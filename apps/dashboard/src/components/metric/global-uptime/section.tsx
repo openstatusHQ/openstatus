@@ -22,6 +22,8 @@ type Metric = {
   variant: React.ComponentProps<typeof MetricCard>["variant"];
 };
 
+// TODO: move the fetch to the parent component
+
 export function GlobalUptimeSection({
   monitorId,
   jobType,

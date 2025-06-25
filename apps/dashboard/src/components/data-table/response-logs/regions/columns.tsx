@@ -9,6 +9,10 @@ import { getActions } from "@/data/region-metrics.client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 
+function TrendCell({ trend }: { trend: RegionMetric["trend"] }) {
+  return <ChartLineRegion className="h-[50px]" data={trend} />;
+}
+
 export const columns: ColumnDef<RegionMetric>[] = [
   {
     accessorKey: "region",
@@ -23,12 +27,13 @@ export const columns: ColumnDef<RegionMetric>[] = [
     accessorKey: "trend",
     header: "Trend",
     cell: ({ row }) => {
-      const trend = row.getValue("trend");
-      if (!trend) return null;
-      return <ChartLineRegion className="h-[50px]" />;
+      return <TrendCell trend={row.original.trend} />;
     },
     enableSorting: false,
     enableHiding: false,
+    meta: {
+      cellClassName: "w-full",
+    },
   },
   {
     accessorKey: "p50",

@@ -7,7 +7,6 @@ import {
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import { ResponseLogsDataTableToolbar } from "@/components/data-table/response-logs/data-table-toolbar";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Button } from "@/components/ui/button";
@@ -23,20 +22,20 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { regions } from "@/data/regions";
-import type { ResponseLog } from "@/data/response-logs";
 import { statusCodes } from "@/data/status-codes";
 import { Braces, Share, TableProperties } from "lucide-react";
 import { useState } from "react";
 import { columns } from "./columns";
+import type { ResponseLog } from "@/data/response-logs";
 
 export function DataTable({ data }: { data: ResponseLog[] }) {
   // TODO: use rowSelection from tanstack-table
   const [selectedRow, setSelectedRow] = useState<ResponseLog | null>(null);
   const regionConfig = regions.find(
-    (region) => region.code === selectedRow?.region,
+    (region) => region.code === selectedRow?.region
   );
   const statusConfig = statusCodes.find(
-    (status) => status.code === selectedRow?.status,
+    (status) => status.code === selectedRow?.status
   );
 
   return (
@@ -51,7 +50,6 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
         // />
         onRowClick={(row) => setSelectedRow(row.original)}
         paginationComponent={DataTablePagination}
-        toolbarComponent={ResponseLogsDataTableToolbar}
       />
       <DataTableSheet
         open={!!selectedRow}
@@ -153,7 +151,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                                   {value}
                                 </TableCell>
                               </TableRow>
-                            ),
+                            )
                           )}
                         </TableBody>
                       </Table>
@@ -185,7 +183,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                             {new Intl.NumberFormat("en-US", {
                               maximumFractionDigits: 2,
                             }).format(
-                              (value / (selectedRow?.latency || 100)) * 100,
+                              (value / (selectedRow?.latency || 100)) * 100
                             )}
                             %
                           </span>
@@ -207,7 +205,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                       </div>
                     </TableCell>
                   </TableRow>
-                ),
+                )
               )}
               {selectedRow?.message && (
                 <>

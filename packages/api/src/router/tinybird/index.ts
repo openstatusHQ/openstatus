@@ -85,6 +85,27 @@ function getMetricsByIntervalProcedure(period: Period, type: Type) {
   }
 }
 
+function getMetricsRegionsProcedure(period: Period, type: Type) {
+  switch (period) {
+    case "1d":
+      return type === "http"
+        ? tb.httpMetricsRegionsDaily
+        : tb.tcpMetricsByIntervalDaily;
+    case "7d":
+      return type === "http"
+        ? tb.httpMetricsRegionsWeekly
+        : tb.tcpMetricsByIntervalWeekly;
+    case "14d":
+      return type === "http"
+        ? tb.httpMetricsRegionsBiweekly
+        : tb.tcpMetricsByIntervalBiweekly;
+    default:
+      return type === "http"
+        ? tb.httpMetricsRegionsDaily
+        : tb.tcpMetricsByIntervalDaily;
+  }
+}
+
 function getStatusProcedure(period: "7d" | "45d", type: Type) {
   switch (period) {
     case "7d":
@@ -244,6 +265,42 @@ export const tinybirdRouter = createTRPCRouter({
       }
 
       const procedure = getMetricsByIntervalProcedure(
+        opts.input.period,
+        opts.input.type
+      );
+      return await procedure(opts.input);
+    }),
+
+  metricsRegions: protectedProcedure
+    .input(
+      z.object({
+        monitorId: z.string(),
+        period: z.enum(periods),
+        type: z.enum(types).default("http"),
+        // Additional filters
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        cronTimestamp: z.number().int().optional(),
+      })
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
+      const procedure = getMetricsRegionsProcedure(
         opts.input.period,
         opts.input.type
       );

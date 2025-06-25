@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  // XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 import {
   type ChartConfig,
@@ -21,20 +14,33 @@ import { ChartTooltipNumber } from "./chart-tooltip-number";
 const chartConfig = {
   latency: {
     label: "Latency",
-    color: "var(--chart-2)",
+    color: "var(--success)",
   },
 } satisfies ChartConfig;
 
-export function ChartLineRegion({ className }: { className?: string }) {
-  const chartData = Array.from({ length: 30 }, (_, i) => ({
-    timestamp: new Date(
-      new Date().setMinutes(new Date().getMinutes() - i)
-    ).toLocaleString("default", {
+export type TrendPoint = {
+  timestamp: number; // unix millis
+  latency: number; // milliseconds
+};
+
+export function ChartLineRegion({
+  className,
+  data,
+}: {
+  className?: string;
+  data: TrendPoint[];
+}) {
+  const trendData = data ?? [];
+
+  const chartData = trendData.map((d) => ({
+    timestamp: new Date(d.timestamp).toLocaleString("default", {
       hour: "numeric",
       minute: "numeric",
+      // TODO: add day/month
     }),
-    latency: Math.floor(Math.random() * 100) * 100,
+    latency: d.latency,
   }));
+
   return (
     <ChartContainer
       config={chartConfig}
