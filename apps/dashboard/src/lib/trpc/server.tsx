@@ -28,6 +28,13 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
           (opts.direction === "down" && opts.result instanceof Error),
       }),
       endingLink({
+        // headers: async () => {
+        //   const h = new Map(await headers());
+        //   h.delete("connection");
+        //   h.delete("transfer-encoding");
+        //   h.set("x-trpc-source", "server");
+        //   return Object.fromEntries(h.entries());
+        // },
         headers: {
           "x-trpc-source": "client",
         },
