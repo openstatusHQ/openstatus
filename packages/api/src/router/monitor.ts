@@ -1139,6 +1139,7 @@ export const monitorRouter = createTRPCRouter({
             jsonBodyAssertion,
           ])
         ),
+        active: z.boolean().default(true),
         // skip the test check if assertions are OK
         skipCheck: z.boolean().default(true),
         // save check in db (iff success? -> e.g. onboarding to get a first ping)
@@ -1193,6 +1194,7 @@ export const monitorRouter = createTRPCRouter({
           method: input.method,
           headers: input.headers ? JSON.stringify(input.headers) : undefined,
           body: input.body,
+          active: input.active,
           assertions: serialize(assertions),
           updatedAt: new Date(),
         })

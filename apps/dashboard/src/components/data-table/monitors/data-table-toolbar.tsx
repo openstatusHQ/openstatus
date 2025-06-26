@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { RouterOutputs } from "@openstatus/api";
+import { globalCards, metricsGlobalCards } from "@/data/metrics.client";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 export interface MonitorDataTableToolbarProps {
@@ -34,12 +35,12 @@ export function MonitorDataTableToolbar({
           <DataTableFacetedFilter
             column={table.getColumn("status")}
             title="Status"
-            options={[
-              { label: "Normal", value: "Normal" },
-              { label: "Degraded", value: "Degraded" },
-              { label: "Failing", value: "Failing" },
-              { label: "Inactive", value: "Inactive" },
-            ]}
+            options={globalCards
+              .filter((key) => key !== "p95")
+              .map((key) => ({
+                label: metricsGlobalCards[key].title,
+                value: key,
+              }))}
           />
         )}
         {isFiltered && (

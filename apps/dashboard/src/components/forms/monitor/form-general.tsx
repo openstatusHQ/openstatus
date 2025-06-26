@@ -58,6 +58,7 @@ import {
   AlertDialogDescription,
   AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
 
 const TYPES = ["http", "tcp"] as const;
 const ASSERTION_TYPES = ["status", "header", "textBody"] as const;
@@ -73,6 +74,7 @@ const schema = z.object({
       value: z.string(),
     })
   ),
+  active: z.boolean().optional().default(true),
   assertions: z.array(
     z.discriminatedUnion("type", [
       statusAssertion,
@@ -102,6 +104,7 @@ export function FormGeneral({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
+      active: true,
       name: "",
       type: undefined,
       method: "GET",
@@ -205,12 +208,12 @@ export function FormGeneral({
               Configure your monitor settings and endpoints.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid gap-4">
+          <FormCardContent className="grid sm:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
                     <Input placeholder="OpenStatus API" {...field} />
@@ -219,6 +222,21 @@ export function FormGeneral({
                   <FormDescription>
                     Displayed on the status page.
                   </FormDescription>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center">
+                  <FormLabel>Active</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
                 </FormItem>
               )}
             />
@@ -640,12 +658,12 @@ export function FormGeneral({
             </>
           )}
           {watchType === "tcp" && (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="url"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Host:Port</FormLabel>
                     <FormControl>
                       <Input placeholder="127.0.0.0.1:8080" {...field} />
@@ -657,7 +675,7 @@ export function FormGeneral({
                   </FormItem>
                 )}
               />
-              <div className="text-muted-foreground text-sm">
+              <div className="col-span-full text-muted-foreground text-sm">
                 Examples:
                 <ul className="list-inside list-disc">
                   <li>

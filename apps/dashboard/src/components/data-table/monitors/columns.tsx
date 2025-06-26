@@ -62,6 +62,12 @@ export const columns: ColumnDef<Monitor>[] = [
     header: "Status",
     cell: ({ row }) => {
       const value = String(row.getValue("status"));
+      const active = Boolean(row.getValue("active"));
+
+      if (!active) {
+        return <div className="font-mono text-muted-foreground">inactive</div>;
+      }
+
       switch (value) {
         case "active":
           return <div className="font-mono text-success">{value}</div>;
@@ -75,6 +81,10 @@ export const columns: ColumnDef<Monitor>[] = [
     },
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    accessorKey: "active",
+    enableHiding: true,
   },
   {
     accessorKey: "tags",

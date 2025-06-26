@@ -147,10 +147,46 @@ export function mapGlobalMetrics(
 
 export type MonitorListMetric = {
   title: string;
-  key: string | boolean;
+  key: "degraded" | "error" | "active" | "inactive" | "p95";
   value: number | string;
   variant: React.ComponentProps<typeof MetricCard>["variant"];
-  type: "filter" | "sorting";
+};
+
+export const globalCards = [
+  "active",
+  "degraded",
+  "error",
+  "inactive",
+  "p95",
+] as const;
+
+export const metricsGlobalCards: Record<
+  (typeof globalCards)[number],
+  {
+    title: string;
+    key: (typeof globalCards)[number];
+  }
+> = {
+  active: {
+    title: "Normal",
+    key: "active" as const,
+  },
+  degraded: {
+    title: "Degraded",
+    key: "degraded" as const,
+  },
+  error: {
+    title: "Failing",
+    key: "error" as const,
+  },
+  inactive: {
+    title: "Inactive",
+    key: "inactive" as const,
+  },
+  p95: {
+    title: "Slowest P95",
+    key: "p95" as const,
+  },
 };
 
 /**
@@ -163,49 +199,48 @@ export function getMonitorListMetrics(
     monitorId: string;
   }[] = []
 ): readonly MonitorListMetric[] {
-  return [
-    {
-      title: "Normal",
-      key: "active" as const,
-      value: monitors.filter(
-        (monitor) => monitor.status === "active" && monitor.active
-      ).length,
-      variant: "success" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Degraded",
-      key: "degraded" as const,
-      value: monitors.filter(
-        (monitor) => monitor.status === "degraded" && monitor.active
-      ).length,
-      variant: "warning" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Failing",
-      key: "error" as const,
-      value: monitors.filter(
-        (monitor) => monitor.status === "error" && monitor.active
-      ).length,
-      variant: "destructive" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Inactive",
-      key: false as const,
-      value: monitors.filter((monitor) => monitor.active === false).length,
-      variant: "default" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Slowest P95",
-      key: "p95" as const,
-      value: formatMilliseconds(
-        data.sort((a, b) => b.p95Latency - a.p95Latency)[0]?.p95Latency ?? 0
-      ),
-      variant: "ghost" as const,
-      type: "sorting" as const,
-    },
-  ] as const;
+  const variantMap: Record<
+    (typeof globalCards)[number],
+    React.ComponentProps<typeof MetricCard>["variant"]
+  > = {
+    active: "success",
+    degraded: "warning",
+    error: "destructive",
+    inactive: "default",
+    p95: "ghost",
+  } as const;
+
+  return globalCards.map((key) => {
+    let value: number | string = 0;
+    switch (key) {
+      case "active":
+        value = monitors.filter(
+          (m) => m.status === "active" && m.active
+        ).length;
+        break;
+      case "degraded":
+        value = monitors.filter(
+          (m) => m.status === "degraded" && m.active
+        ).length;
+        break;
+      case "error":
+        value = monitors.filter((m) => m.status === "error" && m.active).length;
+        break;
+      case "inactive":
+        value = monitors.filter((m) => m.active === false).length;
+        break;
+      case "p95":
+        value = formatMilliseconds(
+          data.sort((a, b) => b.p95Latency - a.p95Latency)[0]?.p95Latency ?? 0
+        );
+        break;
+    }
+
+    return {
+      title: metricsGlobalCards[key].title,
+      key,
+      value,
+      variant: variantMap[key],
+    } as const;
+  }) as readonly MonitorListMetric[];
 }

@@ -21,10 +21,10 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
-import { DropdownPeriod } from "@/components/search-controls/dropdown-period";
-import { CommandRegion } from "@/components/search-controls/command-region";
-import { DropdownStatus } from "@/components/search-controls/dropdown-status";
-import { ButtonReset } from "@/components/search-controls/button-reset";
+import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
+import { CommandRegion } from "@/components/controls-search/command-region";
+import { DropdownStatus } from "@/components/controls-search/dropdown-status";
+import { ButtonReset } from "@/components/controls-search/button-reset";
 import { searchParamsParsers } from "./search-params";
 import { useQueryStates } from "nuqs";
 

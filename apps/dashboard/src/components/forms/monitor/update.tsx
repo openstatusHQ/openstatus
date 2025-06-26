@@ -109,6 +109,7 @@ export function FormMonitorUpdate() {
           method: monitor.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
           headers: monitor.headers ?? [],
           body: monitor.body,
+          active: monitor.active ?? true,
           // TODO: move to server after migration
           assertions: deserialize(monitor?.assertions ?? "").map(
             (a) => a.schema
@@ -128,6 +129,7 @@ export function FormMonitorUpdate() {
             assertions: values.assertions,
             skipCheck: values.skipCheck,
             saveCheck: values.saveCheck,
+            active: values.active,
           });
         }}
       />

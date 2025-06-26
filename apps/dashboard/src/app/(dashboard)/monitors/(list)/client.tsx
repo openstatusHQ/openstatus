@@ -23,36 +23,40 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getMonitorListMetrics } from "@/data/metrics.client";
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "./search-params";
 
 const icons = {
-  filter: {
+  default: {
     active: CheckCircle,
     inactive: ListFilter,
   },
-  sorting: {
+  p95: {
     active: ArrowDown,
     inactive: ListFilter,
   },
-};
+} as const;
 
 export function Client() {
   const trpc = useTRPC();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
-  const router = useRouter();
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  const httpMonitors =
-    monitors
-      ?.filter((monitor) => monitor.jobType === "http")
-      .map((monitor) => monitor.id.toString()) ?? [];
-  const tcpMonitors =
-    monitors
-      ?.filter((monitor) => monitor.jobType === "tcp")
-      .map((monitor) => monitor.id.toString()) ?? [];
+  const monitorsByType = {
+    http:
+      monitors
+        ?.filter((m) => m.jobType === "http")
+        .map((m) => m.id.toString()) ?? [],
+    tcp:
+      monitors
+        ?.filter((m) => m.jobType === "tcp")
+        .map((m) => m.id.toString()) ?? [],
+  };
+  const { http: httpMonitors, tcp: tcpMonitors } = monitorsByType;
 
   const { data: globalHttpMetrics } = useQuery({
     ...trpc.tinybird.globalMetrics.queryOptions({
@@ -70,12 +74,24 @@ export function Client() {
     enabled: tcpMonitors.length > 0,
   });
 
+  useEffect(() => {
+    if (searchParams.status) {
+      setColumnFilters([{ id: "status", value: [searchParams.status] }]);
+    }
+    if (searchParams.active) {
+      setColumnFilters([{ id: "active", value: [searchParams.active] }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!monitors) return null;
 
   const metrics = getMonitorListMetrics(monitors, [
     ...(globalHttpMetrics?.data ?? []),
     ...(globalTcpMetrics?.data ?? []),
   ]);
+
+  console.log({ columnFilters, searchParams });
 
   return (
     <SectionGroup>
@@ -88,42 +104,51 @@ export function Client() {
         </SectionHeader>
         <MetricCardGroup>
           {metrics.map((metric) => {
-            const array = columnFilters.find(
-              (filter) => filter.id === "status"
-            )?.value;
-            const isFilterActive =
-              Array.isArray(array) && array?.includes(metric.title);
-            const isSortingActive = sorting.find(
-              (sort) => sort.id === "p99"
-            )?.desc;
+            const statusArray = columnFilters.find((f) => f.id === "status")
+              ?.value as string[] | undefined;
+            const activeArray = columnFilters.find((f) => f.id === "active")
+              ?.value as boolean[] | undefined;
 
-            const isActive =
-              metric.type === "filter" ? isFilterActive : isSortingActive;
+            let isActive = false;
+            if (metric.key === "p95") {
+              isActive = !!sorting.find((s) => s.id === "p99" && s.desc);
+            } else if (metric.key === "inactive") {
+              isActive =
+                Array.isArray(activeArray) && activeArray.includes(false);
+            } else {
+              isActive =
+                Array.isArray(statusArray) && statusArray.includes(metric.key);
+            }
 
-            const Icon = icons[metric.type][isActive ? "active" : "inactive"];
+            const iconGroup = metric.key === "p95" ? icons.p95 : icons.default;
+            const Icon = iconGroup[isActive ? "active" : "inactive"];
 
             return (
               <MetricCardButton
                 key={metric.title}
                 variant={metric.variant}
                 onClick={() => {
-                  // NOTE: can be refactored into the array object
-                  if (metric.type === "filter") {
-                    if (columnFilters.length === 0 || !isFilterActive) {
-                      router.push(`?status=${metric.title}`);
-                      setColumnFilters([
-                        { id: "status", value: [metric.title] },
-                      ]);
-                    } else {
-                      setColumnFilters([]);
-                      // reset URL params
-                      router.push("/monitors");
-                    }
-                  } else if (metric.type === "sorting") {
+                  if (metric.key === "p95") {
                     if (sorting.length === 0 || !isActive) {
                       setSorting([{ id: "p99", desc: true }]);
                     } else {
                       setSorting([]);
+                    }
+                  } else if (metric.key === "inactive") {
+                    if (columnFilters.length === 0 || !isActive) {
+                      setSearchParams({ active: false, status: null });
+                      setColumnFilters([{ id: "active", value: [false] }]);
+                    } else {
+                      setSearchParams({ active: null });
+                      setColumnFilters([]);
+                    }
+                  } else {
+                    if (columnFilters.length === 0 || !isActive) {
+                      setSearchParams({ status: metric.key, active: null });
+                      setColumnFilters([{ id: "status", value: [metric.key] }]);
+                    } else {
+                      setSearchParams({ status: null });
+                      setColumnFilters([]);
                     }
                   }
                 }}
@@ -161,6 +186,7 @@ export function Client() {
           setColumnFilters={setColumnFilters}
           sorting={sorting}
           setSorting={setSorting}
+          defaultColumnVisibility={{ active: false }}
         />
       </Section>
     </SectionGroup>
