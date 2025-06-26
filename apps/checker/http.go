@@ -67,6 +67,8 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	}
 
 	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader(b))
+
+	req.Close = true
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
 		return Response{}, fmt.Errorf("unable to create req: %w", err)
