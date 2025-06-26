@@ -40,6 +40,7 @@ import {
   selectIncidentSchema,
   selectMaintenanceSchema,
   selectMonitorSchema,
+  selectMonitorStatusSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
   selectPageSchema,
@@ -843,6 +844,9 @@ export const monitorRouter = createTRPCRouter({
           monitorTagsToMonitors: {
             with: { monitorTag: true },
           },
+          incidents: {
+            orderBy: (incident, { desc }) => [desc(incident.createdAt)],
+          },
         },
         orderBy: (monitor, { asc, desc }) =>
           opts.input?.order === "asc"
@@ -854,6 +858,7 @@ export const monitorRouter = createTRPCRouter({
         .array(
           selectMonitorSchema.extend({
             tags: z.array(selectMonitorTagSchema).default([]),
+            incidents: z.array(selectIncidentSchema).default([]),
           })
         )
         .parse(

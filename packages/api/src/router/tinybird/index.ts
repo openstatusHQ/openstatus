@@ -5,7 +5,7 @@ import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { and, db, eq, SQL } from "@openstatus/db";
+import { and, db, eq, inArray, SQL } from "@openstatus/db";
 import { TRPCError } from "@trpc/server";
 import { monitor } from "@openstatus/db/src/schema";
 
@@ -124,6 +124,10 @@ function getGetProcedure(period: "30d", type: Type) {
     default:
       return type === "http" ? tb.httpGetMonthly : tb.tcpGetMonthly;
   }
+}
+
+function getGlobalMetricsProcedure(type: Type) {
+  return type === "http" ? tb.httpGlobalMetricsDaily : tb.tcpGlobalMetricsDaily;
 }
 
 export const tinybirdRouter = createTRPCRouter({
@@ -407,6 +411,34 @@ export const tinybirdRouter = createTRPCRouter({
       }
 
       const procedure = getGetProcedure(opts.input.period, opts.input.type);
+      return await procedure(opts.input);
+    }),
+
+  globalMetrics: protectedProcedure
+    .input(
+      z.object({
+        monitorIds: z.string().array(),
+        type: z.enum(types).default("http"),
+      })
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+        inArray(monitor.id, opts.input.monitorIds.map(Number)),
+      ];
+
+      const _monitors = await db.query.monitor.findMany({
+        where: and(...whereConditions),
+      });
+
+      if (_monitors.length !== opts.input.monitorIds.length) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Some monitors not found",
+        });
+      }
+
+      const procedure = getGlobalMetricsProcedure(opts.input.type);
       return await procedure(opts.input);
     }),
 });

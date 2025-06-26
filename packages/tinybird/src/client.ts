@@ -15,8 +15,8 @@ export class OSTinybird {
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
-      this.tb = new Client({ token });
     }
+    this.tb = new Client({ token });
   }
 
   public get homeStats() {
@@ -799,6 +799,48 @@ export class OSTinybird {
           }
         }),
         timestamp: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.number().int(),
+        maxLatency: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+        count: z.number().int(),
+        monitorId: z.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.number().int(),
+        maxLatency: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+        count: z.number().int(),
+        monitorId: z.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });

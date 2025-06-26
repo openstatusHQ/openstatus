@@ -1,0 +1,35 @@
+VERSION 1
+
+TAGS "http"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        region,
+        trigger,
+        statusCode,
+        monitorId,
+        workspaceId,
+        requestStatus,
+
+        -- Parse each timing subfield from JSON string (nullable)
+        JSONExtractInt(timing, 'dnsStart') AS dnsStart,
+        JSONExtractInt(timing, 'dnsDone') AS dnsDone,
+        JSONExtractInt(timing, 'connectStart') AS connectStart,
+        JSONExtractInt(timing, 'connectDone') AS connectDone,
+        JSONExtractInt(timing, 'tlsHandshakeStart') AS tlsHandshakeStart,
+        JSONExtractInt(timing, 'tlsHandshakeDone') AS tlsHandshakeDone,
+        JSONExtractInt(timing, 'firstByteStart') AS firstByteStart,
+        JSONExtractInt(timing, 'firstByteDone') AS firstByteDone,
+        JSONExtractInt(timing, 'transferStart') AS transferStart,
+        JSONExtractInt(timing, 'transferDone') AS transferDone
+
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE mv__http_timing_phases_14d__v1
+
+

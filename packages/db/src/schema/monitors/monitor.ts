@@ -15,6 +15,7 @@ import { monitorsToStatusReport } from "../status_reports";
 import { workspace } from "../workspaces/workspace";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 import { incidentTable } from "../incidents/incident";
+import { monitorStatusTable } from "../monitor_status/monitor_status";
 
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),
@@ -76,6 +77,7 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
   monitorsToNotifications: many(notificationsToMonitors),
   maintenancesToMonitors: many(maintenancesToMonitors),
   incidents: many(incidentTable),
+  monitorStatus: many(monitorStatusTable),
 }));
 
 export const monitorsToPages = sqliteTable(

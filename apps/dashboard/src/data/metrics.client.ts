@@ -5,6 +5,7 @@ import type { RegionMetric } from "./region-metrics";
 import { MetricCard } from "@/components/metric/metric-card";
 import { RouterOutputs } from "@openstatus/api";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { formatMilliseconds } from "@/lib/formatter";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
@@ -126,4 +127,85 @@ export function mapRegionMetrics(
   });
 
   return Array.from(map.values()) as RegionMetric[];
+}
+
+export function mapGlobalMetrics(
+  metrics: RouterOutputs["tinybird"]["globalMetrics"]
+) {
+  return metrics.data?.map((metric) => {
+    return {
+      p50: metric.p50Latency,
+      p75: metric.p75Latency,
+      p90: metric.p90Latency,
+      p95: metric.p95Latency,
+      p99: metric.p99Latency,
+      total: metric.count,
+      monitorId: metric.monitorId,
+    };
+  });
+}
+
+export type MonitorListMetric = {
+  title: string;
+  key: string | boolean;
+  value: number | string;
+  variant: React.ComponentProps<typeof MetricCard>["variant"];
+  type: "filter" | "sorting";
+};
+
+/**
+ * Build the metric cards data that is shown on the monitors list page.
+ */
+export function getMonitorListMetrics(
+  monitors: RouterOutputs["monitor"]["list"] = [],
+  data: {
+    p95Latency: number;
+    monitorId: string;
+  }[] = []
+): readonly MonitorListMetric[] {
+  return [
+    {
+      title: "Normal",
+      key: "active" as const,
+      value: monitors.filter(
+        (monitor) => monitor.status === "active" && monitor.active
+      ).length,
+      variant: "success" as const,
+      type: "filter" as const,
+    },
+    {
+      title: "Degraded",
+      key: "degraded" as const,
+      value: monitors.filter(
+        (monitor) => monitor.status === "degraded" && monitor.active
+      ).length,
+      variant: "warning" as const,
+      type: "filter" as const,
+    },
+    {
+      title: "Failing",
+      key: "error" as const,
+      value: monitors.filter(
+        (monitor) => monitor.status === "error" && monitor.active
+      ).length,
+      variant: "destructive" as const,
+      type: "filter" as const,
+    },
+    {
+      title: "Inactive",
+      key: false as const,
+      value: monitors.filter((monitor) => monitor.active === false).length,
+      variant: "default" as const,
+      type: "filter" as const,
+    },
+    {
+      title: "Slowest P95",
+      key: "p95" as const,
+      value: formatMilliseconds(
+        data.sort((a, b) => b.p95Latency - a.p95Latency)[0]?.p95Latency ?? 0
+      ),
+      variant: "ghost" as const,
+      type: "sorting" as const,
+    },
+  ] as const;
 }

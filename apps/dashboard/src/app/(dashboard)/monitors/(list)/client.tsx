@@ -25,6 +25,7 @@ import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
 import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getMonitorListMetrics } from "@/data/metrics.client";
 
 const icons = {
   filter: {
@@ -44,47 +45,37 @@ export function Client() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  // TODO: fetch tinybird data from trpc(!)
+  const httpMonitors =
+    monitors
+      ?.filter((monitor) => monitor.jobType === "http")
+      .map((monitor) => monitor.id.toString()) ?? [];
+  const tcpMonitors =
+    monitors
+      ?.filter((monitor) => monitor.jobType === "tcp")
+      .map((monitor) => monitor.id.toString()) ?? [];
+
+  const { data: globalHttpMetrics } = useQuery({
+    ...trpc.tinybird.globalMetrics.queryOptions({
+      monitorIds: httpMonitors,
+      type: "http",
+    }),
+    enabled: httpMonitors.length > 0,
+  });
+
+  const { data: globalTcpMetrics } = useQuery({
+    ...trpc.tinybird.globalMetrics.queryOptions({
+      monitorIds: tcpMonitors,
+      type: "tcp",
+    }),
+    enabled: tcpMonitors.length > 0,
+  });
 
   if (!monitors) return null;
 
-  const metrics = [
-    {
-      title: "Normal",
-      key: "active",
-      value: monitors.filter((monitor) => monitor.status === "active").length,
-      variant: "success" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Degraded",
-      key: "degraded",
-      value: monitors.filter((monitor) => monitor.status === "degraded").length,
-      variant: "warning" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Failing",
-      key: "error",
-      value: monitors.filter((monitor) => monitor.status === "error").length,
-      variant: "destructive" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Inactive",
-      key: false,
-      value: monitors.filter((monitor) => monitor.active === false).length,
-      variant: "default" as const,
-      type: "filter" as const,
-    },
-    {
-      title: "Slowest P95",
-      key: "p95",
-      value: "530ms",
-      variant: "ghost" as const,
-      type: "sorting" as const,
-    },
-  ] as const;
+  const metrics = getMonitorListMetrics(monitors, [
+    ...(globalHttpMetrics?.data ?? []),
+    ...(globalTcpMetrics?.data ?? []),
+  ]);
 
   return (
     <SectionGroup>
@@ -152,7 +143,17 @@ export function Client() {
       <Section>
         <DataTable
           columns={columns}
-          data={monitors}
+          data={monitors.map((monitor) => ({
+            ...monitor,
+            globalMetrics:
+              monitor.jobType === "http"
+                ? globalHttpMetrics?.data?.find(
+                    (m) => m.monitorId === monitor.id.toString()
+                  )
+                : globalTcpMetrics?.data?.find(
+                    (m) => m.monitorId === monitor.id.toString()
+                  ),
+          }))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={MonitorDataTableToolbar}
           paginationComponent={DataTablePaginationSimple}

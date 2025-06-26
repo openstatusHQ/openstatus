@@ -9,8 +9,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { TableCellNumber } from "../table-cell-number";
+import { TableCellDate } from "../table-cell-date";
 
-type Monitor = RouterOutputs["monitor"]["list"][number];
+type Monitor = RouterOutputs["monitor"]["list"][number] & {
+  globalMetrics?: RouterOutputs["tinybird"]["globalMetrics"]["data"][number];
+};
 
 export const columns: ColumnDef<Monitor>[] = [
   {
@@ -53,13 +58,6 @@ export const columns: ColumnDef<Monitor>[] = [
     },
   },
   {
-    accessorKey: "active",
-    header: "Active",
-    meta: {
-      cellClassName: "font-mono",
-    },
-  },
-  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
@@ -84,7 +82,9 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("tags");
       if (!Array.isArray(value)) return null;
-      if (value.length === 0) return null;
+      if (value.length === 0) {
+        return <div className="text-muted-foreground">-</div>;
+      }
       return (
         <div className="group/badges -space-x-2 flex flex-wrap">
           {value.map((tag) => (
@@ -106,47 +106,49 @@ export const columns: ColumnDef<Monitor>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-  // {
-  //   accessorKey: "lastIncident",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="Last Incident" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const value = String(row.getValue("lastIncident") ?? "-");
-  //     return <div className="text-muted-foreground">{value}</div>;
-  //   },
-  //   enableHiding: false,
-  // },
-  // {
-  //   accessorKey: "p50",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="P50" />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <TableCellNumber value={row.getValue("p50")} unit="ms" />
-  //   ),
-  //   enableHiding: false,
-  // },
-  // {
-  //   accessorKey: "p90",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="P90" />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <TableCellNumber value={row.getValue("p90")} unit="ms" />
-  //   ),
-  //   enableHiding: false,
-  // },
-  // {
-  //   accessorKey: "p99",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="P99" />
-  //   ),
-  //   cell: ({ row }) => (
-  //     <TableCellNumber value={row.getValue("p99")} unit="ms" />
-  //   ),
-  //   enableHiding: false,
-  // },
+  {
+    id: "lastIncident",
+    header: "Last Incident",
+    accessorFn: (row) => row.incidents?.[0]?.createdAt,
+    cell: ({ row }) => {
+      const value = row.getValue("lastIncident");
+      return <TableCellDate value={value} formatStr="LLL dd, y" />;
+    },
+    enableHiding: false,
+  },
+  {
+    id: "p50",
+    accessorFn: (row) => row.globalMetrics?.p50Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P50" />
+    ),
+    cell: ({ row }) => (
+      <TableCellNumber value={row.getValue("p50")} unit="ms" />
+    ),
+    enableHiding: false,
+  },
+  {
+    id: "p90",
+    accessorFn: (row) => row.globalMetrics?.p90Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P90" />
+    ),
+    cell: ({ row }) => (
+      <TableCellNumber value={row.getValue("p90")} unit="ms" />
+    ),
+    enableHiding: false,
+  },
+  {
+    id: "p99",
+    accessorFn: (row) => row.globalMetrics?.p99Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P99" />
+    ),
+    cell: ({ row }) => (
+      <TableCellNumber value={row.getValue("p99")} unit="ms" />
+    ),
+    enableHiding: false,
+  },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
