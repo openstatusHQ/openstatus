@@ -99,6 +99,9 @@ export function Client() {
           monitorId={id}
           type={monitor.jobType as "http" | "tcp"}
           period={period}
+          regions={monitor.regions.filter((region) =>
+            selectedRegions.includes(region)
+          )}
         />
       </Section>
       <Section>

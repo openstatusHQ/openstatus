@@ -172,6 +172,37 @@ export const tinybirdRouter = createTRPCRouter({
       return await procedure(opts.input);
     }),
 
+  uptime: protectedProcedure
+    .input(
+      z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        interval: z.number().int().optional(), // in minutes, default 30
+        regions: z.enum(flyRegions).array().optional(),
+        type: z.enum(types).default("http"),
+      })
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
+      return await tb.httpUptime30d(opts.input);
+    }),
+
   metrics: protectedProcedure
     .input(
       z.object({

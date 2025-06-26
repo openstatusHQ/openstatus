@@ -44,20 +44,19 @@ export const variants = {
   React.ComponentProps<typeof MetricCard>["variant"]
 >;
 
-// RENAME: mapUptime
-export function mapStatus(status: RouterOutputs["tinybird"]["status"]) {
+export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
   return status.data
     .map((status) => {
       return {
-        timestamp: new Date(status.day).toLocaleString("default", {
+        ...status,
+        ok: status.success,
+        interval: status.interval.toLocaleString("default", {
           day: "numeric",
           month: "short",
-          // hour: "numeric",
-          // minute: "numeric",
+          hour: "numeric",
+          minute: "numeric",
         }),
-        ok: status.ok,
-        degraded: 0, // status.degraded,
-        error: status.count - status.ok,
+        total: status.success + status.error + status.degraded,
       };
     })
     .reverse();
