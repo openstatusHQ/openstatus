@@ -1,4 +1,5 @@
 # Data Source created from Pipe 'aggregate__http_status_14d__v0'
+VERSION 0
 
 SCHEMA >
     `time` DateTime('UTC'),

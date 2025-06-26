@@ -2,7 +2,6 @@
 
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
-import { BlockWrapper } from "@/components/content/block-wrapper";
 import {
   Section,
   SectionDescription,
@@ -10,13 +9,10 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/audit-logs/columns";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
 // import DatePicker from "@/components/date-picker";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import { auditLogs } from "@/data/audit-logs";
 import type { RegionMetric } from "@/data/region-metrics";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -28,6 +24,7 @@ import React from "react";
 import { DropdownPeriod } from "@/components/search-controls/dropdown-period";
 import { CommandRegion } from "@/components/search-controls/command-region";
 import { ButtonReset } from "@/components/search-controls/button-reset";
+import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
 
 export function Client() {
   const trpc = useTRPC();
@@ -124,13 +121,7 @@ export function Client() {
             What&apos;s happening on your monitor
           </SectionDescription>
         </SectionHeader>
-        <BlockWrapper>
-          <DataTable
-            columns={columns}
-            data={auditLogs}
-            paginationComponent={DataTablePaginationSimple}
-          />
-        </BlockWrapper>
+        <AuditLogsWrapper monitorId={id} />
       </Section>
       <Section>
         <SectionHeader>

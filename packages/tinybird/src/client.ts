@@ -780,4 +780,27 @@ export class OSTinybird {
       }),
     });
   }
+
+  public get getAuditLog() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__audit_log__v1",
+      parameters: z.object({
+        id: z.string(),
+      }),
+      data: z.object({
+        action: z.string(),
+        id: z.string(),
+        metadata: z.string().transform((str) => {
+          try {
+            return JSON.parse(str) as Record<string, unknown>;
+          } catch (error) {
+            console.error(error);
+            return {};
+          }
+        }),
+        timestamp: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
 }
