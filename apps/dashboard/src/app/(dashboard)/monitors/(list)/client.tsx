@@ -14,6 +14,7 @@ import {
   MetricCardButton,
   MetricCardGroup,
   MetricCardHeader,
+  MetricCardSkeleton,
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
@@ -58,7 +59,7 @@ export function Client() {
   };
   const { http: httpMonitors, tcp: tcpMonitors } = monitorsByType;
 
-  const { data: globalHttpMetrics } = useQuery({
+  const { data: globalHttpMetrics, isLoading: isLoadingHttp } = useQuery({
     ...trpc.tinybird.globalMetrics.queryOptions({
       monitorIds: httpMonitors,
       type: "http",
@@ -66,7 +67,7 @@ export function Client() {
     enabled: httpMonitors.length > 0,
   });
 
-  const { data: globalTcpMetrics } = useQuery({
+  const { data: globalTcpMetrics, isLoading: isLoadingTcp } = useQuery({
     ...trpc.tinybird.globalMetrics.queryOptions({
       monitorIds: tcpMonitors,
       type: "tcp",
@@ -90,8 +91,6 @@ export function Client() {
     ...(globalHttpMetrics?.data ?? []),
     ...(globalTcpMetrics?.data ?? []),
   ]);
-
-  console.log({ columnFilters, searchParams });
 
   return (
     <SectionGroup>
@@ -159,7 +158,11 @@ export function Client() {
                   </MetricCardTitle>
                   <Icon className="size-4" />
                 </MetricCardHeader>
-                <MetricCardValue>{metric.value}</MetricCardValue>
+                {metric.key === "p95" && (isLoadingHttp || isLoadingTcp) ? (
+                  <MetricCardSkeleton className="h-6 w-12" />
+                ) : (
+                  <MetricCardValue>{metric.value}</MetricCardValue>
+                )}
               </MetricCardButton>
             );
           })}
@@ -171,13 +174,15 @@ export function Client() {
           data={monitors.map((monitor) => ({
             ...monitor,
             globalMetrics:
-              monitor.jobType === "http"
-                ? globalHttpMetrics?.data?.find(
-                    (m) => m.monitorId === monitor.id.toString()
-                  )
-                : globalTcpMetrics?.data?.find(
-                    (m) => m.monitorId === monitor.id.toString()
-                  ),
+              isLoadingHttp || isLoadingTcp
+                ? undefined
+                : monitor.jobType === "http"
+                  ? (globalHttpMetrics?.data?.find(
+                      (m) => m.monitorId === monitor.id.toString()
+                    ) ?? [])
+                  : (globalTcpMetrics?.data?.find(
+                      (m) => m.monitorId === monitor.id.toString()
+                    ) ?? []),
           }))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={MonitorDataTableToolbar}

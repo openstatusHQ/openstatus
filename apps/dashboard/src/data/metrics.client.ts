@@ -148,7 +148,7 @@ export function mapGlobalMetrics(
 export type MonitorListMetric = {
   title: string;
   key: "degraded" | "error" | "active" | "inactive" | "p95";
-  value: number | string;
+  value: number | string | undefined;
   variant: React.ComponentProps<typeof MetricCard>["variant"];
 };
 
@@ -211,7 +211,7 @@ export function getMonitorListMetrics(
   } as const;
 
   return globalCards.map((key) => {
-    let value: number | string = 0;
+    let value: number | string | undefined;
     switch (key) {
       case "active":
         value = monitors.filter(
@@ -230,9 +230,9 @@ export function getMonitorListMetrics(
         value = monitors.filter((m) => m.active === false).length;
         break;
       case "p95":
-        value = formatMilliseconds(
-          data.sort((a, b) => b.p95Latency - a.p95Latency)[0]?.p95Latency ?? 0
-        );
+        const p95 = data.sort((a, b) => b.p95Latency - a.p95Latency)[0]
+          ?.p95Latency;
+        value = p95 ? formatMilliseconds(p95) : undefined;
         break;
     }
 

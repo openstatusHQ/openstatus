@@ -12,6 +12,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { TableCellNumber } from "../table-cell-number";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellSkeleton } from "../dable-cell-skeleton";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
   globalMetrics?: RouterOutputs["tinybird"]["globalMetrics"]["data"][number];
@@ -132,9 +133,13 @@ export const columns: ColumnDef<Monitor>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="P50" />
     ),
-    cell: ({ row }) => (
-      <TableCellNumber value={row.getValue("p50")} unit="ms" />
-    ),
+    cell: ({ row }) => {
+      const value = row.getValue("p50");
+      if (!value) {
+        return <TableCellSkeleton />;
+      }
+      return <TableCellNumber value={value} unit="ms" />;
+    },
     enableHiding: false,
   },
   {
@@ -143,22 +148,45 @@ export const columns: ColumnDef<Monitor>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="P90" />
     ),
-    cell: ({ row }) => (
-      <TableCellNumber value={row.getValue("p90")} unit="ms" />
-    ),
+    cell: ({ row }) => {
+      const value = row.getValue("p90");
+      if (!value) {
+        return <TableCellSkeleton />;
+      }
+      return <TableCellNumber value={value} unit="ms" />;
+    },
     enableHiding: false,
   },
   {
-    id: "p99",
-    accessorFn: (row) => row.globalMetrics?.p99Latency,
+    id: "p95",
+    accessorFn: (row) => row.globalMetrics?.p95Latency,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P99" />
+      <DataTableColumnHeader column={column} title="P95" />
     ),
-    cell: ({ row }) => (
-      <TableCellNumber value={row.getValue("p99")} unit="ms" />
-    ),
+    cell: ({ row }) => {
+      const value = row.getValue("p95");
+      if (!value) {
+        return <TableCellSkeleton />;
+      }
+      return <TableCellNumber value={value} unit="ms" />;
+    },
     enableHiding: false,
   },
+  // {
+  //   id: "p99",
+  //   accessorFn: (row) => row.globalMetrics?.p99Latency,
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="P99" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = row.getValue("p99");
+  //     if (!value) {
+  //       return <TableCellSkeleton />;
+  //     }
+  //     return <TableCellNumber value={value} unit="ms" />;
+  //   },
+  //   enableHiding: false,
+  // },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,

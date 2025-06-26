@@ -30,9 +30,9 @@ import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS = {
-  operational: "bg-success",
-  degraded: "bg-warning",
-  outage: "bg-degraded",
+  operational: "bg-success border border-success",
+  degraded: "bg-warning border border-warning",
+  outage: "bg-destructive border border-destructive",
 };
 
 export function NavStatusPages() {
@@ -114,6 +114,9 @@ export function NavStatusPages() {
                 toast.success("Status Page ID copied to clipboard");
               },
             });
+            const hasActiveStatusReport = item.statusReports.some(
+              (report) => report.status !== "resolved"
+            );
 
             return (
               <SidebarMenuItem key={item.id}>
@@ -140,7 +143,9 @@ export function NavStatusPages() {
                     <div
                       className={cn(
                         "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
-                        STATUS["degraded"]
+                        STATUS[
+                          hasActiveStatusReport ? "degraded" : "operational"
+                        ]
                       )}
                     />
                   </div>

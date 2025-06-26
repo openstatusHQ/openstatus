@@ -32,10 +32,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS = {
-  Degraded: "bg-warning border border-warning",
-  Failing: "bg-destructive border border-destructive",
-  Inactive: "bg-muted-foreground border border-muted-foreground",
-  Normal: "bg-success border border-success",
+  degraded: "bg-warning border border-warning",
+  error: "bg-destructive border border-destructive",
+  inactive: "bg-muted-foreground/70 border border-muted-foreground/70",
+  active: "bg-success border border-success",
 };
 
 export function NavMonitors() {
@@ -145,7 +145,7 @@ export function NavMonitors() {
                     <div
                       className={cn(
                         "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
-                        STATUS["Normal"]
+                        STATUS[item.active ? item.status : "inactive"]
                       )}
                     >
                       <span className="sr-only">{item.status}</span>

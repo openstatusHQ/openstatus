@@ -40,6 +40,9 @@ export function DataTable({
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
       },
     })
   );

@@ -34,6 +34,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
       },
     })
   );
@@ -43,6 +46,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
       },
     })
   );
@@ -51,6 +57,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
         });
       },
     })

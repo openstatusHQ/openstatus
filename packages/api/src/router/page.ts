@@ -453,18 +453,17 @@ export const pageRouter = createTRPCRouter({
         eq(page.workspaceId, opts.ctx.workspace.id),
       ];
 
-      const query = opts.ctx.db
-        .select()
-        .from(page)
-        .where(and(...whereConditions));
-
-      if (opts.input?.order === "asc") {
-        query.orderBy(asc(page.createdAt));
-      } else {
-        query.orderBy(desc(page.createdAt));
-      }
-
-      const result = await query.all();
+      const result = await opts.ctx.db.query.page.findMany({
+        where: and(...whereConditions),
+        with: {
+          statusReports: true,
+        },
+        orderBy: (pages, { asc }) => [
+          opts.input?.order === "asc"
+            ? asc(pages.createdAt)
+            : desc(pages.createdAt),
+        ],
+      });
 
       return result;
     }),
