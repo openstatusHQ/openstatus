@@ -19,19 +19,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
-
-const chartData = Array.from({ length: 30 }, (_, i) => ({
-  timestamp: new Date(
-    new Date().setMinutes(new Date().getMinutes() - i)
-  ).toLocaleString("default", {
-    hour: "numeric",
-    minute: "numeric",
-  }),
-  dns: Math.floor(Math.random() * 100) * 8,
-  connect: Math.floor(Math.random() * 100) * 40,
-  ttfb: Math.floor(Math.random() * 100) * 80,
-  download: Math.floor(Math.random() * 100) * 50,
-})).reverse();
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { mapLatency } from "@/data/metrics.client";
 
 const chartConfig = {
   dns: {
@@ -50,18 +40,40 @@ const chartConfig = {
     label: "Download",
     color: "var(--chart-4)",
   },
+  latency: {
+    label: "Latency",
+    color: "var(--success)",
+  },
 } satisfies ChartConfig;
 
 // TODO: create new pipes for timing phase metrics
 
-export function ChartAreaLatency({}: {
+export function ChartAreaLatency({
+  monitorId,
+  degradedAfter,
+  period,
+  type,
+}: {
   monitorId: string;
+  degradedAfter: number | null;
   period: "1d" | "7d" | "14d";
   type: "http" | "tcp";
 }) {
+  const trpc = useTRPC();
+
+  const { data: latency } = useQuery(
+    trpc.tinybird.metricsLatency.queryOptions({
+      monitorId,
+      period,
+      type,
+    })
+  );
+
+  const refinedLatency = latency ? mapLatency(latency) : [];
+
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">
-      <AreaChart accessibilityLayer data={chartData}>
+      <AreaChart accessibilityLayer data={refinedLatency}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="timestamp"
@@ -85,7 +97,7 @@ export function ChartAreaLatency({}: {
             />
           }
         />
-        <Area
+        {/* <Area
           dataKey="dns"
           type="monotone"
           fill="var(--color-dns)"
@@ -116,14 +128,28 @@ export function ChartAreaLatency({}: {
           fillOpacity={0.4}
           stroke="var(--color-download)"
           stackId="a"
+        /> */}
+        <Area
+          dataKey="latency"
+          type="monotone"
+          fill="var(--color-latency)"
+          fillOpacity={0.4}
+          stroke="var(--color-latency)"
+          stackId="a"
         />
-        <ReferenceLine y={10_000} stroke="var(--warning)" strokeDasharray="3 3">
-          <Label
-            value="Degraded"
-            position="insideBottomRight"
-            fill="var(--warning)"
-          />
-        </ReferenceLine>
+        {degradedAfter ? (
+          <ReferenceLine
+            y={degradedAfter}
+            stroke="var(--warning)"
+            strokeDasharray="3 3"
+          >
+            <Label
+              value="Degraded"
+              position="insideBottomRight"
+              fill="var(--warning)"
+            />
+          </ReferenceLine>
+        ) : null}
         <YAxis
           domain={["dataMin", "dataMax"]}
           tickLine={false}

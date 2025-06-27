@@ -110,6 +110,7 @@ export function Client() {
         </SectionHeader>
         <ChartAreaLatency
           monitorId={id}
+          degradedAfter={monitor.degradedAfter}
           type={monitor.jobType as "http" | "tcp"}
           period={period}
         />

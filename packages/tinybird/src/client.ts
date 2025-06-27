@@ -864,4 +864,38 @@ export class OSTinybird {
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
+
+  public get httpMetricsLatency1d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_1d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get tcpMetricsLatency1d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_1d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
 }

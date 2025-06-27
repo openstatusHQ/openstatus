@@ -134,6 +134,11 @@ function getUptime30dProcedure(type: Type) {
   return type === "http" ? tb.httpUptime30d : tb.tcpUptime30d;
 }
 
+// TODO: missing pipes for other periods
+function getMetricsLatencyProcedure(period: Period, type: Type) {
+  return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+}
+
 export const tinybirdRouter = createTRPCRouter({
   // Legacy procedure for backward compatibility
   httpGetMonthly: protectedProcedure
@@ -446,6 +451,22 @@ export const tinybirdRouter = createTRPCRouter({
       }
 
       const procedure = getGlobalMetricsProcedure(opts.input.type);
+      return await procedure(opts.input);
+    }),
+
+  metricsLatency: protectedProcedure
+    .input(
+      z.object({
+        monitorId: z.string(),
+        period: z.enum(periods),
+        type: z.enum(types).default("http"),
+      })
+    )
+    .query(async (opts) => {
+      const procedure = getMetricsLatencyProcedure(
+        opts.input.period,
+        opts.input.type
+      );
       return await procedure(opts.input);
     }),
 });

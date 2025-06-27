@@ -5,7 +5,7 @@ import type { RegionMetric } from "./region-metrics";
 import { MetricCard } from "@/components/metric/metric-card";
 import { RouterOutputs } from "@openstatus/api";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { formatMilliseconds } from "@/lib/formatter";
+import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
@@ -81,12 +81,7 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
       return {
         ...status,
         ok: status.success,
-        interval: status.interval.toLocaleString("default", {
-          day: "numeric",
-          month: "short",
-          hour: "numeric",
-          minute: "numeric",
-        }),
+        interval: formatDateTime(status.interval),
         total: status.success + status.error + status.degraded,
       };
     })
@@ -273,4 +268,15 @@ export function getMonitorListMetrics(
       variant: variantMap[key],
     } as const;
   }) as readonly MonitorListMetric[];
+}
+
+export function mapLatency(
+  latency: RouterOutputs["tinybird"]["metricsLatency"]
+) {
+  return latency.data?.map((latency) => {
+    return {
+      timestamp: formatDateTime(new Date(latency.timestamp)),
+      latency: latency.p50Latency,
+    };
+  });
 }
