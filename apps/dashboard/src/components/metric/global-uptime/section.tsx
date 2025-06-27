@@ -13,7 +13,11 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
 import { mapMetrics, variants } from "@/data/metrics.client";
-import { formatMilliseconds, formatNumber } from "@/lib/formatter";
+import {
+  formatMilliseconds,
+  formatNumber,
+  formatPercentage,
+} from "@/lib/formatter";
 
 type Metric = {
   label: string;
@@ -23,6 +27,7 @@ type Metric = {
 };
 
 // TODO: move the fetch to the parent component
+// TODO: missing dynamic degraded
 
 export function GlobalUptimeSection({
   monitorId,
@@ -55,17 +60,22 @@ export function GlobalUptimeSection({
         Object.entries(metric).forEach(([key, value]) => {
           const k = key as keyof typeof acc;
           const isPercentage = k.startsWith("p");
-          const v = isPercentage
-            ? formatMilliseconds(value ?? 0)
-            : formatNumber(value ?? 0);
+          const isUptime = k === "uptime";
+          const v = isUptime
+            ? formatPercentage(value ?? 0)
+            : isPercentage
+              ? formatMilliseconds(value ?? 0)
+              : formatNumber(value ?? 0);
 
           if (k in acc) {
             const trend = acc[k]?.raw ? (value ?? 0) / acc[k]?.raw : 1;
+            const hasTrend =
+              !isNaN(trend) && trend !== Infinity && k !== "total";
             acc[k] = {
               label: k.toUpperCase(),
               variant: variants[k],
               value: v ?? "0",
-              trend: isNaN(trend) || trend === Infinity ? null : trend,
+              trend: hasTrend ? trend : null,
               raw: value ?? 0,
             } as (typeof acc)[typeof k & keyof typeof acc];
           } else {

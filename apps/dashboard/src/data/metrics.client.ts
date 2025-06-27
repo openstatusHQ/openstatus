@@ -232,7 +232,7 @@ export function getMonitorListMetrics(
       case "p95":
         const p95 = data.sort((a, b) => b.p95Latency - a.p95Latency)[0]
           ?.p95Latency;
-        value = p95 ? formatMilliseconds(p95) : undefined;
+        value = p95 ? formatMilliseconds(p95) : "N/A";
         break;
     }
 

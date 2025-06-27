@@ -5,6 +5,14 @@ export function formatMilliseconds(ms: number) {
   }).format(ms)}`;
 }
 
+export function formatPercentage(value: number) {
+  return `${Intl.NumberFormat("en-US", {
+    style: "percent",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)}`;
+}
+
 export function formatNumber(value: number) {
   return `${Intl.NumberFormat("en-US").format(value)}`;
 }

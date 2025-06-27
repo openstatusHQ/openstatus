@@ -45,6 +45,13 @@ export function Sidebar() {
               value: <span className="uppercase">{monitor.jobType}</span>,
             },
             {
+              label: "Regions",
+              value:
+                monitor.regions.length > 6
+                  ? `${monitor.regions.length} regions`
+                  : monitor.regions.join(", "),
+            },
+            {
               label: "Tags",
               value: (
                 <div className="group/badges -space-x-2 flex flex-wrap">

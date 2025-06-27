@@ -785,7 +785,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__audit_log__v1",
       parameters: z.object({
-        id: z.string(),
+        monitorId: z.string(),
       }),
       data: z.object({
         action: z.string(),
@@ -840,7 +840,7 @@ export class OSTinybird {
         p95Latency: z.number().int(),
         p99Latency: z.number().int(),
         count: z.number().int(),
-        monitorId: z.string(),
+        monitorId: z.coerce.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });

@@ -179,10 +179,10 @@ export function Client() {
                 : monitor.jobType === "http"
                   ? (globalHttpMetrics?.data?.find(
                       (m) => m.monitorId === monitor.id.toString()
-                    ) ?? [])
+                    ) ?? false)
                   : (globalTcpMetrics?.data?.find(
                       (m) => m.monitorId === monitor.id.toString()
-                    ) ?? []),
+                    ) ?? false),
           }))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={MonitorDataTableToolbar}

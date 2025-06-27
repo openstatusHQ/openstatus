@@ -214,7 +214,9 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
-      return await tb.getAuditLog({ id: `monitor:${opts.input.monitorId}` });
+      return await tb.getAuditLog({
+        monitorId: `monitor:${opts.input.monitorId}`,
+      });
     }),
 
   metrics: protectedProcedure

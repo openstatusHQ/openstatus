@@ -13,9 +13,13 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { TableCellNumber } from "../table-cell-number";
 import { TableCellDate } from "../table-cell-date";
 import { TableCellSkeleton } from "../dable-cell-skeleton";
+import { TableCellUnavailable } from "../table-cell-unavailable";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
-  globalMetrics?: RouterOutputs["tinybird"]["globalMetrics"]["data"][number];
+  globalMetrics?:
+    | RouterOutputs["tinybird"]["globalMetrics"]["data"][number]
+    // NOTE: after loading the data, if the monitor has no metrics, the value will be `false`
+    | false;
 };
 
 export const columns: ColumnDef<Monitor>[] = [
@@ -129,64 +133,55 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "p50",
-    accessorFn: (row) => row.globalMetrics?.p50Latency,
+    accessorFn: (row) =>
+      typeof row.globalMetrics === "object"
+        ? row.globalMetrics.p50Latency
+        : row.globalMetrics,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="P50" />
     ),
     cell: ({ row }) => {
       const value = row.getValue("p50");
-      if (!value) {
-        return <TableCellSkeleton />;
-      }
+      if (value === undefined) return <TableCellSkeleton />;
+      if (!value) return <TableCellUnavailable />;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
   },
   {
     id: "p90",
-    accessorFn: (row) => row.globalMetrics?.p90Latency,
+    accessorFn: (row) =>
+      typeof row.globalMetrics === "object"
+        ? row.globalMetrics.p90Latency
+        : row.globalMetrics,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="P90" />
     ),
     cell: ({ row }) => {
       const value = row.getValue("p90");
-      if (!value) {
-        return <TableCellSkeleton />;
-      }
+      if (value === undefined) return <TableCellSkeleton />;
+      if (!value) return <TableCellUnavailable />;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
   },
   {
     id: "p95",
-    accessorFn: (row) => row.globalMetrics?.p95Latency,
+    accessorFn: (row) =>
+      typeof row.globalMetrics === "object"
+        ? row.globalMetrics.p95Latency
+        : row.globalMetrics,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="P95" />
     ),
     cell: ({ row }) => {
       const value = row.getValue("p95");
-      if (!value) {
-        return <TableCellSkeleton />;
-      }
+      if (value === undefined) return <TableCellSkeleton />;
+      if (!value) return <TableCellUnavailable />;
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
   },
-  // {
-  //   id: "p99",
-  //   accessorFn: (row) => row.globalMetrics?.p99Latency,
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="P99" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const value = row.getValue("p99");
-  //     if (!value) {
-  //       return <TableCellSkeleton />;
-  //     }
-  //     return <TableCellNumber value={value} unit="ms" />;
-  //   },
-  //   enableHiding: false,
-  // },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
