@@ -25,11 +25,12 @@ import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
 import { CommandRegion } from "@/components/controls-search/command-region";
 import { ButtonReset } from "@/components/controls-search/button-reset";
 import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
+import { DropdownPercentile } from "@/components/controls-search/dropdown-percentile";
 
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
-  const [{ period, regions: selectedRegions }] =
+  const [{ period, regions: selectedRegions, percentile }] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
@@ -108,8 +109,12 @@ export function Client() {
             Average latency accross all the regions
           </SectionDescription>
         </SectionHeader>
+        <div className="flex flex-wrap gap-2">
+          <DropdownPercentile />
+        </div>
         <ChartAreaLatency
           monitorId={id}
+          percentile={percentile}
           degradedAfter={monitor.degradedAfter}
           type={monitor.jobType as "http" | "tcp"}
           period={period}

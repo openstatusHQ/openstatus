@@ -21,7 +21,7 @@ import {
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { mapLatency } from "@/data/metrics.client";
+import { mapLatency, PERCENTILES } from "@/data/metrics.client";
 
 const chartConfig = {
   dns: {
@@ -53,9 +53,11 @@ export function ChartAreaLatency({
   degradedAfter,
   period,
   type,
+  percentile,
 }: {
   monitorId: string;
   degradedAfter: number | null;
+  percentile: (typeof PERCENTILES)[number];
   period: "1d" | "7d" | "14d";
   type: "http" | "tcp";
 }) {
@@ -69,7 +71,7 @@ export function ChartAreaLatency({
     })
   );
 
-  const refinedLatency = latency ? mapLatency(latency) : [];
+  const refinedLatency = latency ? mapLatency(latency, percentile) : [];
 
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">

@@ -10,6 +10,15 @@ import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
 export const REGIONS = flyRegions as unknown as (typeof flyRegions)[number][];
+export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
+
+const PERCENTILE_MAP = {
+  p50: "p50Latency",
+  p75: "p75Latency",
+  p90: "p90Latency",
+  p95: "p95Latency",
+  p99: "p99Latency",
+} as const;
 
 // FIXME: rename pipe return values
 
@@ -271,12 +280,13 @@ export function getMonitorListMetrics(
 }
 
 export function mapLatency(
-  latency: RouterOutputs["tinybird"]["metricsLatency"]
+  latency: RouterOutputs["tinybird"]["metricsLatency"],
+  percentile: (typeof PERCENTILES)[number]
 ) {
-  return latency.data?.map((latency) => {
+  return latency.data?.map((metric) => {
     return {
-      timestamp: formatDateTime(new Date(latency.timestamp)),
-      latency: latency.p50Latency,
+      timestamp: formatDateTime(new Date(metric.timestamp)),
+      latency: metric[PERCENTILE_MAP[percentile]],
     };
   });
 }
