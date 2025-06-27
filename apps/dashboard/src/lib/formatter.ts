@@ -1,4 +1,12 @@
 export function formatMilliseconds(ms: number) {
+  if (ms > 1000) {
+    return `${Intl.NumberFormat("en-US", {
+      style: "unit",
+      unit: "second",
+      maximumFractionDigits: 2,
+    }).format(ms / 1000)}`;
+  }
+
   return `${Intl.NumberFormat("en-US", {
     style: "unit",
     unit: "millisecond",

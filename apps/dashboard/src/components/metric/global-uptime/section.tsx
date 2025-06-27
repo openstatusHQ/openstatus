@@ -12,7 +12,7 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
-import { mapMetrics, variants } from "@/data/metrics.client";
+import { mapMetrics, metricsCards } from "@/data/metrics.client";
 import {
   formatMilliseconds,
   formatNumber,
@@ -72,16 +72,16 @@ export function GlobalUptimeSection({
             const hasTrend =
               !isNaN(trend) && trend !== Infinity && k !== "total";
             acc[k] = {
-              label: k.toUpperCase(),
-              variant: variants[k],
+              label: metricsCards[k].label,
+              variant: metricsCards[k].variant,
               value: v ?? "0",
               trend: hasTrend ? trend : null,
               raw: value ?? 0,
             } as (typeof acc)[typeof k & keyof typeof acc];
           } else {
             acc[k] = {
-              label: k.toUpperCase(),
-              variant: variants[k],
+              label: metricsCards[k].label,
+              variant: metricsCards[k].variant,
               value: v ?? "0",
               trend: 1,
               raw: value ?? 0,
@@ -115,10 +115,10 @@ export function GlobalUptimeSection({
     const metric =
       defineMetrics()?.[key as keyof ReturnType<typeof mapMetrics>[number]];
     return {
-      label: key.toUpperCase(),
+      label: metricsCards[key].label,
       value: metric?.value ?? "0",
       trend: metric?.trend ?? null,
-      variant: variants[key] ?? ("default" as const),
+      variant: metricsCards[key].variant,
     } as Metric;
   });
 

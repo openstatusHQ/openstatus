@@ -30,19 +30,49 @@ export function mapMetrics(metrics: RouterOutputs["tinybird"]["metrics"]) {
   });
 }
 
-export const variants = {
-  uptime: "success",
-  degraded: "warning",
-  error: "destructive",
-  total: "default",
-  p50: "default",
-  p75: "default",
-  p90: "default",
-  p95: "default",
-  p99: "default",
+export const metricsCards = {
+  uptime: {
+    label: "UPTIME",
+    variant: "success",
+  },
+  degraded: {
+    label: "DEGRADED",
+    variant: "warning",
+  },
+  error: {
+    label: "FAILING",
+    variant: "destructive",
+  },
+  total: {
+    label: "REQUESTS",
+    variant: "default",
+  },
+  p50: {
+    label: "P50",
+    variant: "default",
+  },
+  p75: {
+    label: "P75",
+    variant: "default",
+  },
+  p90: {
+    label: "P90",
+    variant: "default",
+  },
+  p95: {
+    label: "P95",
+    variant: "default",
+  },
+  p99: {
+    label: "P99",
+    variant: "default",
+  },
 } as const satisfies Record<
   keyof ReturnType<typeof mapMetrics>[number],
-  React.ComponentProps<typeof MetricCard>["variant"]
+  {
+    label: string;
+    variant: React.ComponentProps<typeof MetricCard>["variant"];
+  }
 >;
 
 export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
