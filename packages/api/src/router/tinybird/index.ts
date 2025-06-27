@@ -130,6 +130,10 @@ function getGlobalMetricsProcedure(type: Type) {
   return type === "http" ? tb.httpGlobalMetricsDaily : tb.tcpGlobalMetricsDaily;
 }
 
+function getUptime30dProcedure(type: Type) {
+  return type === "http" ? tb.httpUptime30d : tb.tcpUptime30d;
+}
+
 export const tinybirdRouter = createTRPCRouter({
   // Legacy procedure for backward compatibility
   httpGetMonthly: protectedProcedure
@@ -204,7 +208,8 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      return await tb.httpUptime30d(opts.input);
+      const procedure = getUptime30dProcedure(opts.input.type);
+      return await procedure(opts.input);
     }),
 
   auditLog: protectedProcedure
