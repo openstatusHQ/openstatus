@@ -4,16 +4,19 @@ import { flyRegions } from "../../db/src/schema/constants";
 import { headersSchema, timingSchema, triggers } from "./schema";
 
 const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
+const DEV_CACHE = 10 * 60; // 10m
+const REVALIDATE = process.env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
 export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
+    // this.tb = new Client({ token });
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
-      this.tb = new Client({ token });
     }
+    this.tb = new Client({ token });
   }
 
   public get homeStats() {
@@ -49,7 +52,7 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.string(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -71,7 +74,7 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.string(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -93,7 +96,7 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.string(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -114,7 +117,7 @@ export class OSTinybird {
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -135,7 +138,7 @@ export class OSTinybird {
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -156,7 +159,7 @@ export class OSTinybird {
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -176,7 +179,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -196,7 +199,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -216,7 +219,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -236,7 +239,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -256,7 +259,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -276,7 +279,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -294,7 +297,7 @@ export class OSTinybird {
         count: z.number().default(0),
         ok: z.number().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -397,7 +400,7 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.coerce.string(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -418,7 +421,7 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.coerce.string(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -439,7 +442,7 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.coerce.string(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -460,7 +463,7 @@ export class OSTinybird {
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -481,7 +484,7 @@ export class OSTinybird {
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -502,7 +505,7 @@ export class OSTinybird {
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -522,7 +525,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -542,7 +545,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -562,7 +565,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -582,7 +585,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -602,7 +605,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -622,7 +625,7 @@ export class OSTinybird {
         p95Latency: z.number().nullable().default(0),
         p99Latency: z.number().nullable().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -640,7 +643,7 @@ export class OSTinybird {
         count: z.number().default(0),
         ok: z.number().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -687,7 +690,159 @@ export class OSTinybird {
         workspaceId: z.string(),
       }),
       // REMINDER: cache the result for accessing the data for a check as it won't change
-      opts: { cache: "force-cache" },
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  /**
+   * Region + timestamp metrics (quantiles) – aggregated by interval.
+   * NOTE: The Tinybird pipe returns one row per region & interval with latency quantiles.
+   */
+  public get httpMetricsRegionsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_regions_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.number().int().optional(),
+        // Comma-separated list of regions, e.g. "ams,fra". Keeping string to pass directly.
+        regions: z.string().array().optional(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpMetricsRegionsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_regions_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.number().int().optional(),
+        regions: z.string().array().optional(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpMetricsRegionsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_regions_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.number().int().optional(),
+        regions: z.string().array().optional(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpUptime30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_uptime_30d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(flyRegions).array().optional(),
+        interval: z.number().int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.number().int(),
+        degraded: z.number().int(),
+        error: z.number().int(),
+      }),
+    });
+  }
+
+  public get getAuditLog() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__audit_log__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        action: z.string(),
+        id: z.string(),
+        metadata: z.string().transform((str) => {
+          try {
+            return JSON.parse(str) as Record<string, unknown>;
+          } catch (error) {
+            console.error(error);
+            return {};
+          }
+        }),
+        timestamp: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.number().int(),
+        maxLatency: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+        count: z.number().int(),
+        monitorId: z.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.number().int(),
+        maxLatency: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+        count: z.number().int(),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 }

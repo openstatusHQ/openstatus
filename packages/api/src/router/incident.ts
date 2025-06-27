@@ -1,7 +1,16 @@
 import { z } from "zod";
 
-import { and, eq, isNull, schema } from "@openstatus/db";
-import { selectIncidentSchema } from "@openstatus/db/src/schema";
+import {
+  and,
+  desc,
+  asc,
+  eq,
+  gte,
+  isNull,
+  schema,
+  type SQL,
+} from "@openstatus/db";
+import { incidentTable, selectIncidentSchema } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -17,13 +26,13 @@ export const incidentRouter = createTRPCRouter({
         .where(eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id))
         .leftJoin(
           schema.monitor,
-          eq(schema.incidentTable.monitorId, schema.monitor.id),
+          eq(schema.incidentTable.monitorId, schema.monitor.id)
         )
         .all();
       return z
         .array(selectIncidentSchema)
         .parse(
-          result.map((r) => ({ ...r.incident, monitorName: r.monitor?.name })),
+          result.map((r) => ({ ...r.incident, monitorName: r.monitor?.name }))
         );
     }),
 
@@ -37,12 +46,12 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .leftJoin(
           schema.monitor,
-          eq(schema.incidentTable.monitorId, schema.monitor.id),
+          eq(schema.incidentTable.monitorId, schema.monitor.id)
         )
         .get();
 
@@ -59,8 +68,8 @@ export const incidentRouter = createTRPCRouter({
       .where(
         and(
           eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          isNull(schema.incidentTable.resolvedAt),
-        ),
+          isNull(schema.incidentTable.resolvedAt)
+        )
       )
       .all();
   }),
@@ -75,8 +84,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .get();
       if (!currentIncident) {
@@ -90,12 +99,13 @@ export const incidentRouter = createTRPCRouter({
         .set({
           acknowledgedAt: new Date(),
           acknowledgedBy: opts.ctx.user.id,
+          updatedAt: new Date(),
         })
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
         );
       return true;
     }),
@@ -109,8 +119,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .get();
       if (!currentIncident) {
@@ -127,12 +137,13 @@ export const incidentRouter = createTRPCRouter({
         .set({
           resolvedAt: new Date(),
           resolvedBy: opts.ctx.user.id,
+          updatedAt: new Date(),
         })
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
         );
       return true;
     }),
@@ -147,8 +158,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .get();
       if (!incidentToDelete) return;
@@ -157,5 +168,52 @@ export const incidentRouter = createTRPCRouter({
         .delete(schema.incidentTable)
         .where(eq(schema.incidentTable.id, incidentToDelete.id))
         .run();
+    }),
+
+  // DASHBOARD
+
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          startedAt: z
+            .object({
+              gte: z.date().optional(),
+            })
+            .optional(),
+          monitorId: z.number().optional(),
+          order: z.enum(["asc", "desc"]).optional(),
+        })
+        .optional()
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(incidentTable.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      if (opts.input?.startedAt?.gte) {
+        whereConditions.push(
+          gte(incidentTable.startedAt, opts.input.startedAt.gte)
+        );
+      }
+
+      if (opts.input?.monitorId) {
+        whereConditions.push(eq(incidentTable.monitorId, opts.input.monitorId));
+      }
+
+      const query = opts.ctx.db
+        .select()
+        .from(incidentTable)
+        .where(and(...whereConditions));
+
+      if (opts.input?.order === "asc") {
+        query.orderBy(asc(incidentTable.startedAt));
+      } else {
+        query.orderBy(desc(incidentTable.startedAt));
+      }
+
+      const result = await query.all();
+
+      return result;
     }),
 });

@@ -13,7 +13,7 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 
-import { Alert, AlertDescription, AlertTitle, Badge } from "@openstatus/ui";
+import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 import { SectionHeader } from "../shared/section-header";
 import { SectionRequestHTTP } from "./section-request-http";
 import { SectionRequestTCP } from "./section-request-tcp";
