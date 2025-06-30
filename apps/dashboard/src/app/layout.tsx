@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
+import { DevelopmentIndicator } from "@/components/development-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ogMetadata, twitterMetadata } from "./metadata";
@@ -48,6 +49,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <DevelopmentIndicator />
             <TailwindIndicator />
             <Toaster expand />
           </ThemeProvider>
