@@ -21,9 +21,12 @@
     "turbo": "2.3.2",
     "typescript": "5.7.2"
   },
-  "packageManager": "pnpm@10.11.0",
+  "packageManager": "pnpm@10.12.4",
   "pnpm": {
-    "onlyBuiltDependencies": ["@swc/core", "sharp"]
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "sharp"
+    ]
   },
   "name": "openstatus",
   "workspaces": [
