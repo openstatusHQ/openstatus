@@ -117,6 +117,7 @@ export function Client() {
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http"}
             period={period}
+            percentile={percentile}
           />
         ) : (
           <ChartAreaLatency

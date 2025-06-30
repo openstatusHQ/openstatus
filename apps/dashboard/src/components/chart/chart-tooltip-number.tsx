@@ -1,4 +1,5 @@
 import type { ChartConfig } from "@/components/ui/chart";
+import { cn } from "@/lib/utils";
 import type {
   NameType,
   ValueType,
@@ -16,18 +17,39 @@ export function ChartTooltipNumber({
   chartConfig,
 }: ChartTooltipNumberProps) {
   return (
+    <ChartTooltipNumberRaw
+      value={value}
+      label={chartConfig[name as keyof typeof chartConfig]?.label || name}
+      style={
+        {
+          "--color-bg": `var(--color-${name})`,
+        } as React.CSSProperties
+      }
+    />
+  );
+}
+
+export function ChartTooltipNumberRaw({
+  value,
+  label,
+  style,
+  className,
+}: {
+  value: ValueType;
+  label: React.ReactNode;
+  style?: React.CSSProperties;
+  className?: string;
+}) {
+  return (
     <>
       <div
-        className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-(--color-bg)"
-        style={
-          {
-            "--color-bg": `var(--color-${name})`,
-          } as React.CSSProperties
-        }
+        className={cn(
+          "h-2.5 w-2.5 shrink-0 rounded-[2px] bg-(--color-bg)",
+          className
+        )}
+        style={style}
       />
-      <span>
-        {chartConfig[name as keyof typeof chartConfig]?.label || name}
-      </span>
+      <span>{label}</span>
       <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
         {value}
         <span className="font-normal text-muted-foreground">ms</span>

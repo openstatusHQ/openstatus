@@ -18,10 +18,13 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartTooltipNumber } from "./chart-tooltip-number";
+import {
+  ChartTooltipNumber,
+  ChartTooltipNumberRaw,
+} from "./chart-tooltip-number";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { mapTimingPhases } from "@/data/metrics.client";
+import { mapTimingPhases, PERCENTILES } from "@/data/metrics.client";
 
 const chartConfig = {
   dns: {
@@ -52,11 +55,13 @@ export function ChartAreaTimingPhases({
   monitorId,
   degradedAfter,
   period,
+  percentile,
   type,
 }: {
   monitorId: string;
   degradedAfter: number | null;
   period: "1d" | "7d" | "14d";
+  percentile: (typeof PERCENTILES)[number];
   type: "http";
 }) {
   const trpc = useTRPC();
@@ -70,7 +75,9 @@ export function ChartAreaTimingPhases({
     })
   );
 
-  const refinedTimingPhases = timingPhases ? mapTimingPhases(timingPhases) : [];
+  const refinedTimingPhases = timingPhases
+    ? mapTimingPhases(timingPhases, percentile)
+    : [];
 
   console.log(refinedTimingPhases);
   return (
@@ -86,16 +93,43 @@ export function ChartAreaTimingPhases({
         />
         <ChartTooltip
           cursor={false}
+          defaultIndex={10}
           content={
             <ChartTooltipContent
               indicator="dot"
-              formatter={(value, name) => (
-                <ChartTooltipNumber
-                  chartConfig={chartConfig}
-                  value={value}
-                  name={name}
-                />
-              )}
+              formatter={(value, name, item, index) => {
+                if (index !== 4) {
+                  return (
+                    <ChartTooltipNumber
+                      chartConfig={chartConfig}
+                      value={value}
+                      name={name}
+                    />
+                  );
+                }
+
+                const total =
+                  item.payload?.dns +
+                  item.payload?.connect +
+                  item.payload?.tls +
+                  item.payload?.ttfb +
+                  item.payload?.transfer;
+
+                return (
+                  <>
+                    <ChartTooltipNumber
+                      chartConfig={chartConfig}
+                      value={value}
+                      name={name}
+                    />
+                    <ChartTooltipNumberRaw
+                      value={total}
+                      label="Total"
+                      className="text-foreground flex basis-full items-center border-t text-xs h-0 font-medium"
+                    />
+                  </>
+                );
+              }}
             />
           }
         />

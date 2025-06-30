@@ -292,12 +292,17 @@ export function mapLatency(
 }
 
 export function mapTimingPhases(
-  timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"]
+  timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"],
+  percentile: (typeof PERCENTILES)[number]
 ) {
   return timingPhases.data?.map((metric) => {
     return {
-      ...metric,
       timestamp: formatDateTime(new Date(metric.timestamp)),
+      dns: metric[`${percentile}Dns`],
+      ttfb: metric[`${percentile}Ttfb`],
+      transfer: metric[`${percentile}Transfer`],
+      connect: metric[`${percentile}Connect`],
+      tls: metric[`${percentile}Tls`],
     };
   });
 }
