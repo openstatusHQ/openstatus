@@ -23,7 +23,7 @@ export default async function Page(props: {
           Get started now. No credit card required.
         </p>
       </div>
-      <div className="grid gap-3">
+      <div className="grid gap-3 p-4">
         {process.env.NODE_ENV === "development" ? (
           <div className="grid gap-3">
             <MagicLinkForm />
