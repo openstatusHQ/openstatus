@@ -4,7 +4,7 @@ description: Learn how to monitor your MCP server with openstatus.
 sidebar:
   label: Monitor your MCP Server
 ---
-In this guide, we will show you how to monitor your MCP server using OpenStatus. We will use the Hugging Face MCP server for this article, but you can apply the same principles to any MCP server. You can find the code for this guide on [GitHub](https://github.com/openstatusHQ/template/tree/a69eac06e9d3d8579768dad803304e456f56ec33/mcp-server).
+In this guide, we will show you how to monitor your remote MCP server using OpenStatus. We will use the Hugging Face MCP server for this article, but you can apply the same principles to any MCP server. You can find the code for this guide on [GitHub](https://github.com/openstatusHQ/template/tree/a69eac06e9d3d8579768dad803304e456f56ec33/mcp-server).
 
 **Prerequisites**
 
@@ -31,11 +31,13 @@ The official [MCP documentation](https://modelcontextprotocol.io/docs/concepts/a
 
 ## Create Your OpenStatus Monitor
 
-Monitoring an MCP server with OpenStatus is straightforward. OpenStatus allows you to monitor your MCP server by sending a ping request to your MCP server's endpoint.
+ OpenStatus allows you to monitor your MCP server by sending a ping request to your MCP server's endpoint on a regular basis from multiple locations around the world. Making it easy to monitor your remote MCP server's health and performance.
 
 ### YAML Configuration
 
-The OpenStatus CLI enables you to create a monitor defined in a YAML configuration file.
+The [OpenStatus CLI](/cli/getting-started/) allows you to create monitor defined in a YAML configuration file. This is perfect solution if want to manage your monitors via GitOps.
+
+Here's an example of a monitor configuration for Hugging Face MCP server:
 
 ```YAML
 # yaml-language-server: $schema=https://www.openstatus.dev/schema.json
