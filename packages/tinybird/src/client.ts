@@ -865,6 +865,24 @@ export class OSTinybird {
     });
   }
 
+  public get httpTimingPhases14d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_timing_phases_14d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.number().int().optional(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        dns: z.number().int(),
+        ttfb: z.number().int(),
+        transfer: z.number().int(),
+        connect: z.number().int(),
+        tls: z.number().int(),
+      }),
+    });
+  }
+
   public get httpMetricsLatency1d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_latency_1d__v1",

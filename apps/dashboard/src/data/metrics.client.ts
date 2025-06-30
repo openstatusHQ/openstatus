@@ -290,3 +290,14 @@ export function mapLatency(
     };
   });
 }
+
+export function mapTimingPhases(
+  timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"]
+) {
+  return timingPhases.data?.map((metric) => {
+    return {
+      ...metric,
+      timestamp: formatDateTime(new Date(metric.timestamp)),
+    };
+  });
+}

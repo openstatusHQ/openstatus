@@ -1,9 +1,5 @@
 # Data Source created from Pipe 'aggregate__http_timing_phases_14d__v1'
 
-VERSION 1
-
-TAGS "http"
-
 SCHEMA >
     `time` DateTime,
     `latency` Int64,
@@ -13,16 +9,11 @@ SCHEMA >
     `monitorId` String,
     `workspaceId` String,
     `requestStatus` Nullable(String),
-    `dnsStart` Nullable(Int64),
-    `dnsDone` Nullable(Int64),
-    `connectStart` Nullable(Int64),
-    `connectDone` Nullable(Int64),
-    `tlsHandshakeStart` Nullable(Int64),
-    `tlsHandshakeDone` Nullable(Int64),
-    `firstByteStart` Nullable(Int64),
-    `firstByteDone` Nullable(Int64),
-    `transferStart` Nullable(Int64),
-    `transferDone` Nullable(Int64)
+    `dns` Nullable(Int64),
+    `connect` Nullable(Int64),
+    `tls` Nullable(Int64),
+    `firstByte` Nullable(Int64),
+    `transfer` Nullable(Int64)
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

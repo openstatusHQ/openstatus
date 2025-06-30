@@ -139,6 +139,10 @@ function getMetricsLatencyProcedure(period: Period, type: Type) {
   return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
 }
 
+function getTimingPhasesProcedure(type: Type) {
+  return type === "http" ? tb.httpTimingPhases14d : null;
+}
+
 export const tinybirdRouter = createTRPCRouter({
   // Legacy procedure for backward compatibility
   httpGetMonthly: protectedProcedure
@@ -467,6 +471,28 @@ export const tinybirdRouter = createTRPCRouter({
         opts.input.period,
         opts.input.type
       );
+      return await procedure(opts.input);
+    }),
+
+  metricsTimingPhases: protectedProcedure
+    .input(
+      z.object({
+        monitorId: z.string(),
+        period: z.enum(periods),
+        interval: z.number().int().optional(),
+        type: z.literal("http"),
+      })
+    )
+    .query(async (opts) => {
+      const procedure = getTimingPhasesProcedure(opts.input.type);
+
+      if (!procedure) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Timing phases not supported for this type",
+        });
+      }
+
       return await procedure(opts.input);
     }),
 });

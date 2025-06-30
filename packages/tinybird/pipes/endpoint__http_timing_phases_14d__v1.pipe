@@ -1,0 +1,18 @@
+NODE endpoint__http_timing_phases_14d__v1_0
+SQL >
+
+    %
+    SELECT
+        toStartOfInterval(time, INTERVAL {{ Int64(interval, 30) }} MINUTE) as h,
+        toUnixTimestamp64Milli(toDateTime64(h, 3)) as timestamp,
+        round(quantile(0.5)(dns)) as dns,
+        round(quantile(0.5)(firstByte)) as ttfb,
+        round(quantile(0.5)(transfer)) as transfer,
+        round(quantile(0.5)(connect)) as connect,
+        round(quantile(0.5)(tls)) as tls
+    FROM mv__http_timing_phases_14d__v1
+    WHERE monitorId = {{ String(monitorId, '141', required=True) }}
+    GROUP BY h
+    ORDER BY h ASC
+
+

@@ -26,6 +26,7 @@ import { CommandRegion } from "@/components/controls-search/command-region";
 import { ButtonReset } from "@/components/controls-search/button-reset";
 import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
 import { DropdownPercentile } from "@/components/controls-search/dropdown-percentile";
+import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 
 export function Client() {
   const trpc = useTRPC();
@@ -53,8 +54,6 @@ export function Client() {
   const regionMetrics: RegionMetric[] = React.useMemo(() => {
     return mapRegionMetrics(regionTimeline, monitor?.regions ?? []);
   }, [regionTimeline, monitor]);
-
-  console.log(regionMetrics, regionTimeline, monitor?.regions);
 
   if (!monitor) return null;
 
@@ -112,13 +111,22 @@ export function Client() {
         <div className="flex flex-wrap gap-2">
           <DropdownPercentile />
         </div>
-        <ChartAreaLatency
-          monitorId={id}
-          percentile={percentile}
-          degradedAfter={monitor.degradedAfter}
-          type={monitor.jobType as "http" | "tcp"}
-          period={period}
-        />
+        {monitor.jobType === "http" ? (
+          <ChartAreaTimingPhases
+            monitorId={id}
+            degradedAfter={monitor.degradedAfter}
+            type={monitor.jobType as "http"}
+            period={period}
+          />
+        ) : (
+          <ChartAreaLatency
+            monitorId={id}
+            percentile={percentile}
+            degradedAfter={monitor.degradedAfter}
+            type={monitor.jobType as "http" | "tcp"}
+            period={period}
+          />
+        )}
       </Section>
       <Section>
         <SectionHeader>

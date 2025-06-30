@@ -21,45 +21,61 @@ import {
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { mapLatency, PERCENTILES } from "@/data/metrics.client";
+import { mapTimingPhases } from "@/data/metrics.client";
 
 const chartConfig = {
-  latency: {
-    label: "Latency",
-    color: "var(--success)",
+  dns: {
+    label: "DNS",
+    color: "var(--chart-1)",
+  },
+  connect: {
+    label: "Connect",
+    color: "var(--chart-2)",
+  },
+  tls: {
+    label: "TLS",
+    color: "var(--chart-3)",
+  },
+  ttfb: {
+    label: "TTFB",
+    color: "var(--chart-4)",
+  },
+  transfer: {
+    label: "Transfer",
+    color: "var(--chart-5)",
   },
 } satisfies ChartConfig;
 
 // TODO: create new pipes for timing phase metrics
 
-export function ChartAreaLatency({
+export function ChartAreaTimingPhases({
   monitorId,
   degradedAfter,
   period,
   type,
-  percentile,
 }: {
   monitorId: string;
   degradedAfter: number | null;
-  percentile: (typeof PERCENTILES)[number];
   period: "1d" | "7d" | "14d";
-  type: "http" | "tcp";
+  type: "http";
 }) {
   const trpc = useTRPC();
 
-  const { data: latency } = useQuery(
-    trpc.tinybird.metricsLatency.queryOptions({
+  const { data: timingPhases } = useQuery(
+    trpc.tinybird.metricsTimingPhases.queryOptions({
       monitorId,
       period,
       type,
+      interval: 120,
     })
   );
 
-  const refinedLatency = latency ? mapLatency(latency, percentile) : [];
+  const refinedTimingPhases = timingPhases ? mapTimingPhases(timingPhases) : [];
 
+  console.log(refinedTimingPhases);
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">
-      <AreaChart accessibilityLayer data={refinedLatency}>
+      <AreaChart accessibilityLayer data={refinedTimingPhases}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="timestamp"
@@ -84,11 +100,43 @@ export function ChartAreaLatency({
           }
         />
         <Area
-          dataKey="latency"
+          dataKey="dns"
           type="monotone"
-          fill="var(--color-latency)"
+          fill="var(--color-dns)"
           fillOpacity={0.4}
-          stroke="var(--color-latency)"
+          stroke="var(--color-dns)"
+          stackId="a"
+        />
+        <Area
+          dataKey="connect"
+          type="monotone"
+          fill="var(--color-connect)"
+          fillOpacity={0.4}
+          stroke="var(--color-connect)"
+          stackId="a"
+        />
+        <Area
+          dataKey="tls"
+          type="monotone"
+          fill="var(--color-tls)"
+          fillOpacity={0.4}
+          stroke="var(--color-tls)"
+          stackId="a"
+        />
+        <Area
+          dataKey="ttfb"
+          type="monotone"
+          fill="var(--color-ttfb)"
+          fillOpacity={0.4}
+          stroke="var(--color-ttfb)"
+          stackId="a"
+        />
+        <Area
+          dataKey="transfer"
+          type="monotone"
+          fill="var(--color-transfer)"
+          fillOpacity={0.4}
+          stroke="var(--color-transfer)"
           stackId="a"
         />
         {degradedAfter ? (

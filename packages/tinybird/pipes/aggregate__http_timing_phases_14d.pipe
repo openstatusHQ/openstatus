@@ -1,7 +1,3 @@
-VERSION 1
-
-TAGS "http"
-
 NODE aggregate
 SQL >
 
@@ -15,17 +11,21 @@ SQL >
         workspaceId,
         requestStatus,
 
-        -- Parse each timing subfield from JSON string (nullable)
-        JSONExtractInt(timing, 'dnsStart') AS dnsStart,
-        JSONExtractInt(timing, 'dnsDone') AS dnsDone,
-        JSONExtractInt(timing, 'connectStart') AS connectStart,
-        JSONExtractInt(timing, 'connectDone') AS connectDone,
-        JSONExtractInt(timing, 'tlsHandshakeStart') AS tlsHandshakeStart,
-        JSONExtractInt(timing, 'tlsHandshakeDone') AS tlsHandshakeDone,
-        JSONExtractInt(timing, 'firstByteStart') AS firstByteStart,
-        JSONExtractInt(timing, 'firstByteDone') AS firstByteDone,
-        JSONExtractInt(timing, 'transferStart') AS transferStart,
-        JSONExtractInt(timing, 'transferDone') AS transferDone
+        -- Compute actual durations from timing phases
+        if(isNull(JSONExtractInt(timing, 'dnsStart')) OR isNull(JSONExtractInt(timing, 'dnsDone')), NULL,
+           JSONExtractInt(timing, 'dnsDone') - JSONExtractInt(timing, 'dnsStart')) AS dns,
+
+        if(isNull(JSONExtractInt(timing, 'connectStart')) OR isNull(JSONExtractInt(timing, 'connectDone')), NULL,
+           JSONExtractInt(timing, 'connectDone') - JSONExtractInt(timing, 'connectStart')) AS connect,
+
+        if(isNull(JSONExtractInt(timing, 'tlsHandshakeStart')) OR isNull(JSONExtractInt(timing, 'tlsHandshakeDone')), NULL,
+           JSONExtractInt(timing, 'tlsHandshakeDone') - JSONExtractInt(timing, 'tlsHandshakeStart')) AS tls,
+
+        if(isNull(JSONExtractInt(timing, 'firstByteStart')) OR isNull(JSONExtractInt(timing, 'firstByteDone')), NULL,
+           JSONExtractInt(timing, 'firstByteDone') - JSONExtractInt(timing, 'firstByteStart')) AS firstByte,
+
+        if(isNull(JSONExtractInt(timing, 'transferStart')) OR isNull(JSONExtractInt(timing, 'transferDone')), NULL,
+           JSONExtractInt(timing, 'transferDone') - JSONExtractInt(timing, 'transferStart')) AS transfer
 
     FROM ping_response__v8
 
