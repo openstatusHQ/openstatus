@@ -12,8 +12,8 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
-    "@types/react": "19.1.0",
-    "@types/react-dom": "19.1.1",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.6",
     "typescript": "5.7.2"
   }
 }
