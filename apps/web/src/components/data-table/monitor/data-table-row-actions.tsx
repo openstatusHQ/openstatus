@@ -31,7 +31,7 @@ import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
-import type { TCPResponse } from "@/app/api/checker/test/tcp/schema";
+import type { TCPResponseTest } from "@/app/api/checker/test/tcp/schema";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 interface DataTableRowActionsProps<TData> {
@@ -79,13 +79,14 @@ export function DataTableRowActions<TData>({
         });
         const data = (await res.json()) as
           | RegionChecker
-          | z.infer<typeof TCPResponse>;
+          | z.infer<typeof TCPResponseTest>;
 
         // FIXME: assertions
+        // it's getting 😭
         const success =
-          data.type === "http"
+          data.state === 'success' && data.type === "http"
             ? data.status >= 200 && data.status < 300
-            : !data.error;
+            : data.state === 'success' && data.type === "tcp" && !data.error;
 
         if (success) {
           toastAction("test-success");

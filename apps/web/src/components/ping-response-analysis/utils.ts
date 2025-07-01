@@ -125,7 +125,7 @@ const errorRequest = z.object({
 export const regionCheckerSchema = checkerSchema
   .extend({
     region: monitorFlyRegionSchema,
-    state: z.literal("success"),
+    state: z.literal("success").default('success'),
   })
   .or(
     errorRequest.extend({
