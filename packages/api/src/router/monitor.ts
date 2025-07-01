@@ -854,19 +854,27 @@ export const monitorRouter = createTRPCRouter({
             : [desc(monitor.active), desc(monitor.createdAt)],
       });
 
-      return z
+      const data = z
         .array(
           selectMonitorSchema.extend({
             tags: z.array(selectMonitorTagSchema).default([]),
             incidents: z.array(selectIncidentSchema).default([]),
           })
         )
-        .parse(
+        .safeParse(
           result.map((data) => ({
             ...data,
             tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
           }))
         );
+
+      if(data.error){
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: data.error.message,
+        });
+      }
+      return data.data
     }),
 
   get: protectedProcedure
