@@ -97,7 +97,7 @@
     "@eslint/eslintrc": "3.3.1",
     "@tailwindcss/postcss": "4.1.11",
     "@types/node": "24.0.8",
-    "@types/react": "19.1.8",
+    "@types/react": "19.1.6",
     "@types/react-dom": "19.1.6",
     "eslint": "9.30.0",
     "eslint-config-next": "15.3.4",
