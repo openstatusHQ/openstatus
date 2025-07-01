@@ -101,7 +101,7 @@ export const timingSchema = z.object({
 
 export const checkerSchema = z.object({
   type: z.literal("http").default("http"),
-  state: z.literal('success'),
+  state: z.literal("success"),
   status: z.number(),
   latency: z.number(),
   headers: z.record(z.string()),
@@ -119,17 +119,19 @@ export const cachedCheckerSchema = z.object({
 
 const errorRequest = z.object({
   message: z.string(),
-  state: z.literal('error').default('error'),
+  state: z.literal("error").default("error"),
+});
 
-})
-
-export const regionCheckerSchema = checkerSchema.extend({
-  region: monitorFlyRegionSchema,
-  state:z.literal('success'),
-
-}).or(errorRequest.extend({
-  region: monitorFlyRegionSchema,
-}));
+export const regionCheckerSchema = checkerSchema
+  .extend({
+    region: monitorFlyRegionSchema,
+    state: z.literal("success"),
+  })
+  .or(
+    errorRequest.extend({
+      region: monitorFlyRegionSchema,
+    }),
+  );
 
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
@@ -147,8 +149,7 @@ export type Method =
   | "TRACE";
 export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 
-
-export type ErrorRequest = z.infer<typeof errorRequest>
+export type ErrorRequest = z.infer<typeof errorRequest>;
 export async function checkRegion(
   url: string,
   region: MonitorFlyRegion,
@@ -157,7 +158,7 @@ export async function checkRegion(
     headers?: { value: string; key: string }[];
     body?: string;
   },
-): Promise<RegionChecker > {
+): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {
@@ -210,9 +211,9 @@ export async function checkAllRegions(url: string, opts?: { method: Method }) {
   return await Promise.all(
     flyRegions.map(async (region) => {
       const check = await checkRegion(url, region, opts);
-      if (check.state === 'success'){
-      // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
-        check.body = undefined
+      if (check.state === "success") {
+        // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
+        check.body = undefined;
       }
       return check;
     }),
