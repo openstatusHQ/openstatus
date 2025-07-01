@@ -9,7 +9,6 @@ import {
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
 } from "@trpc/tanstack-react-query";
-import { cache } from "react";
 import { makeQueryClient } from "./query-client";
 import { endingLink } from "./shared";
 import { cookies } from "next/headers";
@@ -28,15 +27,8 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
           (opts.direction === "down" && opts.result instanceof Error),
       }),
       endingLink({
-        // headers: async () => {
-        //   const h = new Map(await headers());
-        //   h.delete("connection");
-        //   h.delete("transfer-encoding");
-        //   h.set("x-trpc-source", "server");
-        //   return Object.fromEntries(h.entries());
-        // },
         headers: {
-          "x-trpc-source": "client",
+          "x-trpc-source": "server",
         },
         async fetch(url, options) {
           const cookieStore = await cookies();
@@ -48,6 +40,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
               cookie: cookieStore.toString(),
             },
           });
+
         },
       }),
     ],
