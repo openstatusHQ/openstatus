@@ -146,7 +146,7 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		return nil
 	}
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		c.JSON(http.StatusOK, gin.H{"message": "url not reachable"})
 
 		return
 	}

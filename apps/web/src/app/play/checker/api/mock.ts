@@ -3,7 +3,9 @@ import { wait } from "@/lib/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 
 export async function mockCheckRegion(region: Region) {
-  const response = data.checks.find((check) => check.region === region);
+  const response = data.checks
+    .filter((i) => i.state === "success")
+    .find((check) => check.region === region);
 
   if (!response) {
     throw new Error("Region not found");
@@ -21,6 +23,8 @@ export const data = {
   checks: [
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 889,
       headers: {
@@ -58,6 +62,8 @@ export const data = {
     {
       type: "http",
       status: 200,
+      state: "success",
+
       latency: 1602,
       headers: {
         Age: "0",
@@ -95,6 +101,8 @@ export const data = {
     {
       type: "http",
       status: 200,
+      state: "success",
+
       latency: 823,
       headers: {
         Age: "0",
@@ -131,6 +139,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1198,
       headers: {
@@ -168,6 +178,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1423,
       headers: {
@@ -205,6 +217,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1134,
       headers: {
@@ -242,6 +256,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 812,
       headers: {
@@ -279,6 +295,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1081,
       headers: {
@@ -316,6 +334,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1329,
       headers: {
@@ -353,6 +373,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 380,
       headers: {
@@ -390,6 +412,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 802,
       headers: {
@@ -427,6 +451,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 615,
       headers: {
@@ -463,6 +489,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1481,
       headers: {
@@ -500,6 +528,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 768,
       headers: {
@@ -537,6 +567,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 662,
       headers: {
@@ -574,6 +606,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1543,
       headers: {
@@ -611,6 +645,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 369,
       headers: {
@@ -648,6 +684,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1264,
       headers: {
@@ -685,6 +723,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 642,
       headers: {
@@ -722,6 +762,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 627,
       headers: {
@@ -759,6 +801,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 951,
       headers: {
@@ -796,6 +840,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 808,
       headers: {
@@ -833,6 +879,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1301,
       headers: {
@@ -870,6 +918,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1079,
       headers: {
@@ -907,6 +957,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1349,
       headers: {
@@ -943,6 +995,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 970,
       headers: {
@@ -980,6 +1034,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1539,
       headers: {
@@ -1017,6 +1073,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1347,
       headers: {
@@ -1054,6 +1112,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 400,
       headers: {
@@ -1091,6 +1151,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 883,
       headers: {
@@ -1128,6 +1190,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 825,
       headers: {
@@ -1165,6 +1229,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 526,
       headers: {
@@ -1202,6 +1268,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 869,
       headers: {
@@ -1238,6 +1306,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 1133,
       headers: {
@@ -1275,6 +1345,8 @@ export const data = {
     },
     {
       type: "http",
+      state: "success",
+
       status: 200,
       latency: 447,
       headers: {

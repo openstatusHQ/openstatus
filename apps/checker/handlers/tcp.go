@@ -331,7 +331,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	}
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		c.JSON(http.StatusOK, gin.H{"message": "uri not reachable"})
 
 		return
 	}
