@@ -11,7 +11,6 @@ import {
 } from "@/components/content/empty-state";
 import { Section } from "@/components/content/section";
 import { columns as incidentsColumns } from "@/components/data-table/incidents/columns";
-import { columns as statusReportsColumns } from "@/components/data-table/status-reports/columns";
 import { columns as maintenancesColumns } from "@/components/data-table/maintenances/columns";
 import {
   MetricCard,
@@ -26,6 +25,7 @@ import Link from "next/link";
 import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
+import { DataTableStatusReports } from "./data-table-status-reports";
 
 // FIXME: the page is server side
 // whenever I change the maintenances, the page is not updated
@@ -180,7 +180,7 @@ export default async function Page() {
             </SectionDescription>
           </SectionHeader>
           {statusReports.length > 0 ? (
-            <DataTable columns={statusReportsColumns} data={statusReports} />
+            <DataTableStatusReports statusReports={statusReports} />
           ) : (
             <EmptyStateContainer>
               <EmptyStateTitle>No reports found</EmptyStateTitle>

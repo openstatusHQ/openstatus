@@ -20,6 +20,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { colors } from "@/data/status-report-updates.client";
 import { ProcessMessage } from "@/components/content/process-message";
+import {
+  TooltipContent,
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type StatusReportUpdates =
   RouterOutputs["statusReport"]["list"][number]["updates"];
@@ -57,25 +63,34 @@ export function DataTable({
           <TableHead>Message</TableHead>
           <TableHead>Date</TableHead>
           <TableHead className="w-[px]">
-            <FormSheetStatusReportUpdate
-              onSubmit={async (values) => {
-                await createStatusReportUpdateMutation.mutateAsync({
-                  statusReportId: reportId,
-                  message: values.message,
-                  status: values.status,
-                  date: values.date,
-                });
-              }}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="ml-auto flex h-7 w-7 p-0"
-              >
-                <Plus />
-                <span className="sr-only">Create Status Report Update</span>
-              </Button>
-            </FormSheetStatusReportUpdate>
+            <TooltipProvider>
+              <Tooltip>
+                <FormSheetStatusReportUpdate
+                  onSubmit={async (values) => {
+                    await createStatusReportUpdateMutation.mutateAsync({
+                      statusReportId: reportId,
+                      message: values.message,
+                      status: values.status,
+                      date: values.date,
+                    });
+                  }}
+                >
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ml-auto flex h-7 w-7 p-0"
+                    >
+                      <Plus />
+                      <span className="sr-only">Create Report Update</span>
+                    </Button>
+                  </TooltipTrigger>
+                </FormSheetStatusReportUpdate>
+                <TooltipContent side="left" align="center">
+                  Create Report Update
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </TableHead>
         </TableRow>
       </TableHeader>
