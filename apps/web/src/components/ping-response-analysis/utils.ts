@@ -23,7 +23,7 @@ export function continentFormatter(region: MonitorFlyRegion) {
 
 export function regionFormatter(
   region: MonitorFlyRegion,
-  type: "short" | "long" = "short",
+  type: "short" | "long" = "short"
 ) {
   const { code, flag, location } = flyRegionsDict[region];
   if (type === "short") return `${code} ${flag}`;
@@ -143,7 +143,7 @@ export async function checkRegion(
     method?: Method;
     headers?: { value: string; key: string }[];
     body?: string;
-  },
+  }
 ): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
@@ -175,9 +175,10 @@ export async function checkRegion(
   const data = checkerSchema.safeParse(json);
 
   if (!data.success) {
-    console.log(json);
+    console.error(res);
+    console.error(JSON.stringify(json));
     console.error(
-      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+      `something went wrong with request to ${url} error ${data.error.message}`
     );
     throw new Error(data.error.message);
   }
@@ -199,7 +200,7 @@ export async function checkAllRegions(url: string, opts?: { method: Method }) {
       // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
       check.body = undefined;
       return check;
-    }),
+    })
   );
 }
 
@@ -261,10 +262,9 @@ export async function getCheckerDataById(id: string) {
   pipe.hgetall(`check:base:${id}`);
   pipe.smembers(`check:data:${id}`);
 
-  const res =
-    await pipe.exec<
-      [{ url: string; method: Method; time: number }, RegionChecker]
-    >();
+  const res = await pipe.exec<
+    [{ url: string; method: Method; time: number }, RegionChecker]
+  >();
 
   if (!res) {
     return null;
