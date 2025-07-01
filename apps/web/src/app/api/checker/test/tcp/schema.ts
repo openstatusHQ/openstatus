@@ -26,11 +26,12 @@ export const TCPResponse = z.object({
   latency: z.number().optional(),
 });
 
-
 export const TCPResponseTest = TCPResponse.extend({
-  state:z.literal('success').default('success')
-}).or(z.object({
-  type: z.literal("tcp").default("tcp"),
-  state:z.literal('error').default('error')
-}))
+  state: z.literal("success").default("success"),
+}).or(
+  z.object({
+    type: z.literal("tcp").default("tcp"),
+    state: z.literal("error").default("error"),
+  }),
+);
 export type tcpPayload = z.infer<typeof tcpPayload>;

@@ -84,9 +84,9 @@ export function DataTableRowActions<TData>({
         // FIXME: assertions
         // it's getting 😭
         const success =
-          data.state === 'success' && data.type === "http"
+          data.state === "success" && data.type === "http"
             ? data.status >= 200 && data.status < 300
-            : data.state === 'success' && data.type === "tcp" && !data.error;
+            : data.state === "success" && data.type === "tcp" && !data.error;
 
         if (success) {
           toastAction("test-success");
