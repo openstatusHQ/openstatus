@@ -172,12 +172,14 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 setResult(currentResult);
 
                 if (_result) {
-                  toast.loading(
-                    `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
-                    {
-                      id: toastId,
-                    },
-                  );
+                  if(_result[0].state === 'success'){
+                    toast.loading(
+                      `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
+                      {
+                        id: toastId,
+                      },
+                    );
+                  }
                 }
               }
             }
@@ -360,7 +362,7 @@ function TableResult({
       </TableHeader>
       <TableBody>
         {result.length > 0 ? (
-          result.map((item) => (
+          result.filter((item) => item.state === 'success').map((item) => (
             <TableRow key={item.region}>
               <TableCell className="flex items-center gap-2 font-medium">
                 {regionFormatter(item.region, "long")}
