@@ -101,8 +101,6 @@ export function ContactForm({
     });
   }
 
-  console.log(form.formState.errors);
-
   return (
     <Form {...form}>
       <form

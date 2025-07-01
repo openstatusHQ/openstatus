@@ -80,7 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
         <NavHelp />
       </SidebarContent>
-      <SidebarFooter className="p-0 gap-0 h-14 border-t">
+      <SidebarFooter className="p-0 gap-0 h-14 border-t flex flex-col justify-center">
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

@@ -85,6 +85,7 @@ function getMetricsByIntervalProcedure(period: Period, type: Type) {
   }
 }
 
+// FIXME: tb pipes are deprecated, we need new ones
 function getMetricsRegionsProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":

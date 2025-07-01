@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
-export const TITLE = "OpenStatus Template";
+export const TITLE = "OpenStatus";
 export const DESCRIPTION =
-  "We've created this template to help you get started with your @shadcn/ui project. It uses @nextjs in an SPA mode and can be exported statically (BYO router).";
+  "OpenStatus is an open-source platform to monitor your services and keep your users informed.";
 
-const OG_TITLE = "OpenStatus Template";
-const OG_DESCRIPTION = "Quick start template for your shadcn/ui project.";
-const FOOTER = "template.openstatus.dev";
+const OG_TITLE = "OpenStatus";
+const OG_DESCRIPTION = "Monitor your services and keep your users informed.";
+const FOOTER = "app.openstatus.dev";
 
 export const defaultMetadata: Metadata = {
   title: {
@@ -14,7 +14,7 @@ export const defaultMetadata: Metadata = {
     default: TITLE,
   },
   description: DESCRIPTION,
-  metadataBase: new URL("https://www.openstatus.dev"),
+  metadataBase: new URL("https://app.openstatus.dev"),
 };
 
 export const twitterMetadata: Metadata["twitter"] = {

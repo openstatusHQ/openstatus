@@ -42,7 +42,7 @@ export function WorkspaceSwitcher() {
             <SidebarMenuButton
               size="lg"
               // FIXME: group-data-[collapsible=icon]:mx-8! (incl. nav-user)
-              className="px-4 h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-6!"
+              className="px-4 h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
                 <div className="size-8 rounded-lg overflow-hidden">

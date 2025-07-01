@@ -59,6 +59,7 @@ export function Client() {
   };
   const { http: httpMonitors, tcp: tcpMonitors } = monitorsByType;
 
+  // HMM: why do we need two queries?
   const { data: globalHttpMetrics, isLoading: isLoadingHttp } = useQuery({
     ...trpc.tinybird.globalMetrics.queryOptions({
       monitorIds: httpMonitors,
