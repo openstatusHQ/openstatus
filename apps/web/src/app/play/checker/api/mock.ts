@@ -3,7 +3,9 @@ import { wait } from "@/lib/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 
 export async function mockCheckRegion(region: Region) {
-  const response = data.checks.filter((i) => i.state === 'success').find((check) => check.region === region);
+  const response = data.checks
+    .filter((i) => i.state === "success")
+    .find((check) => check.region === region);
 
   if (!response) {
     throw new Error("Region not found");
@@ -21,7 +23,7 @@ export const data = {
   checks: [
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 889,
@@ -60,7 +62,7 @@ export const data = {
     {
       type: "http",
       status: 200,
-      state:"success",
+      state: "success",
 
       latency: 1602,
       headers: {
@@ -99,7 +101,7 @@ export const data = {
     {
       type: "http",
       status: 200,
-      state:"success",
+      state: "success",
 
       latency: 823,
       headers: {
@@ -137,7 +139,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1198,
@@ -176,7 +178,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1423,
@@ -215,7 +217,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1134,
@@ -254,7 +256,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 812,
@@ -293,7 +295,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1081,
@@ -332,7 +334,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1329,
@@ -371,7 +373,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 380,
@@ -410,7 +412,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 802,
@@ -449,7 +451,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 615,
@@ -487,7 +489,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1481,
@@ -526,7 +528,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 768,
@@ -565,7 +567,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 662,
@@ -604,7 +606,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1543,
@@ -643,7 +645,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 369,
@@ -682,7 +684,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1264,
@@ -721,7 +723,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 642,
@@ -760,7 +762,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 627,
@@ -799,7 +801,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 951,
@@ -838,7 +840,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 808,
@@ -877,7 +879,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1301,
@@ -916,7 +918,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1079,
@@ -955,7 +957,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1349,
@@ -993,7 +995,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 970,
@@ -1032,7 +1034,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1539,
@@ -1071,7 +1073,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1347,
@@ -1110,7 +1112,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 400,
@@ -1149,7 +1151,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 883,
@@ -1188,7 +1190,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 825,
@@ -1227,7 +1229,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 526,
@@ -1266,7 +1268,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 869,
@@ -1304,7 +1306,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 1133,
@@ -1343,7 +1345,7 @@ export const data = {
     },
     {
       type: "http",
-      state:"success",
+      state: "success",
 
       status: 200,
       latency: 447,
