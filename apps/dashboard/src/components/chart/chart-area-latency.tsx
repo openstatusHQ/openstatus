@@ -21,7 +21,7 @@ import {
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { mapLatency, PERCENTILES } from "@/data/metrics.client";
+import { mapLatency, type PERCENTILES } from "@/data/metrics.client";
 
 const chartConfig = {
   latency: {
@@ -112,7 +112,7 @@ export function ChartAreaLatency({
           orientation="right"
           tickFormatter={(value) => `${value}ms`}
         />
-        <ChartLegend content={<ChartLegendContent />} />
+        <ChartLegend content={<ChartLegendContent  />} />
       </AreaChart>
     </ChartContainer>
   );
