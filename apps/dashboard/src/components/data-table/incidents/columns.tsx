@@ -13,7 +13,8 @@ type Incident = RouterOutputs["incident"]["list"][number];
 
 export const columns: ColumnDef<Incident>[] = [
   {
-    accessorKey: "monitor",
+    id: "monitor",
+    accessorFn: (row) => row.monitor.name,
     header: "Monitor",
     enableSorting: false,
     enableHiding: false,
@@ -21,7 +22,7 @@ export const columns: ColumnDef<Incident>[] = [
       return (
         <TableCellLink
           value={row.getValue("monitor")}
-          href="/monitors/overview"
+          href={`/monitors/${row.original.monitor.id}/overview`}
         />
       );
     },

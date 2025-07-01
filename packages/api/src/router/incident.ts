@@ -10,7 +10,11 @@ import {
   schema,
   type SQL,
 } from "@openstatus/db";
-import { incidentTable, selectIncidentSchema } from "@openstatus/db/src/schema";
+import {
+  incidentTable,
+  selectIncidentSchema,
+  selectMonitorSchema,
+} from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -201,19 +205,22 @@ export const incidentRouter = createTRPCRouter({
         whereConditions.push(eq(incidentTable.monitorId, opts.input.monitorId));
       }
 
-      const query = opts.ctx.db
-        .select()
-        .from(incidentTable)
-        .where(and(...whereConditions));
+      const result = await opts.ctx.db.query.incidentTable.findMany({
+        where: and(...whereConditions),
+        with: {
+          monitor: true,
+        },
+        orderBy:
+          opts.input?.order === "asc"
+            ? asc(incidentTable.startedAt)
+            : desc(incidentTable.startedAt),
+      });
 
-      if (opts.input?.order === "asc") {
-        query.orderBy(asc(incidentTable.startedAt));
-      } else {
-        query.orderBy(desc(incidentTable.startedAt));
-      }
-
-      const result = await query.all();
-
-      return result;
+      return selectIncidentSchema
+        .extend({
+          monitor: selectMonitorSchema,
+        })
+        .array()
+        .parse(result);
     }),
 });
