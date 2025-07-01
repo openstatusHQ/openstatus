@@ -11,6 +11,7 @@ export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
 export const REGIONS = flyRegions as unknown as (typeof flyRegions)[number][];
 export const PERCENTILES = ["p50", "p75", "p90", "p95", "p99"] as const;
+export const INTERVALS = [5, 15, 30, 60, 120, 240, 480, 1440] as const;
 
 const PERCENTILE_MAP = {
   p50: "p50Latency",

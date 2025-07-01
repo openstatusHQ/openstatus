@@ -12,6 +12,7 @@ import {
 import { makeQueryClient } from "./query-client";
 import { endingLink } from "./shared";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -40,7 +41,6 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
               cookie: cookieStore.toString(),
             },
           });
-
         },
       }),
     ],

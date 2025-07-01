@@ -24,7 +24,7 @@ import {
 } from "./chart-tooltip-number";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { mapTimingPhases, PERCENTILES } from "@/data/metrics.client";
+import { INTERVALS, mapTimingPhases, PERCENTILES } from "@/data/metrics.client";
 
 const chartConfig = {
   dns: {
@@ -56,12 +56,14 @@ export function ChartAreaTimingPhases({
   degradedAfter,
   period,
   percentile,
+  interval,
   type,
 }: {
   monitorId: string;
   degradedAfter: number | null;
   period: "1d" | "7d" | "14d";
   percentile: (typeof PERCENTILES)[number];
+  interval: (typeof INTERVALS)[number];
   type: "http";
 }) {
   const trpc = useTRPC();
@@ -71,7 +73,7 @@ export function ChartAreaTimingPhases({
       monitorId,
       period,
       type,
-      interval: 120,
+      interval,
     })
   );
 
