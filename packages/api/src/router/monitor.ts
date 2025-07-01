@@ -869,6 +869,7 @@ export const monitorRouter = createTRPCRouter({
         );
 
       if(data.error){
+        console.error(data.error)
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: data.error.message,
