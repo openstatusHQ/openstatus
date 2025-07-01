@@ -66,19 +66,13 @@ export function Client() {
           <SectionDescription>{monitor.url}</SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
-          <DropdownPeriod />
-          {/* <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
-                Last 7 days
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <DatePicker />
-            </PopoverContent>
-            </Popover> */}
-          <CommandRegion regions={monitor.regions} />
-          <ButtonReset />
+          <div>
+            <DropdownPeriod /> including{" "}
+            <CommandRegion regions={monitor.regions} />
+          </div>
+          <div>
+            <ButtonReset only={["period", "regions"]} />
+          </div>
         </div>
         <GlobalUptimeSection
           monitorId={id}
@@ -103,15 +97,21 @@ export function Client() {
         />
       </Section>
       <Section>
+        {/* TODO: based on http, we have Timing Phases instead of Latency */}
         <SectionHeader>
           <SectionTitle>Latency</SectionTitle>
           <SectionDescription>
             Average latency accross all the regions
           </SectionDescription>
         </SectionHeader>
-        <div>
-          The <DropdownPercentile /> quantile within a <DropdownInterval />{" "}
-          resolution
+        <div className="flex flex-wrap gap-2">
+          <div>
+            The <DropdownPercentile /> quantile within a <DropdownInterval />{" "}
+            resolution
+          </div>
+          <div>
+            <ButtonReset only={["percentile", "interval"]} />
+          </div>
         </div>
         {monitor.jobType === "http" ? (
           <ChartAreaTimingPhases

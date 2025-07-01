@@ -42,7 +42,7 @@ export default async function Page() {
     trpc.incident.list.queryOptions({
       order: "desc",
       startedAt: {
-        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
     })
   );
@@ -50,7 +50,7 @@ export default async function Page() {
     trpc.statusReport.list.queryOptions({
       order: "desc",
       createdAt: {
-        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
     })
   );
@@ -58,7 +58,7 @@ export default async function Page() {
     trpc.maintenance.list.queryOptions({
       order: "desc",
       createdAt: {
-        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
     })
   );
@@ -161,7 +161,7 @@ export default async function Page() {
           <SectionHeader>
             <SectionTitle>Incidents</SectionTitle>
             <SectionDescription>
-              Incidents over the last 30 days.
+              Incidents over the last 7 days.
             </SectionDescription>
           </SectionHeader>
           {incidents.length > 0 ? (
@@ -176,7 +176,7 @@ export default async function Page() {
           <SectionHeader>
             <SectionTitle>Reports</SectionTitle>
             <SectionDescription>
-              Reports over the last 30 days.
+              Reports over the last 7 days.
             </SectionDescription>
           </SectionHeader>
           {statusReports.length > 0 ? (
@@ -191,7 +191,7 @@ export default async function Page() {
           <SectionHeader>
             <SectionTitle>Maintenance</SectionTitle>
             <SectionDescription>
-              Maintenance over the last 30 days.
+              Maintenance over the last 7 days.
             </SectionDescription>
           </SectionHeader>
           {maintenances.length > 0 ? (
