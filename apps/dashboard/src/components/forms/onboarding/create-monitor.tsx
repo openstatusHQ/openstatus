@@ -28,7 +28,7 @@ export function CreateMonitorForm({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -43,11 +43,10 @@ export function CreateMonitorForm({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: () => "Saved",
           error: "Failed to save",
         });
         await promise;
