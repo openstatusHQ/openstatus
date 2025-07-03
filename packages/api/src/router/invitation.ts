@@ -2,13 +2,14 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { Events } from "@openstatus/analytics";
-import { and, eq, gte, isNull, SQL } from "@openstatus/db";
+import { and, db, eq, gte, isNull, SQL } from "@openstatus/db";
 import {
   insertInvitationSchema,
   invitation,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
+  workspace,
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -183,4 +184,103 @@ export const invitationRouter = createTRPCRouter({
 
     return result;
   }),
+
+  get: protectedProcedure
+    .input(z.object({ token: z.string().nullable() }))
+    .query(async (opts) => {
+      if (!opts.ctx.user.email) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+
+      if (!opts.input.token) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Token is required.",
+        });
+      }
+
+      const result = await opts.ctx.db.query.invitation.findFirst({
+        where: and(
+          eq(invitation.token, opts.input.token),
+          isNull(invitation.acceptedAt),
+          gte(invitation.expiresAt, new Date()),
+          eq(invitation.email, opts.ctx.user.email)
+        ),
+      });
+
+      if (!result) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invitation not found.",
+        });
+      }
+
+      return result;
+    }),
+
+  accept: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      if (!opts.ctx.user.email) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to access this resource.",
+        });
+      }
+
+      console.log(opts.input);
+
+      const _invitation = await opts.ctx.db.query.invitation.findFirst({
+        where: and(
+          eq(invitation.id, opts.input.id),
+          eq(invitation.email, opts.ctx.user.email),
+          isNull(invitation.acceptedAt),
+          gte(invitation.expiresAt, new Date())
+        ),
+      });
+
+      if (!_invitation) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invitation not found.",
+        });
+      }
+
+      if (_invitation.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invitation already accepted.",
+        });
+      }
+
+      const result = await db.transaction(async (tx) => {
+        await tx
+          .update(invitation)
+          .set({
+            acceptedAt: new Date(),
+          })
+          .where(eq(invitation.id, opts.input.id))
+          .run();
+
+        await tx
+          .insert(usersToWorkspaces)
+          .values({
+            userId: opts.ctx.user.id,
+            workspaceId: _invitation.workspaceId,
+            role: _invitation.role,
+          })
+          .run();
+
+        const _workspace = await tx.query.workspace.findFirst({
+          where: eq(workspace.id, _invitation.workspaceId),
+        });
+
+        return _workspace;
+      });
+
+      return result;
+    }),
 });

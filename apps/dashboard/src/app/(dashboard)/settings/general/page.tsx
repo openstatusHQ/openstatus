@@ -15,6 +15,8 @@ import { FormWorkspace } from "@/components/forms/settings/form-workspace";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+const BASE_URL = "https://app.openstatus.dev/";
+
 export default function Page() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -31,9 +33,13 @@ export default function Page() {
       },
     })
   );
+  const sendInvitationMutation = useMutation(
+    trpc.emailRouter.sendTeamInvitation.mutationOptions()
+  );
   const createInvitationMutation = useMutation(
     trpc.invitation.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
+        sendInvitationMutation.mutate({ id: data.id, baseUrl: BASE_URL });
         queryClient.invalidateQueries({
           queryKey: trpc.invitation.list.queryKey(),
         });
