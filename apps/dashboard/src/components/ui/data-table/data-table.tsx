@@ -3,6 +3,7 @@
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  PaginationState,
   type Row,
   type SortingState,
   type VisibilityState,
@@ -69,6 +70,10 @@ export function DataTable<TData, TValue>({
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 20,
+  });
   const [internalColumnFilters, setInternalColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
   const [internalSorting, setInternalSorting] =
@@ -87,6 +92,7 @@ export function DataTable<TData, TValue>({
       sorting: sortingState,
       columnVisibility,
       rowSelection,
+      pagination,
       columnFilters: columnFiltersState,
     },
     enableRowSelection: true,
@@ -94,6 +100,7 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSortingState,
     onColumnFiltersChange: setColumnFiltersState,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
