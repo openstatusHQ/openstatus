@@ -101,7 +101,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Latency</SectionTitle>
           <SectionDescription>
-            Average latency accross all the regions
+            Response time accross all the regions
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap gap-2">

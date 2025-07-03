@@ -1,56 +1,113 @@
-export const plans = [
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type React from "react";
+
+export const plans = allPlans;
+
+export const config: Record<
+  string,
   {
-    title: "Hobby",
-    id: "hobby",
-    description: "Perfect for personal projects",
-    price: 0,
-    limits: {
-      monitors: 1,
-      regions: 35,
-      periodicity: "10m",
-      "status-pages": 1,
-      members: 1,
-      "notification-channels": 1,
-      "custom-domain": false,
-      "password-protection": false,
-      "status-subscribers": false,
-      "audit-log": false,
-    },
+    label: string;
+    features: {
+      value: keyof Limits;
+      label: string;
+      description?: React.ReactNode; // tooltip informations
+      badge?: string;
+      monthly?: boolean;
+    }[];
+  }
+> = {
+  monitors: {
+    label: "Monitors",
+    features: [
+      {
+        value: "periodicity",
+        label: "Frequency",
+      },
+      {
+        value: "monitors",
+        label: "Number of monitors",
+      },
+      {
+        value: "multi-region",
+        label: "Multi-region monitoring",
+      },
+      { value: "max-regions", label: "Number of Regions" },
+      { value: "data-retention", label: "Data retention" },
+      { value: "otel", label: "OTel Exporter" },
+      {
+        value: "synthetic-checks",
+        label: "Synthetic API Checks",
+        monthly: true,
+      },
+    ],
   },
-  {
-    title: "Starter",
-    id: "starter",
-    description: "Perfect for uptime monitoring",
-    price: 30,
-    limits: {
-      monitors: 10,
-      regions: 35,
-      periodicity: "1m",
-      "status-pages": 1,
-      members: Number.POSITIVE_INFINITY,
-      "notification-channels": 10,
-      "custom-domain": true,
-      "password-protection": true,
-      "status-subscribers": true,
-      "audit-log": false,
-    },
+  "status-pages": {
+    label: "Status Pages",
+    features: [
+      {
+        value: "status-pages",
+        label: "Number of status pages",
+      },
+      {
+        value: "maintenance",
+        label: "Maintenance status",
+      },
+      {
+        value: "monitor-values-visibility",
+        label: "Toggle numbers visibility",
+      },
+      {
+        value: "status-subscribers",
+        label: "Subscribers",
+      },
+      {
+        value: "custom-domain",
+        label: "Custom domain",
+      },
+      {
+        value: "password-protection",
+        label: "Password-protected",
+      },
+    ],
   },
-  {
-    title: "Pro",
-    id: "team",
-    description: "Perfect for global synthetic monitoring",
-    price: 100,
-    limits: {
-      monitors: 100,
-      regions: 35,
-      periodicity: "30s",
-      "status-pages": 5,
-      members: Number.POSITIVE_INFINITY,
-      "notification-channels": 20,
-      "custom-domain": true,
-      "password-protection": true,
-      "status-subscribers": true,
-      "audit-log": true,
-    },
+  notifiers: {
+    label: "Notifiers",
+    features: [
+      {
+        value: "notifications",
+        label: "Slack, Discord, Email, Webhook, ntfy.sh",
+      },
+      {
+        value: "sms",
+        label: "SMS",
+      },
+      {
+        value: "pagerduty",
+        label: "PagerDuty",
+      },
+      {
+        value: "opsgenie",
+        label: "OpsGenie",
+      },
+      {
+        value: "notification-channels",
+        label: "Number of notification channels",
+      },
+    ],
   },
-];
+  collaboration: {
+    label: "Collaboration",
+    features: [
+      {
+        value: "members",
+        label: "Team members",
+      },
+      {
+        value: "audit-log",
+        label: "Audit log",
+        badge: "Planned",
+      },
+    ],
+  },
+};

@@ -3,15 +3,9 @@
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
-import { CircleCheck, Logs } from "lucide-react";
+import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { formatMilliseconds } from "@/lib/formatter";
 import { deserialize } from "@openstatus/assertions";
@@ -150,43 +144,43 @@ export function Sidebar() {
                 })
               : [],
         },
-        {
-          label: "Last Logs",
-          items: [
-            ...Array.from({ length: 20 }).map((_, index) => {
-              const date = new Date(new Date().getTime() - index * 500000);
-              return {
-                label: [
-                  "Amsterdam",
-                  "Frankfurt",
-                  "New York",
-                  "Singapore",
-                  "Johannesburg",
-                ][index % 5],
-                value: (
-                  <div className="flex items-center justify-between gap-2">
-                    <CircleCheck className="h-4 w-4 text-success" />
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <span className="underline decoration-muted-foreground/50 decoration-dashed underline-offset-2">
-                            {date.toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent align="center" side="left">
-                          {date.toLocaleString("en-US")}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                ),
-              };
-            }),
-          ],
-        },
+        // {
+        //   label: "Last Logs",
+        //   items: [
+        //     ...Array.from({ length: 20 }).map((_, index) => {
+        //       const date = new Date(new Date().getTime() - index * 500000);
+        //       return {
+        //         label: [
+        //           "Amsterdam",
+        //           "Frankfurt",
+        //           "New York",
+        //           "Singapore",
+        //           "Johannesburg",
+        //         ][index % 5],
+        //         value: (
+        //           <div className="flex items-center justify-between gap-2">
+        //             <CircleCheck className="h-4 w-4 text-success" />
+        //             <TooltipProvider>
+        //               <Tooltip>
+        //                 <TooltipTrigger>
+        //                   <span className="underline decoration-muted-foreground/50 decoration-dashed underline-offset-2">
+        //                     {date.toLocaleTimeString("en-US", {
+        //                       hour: "2-digit",
+        //                       minute: "2-digit",
+        //                     })}
+        //                   </span>
+        //                 </TooltipTrigger>
+        //                 <TooltipContent align="center" side="left">
+        //                   {date.toLocaleString("en-US")}
+        //                 </TooltipContent>
+        //               </Tooltip>
+        //             </TooltipProvider>
+        //           </div>
+        //         ),
+        //       };
+        //     }),
+        //   ],
+        // },
       ]}
       footerButton={{
         onClick: () => router.push("/monitors/logs"),

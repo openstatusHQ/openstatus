@@ -1,4 +1,4 @@
-import { Code, Copy, CopyPlus, Pencil, Trash2 } from "lucide-react";
+import { Copy, CopyPlus, Pencil, Trash2 } from "lucide-react";
 
 export const actions = [
   {
