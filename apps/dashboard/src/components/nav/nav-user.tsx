@@ -3,8 +3,11 @@
 import {
   ChevronsUpDown,
   CreditCard,
+  Laptop,
   LogOut,
+  Moon,
   Sparkles,
+  Sun,
   User,
 } from "lucide-react";
 
@@ -16,7 +19,11 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -28,9 +35,11 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 
 export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();
+  const { theme, setTheme } = useTheme();
   const trpc = useTRPC();
   const { data } = useQuery(trpc.user.get.queryOptions());
 
@@ -41,6 +50,8 @@ export function NavUser() {
     email: data?.email,
     avatar: data?.photoUrl ?? undefined,
   };
+
+  console.log({ theme });
 
   return (
     <SidebarMenu>
@@ -112,6 +123,31 @@ export function NavUser() {
                   Account
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
+                  {theme === "dark" ? (
+                    <Moon />
+                  ) : theme === "light" ? (
+                    <Sun />
+                  ) : (
+                    <Laptop />
+                  )}
+                  Theme
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                      <Sun /> Light
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                      <Moon /> Dark
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                      <Laptop /> System
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
               <DropdownMenuItem asChild>
                 <Link
                   href="/settings/billing"

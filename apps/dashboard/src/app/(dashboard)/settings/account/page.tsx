@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Section,
   SectionGroup,
@@ -19,8 +21,15 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Page() {
+  const trpc = useTRPC();
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
+
+  if (!user) return null;
+
   return (
     <SectionGroup>
       <Section>
@@ -39,11 +48,11 @@ export default function Page() {
             <form className="grid gap-4">
               <div className="grid gap-1.5">
                 <Label>Name</Label>
-                <Input />
+                <Input defaultValue={user?.name ?? undefined} />
               </div>
               <div className="grid gap-1.5">
                 <Label>Email</Label>
-                <Input placeholder="max@openstatus.dev" />
+                <Input defaultValue={user?.email ?? undefined} />
               </div>
             </form>
           </FormCardContent>
