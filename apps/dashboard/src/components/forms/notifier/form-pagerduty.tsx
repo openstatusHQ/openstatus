@@ -142,7 +142,11 @@ export function FormPagerDuty({
               <FormItem>
                 <FormLabel>URL</FormLabel>
                 <FormControl>
-                  <Input placeholder="..." {...field} />
+                  <Input
+                    placeholder="..."
+                    disabled={!!defaultValues?.data}
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
@@ -152,7 +156,12 @@ export function FormPagerDuty({
             )}
           />
           <div>
-            <Button variant="outline" size="sm" onClick={testAction}>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={testAction}
+            >
               Send Test
             </Button>
           </div>

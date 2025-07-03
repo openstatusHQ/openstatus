@@ -130,6 +130,7 @@ export function NavActions() {
               variant="ghost"
               size="icon"
               className="h-7 w-7"
+              type="button"
               onClick={testAction}
             >
               <Zap />
