@@ -131,7 +131,7 @@ export function Client() {
                     name: new URL(values.url).hostname,
                     // FIXME: undefined values should be allowed
                     headers: [],
-                    assertions: "",
+                    assertions: undefined,
                     jobType: "http",
                     // FIXME: check which regions are available on free plan
                     regions: ["ams", "iad", "syd"],

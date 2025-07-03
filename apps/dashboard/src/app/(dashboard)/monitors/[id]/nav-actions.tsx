@@ -43,6 +43,17 @@ export function NavActions() {
     })
   );
 
+  const cloneMonitorMutation = useMutation(
+    trpc.monitor.clone.mutationOptions({
+      onSuccess: (newMonitor) => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
+        router.push(`/monitors/${newMonitor.id}`);
+      },
+    })
+  );
+
   const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
   const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
 
@@ -53,6 +64,19 @@ export function NavActions() {
       toast.success("Monitor ID copied to clipboard");
     },
     // export: () => setOpenDialog(true),
+    clone: () => {
+      const promise = cloneMonitorMutation.mutateAsync({ id: parseInt(id) });
+      toast.promise(promise, {
+        loading: "Cloning monitor...",
+        success: "Monitor cloned",
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "Failed to clone monitor";
+        },
+      });
+    },
   });
 
   async function testAction() {

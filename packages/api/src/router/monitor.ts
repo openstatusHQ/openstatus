@@ -854,28 +854,19 @@ export const monitorRouter = createTRPCRouter({
             : [desc(monitor.active), desc(monitor.createdAt)],
       });
 
-      const data = z
+      return z
         .array(
           selectMonitorSchema.extend({
             tags: z.array(selectMonitorTagSchema).default([]),
             incidents: z.array(selectIncidentSchema).default([]),
           })
         )
-        .safeParse(
+        .parse(
           result.map((data) => ({
             ...data,
             tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
           }))
         );
-
-      if(data.error){
-        console.error(data.error)
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: data.error.message,
-        });
-      }
-      return data.data
     }),
 
   get: protectedProcedure
@@ -926,6 +917,61 @@ export const monitorRouter = createTRPCRouter({
           maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
           incidents: data.incidents,
         });
+    }),
+
+  clone: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      const _monitors = await ctx.db.query.monitor.findMany({
+        where: and(
+          eq(monitor.workspaceId, ctx.workspace.id),
+          isNull(monitor.deletedAt)
+        ),
+      });
+
+      if (_monitors.length >= ctx.workspace.limits.monitors) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You have reached the maximum number of monitors.",
+        });
+      }
+
+      const data = await ctx.db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!data) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
+      const [newMonitor] = await ctx.db
+        .insert(monitor)
+        .values({
+          ...data,
+          id: undefined, // let the db generate the id
+          name: `${data.name} (Copy)`,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      if (!newMonitor) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to clone monitor.",
+        });
+      }
+
+      return newMonitor;
     }),
 
   updateRetry: protectedProcedure

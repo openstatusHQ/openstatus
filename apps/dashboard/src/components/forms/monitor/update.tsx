@@ -111,9 +111,9 @@ export function FormMonitorUpdate() {
           body: monitor.body,
           active: monitor.active ?? true,
           // TODO: move to server after migration
-          assertions: deserialize(monitor?.assertions ?? "").map(
-            (a) => a.schema
-          ),
+          assertions: monitor?.assertions
+            ? deserialize(monitor?.assertions).map((a) => a.schema)
+            : [],
           skipCheck: false,
           saveCheck: false,
         }}

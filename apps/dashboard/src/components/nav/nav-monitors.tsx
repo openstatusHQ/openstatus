@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isTRPCClientError } from "@trpc/client";
 
 const STATUS = {
   degraded: "bg-warning border border-warning",
@@ -58,6 +59,17 @@ export function NavMonitors() {
         queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
+      },
+    })
+  );
+  const cloneMonitorMutation = useMutation(
+    trpc.monitor.clone.mutationOptions({
+      onSuccess: (newMonitor) => {
+        refetch();
+        queryClient.invalidateQueries({
+          queryKey: trpc.workspace.get.queryKey(),
+        });
+        router.push(`/monitors/${newMonitor.id}`);
       },
     })
   );
@@ -118,6 +130,21 @@ export function NavMonitors() {
                 navigator.clipboard.writeText("ID");
                 toast.success("Monitor ID copied to clipboard");
               },
+              clone: () => {
+                const promise = cloneMonitorMutation.mutateAsync({
+                  id: item.id,
+                });
+                toast.promise(promise, {
+                  loading: "Cloning monitor...",
+                  success: "Monitor cloned",
+                  error: (error) => {
+                    if (isTRPCClientError(error)) {
+                      return error.message;
+                    }
+                    return "Failed to clone monitor";
+                  },
+                });
+              },
               // export: () => setOpenDialog(true),
             });
             return (
@@ -161,6 +188,9 @@ export function NavMonitors() {
                       await deleteMonitorMutation.mutateAsync({
                         id: item.id,
                       });
+                      if (pathname.startsWith(`/monitors/${item.id}`)) {
+                        router.push("/monitors");
+                      }
                     },
                   }}
                   side={isMobile ? "bottom" : "right"}
