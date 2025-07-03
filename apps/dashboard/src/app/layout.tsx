@@ -8,6 +8,12 @@ import { Toaster } from "@/components/ui/sonner";
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import LocalFont from "next/font/local";
+
+const cal = LocalFont({
+  src: "../../public/fonts/CalSans-SemiBold.ttf",
+  variable: "--font-cal-sans",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cal.variable} antialiased`}
       >
         <NuqsAdapter>
           <ThemeProvider
