@@ -13,12 +13,12 @@ export const actions = [
     icon: Copy,
     variant: "default" as const,
   },
-  {
-    id: "create-badge",
-    label: "Create Badge",
-    icon: Tag,
-    variant: "default" as const,
-  },
+  // {
+  //   id: "create-badge",
+  //   label: "Create Badge",
+  //   icon: Tag,
+  //   variant: "default" as const,
+  // },
   {
     id: "delete",
     label: "Delete",
@@ -30,7 +30,7 @@ export const actions = [
 export type StatusPageAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<StatusPageAction["id"], () => Promise<void> | void>>,
+  props: Partial<Record<StatusPageAction["id"], () => Promise<void> | void>>
 ): (StatusPageAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

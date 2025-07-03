@@ -118,7 +118,7 @@ export function NavMonitors() {
                 navigator.clipboard.writeText("ID");
                 toast.success("Monitor ID copied to clipboard");
               },
-              export: () => setOpenDialog(true),
+              // export: () => setOpenDialog(true),
             });
             return (
               <SidebarMenuItem key={item.name}>

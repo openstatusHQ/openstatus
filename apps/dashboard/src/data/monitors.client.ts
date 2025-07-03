@@ -19,12 +19,12 @@ export const actions = [
     icon: CopyPlus,
     variant: "default" as const,
   },
-  {
-    id: "export",
-    label: "Export Code",
-    icon: Code,
-    variant: "default" as const,
-  },
+  // {
+  //   id: "export",
+  //   label: "Export Code",
+  //   icon: Code,
+  //   variant: "default" as const,
+  // },
   {
     id: "delete",
     label: "Delete",
@@ -36,7 +36,7 @@ export const actions = [
 export type MonitorAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<MonitorAction["id"], () => Promise<void> | void>>,
+  props: Partial<Record<MonitorAction["id"], () => Promise<void> | void>>
 ): (MonitorAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

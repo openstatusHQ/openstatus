@@ -52,7 +52,7 @@ export function NavActions() {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");
     },
-    export: () => setOpenDialog(true),
+    // export: () => setOpenDialog(true),
   });
 
   async function testAction() {
