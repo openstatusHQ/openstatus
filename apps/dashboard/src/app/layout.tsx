@@ -57,7 +57,7 @@ export default function RootLayout({
             {children}
             <DevelopmentIndicator />
             <TailwindIndicator />
-            <Toaster expand />
+            <Toaster richColors expand />
           </ThemeProvider>
         </NuqsAdapter>
       </body>
