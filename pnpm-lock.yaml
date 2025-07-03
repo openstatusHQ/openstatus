@@ -888,6 +888,9 @@ importers:
       '@unkey/api':
         specifier: 0.26.1
         version: 0.26.1
+      '@vercel/blob':
+        specifier: 0.23.3
+        version: 0.23.3
       nanoid:
         specifier: 5.0.7
         version: 5.0.7

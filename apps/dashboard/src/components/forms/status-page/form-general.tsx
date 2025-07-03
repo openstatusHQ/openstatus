@@ -31,7 +31,8 @@ import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
 import { useTRPC } from "@/lib/trpc/client";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import Image from "next/image";
 
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";
@@ -52,6 +53,20 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/** Convert a File to a base64 string without the data: prefix */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // result is like "data:image/png;base64,XXXX" – we only need the part after the comma
+      resolve(result.split(",")[1] || "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function FormGeneral({
   disabled,
   defaultValues,
@@ -67,12 +82,13 @@ export function FormGeneral({
     defaultValues: defaultValues ?? {
       title: "",
       slug: "",
-      icon: "",
+      icon: undefined,
       description: "",
     },
   });
   const [isPending, startTransition] = useTransition();
   const trpc = useTRPC();
+  const uploadMutation = useMutation(trpc.blob.upload.mutationOptions());
   const watchSlug = form.watch("slug");
   const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 500);
@@ -185,9 +201,49 @@ export function FormGeneral({
                 <FormItem>
                   <FormLabel>Icon</FormLabel>
                   <FormControl>
-                    <div className="flex flex-row items-center space-x-2">
-                      <div className="size-[36px] rounded-md border bg-muted" />
-                      <Input type="file" {...field} />
+                    <div className="flex items-center space-x-2">
+                      {field.value ? (
+                        <>
+                          <div className="size-[36px] overflow-hidden rounded-md border bg-muted">
+                            <Image
+                              src={field.value}
+                              width={36}
+                              height={36}
+                              alt="Icon preview"
+                            />
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            onClick={() => form.setValue("icon", undefined)}
+                          >
+                            Remove
+                          </Button>
+                        </>
+                      ) : (
+                        <Input
+                          type="file"
+                          accept="image/png,image/x-icon"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const base64String = await fileToBase64(file);
+                            try {
+                              const blob = await uploadMutation.mutateAsync({
+                                filename: file.name,
+                                file: base64String,
+                              });
+                              if (blob?.url) {
+                                form.setValue("icon", blob.url as string);
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              toast.error("Upload failed");
+                            }
+                          }}
+                        />
+                      )}
                     </div>
                   </FormControl>
                   <FormMessage />
