@@ -22,6 +22,9 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: page } = useQuery(
+    trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
   const { data: statusReports, refetch } = useQuery(
     trpc.statusReport.list.queryOptions({ pageId: parseInt(id) })
   );
@@ -37,14 +40,14 @@ export default function Page() {
     })
   );
 
-  if (!statusReports || !monitors) return null;
+  if (!statusReports || !monitors || !page) return null;
 
   return (
     <SectionGroup>
       <Section>
         <SectionHeaderRow>
           <SectionHeader>
-            <SectionTitle>OpenStatus Status</SectionTitle>
+            <SectionTitle>{page.title}</SectionTitle>
             <SectionDescription>
               See our uptime history and status reports.
             </SectionDescription>
