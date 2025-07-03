@@ -63,15 +63,14 @@ export const columns: ColumnDef<Monitor>[] = [
     },
   },
   {
-    accessorKey: "status",
+    id: "status",
+    accessorFn: (row) => {
+      console.log(row);
+      return row.active ? row.status : "inactive";
+    },
     header: "Status",
     cell: ({ row }) => {
       const value = String(row.getValue("status"));
-      const active = Boolean(row.getValue("active"));
-
-      if (!active) {
-        return <div className="font-mono text-muted-foreground">inactive</div>;
-      }
 
       switch (value) {
         case "active":
@@ -83,6 +82,18 @@ export const columns: ColumnDef<Monitor>[] = [
         default:
           return <div className="font-mono text-muted-foreground">{value}</div>;
       }
+    },
+    filterFn: (row, _, value) => {
+      if (Array.isArray(value)) {
+        if (value.includes("inactive")) {
+          return !row.original.active;
+        }
+        if (value.includes("active")) {
+          return !!row.original.active && row.original.status === "active";
+        }
+        return value.includes(row.original.status);
+      }
+      return row.original.status === value;
     },
     enableSorting: false,
     enableHiding: false,

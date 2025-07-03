@@ -43,8 +43,8 @@ const icons = {
 export function Client() {
   const trpc = useTRPC();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
-  const [sorting, setSorting] = useState<SortingState>([]);
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const monitorsByType = {
@@ -76,12 +76,13 @@ export function Client() {
     enabled: tcpMonitors.length > 0,
   });
 
+  // TODO: ideally we read from the searchParamsCache and there is no layout shift
   useEffect(() => {
     if (searchParams.status) {
       setColumnFilters([{ id: "status", value: [searchParams.status] }]);
     }
-    if (searchParams.active) {
-      setColumnFilters([{ id: "active", value: [searchParams.active] }]);
+    if (searchParams.sort) {
+      setSorting([searchParams.sort]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -106,15 +107,10 @@ export function Client() {
           {metrics.map((metric) => {
             const statusArray = columnFilters.find((f) => f.id === "status")
               ?.value as string[] | undefined;
-            const activeArray = columnFilters.find((f) => f.id === "active")
-              ?.value as boolean[] | undefined;
 
             let isActive = false;
             if (metric.key === "p95") {
-              isActive = !!sorting.find((s) => s.id === "p99" && s.desc);
-            } else if (metric.key === "inactive") {
-              isActive =
-                Array.isArray(activeArray) && activeArray.includes(false);
+              isActive = !!sorting.find((s) => s.id === "p95" && s.desc);
             } else {
               isActive =
                 Array.isArray(statusArray) && statusArray.includes(metric.key);
@@ -130,21 +126,15 @@ export function Client() {
                 onClick={() => {
                   if (metric.key === "p95") {
                     if (sorting.length === 0 || !isActive) {
-                      setSorting([{ id: "p99", desc: true }]);
+                      setSearchParams({ sort: { id: "p95", desc: true } });
+                      setSorting([{ id: "p95", desc: true }]);
                     } else {
+                      setSearchParams({ sort: null });
                       setSorting([]);
-                    }
-                  } else if (metric.key === "inactive") {
-                    if (columnFilters.length === 0 || !isActive) {
-                      setSearchParams({ active: false, status: null });
-                      setColumnFilters([{ id: "active", value: [false] }]);
-                    } else {
-                      setSearchParams({ active: null });
-                      setColumnFilters([]);
                     }
                   } else {
                     if (columnFilters.length === 0 || !isActive) {
-                      setSearchParams({ status: metric.key, active: null });
+                      setSearchParams({ status: metric.key });
                       setColumnFilters([{ id: "status", value: [metric.key] }]);
                     } else {
                       setSearchParams({ status: null });

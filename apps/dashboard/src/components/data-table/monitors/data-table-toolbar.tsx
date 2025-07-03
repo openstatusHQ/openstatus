@@ -6,9 +6,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { RouterOutputs } from "@openstatus/api";
-import { globalCards, metricsGlobalCards } from "@/data/metrics.client";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 export interface MonitorDataTableToolbarProps {
@@ -31,18 +29,6 @@ export function MonitorDataTableToolbar({
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
-        {table.getColumn("status") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("status")}
-            title="Status"
-            options={globalCards
-              .filter((key) => key !== "p95")
-              .map((key) => ({
-                label: metricsGlobalCards[key].title,
-                value: key,
-              }))}
-          />
-        )}
         {isFiltered && (
           <Button
             variant="ghost"
@@ -54,7 +40,6 @@ export function MonitorDataTableToolbar({
           </Button>
         )}
       </div>
-      {/* <DataTableViewOptions table={table} /> */}
     </div>
   );
 }
