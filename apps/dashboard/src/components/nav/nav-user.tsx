@@ -51,8 +51,6 @@ export function NavUser() {
     avatar: data?.photoUrl ?? undefined,
   };
 
-  console.log({ theme });
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>

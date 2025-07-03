@@ -14,7 +14,7 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -26,6 +26,8 @@ import {
 } from "@/components/forms/form-card";
 import { config } from "@/data/notifiers.client";
 import { Button } from "@/components/ui/button";
+import { useQueryState, parseAsString } from "nuqs";
+import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 
 const schema = z.object({
   name: z.string(),
@@ -47,6 +49,8 @@ export function FormPagerDuty({
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
+  const [searchConfig] = useQueryState("config", parseAsString);
+  console.log(searchConfig);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -57,6 +61,17 @@ export function FormPagerDuty({
     },
   });
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (searchConfig) {
+      const data = PagerDutySchema.safeParse(searchConfig);
+      if (data.success) {
+        form.setValue("data", JSON.stringify(data.data));
+      } else {
+        toast.error("Invalid PagerDuty configuration");
+      }
+    }
+  }, [searchConfig, form]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -140,17 +155,13 @@ export function FormPagerDuty({
             name="data"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>URL</FormLabel>
+                <FormLabel>Config</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="..."
-                    disabled={!!defaultValues?.data}
-                    {...field}
-                  />
+                  <Input placeholder="..." disabled {...field} />
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
-                  The endpoint URL that is is being used.
+                  The PagerDuty configuration that is being used.
                 </FormDescription>
               </FormItem>
             )}

@@ -21,15 +21,18 @@ export function FormSheetNotifier({
   provider,
   onSubmit,
   monitors,
+  defaultOpen,
   ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   provider: FormValues["provider"];
   onSubmit?: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
+  defaultOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen ?? false);
   const Form = provider ? config[provider].form : undefined;
+
   return (
     <FormSheet open={open} onOpenChange={setOpen}>
       <FormSheetTrigger {...props} asChild>
