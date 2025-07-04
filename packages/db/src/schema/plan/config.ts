@@ -50,11 +50,11 @@ export const allPlans: Record<
     description: "Perfect for uptime monitoring",
     price: 30,
     limits: {
-      monitors: 5,
+      monitors: 10,
       "synthetic-checks": 100,
       periodicity: ["1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
-      "max-regions": 35,
+      "max-regions": 6,
       "data-retention": "3 months",
       "status-pages": 1,
       maintenance: true,
@@ -118,7 +118,7 @@ export const allPlans: Record<
     description: "Perfect for global synthetic monitoring",
     price: 100,
     limits: {
-      monitors: 15,
+      monitors: 100,
       "synthetic-checks": 300,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,

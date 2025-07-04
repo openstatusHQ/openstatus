@@ -56,6 +56,13 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     }
 
     if (input.regions) {
+      if (limits["max-regions"] < input.regions.length) {
+        throw new OpenStatusApiError({
+          code: "PAYMENT_REQUIRED",
+          message: "Upgrade for more regions",
+        });
+      }
+
       for (const region of input.regions) {
         if (!limits.regions.includes(region)) {
           throw new OpenStatusApiError({
@@ -73,8 +80,8 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           isNull(monitor.deletedAt),
-          eq(monitor.workspaceId, workspaceId),
-        ),
+          eq(monitor.workspaceId, workspaceId)
+        )
       )
       .get();
 

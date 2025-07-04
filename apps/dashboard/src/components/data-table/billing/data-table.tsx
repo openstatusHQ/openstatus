@@ -119,7 +119,7 @@ export function DataTable() {
               {features.map(({ value, label: featureLabel, monthly }) => (
                 <TableRow key={groupKey + value}>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-wrap">
                       {featureLabel}
                     </div>
                   </TableCell>
@@ -143,7 +143,7 @@ export function DataTable() {
                           .toString();
                       }
                       if (Array.isArray(limitValue) && limitValue.length > 0) {
-                        return limitValue[0];
+                        return limitValue.length;
                       }
                       return limitValue;
                     }

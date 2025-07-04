@@ -48,7 +48,7 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
         .select({ count: sql<number>`count(*)` })
         .from(monitor)
         .where(
-          and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
+          and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt))
         )
         .all()
     )[0].count;
@@ -64,6 +64,13 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more periodicity",
+      });
+    }
+
+    if (limits["max-regions"] < input.regions.length) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for more regions",
       });
     }
 

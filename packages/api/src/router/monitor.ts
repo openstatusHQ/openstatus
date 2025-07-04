@@ -1052,10 +1052,25 @@ export const monitorRouter = createTRPCRouter({
       ];
 
       const limits = ctx.workspace.limits;
+
       if (!limits.periodicity.includes(input.periodicity)) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Upgrade to check more often.",
+        });
+      }
+
+      if (limits["max-regions"] < input.regions.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You have reached the maximum number of regions.",
+        });
+      }
+
+      if (limits["regions"].some((r) => !input.regions.includes(r))) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this region.",
         });
       }
 

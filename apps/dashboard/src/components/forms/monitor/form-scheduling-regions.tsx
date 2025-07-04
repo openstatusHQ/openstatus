@@ -96,7 +96,11 @@ export function FormSchedulingRegions({
 
   if (!workspace) return null;
 
-  const limits = workspace.limits["regions"];
+  const allowedRegions = workspace.limits["regions"];
+  const maxRegions = workspace.limits["max-regions"];
+  const periodicity = workspace.limits.periodicity;
+
+  const isMaxed = watchRegions.length >= maxRegions;
 
   return (
     <Form {...form}>
@@ -125,9 +129,8 @@ export function FormSchedulingRegions({
                           field.onChange(PERIODICITY[value[0]]);
                         }}
                         className={cn(
-                          !workspace?.limits.periodicity.includes(
-                            watchPeriodicity
-                          ) && "[&_[data-slot=slider-range]]:bg-destructive"
+                          !periodicity.includes(watchPeriodicity) &&
+                            "[&_[data-slot=slider-range]]:bg-destructive"
                         )}
                       />
                       <span
@@ -165,7 +168,7 @@ export function FormSchedulingRegions({
                       {Object.entries(groupByContinent).map(
                         ([continent, r]) => {
                           const selected = r
-                            .filter((r) => limits.includes(r.code))
+                            .filter((r) => allowedRegions.includes(r.code))
                             .reduce((prev, curr) => {
                               return (
                                 prev +
@@ -174,7 +177,12 @@ export function FormSchedulingRegions({
                             }, 0);
                           const isAllSelected =
                             selected ===
-                            r.filter((r) => limits.includes(r.code)).length;
+                            r.filter((r) => allowedRegions.includes(r.code))
+                              .length;
+
+                          const disabled =
+                            r.length + watchRegions.length - selected >
+                            maxRegions;
 
                           return (
                             <div key={continent} className="space-y-2">
@@ -192,12 +200,13 @@ export function FormSchedulingRegions({
                                   className={cn(
                                     isAllSelected && "text-muted-foreground"
                                   )}
+                                  disabled={disabled}
                                   onClick={() => {
                                     if (!isAllSelected) {
                                       // Add all regions from this continent
                                       const newRegions = [...watchRegions];
                                       r.filter((r) =>
-                                        limits.includes(r.code)
+                                        allowedRegions.includes(r.code)
                                       ).forEach((region) => {
                                         if (!newRegions.includes(region.code)) {
                                           newRegions.push(region.code);
@@ -230,50 +239,57 @@ export function FormSchedulingRegions({
                                       key={region.code}
                                       control={form.control}
                                       name="regions"
-                                      render={({ field }) => (
-                                        <FormItem
-                                          key={region.code}
-                                          className="flex items-center"
-                                        >
-                                          <Checkbox
-                                            id={region.code}
-                                            checked={
-                                              field.value?.includes(
-                                                region.code
-                                              ) || false
-                                            }
-                                            disabled={
-                                              !limits.includes(region.code)
-                                            }
-                                            onCheckedChange={(checked) => {
-                                              console.log(checked, field.value);
-                                              if (checked) {
-                                                field.onChange([
-                                                  ...field.value,
-                                                  region.code,
-                                                ]);
-                                              } else {
-                                                field.onChange(
-                                                  field.value?.filter(
-                                                    (r) => r !== region.code
-                                                  )
-                                                );
-                                              }
-                                            }}
-                                          />
-                                          <FormLabel
-                                            htmlFor={region.code}
-                                            className="w-full truncate font-mono font-normal text-sm"
+                                      render={({ field }) => {
+                                        const checked = field.value?.includes(
+                                          region.code
+                                        );
+                                        const disabled = checked
+                                          ? false
+                                          : !allowedRegions.includes(
+                                              region.code
+                                            ) || isMaxed;
+                                        return (
+                                          <FormItem
+                                            key={region.code}
+                                            className="flex items-center"
                                           >
-                                            <span className="text-nowrap">
-                                              {region.code} {region.flag}
-                                            </span>
-                                            <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
-                                              {region.location}
-                                            </span>
-                                          </FormLabel>
-                                        </FormItem>
-                                      )}
+                                            <Checkbox
+                                              id={region.code}
+                                              checked={checked || false}
+                                              disabled={disabled}
+                                              onCheckedChange={(checked) => {
+                                                console.log(
+                                                  checked,
+                                                  field.value
+                                                );
+                                                if (checked) {
+                                                  field.onChange([
+                                                    ...field.value,
+                                                    region.code,
+                                                  ]);
+                                                } else {
+                                                  field.onChange(
+                                                    field.value?.filter(
+                                                      (r) => r !== region.code
+                                                    )
+                                                  );
+                                                }
+                                              }}
+                                            />
+                                            <FormLabel
+                                              htmlFor={region.code}
+                                              className="w-full truncate font-mono font-normal text-sm"
+                                            >
+                                              <span className="text-nowrap">
+                                                {region.code} {region.flag}
+                                              </span>
+                                              <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                                {region.location}
+                                              </span>
+                                            </FormLabel>
+                                          </FormItem>
+                                        );
+                                      }}
                                     />
                                   );
                                 })}
@@ -290,7 +306,13 @@ export function FormSchedulingRegions({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">Regions</Link> and{" "}
+              Your plan allows you to run{" "}
+              <span className="font-medium text-foreground">{maxRegions}</span>{" "}
+              out of{" "}
+              <span className="font-medium text-foreground">
+                {allowedRegions.length}
+              </span>{" "}
+              regions. Learn more about <Link href="#">Regions</Link> and{" "}
               <Link href="#">Periodicity</Link>.
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending}>
