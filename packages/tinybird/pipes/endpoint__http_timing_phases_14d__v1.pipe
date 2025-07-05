@@ -1,0 +1,38 @@
+NODE endpoint__http_timing_phases_14d__v1_0
+SQL >
+
+    %
+    SELECT
+        toStartOfInterval(time, INTERVAL {{ Int64(interval, 30) }} MINUTE) as h,
+        toUnixTimestamp64Milli(toDateTime64(h, 3)) as timestamp,
+            round(quantile(0.5)(dns)) as p50Dns,
+            round(quantile(0.5)(firstByte)) as p50Ttfb,
+            round(quantile(0.5)(transfer)) as p50Transfer,
+            round(quantile(0.5)(connect)) as p50Connect,
+            round(quantile(0.5)(tls)) as p50Tls,
+            round(quantile(0.75)(dns)) as p75Dns,
+            round(quantile(0.75)(firstByte)) as p75Ttfb,
+            round(quantile(0.75)(transfer)) as p75Transfer,
+            round(quantile(0.75)(connect)) as p75Connect,
+            round(quantile(0.75)(tls)) as p75Tls,
+            round(quantile(0.90)(dns)) as p90Dns,
+            round(quantile(0.90)(firstByte)) as p90Ttfb,
+            round(quantile(0.90)(transfer)) as p90Transfer,
+            round(quantile(0.90)(connect)) as p90Connect,
+            round(quantile(0.90)(tls)) as p90Tls,
+            round(quantile(0.95)(dns)) as p95Dns,
+            round(quantile(0.95)(firstByte)) as p95Ttfb,
+            round(quantile(0.95)(transfer)) as p95Transfer,
+            round(quantile(0.95)(connect)) as p95Connect,
+            round(quantile(0.95)(tls)) as p95Tls,
+            round(quantile(0.99)(dns)) as p99Dns,
+            round(quantile(0.99)(firstByte)) as p99Ttfb,
+            round(quantile(0.99)(transfer)) as p99Transfer,
+            round(quantile(0.99)(connect)) as p99Connect,
+            round(quantile(0.99)(tls)) as p99Tls
+    FROM mv__http_timing_phases_14d__v1
+    WHERE monitorId = {{ String(monitorId, '141', required=True) }}
+    GROUP BY h
+    ORDER BY h ASC
+
+

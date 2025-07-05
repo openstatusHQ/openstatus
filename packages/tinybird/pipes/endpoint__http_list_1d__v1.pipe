@@ -1,0 +1,12 @@
+TAGS "http"
+
+NODE endpoint
+SQL >
+
+    %
+        SELECT * FROM mv__http_1d__v1
+        WHERE
+            monitorId = {{ String(monitorId, '1', required=True) }}
+        ORDER BY cronTimestamp DESC
+
+

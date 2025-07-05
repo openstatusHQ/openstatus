@@ -1,0 +1,12 @@
+TAGS "tcp"
+
+NODE endpoint
+SQL >
+
+    %
+        SELECT * FROM mv__tcp_1d__v1
+        WHERE
+            monitorId = {{ String(monitorId, '4433', required=True) }}
+        ORDER BY time DESC
+
+

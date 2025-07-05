@@ -49,14 +49,11 @@ export const pricingTableConfig: Record<
         value: "multi-region",
         label: "Multi-region monitoring",
       },
-      { value: "max-regions", label: "Number of Regions" },
+      { value: "regions", label: "Total regions" },
+      { value: "max-regions", label: "Regions per monitor" },
       { value: "data-retention", label: "Data retention" },
+      { value: "response-logs", label: "Response logs" },
       { value: "otel", label: "OTel Exporter" },
-    ],
-  },
-  "synthetic-checks": {
-    label: "Synthetic API Checks",
-    features: [
       {
         value: "synthetic-checks",
         label: "Number of on-demand checks",
@@ -79,7 +76,7 @@ export const pricingTableConfig: Record<
         value: "monitor-values-visibility",
         label: "Toggle numbers visibility",
         description: renderChangelogDescription(
-          "status-page-monitor-values-visibility",
+          "status-page-monitor-values-visibility"
         ),
       },
       {
@@ -94,7 +91,7 @@ export const pricingTableConfig: Record<
         value: "password-protection",
         label: "Password-protected",
         description: renderChangelogDescription(
-          "password-protected-status-page",
+          "password-protected-status-page"
         ),
       },
     ],

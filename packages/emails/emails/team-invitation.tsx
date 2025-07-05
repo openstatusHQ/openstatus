@@ -13,10 +13,13 @@ import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
+const BASE_URL = "https://openstatus.dev/app/invite";
+
 export const TeamInvitationSchema = z.object({
   invitedBy: z.string(),
   workspaceName: z.string().optional().nullable(),
   token: z.string(),
+  baseUrl: z.string().optional(),
 });
 
 export type TeamInvitationProps = z.infer<typeof TeamInvitationSchema>;
@@ -25,6 +28,7 @@ const TeamInvitationEmail = ({
   token,
   workspaceName,
   invitedBy,
+  baseUrl = BASE_URL,
 }: TeamInvitationProps) => {
   return (
     <Html>
@@ -38,10 +42,7 @@ const TeamInvitationEmail = ({
           </Heading>
           <Text>
             Click here to access the workspace:{" "}
-            <Link
-              style={styles.link}
-              href={`https://openstatus.dev/app/invite?token=${token}`}
-            >
+            <Link style={styles.link} href={`${baseUrl}?token=${token}`}>
               accept invitation
             </Link>
           </Text>

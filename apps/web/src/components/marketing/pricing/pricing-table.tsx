@@ -61,7 +61,7 @@ export function PricingTable({
                 key={key}
                 className={cn(
                   "h-auto px-3 py-3 align-bottom text-foreground",
-                  key === "starter" ? "bg-muted/30" : "bg-background",
+                  key === "starter" ? "bg-muted/30" : "bg-background"
                 )}
               >
                 <p className="sticky top-0 mb-2 font-cal text-2xl">
@@ -167,7 +167,7 @@ export function PricingTable({
                               Array.isArray(limitValue) &&
                               limitValue.length > 0
                             ) {
-                              return limitValue[0];
+                              return limitValue.length;
                             }
                             return limitValue;
                           }
@@ -178,7 +178,7 @@ export function PricingTable({
                               key={key + value + _i}
                               className={cn(
                                 "p-3 font-mono",
-                                plan.key === "starter" && "bg-muted/30",
+                                plan.key === "starter" && "bg-muted/30"
                               )}
                             >
                               {renderContent()}
@@ -188,11 +188,11 @@ export function PricingTable({
                         })}
                       </TableRow>
                     );
-                  },
+                  }
                 )}
               </Fragment>
             );
-          },
+          }
         )}
       </TableBody>
     </Table>
