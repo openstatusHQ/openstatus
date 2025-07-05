@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, Cell, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
   type ChartConfig,
@@ -80,31 +80,9 @@ export function ChartBarUptime({
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
-        <Bar dataKey="ok" stackId="a" fill="var(--color-ok)" minPointSize={2}>
-          {refinedUptime.map((_, idx) => (
-            <Cell key={`ok-${idx}`} fill="var(--color-ok)" />
-          ))}
-        </Bar>
-
-        <Bar dataKey="error" stackId="a" fill="var(--color-error)">
-          {refinedUptime.map(({ total, error }, idx) => (
-            <Cell
-              key={`error-${idx}`}
-              fill="var(--color-error)"
-              height={error ? Math.max(3, (error / total) * 100) : 0}
-            />
-          ))}
-        </Bar>
-
-        <Bar dataKey="degraded" stackId="a" fill="var(--color-degraded)">
-          {refinedUptime.map(({ total, degraded }, idx) => (
-            <Cell
-              key={`degraded-${idx}`}
-              fill="var(--color-degraded)"
-              height={degraded ? Math.max(3, (degraded / total) * 100) : 0}
-            />
-          ))}
-        </Bar>
+        <Bar dataKey="ok" stackId="a" fill="var(--color-ok)" />
+        <Bar dataKey="error" stackId="a" fill="var(--color-error)" />
+        <Bar dataKey="degraded" stackId="a" fill="var(--color-degraded)" />
         <YAxis
           domain={["dataMin", "dataMax"]}
           tickLine={false}
