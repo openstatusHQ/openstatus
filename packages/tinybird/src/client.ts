@@ -1,7 +1,12 @@
 import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 import { flyRegions } from "../../db/src/schema/constants";
-import { headersSchema, timingSchema, triggers } from "./schema";
+import {
+  headersSchema,
+  timingSchema,
+  timingPhasesSchema,
+  triggers,
+} from "./schema";
 
 const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
@@ -34,7 +39,7 @@ export class OSTinybird {
     });
   }
 
-  public get httpListDaily() {
+  public get legacy_httpListDaily() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_list_1d__v0",
       parameters: z.object({
@@ -56,7 +61,30 @@ export class OSTinybird {
     });
   }
 
-  public get httpListWeekly() {
+  public get httpListDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_1d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("http").default("http"),
+        id: z.string().nullable(),
+        latency: z.number().int(),
+        statusCode: z.number().int().nullable(),
+        monitorId: z.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        timing: timingPhasesSchema,
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_httpListWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_list_7d__v0",
       parameters: z.object({
@@ -78,7 +106,30 @@ export class OSTinybird {
     });
   }
 
-  public get httpListBiweekly() {
+  public get httpListWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("http").default("http"),
+        id: z.string().nullable(),
+        latency: z.number().int(),
+        statusCode: z.number().int().nullable(),
+        monitorId: z.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        timing: timingPhasesSchema,
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_httpListBiweekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_list_14d__v0",
       parameters: z.object({
@@ -95,6 +146,29 @@ export class OSTinybird {
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
         workspaceId: z.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_14d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("http").default("http"),
+        id: z.string().nullable(),
+        latency: z.number().int(),
+        statusCode: z.number().int().nullable(),
+        monitorId: z.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        timing: timingPhasesSchema,
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -324,6 +398,37 @@ export class OSTinybird {
     });
   }
 
+  public get httpGetBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_get_14d__v0",
+      parameters: z.object({
+        id: z.string().nullable(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("http").default("http"),
+        latency: z.number().int(),
+        statusCode: z.number().int().nullable(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        monitorId: z.string(),
+        url: z.string().url(),
+        error: z.coerce.boolean(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        message: z.string().nullable(),
+        headers: headersSchema,
+        timing: timingPhasesSchema,
+        assertions: z.string().nullable(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        workspaceId: z.string(),
+        id: z.string().nullable(),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { cache: "force-cache" },
+    });
+  }
+
   public get httpGetMonthly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_get_30d__v0",
@@ -383,7 +488,7 @@ export class OSTinybird {
   }
   // TODO: add tcpChartDaily, tcpChartWeekly
 
-  public get tcpListDaily() {
+  public get legacy_tcpListDaily() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_list_1d__v0",
       parameters: z.object({
@@ -404,7 +509,28 @@ export class OSTinybird {
     });
   }
 
-  public get tcpListWeekly() {
+  public get tcpListDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_1d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        id: z.string().nullable(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_tcpListWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_list_7d__v0",
       parameters: z.object({
@@ -425,7 +551,28 @@ export class OSTinybird {
     });
   }
 
-  public get tcpListBiweekly() {
+  public get tcpListWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        id: z.string().nullable(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_tcpListBiweekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_list_14d__v0",
       parameters: z.object({
@@ -441,6 +588,27 @@ export class OSTinybird {
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
         workspaceId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_14d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        id: z.string().nullable(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
     });
@@ -667,6 +835,31 @@ export class OSTinybird {
           revalidate: PUBLIC_CACHE,
         },
       },
+    });
+  }
+
+  public get tcpGetBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_get_14d__v0",
+      parameters: z.object({
+        id: z.string().nullable(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 

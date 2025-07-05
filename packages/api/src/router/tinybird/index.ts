@@ -118,12 +118,12 @@ function getStatusProcedure(period: "7d" | "45d", type: Type) {
   }
 }
 
-function getGetProcedure(period: "30d", type: Type) {
+function getGetProcedure(period: "14d", type: Type) {
   switch (period) {
-    case "30d":
-      return type === "http" ? tb.httpGetMonthly : tb.tcpGetMonthly;
+    case "14d":
+      return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
     default:
-      return type === "http" ? tb.httpGetMonthly : tb.tcpGetMonthly;
+      return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
   }
 }
 
@@ -164,7 +164,6 @@ export const tinybirdRouter = createTRPCRouter({
       z.object({
         monitorId: z.string(),
         period: z.enum(periods),
-        type: z.enum(types).default("http"),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
       })
@@ -186,7 +185,10 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      const procedure = getListProcedure(opts.input.period, opts.input.type);
+      const procedure = getListProcedure(
+        opts.input.period,
+        _monitor.jobType as "http" | "tcp"
+      );
       return await procedure(opts.input);
     }),
 
@@ -403,11 +405,9 @@ export const tinybirdRouter = createTRPCRouter({
   get: protectedProcedure
     .input(
       z.object({
+        id: z.string().nullable(),
         monitorId: z.string(),
-        period: z.enum(["30d"]),
-        type: z.enum(types).default("http"),
-        region: z.enum(flyRegions).optional(),
-        cronTimestamp: z.number().int().optional(),
+        period: z.enum(["14d"]).default("14d"),
       })
     )
     .query(async (opts) => {
@@ -427,7 +427,10 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      const procedure = getGetProcedure(opts.input.period, opts.input.type);
+      const procedure = getGetProcedure(
+        opts.input.period,
+        _monitor.jobType as "http" | "tcp"
+      );
       return await procedure(opts.input);
     }),
 

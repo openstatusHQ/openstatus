@@ -1067,7 +1067,14 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      if (limits["regions"].some((r) => !input.regions.includes(r))) {
+      console.log(input.regions, limits["regions"]);
+
+      if (
+        input.regions.length > 0 &&
+        !input.regions.every((r) =>
+          limits["regions"].includes(r as (typeof limits)["regions"][number])
+        )
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You don't have access to this region.",

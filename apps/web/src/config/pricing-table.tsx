@@ -49,8 +49,10 @@ export const pricingTableConfig: Record<
         value: "multi-region",
         label: "Multi-region monitoring",
       },
-      { value: "max-regions", label: "Number of Regions" },
+      { value: "regions", label: "Total regions" },
+      { value: "max-regions", label: "Regions per monitor" },
       { value: "data-retention", label: "Data retention" },
+      { value: "response-logs", label: "Response logs" },
       { value: "otel", label: "OTel Exporter" },
       {
         value: "synthetic-checks",

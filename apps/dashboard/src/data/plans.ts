@@ -35,6 +35,7 @@ export const config: Record<
       { value: "regions", label: "Total regions" },
       { value: "max-regions", label: "Regions per monitor" },
       { value: "data-retention", label: "Data retention" },
+      { value: "response-logs", label: "Response Logs" },
       { value: "otel", label: "OTel Exporter" },
       {
         value: "synthetic-checks",

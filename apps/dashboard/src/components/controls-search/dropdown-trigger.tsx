@@ -13,33 +13,33 @@ import {
 import React from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { STATUS } from "@/data/metrics.client";
+import { TRIGGER } from "@/data/metrics.client";
 
-const parseStatus = parseAsStringLiteral(STATUS);
+const parseTrigger = parseAsStringLiteral(TRIGGER);
 
-export function DropdownStatus() {
-  const [status, setStatus] = useQueryState("status", parseStatus);
+export function DropdownTrigger() {
+  const [trigger, setTrigger] = useQueryState("trigger", parseTrigger);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className="capitalize">
-          {status ?? "All Status"}
+          {trigger ?? "All Trigger"}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
-            Request Status
+            Trigger
           </DropdownMenuLabel>
-          {STATUS.map((item) => (
+          {TRIGGER.map((item) => (
             <DropdownMenuItem
               key={item}
-              onSelect={() => setStatus(item)}
+              onSelect={() => setTrigger(item)}
               className={cn("capitalize")}
             >
               {item}
-              {status === item ? <Check className="ml-auto shrink-0" /> : null}
+              {trigger === item ? <Check className="ml-auto shrink-0" /> : null}
             </DropdownMenuItem>
           ))}
         </DropdownMenuGroup>

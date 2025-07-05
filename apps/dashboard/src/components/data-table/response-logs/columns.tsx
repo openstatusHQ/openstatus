@@ -14,31 +14,32 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ResponseLog } from "@/data/response-logs";
-import { statusCodes } from "@/data/status-codes";
+import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { cn } from "@/lib/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";
+import type { RouterOutputs } from "@openstatus/api";
+import { flyRegionsDict } from "@openstatus/utils";
 
-const icons = {
-  scheduled: Clock,
-  "on-demand": Workflow,
-};
+type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
 
 export const columns: ColumnDef<ResponseLog>[] = [
   {
-    accessorKey: "error",
+    accessorKey: "requestStatus",
     header: () => null,
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("error");
-      if (typeof value === "boolean") {
-        if (value) {
-          return <div className="h-2.5 w-2.5 rounded-[2px] bg-destructive" />;
-        }
-        return <div className="h-2.5 w-2.5 rounded-[2px] bg-muted" />;
+      const value = row.getValue("requestStatus");
+      if (value === "error") {
+        return <div className="h-2.5 w-2.5 rounded-[2px] bg-destructive" />;
+      }
+      if (value === "degraded") {
+        return <div className="h-2.5 w-2.5 rounded-[2px] bg-warning" />;
+      }
+      if (value === "success") {
+        return <div className="h-2.5 w-2.5 rounded-[2px] bg-success" />;
       }
       return <div className="text-muted-foreground">-</div>;
     },
@@ -58,14 +59,20 @@ export const columns: ColumnDef<ResponseLog>[] = [
     },
   },
   {
-    accessorKey: "status",
+    accessorKey: "statusCode",
     header: "Status",
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("status");
-      const status = statusCodes.find((s) => s.code === value);
-      return <TableCellNumber value={value} className={status?.text} />;
+      const log = row.original;
+      if (log.type === "http") {
+        const value = log.statusCode;
+        const variant = getStatusCodeVariant(value);
+        return (
+          <TableCellNumber value={value} className={textColors[variant]} />
+        );
+      }
+      return <div className="text-muted-foreground">-</div>;
     },
   },
   {
@@ -80,8 +87,19 @@ export const columns: ColumnDef<ResponseLog>[] = [
   {
     accessorKey: "region",
     header: "Region",
+    cell: ({ row }) => {
+      const value = row.getValue("region");
+
+      if (typeof value !== "string") {
+        return <div className="text-muted-foreground">-</div>;
+      }
+
+      const regionConfig = flyRegionsDict[value as keyof typeof flyRegionsDict];
+      return regionConfig.location;
+    },
     enableSorting: false,
     enableHiding: false,
+    filterFn: "arrIncludesSome",
     meta: {
       cellClassName: "text-muted-foreground font-mono",
     },
@@ -90,19 +108,23 @@ export const columns: ColumnDef<ResponseLog>[] = [
     accessorKey: "timing",
     header: "Timing",
     cell: ({ row }) => {
-      const value = row.getValue("timing") as ResponseLog["timing"];
-      return <HoverCardTiming timing={value} latency={row.original.latency} />;
+      const log = row.original;
+      if (log.type === "http" && log.timing) {
+        return <HoverCardTiming timing={log.timing} latency={log.latency} />;
+      }
+      return <div className="text-muted-foreground">-</div>;
     },
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: "type",
-    header: "Type",
+    accessorKey: "trigger",
+    header: "Trigger",
     cell: ({ row }) => {
-      const value = row.getValue("type");
-      if (value === "scheduled" || value === "on-demand") {
-        const Icon = icons[value];
+      const value = row.getValue("trigger");
+      if (value === "cron" || value === "api") {
+        const Icon = value === "cron" ? Clock : Workflow;
+        const label = value === "cron" ? "Scheduled" : "API";
         return (
           <TooltipProvider>
             <Tooltip>
@@ -110,7 +132,7 @@ export const columns: ColumnDef<ResponseLog>[] = [
                 <Icon className="size-3 text-muted-foreground" />
               </TooltipTrigger>
               <TooltipContent side="right">
-                <p className="capitalize">{value}</p>
+                <p>{label}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -131,8 +153,8 @@ function HoverCardTiming({
   timing,
   latency,
 }: {
-  timing: ResponseLog["timing"];
-  latency: ResponseLog["latency"];
+  timing: NonNullable<Extract<ResponseLog, { type: "http" }>["timing"]>;
+  latency: number;
 }) {
   return (
     <HoverCard openDelay={50} closeDelay={50}>
@@ -167,8 +189,8 @@ function HoverCardTimingContent({
   timing,
   latency,
 }: {
-  timing: ResponseLog["timing"];
-  latency: ResponseLog["latency"];
+  timing: NonNullable<Extract<ResponseLog, { type: "http" }>["timing"]>;
+  latency: number;
 }) {
   return (
     <div className="flex flex-col gap-1">

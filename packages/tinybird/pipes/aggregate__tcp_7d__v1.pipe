@@ -1,23 +1,22 @@
-TAGS "http"
+TAGS "tcp"
 
 NODE aggregate
 SQL >
 
     SELECT
         toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
-        id,
         latency,
+        error,
         region,
         trigger,
-        statusCode,
         timestamp,
         cronTimestamp,
         monitorId,
         requestStatus,
-        timing
-    FROM ping_response__v8
+        id
+    FROM tcp_response__v0
 
 TYPE materialized
-DATASOURCE mv__http_1d__v1
+DATASOURCE mv__tcp_7d__v1
 
 

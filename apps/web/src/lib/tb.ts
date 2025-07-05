@@ -19,22 +19,22 @@ export function prepareListByPeriod(period: Period, type: Type = "http") {
   switch (period) {
     case "1d": {
       const getData = {
-        http: tb.httpListDaily,
-        tcp: tb.tcpListDaily,
+        http: tb.legacy_httpListDaily,
+        tcp: tb.legacy_tcpListDaily,
       } as const;
       return { getData: getData[type] };
     }
     case "7d": {
       const getData = {
-        http: tb.httpListWeekly,
-        tcp: tb.tcpListWeekly,
+        http: tb.legacy_httpListWeekly,
+        tcp: tb.legacy_tcpListWeekly,
       } as const;
       return { getData: getData[type] };
     }
     case "14d": {
       const getData = {
-        http: tb.httpListBiweekly,
-        tcp: tb.tcpListBiweekly,
+        http: tb.legacy_httpListBiweekly,
+        tcp: tb.legacy_tcpListBiweekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -83,7 +83,7 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
 
 export function prepareMetricByRegionByPeriod(
   period: Period,
-  type: Type = "http",
+  type: Type = "http"
 ) {
   switch (period) {
     case "1d": {
@@ -119,7 +119,7 @@ export function prepareMetricByRegionByPeriod(
 
 export function prepareMetricByIntervalByPeriod(
   period: Period,
-  type: Type = "http",
+  type: Type = "http"
 ) {
   switch (period) {
     case "1d": {
@@ -155,7 +155,7 @@ export function prepareMetricByIntervalByPeriod(
 
 export function prepareStatusByPeriod(
   period: "7d" | "45d",
-  type: Type = "http",
+  type: Type = "http"
 ) {
   switch (period) {
     case "7d": {

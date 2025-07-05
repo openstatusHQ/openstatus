@@ -1,0 +1,294 @@
+"use client";
+
+import {
+  DataTableSheet,
+  DataTableSheetContent,
+  DataTableSheetFooter,
+  DataTableSheetHeader,
+  DataTableSheetTitle,
+} from "@/components/data-table/data-table-sheet";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Braces, Check, Copy, TableProperties } from "lucide-react";
+import type { RouterOutputs } from "@openstatus/api";
+import { getStatusCodeVariant, textColors } from "@/data/status-codes";
+import { flyRegionsDict } from "@openstatus/utils";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+
+type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
+
+export function Sheet({
+  data,
+  onClose,
+}: {
+  data: ResponseLog | null;
+  onClose: () => void;
+}) {
+  const { copy, isCopied } = useCopyToClipboard();
+  if (!data) return null;
+
+  const regionConfig = flyRegionsDict[data.region];
+  return (
+    <DataTableSheet defaultOpen onOpenChange={(open) => !open && onClose()}>
+      <DataTableSheetContent>
+        <DataTableSheetHeader className="px-2">
+          <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
+        </DataTableSheetHeader>
+        <Table className="table-fixed">
+          <TableBody>
+            <TableRow>
+              <TableHead colSpan={2}>Request</TableHead>
+            </TableRow>
+            <TableRow className="[&>:not(:last-child)]:border-r">
+              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                Result
+              </TableHead>
+              {/* TODO: add colored square like list (see columns) */}
+              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn("h-2.5 w-2.5 rounded-[2px] bg-muted", {
+                      "bg-destructive": data?.requestStatus === "error",
+                      "bg-warning": data?.requestStatus === "degraded",
+                      "bg-success": data?.requestStatus === "success",
+                    })}
+                  />
+                  <div className="capitalize">
+                    {data?.requestStatus ?? "unknown"}
+                  </div>
+                </div>
+              </TableCell>
+            </TableRow>
+            <TableRow className="[&>:not(:last-child)]:border-r">
+              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                ID
+              </TableHead>
+              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                {data.id}
+              </TableCell>
+            </TableRow>
+            <TableRow className="[&>:not(:last-child)]:border-r">
+              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                Timestamp
+              </TableHead>
+              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                <TableCellDate
+                  value={new Date(data.cronTimestamp)}
+                  className="text-foreground"
+                />
+              </TableCell>
+            </TableRow>
+            {data.type === "http" ? (
+              <TableRow className="[&>:not(:last-child)]:border-r">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                  URL
+                </TableHead>
+                <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                  {data.url}
+                </TableCell>
+              </TableRow>
+            ) : null}
+            {data.type === "tcp" ? (
+              <TableRow className="[&>:not(:last-child)]:border-r">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                  URI
+                </TableHead>
+                <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                  {data.uri}
+                </TableCell>
+              </TableRow>
+            ) : null}
+            {/* TODO: store method in TB 🤦 */}
+            {/* <TableRow className="[&>:not(:last-child)]:border-r">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                  Method
+                </TableHead>
+                <TableCell className="whitespace-normal font-mono">
+                  {data?.method}
+                </TableCell>
+              </TableRow> */}
+            {data.type === "http" ? (
+              <TableRow className="[&>:not(:last-child)]:border-r">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                  Status
+                </TableHead>
+                <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                  <TableCellNumber
+                    value={data.statusCode}
+                    className={
+                      textColors[getStatusCodeVariant(data.statusCode)]
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            ) : null}
+            <TableRow className="[&>:not(:last-child)]:border-r">
+              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                Latency
+              </TableHead>
+              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                <TableCellNumber value={data?.latency} unit="ms" />
+              </TableCell>
+            </TableRow>
+            <TableRow className="[&>:not(:last-child)]:border-r">
+              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                Region
+              </TableHead>
+              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                {regionConfig?.flag} {regionConfig?.code}{" "}
+                <span className="text-muted-foreground">
+                  {regionConfig?.location}
+                </span>
+              </TableCell>
+            </TableRow>
+            <TableRow className="[&>:not(:last-child)]:border-r">
+              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                Trigger
+              </TableHead>
+              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                {data?.trigger}
+              </TableCell>
+            </TableRow>
+            {data.type === "http" && data.headers ? (
+              <>
+                <TableRow>
+                  <TableHead colSpan={2}>Headers</TableHead>
+                </TableRow>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={2} className="p-0">
+                    <Tabs defaultValue="table" className="w-full gap-0">
+                      <TabsList className="w-full justify-start rounded-none border-b px-2">
+                        <TabsTrigger value="table">
+                          <TableProperties className="size-3 rotate-180" />
+                        </TabsTrigger>
+                        <TabsTrigger value="raw">
+                          <Braces className="size-3" />
+                        </TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="table">
+                        <Table className="table-fixed">
+                          <TableBody>
+                            {Object.entries(data?.headers ?? {}).map(
+                              ([key, value]) => (
+                                <TableRow
+                                  key={key}
+                                  className="[&>:not(:last-child)]:border-r"
+                                >
+                                  <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                                    {key}
+                                  </TableHead>
+                                  <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                                    {value}
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TabsContent>
+                      <TabsContent value="raw">
+                        <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm overflow-x-auto max-w-full">
+                          {JSON.stringify(data?.headers, null, 2)}
+                        </pre>
+                      </TabsContent>
+                    </Tabs>
+                  </TableCell>
+                </TableRow>
+              </>
+            ) : null}
+            {data.type === "http" && data.timing ? (
+              <>
+                <TableRow>
+                  <TableHead colSpan={2}>Timing</TableHead>
+                </TableRow>
+                {Object.entries(data?.timing ?? {}).map(
+                  ([key, value], index) => (
+                    <TableRow
+                      key={key}
+                      className="[&>:not(:last-child)]:border-r"
+                    >
+                      <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                        <span className="uppercase">{key}</span>
+                      </TableHead>
+                      <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1">
+                            <span className="text-muted-foreground">
+                              {new Intl.NumberFormat("en-US", {
+                                maximumFractionDigits: 2,
+                              }).format((value / (data?.latency || 100)) * 100)}
+                              %
+                            </span>
+                          </div>
+                          <div className="flex w-full flex-1 items-center justify-end gap-2">
+                            <span className="text-muted-foreground">
+                              {value}ms
+                            </span>
+                            <div
+                              className="h-4"
+                              style={{
+                                width: `${(value / (data?.latency || 100)) * 100}%`,
+                                backgroundColor: `var(--chart-${index + 1})`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </>
+            ) : null}
+            {/* TODO: add assertions */}
+            {data.type === "http" && data?.message && (
+              <>
+                <TableRow>
+                  <TableHead colSpan={2}>Message</TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={2} className="p-0">
+                    <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm overflow-x-auto max-w-full">
+                      {data?.message}
+                    </pre>
+                  </TableCell>
+                </TableRow>
+              </>
+            )}
+            {/* TODO: add assertions */}
+          </TableBody>
+        </Table>
+        <Separator />
+        <DataTableSheetFooter>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const BASE_URL =
+                process.env.NODE_ENV === "development"
+                  ? "http://localhost:3000"
+                  : "https://app.openstatus.dev";
+              const url = `${BASE_URL}/monitors/${data.monitorId}/logs?selected=${data.id}`;
+
+              copy(url, {
+                withToast: false,
+              });
+            }}
+          >
+            {isCopied ? "Copied" : "Copy"}
+            {isCopied ? <Check /> : <Copy />}
+          </Button>
+        </DataTableSheetFooter>
+      </DataTableSheetContent>
+    </DataTableSheet>
+  );
+}

@@ -1,17 +1,16 @@
-# Data Source created from Pipe 'aggregate__http_1d__v1'
+# Data Source created from Pipe 'aggregate__tcp_1d__v1'
 
 SCHEMA >
     `time` DateTime,
-    `id` Nullable(String),
     `latency` Int64,
-    `requestStatus` Nullable(String),
-    `region` LowCardinality(String),
+    `error` Int16,
+    `region` String,
     `trigger` Nullable(String),
-    `statusCode` Nullable(Int16),
     `timestamp` Int64,
     `cronTimestamp` Int64,
-    `monitorId` String,
-    `timing` Nullable(String)
+    `monitorId` Int32,
+    `requestStatus` Nullable(String),
+    `id` Nullable(String)
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

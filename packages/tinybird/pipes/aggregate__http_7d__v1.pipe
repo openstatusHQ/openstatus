@@ -1,5 +1,3 @@
-TAGS "http"
-
 NODE aggregate
 SQL >
 
@@ -18,6 +16,6 @@ SQL >
     FROM ping_response__v8
 
 TYPE materialized
-DATASOURCE mv__http_1d__v1
+DATASOURCE mv__http_7d__v1
 
 

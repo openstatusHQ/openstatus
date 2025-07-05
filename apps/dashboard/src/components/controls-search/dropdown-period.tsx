@@ -30,7 +30,7 @@ export const PERIOD_VALUES = [
   },
 ] satisfies { value: (typeof PERIODS)[number]; label: string }[];
 
-const parsePeriod = parseAsStringLiteral(PERIODS).withDefault("7d");
+const parsePeriod = parseAsStringLiteral(PERIODS).withDefault("1d");
 
 export function DropdownPeriod() {
   const [period, setPeriod] = useQueryState("period", parsePeriod);
