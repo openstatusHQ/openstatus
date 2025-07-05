@@ -66,6 +66,8 @@ export class OSTinybird {
       pipe: "endpoint__http_list_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
       }),
       data: z.object({
         type: z.literal("http").default("http"),
@@ -111,6 +113,8 @@ export class OSTinybird {
       pipe: "endpoint__http_list_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
       }),
       data: z.object({
         type: z.literal("http").default("http"),
@@ -156,6 +160,8 @@ export class OSTinybird {
       pipe: "endpoint__http_list_14d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
       }),
       data: z.object({
         type: z.literal("http").default("http"),
@@ -514,6 +520,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_list_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
       }),
       data: z.object({
         type: z.literal("tcp").default("tcp"),
@@ -556,6 +564,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_list_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
       }),
       data: z.object({
         type: z.literal("tcp").default("tcp"),
@@ -598,6 +608,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_list_14d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
       }),
       data: z.object({
         type: z.literal("tcp").default("tcp"),

@@ -10,7 +10,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
-// import DatePicker from "@/components/date-picker";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import type { RegionMetric } from "@/data/region-metrics";

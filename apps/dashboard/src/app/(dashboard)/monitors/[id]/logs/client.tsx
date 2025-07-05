@@ -20,7 +20,6 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
-import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
 import { CommandRegion } from "@/components/controls-search/command-region";
 import { DropdownStatus } from "@/components/controls-search/dropdown-status";
 import { ButtonReset } from "@/components/controls-search/button-reset";
@@ -33,6 +32,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { DropdownTrigger } from "@/components/controls-search/dropdown-trigger";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { PopoverDate } from "@/components/controls-search/popover-date";
 
 // TODO: TCP logs
 
@@ -72,7 +72,7 @@ const exampleLogs: ResponseLog[] = Array.from({ length: 10 }).map((_, i) => ({
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
-  const [{ period, regions, status, selected, trigger }, setSearchParams] =
+  const [{ regions, status, selected, trigger, from, to }, setSearchParams] =
     useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitor } = useQuery(
@@ -80,7 +80,7 @@ export function Client() {
   );
   const enabled = workspace && workspace?.plan !== "free";
   const { data: _logs, isLoading } = useQuery({
-    ...trpc.tinybird.list.queryOptions({ monitorId: id, period }),
+    ...trpc.tinybird.list.queryOptions({ monitorId: id, from, to }),
     enabled,
   });
   const { data: _log } = useQuery({
@@ -98,7 +98,7 @@ export function Client() {
           <SectionDescription>{monitor.url}</SectionDescription>
         </SectionHeader>
         <div className="flex items-center flex-wrap gap-2">
-          <DropdownPeriod />
+          <PopoverDate />
           {monitor.jobType === "http" ? <DropdownStatus /> : null}
           <DropdownTrigger />
           <CommandRegion regions={monitor.regions} />

@@ -8,6 +8,7 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { and, db, eq, inArray, SQL } from "@openstatus/db";
 import { TRPCError } from "@trpc/server";
 import { monitor } from "@openstatus/db/src/schema";
+import { calculatePeriod } from "./utils";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
@@ -163,9 +164,10 @@ export const tinybirdRouter = createTRPCRouter({
     .input(
       z.object({
         monitorId: z.string(),
-        period: z.enum(periods),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
       })
     )
     .query(async (opts) => {
@@ -185,11 +187,17 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
+      const period = calculatePeriod(opts.input.from, opts.input.to);
+
       const procedure = getListProcedure(
-        opts.input.period,
+        period,
         _monitor.jobType as "http" | "tcp"
       );
-      return await procedure(opts.input);
+      return await procedure({
+        ...opts.input,
+        fromDate: opts.input.from?.getTime() ?? undefined,
+        toDate: opts.input.to?.getTime(),
+      });
     }),
 
   uptime: protectedProcedure
