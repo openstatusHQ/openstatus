@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import React from "react";
 import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { INTERVALS } from "@/data/metrics.client";
 
 const MAPPING = {
@@ -34,7 +33,7 @@ export function DropdownInterval() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="capitalize">
+        <Button variant="outline" size="sm">
           {MAPPING[interval]}
         </Button>
       </DropdownMenuTrigger>
@@ -44,11 +43,7 @@ export function DropdownInterval() {
             Resolution
           </DropdownMenuLabel>
           {INTERVALS.map((item) => (
-            <DropdownMenuItem
-              key={item}
-              onSelect={() => setInterval(item)}
-              className={cn("capitalize")}
-            >
+            <DropdownMenuItem key={item} onSelect={() => setInterval(item)}>
               {MAPPING[item]}
               {interval === item ? (
                 <Check className="ml-auto shrink-0" />

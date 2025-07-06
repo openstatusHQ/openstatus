@@ -10,7 +10,7 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { parseAsStringLiteral, parseAsArrayOf, useQueryState } from "nuqs";
 import React from "react";
 import { groupByContinent } from "@openstatus/utils";
@@ -21,6 +21,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { REGIONS } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import {
+  BillingOverlay,
+  BillingOverlayButton,
+  BillingOverlayDescription,
+} from "@/components/content/billing-overlay";
+import { Link } from "@/components/common/link";
 
 export const parseRegions = (regions: (typeof REGIONS)[number][]) =>
   parseAsArrayOf(
@@ -32,10 +40,14 @@ export function CommandRegion({
 }: {
   regions: (typeof REGIONS)[number][];
 }) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const [selectedRegions, setSelectedRegions] = useQueryState(
     "regions",
     parseRegions(regions)
   );
+
+  const limited = workspace?.plan === "free";
 
   return (
     <Popover>
@@ -46,9 +58,12 @@ export function CommandRegion({
             : `${selectedRegions.length} Regions`}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[200px] p-0">
+      <PopoverContent
+        align="start"
+        className="w-[200px] p-0 relative overflow-hidden"
+      >
         <Command>
-          <CommandInput placeholder="Search region..." />
+          <CommandInput placeholder="Search region..." disabled={limited} />
           <CommandList>
             <CommandGroup forceMount>
               <CommandItem
@@ -72,6 +87,7 @@ export function CommandRegion({
                   }
                 }}
                 value="select-all"
+                disabled={limited}
               >
                 Toggle selection
               </CommandItem>
@@ -90,6 +106,7 @@ export function CommandRegion({
                   <CommandGroup key={continent} heading={continent}>
                     {allowedRegions.map((region) => (
                       <CommandItem
+                        disabled={limited}
                         key={region.code}
                         value={region.code}
                         keywords={[
@@ -128,6 +145,17 @@ export function CommandRegion({
             <CommandEmpty>No region found.</CommandEmpty>
           </CommandList>
         </Command>
+        <BillingOverlay className="to-70%">
+          <BillingOverlayButton asChild>
+            <Link href="/settings/billing">
+              <Lock />
+              Upgrade
+            </Link>
+          </BillingOverlayButton>
+          <BillingOverlayDescription>
+            Filter by region is only available on paid plans.
+          </BillingOverlayDescription>
+        </BillingOverlay>
       </PopoverContent>
     </Popover>
   );

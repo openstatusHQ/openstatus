@@ -264,6 +264,10 @@ export const tinybirdRouter = createTRPCRouter({
         where: and(...whereConditions),
       });
 
+      if (opts.ctx.workspace.plan === "free") {
+        opts.input.regions = undefined;
+      }
+
       if (!_monitor) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -370,6 +374,10 @@ export const tinybirdRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Monitor not found",
         });
+      }
+
+      if (opts.ctx.workspace.plan === "free") {
+        opts.input.regions = undefined;
       }
 
       const procedure = getMetricsRegionsProcedure(
@@ -480,6 +488,10 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
+      if (opts.ctx.workspace.plan === "free") {
+        opts.input.regions = undefined;
+      }
+
       const procedure = getMetricsLatencyProcedure(
         opts.input.period,
         opts.input.type
@@ -498,6 +510,10 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
+      if (opts.ctx.workspace.plan === "free") {
+        opts.input.regions = undefined;
+      }
+
       const procedure = getTimingPhasesProcedure(opts.input.type);
 
       if (!procedure) {
