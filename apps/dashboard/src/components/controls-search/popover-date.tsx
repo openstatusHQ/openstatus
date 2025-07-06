@@ -7,9 +7,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/date-picker";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { formatDateRange } from "@/lib/formatter";
+import { DateRange } from "react-day-picker";
 
 export function PopoverDate() {
+  const [open, setOpen] = useState(false);
   const today = useRef(new Date());
   const [from, setFrom] = useQueryState(
     "from",
@@ -19,8 +22,9 @@ export function PopoverDate() {
     "to",
     parseAsIsoDateTime.withDefault(endOfDay(today.current))
   );
+  const [range, setRange] = useState<DateRange>({ from, to });
 
-  const periods = [
+  const presets = [
     {
       id: "today",
       label: "Today",
@@ -54,6 +58,14 @@ export function PopoverDate() {
       },
     },
     {
+      id: "last24Hours",
+      label: "Last 24 hours",
+      values: {
+        from: subHours(today.current, 23),
+        to: today.current,
+      },
+    },
+    {
       id: "last7Days",
       label: "Last 7 days",
       values: {
@@ -71,29 +83,31 @@ export function PopoverDate() {
     },
   ];
 
-  const selected = periods.find((period) => {
+  //   instead use `range` state
+  const selected = presets.find((period) => {
     return (
       from.getTime() === period.values.from.getTime() &&
       to.getTime() === period.values.to.getTime()
     );
   });
 
+  useEffect(() => {
+    if (!open) {
+      setFrom(range.from ?? null);
+      setTo(range.to ?? null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm">
-          {selected?.label ?? "Select Date"}
+          {selected?.label ?? formatDateRange(from, to)}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <DatePicker
-          actions={periods}
-          range={{ from, to }}
-          onSelect={(range) => {
-            setFrom(range.from ?? null);
-            setTo(range.to ?? null);
-          }}
-        />
+        <DatePicker presets={presets} range={range} onSelect={setRange} />
       </PopoverContent>
     </Popover>
   );
