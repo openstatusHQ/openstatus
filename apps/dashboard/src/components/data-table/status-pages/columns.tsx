@@ -46,6 +46,16 @@ export const columns: ColumnDef<StatusPage>[] = [
   {
     accessorKey: "slug",
     header: "Slug",
+    cell: ({ row }) => {
+      const domain = row.getValue("domain");
+      const slug = row.getValue("slug");
+      return (
+        <TableCellLink
+          href={domain ? `https://${domain}` : `https://${slug}.openstatus.dev`}
+          value={slug}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
     meta: {

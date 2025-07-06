@@ -1,6 +1,6 @@
 import { Link } from "@/components/common/link";
 import { cn } from "@/lib/utils";
-import { ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight } from "lucide-react";
 
 export function TableCellLink({
   value,
@@ -10,16 +10,23 @@ export function TableCellLink({
   value: unknown;
 }) {
   if (typeof value === "string") {
+    const isExternal = props.href?.toString().startsWith("http");
+    const externalProps = isExternal
+      ? { target: "_blank", rel: "noopener noreferrer" }
+      : {};
+    const Icon = isExternal ? ArrowUpRight : ChevronRight;
     return (
       <Link
         className={cn(
-          "group/link flex w-full items-center justify-between gap-1",
-          className,
+          "group/link flex w-full items-center gap-2",
+          !isExternal && "justify-between",
+          className
         )}
+        {...externalProps}
         {...props}
       >
-        <span className="flex-1 truncate">{value}</span>
-        <ChevronRight className="size-3 flex-shrink-0 text-muted-foreground group-hover/link:text-foreground" />
+        <span className="truncate">{value}</span>
+        <Icon className="size-4 flex-shrink-0 text-muted-foreground group-hover/link:text-foreground" />
       </Link>
     );
   }
