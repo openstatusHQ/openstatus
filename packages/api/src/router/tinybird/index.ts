@@ -475,6 +475,7 @@ export const tinybirdRouter = createTRPCRouter({
       z.object({
         monitorId: z.string(),
         period: z.enum(periods),
+        regions: z.array(z.enum(flyRegions)).optional(),
         type: z.enum(types).default("http"),
       })
     )
@@ -492,6 +493,7 @@ export const tinybirdRouter = createTRPCRouter({
         monitorId: z.string(),
         period: z.enum(periods),
         interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
         type: z.literal("http"),
       })
     )

@@ -1221,6 +1221,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1275,6 +1276,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),

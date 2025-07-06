@@ -25,6 +25,7 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { INTERVALS, mapTimingPhases, PERCENTILES } from "@/data/metrics.client";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 const chartConfig = {
   dns: {
@@ -58,12 +59,14 @@ export function ChartAreaTimingPhases({
   percentile,
   interval,
   type,
+  regions,
 }: {
   monitorId: string;
   degradedAfter: number | null;
   period: "1d" | "7d" | "14d";
   percentile: (typeof PERCENTILES)[number];
   interval: (typeof INTERVALS)[number];
+  regions: (typeof flyRegions)[number][];
   type: "http";
 }) {
   const trpc = useTRPC();
@@ -74,6 +77,7 @@ export function ChartAreaTimingPhases({
       period,
       type,
       interval,
+      regions,
     })
   );
 

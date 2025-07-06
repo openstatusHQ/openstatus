@@ -121,6 +121,7 @@ export function Client() {
             period={period}
             percentile={percentile}
             interval={interval}
+            regions={selectedRegions}
           />
         ) : (
           <ChartAreaLatency
@@ -129,6 +130,7 @@ export function Client() {
             degradedAfter={monitor.degradedAfter}
             type={monitor.jobType as "http" | "tcp"}
             period={period}
+            regions={selectedRegions}
           />
         )}
       </Section>
