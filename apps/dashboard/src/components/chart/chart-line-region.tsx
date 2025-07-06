@@ -36,7 +36,8 @@ export function ChartLineRegion({
     timestamp: new Date(d.timestamp).toLocaleString("default", {
       hour: "numeric",
       minute: "numeric",
-      // TODO: add day/month
+      day: "numeric",
+      month: "short",
     }),
     latency: d.latency,
   }));

@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { mapUptime, PERIODS } from "@/data/metrics.client";
 import { Region } from "@openstatus/db/src/schema/constants";
 import { endOfDay, startOfDay, subDays } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const chartConfig = {
   ok: {
@@ -54,6 +55,7 @@ export function ChartBarUptime({
   type: "http" | "tcp";
   regions: Region[];
 }) {
+  const isMobile = useIsMobile();
   const trpc = useTRPC();
   const fromDate = periodToFromDate[period];
   const toDate = endOfDay(new Date());
@@ -74,7 +76,11 @@ export function ChartBarUptime({
 
   return (
     <ChartContainer config={chartConfig} className="h-[130px] w-full">
-      <BarChart accessibilityLayer data={refinedUptime} barCategoryGap={2}>
+      <BarChart
+        accessibilityLayer
+        data={refinedUptime}
+        barCategoryGap={isMobile ? 0 : 2}
+      >
         <CartesianGrid vertical={false} />
         <ChartTooltip
           cursor={false}

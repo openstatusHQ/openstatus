@@ -23,7 +23,7 @@ export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
   return (
-    <div className="flex items-center justify-between px-2">
+    <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex-1 text-muted-foreground text-sm">
         {table.getFilteredSelectedRowModel().rows.length} of{" "}
         {table.getFilteredRowModel().rows.length} row(s) selected.
@@ -49,7 +49,7 @@ export function DataTablePagination<TData>({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-[100px] items-center justify-center font-medium text-sm">
+        <div className="flex items-center justify-center font-medium text-sm">
           Page {table.getState().pagination.pageIndex + 1} of{" "}
           {table.getPageCount()}
         </div>
@@ -100,7 +100,7 @@ export function DataTablePaginationSimple<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
   return (
-    <div className="flex items-center justify-between px-2">
+    <div className="flex items-center justify-between">
       <div className="flex-1 text-muted-foreground text-sm">
         {table.getFilteredRowModel().rows.length} of{" "}
         {table.getPreFilteredRowModel().rows.length} row(s) filtered.

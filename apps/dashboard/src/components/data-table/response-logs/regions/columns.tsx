@@ -4,8 +4,15 @@ import { ChartLineRegion } from "@/components/chart/chart-line-region";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { RegionMetric } from "@/data/region-metrics";
 import { getActions } from "@/data/region-metrics.client";
+import { flyRegionsDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
 
@@ -17,10 +24,27 @@ export const columns: ColumnDef<RegionMetric>[] = [
   {
     accessorKey: "region",
     header: "Region",
+    cell: ({ row }) => {
+      const value = row.getValue("region");
+      if (typeof value === "string") {
+        const region = flyRegionsDict[value as keyof typeof flyRegionsDict];
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger className="h-[50px]">
+                {region.flag} {region.code}
+              </TooltipTrigger>
+              <TooltipContent side="left">{region.location}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      return null;
+    },
     enableSorting: false,
     enableHiding: false,
     meta: {
-      cellClassName: "w-24",
+      cellClassName: "w-24 font-mono",
     },
   },
   {
@@ -32,7 +56,7 @@ export const columns: ColumnDef<RegionMetric>[] = [
     enableSorting: false,
     enableHiding: false,
     meta: {
-      cellClassName: "w-full",
+      cellClassName: "w-full min-w-[200px] max-w-full",
     },
   },
   {
