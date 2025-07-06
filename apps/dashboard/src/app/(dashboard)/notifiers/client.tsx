@@ -68,7 +68,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Create a new notifier</SectionTitle>
           <SectionDescription>
-            Define your notifiers to receive notifications when incidents.{" "}
+            Define your notifiers to receive alerts when downtime occurs.{" "}
             <Link href="#">Learn more</Link>.
           </SectionDescription>
         </SectionHeader>
@@ -86,7 +86,12 @@ export function Client() {
             if (!searchParams.channel && key === "pagerduty") {
               const PAGERDUTY_URL = `https://app.pagerduty.com/install/integration?app_id=${process.env.NEXT_PUBLIC_PAGERDUTY_APP_ID}&redirect_url=${BASE_URL}/api/callback/pagerduty?workspace=${workspace.slug}&version=2`;
               return (
-                <a key={key} href={PAGERDUTY_URL}>
+                <a
+                  key={key}
+                  href={PAGERDUTY_URL}
+                  data-disabled={!enabled}
+                  className="data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none"
+                >
                   <ActionCard className="h-full w-full">
                     <ActionCardHeader>
                       <div className="flex items-center gap-2">
@@ -155,9 +160,3 @@ export function Client() {
     </SectionGroup>
   );
 }
-
-// const PAGERDUTY_URL = `https://app.pagerduty.com/install/integration?app_id=${env.PAGERDUTY_APP_ID}&redirect_url=${
-//     process.env.NODE_ENV === "development" // FIXME: This sucks
-//       ? "http://localhost:3000"
-//       : "https://www.openstatus.dev"
-//   }/api/callback/pagerduty?workspace=${workspace.slug}&version=2`
