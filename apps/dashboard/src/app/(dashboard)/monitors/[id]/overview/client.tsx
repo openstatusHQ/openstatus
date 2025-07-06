@@ -28,6 +28,8 @@ import { DropdownPercentile } from "@/components/controls-search/dropdown-percen
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { DropdownInterval } from "@/components/controls-search/dropdown-interval";
 
+const TIMELINE_INTERVAL = 30; // in days
+
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
@@ -138,10 +140,10 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Timeline</SectionTitle>
           <SectionDescription>
-            What&apos;s happening on your monitor
+            What happened to your monitor over the last {TIMELINE_INTERVAL} days
           </SectionDescription>
         </SectionHeader>
-        <AuditLogsWrapper monitorId={id} />
+        <AuditLogsWrapper monitorId={id} interval={TIMELINE_INTERVAL} />
       </Section>
       <Section>
         <SectionHeader>

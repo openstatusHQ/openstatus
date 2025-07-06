@@ -1155,6 +1155,7 @@ export class OSTinybird {
       pipe: "endpoint__audit_log__v1",
       parameters: z.object({
         monitorId: z.string(),
+        interval: z.number().int().default(30), // in days
       }),
       data: z.object({
         action: z.string(),

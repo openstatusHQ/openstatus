@@ -15,11 +15,17 @@ import React from "react";
 
 import { columns } from "./columns";
 
-export function AuditLogsWrapper({ monitorId }: { monitorId: string }) {
+export function AuditLogsWrapper({
+  monitorId,
+  interval,
+}: {
+  monitorId: string;
+  interval: number;
+}) {
   const trpc = useTRPC();
 
   const { data: auditLogs, isLoading } = useQuery(
-    trpc.tinybird.auditLog.queryOptions({ monitorId })
+    trpc.tinybird.auditLog.queryOptions({ monitorId, interval })
   );
 
   if (isLoading) {

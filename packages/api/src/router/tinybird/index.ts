@@ -236,11 +236,29 @@ export const tinybirdRouter = createTRPCRouter({
     .input(
       z.object({
         monitorId: z.string(),
+        interval: z.number().int().default(30), // in days
       })
     )
     .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       return await tb.getAuditLog({
         monitorId: `monitor:${opts.input.monitorId}`,
+        interval: opts.input.interval,
       });
     }),
 

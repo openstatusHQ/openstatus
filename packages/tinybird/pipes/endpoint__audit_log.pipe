@@ -11,7 +11,7 @@ SQL >
     FROM audit_log__v0
     WHERE
         id = {{String(monitorId, 'monitor:1', required=True)}}
-        AND timestamp > toUnixTimestamp(now() - INTERVAL 30 day) * 1000
+        AND timestamp > toUnixTimestamp(now() - INTERVAL {{ Int64(interval, 30) }} day) * 1000
     ORDER BY timestamp DESC
 
 

@@ -31,7 +31,7 @@ export function WorkspaceSwitcher() {
 
   function handleClick(slug: string) {
     document.cookie = `workspace-slug=${slug}; path=/;`;
-    window.location.reload();
+    window.location.href = "/overview";
   }
 
   return (
