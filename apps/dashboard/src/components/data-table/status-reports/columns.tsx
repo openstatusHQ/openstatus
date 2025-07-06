@@ -2,6 +2,7 @@
 
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { TableCellBadge } from "@/components/data-table/table-cell-badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -72,7 +73,7 @@ export const columns: ColumnDef<StatusReport>[] = [
   {
     id: "updates",
     accessorFn: (row) => row.updates.length,
-    header: "Updates",
+    header: "Total Updates",
     cell: ({ row }) => {
       const value = row.getValue("updates");
       return <TableCellNumber value={value} />;
@@ -80,11 +81,20 @@ export const columns: ColumnDef<StatusReport>[] = [
   },
   {
     id: "monitors",
-    accessorFn: (row) => row.monitors.length,
-    header: "Monitors",
+    accessorFn: (row) => row.monitors,
+    header: "Affected",
     cell: ({ row }) => {
       const value = row.getValue("monitors");
-      return <TableCellNumber value={value} />;
+      if (Array.isArray(value) && value.length > 0 && "name" in value[0]) {
+        return (
+          <div className="flex flex-wrap gap-1">
+            {value.map((m) => (
+              <TableCellBadge key={m.id} value={m.name} />
+            ))}
+          </div>
+        );
+      }
+      return <div className="text-muted-foreground">-</div>;
     },
   },
   {

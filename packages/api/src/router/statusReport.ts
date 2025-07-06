@@ -392,7 +392,8 @@ export const statusReportRouter = createTRPCRouter({
       return selectStatusReportSchema
         .extend({
           updates: z.array(selectStatusReportUpdateSchema).default([]),
-          monitors: z.number().array().default([]),
+          // monitors: z.number().array().default([]),
+          monitors: z.array(selectMonitorSchema).default([]),
         })
         .array()
         .parse(
@@ -400,7 +401,7 @@ export const statusReportRouter = createTRPCRouter({
             ...report,
             updates: report.statusReportUpdates,
             monitors: report.monitorsToStatusReports.map(
-              ({ monitorId }) => monitorId
+              ({ monitor }) => monitor
             ),
           }))
         );

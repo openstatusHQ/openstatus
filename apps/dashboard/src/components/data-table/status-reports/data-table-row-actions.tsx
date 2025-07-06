@@ -85,7 +85,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         defaultValues={{
           title: row.original.title,
           status: row.original.status,
-          monitors: row.original.monitors,
+          monitors: row.original.monitors.map((m) => m.id),
         }}
         onSubmit={async (values) => {
           await updateStatusReportMutation.mutateAsync({
