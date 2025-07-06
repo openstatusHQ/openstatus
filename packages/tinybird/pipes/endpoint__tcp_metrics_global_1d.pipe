@@ -1,0 +1,23 @@
+VERSION 0
+
+TAGS "tcp"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT
+        round(min(latency), 0) as minLatency,
+        round(max(latency), 0) as maxLatency,
+        round(quantile(0.5)(latency), 0) as p50Latency,
+        round(quantile(0.75)(latency), 0) as p75Latency,
+        round(quantile(0.9)(latency), 0) as p90Latency,
+        round(quantile(0.95)(latency), 0) as p95Latency,
+        round(quantile(0.99)(latency), 0) as p99Latency,
+        count() as count,
+        monitorId
+    FROM mv__tcp_1d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+    GROUP BY monitorId
+
+

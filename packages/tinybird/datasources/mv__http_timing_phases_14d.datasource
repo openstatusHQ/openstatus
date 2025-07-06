@@ -1,0 +1,21 @@
+# Data Source created from Pipe 'aggregate__http_timing_phases_14d__v1'
+
+SCHEMA >
+    `time` DateTime,
+    `latency` Int64,
+    `region` LowCardinality(String),
+    `trigger` Nullable(String),
+    `statusCode` Nullable(Int16),
+    `monitorId` String,
+    `workspaceId` String,
+    `requestStatus` Nullable(String),
+    `dns` Nullable(Int64),
+    `connect` Nullable(Int64),
+    `tls` Nullable(Int64),
+    `firstByte` Nullable(Int64),
+    `transfer` Nullable(Int64)
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(14)"

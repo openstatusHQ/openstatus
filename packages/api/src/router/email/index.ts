@@ -49,7 +49,7 @@ export const emailRouter = createTRPCRouter({
 
         await emailClient.sendStatusReportUpdate({
           to: _statusReportUpdate.statusReport.page.pageSubscribers.map(
-            (subscriber) => subscriber.email,
+            (subscriber) => subscriber.email
           ),
           pageTitle: _statusReportUpdate.statusReport.page.title,
           reportTitle: _statusReportUpdate.statusReport.title,
@@ -57,13 +57,13 @@ export const emailRouter = createTRPCRouter({
           message: _statusReportUpdate.message,
           date: new Date(_statusReportUpdate.date).toISOString(),
           monitors: _statusReportUpdate.statusReport.page.monitorsToPages.map(
-            (i) => i.monitor.name,
+            (i) => i.monitor.name
           ),
         });
       }
     }),
   sendTeamInvitation: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number(), baseUrl: z.string().optional() }))
     .mutation(async (opts) => {
       const limits = opts.ctx.workspace.limits;
 
@@ -71,7 +71,7 @@ export const emailRouter = createTRPCRouter({
         const _invitation = await opts.ctx.db.query.invitation.findFirst({
           where: and(
             eq(invitation.id, opts.input.id),
-            eq(invitation.workspaceId, opts.ctx.workspace.id),
+            eq(invitation.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -82,6 +82,7 @@ export const emailRouter = createTRPCRouter({
           token: _invitation.token,
           invitedBy: `${opts.ctx.user.email}`,
           workspaceName: opts.ctx.workspace.name || "OpenStatus",
+          baseUrl: opts.input.baseUrl,
         });
       }
     }),
