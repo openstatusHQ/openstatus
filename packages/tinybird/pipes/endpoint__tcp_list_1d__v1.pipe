@@ -7,6 +7,12 @@ SQL >
         SELECT * FROM mv__tcp_1d__v1
         WHERE
             monitorId = {{ String(monitorId, '4433', required=True) }}
+            {% if defined(fromDate) %}
+                AND time >= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(fromDate) }})))
+            {% end %}
+            {% if defined(toDate) %}
+                AND time <= toDateTime(fromUnixTimestamp64Milli(toInt64({{ String(toDate) }})))
+            {% end %}
         ORDER BY time DESC
 
 

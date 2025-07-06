@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { regions } from "@/data/regions";
-import type { ResponseLog } from "@/data/response-logs";
 import { statusCodes } from "@/data/status-codes";
+import type { RouterOutputs } from "@openstatus/api";
+
+type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
 
 export interface ResponseLogsDataTableToolbarProps {
   table: Table<ResponseLog>;

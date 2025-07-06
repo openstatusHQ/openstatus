@@ -869,6 +869,7 @@ export class OSTinybird {
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
       }),
       // REMINDER: cache the result for accessing the data for a check as it won't change
       opts: { next: { revalidate: REVALIDATE } },

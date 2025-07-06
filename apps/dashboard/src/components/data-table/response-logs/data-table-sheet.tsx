@@ -250,22 +250,54 @@ export function Sheet({
                 )}
               </>
             ) : null}
-            {/* TODO: add assertions */}
-            {data.type === "http" && data?.message && (
+            {data.type === "http" && data?.message ? (
               <>
                 <TableRow>
                   <TableHead colSpan={2}>Message</TableHead>
                 </TableRow>
                 <TableRow>
                   <TableCell colSpan={2} className="p-0">
-                    <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm overflow-x-auto max-w-full">
-                      {data?.message}
+                    <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                      {data.message}
                     </pre>
                   </TableCell>
                 </TableRow>
               </>
-            )}
-            {/* TODO: add assertions */}
+            ) : null}
+            {data.type === "tcp" && data?.errorMessage ? (
+              <>
+                <TableRow>
+                  <TableHead colSpan={2}>Error Message</TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={2} className="p-0">
+                    <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                      {data.errorMessage}
+                    </pre>
+                  </TableCell>
+                </TableRow>
+              </>
+            ) : null}
+            {data.type === "http" ? (
+              <>
+                <TableRow>
+                  <TableHead colSpan={2}>Assertions</TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableCell colSpan={2} className="p-0">
+                    {!data.assertions || data.assertions === "[]" ? (
+                      <div className="text-muted-foreground text-sm font-mono p-2">
+                        Default status code 2xx assertion
+                      </div>
+                    ) : (
+                      <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                        {JSON.stringify(data.assertions, null, 2)}
+                      </pre>
+                    )}
+                  </TableCell>
+                </TableRow>
+              </>
+            ) : null}
           </TableBody>
         </Table>
         <Separator />
