@@ -53,12 +53,15 @@ export function WorkspaceSwitcher() {
                 </div>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
+                <div className="truncate font-medium">
                   {workspace.name || "Untitled Workspace"}
-                </span>
-                <span className="truncate font-mono text-xs">
-                  {workspace.slug}
-                </span>
+                </div>
+                <div className="truncate text-xs">
+                  <span className="font-mono">{workspace.slug}</span>{" "}
+                  <span className="text-muted-foreground">
+                    {workspace.plan === "team" ? "pro" : workspace.plan}
+                  </span>
+                </div>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>

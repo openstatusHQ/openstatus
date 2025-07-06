@@ -251,7 +251,9 @@ export const workspaceRouter = createTRPCRouter({
       where: and(...whereConditions),
       with: {
         pages: true,
-        monitors: true,
+        monitors: {
+          where: isNull(monitor.deletedAt),
+        },
         notifications: true,
       },
     });

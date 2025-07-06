@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Check, Copy } from "lucide-react";
 import { z } from "zod";
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -53,7 +54,17 @@ export function FormSlug({ defaultValues }: { defaultValues?: FormValues }) {
       </FormCardContent>
       <FormCardFooter className="[&>:last-child]:ml-0">
         <FormCardFooterInfo>
-          Used when interacting with the API or for help on Discord.
+          Used when interacting with the API or for help on Discord.{" "}
+          <FormDialogSupportContact>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="px-0 py-0 hover:bg-transparent dark:hover:bg-transparent text-accent-foreground"
+            >
+              Let us know
+            </Button>
+          </FormDialogSupportContact>{" "}
+          if you&apos;d like to change it.
         </FormCardFooterInfo>
       </FormCardFooter>
     </FormCard>
