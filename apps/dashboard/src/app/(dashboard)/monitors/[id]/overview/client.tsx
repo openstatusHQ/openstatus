@@ -77,6 +77,7 @@ export function Client() {
           monitorId={id}
           jobType={monitor.jobType as "http" | "tcp"}
           period={period}
+          regions={selectedRegions}
         />
       </Section>
       <Section>

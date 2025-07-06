@@ -18,6 +18,7 @@ import {
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 type Metric = {
   label: string;
@@ -33,10 +34,12 @@ export function GlobalUptimeSection({
   monitorId,
   jobType,
   period = "7d",
+  regions,
 }: {
   monitorId: string;
   jobType: "http" | "tcp";
   period: "1d" | "7d" | "14d";
+  regions: (typeof flyRegions)[number][];
 }) {
   const trpc = useTRPC();
 
@@ -45,6 +48,7 @@ export function GlobalUptimeSection({
       monitorId,
       period,
       type: jobType,
+      regions,
     })
   );
 
@@ -55,7 +59,7 @@ export function GlobalUptimeSection({
 
     if (_metrics.length !== 2) return null;
 
-    return _metrics.reduce(
+    return _metrics.reverse().reduce(
       (acc, metric) => {
         Object.entries(metric).forEach(([key, value]) => {
           const k = key as keyof typeof acc;

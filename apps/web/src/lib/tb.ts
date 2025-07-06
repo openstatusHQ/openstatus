@@ -52,29 +52,29 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
   switch (period) {
     case "1d": {
       const getData = {
-        http: tb.httpMetricsDaily,
-        tcp: tb.tcpMetricsDaily,
+        http: tb.legacy_httpMetricsDaily,
+        tcp: tb.legacy_tcpMetricsDaily,
       } as const;
       return { getData: getData[type] };
     }
     case "7d": {
       const getData = {
-        http: tb.httpMetricsWeekly,
-        tcp: tb.tcpMetricsWeekly,
+        http: tb.legacy_httpMetricsWeekly,
+        tcp: tb.legacy_tcpMetricsWeekly,
       } as const;
       return { getData: getData[type] };
     }
     case "14d": {
       const getData = {
-        http: tb.httpMetricsBiweekly,
-        tcp: tb.tcpMetricsBiweekly,
+        http: tb.legacy_httpMetricsBiweekly,
+        tcp: tb.legacy_tcpMetricsBiweekly,
       } as const;
       return { getData: getData[type] };
     }
     default: {
       const getData = {
-        http: tb.httpMetricsDaily,
-        tcp: tb.tcpMetricsDaily,
+        http: tb.legacy_httpMetricsDaily,
+        tcp: tb.legacy_tcpMetricsDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -203,7 +203,7 @@ export function prepareGetByPeriod(period: "30d", type: Type = "http") {
 
 // FOR MIGRATION
 export type ResponseTimeMetrics = Awaited<
-  ReturnType<OSTinybird["httpMetricsDaily"]>
+  ReturnType<OSTinybird["legacy_httpMetricsDaily"]>
 >["data"][number];
 
 export type ResponseTimeMetricsByRegion = Awaited<

@@ -250,7 +250,7 @@ export const tinybirdRouter = createTRPCRouter({
         monitorId: z.string(),
         period: z.enum(periods),
         type: z.enum(types).default("http"),
-        region: z.enum(flyRegions).optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
         cronTimestamp: z.number().int().optional(),
       })
     )

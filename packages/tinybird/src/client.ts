@@ -180,7 +180,7 @@ export class OSTinybird {
     });
   }
 
-  public get httpMetricsDaily() {
+  public get legacy_httpMetricsDaily() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_1d__v0",
       parameters: z.object({
@@ -201,7 +201,31 @@ export class OSTinybird {
     });
   }
 
-  public get httpMetricsWeekly() {
+  public get httpMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_1d__v1",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_httpMetricsWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_7d__v0",
       parameters: z.object({
@@ -222,7 +246,31 @@ export class OSTinybird {
     });
   }
 
-  public get httpMetricsBiweekly() {
+  public get httpMetricsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_7d__v1",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_httpMetricsBiweekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_14d__v0",
       parameters: z.object({
@@ -237,6 +285,30 @@ export class OSTinybird {
         p99Latency: z.number().nullable().default(0),
         count: z.number().int(),
         ok: z.number().int(),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpMetricsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_14d__v1",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
         lastTimestamp: z.number().int().nullable(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
@@ -626,7 +698,7 @@ export class OSTinybird {
     });
   }
 
-  public get tcpMetricsDaily() {
+  public get legacy_tcpMetricsDaily() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_1d__v0",
       parameters: z.object({
@@ -647,7 +719,31 @@ export class OSTinybird {
     });
   }
 
-  public get tcpMetricsWeekly() {
+  public get tcpMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_1d__v1",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_tcpMetricsWeekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_7d__v0",
       parameters: z.object({
@@ -668,7 +764,31 @@ export class OSTinybird {
     });
   }
 
-  public get tcpMetricsBiweekly() {
+  public get tcpMetricsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_7d__v1",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get legacy_tcpMetricsBiweekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_14d__v0",
       parameters: z.object({
@@ -683,6 +803,30 @@ export class OSTinybird {
         p99Latency: z.number().nullable().default(0),
         count: z.number().int(),
         ok: z.number().int(),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpMetricsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_14d__v1",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
         lastTimestamp: z.number().int().nullable(),
       }),
       opts: { next: { revalidate: REVALIDATE } },

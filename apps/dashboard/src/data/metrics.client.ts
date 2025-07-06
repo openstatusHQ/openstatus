@@ -32,11 +32,10 @@ export function mapMetrics(metrics: RouterOutputs["tinybird"]["metrics"]) {
       p90: metric.p90Latency,
       p95: metric.p95Latency,
       p99: metric.p99Latency,
-      // TODO: rename
       total: metric.count,
-      uptime: metric.ok / metric.count,
-      degraded: 0, // metric.degraded,
-      error: metric.count - metric.ok,
+      uptime: (metric.success + metric.degraded) / metric.count,
+      degraded: metric.degraded,
+      error: metric.error,
     };
   });
 }

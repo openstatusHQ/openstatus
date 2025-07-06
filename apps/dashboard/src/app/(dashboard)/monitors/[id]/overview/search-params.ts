@@ -11,7 +11,7 @@ const PERIOD = ["1d", "7d", "14d"] as const;
 const PERCENTILE = ["p50", "p75", "p90", "p95", "p99"] as const;
 
 export const searchParamsParsers = {
-  period: parseAsStringLiteral(PERIOD).withDefault("7d"),
+  period: parseAsStringLiteral(PERIOD).withDefault("1d"),
   regions: parseAsArrayOf(parseAsStringLiteral(flyRegions)).withDefault(
     // FIXME: readonly
     flyRegions as unknown as (typeof flyRegions)[number][]
