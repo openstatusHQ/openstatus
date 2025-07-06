@@ -6,15 +6,16 @@ import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { formatDateForInput } from "@/lib/formatter";
 import { endOfDay } from "date-fns";
+import { Kbd } from "@/components/common/kbd";
 
 type DatePickerProps = {
   range: DateRange;
   onSelect: (range: DateRange) => void;
-  presets: { id: string; label: string; values: DateRange }[];
+  presets: { id: string; label: string; values: DateRange; shortcut: string }[];
 };
 
 export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
@@ -30,19 +31,26 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
               <div className="font-medium text-muted-foreground text-xs px-3 py-1">
                 Presets
               </div>
-              {presets.map((preset) => (
-                <Button
-                  key={preset.id}
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
-                  onClick={() => {
-                    onSelect(preset.values);
-                  }}
-                >
-                  {preset.label}
-                </Button>
-              ))}
+              {presets.map((preset) => {
+                const isSelected =
+                  range.from?.getTime() === preset.values.from?.getTime() &&
+                  range.to?.getTime() === preset.values.to?.getTime();
+
+                return (
+                  <Button
+                    key={preset.id}
+                    variant={isSelected ? "outline" : "ghost"}
+                    size="sm"
+                    className="w-full justify-between border-transparent border"
+                    onClick={() => {
+                      onSelect(preset.values);
+                    }}
+                  >
+                    <span>{preset.label}</span>
+                    <Kbd className="uppercase font-mono">{preset.shortcut}</Kbd>
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>
