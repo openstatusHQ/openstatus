@@ -78,11 +78,17 @@ export function CommandRegion({
             </CommandGroup>
             <CommandSeparator alwaysRender />
             {Object.entries(groupByContinent).map(
-              ([continent, continentRegions]) => (
-                <CommandGroup key={continent} heading={continent}>
-                  {continentRegions
-                    .filter((region) => regions.includes(region.code))
-                    .map((region) => (
+              ([continent, continentRegions]) => {
+                const allowedRegions = continentRegions.filter((region) =>
+                  regions.includes(region.code)
+                );
+
+                if (allowedRegions.length === 0) {
+                  return null;
+                }
+                return (
+                  <CommandGroup key={continent} heading={continent}>
+                    {allowedRegions.map((region) => (
                       <CommandItem
                         key={region.code}
                         value={region.code}
@@ -115,8 +121,9 @@ export function CommandRegion({
                         />
                       </CommandItem>
                     ))}
-                </CommandGroup>
-              )
+                  </CommandGroup>
+                );
+              }
             )}
             <CommandEmpty>No region found.</CommandEmpty>
           </CommandList>
