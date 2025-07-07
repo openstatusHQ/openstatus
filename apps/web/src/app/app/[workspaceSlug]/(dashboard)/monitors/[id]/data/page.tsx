@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import * as React from "react";
 
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { prepareListByPeriod } from "@/lib/tb";

@@ -2,7 +2,6 @@ import { flyRegions } from "@openstatus/db/src/schema/constants";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
-  parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
 

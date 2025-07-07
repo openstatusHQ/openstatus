@@ -1,9 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-
-import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
-
 import { workspacePlans } from "@openstatus/db/src/schema";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense } from "react";

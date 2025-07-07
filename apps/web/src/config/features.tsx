@@ -1,5 +1,4 @@
 import type { ValidIcon } from "@/components/icons";
-import { Terminal } from "@/components/marketing/cli/terminal";
 
 export type Feature = {
   icon: ValidIcon;

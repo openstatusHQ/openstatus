@@ -1,5 +1,3 @@
-import { format } from "date-fns";
-
 import { flyRegionsDict } from "@openstatus/utils";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";

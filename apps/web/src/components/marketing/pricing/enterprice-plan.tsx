@@ -15,7 +15,7 @@ export function EnterpricePlan() {
     <div>
       <p className="mb-2 font-cal text-2xl">Enterprise</p>
       <p className="text-muted-foreground">If you are looking for:</p>
-      <div className="my-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         {features.map((feature) => (
           <div key={feature} className="flex items-center">
             <CheckIcon className="mr-1.5 h-4 w-4 shrink-0" />
@@ -23,15 +23,15 @@ export function EnterpricePlan() {
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
         <div className="sm:col-span-3">
           <p className="text-muted-foreground">
             We can help you with that. Speak with us today to build your own
             custom solution that fits your needs.
           </p>
         </div>
-        <div className="sm:col-span-1 w-full">
-          <Button className="rounded-full w-full" asChild>
+        <div className="w-full sm:col-span-1">
+          <Button className="w-full rounded-full" asChild>
             <a
               href="https://cal.com/team/openstatus/30min"
               target="_blank"

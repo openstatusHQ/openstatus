@@ -17,7 +17,6 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Skeleton,
   Sortable,
   SortableDragHandle,
   SortableItem,

@@ -1,4 +1,4 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { and, eq } from "@openstatus/db";

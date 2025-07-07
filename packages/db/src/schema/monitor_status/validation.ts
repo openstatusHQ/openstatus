@@ -1,5 +1,4 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import type { z } from "zod";
 
 import { monitorRegionSchema } from "../constants";
 import { monitorStatusSchema } from "../monitors";

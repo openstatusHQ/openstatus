@@ -146,7 +146,7 @@ interface FeatureTitleProps
 
 function FeatureTitle({ strong, regular }: FeatureTitleProps) {
   return (
-    <p className="text-muted-foreground text-lg md:text-xl">
+    <p className="text-lg text-muted-foreground md:text-xl">
       <strong className="font-medium text-foreground">{strong}</strong>{" "}
       {regular}
     </p>

@@ -3,12 +3,7 @@
 import { useState } from "react";
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
-import {
-  Badge,
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@openstatus/ui";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@openstatus/ui";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { upgradePlan } from "./utils";

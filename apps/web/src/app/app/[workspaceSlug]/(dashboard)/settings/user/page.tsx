@@ -2,13 +2,7 @@
 
 import { useSession } from "next-auth/react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-  Input,
-  Label,
-} from "@openstatus/ui";
+import { Input, Label } from "@openstatus/ui";
 
 import Loading from "./loading";
 

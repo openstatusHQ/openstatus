@@ -1,4 +1,4 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";

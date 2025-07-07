@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname, useRouter } from "next/navigation";
-import * as React from "react";
 import { useCallback, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
