@@ -101,7 +101,7 @@ export const timingSchema = z.object({
 
 export const checkerSchema = z.object({
   type: z.literal("http").default("http"),
-  state: z.literal("success"),
+  state: z.literal("success").default("success"),
   status: z.number(),
   latency: z.number(),
   headers: z.record(z.string()),
@@ -127,16 +127,18 @@ export const regionCheckerSchema = checkerSchema
     region: monitorFlyRegionSchema,
     state: z.literal("success").default("success"),
   })
-  .or(
-    errorRequest.extend({
-      region: monitorFlyRegionSchema,
-    }),
-  );
 
+
+export const regionCheckerSchemaResponse = regionCheckerSchema.or(
+  errorRequest.extend({
+    region: monitorFlyRegionSchema,
+  }),
+);
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 // FIXME: does not include TCP!
 export type RegionChecker = z.infer<typeof regionCheckerSchema>;
+export type RegionCheckerResponse = z.infer<typeof regionCheckerSchemaResponse>;
 export type Method =
   | "GET"
   | "HEAD"
@@ -158,7 +160,7 @@ export async function checkRegion(
     headers?: { value: string; key: string }[];
     body?: string;
   },
-): Promise<RegionChecker> {
+): Promise<RegionCheckerResponse> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {

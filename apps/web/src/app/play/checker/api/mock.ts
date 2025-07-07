@@ -23,8 +23,6 @@ export const data = {
   checks: [
     {
       type: "http",
-      state: "success",
-
       status: 200,
       latency: 889,
       headers: {
