@@ -229,11 +229,9 @@ export function MonitorForm({
       const _headers: Record<string, string> = {};
       // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       res.headers.forEach((value, key) => (_headers[key] = value));
-      if(data.state === "success") {
-
+      if (data.state === "success") {
         if (as.length > 0) {
           for (const a of as) {
-
             const { success, message } = a.assert({
               body: data.body ?? "",
               header: data.headers ?? {},
@@ -255,7 +253,6 @@ export function MonitorForm({
       } else {
         return { data, error: `Request error: ${data}` };
       }
-
 
       return { data, error: undefined };
     } catch (error) {

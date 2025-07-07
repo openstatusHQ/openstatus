@@ -31,7 +31,7 @@ async function* makeIterator({
         check.body = undefined; // Drop the body to avoid storing it in Redis Cache
       }
 
-      if(check.state === "success") {
+      if (check.state === "success") {
         storeCheckerData({ check, id });
       }
 

@@ -1,11 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  type RegionChecker,
-  latencyFormatter,
-  regionFormatter,
-} from "./utils";
+import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
 import { flyRegionsDict } from "@openstatus/utils";
 
