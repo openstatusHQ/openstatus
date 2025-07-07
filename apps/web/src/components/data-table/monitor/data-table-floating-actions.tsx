@@ -42,7 +42,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { Check, Minus, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface DataTableFloatingActions<TData> {

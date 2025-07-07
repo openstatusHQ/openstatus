@@ -26,7 +26,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast, toastAction } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {

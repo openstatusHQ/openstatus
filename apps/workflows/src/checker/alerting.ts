@@ -56,7 +56,7 @@ export const triggerNotifications = async ({
         notificationId: notif.notification.id,
         cronTimestamp: cronTimestamp,
       });
-    } catch (e) {
+    } catch (_e) {
       console.log("notification trigger already exists dont send again");
       continue;
     }

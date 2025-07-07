@@ -1,13 +1,7 @@
 "use client";
-
-import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import type {
-  InsertStatusReport,
-  Monitor,
-  Page,
-} from "@openstatus/db/src/schema";
+import type { InsertStatusReport, Monitor } from "@openstatus/db/src/schema";
 import {
   FormControl,
   FormDescription,

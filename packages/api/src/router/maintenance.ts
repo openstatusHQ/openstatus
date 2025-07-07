@@ -5,7 +5,6 @@ import {
   insertMaintenanceSchema,
   maintenance,
   maintenancesToMonitors,
-  selectMaintenanceSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";

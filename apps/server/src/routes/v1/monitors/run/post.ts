@@ -1,7 +1,7 @@
 import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { openApiErrorResponses } from "@/libs/errors";
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitorRun } from "@openstatus/db/src/schema";

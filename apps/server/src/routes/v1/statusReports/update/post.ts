@@ -3,14 +3,11 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
-  monitor,
-  page,
   pageSubscriber,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails/src/client";
-import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";

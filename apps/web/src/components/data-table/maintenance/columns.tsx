@@ -3,8 +3,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Maintenance } from "@openstatus/db/src/schema";
-
-import { formatDateTime } from "@/lib/utils";
 import { format } from "date-fns";
 import { DataTableRowActions } from "./data-table-row-actions";
 

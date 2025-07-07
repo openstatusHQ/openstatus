@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { render } from "@react-email/render";
-import { ErrorResponse, Resend } from "resend";
+import { Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
 import MonitorAlertEmail from "../emails/monitor-alert";
 import type { MonitorAlertProps } from "../emails/monitor-alert";

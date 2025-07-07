@@ -4,7 +4,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
 import { flyRegionsDict } from "@openstatus/utils";
-
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 

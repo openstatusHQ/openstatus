@@ -2,15 +2,8 @@ import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@openstatus/ui";
+import { Card, CardDescription, CardHeader, CardTitle } from "@openstatus/ui";
 
-import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { env } from "@/env";
 import {

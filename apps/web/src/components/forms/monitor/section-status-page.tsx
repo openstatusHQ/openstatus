@@ -2,11 +2,7 @@
 
 import type { UseFormReturn } from "react-hook-form";
 
-import type {
-  InsertMonitor,
-  Page,
-  WorkspacePlan,
-} from "@openstatus/db/src/schema";
+import type { InsertMonitor, Page } from "@openstatus/db/src/schema";
 import {
   FormControl,
   FormDescription,

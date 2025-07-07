@@ -1,7 +1,6 @@
 "use client";
 
 import { HelpCircle } from "lucide-react";
-import * as React from "react";
 
 import { Label } from "@openstatus/ui/src/components/label";
 import {

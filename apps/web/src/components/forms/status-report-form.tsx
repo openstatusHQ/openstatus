@@ -10,11 +10,7 @@ import {
   statusReportStatus,
   statusReportStatusSchema,
 } from "@openstatus/db/src/schema";
-import type {
-  InsertStatusReport,
-  Monitor,
-  Page,
-} from "@openstatus/db/src/schema";
+import type { InsertStatusReport, Monitor } from "@openstatus/db/src/schema";
 import {
   Accordion,
   AccordionContent,

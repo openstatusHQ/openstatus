@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
-import * as React from "react";
 
 import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {

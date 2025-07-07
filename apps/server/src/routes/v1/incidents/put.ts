@@ -1,4 +1,4 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 import { and, db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";

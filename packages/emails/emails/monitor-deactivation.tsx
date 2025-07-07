@@ -4,7 +4,6 @@ import {
   Body,
   Button,
   Head,
-  Heading,
   Html,
   Preview,
   Text,
