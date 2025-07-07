@@ -29,7 +29,9 @@
       ".wrangler",
       ".react-email",
       ".content-collections",
-      "meta"
+      "meta",
+      "*.astro",
+      ".astro"
     ]
   },
   "formatter": {
@@ -45,7 +47,9 @@
       ".wrangler",
       ".react-email",
       ".content-collections",
-      "meta"
+      "meta",
+      "*.astro",
+      ".astro"
     ]
   },
   "organizeImports": {
@@ -57,7 +61,9 @@
       ".nuxt",
       ".wrangler",
       ".react-email",
-      ".content-collections"
+      ".content-collections",
+      "*.astro",
+      ".astro"
     ]
   }
 }

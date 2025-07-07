@@ -1,8 +1,6 @@
 ---
 import { getStatus, statusDictionary } from "./utils";
-
 const { status } = await getStatus("openstatus");
-
 const { label, color } = statusDictionary[status];
 ---
 
