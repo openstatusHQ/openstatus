@@ -135,10 +135,10 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
         <DialogHeader>
           <DialogTitle>Response</DialogTitle>
         </DialogHeader>
-        {check ? (
+        {check?.data.state === "success" ? (
           <div className="grid gap-8">
             <RegionInfo check={check.data} error={check.error} />
-            {check.data.type === "http" ? (
+            {check.data.state === "success" && check.data.type === "http" ? (
               <ResponseDetailTabs
                 timing={check.data.timing}
                 headers={check.data.headers}

@@ -1,16 +1,10 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  type RegionChecker,
-  continentFormatter,
-  latencyFormatter,
-  regionFormatter,
-} from "./utils";
+import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
 import { flyRegionsDict } from "@openstatus/utils";
-import { format } from "date-fns";
-import { utcToZonedTime } from "date-fns-tz";
+
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 

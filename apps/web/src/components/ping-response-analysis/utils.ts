@@ -101,6 +101,7 @@ export const timingSchema = z.object({
 
 export const checkerSchema = z.object({
   type: z.literal("http").default("http"),
+  state: z.literal("success").default("success"),
   status: z.number(),
   latency: z.number(),
   headers: z.record(z.string()),
@@ -116,14 +117,26 @@ export const cachedCheckerSchema = z.object({
   checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
 });
 
-export const regionCheckerSchema = checkerSchema.extend({
-  region: monitorFlyRegionSchema,
+const errorRequest = z.object({
+  message: z.string(),
+  state: z.literal("error").default("error"),
 });
 
+export const regionCheckerSchema = checkerSchema.extend({
+  region: monitorFlyRegionSchema,
+  state: z.literal("success").default("success"),
+});
+
+export const regionCheckerSchemaResponse = regionCheckerSchema.or(
+  errorRequest.extend({
+    region: monitorFlyRegionSchema,
+  }),
+);
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 // FIXME: does not include TCP!
 export type RegionChecker = z.infer<typeof regionCheckerSchema>;
+export type RegionCheckerResponse = z.infer<typeof regionCheckerSchemaResponse>;
 export type Method =
   | "GET"
   | "HEAD"
@@ -136,6 +149,7 @@ export type Method =
   | "TRACE";
 export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 
+export type ErrorRequest = z.infer<typeof errorRequest>;
 export async function checkRegion(
   url: string,
   region: MonitorFlyRegion,
@@ -144,7 +158,7 @@ export async function checkRegion(
     headers?: { value: string; key: string }[];
     body?: string;
   },
-): Promise<RegionChecker> {
+): Promise<RegionCheckerResponse> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {
@@ -172,10 +186,10 @@ export async function checkRegion(
 
   const json = await res.json();
 
-  const data = checkerSchema.safeParse(json);
+  const data = checkerSchema.or(errorRequest).safeParse(json);
 
   if (!data.success) {
-    console.error(res);
+    console.error(JSON.stringify(res));
     console.error(JSON.stringify(json));
     console.error(
       `something went wrong with request to ${url} error ${data.error.message}`,
@@ -197,8 +211,10 @@ export async function checkAllRegions(url: string, opts?: { method: Method }) {
   return await Promise.all(
     flyRegions.map(async (region) => {
       const check = await checkRegion(url, region, opts);
-      // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
-      check.body = undefined;
+      if (check.state === "success") {
+        // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
+        check.body = undefined;
+      }
       return check;
     }),
   );

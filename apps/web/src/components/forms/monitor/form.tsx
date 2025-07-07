@@ -229,26 +229,29 @@ export function MonitorForm({
       const _headers: Record<string, string> = {};
       // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       res.headers.forEach((value, key) => (_headers[key] = value));
-
-      if (as.length > 0) {
-        for (const a of as) {
-          const { success, message } = a.assert({
-            body: data.body ?? "",
-            header: data.headers ?? {},
-            status: data.status,
-          });
-          if (!success) {
-            return { data, error: `Assertion error: ${message}` };
+      if (data.state === "success") {
+        if (as.length > 0) {
+          for (const a of as) {
+            const { success, message } = a.assert({
+              body: data.body ?? "",
+              header: data.headers ?? {},
+              status: data.status,
+            });
+            if (!success) {
+              return { data, error: `Assertion error: ${message}` };
+            }
+          }
+        } else {
+          // default assertion if no assertions are provided
+          if (res.status < 200 || res.status >= 300) {
+            return {
+              data,
+              error: `Assertion error: The response status was not 2XX: ${data.status}.`,
+            };
           }
         }
       } else {
-        // default assertion if no assertions are provided
-        if (res.status < 200 || res.status >= 300) {
-          return {
-            data,
-            error: `Assertion error: The response status was not 2XX: ${data.status}.`,
-          };
-        }
+        return { data, error: `Request error: ${data}` };
       }
 
       return { data, error: undefined };
