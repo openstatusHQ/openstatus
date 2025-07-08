@@ -15,20 +15,18 @@ export function NavActions() {
 
   const limitReached = monitors.length >= workspace.limits["monitors"];
 
-  if (limitReached) {
-    return (
-      <Button size="sm" disabled={limitReached}>
-        Create Monitor
-      </Button>
-    );
-  }
-
   return (
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
-      <Button size="sm" disabled={limitReached} asChild>
-        <Link href="/monitors/create">Create Monitor</Link>
-      </Button>
+      {limitReached ? (
+        <Button size="sm" disabled={limitReached}>
+          Create Monitor
+        </Button>
+      ) : (
+        <Button size="sm" disabled={limitReached} asChild>
+          <Link href="/monitors/create">Create Monitor</Link>
+        </Button>
+      )}
     </div>
   );
 }

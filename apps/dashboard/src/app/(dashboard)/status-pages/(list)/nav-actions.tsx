@@ -15,20 +15,18 @@ export function NavActions() {
 
   const limitReached = statusPages.length >= workspace.limits["status-pages"];
 
-  if (limitReached) {
-    return (
-      <Button size="sm" disabled={limitReached}>
-        Create Status Page
-      </Button>
-    );
-  }
-
   return (
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
-      <Button size="sm" disabled={limitReached} asChild>
-        <Link href="/status-pages/create">Create Status Page</Link>
-      </Button>
+      {limitReached ? (
+        <Button size="sm" disabled={limitReached}>
+          Create Status Page
+        </Button>
+      ) : (
+        <Button size="sm" disabled={limitReached} asChild>
+          <Link href="/status-pages/create">Create Status Page</Link>
+        </Button>
+      )}
     </div>
   );
 }

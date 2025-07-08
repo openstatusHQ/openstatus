@@ -21,6 +21,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect, useState, useCallback } from "react";
+import { Kbd } from "../common/kbd";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -74,7 +75,7 @@ export function NavFeedback() {
         <Button
           variant="ghost"
           size="sm"
-          className="p-1.5 -mx-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-transparent data-[state=open]:text-foreground"
+          className="px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-transparent data-[state=open]:text-foreground"
         >
           Feedback
         </Button>
@@ -102,11 +103,11 @@ export function NavFeedback() {
             <Button
               size="sm"
               variant="ghost"
-              className="absolute bottom-1.5 right-1.5"
+              className="absolute bottom-1.5 right-1.5 gap-0"
               type="submit"
               disabled={feedbackMutation.isPending}
             >
-              Send
+              Send<Kbd>⌘ ↵</Kbd>
             </Button>
           </form>
         </Form>
