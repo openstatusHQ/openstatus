@@ -123,7 +123,7 @@ export function NavMonitors() {
           </SidebarMenuItem>
         ) : monitors && monitors.length > 0 ? (
           monitors.map((item) => {
-            const isActive = pathname.startsWith(`/monitors/${item.id}`);
+            const isActive = pathname.startsWith(`/monitors/${item.id}/`);
             const actions = getActions({
               edit: () => router.push(`/monitors/${item.id}/edit`),
               "copy-id": () => {

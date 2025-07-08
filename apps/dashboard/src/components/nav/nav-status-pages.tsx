@@ -106,7 +106,7 @@ export function NavStatusPages() {
           </SidebarMenuItem>
         ) : statusPages && statusPages.length > 0 ? (
           statusPages.map((item) => {
-            const isActive = pathname.startsWith(`/status-pages/${item.id}`);
+            const isActive = pathname.startsWith(`/status-pages/${item.id}/`);
             const actions = getActions({
               edit: () => router.push(`/status-pages/${item.id}/edit`),
               "copy-id": () => {
