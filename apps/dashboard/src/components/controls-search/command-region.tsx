@@ -145,17 +145,19 @@ export function CommandRegion({
             <CommandEmpty>No region found.</CommandEmpty>
           </CommandList>
         </Command>
-        <BillingOverlay className="to-70%">
-          <BillingOverlayButton asChild>
-            <Link href="/settings/billing">
-              <Lock />
-              Upgrade
-            </Link>
-          </BillingOverlayButton>
-          <BillingOverlayDescription>
-            Filter by region is only available on paid plans.
-          </BillingOverlayDescription>
-        </BillingOverlay>
+        {limited ? (
+          <BillingOverlay className="to-70%">
+            <BillingOverlayButton asChild>
+              <Link href="/settings/billing">
+                <Lock />
+                Upgrade
+              </Link>
+            </BillingOverlayButton>
+            <BillingOverlayDescription>
+              Filter by region is only available on paid plans.
+            </BillingOverlayDescription>
+          </BillingOverlay>
+        ) : null}
       </PopoverContent>
     </Popover>
   );
