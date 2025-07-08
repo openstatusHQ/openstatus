@@ -69,6 +69,13 @@ export const metadata = {
     visible: () => true,
     format: (value) => formatMilliseconds(Number(value)),
   },
+  provider: {
+    label: "Provider",
+    key: "provider",
+    unit: undefined,
+    visible: () => true,
+    format: (value) => String(value),
+  },
 } as const satisfies Record<
   string,
   {

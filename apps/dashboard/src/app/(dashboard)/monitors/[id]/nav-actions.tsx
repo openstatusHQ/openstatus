@@ -114,14 +114,29 @@ export function NavActions() {
     }
   }
 
+  if (!monitor) return null;
+
   return (
     <div className="flex items-center gap-2 text-sm">
       <div className="hidden font-medium text-muted-foreground lg:inline-block">
-        Last ping 5m ago
-        <span className="relative ml-1.5 inline-flex">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/80 opacity-75" />
-          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
-        </span>
+        {!monitor.active ? (
+          <span className="relative ml-1.5 inline-flex">
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-muted-foreground/70" />
+          </span>
+        ) : monitor.status === "active" ? (
+          <span className="relative ml-1.5 inline-flex">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/80 opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
+          </span>
+        ) : monitor.status === "error" ? (
+          <span className="relative ml-1.5 inline-flex">
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-error" />
+          </span>
+        ) : (
+          <span className="relative ml-1.5 inline-flex">
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+          </span>
+        )}
       </div>
       <TooltipProvider>
         <Tooltip>

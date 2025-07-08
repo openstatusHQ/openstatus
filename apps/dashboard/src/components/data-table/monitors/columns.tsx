@@ -47,7 +47,9 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     accessorKey: "name",
-    header: "Name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     cell: ({ row }) => {
       return (
         <TableCellLink
@@ -56,7 +58,6 @@ export const columns: ColumnDef<Monitor>[] = [
         />
       );
     },
-    enableSorting: false,
     enableHiding: false,
     meta: {
       cellClassName: "max-w-[150px] min-w-max",

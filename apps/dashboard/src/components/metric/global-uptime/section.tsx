@@ -72,7 +72,11 @@ export function GlobalUptimeSection({
               : formatNumber(value ?? 0);
 
           if (k in acc) {
-            const trend = acc[k]?.raw ? (value ?? 0) / acc[k]?.raw : 1;
+            const trend = acc[k]?.raw
+              ? isUptime
+                ? acc[k]?.raw / (value ?? 0)
+                : (value ?? 0) / acc[k]?.raw
+              : 1;
             const hasTrend =
               !isNaN(trend) && trend !== Infinity && k !== "total";
             acc[k] = {

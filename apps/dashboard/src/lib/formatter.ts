@@ -16,6 +16,7 @@ export function formatMilliseconds(ms: number) {
 }
 
 export function formatPercentage(value: number) {
+  if (isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {
     style: "percent",
     minimumFractionDigits: 2,
