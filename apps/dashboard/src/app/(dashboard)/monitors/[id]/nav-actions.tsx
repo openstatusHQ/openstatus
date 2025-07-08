@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { isTRPCClientError } from "@trpc/client";
+import { NavFeedback } from "@/components/nav/nav-feedack";
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
@@ -118,6 +119,7 @@ export function NavActions() {
 
   return (
     <div className="flex items-center gap-2 text-sm">
+      <NavFeedback />
       <div className="hidden font-medium text-muted-foreground lg:inline-block">
         {!monitor.active ? (
           <span className="relative ml-1.5 inline-flex">

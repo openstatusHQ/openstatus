@@ -12,6 +12,7 @@ export const env = createEnv({
     CRON_SECRET: z.string(),
     UNKEY_TOKEN: z.string(),
     UNKEY_API_ID: z.string(),
+    SLACK_FEEDBACK_WEBHOOK_URL: z.string().optional(),
   },
 
   runtimeEnv: {
@@ -24,6 +25,7 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     UNKEY_TOKEN: process.env.UNKEY_TOKEN,
     UNKEY_API_ID: process.env.UNKEY_API_ID,
+    SLACK_FEEDBACK_WEBHOOK_URL: process.env.SLACK_FEEDBACK_WEBHOOK_URL,
   },
   skipValidation: process.env.NODE_ENV === "test",
 });

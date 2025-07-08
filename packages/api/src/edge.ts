@@ -17,6 +17,7 @@ import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
 import { checkerRouter } from "./router/checker";
 import { blobRouter } from "./router/blob";
+import { feedbackRouter } from "./router/feedback";
 
 // Deployed to /trpc/edge/**
 export const edgeRouter = createTRPCRouter({
@@ -38,4 +39,5 @@ export const edgeRouter = createTRPCRouter({
   member: memberRouter,
   checker: checkerRouter,
   blob: blobRouter,
+  feedback: feedbackRouter,
 });

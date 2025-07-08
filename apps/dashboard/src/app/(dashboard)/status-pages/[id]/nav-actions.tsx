@@ -1,6 +1,7 @@
 "use client";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { NavFeedback } from "@/components/nav/nav-feedack";
 import { getActions } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ export function NavActions() {
 
   return (
     <div className="flex items-center gap-2 text-sm">
+      <NavFeedback />
       <QuickActions
         actions={actions}
         deleteAction={{

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { NavFeedback } from "@/components/nav/nav-feedack";
 
 export function NavActions() {
   const trpc = useTRPC();
@@ -23,8 +24,11 @@ export function NavActions() {
   }
 
   return (
-    <Button size="sm" disabled={limitReached} asChild>
-      <Link href="/status-pages/create">Create Status Page</Link>
-    </Button>
+    <div className="flex items-center gap-2 text-sm">
+      <NavFeedback />
+      <Button size="sm" disabled={limitReached} asChild>
+        <Link href="/status-pages/create">Create Status Page</Link>
+      </Button>
+    </div>
   );
 }
