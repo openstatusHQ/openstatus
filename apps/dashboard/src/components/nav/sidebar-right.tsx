@@ -24,8 +24,13 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "]";
+const SIDEBAR_WIDTH = "18rem";
+const SIDEBAR_WIDTH_XL = "24rem";
+const SIDEBAR_WIDTH_MOBILE = "18rem";
 
 type SidebarRightProps = React.ComponentProps<typeof Sidebar> & {
   header: string;
@@ -39,6 +44,8 @@ export function SidebarRight({
   footerButton,
   ...props
 }: SidebarRightProps) {
+  const isMobile = useIsMobile();
+  const isXL = useMediaQuery("(min-width: 1280px)");
   return (
     <Sidebar
       collapsible="offcanvas"
@@ -46,7 +53,11 @@ export function SidebarRight({
       className="top-14 flex h-[calc(100svh_-_56px)]"
       style={
         {
-          // "--sidebar-width": "300px",
+          "--sidebar-width": isMobile
+            ? SIDEBAR_WIDTH_MOBILE
+            : isXL
+              ? SIDEBAR_WIDTH_XL
+              : SIDEBAR_WIDTH,
         } as React.CSSProperties
       }
       {...props}

@@ -41,11 +41,15 @@ export function Sheet({
   const regionConfig = flyRegionsDict[data.region];
   return (
     <DataTableSheet defaultOpen onOpenChange={(open) => !open && onClose()}>
-      <DataTableSheetContent>
+      <DataTableSheetContent className="sm:max-w-lg">
         <DataTableSheetHeader className="px-2">
           <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
         </DataTableSheetHeader>
         <Table className="table-fixed">
+          <colgroup>
+            <col className="w-1/3" />
+            <col className="w-2/3" />
+          </colgroup>
           <TableBody>
             <TableRow>
               <TableHead colSpan={2}>Request</TableHead>
@@ -178,6 +182,10 @@ export function Sheet({
                       </TabsList>
                       <TabsContent value="table">
                         <Table className="table-fixed">
+                          <colgroup>
+                            <col className="w-1/3" />
+                            <col className="w-2/3" />
+                          </colgroup>
                           <TableBody>
                             {Object.entries(data?.headers ?? {}).map(
                               ([key, value]) => (
