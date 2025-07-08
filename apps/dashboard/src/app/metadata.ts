@@ -7,6 +7,7 @@ export const DESCRIPTION =
 const OG_TITLE = "OpenStatus";
 const OG_DESCRIPTION = "Monitor your services and keep your users informed.";
 const FOOTER = "app.openstatus.dev";
+const IMAGE = "assets/og/dashboard-v2.png";
 
 export const defaultMetadata: Metadata = {
   title: {
@@ -22,7 +23,7 @@ export const twitterMetadata: Metadata["twitter"] = {
   description: DESCRIPTION,
   card: "summary_large_image",
   images: [
-    `/api/og?title=${OG_TITLE}&description=${OG_DESCRIPTION}&footer=${FOOTER}`,
+    `/api/og?title=${OG_TITLE}&description=${OG_DESCRIPTION}&footer=${FOOTER}&image=${IMAGE}`,
   ],
 };
 
@@ -31,6 +32,6 @@ export const ogMetadata: Metadata["openGraph"] = {
   description: DESCRIPTION,
   type: "website",
   images: [
-    `/api/og?title=${OG_TITLE}&description=${OG_DESCRIPTION}&footer=${FOOTER}`,
+    `/api/og?title=${OG_TITLE}&description=${OG_DESCRIPTION}&footer=${FOOTER}&image=${IMAGE}`,
   ],
 };
