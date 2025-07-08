@@ -150,7 +150,7 @@ export function NavMonitors() {
             return (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton
-                  className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11 data-[active=false]:text-muted-foreground"
+                  className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11"
                   isActive={isActive}
                   asChild
                 >
