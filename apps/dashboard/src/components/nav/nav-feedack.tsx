@@ -42,7 +42,10 @@ export function NavFeedback() {
 
   const onSubmit = useCallback(
     async (values: z.infer<typeof schema>) => {
-      const promise = feedbackMutation.mutateAsync(values);
+      const promise = feedbackMutation.mutateAsync({
+        ...values,
+        path: window.location.pathname,
+      });
       toast.promise(promise, {
         loading: "Sending feedback...",
         success: "Feedback sent",
@@ -106,7 +109,7 @@ export function NavFeedback() {
                   <FormLabel className="sr-only">Feedback</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Feedback"
+                      placeholder="Ideas, bugs, or anything else..."
                       className="resize-none p-3"
                       rows={4}
                       {...field}

@@ -8,6 +8,7 @@ export const feedbackRouter = createTRPCRouter({
     .input(
       z.object({
         message: z.string().min(1, "Message required"),
+        path: z.string().optional(),
       })
     )
     .mutation(async (opts) => {
@@ -20,6 +21,7 @@ export const feedbackRouter = createTRPCRouter({
 
       const textLines: string[] = [];
       if (opts.ctx.user) textLines.push(`*Email:* ${opts.ctx.user.email}`);
+      if (opts.input.path) textLines.push(`*Path:* ${opts.input.path}`);
       textLines.push(`*Message:* ${opts.input.message}`);
 
       await fetch(env.SLACK_FEEDBACK_WEBHOOK_URL, {
