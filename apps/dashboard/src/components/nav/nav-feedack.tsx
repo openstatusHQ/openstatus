@@ -22,6 +22,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useEffect, useState, useCallback } from "react";
 import { Kbd } from "../common/kbd";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -37,6 +38,7 @@ export function NavFeedback() {
   });
   const trpc = useTRPC();
   const feedbackMutation = useMutation(trpc.feedback.submit.mutationOptions());
+  const isMobile = useIsMobile();
 
   const onSubmit = useCallback(
     async (values: z.infer<typeof schema>) => {
@@ -54,7 +56,13 @@ export function NavFeedback() {
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if (!open) return;
+      if (!open) {
+        if (e.key === "f") {
+          e.preventDefault();
+          setOpen(true);
+        }
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         form.handleSubmit(onSubmit)();
       }
@@ -69,15 +77,22 @@ export function NavFeedback() {
     }
   }, [open, form]);
 
+  if (isMobile) {
+    return null;
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
-          className="px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-transparent data-[state=open]:text-foreground"
+          className="group gap-0 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-transparent data-[state=open]:text-foreground"
         >
-          Feedback
+          Feedback{" "}
+          <Kbd className="group-data-[state=open]:text-foreground group-hover:text-foreground font-mono">
+            F
+          </Kbd>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="relative p-0 border-none">
@@ -103,11 +118,13 @@ export function NavFeedback() {
             <Button
               size="sm"
               variant="ghost"
-              className="absolute bottom-1.5 right-1.5 gap-0"
+              className="absolute group bottom-1.5 right-1.5 gap-0"
               type="submit"
               disabled={feedbackMutation.isPending}
             >
-              Send<Kbd>⌘ ↵</Kbd>
+              Send
+              <Kbd className="group-hover:text-foreground font-mono">⌘</Kbd>
+              <Kbd className="group-hover:text-foreground font-mono">↵</Kbd>
             </Button>
           </form>
         </Form>
