@@ -2,9 +2,17 @@
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedack";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { getActions } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Globe } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -14,6 +22,10 @@ export function NavActions() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const pathname = usePathname();
+
+  const { data: statusPage } = useQuery(
+    trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
 
   const deleteStatusPageMutation = useMutation(
     trpc.page.delete.mutationOptions({
@@ -36,9 +48,26 @@ export function NavActions() {
     },
   });
 
+  if (!statusPage) return null;
+
   return (
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="sm" asChild className="h-7 w-7">
+              <a
+                href={`https://${statusPage.customDomain ?? `${statusPage.slug}.openstatus.dev`}`}
+                target="_blank"
+              >
+                <Globe className="w-4 h-4" />
+              </a>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>View Page</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       <QuickActions
         actions={actions}
         deleteAction={{
