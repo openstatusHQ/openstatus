@@ -37,7 +37,14 @@ export function Sidebar() {
           items: [
             {
               label: "Slug",
-              value: <Link href="#">{statusPage.slug}</Link>,
+              value: (
+                <Link
+                  href={`https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`}
+                  target="_blank"
+                >
+                  {statusPage.slug}
+                </Link>
+              ),
             },
             { label: "Domain", value: statusPage.customDomain || "-" },
             {

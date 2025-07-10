@@ -58,7 +58,7 @@ export function NavActions() {
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
               <a
-                href={`https://${statusPage.customDomain ?? `${statusPage.slug}.openstatus.dev`}`}
+                href={`https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`}
                 target="_blank"
               >
                 <Globe className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
