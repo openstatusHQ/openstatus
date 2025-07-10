@@ -59,8 +59,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, workspaceId)
-        )
+          eq(statusReport.workspaceId, workspaceId),
+        ),
       )
       .returning()
       .get();
@@ -84,7 +84,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .get();
 
     if (limits.notifications && _statusReport.pageId) {
-      const _statusReportWithRelations = await db.query.statusReport.findFirst({
+      const allInfo = await db.query.statusReport.findFirst({
         where: eq(statusReport.id, Number(id)),
         with: {
           monitorsToStatusReports: {
@@ -102,21 +102,21 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         .where(
           and(
             eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
         )
         .all();
 
-      if (_statusReportWithRelations?.page) {
+      if (allInfo?.page) {
         await emailClient.sendStatusReportUpdate({
           to: subscribers.map((subscriber) => subscriber.email),
-          pageTitle: _statusReportWithRelations.page.title,
-          reportTitle: _statusReportWithRelations.title,
-          status: _statusReportWithRelations.status,
+          pageTitle: allInfo.page.title,
+          reportTitle: allInfo.title,
+          status: allInfo.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
-          monitors: _statusReportWithRelations.monitorsToStatusReports.map(
-            (monitor) => monitor.monitor.name
+          monitors: allInfo.monitorsToStatusReports.map(
+            (monitor) => monitor.monitor.name,
           ),
         });
       }
