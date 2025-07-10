@@ -45,23 +45,26 @@ const createStatusUpdate = createRoute({
 });
 
 export function registerPostStatusReportUpdate(
-  api: typeof statusReportUpdatesApi,
+  api: typeof statusReportUpdatesApi
 ) {
   return api.openapi(createStatusUpdate, async (c) => {
     const workspaceId = c.get("workspace").id;
     const input = c.req.valid("json");
     const limits = c.get("workspace").limits;
 
-    const _statusReport = await db
-      .select()
-      .from(statusReport)
-      .where(
-        and(
-          eq(statusReport.id, input.statusReportId),
-          eq(statusReport.workspaceId, workspaceId),
-        ),
-      )
-      .get();
+    const _statusReport = await db.query.statusReport.findFirst({
+      where: and(
+        eq(statusReport.id, input.statusReportId),
+        eq(statusReport.workspaceId, workspaceId)
+      ),
+      with: {
+        monitorsToStatusReports: {
+          with: {
+            monitor: true,
+          },
+        },
+      },
+    });
 
     if (!_statusReport) {
       throw new OpenStatusApiError({
@@ -87,8 +90,8 @@ export function registerPostStatusReportUpdate(
         .where(
           and(
             eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt),
-          ),
+            isNotNull(pageSubscriber.acceptedAt)
+          )
         )
         .all();
 
@@ -111,7 +114,9 @@ export function registerPostStatusReportUpdate(
           status: _statusReport.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
-          monitors: _page.monitorsToPages.map((i) => i.monitor.name),
+          monitors: _statusReport.monitorsToStatusReports.map(
+            (i) => i.monitor.name
+          ),
         });
       }
     }
