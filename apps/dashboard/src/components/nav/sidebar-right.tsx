@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarProvider,
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -29,7 +30,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "]";
 const SIDEBAR_WIDTH = "18rem";
-const SIDEBAR_WIDTH_XL = "24rem";
+const SIDEBAR_WIDTH_2XL = "24rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 
 type SidebarRightProps = React.ComponentProps<typeof Sidebar> & {
@@ -45,59 +46,62 @@ export function SidebarRight({
   ...props
 }: SidebarRightProps) {
   const isMobile = useIsMobile();
-  const isXL = useMediaQuery("(min-width: 1280px)");
+  const is2XL = useMediaQuery("(min-width: 1536px)");
   return (
-    <Sidebar
-      collapsible="offcanvas"
-      side="right"
-      className="top-14 flex h-[calc(100svh_-_56px)]"
+    <SidebarProvider
       style={
         {
           "--sidebar-width": isMobile
             ? SIDEBAR_WIDTH_MOBILE
-            : isXL
-              ? SIDEBAR_WIDTH_XL
+            : is2XL
+              ? SIDEBAR_WIDTH_2XL
               : SIDEBAR_WIDTH,
         } as React.CSSProperties
       }
-      {...props}
     >
-      <SidebarHeader className="relative border-sidebar-border border-b">
-        {header}
-        <div className="-left-9 absolute inset-y-0 z-10 flex items-center justify-center">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarTrigger />
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                <p className="mr-px inline-flex items-center gap-1">
-                  Toggle Sidebar{" "}
-                  <Kbd className="border-muted-foreground bg-primary text-background">
-                    ⌘+{SIDEBAR_KEYBOARD_SHORTCUT}
-                  </Kbd>
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </SidebarHeader>
-      <SidebarContent className="flex flex-col gap-0">
-        {metadata.map((item) => (
-          <SidebarMetadata key={item.label} {...item} />
-        ))}
-      </SidebarContent>
-      <SidebarSeparator className="mx-0" />
-      {footerButton ? (
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton {...footerButton} />
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      ) : null}
-    </Sidebar>
+      <Sidebar
+        collapsible="offcanvas"
+        side="right"
+        className="top-14 flex h-[calc(100svh_-_56px)]"
+        {...props}
+      >
+        <SidebarHeader className="relative border-sidebar-border border-b">
+          {header}
+          <div className="-left-9 absolute inset-y-0 z-10 flex items-center justify-center">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <SidebarTrigger />
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p className="mr-px inline-flex items-center gap-1">
+                    Toggle Sidebar{" "}
+                    <Kbd className="border-muted-foreground bg-primary text-background">
+                      ⌘+{SIDEBAR_KEYBOARD_SHORTCUT}
+                    </Kbd>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="flex flex-col gap-0">
+          {metadata.map((item) => (
+            <SidebarMetadata key={item.label} {...item} />
+          ))}
+        </SidebarContent>
+        <SidebarSeparator className="mx-0" />
+        {footerButton ? (
+          <SidebarFooter>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton {...footerButton} />
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        ) : null}
+      </Sidebar>
+    </SidebarProvider>
   );
 }
 
