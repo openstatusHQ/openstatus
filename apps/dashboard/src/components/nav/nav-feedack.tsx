@@ -20,9 +20,10 @@ import { useForm } from "react-hook-form";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useEffect, useState, useCallback } from "react";
-import { Kbd } from "../common/kbd";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Kbd } from "@/components/common/kbd";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Mic, MicOff } from "lucide-react";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -39,6 +40,63 @@ export function NavFeedback() {
   const trpc = useTRPC();
   const feedbackMutation = useMutation(trpc.feedback.submit.mutationOptions());
   const isMobile = useIsMobile();
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+      console.log("speech recognition API supported");
+    } else {
+      console.log("speech recognition API not supported");
+    }
+
+    const SpeechRecognitionCtor =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitSpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).SpeechRecognition;
+
+    // Browser not supported
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition: SpeechRecognition = new SpeechRecognitionCtor();
+    recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join(" ");
+      form.setValue(
+        "message",
+        `${form.getValues("message") ?? ""}${transcript} `
+      );
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+  }, [form]);
+
+  const toggleListening = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+    if (isListening) {
+      recognition.stop();
+    } else {
+      try {
+        recognition.start();
+        setIsListening(true);
+      } catch {
+        // recognition already started, ignore
+      }
+    }
+  };
 
   const onSubmit = useCallback(
     async (values: z.infer<typeof schema>) => {
@@ -110,7 +168,7 @@ export function NavFeedback() {
                   <FormControl>
                     <Textarea
                       placeholder="Ideas, bugs, or anything else..."
-                      className="resize-none p-3"
+                      className="resize-none p-3 field-sizing-fixed"
                       rows={4}
                       {...field}
                     />
@@ -118,6 +176,21 @@ export function NavFeedback() {
                 </FormItem>
               )}
             />
+            {recognitionRef.current && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="absolute group bottom-1.5 left-1.5 gap-0"
+                onClick={toggleListening}
+              >
+                {isListening ? (
+                  <MicOff className="size-4" />
+                ) : (
+                  <Mic className="size-4" />
+                )}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"
