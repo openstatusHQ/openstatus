@@ -80,15 +80,15 @@ function SidebarMetadataTable({
     <Table>
       <TableHeader className="sr-only">
         <TableRow>
-          <TableHead className="w-24">Label</TableHead>
+          <TableHead className="w-26">Label</TableHead>
           <TableHead>Value</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {items.map((item, index) => (
           <TableRow key={`${item.label}-${index}`}>
-            <TableCell className="w-24 border-r text-muted-foreground">
-              <div className="min-w-[80px] max-w-[80px] truncate">
+            <TableCell className="w-26 border-r text-muted-foreground">
+              <div className="min-w-[90px] max-w-[90px] truncate">
                 {item.isNested ? "└ " : ""}
                 {item.label}
               </div>

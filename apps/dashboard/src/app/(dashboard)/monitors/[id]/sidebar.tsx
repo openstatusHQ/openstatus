@@ -39,6 +39,10 @@ export function Sidebar() {
               value: <span className="uppercase">{monitor.jobType}</span>,
             },
             {
+              label: "Endpoint",
+              value: monitor.url.replace(/^https?:\/\//, ""),
+            },
+            {
               label: "Regions",
               value:
                 monitor.regions.length > 6
