@@ -71,15 +71,17 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(monitor.workspaceId, workspaceId),
             inArray(monitor.id, input.monitorIds),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 
       if (_monitors.length !== input.monitorIds.length) {
         throw new OpenStatusApiError({
           code: "BAD_REQUEST",
-          message: `Some of the monitors ${input.monitorIds.join(", ")} not found`,
+          message: `Some of the monitors ${input.monitorIds.join(
+            ", "
+          )} not found`,
         });
       }
     }
@@ -128,7 +130,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
               monitorId: id,
               statusReportId: _newStatusReport.id,
             };
-          }),
+          })
         )
         .returning();
     }
@@ -140,8 +142,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(
           and(
             eq(pageSubscriber.pageId, _newStatusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt),
-          ),
+            isNotNull(pageSubscriber.acceptedAt)
+          )
         )
         .all();
 
@@ -156,6 +158,22 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         },
       });
 
+      const _statusReport = await db.query.statusReport.findFirst({
+        where: eq(statusReport.id, _newStatusReport.id),
+        with: {
+          monitorsToStatusReports: {
+            with: { monitor: true },
+          },
+        },
+      });
+
+      if (!_statusReport) {
+        throw new OpenStatusApiError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Status report not found",
+        });
+      }
+
       if (pageInfo && subscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({
           to: subscribers.map((subscriber) => subscriber.email),
@@ -164,7 +182,9 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           status: _newStatusReport.status,
           message: _newStatusReportUpdate.message,
           date: _newStatusReportUpdate.date.toISOString(),
-          monitors: pageInfo.monitorsToPages.map((i) => i.monitor.name),
+          monitors: _statusReport.monitorsToStatusReports.map(
+            (i) => i.monitor.name
+          ),
         });
       }
     }
