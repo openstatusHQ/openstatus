@@ -38,7 +38,7 @@ export function DropdownTrigger() {
               onSelect={() => setTrigger(item)}
               className={cn("capitalize")}
             >
-              {item}
+              {item === "cron" ? "Scheduled" : "API"}
               {trigger === item ? <Check className="ml-auto shrink-0" /> : null}
             </DropdownMenuItem>
           ))}
