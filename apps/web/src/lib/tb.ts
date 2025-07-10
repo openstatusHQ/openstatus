@@ -40,8 +40,8 @@ export function prepareListByPeriod(period: Period, type: Type = "http") {
     }
     default: {
       const getData = {
-        http: tb.httpListDaily,
-        tcp: tb.tcpListDaily,
+        http: tb.legacy_httpListDaily,
+        tcp: tb.legacy_tcpListDaily,
       } as const;
       return { getData: getData[type] };
     }
