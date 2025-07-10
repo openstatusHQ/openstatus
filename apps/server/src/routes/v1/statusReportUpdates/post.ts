@@ -45,7 +45,7 @@ const createStatusUpdate = createRoute({
 });
 
 export function registerPostStatusReportUpdate(
-  api: typeof statusReportUpdatesApi
+  api: typeof statusReportUpdatesApi,
 ) {
   return api.openapi(createStatusUpdate, async (c) => {
     const workspaceId = c.get("workspace").id;
@@ -55,7 +55,7 @@ export function registerPostStatusReportUpdate(
     const _statusReport = await db.query.statusReport.findFirst({
       where: and(
         eq(statusReport.id, input.statusReportId),
-        eq(statusReport.workspaceId, workspaceId)
+        eq(statusReport.workspaceId, workspaceId),
       ),
       with: {
         monitorsToStatusReports: {
@@ -90,8 +90,8 @@ export function registerPostStatusReportUpdate(
         .where(
           and(
             eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
         )
         .all();
 
@@ -115,7 +115,7 @@ export function registerPostStatusReportUpdate(
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _statusReport.monitorsToStatusReports.map(
-            (i) => i.monitor.name
+            (i) => i.monitor.name,
           ),
         });
       }

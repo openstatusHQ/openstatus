@@ -59,8 +59,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, workspaceId)
-        )
+          eq(statusReport.workspaceId, workspaceId),
+        ),
       )
       .returning()
       .get();
@@ -102,8 +102,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         .where(
           and(
             eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
         )
         .all();
 
@@ -116,7 +116,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _statusReportWithRelations.monitorsToStatusReports.map(
-            (monitor) => monitor.monitor.name
+            (monitor) => monitor.monitor.name,
           ),
         });
       }
