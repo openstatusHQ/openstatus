@@ -146,11 +146,11 @@ export function NavActions() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="group h-7 w-7"
               type="button"
               onClick={testAction}
             >
-              <Zap />
+              <Zap className="text-muted-foreground group-hover:text-foreground" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Test Monitor</TooltipContent>
