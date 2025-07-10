@@ -6,6 +6,7 @@ import {
   Head,
   Heading,
   Html,
+  Markdown,
   Preview,
   Row,
   Text,
@@ -98,7 +99,21 @@ function StatusReportEmail({
           </Row>
           <Row style={styles.row}>
             <Column>
-              <Text>{message}</Text>
+              <Markdown
+                markdownCustomStyles={{
+                  p: { fontSize: 14, lineHeight: 24 },
+                  h1: { fontSize: 24, lineHeight: 32 },
+                  h2: { fontSize: 20, lineHeight: 28 },
+                  h3: { fontSize: 16, lineHeight: 24 },
+                  h4: { fontSize: 14, lineHeight: 24 },
+                  h5: { fontSize: 12, lineHeight: 20 },
+                  h6: { fontSize: 10, lineHeight: 16 },
+                  li: { fontSize: 14, lineHeight: 24 },
+                  hr: { borderColor: colors.border },
+                }}
+              >
+                {message}
+              </Markdown>
             </Column>
           </Row>
         </Layout>
@@ -114,8 +129,26 @@ StatusReportEmail.PreviewProps = {
   reportTitle: "API Unavaible",
   status: "investigating",
   date: new Date().toISOString(),
-  message:
-    "The API is down, including the webhook. We are actively investigating the issue and will provide updates as soon as possible.",
+  message: `
+**Status**: Partial Service Restored
+**GitHub Runners**: Operational
+**Cache Action**: Degraded 
+
+--- 
+
+### What’s Changed 
+
+- All queued workflows are now being picked up and completed successfully. 
+- Jobs are running normally on our GitHub App. ### Current Issue: Cache Action Unavailable Attempts to re-publish our action to GitHub Marketplace are returning 500 Internal Server Errors. This prevents the updated versions from going live. 
+
+### Mitigation In Progress 
+
+- Collaborating with GitHub Support to resolve any upstream issues. 
+
+### Next Update 
+
+We’ll post another update by **19:00 UTC** today or sooner if critical developments occur. We apologize for the inconvenience and appreciate your patience as we restore full cache functionality.
+  `,
   monitors: ["OpenStatus API", "OpenStatus Webhook"],
 };
 
