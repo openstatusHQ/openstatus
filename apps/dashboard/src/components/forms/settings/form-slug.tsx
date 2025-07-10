@@ -39,12 +39,12 @@ export function FormSlug({ defaultValues }: { defaultValues?: FormValues }) {
           variant="outline"
           size="sm"
           onClick={() =>
-            copy("easy-peasy", {
+            copy(defaultValues?.slug ?? "unknown slug", {
               successMessage: "Copied slug to clipboard",
             })
           }
         >
-          easy-peasy
+          {defaultValues?.slug ?? "unknown slug"}
           {isCopied ? (
             <Check size={16} className="text-muted-foreground" />
           ) : (

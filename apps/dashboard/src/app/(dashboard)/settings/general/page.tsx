@@ -67,7 +67,7 @@ export default function Page() {
               });
             }}
           />
-          <FormSlug />
+          <FormSlug defaultValues={{ slug: workspace.slug }} />
           <FormMembers
             onCreate={async (values) => {
               await createInvitationMutation.mutateAsync({
