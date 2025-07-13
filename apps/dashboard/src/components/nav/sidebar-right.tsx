@@ -58,6 +58,8 @@ export function SidebarRight({
               : SIDEBAR_WIDTH,
         } as React.CSSProperties
       }
+      defaultOpen={false}
+      cookieName="sidebar_state_right"
     >
       <Sidebar
         collapsible="offcanvas"
