@@ -994,6 +994,38 @@ export class OSTinybird {
     });
   }
 
+  public get httpWorkspace30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_workspace_30d__v0",
+      parameters: z.object({
+        workspaceId: z.string(),
+      }),
+      data: z.object({
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
+        count: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpWorkspace30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_workspace_30d__v0",
+      parameters: z.object({
+        workspaceId: z.string(),
+      }),
+      data: z.object({
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
+        count: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpGetBiweekly() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_get_14d__v0",

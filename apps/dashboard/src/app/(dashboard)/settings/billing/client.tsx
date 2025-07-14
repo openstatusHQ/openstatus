@@ -24,15 +24,48 @@ import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { useRouter } from "next/navigation";
-import { useEffect, useTransition } from "react";
+import { useEffect, useMemo, useTransition } from "react";
 import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "./search-params";
 import { toast } from "sonner";
+import { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
+
+function calculateTotalRequests(limits: Limits) {
+  const monitors = limits.monitors;
+  const maxRegions = limits["max-regions"];
+  const periodicity = limits.periodicity;
+
+  if (periodicity.includes("30s")) {
+    return monitors * maxRegions * 2 * 60 * 24 * 30;
+  }
+
+  if (periodicity.includes("1m")) {
+    return monitors * maxRegions * 60 * 24 * 30;
+  }
+
+  if (periodicity.includes("5m")) {
+    return monitors * maxRegions * 12 * 24 * 30;
+  }
+
+  if (periodicity.includes("10m")) {
+    return monitors * maxRegions * 6 * 24 * 30;
+  }
+
+  if (periodicity.includes("30m")) {
+    return monitors * maxRegions * 2 * 24 * 30;
+  }
+
+  if (periodicity.includes("1h")) {
+    return monitors * maxRegions * 24 * 30;
+  }
+
+  return 0;
+}
 
 export function Client() {
   const trpc = useTRPC();
@@ -48,6 +81,19 @@ export function Client() {
       },
     })
   );
+  const { data: httpWorkspace30d } = useQuery({
+    ...trpc.tinybird.workspace30d.queryOptions({
+      type: "http",
+    }),
+    enabled: !!workspace,
+  });
+
+  const { data: tcpWorkspace30d } = useQuery({
+    ...trpc.tinybird.workspace30d.queryOptions({
+      type: "tcp",
+    }),
+    enabled: !!workspace,
+  });
 
   useEffect(() => {
     if (success) {
@@ -60,6 +106,18 @@ export function Client() {
       }, 500);
     }
   }, [success, setSearchParams]);
+
+  const totalRequests = useMemo(() => {
+    const httpRequests = httpWorkspace30d?.data?.reduce(
+      (acc, curr) => acc + curr.count,
+      0
+    );
+    const tcpRequests = tcpWorkspace30d?.data?.reduce(
+      (acc, curr) => acc + curr.count,
+      0
+    );
+    return (httpRequests ?? 0) + (tcpRequests ?? 0);
+  }, [httpWorkspace30d, tcpWorkspace30d]);
 
   if (!workspace) return null;
 
@@ -96,6 +154,16 @@ export function Client() {
                   label="Notifiers"
                   value={workspace.usage?.notifications ?? 0}
                   max={workspace.limits["notification-channels"]}
+                />
+              </div>
+            </FormCardContent>
+            <FormCardSeparator />
+            <FormCardContent>
+              <div className="flex flex-col gap-2">
+                <BillingProgress
+                  label="Requests in the last 30 days"
+                  value={totalRequests}
+                  max={calculateTotalRequests(workspace.limits)}
                 />
               </div>
             </FormCardContent>

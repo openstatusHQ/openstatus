@@ -17,6 +17,10 @@ const types = ["http", "tcp"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
+// NEW: workspace-level counters helper
+function getWorkspace30dProcedure(type: Type) {
+  return type === "http" ? tb.httpWorkspace30d : tb.tcpWorkspace30d;
+}
 // Helper functions to get the right procedure based on period and type
 function getListProcedure(period: Period, type: Type) {
   switch (period) {
@@ -542,5 +546,16 @@ export const tinybirdRouter = createTRPCRouter({
       }
 
       return await procedure(opts.input);
+    }),
+
+  workspace30d: protectedProcedure
+    .input(
+      z.object({
+        type: z.enum(types).default("http"),
+      })
+    )
+    .query(async (opts) => {
+      const procedure = getWorkspace30dProcedure(opts.input.type);
+      return await procedure({ workspaceId: String(opts.ctx.workspace.id) });
     }),
 });
