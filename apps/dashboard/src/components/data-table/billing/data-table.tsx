@@ -142,8 +142,14 @@ export function DataTable() {
                           .format(limitValue)
                           .toString();
                       }
+
+                      // TODO: create a format function for this in @data/plans
+                      if (value === "regions" && Array.isArray(limitValue)) {
+                        return limitValue?.length ?? 0;
+                      }
+
                       if (Array.isArray(limitValue) && limitValue.length > 0) {
-                        return limitValue.length;
+                        return limitValue[0];
                       }
                       return limitValue;
                     }
