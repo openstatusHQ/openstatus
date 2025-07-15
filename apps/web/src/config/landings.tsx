@@ -52,7 +52,7 @@ export const landingsConfig = {
   "status-page": {
     icon: "panel-top",
     title: "Status Page",
-    hero: "Turn transparency into trust with a dedicated status page.",
+    hero: "Turn transparency into trust with a dedicated status page",
     description:
       "Keep users informed during downtime, so you can focus on the fix.",
     blocks: [
@@ -73,7 +73,7 @@ export const landingsConfig = {
   "synthetic-monitoring": {
     icon: "network",
     title: "Synthetic Monitoring",
-    hero: "Monitor your application's performance from anywhere, anytime.",
+    hero: "Monitor your application's performance from anywhere, anytime",
     description:
       "Proactively identify and resolve application issues across the globe.",
     blocks: [
