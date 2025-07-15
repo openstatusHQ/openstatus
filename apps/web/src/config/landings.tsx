@@ -73,8 +73,8 @@ export const landingsConfig = {
   "synthetic-monitoring": {
     icon: "network",
     title: "Synthetic Monitoring",
-    hero: "Global Synthetic Monitoring",
-    description: "Proactively monitor your api and website globally.",
+    hero: "Monitor your application's performance from anywhere, anytime.",
+    description: "Proactively identify and resolve application issues across the globe.",
     blocks: [
       <FeatureRegions key="feature-regions" />,
       <SpeedBanner key="speed-banner" />,
