@@ -490,7 +490,7 @@ export function FeatureCLI(
       icon="terminal"
       iconText="CLI"
       title="Run everywhere."
-      subTitle="Check your monitors from your favorite terminal."
+      subTitle="Create your monitors from your favorite terminal."
       component={
         <Mdx
           code={blockCLI.mdx}

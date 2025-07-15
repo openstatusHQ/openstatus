@@ -26,6 +26,7 @@ import {
 
 type Landing = {
   title: string;
+  hero: string;
   description: string;
   icon: ValidIcon;
   blocks: React.ReactNode[];
@@ -35,6 +36,7 @@ export const landingsConfig = {
   "uptime-monitoring": {
     icon: "activity",
     title: "Uptime Monitoring",
+    hero: "Detect downtime before your users do",
     description:
       "Monitor your uptime and get notified when your services are down.",
     blocks: [
@@ -50,7 +52,9 @@ export const landingsConfig = {
   "status-page": {
     icon: "panel-top",
     title: "Status Page",
-    description: "Create a status page to inform your users about the uptime.",
+    hero: "Turn transparency into trust with a dedicated status page",
+    description:
+      "Keep users informed during downtime, so you can focus on the fix.",
     blocks: [
       <FeatureCustomDomain key="feature-custom-domain" />,
       <FeatureStatusPageTrackerToggle key="feature-status-page-tracker" />,
@@ -69,7 +73,9 @@ export const landingsConfig = {
   "synthetic-monitoring": {
     icon: "network",
     title: "Synthetic Monitoring",
-    description: "Proactively monitor your api and website globally.",
+    hero: "Monitor your application's performance from anywhere, anytime",
+    description:
+      "Proactively identify and resolve application issues across the globe.",
     blocks: [
       <FeatureRegions key="feature-regions" />,
       <SpeedBanner key="speed-banner" />,
@@ -83,16 +89,17 @@ export const landingsConfig = {
       <BookingBanner key="booking-banner" />,
     ],
   },
-  "ci-cd": {
+  "monitoring-as-code": {
     icon: "terminal",
-    title: "CI/CD Testing",
+    title: "Monitoring as Code",
+    hero: "Get rid of ClickOps",
     description:
-      "Run your synthetic checks in your CI/CD pipeline and export metrics to your observability stack.",
+      "Use configuration files to define your monitoring and store them in your codebase.",
     blocks: [
+      <FeatureCLI key="feature-cli" />,
       <FeatureGitHubAction key="feature-github-action" />,
       <EnterpriseBanner key="enterprise-banner" />,
       <FeatureAPIMonitoring key="feature-api-monitoring" />,
-      <FeatureCLI key="feature-cli" />,
       <FeatureTerraformProvider key="feature-terraform-provider" />,
       <FeatureOpenTelemetry key="feature-open-telemetry" />,
       <BookingBanner key="booking-banner" />,
