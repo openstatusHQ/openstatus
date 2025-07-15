@@ -36,7 +36,7 @@ export const landingsConfig = {
   "uptime-monitoring": {
     icon: "activity",
     title: "Uptime Monitoring",
-    hero:"Detect downtime before your users do",
+    hero: "Detect downtime before your users do",
     description:
       "Monitor your uptime and get notified when your services are down.",
     blocks: [
@@ -52,8 +52,9 @@ export const landingsConfig = {
   "status-page": {
     icon: "panel-top",
     title: "Status Page",
-    hero:"Turn transparency into trust with a dedicated status page.",
-    description: "Keep users informed during downtime, so you can focus on the fix.",
+    hero: "Turn transparency into trust with a dedicated status page.",
+    description:
+      "Keep users informed during downtime, so you can focus on the fix.",
     blocks: [
       <FeatureCustomDomain key="feature-custom-domain" />,
       <FeatureStatusPageTrackerToggle key="feature-status-page-tracker" />,

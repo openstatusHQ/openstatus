@@ -68,7 +68,7 @@ export default async function Page({
   );
 }
 
-function Hero({  hero, description }: { hero: string; description: string }) {
+function Hero({ hero, description }: { hero: string; description: string }) {
   return (
     <div className="mx-auto my-12 flex flex-col items-center gap-4 sm:my-16 md:gap-6">
       <div className="flex flex-col gap-4 text-center md:gap-6">
