@@ -15,6 +15,7 @@ import { getActions } from "@/data/region-metrics.client";
 import { flyRegionsDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 function TrendCell({ trend }: { trend: RegionMetric["trend"] }) {
   return <ChartLineRegion className="h-[50px]" data={trend} />;
@@ -101,7 +102,14 @@ export const columns: ColumnDef<RegionMetric>[] = [
   {
     id: "actions",
     cell: ({ row }) => {
+      // NOTE: works, but is not very react-esque
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const router = useRouter();
       const actions = getActions({
+        filter: async () => {
+          router.push(`?regions=${row.original.region}`);
+        },
+        // TODO: add triggerById in TRPC client
         trigger: async () => {
           console.log(row.original);
           const promise = new Promise((resolve) => setTimeout(resolve, 1000));
