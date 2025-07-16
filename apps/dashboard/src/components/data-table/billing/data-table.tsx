@@ -59,7 +59,7 @@ export function DataTable() {
               <TableHead
                 key={id}
                 className={cn(
-                  "h-px p-2 align-top text-foreground",
+                  "h-auto p-2 align-bottom text-foreground",
                   id === "starter" ? "bg-muted/30" : ""
                 )}
               >
