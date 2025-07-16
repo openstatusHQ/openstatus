@@ -324,7 +324,7 @@ export function Sheet({
               });
             }}
           >
-            {isCopied ? "Copied" : "Copy"}
+            Copy Request Log URL
             {isCopied ? <Check /> : <Copy />}
           </Button>
         </DataTableSheetFooter>

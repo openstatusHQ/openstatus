@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Kbd } from "@/components/common/kbd";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Mic, MicOff } from "lucide-react";
+import { AudioLines, Mic } from "lucide-react";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -185,7 +185,7 @@ export function NavFeedback() {
                 onClick={toggleListening}
               >
                 {isListening ? (
-                  <MicOff className="size-4" />
+                  <AudioLines className="size-4 animate-pulse" />
                 ) : (
                   <Mic className="size-4" />
                 )}

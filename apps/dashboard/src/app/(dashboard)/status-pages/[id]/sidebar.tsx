@@ -108,7 +108,12 @@ export function Sidebar() {
         },
       ]}
       footerButton={{
-        // TODO: onClick
+        onClick: () =>
+          typeof window !== "undefined" &&
+          window.open(
+            `https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`,
+            "_blank"
+          ),
         children: (
           <>
             <ExternalLink />

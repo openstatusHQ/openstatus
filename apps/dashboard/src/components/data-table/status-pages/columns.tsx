@@ -27,11 +27,12 @@ export const columns: ColumnDef<StatusPage>[] = [
     },
   },
   {
-    accessorKey: "favicon",
+    accessorKey: "icon",
     header: "Favicon",
     cell: ({ row }) => {
-      const value = row.getValue("favicon");
-      if (!value) return "-";
+      const value = row.getValue("icon");
+      if (!value || typeof value !== "string")
+        return <span className="text-muted-foreground">-</span>;
       return (
         <img
           src={`${value}`}
@@ -67,7 +68,8 @@ export const columns: ColumnDef<StatusPage>[] = [
     header: "Domain",
     cell: ({ row }) => {
       const value = row.getValue("domain");
-      if (typeof value !== "string") return "-";
+      if (typeof value !== "string")
+        return <span className="text-muted-foreground">-</span>;
       return (
         <Link href={"#"} className="font-mono">
           {value}

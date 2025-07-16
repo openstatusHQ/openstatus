@@ -41,15 +41,12 @@ export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();
   const { theme, setTheme } = useTheme();
   const trpc = useTRPC();
-  const { data } = useQuery(trpc.user.get.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: user } = useQuery(trpc.user.get.queryOptions());
 
-  if (!data) return null;
+  if (!user || !workspace) return null;
 
-  const user = {
-    name: data?.name ?? `${data?.firstName} ${data?.lastName}`.trim(),
-    email: data?.email,
-    avatar: data?.photoUrl ?? undefined,
-  };
+  const userName = user?.name ?? `${user?.firstName} ${user?.lastName}`.trim();
 
   return (
     <SidebarMenu>
@@ -61,9 +58,9 @@ export function NavUser() {
               className="px-4 h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user?.avatar} alt={user?.name} />
+                <AvatarImage src={user?.photoUrl ?? undefined} alt={userName} />
                 <AvatarFallback className="rounded-lg uppercase">
-                  {user?.name.slice(0, 2)}
+                  {userName.slice(0, 2)}
                 </AvatarFallback>
                 {/*                   <img
                     src={`https://api.dicebear.com/9.x/glass/svg?seed=${workspace.slug}`}
@@ -72,7 +69,7 @@ export function NavUser() {
                    */}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user?.name}</span>
+                <span className="truncate font-medium">{userName}</span>
                 <span className="truncate text-xs">{user?.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -87,30 +84,35 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user?.avatar} alt={user?.name} />
+                  <AvatarImage
+                    src={user?.photoUrl ?? undefined}
+                    alt={userName}
+                  />
                   <AvatarFallback className="rounded-lg">
-                    {user?.name.slice(0, 2)}
+                    {userName.slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user?.name}</span>
+                  <span className="truncate font-medium">{userName}</span>
                   <span className="truncate text-xs">{user?.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/settings/billing"
-                  onClick={() => setOpenMobile(false)}
-                >
-                  <Sparkles />
-                  Upgrade to Pro
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
+            {workspace.plan === "free" ? (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="/settings/billing"
+                    onClick={() => setOpenMobile(false)}
+                  >
+                    <Sparkles />
+                    Upgrade Workspace
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : null}
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link

@@ -29,7 +29,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     })
   );
   const actions = getActions({
-    edit: () => router.push("/status-pages/edit"),
+    edit: () => router.push(`/status-pages/${row.original.id}/edit`),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");
