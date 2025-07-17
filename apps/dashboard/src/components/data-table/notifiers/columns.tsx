@@ -4,14 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { RouterOutputs } from "@openstatus/api";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
 
 export const columns: ColumnDef<Notifier>[] = [
   {
     accessorKey: "name",
-    header: "Name",
-    enableSorting: false,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     enableHiding: false,
   },
   {
