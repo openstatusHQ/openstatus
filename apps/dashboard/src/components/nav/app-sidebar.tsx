@@ -1,6 +1,13 @@
 "use client";
 
-import { Activity, Bell, Cog, LayoutGrid, PanelTop } from "lucide-react";
+import {
+  Activity,
+  Bell,
+  Cog,
+  LayoutGrid,
+  PanelTop,
+  Terminal,
+} from "lucide-react";
 import * as React from "react";
 
 import { Kbd } from "@/components/common/kbd";
@@ -61,6 +68,11 @@ const data = {
       name: "Settings",
       url: "/settings/general",
       icon: Cog,
+    },
+    {
+      name: "CLI",
+      url: "/cli",
+      icon: Terminal,
     },
   ],
 };
