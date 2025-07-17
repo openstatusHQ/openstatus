@@ -451,10 +451,14 @@ export const HTTPMonitorSchema = baseRequest.extend({
   request: httpRequestSchema.openapi({
     description: "The HTTP Request we are sending",
   }),
+}).openapi({
+  title:"HTTP Monitor Schema"
 });
 
 export const TCPMonitorSchema = baseRequest.extend({
   request: tcpRequestSchema.openapi({
     description: "The TCP Request we are sending",
   }),
+}).openapi({
+  title:"TCP Monitor Schema"
 });
