@@ -15,10 +15,9 @@ test("update the monitor", async () => {
     }),
   });
   const data = await res.json();
-  const monitor = MonitorSchema.parse(data)
+  const monitor = MonitorSchema.parse(data);
   expect(res.status).toBe(200);
   expect(monitor.name).toBe("New Name");
-
 });
 
 test("invalid monitor id should return 404", async () => {
