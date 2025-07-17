@@ -9,12 +9,12 @@ import { registerPostMonitor } from "./post";
 import { registerPostMonitorHTTP } from "./post_http";
 import { registerPostMonitorTCP } from "./post_tcp";
 import { registerPutMonitor } from "./put";
+import { registerPutHTTPMonitor } from "./put_http";
+import { registerPutTCPMonitor } from "./put_tcp";
 import { registerGetMonitorResult } from "./results/get";
 import { registerRunMonitor } from "./run/post";
 import { registerGetMonitorSummary } from "./summary/get";
 import { registerTriggerMonitor } from "./trigger/post";
-import { registerPutHTTPMonitor } from "./put_http";
-import { registerPutTCPMonitor } from "./put_tcp";
 
 const monitorsApi = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,

@@ -1,4 +1,3 @@
-
 import { createRoute } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
@@ -8,11 +7,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import type { monitorsApi } from "./index";
-import {
-  MonitorSchema,
-  ParamsSchema,
-  TCPMonitorSchema,
-} from "./schema";
+import { MonitorSchema, ParamsSchema, TCPMonitorSchema } from "./schema";
 
 const putRoute = createRoute({
   method: "put",
@@ -88,7 +83,7 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
       });
     }
 
-    if(_monitor.jobType !== "tcp") {
+    if (_monitor.jobType !== "tcp") {
       throw new OpenStatusApiError({
         code: "NOT_FOUND",
         message: `Monitor ${id} not found`,
@@ -97,7 +92,6 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
 
     const { request, regions, otelHeaders, ...rest } = input;
 
-
     const otelHeadersEntries = otelHeaders
       ? Object.entries(otelHeaders).map(([key, value]) => ({
           key: key,
@@ -105,13 +99,14 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
         }))
       : undefined;
 
-
     const _newMonitor = await db
       .update(monitor)
       .set({
         ...rest,
         regions: regions ? regions.join(",") : undefined,
-        otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : undefined,
+        otelHeaders: otelHeadersEntries
+          ? JSON.stringify(otelHeadersEntries)
+          : undefined,
         timeout: input.timeout || 45000,
         updatedAt: new Date(),
       })

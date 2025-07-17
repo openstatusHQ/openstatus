@@ -8,11 +8,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { serialize } from "@openstatus/assertions";
 import type { monitorsApi } from "./index";
-import {
-    HTTPMonitorSchema,
-  MonitorSchema,
-  ParamsSchema,
-} from "./schema";
+import { HTTPMonitorSchema, MonitorSchema, ParamsSchema } from "./schema";
 import { getAssertionNew } from "./utils";
 
 const putRoute = createRoute({
@@ -82,7 +78,6 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       )
       .get();
 
-
     if (!_monitor) {
       throw new OpenStatusApiError({
         code: "NOT_FOUND",
@@ -90,7 +85,7 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       });
     }
 
-    if(_monitor.jobType !== "http") {
+    if (_monitor.jobType !== "http") {
       throw new OpenStatusApiError({
         code: "NOT_FOUND",
         message: `Monitor ${id} not found`,
@@ -120,7 +115,9 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
         ...rest,
         regions: regions ? regions.join(",") : undefined,
         headers: headersEntries ? JSON.stringify(headersEntries) : undefined,
-        otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : undefined,
+        otelHeaders: otelHeadersEntries
+          ? JSON.stringify(otelHeadersEntries)
+          : undefined,
         assertions: assert ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
         updatedAt: new Date(),

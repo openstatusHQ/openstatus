@@ -8,10 +8,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { serialize } from "@openstatus/assertions";
 import type { monitorsApi } from "./index";
-import {
-  MonitorSchema,
-  ParamsSchema,
-} from "./schema";
+import { MonitorSchema, ParamsSchema } from "./schema";
 import { getAssertions } from "./utils";
 
 const putRoute = createRoute({

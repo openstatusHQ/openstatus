@@ -14,11 +14,8 @@ test("update the monitor", async () => {
     }),
   });
 
-
   expect(res.status).toBe(400);
-
 });
-
 
 test("invalid monitor id should return 404", async () => {
   const res = await app.request("/v1/monitor/http/404", {
