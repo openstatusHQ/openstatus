@@ -9,6 +9,7 @@ export const feedbackRouter = createTRPCRouter({
       z.object({
         message: z.string().min(1, "Message required"),
         path: z.string().optional(),
+        isMobile: z.boolean().optional(),
       })
     )
     .mutation(async (opts) => {
@@ -22,6 +23,15 @@ export const feedbackRouter = createTRPCRouter({
       const textLines: string[] = [];
       if (opts.ctx.user) textLines.push(`*Email:* ${opts.ctx.user.email}`);
       if (opts.input.path) textLines.push(`*Path:* ${opts.input.path}`);
+      if (opts.input.isMobile)
+        textLines.push(`*Mobile:* ${opts.input.isMobile}`);
+      if (opts.ctx.metadata?.userAgent)
+        textLines.push(`*User Agent:* ${opts.ctx.metadata.userAgent}`);
+      if (opts.ctx.metadata?.location)
+        textLines.push(`*Location:* ${opts.ctx.metadata.location}`);
+
+      textLines.push("--------------------------------");
+
       textLines.push(`*Message:* ${opts.input.message}`);
 
       await fetch(env.SLACK_FEEDBACK_WEBHOOK_URL, {

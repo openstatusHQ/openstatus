@@ -31,6 +31,7 @@ const schema = z.object({
 
 export function NavFeedback() {
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -39,7 +40,6 @@ export function NavFeedback() {
   });
   const trpc = useTRPC();
   const feedbackMutation = useMutation(trpc.feedback.submit.mutationOptions());
-  const isMobile = useIsMobile();
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
@@ -103,6 +103,7 @@ export function NavFeedback() {
       const promise = feedbackMutation.mutateAsync({
         ...values,
         path: window.location.pathname,
+        isMobile,
       });
       toast.promise(promise, {
         loading: "Sending feedback...",

@@ -8,9 +8,12 @@ import {
   TooltipTrigger,
 } from "./ui/tooltip";
 import { Kbd } from "./common/kbd";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function DevelopmentIndicator() {
-  // if (process.env.NODE_ENV !== "production") return null;
+  const isMobile = useIsMobile();
+
+  if (process.env.NODE_ENV !== "production") return null;
 
   return (
     <Portal.Root>
@@ -25,13 +28,17 @@ export function DevelopmentIndicator() {
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>
-                  Press{" "}
-                  <Kbd variant="secondary" className="-me-0 ms-0">
-                    F
-                  </Kbd>{" "}
-                  key to provide feedback.
-                </p>
+                {!isMobile ? (
+                  <p>
+                    Press{" "}
+                    <Kbd variant="secondary" className="-me-0 ms-0">
+                      F
+                    </Kbd>{" "}
+                    key to provide feedback.
+                  </p>
+                ) : (
+                  <p>Use a larger screen to provide feedback.</p>
+                )}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
