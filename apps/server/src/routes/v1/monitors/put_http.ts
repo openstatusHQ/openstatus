@@ -107,18 +107,22 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
     const headersEntries = headers
       ? headers.map(([key, value]) => ({ key: key, value: value }))
       : undefined;
-    const assert = assertions ? getAssertionNew(assertions) : undefined;
+    const assert = assertions ? getAssertionNew(assertions) : [];
 
     const _newMonitor = await db
       .update(monitor)
       .set({
         ...rest,
+        periodicity:input.frequency,
+        url: input.request.url,
+        method: input.request.method,
+        body: input.request.body,
         regions: regions ? regions.join(",") : undefined,
         headers: headersEntries ? JSON.stringify(headersEntries) : undefined,
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
-        assertions: assert ? serialize(assert) : undefined,
+        assertions: assert ? serialize(assert): "",
         timeout: input.timeout || 45000,
         updatedAt: new Date(),
       })

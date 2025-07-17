@@ -103,6 +103,8 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
       .update(monitor)
       .set({
         ...rest,
+        periodicity: input.frequency,
+        url: `${request.host}:${request.port}`,
         regions: regions ? regions.join(",") : undefined,
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
