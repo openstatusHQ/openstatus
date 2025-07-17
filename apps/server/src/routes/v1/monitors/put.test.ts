@@ -22,7 +22,6 @@ test("update the monitor", async () => {
   expect(result.data?.name).toBe("New Name");
 });
 
-
 test("invalid monitor id should return 404", async () => {
   const res = await app.request("/v1/page/404", {
     method: "PUT",
