@@ -114,15 +114,12 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         .update(monitor)
         .set({
           ...rest,
-          regions:regions.join(","),
-          headers: headersEntries
-            ? JSON.stringify(headersEntries)
-            :undefined,
+          regions: regions.join(","),
+          headers: headersEntries ? JSON.stringify(headersEntries) : undefined,
           otelHeaders: otelHeadersEntries
             ? JSON.stringify(otelHeadersEntries)
             : undefined,
-          assertions:
-            assert.length > 0 ? serialize(assert) : undefined,
+          assertions: assert.length > 0 ? serialize(assert) : undefined,
           timeout: input.timeout || 45000,
           updatedAt: new Date(),
         })
