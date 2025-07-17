@@ -444,17 +444,25 @@ export const assertionsSchema = z.discriminatedUnion("kind", [
   textBodyAssertions,
 ]);
 
-export const HTTPMonitorSchema = baseRequest.extend({
-  assertions: z.array(assertionsSchema).optional().openapi({
-    description: "Assertions to run on the response",
-  }),
-  request: httpRequestSchema.openapi({
-    description: "The HTTP Request we are sending",
-  }),
-});
+export const HTTPMonitorSchema = baseRequest
+  .extend({
+    assertions: z.array(assertionsSchema).optional().openapi({
+      description: "Assertions to run on the response",
+    }),
+    request: httpRequestSchema.openapi({
+      description: "The HTTP Request we are sending",
+    }),
+  })
+  .openapi({
+    title: "HTTP Monitor Schema",
+  });
 
-export const TCPMonitorSchema = baseRequest.extend({
-  request: tcpRequestSchema.openapi({
-    description: "The TCP Request we are sending",
-  }),
-});
+export const TCPMonitorSchema = baseRequest
+  .extend({
+    request: tcpRequestSchema.openapi({
+      description: "The TCP Request we are sending",
+    }),
+  })
+  .openapi({
+    title: "TCP Monitor Schema",
+  });

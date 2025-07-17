@@ -1,3 +1,4 @@
+
 import { createRoute } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
@@ -6,19 +7,18 @@ import { monitor } from "@openstatus/db/src/schema";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
-import { serialize } from "@openstatus/assertions";
 import type { monitorsApi } from "./index";
 import {
   MonitorSchema,
   ParamsSchema,
+  TCPMonitorSchema,
 } from "./schema";
-import { getAssertions } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
   tags: ["monitor"],
-  summary: "Update a monitor",
-  path: "/{id}",
+  summary: "Update an TCP monitor",
+  path: "/tcp/{id}",
   middleware: [trackMiddleware(Events.UpdateMonitor)],
   request: {
     params: ParamsSchema,
@@ -26,7 +26,7 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          schema: MonitorSchema.omit({ id: true }).partial(),
+          schema: TCPMonitorSchema,
         },
       },
     },
@@ -44,14 +44,14 @@ const putRoute = createRoute({
   },
 });
 
-export function registerPutMonitor(api: typeof monitorsApi) {
+export function registerPutTCPMonitor(api: typeof monitorsApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
     const limits = c.get("workspace").limits;
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    if (input.periodicity && !limits.periodicity.includes(input.periodicity)) {
+    if (input.frequency && !limits.periodicity.includes(input.frequency)) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more periodicity",
@@ -88,25 +88,30 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       });
     }
 
-    if (input.jobType && input.jobType !== _monitor.jobType) {
+    if(_monitor.jobType !== "tcp") {
       throw new OpenStatusApiError({
-        code: "BAD_REQUEST",
-        message:
-          "Cannot change jobType. Please delete and create a new monitor instead.",
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
       });
     }
 
-    const { headers, regions, assertions, ...rest } = input;
+    const { request, regions, otelHeaders, ...rest } = input;
 
-    const assert = assertions ? getAssertions(assertions) : [];
+
+    const otelHeadersEntries = otelHeaders
+      ? Object.entries(otelHeaders).map(([key, value]) => ({
+          key: key,
+          value: value,
+        }))
+      : undefined;
+
 
     const _newMonitor = await db
       .update(monitor)
       .set({
         ...rest,
         regions: regions ? regions.join(",") : undefined,
-        headers: input.headers ? JSON.stringify(input.headers) : undefined,
-        assertions: assert.length > 0 ? serialize(assert) : undefined,
+        otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : undefined,
         timeout: input.timeout || 45000,
         updatedAt: new Date(),
       })

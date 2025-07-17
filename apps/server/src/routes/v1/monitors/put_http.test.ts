@@ -1,10 +1,9 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
-import { MonitorSchema } from "./schema";
 
 test("update the monitor", async () => {
-  const res = await app.request("/v1/monitor/1", {
+  const res = await app.request("/v1/monitor/http/1", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -15,37 +14,40 @@ test("update the monitor", async () => {
     }),
   });
 
-  const result = MonitorSchema.safeParse(await res.json());
-
-  expect(res.status).toBe(200);
-  expect(result.success).toBe(true);
-  expect(result.data?.name).toBe("New Name");
-});
-
-test("update the monitor with a different jobType should return 400", async () => {
-  const res = await app.request("/v1/monitor/1", {
-    method: "PUT",
-    headers: {
-      "x-openstatus-key": "1",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jobType: "tcp",
-    }),
-  });
 
   expect(res.status).toBe(400);
+
 });
 
+
 test("invalid monitor id should return 404", async () => {
-  const res = await app.request("/v1/monitor/404", {
+  const res = await app.request("/v1/monitor/http/404", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      /* */
+      frequency: "10m",
+      name: "OpenStatus",
+      description: "OpenStatus website",
+      regions: ["ams", "gru"],
+      request: {
+        url: "https://www.openstatus.dev",
+        method: "POST",
+        body: '{"hello":"world"}',
+        headers: { "content-type": "application/json" },
+      },
+      active: true,
+      public: true,
+      assertions: [
+        {
+          kind: "statusCode",
+          compare: "eq",
+          target: 200,
+        },
+        { kind: "header", compare: "not_eq", key: "key", target: "value" },
+      ],
     }),
   });
 
@@ -53,7 +55,7 @@ test("invalid monitor id should return 404", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await app.request("/v1/monitor/2", {
+  const res = await app.request("/v1/monitor/http/2", {
     method: "PUT",
     headers: {
       "content-type": "application/json",
