@@ -142,7 +142,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         .set({
           ...rest,
           regions: regions ? regions.join(",") : _monitor.regions,
-
+          otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : _monitor.otelHeaders,
           timeout: input.timeout || 45000,
           updatedAt: new Date(),
         })
@@ -152,13 +152,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       const r = MonitorSchema.parse(_newMonitor);
       return c.json(r, 200);
     }
-    // if (input.jobType && input.jobType !== _monitor.jobType) {
-    //   throw new OpenStatusApiError({
-    //     code: "BAD_REQUEST",
-    //     message:
-    //       "Cannot change jobType. Please delete and create a new monitor instead.",
-    //   });
-    // }
+
 
     throw new OpenStatusApiError({
       code: "NOT_FOUND",
