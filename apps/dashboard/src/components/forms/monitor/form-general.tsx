@@ -719,7 +719,11 @@ export function FormGeneral({
                 failed. Do you want to save the monitor anyway?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <p className="font-mono text-sm text-destructive">{error}</p>
+            <div className="p-2 border border-destructive/20 rounded-md bg-destructive/10">
+              <p className="font-mono text-sm text-destructive whitespace-pre-wrap">
+                {error}
+              </p>
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
               <AlertDialogAction

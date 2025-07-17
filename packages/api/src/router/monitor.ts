@@ -1368,8 +1368,6 @@ export const monitorRouter = createTRPCRouter({
         }
       }
 
-      console.log("assertions", input.assertions);
-
       // NOTE: we are checking the endpoint before saving
       if (!input.skipCheck) {
         if (input.jobType === "http") {

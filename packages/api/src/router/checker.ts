@@ -51,42 +51,58 @@ const tcpTestInput = z.object({
   region: monitorFlyRegionSchema.optional().default("ams"),
 });
 
-export const tcpTextOutput = z.object({
-  type: z.literal("tcp").default("tcp"),
-  requestId: z.number().optional(),
-  workspaceId: z.number().optional(),
-  monitorId: z.number().optional(),
-  timestamp: z.number(),
-  timing: z.object({
-    tcpStart: z.number(),
-    tcpDone: z.number(),
-  }),
-  error: z.string().optional(),
-  region: monitorFlyRegionSchema,
-  latency: z.number().optional(),
-});
+export const tcpTextOutput = z
+  .object({
+    state: z.literal("success").default("success"),
+    type: z.literal("tcp").default("tcp"),
+    requestId: z.number().optional(),
+    workspaceId: z.number().optional(),
+    monitorId: z.number().optional(),
+    timestamp: z.number(),
+    timing: z.object({
+      tcpStart: z.number(),
+      tcpDone: z.number(),
+    }),
+    error: z.string().optional(),
+    region: monitorFlyRegionSchema,
+    latency: z.number().optional(),
+  })
+  .or(
+    z.object({
+      state: z.literal("error").default("error"),
+      message: z.string(),
+    })
+  );
 
-export const httpOutput = z.object({
-  type: z.literal("http").default("http"),
-  status: z.number(),
-  latency: z.number(),
-  headers: z.record(z.string()),
-  timestamp: z.number(),
-  timing: z.object({
-    dnsStart: z.number(),
-    dnsDone: z.number(),
-    connectStart: z.number(),
-    connectDone: z.number(),
-    tlsHandshakeStart: z.number(),
-    tlsHandshakeDone: z.number(),
-    firstByteStart: z.number(),
-    firstByteDone: z.number(),
-    transferStart: z.number(),
-    transferDone: z.number(),
-  }),
-  body: z.string().optional().nullable(),
-  region: monitorFlyRegionSchema,
-});
+export const httpOutput = z
+  .object({
+    state: z.literal("success").default("success"),
+    type: z.literal("http").default("http"),
+    status: z.number(),
+    latency: z.number(),
+    headers: z.record(z.string()),
+    timestamp: z.number(),
+    timing: z.object({
+      dnsStart: z.number(),
+      dnsDone: z.number(),
+      connectStart: z.number(),
+      connectDone: z.number(),
+      tlsHandshakeStart: z.number(),
+      tlsHandshakeDone: z.number(),
+      firstByteStart: z.number(),
+      firstByteDone: z.number(),
+      transferStart: z.number(),
+      transferDone: z.number(),
+    }),
+    body: z.string().optional().nullable(),
+    region: monitorFlyRegionSchema,
+  })
+  .or(
+    z.object({
+      state: z.literal("error").default("error"),
+      message: z.string(),
+    })
+  );
 
 export async function testHttp(input: z.infer<typeof httpTestInput>) {
   // Reject requests to our own domain to avoid loops
@@ -124,34 +140,57 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
     );
 
     const json = await res.json();
-    const result = httpOutput.parse(json);
+    const result = httpOutput.safeParse(json);
 
-    const assertions = deserialize(JSON.stringify(input.assertions)).map(
-      (assertion) =>
-        assertion.assert({
-          body: result.body ?? "",
-          header: result.headers ?? {},
-          status: result.status,
-        })
-    );
-
-    if (assertions.some((assertion) => !assertion.success)) {
+    if (!result.success) {
+      console.error(
+        `Checker HTTP test failed for ${input.url}:`,
+        result.error.message
+      );
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: `Assertion error: ${
-          assertions.find((assertion) => !assertion.success)?.message
-        }`,
+        message:
+          "Checker response is not valid. Please try again. If the problem persists, please contact support.",
       });
     }
 
-    if (result.status < 200 || result.status >= 300) {
+    if (result.data.state === "error") {
       throw new TRPCError({
         code: "BAD_REQUEST",
-        message: `Assertion error: The response status was not 2XX: ${result.status}.`,
+        message: result.data.message,
       });
     }
 
-    return result;
+    if (result.data.state === "success") {
+      const { body, headers, status } = result.data;
+
+      const assertions = deserialize(JSON.stringify(input.assertions)).map(
+        (assertion) =>
+          assertion.assert({
+            body: body ?? "",
+            header: headers ?? {},
+            status: status,
+          })
+      );
+
+      if (assertions.some((assertion) => !assertion.success)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Assertion error: ${
+            assertions.find((assertion) => !assertion.success)?.message
+          }`,
+        });
+      }
+
+      if (assertions.length === 0 && (status < 200 || status >= 300)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Assertion error: The response status was not 2XX: ${status}.`,
+        });
+      }
+    }
+
+    return result.data;
   } catch (error) {
     console.error("Checker HTTP test failed", error);
     throw new TRPCError({
@@ -178,7 +217,27 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
     );
 
     const json = await res.json();
-    return tcpTextOutput.parse(json);
+    const result = tcpTextOutput.safeParse(json);
+
+    if (!result.success) {
+      console.error(
+        `Checker TCP test failed for ${input.url}:`,
+        result.error.message
+      );
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Checker response is not valid. Please try again. If the problem persists, please contact support. ${result.error.message}`,
+      });
+    }
+
+    if (result.data.state === "error") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: result.data.message,
+      });
+    }
+
+    return result.data;
   } catch (error) {
     console.error("Checker TCP test failed", error);
     throw new TRPCError({
