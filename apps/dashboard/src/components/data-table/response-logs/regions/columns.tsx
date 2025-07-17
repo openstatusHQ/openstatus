@@ -14,7 +14,7 @@ import type { RegionMetric } from "@/data/region-metrics";
 import { getActions } from "@/data/region-metrics.client";
 import { flyRegionsDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 function TrendCell({ trend }: { trend: RegionMetric["trend"] }) {
@@ -110,16 +110,16 @@ export const columns: ColumnDef<RegionMetric>[] = [
           router.push(`?regions=${row.original.region}`);
         },
         // TODO: add triggerById in TRPC client
-        trigger: async () => {
-          console.log(row.original);
-          const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-          toast.promise(promise, {
-            loading: "Checking...",
-            success: "Success",
-            error: "Failed",
-          });
-          await promise;
-        },
+        // trigger: async () => {
+        //   console.log(row.original);
+        //   const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        //   toast.promise(promise, {
+        //     loading: "Checking...",
+        //     success: "Success",
+        //     error: "Failed",
+        //   });
+        //   await promise;
+        // },
       });
       return <QuickActions actions={actions} />;
     },
