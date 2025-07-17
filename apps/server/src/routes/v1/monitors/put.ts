@@ -8,7 +8,12 @@ import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { serialize } from "@openstatus/assertions";
 import type { monitorsApi } from "./index";
-import { HTTPMonitorSchema, MonitorSchema, ParamsSchema, TCPMonitorSchema } from "./schema";
+import {
+  HTTPMonitorSchema,
+  MonitorSchema,
+  ParamsSchema,
+  TCPMonitorSchema,
+} from "./schema";
 import { getAssertionNew } from "./utils";
 
 const putRoute = createRoute({
@@ -85,9 +90,8 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       });
     }
 
-
-    if (_monitor.jobType === "http" ) {
-      const data = HTTPMonitorSchema.partial().parse(input)
+    if (_monitor.jobType === "http") {
+      const data = HTTPMonitorSchema.partial().parse(input);
       const { request, regions, assertions, otelHeaders, ...rest } = data;
 
       const headers = data?.request?.headers
@@ -111,9 +115,14 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         .set({
           ...rest,
           regions: regions ? regions.join(",") : _monitor.regions,
-          headers: headersEntries ? JSON.stringify(headersEntries) : _monitor.headers,
-          otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : _monitor.otelHeaders,
-          assertions: assert.length > 0 ? serialize(assert) : _monitor.assertions,
+          headers: headersEntries
+            ? JSON.stringify(headersEntries)
+            : _monitor.headers,
+          otelHeaders: otelHeadersEntries
+            ? JSON.stringify(otelHeadersEntries)
+            : _monitor.otelHeaders,
+          assertions:
+            assert.length > 0 ? serialize(assert) : _monitor.assertions,
           timeout: input.timeout || 45000,
           updatedAt: new Date(),
         })
@@ -123,10 +132,9 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       const r = MonitorSchema.parse(_newMonitor);
       return c.json(r, 200);
     }
-    if(_monitor.jobType === "tcp") {
-      const data = TCPMonitorSchema.partial().parse(input)
-      const { request, regions,  otelHeaders, ...rest } = data;
-
+    if (_monitor.jobType === "tcp") {
+      const data = TCPMonitorSchema.partial().parse(input);
+      const { request, regions, otelHeaders, ...rest } = data;
 
       const otelHeadersEntries = otelHeaders
         ? Object.entries(otelHeaders).map(([key, value]) => ({
@@ -135,14 +143,14 @@ export function registerPutMonitor(api: typeof monitorsApi) {
           }))
         : undefined;
 
-
-
       const _newMonitor = await db
         .update(monitor)
         .set({
           ...rest,
           regions: regions ? regions.join(",") : _monitor.regions,
-          otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : _monitor.otelHeaders,
+          otelHeaders: otelHeadersEntries
+            ? JSON.stringify(otelHeadersEntries)
+            : _monitor.otelHeaders,
           timeout: input.timeout || 45000,
           updatedAt: new Date(),
         })
@@ -153,11 +161,9 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       return c.json(r, 200);
     }
 
-
     throw new OpenStatusApiError({
       code: "NOT_FOUND",
-      message: 'Something went wrong',
+      message: "Something went wrong",
     });
-
   });
 }
