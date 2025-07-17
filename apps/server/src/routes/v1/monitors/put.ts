@@ -28,7 +28,7 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          schema: HTTPMonitorSchema.partial().or(TCPMonitorSchema.partial()),
+          schema: HTTPMonitorSchema.or(TCPMonitorSchema),
         },
       },
     },
@@ -91,7 +91,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     }
 
     if (_monitor.jobType === "http") {
-      const data = HTTPMonitorSchema.partial().parse(input);
+      const data = HTTPMonitorSchema.parse(input);
       const { request, regions, assertions, otelHeaders, ...rest } = data;
 
       const headers = data?.request?.headers
@@ -114,15 +114,15 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         .update(monitor)
         .set({
           ...rest,
-          regions: regions ? regions.join(",") : _monitor.regions,
+          regions:regions.join(","),
           headers: headersEntries
             ? JSON.stringify(headersEntries)
-            : _monitor.headers,
+            :undefined,
           otelHeaders: otelHeadersEntries
             ? JSON.stringify(otelHeadersEntries)
-            : _monitor.otelHeaders,
+            : undefined,
           assertions:
-            assert.length > 0 ? serialize(assert) : _monitor.assertions,
+            assert.length > 0 ? serialize(assert) : undefined,
           timeout: input.timeout || 45000,
           updatedAt: new Date(),
         })
@@ -133,7 +133,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       return c.json(r, 200);
     }
     if (_monitor.jobType === "tcp") {
-      const data = TCPMonitorSchema.partial().parse(input);
+      const data = TCPMonitorSchema.parse(input);
       const { request, regions, otelHeaders, ...rest } = data;
 
       const otelHeadersEntries = otelHeaders
@@ -147,10 +147,10 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         .update(monitor)
         .set({
           ...rest,
-          regions: regions ? regions.join(",") : _monitor.regions,
+          regions: regions.join(","),
           otelHeaders: otelHeadersEntries
             ? JSON.stringify(otelHeadersEntries)
-            : _monitor.otelHeaders,
+            : undefined,
           timeout: input.timeout || 45000,
           updatedAt: new Date(),
         })
