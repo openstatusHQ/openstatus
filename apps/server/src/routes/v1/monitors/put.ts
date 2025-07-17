@@ -8,8 +8,8 @@ import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { serialize } from "@openstatus/assertions";
 import type { monitorsApi } from "./index";
-import { MonitorSchema, ParamsSchema } from "./schema";
-import { getAssertions } from "./utils";
+import { HTTPMonitorSchema, MonitorSchema, ParamsSchema, TCPMonitorSchema } from "./schema";
+import { getAssertionNew } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
@@ -23,7 +23,7 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          schema: MonitorSchema.omit({ id: true }).partial(),
+          schema: HTTPMonitorSchema.partial().or(TCPMonitorSchema.partial()),
         },
       },
     },
@@ -48,7 +48,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    if (input.periodicity && !limits.periodicity.includes(input.periodicity)) {
+    if (input.frequency && !limits.periodicity.includes(input.frequency)) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more periodicity",
@@ -85,33 +85,85 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       });
     }
 
-    if (input.jobType && input.jobType !== _monitor.jobType) {
-      throw new OpenStatusApiError({
-        code: "BAD_REQUEST",
-        message:
-          "Cannot change jobType. Please delete and create a new monitor instead.",
-      });
+
+    if (_monitor.jobType === "http" ) {
+      const data = HTTPMonitorSchema.partial().parse(input)
+      const { request, regions, assertions, otelHeaders, ...rest } = data;
+
+      const headers = data?.request?.headers
+        ? Object.entries(data?.request.headers)
+        : undefined;
+
+      const otelHeadersEntries = otelHeaders
+        ? Object.entries(otelHeaders).map(([key, value]) => ({
+            key: key,
+            value: value,
+          }))
+        : undefined;
+      const headersEntries = headers
+        ? headers.map(([key, value]) => ({ key: key, value: value }))
+        : undefined;
+
+      const assert = assertions ? getAssertionNew(assertions) : [];
+
+      const _newMonitor = await db
+        .update(monitor)
+        .set({
+          ...rest,
+          regions: regions ? regions.join(",") : _monitor.regions,
+          headers: headersEntries ? JSON.stringify(headersEntries) : _monitor.headers,
+          otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : _monitor.otelHeaders,
+          assertions: assert.length > 0 ? serialize(assert) : _monitor.assertions,
+          timeout: input.timeout || 45000,
+          updatedAt: new Date(),
+        })
+        .where(eq(monitor.id, Number(_monitor.id)))
+        .returning()
+        .get();
+      const r = MonitorSchema.parse(_newMonitor);
+      return c.json(r, 200);
     }
+    if(_monitor.jobType === "tcp") {
+      const data = TCPMonitorSchema.partial().parse(input)
+      const { request, regions,  otelHeaders, ...rest } = data;
 
-    const { headers, regions, assertions, ...rest } = input;
 
-    const assert = assertions ? getAssertions(assertions) : [];
+      const otelHeadersEntries = otelHeaders
+        ? Object.entries(otelHeaders).map(([key, value]) => ({
+            key: key,
+            value: value,
+          }))
+        : undefined;
 
-    const _newMonitor = await db
-      .update(monitor)
-      .set({
-        ...rest,
-        regions: regions ? regions.join(",") : undefined,
-        headers: input.headers ? JSON.stringify(input.headers) : undefined,
-        assertions: assert.length > 0 ? serialize(assert) : undefined,
-        timeout: input.timeout || 45000,
-        updatedAt: new Date(),
-      })
-      .where(eq(monitor.id, Number(_monitor.id)))
-      .returning()
-      .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
-    return c.json(data, 200);
+
+      const _newMonitor = await db
+        .update(monitor)
+        .set({
+          ...rest,
+          regions: regions ? regions.join(",") : _monitor.regions,
+
+          timeout: input.timeout || 45000,
+          updatedAt: new Date(),
+        })
+        .where(eq(monitor.id, Number(_monitor.id)))
+        .returning()
+        .get();
+      const r = MonitorSchema.parse(_newMonitor);
+      return c.json(r, 200);
+    }
+    // if (input.jobType && input.jobType !== _monitor.jobType) {
+    //   throw new OpenStatusApiError({
+    //     code: "BAD_REQUEST",
+    //     message:
+    //       "Cannot change jobType. Please delete and create a new monitor instead.",
+    //   });
+    // }
+
+    throw new OpenStatusApiError({
+      code: "NOT_FOUND",
+      message: 'Something went wrong',
+    });
+
   });
 }
