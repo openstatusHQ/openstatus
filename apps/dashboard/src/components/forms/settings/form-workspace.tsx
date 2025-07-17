@@ -54,7 +54,7 @@ export function FormWorkspace({
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: () => "Saved",
           error: "Failed to save",
         });
         await promise;
