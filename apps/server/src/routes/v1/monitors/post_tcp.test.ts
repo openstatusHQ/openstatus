@@ -21,14 +21,6 @@ test("create a valid monitor", async () => {
       },
       active: true,
       public: true,
-      assertions: [
-        {
-          type: "status",
-          compare: "eq",
-          target: 200,
-        },
-        { type: "header", compare: "not_eq", key: "key", target: "value" },
-      ],
     }),
   });
 
