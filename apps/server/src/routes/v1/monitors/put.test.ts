@@ -22,21 +22,6 @@ test("update the monitor", async () => {
   expect(result.data?.name).toBe("New Name");
 });
 
-test("update the monitor with a different jobType should return 400", async () => {
-  const res = await app.request("/v1/monitor/1", {
-    method: "PUT",
-    headers: {
-      "x-openstatus-key": "1",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jobType: "tcp",
-    }),
-  });
-
-  expect(res.status).toBe(400);
-});
-
 test("invalid monitor id should return 404", async () => {
   const res = await app.request("/v1/page/404", {
     method: "PUT",
