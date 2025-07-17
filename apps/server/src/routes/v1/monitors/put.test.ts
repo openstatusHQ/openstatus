@@ -1,9 +1,8 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
-import { MonitorSchema } from "./schema";
 
-test("update the monitor", async () => {
+test("Partial update the monitor", async () => {
   const res = await app.request("/v1/monitor/1", {
     method: "PUT",
     headers: {
@@ -15,11 +14,7 @@ test("update the monitor", async () => {
     }),
   });
 
-  const result = MonitorSchema.safeParse(await res.json());
-
-  expect(res.status).toBe(200);
-  expect(result.success).toBe(true);
-  expect(result.data?.name).toBe("New Name");
+  expect(res.status).toBe(400);
 });
 
 test("invalid monitor id should return 404", async () => {
