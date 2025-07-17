@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { RouterOutputs } from "@openstatus/api";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { TableCellBadge } from "../table-cell-badge";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
 
@@ -36,8 +37,14 @@ export const columns: ColumnDef<Notifier>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const value = row.getValue("monitors");
-      if (Array.isArray(value) && value.length > 0) {
-        return value.length;
+      if (Array.isArray(value) && value.length > 0 && "name" in value[0]) {
+        return (
+          <div className="flex flex-wrap gap-1">
+            {value.map((m) => (
+              <TableCellBadge key={m.id} value={m.name} />
+            ))}
+          </div>
+        );
       }
       return <span className="text-muted-foreground">-</span>;
     },

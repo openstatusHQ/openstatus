@@ -63,7 +63,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           provider: props.row.original.provider,
           // TBD: parse it?
           data: JSON.parse(props.row.original.data ?? "{}"),
-          monitors: props.row.original.monitors,
+          monitors: props.row.original.monitors.map((m) => m.id),
         }}
         monitors={monitors ?? []}
         onSubmit={async (values) => {

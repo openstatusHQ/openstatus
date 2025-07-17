@@ -244,19 +244,23 @@ export const notificationRouter = createTRPCRouter({
     const notifications = await opts.ctx.db.query.notification.findMany({
       where: eq(notification.workspaceId, opts.ctx.workspace.id),
       with: {
-        monitor: true,
+        monitor: {
+          with: {
+            monitor: true,
+          },
+        },
       },
     });
 
     return selectNotificationSchema
       .extend({
-        monitors: z.number().array(),
+        monitors: selectMonitorSchema.array(),
       })
       .array()
       .parse(
         notifications.map((notification) => ({
           ...notification,
-          monitors: notification.monitor.map(({ monitorId }) => monitorId),
+          monitors: notification.monitor.map(({ monitor }) => monitor),
         }))
       );
   }),

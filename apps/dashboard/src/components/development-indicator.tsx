@@ -7,9 +7,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
+import { Kbd } from "./common/kbd";
 
 export function DevelopmentIndicator() {
-  if (process.env.NODE_ENV !== "production") return null;
+  // if (process.env.NODE_ENV !== "production") return null;
 
   return (
     <Portal.Root>
@@ -20,11 +21,17 @@ export function DevelopmentIndicator() {
             <Tooltip>
               <TooltipTrigger>
                 <div className="bg-destructive text-background w-fit font-mono text-xs rounded-t px-2 py-1">
-                  In Development
+                  In Beta
                 </div>
               </TooltipTrigger>
               <TooltipContent side="top">
-                <p>Be careful with your actions.</p>
+                <p>
+                  Press{" "}
+                  <Kbd variant="secondary" className="-me-0 ms-0">
+                    F
+                  </Kbd>{" "}
+                  key to provide feedback.
+                </p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

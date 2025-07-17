@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { env } from "../env";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const feedbackRouter = createTRPCRouter({
-  submit: publicProcedure
+  submit: protectedProcedure
     .input(
       z.object({
         message: z.string().min(1, "Message required"),

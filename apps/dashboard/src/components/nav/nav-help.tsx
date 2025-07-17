@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { DiscordIcon } from "@/components/icons/discord";
+import { GitHubIcon } from "@/components/icons/github";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,7 +69,7 @@ export function NavHelp() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="https://docs.openstatus.dev/api-reference"
+                    href="https://api.openstatus.dev/v1"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -92,6 +93,16 @@ export function NavHelp() {
                   >
                     <DiscordIcon />
                     Community
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href="https://openstatus.dev/github"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <GitHubIcon />
+                    GitHub
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
