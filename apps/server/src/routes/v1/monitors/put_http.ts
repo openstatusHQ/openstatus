@@ -113,7 +113,7 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       .update(monitor)
       .set({
         ...rest,
-        periodicity:input.frequency,
+        periodicity: input.frequency,
         url: input.request.url,
         method: input.request.method,
         body: input.request.body,
@@ -122,7 +122,7 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
-        assertions: assert ? serialize(assert): "",
+        assertions: assert ? serialize(assert) : "",
         timeout: input.timeout || 45000,
         updatedAt: new Date(),
       })
