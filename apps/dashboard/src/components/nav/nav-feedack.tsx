@@ -113,11 +113,19 @@ export function NavFeedback() {
       await promise;
       setOpen(false);
     },
-    [feedbackMutation, setOpen]
+    [feedbackMutation, setOpen, isMobile]
   );
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      if (isTyping) return;
+
       if (!open) {
         if (e.key === "f") {
           e.preventDefault();
