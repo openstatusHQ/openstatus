@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 
 const STATUS = {
   operational: "bg-success border border-success",
@@ -37,6 +39,7 @@ const STATUS = {
 
 export function NavStatusPages() {
   const { isMobile, setOpenMobile } = useSidebar();
+  const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
   const pathname = usePathname();
   const trpc = useTRPC();
   const router = useRouter();
@@ -82,8 +85,11 @@ export function NavStatusPages() {
                 <SidebarMenuAction
                   data-disabled={limitReached}
                   className="relative top-0 right-0 border data-[disabled=true]:opacity-50"
-                  disabled={limitReached}
                   onClick={() => {
+                    if (limitReached) {
+                      setOpenUpgradeDialog(true);
+                      return;
+                    }
                     router.push("/status-pages/create");
                     setOpenMobile(false);
                   }}
@@ -181,6 +187,10 @@ export function NavStatusPages() {
           </SidebarMenuItem>
         )}
       </SidebarMenu>
+      <UpgradeDialog
+        open={openUpgradeDialog}
+        onOpenChange={setOpenUpgradeDialog}
+      />
     </SidebarGroup>
   );
 }

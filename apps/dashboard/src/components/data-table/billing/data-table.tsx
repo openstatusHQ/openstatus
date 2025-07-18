@@ -19,13 +19,14 @@ import { cn } from "@/lib/utils";
 import { useTRPC } from "@/lib/trpc/client";
 import { getStripe } from "@/lib/stripe";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
 
-export function DataTable() {
+export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
   const trpc = useTRPC();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -43,6 +44,10 @@ export function DataTable() {
 
   if (!workspace) return null;
 
+  const filteredPlans = Object.values(plans).filter((plan) =>
+    restrictTo ? restrictTo.includes(plan.id) : true
+  );
+
   return (
     <Table className="relative table-fixed">
       <TableCaption>
@@ -53,7 +58,7 @@ export function DataTable() {
           <TableHead className="p-2 align-bottom">
             Features comparison
           </TableHead>
-          {Object.values(plans).map(({ id, ...plan }) => {
+          {filteredPlans.map(({ id, ...plan }) => {
             const isCurrentPlan = workspace.plan === id;
             return (
               <TableHead
@@ -110,7 +115,7 @@ export function DataTable() {
             <Fragment key={groupKey}>
               <TableRow className="bg-muted/50">
                 <TableCell
-                  colSpan={Object.keys(plans).length + 1}
+                  colSpan={filteredPlans.length + 1}
                   className="font-medium"
                 >
                   {label}
@@ -123,7 +128,7 @@ export function DataTable() {
                       {featureLabel}
                     </div>
                   </TableCell>
-                  {Object.values(plans).map((plan) => {
+                  {filteredPlans.map((plan) => {
                     const limitValue =
                       plan.limits[value as keyof typeof plan.limits];
 

@@ -50,6 +50,9 @@ export function Client() {
 
   if (!notifiers || !monitors || !workspace) return null;
 
+  const limitReached =
+    notifiers.length >= workspace.limits["notification-channels"];
+
   return (
     <SectionGroup>
       <SectionHeader>
@@ -81,6 +84,10 @@ export function Client() {
             if (key in workspace.limits) {
               enabled =
                 workspace.limits[key as "opsgenie" | "sms" | "opsgenie"];
+            }
+
+            if (limitReached) {
+              enabled = false;
             }
 
             if (!searchParams.channel && key === "pagerduty") {

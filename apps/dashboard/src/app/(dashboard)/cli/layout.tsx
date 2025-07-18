@@ -14,7 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <AppHeader>
         <AppHeaderContent>
           <AppSidebarTrigger />
-          <NavBreadcrumb items={[{ type: "page", label: "Overview" }]} />
+          <NavBreadcrumb items={[{ type: "page", label: "CLI" }]} />
         </AppHeaderContent>
         <AppHeaderActions>
           <NavActions />

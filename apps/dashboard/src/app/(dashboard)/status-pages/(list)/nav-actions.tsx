@@ -5,8 +5,11 @@ import { useTRPC } from "@/lib/trpc/client";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { NavFeedback } from "@/components/nav/nav-feedack";
+import { useState } from "react";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 
 export function NavActions() {
+  const [openDialog, setOpenDialog] = useState(false);
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
@@ -19,14 +22,20 @@ export function NavActions() {
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
       {limitReached ? (
-        <Button size="sm" disabled={limitReached}>
+        <Button
+          size="sm"
+          data-disabled={limitReached}
+          className="data-[disabled=true]:opacity-50"
+          onClick={() => setOpenDialog(true)}
+        >
           Create Status Page
         </Button>
       ) : (
-        <Button size="sm" disabled={limitReached} asChild>
+        <Button size="sm" asChild>
           <Link href="/status-pages/create">Create Status Page</Link>
         </Button>
       )}
+      <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
     </div>
   );
 }

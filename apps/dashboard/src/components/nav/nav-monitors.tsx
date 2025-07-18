@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
 
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   SidebarGroup,
@@ -41,6 +42,7 @@ const STATUS = {
 
 export function NavMonitors() {
   const [openDialog, setOpenDialog] = useState(false);
+  const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
   const { isMobile, setOpenMobile } = useSidebar();
   const trpc = useTRPC();
   const router = useRouter();
@@ -97,10 +99,13 @@ export function NavMonitors() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuAction
-                  disabled={limitReached}
                   data-disabled={limitReached}
                   className="relative top-0 right-0 border data-[disabled=true]:opacity-50"
                   onClick={() => {
+                    if (limitReached) {
+                      setOpenUpgradeDialog(true);
+                      return;
+                    }
                     router.push("/monitors/create");
                     setOpenMobile(false);
                   }}
@@ -213,6 +218,10 @@ export function NavMonitors() {
         )}
       </SidebarMenu>
       <ExportCodeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      <UpgradeDialog
+        open={openUpgradeDialog}
+        onOpenChange={setOpenUpgradeDialog}
+      />
     </SidebarGroup>
   );
 }
