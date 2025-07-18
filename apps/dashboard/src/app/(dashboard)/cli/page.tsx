@@ -46,7 +46,7 @@ const installs = [
   {
     title: "Export Monitors",
     icon: FileDown,
-    description: "Export your current monitors to a YAML file.",
+    description: "Export your workspace monitors to a YAML file.",
     command: "openstatus monitors export",
   },
   {
