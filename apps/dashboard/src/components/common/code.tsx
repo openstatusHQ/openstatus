@@ -13,18 +13,20 @@ export function Code({
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
-    <pre
-      className={cn(
-        "relative rounded-md border bg-muted p-2 text-xs",
-        className
-      )}
-      {...props}
-    >
-      {children}
+    <div className="relative">
+      <pre
+        className={cn(
+          "rounded-md border bg-muted p-2 text-xs overflow-x-auto",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </pre>
       <Button
         variant="outline"
         size="icon"
-        className="absolute top-0.5 right-1 size-6 p-1"
+        className="absolute top-1 right-1 size-6 p-1 backdrop-blur-md"
         onClick={() =>
           copy(children?.toString() ?? "", {
             withToast: false,
@@ -34,6 +36,6 @@ export function Code({
       >
         {isCopied ? <Check className="size-3" /> : <Copy className="size-3" />}
       </Button>
-    </pre>
+    </div>
   );
 }

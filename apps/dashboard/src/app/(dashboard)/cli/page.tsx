@@ -8,14 +8,25 @@ import { Section } from "@/components/content/section";
 import { Code } from "@/components/common/code";
 import { FileDown, Terminal, FileJson, Key } from "lucide-react";
 import { Link } from "@/components/common/link";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React from "react";
 
-const gettingStarted = [
+const OS = ["macOs", "Windows", "Linux"] as const;
+
+const installs = [
   {
     title: "Install CLI",
     icon: Terminal,
     description:
       "Install the OpenStatus CLI to set up your monitors straight in your code.",
-    commands: ["brew tap openstatusHQ/cli", "brew install openstatus"],
+    command: {
+      macOs: [
+        "brew install openstatusHQ/cli/openstatus --cask",
+        "curl -sSL instl.sh/openstatushq/cli/macos | bash",
+      ],
+      Linux: ["curl -sSL instl.sh/openstatushq/cli/linux | bash"],
+      Windows: ["iwr instl.sh/openstatushq/cli/windows | iex"],
+    },
   },
   {
     title: "Add API Key",
@@ -26,26 +37,30 @@ const gettingStarted = [
         <Link href="/settings/workspace">settings.</Link>
       </>
     ),
-    commands: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
+    command: {
+      macOs: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
+      Windows: ["set OPENSTATUS_API_TOKEN=<your-api-token>"],
+      Linux: ["export OPENSTATUS_API_TOKEN=<your-api-token>"],
+    },
   },
   {
-    title: "Import Monitors",
+    title: "Export Monitors",
     icon: FileDown,
-    description: "Import your current monitors to a YAML file.",
-    commands: ["openstatus monitors import"],
+    description: "Export your current monitors to a YAML file.",
+    command: "openstatus monitors export",
   },
   {
     title: "Apply Changes",
     icon: FileJson,
     description:
       "Add, remove, or update monitors from a YAML file and apply your changes.",
-    commands: ["openstatus monitors apply"],
+    command: "openstatus monitors apply",
   },
 ] satisfies {
   title: string;
   icon: React.ElementType;
   description: React.ReactNode;
-  commands: string[];
+  command: string | Record<(typeof OS)[number], string[]>;
 }[];
 
 const commands = [
@@ -67,6 +82,43 @@ const commands = [
   },
 ];
 
+const templates = [
+  {
+    description: "MCP server",
+    template: `# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+
+mcp-server:
+  name: "HF MCP Server"
+  description: "Hugging Face MCP server monitoring"
+  frequency: "1m"
+  active: true
+  regions: ["iad", "ams", "lax"]
+  retry: 3
+  kind: http
+  request:
+    url: https://hf.co/mcp
+    method: POST
+    body: >
+      {
+        "jsonrpc": "2.0",
+        "id": "openstatus",
+        "method": "ping"
+      }
+    headers:
+      User-Agent: OpenStatus
+      Accept: application/json, text/event-stream
+      Content-Type: application/json
+  assertions:
+    - kind: statusCode
+      compare: eq
+      target: 200
+    - kind: textBody
+      compare: eq
+      target: '{"result":{},"jsonrpc":"2.0","id":"openstatus"}'
+`,
+  },
+];
+
 export default function Page() {
   return (
     <SectionGroup>
@@ -82,30 +134,52 @@ export default function Page() {
             .
           </SectionDescription>
         </SectionHeader>
-        <div className="flex flex-col gap-6">
-          <p className="text-warning">
-            Warning: the following steps are for macOS only. (Windows will
-            follow)
-          </p>
-          {gettingStarted.map((step, i) => {
-            return (
-              <div key={i} className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                  <p className="flex items-center gap-2 text-sm font-medium">
-                    <step.icon className="size-4" />
-                    {step.title}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {step.description}
-                  </p>
-                </div>
-                {step.commands.map((command, i) => (
-                  <Code key={i}>{command}</Code>
-                ))}
-              </div>
-            );
-          })}
-        </div>
+        <Tabs defaultValue={OS[0]} className="flex flex-col gap-3">
+          <TabsList>
+            {OS.map((os) => (
+              <TabsTrigger key={os} value={os}>
+                {os}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {OS.map((os) => (
+            <TabsContent key={os} value={os} className="flex flex-col gap-6">
+              {installs.map((step, i) => {
+                const commands =
+                  typeof step.command === "string"
+                    ? step.command
+                    : step.command[os];
+                return (
+                  <div key={i} className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-1">
+                      <p className="flex items-center gap-2 text-sm font-medium">
+                        <step.icon className="size-4" />
+                        {step.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {step.description}
+                      </p>
+                    </div>
+                    {typeof commands === "string" ? (
+                      <Code>{commands}</Code>
+                    ) : (
+                      <>
+                        {commands.map((command, i) => (
+                          <React.Fragment key={command}>
+                            <Code>{command}</Code>
+                            {i < commands.length - 1 && (
+                              <span className="text-muted-foreground">or</span>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </TabsContent>
+          ))}
+        </Tabs>
       </Section>
       <Section>
         <SectionHeader>
@@ -132,6 +206,28 @@ export default function Page() {
             </li>
           ))}
         </ul>
+      </Section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Templates</SectionTitle>
+          <SectionDescription>
+            We have a few templates to help you get started. Check{" "}
+            <Link href="https://github.com/openstatusHQ/cli-template">
+              the repository
+            </Link>{" "}
+            for more.
+          </SectionDescription>
+        </SectionHeader>
+        <div className="flex flex-col gap-6">
+          {templates.map((template, i) => (
+            <div key={i} className="flex flex-col gap-0.5">
+              <p className="text-sm text-muted-foreground">
+                {template.description}
+              </p>
+              <Code>{template.template}</Code>
+            </div>
+          ))}
+        </div>
       </Section>
     </SectionGroup>
   );
