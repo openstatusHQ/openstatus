@@ -42,6 +42,10 @@ export default function Page() {
 
   if (!statusReports || !monitors || !page) return null;
 
+  const hasUnresolvedIssue = statusReports.some(
+    (report) => report.status !== "resolved"
+  );
+
   return (
     <SectionGroup>
       <Section>
@@ -54,6 +58,11 @@ export default function Page() {
           </SectionHeader>
           <div>
             <FormSheetStatusReport
+              warning={
+                hasUnresolvedIssue
+                  ? "An unresolved report already exists. Consider adding a status report update instead."
+                  : undefined
+              }
               monitors={monitors}
               onSubmit={async (values) => {
                 // NOTE: for type safety, we need to check if the values have a date property
@@ -70,7 +79,7 @@ export default function Page() {
                 }
               }}
             >
-              <Button data-section="action" size="sm" variant="ghost">
+              <Button data-section="action" size="sm">
                 <Plus />
                 Create Status Report
               </Button>

@@ -7,11 +7,19 @@ const noteVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-border bg-sidebar text-foreground",
+        default: "border-border bg-sidebar",
+        ghost: "border-none bg-transparent",
+      },
+      color: {
+        default: "text-foreground",
+        warning: "text-warning",
+        error: "text-destructive",
+        success: "text-success",
       },
     },
     defaultVariants: {
       variant: "default",
+      color: "default",
     },
   }
 );
@@ -20,12 +28,13 @@ export function Note({
   children,
   className,
   variant = "default",
+  color = "default",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof noteVariants>) {
   return (
     <div
       data-variant={variant}
-      className={cn(noteVariants({ variant, className }))}
+      className={cn(noteVariants({ variant, color, className }))}
       {...props}
     >
       {children}

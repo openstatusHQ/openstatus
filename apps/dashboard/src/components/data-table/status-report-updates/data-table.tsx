@@ -76,11 +76,7 @@ export function DataTable({
                   }}
                 >
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-auto flex h-7 w-7 p-0"
-                    >
+                    <Button size="icon" className="ml-auto flex h-7 w-7 p-0">
                       <Plus />
                       <span className="sr-only">Create Report Update</span>
                     </Button>
