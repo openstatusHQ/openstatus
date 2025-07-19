@@ -130,6 +130,14 @@ export const columns: ColumnDef<Monitor>[] = [
         </div>
       );
     },
+    filterFn: (row, _, value) => {
+      const tagIds = row.original.tags.map((tag) => tag.id);
+      if (Array.isArray(value)) {
+        return value.some((v) => tagIds.includes(v));
+      }
+      return tagIds.includes(value);
+    },
+    getUniqueValues: (row) => row.tags.map((tag) => tag.id),
     enableSorting: false,
     enableHiding: false,
   },

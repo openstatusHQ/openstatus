@@ -12,6 +12,7 @@ export default async function Page({
 
   await searchParamsCache.parse(searchParams);
   await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.monitorTag.list.queryOptions());
 
   return (
     <HydrateClient>

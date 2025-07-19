@@ -7,14 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { RouterOutputs } from "@openstatus/api";
+import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
+type MonitorTag = RouterOutputs["monitorTag"]["list"][number];
+
 export interface MonitorDataTableToolbarProps {
   table: Table<Monitor>;
+  tags: MonitorTag[];
 }
 
 export function MonitorDataTableToolbar({
   table,
+  tags,
 }: MonitorDataTableToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
@@ -29,6 +34,16 @@ export function MonitorDataTableToolbar({
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
+        {table.getColumn("tags") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("tags")}
+            title="Tags"
+            options={tags.map((tag) => ({
+              label: tag.name,
+              value: tag.id,
+            }))}
+          />
+        )}
         {isFiltered && (
           <Button
             variant="ghost"

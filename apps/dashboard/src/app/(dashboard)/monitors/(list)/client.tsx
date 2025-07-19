@@ -43,6 +43,7 @@ const icons = {
 export function Client() {
   const trpc = useTRPC();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: tags } = useQuery(trpc.monitorTag.list.queryOptions());
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -176,7 +177,9 @@ export function Client() {
                     ) ?? false),
           }))}
           actionBar={MonitorDataTableActionBar}
-          toolbarComponent={MonitorDataTableToolbar}
+          toolbarComponent={(props) => (
+            <MonitorDataTableToolbar {...props} tags={tags ?? []} />
+          )}
           paginationComponent={DataTablePaginationSimple}
           columnFilters={columnFilters}
           setColumnFilters={setColumnFilters}
