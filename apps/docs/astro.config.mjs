@@ -73,11 +73,11 @@ export default defineConfig({
                 ],
               },
               {
-                label: "Synthetic Monitoring",
+                label: "Monitoring",
                 items: [
                   { label: "Overview", slug: "monitoring/overview" },
                   {
-                    label: "Create a synthetic check",
+                    label: "Create a monitor",
                     slug: "monitoring/create-monitor",
                   },
                   {
