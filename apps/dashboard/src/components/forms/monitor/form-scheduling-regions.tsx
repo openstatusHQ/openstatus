@@ -312,8 +312,23 @@ export function FormSchedulingRegions({
               <span className="font-medium text-foreground">
                 {allowedRegions.length}
               </span>{" "}
-              regions. Learn more about <Link href="#">Regions</Link> and{" "}
-              <Link href="#">Periodicity</Link>.
+              regions. Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/monitoring/customization/locations/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Regions
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="https://docs.openstatus.dev/monitoring/customization/frequency/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Periodicity
+              </Link>
+              .
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}

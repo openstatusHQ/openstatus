@@ -178,7 +178,15 @@ export function FormOtel({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">OTel</Link>.
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/monitoring/opentelemetry/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                OTel
+              </Link>
+              .
             </FormCardFooterInfo>
             {locked ? (
               <Button asChild>

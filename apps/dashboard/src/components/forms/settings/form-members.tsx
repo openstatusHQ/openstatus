@@ -131,7 +131,14 @@ export function FormMembers({
               <>
                 <FormCardFooterInfo>
                   This feature is available on the{" "}
-                  <Link href="#">Pro plan</Link>.
+                  <Link
+                    href="https://www.openstatus.dev/changelog/team-invites"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Pro plan
+                  </Link>
+                  .
                 </FormCardFooterInfo>
                 <Button type="button" size="sm" asChild>
                   <Link href="/settings/billing">

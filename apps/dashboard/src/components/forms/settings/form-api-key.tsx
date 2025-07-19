@@ -141,7 +141,14 @@ export function FormApiKey() {
       <FormCardFooter>
         <FormCardFooterInfo>
           Trigger monitors via CLI, CI/CD or create your own status page.{" "}
-          <Link href="#">Learn more</Link>.
+          <Link
+            href="https://api.openstatus.dev/v1"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Learn more
+          </Link>
+          .
         </FormCardFooterInfo>
         {!apiKey ? (
           <Button size="sm" onClick={createAction}>

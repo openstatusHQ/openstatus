@@ -120,7 +120,15 @@ export function FormVisibility({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">monitor visibility</Link>.
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/status-page/advanced/monitors/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                monitor visibility
+              </Link>
+              .
             </FormCardFooterInfo>
             {locked ? (
               <Button asChild>

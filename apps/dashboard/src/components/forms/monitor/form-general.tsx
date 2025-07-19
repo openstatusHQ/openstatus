@@ -702,8 +702,23 @@ export function FormGeneral({
           )}
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">Monitor Type</Link> and{" "}
-              <Link href="#">Assertions</Link>.
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/monitoring/create-monitor/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Monitor Type
+              </Link>{" "}
+              and{" "}
+              <Link
+                href="https://docs.openstatus.dev/monitoring/create-monitor/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Assertions
+              </Link>
+              .
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending || disabled}>
               {isPending ? "Submitting..." : "Submit"}

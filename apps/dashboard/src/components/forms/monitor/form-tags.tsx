@@ -258,7 +258,15 @@ export function FormTags({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">tags</Link> and how to use them.
+              Learn more about{" "}
+              <Link
+                href="https://www.openstatus.dev/changelog/monitor-tags"
+                rel="noreferrer"
+                target="_blank"
+              >
+                tags
+              </Link>{" "}
+              and how to use them.
             </FormCardFooterInfo>
             <Button type="submit" form="monitor-tags-form" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}

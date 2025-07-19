@@ -107,7 +107,15 @@ export function FormRetry({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">retries</Link>.
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/monitoring/customization/retry/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                retries
+              </Link>
+              .
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}

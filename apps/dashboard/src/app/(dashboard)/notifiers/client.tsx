@@ -72,7 +72,14 @@ export function Client() {
           <SectionTitle>Create a new notifier</SectionTitle>
           <SectionDescription>
             Define your notifiers to receive alerts when downtime occurs.{" "}
-            <Link href="#">Learn more</Link>.
+            <Link
+              href="https://docs.openstatus.dev/alerting/overview/"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Learn more
+            </Link>
+            .
           </SectionDescription>
         </SectionHeader>
         <ActionCardGroup className="grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

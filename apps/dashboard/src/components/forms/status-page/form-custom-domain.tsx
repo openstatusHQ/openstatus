@@ -115,7 +115,15 @@ export function FormCustomDomain({
           ) : null}
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">Custom Domain</Link>.
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/status-page/advanced/custom-domain/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Custom Domain
+              </Link>
+              .
             </FormCardFooterInfo>
             {locked ? (
               <Button type="button" asChild>

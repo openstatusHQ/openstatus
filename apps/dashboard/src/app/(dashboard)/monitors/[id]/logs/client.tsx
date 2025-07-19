@@ -146,7 +146,14 @@ function BillingPlaceholder() {
         </BillingOverlayButton>
         <BillingOverlayDescription>
           Access response headers, timing phases and more for each request.{" "}
-          <Link href="#">Learn more</Link>.
+          <Link
+            href="https://docs.openstatus.dev/monitoring/monitor-data-collected/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Learn more
+          </Link>
+          .
         </BillingOverlayDescription>
       </BillingOverlay>
     </BillingOverlayContainer>

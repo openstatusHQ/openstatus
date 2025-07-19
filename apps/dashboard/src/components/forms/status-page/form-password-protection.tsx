@@ -130,7 +130,15 @@ export function FormPasswordProtection({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">Password Protection</Link>.
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/status-page/advanced/password/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Password Protection
+              </Link>
+              .
             </FormCardFooterInfo>
             {locked ? (
               <Button type="button" asChild>
