@@ -1,6 +1,7 @@
 import {
   createSearchParamsCache,
   parseAsArrayOf,
+  parseAsInteger,
   parseAsIsoDateTime,
   parseAsString,
   parseAsStringLiteral,
@@ -21,6 +22,8 @@ export const searchParamsParsers = {
   selected: parseAsString,
   from: parseAsIsoDateTime.withDefault(startOfDay(new Date())),
   to: parseAsIsoDateTime.withDefault(endOfDay(new Date())),
+  pageIndex: parseAsInteger.withDefault(0),
+  pageSize: parseAsInteger.withDefault(20),
 };
 
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

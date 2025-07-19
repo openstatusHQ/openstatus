@@ -311,15 +311,11 @@ export function Sheet({
           <Button
             variant="outline"
             onClick={() => {
-              const BASE_URL =
-                process.env.NODE_ENV === "development"
-                  ? "http://localhost:3000"
-                  : "https://app.openstatus.dev";
-              const url = `${BASE_URL}/monitors/${data.monitorId}/logs?selected=${data.id}`;
-
-              copy(url, {
-                withToast: false,
-              });
+              if (typeof window !== "undefined") {
+                copy(window.location.href, {
+                  withToast: false,
+                });
+              }
             }}
           >
             Copy Request Log URL

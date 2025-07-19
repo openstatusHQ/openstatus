@@ -43,12 +43,16 @@ export interface DataTableProps<TData, TValue> {
   defaultSorting?: SortingState;
   defaultColumnVisibility?: VisibilityState;
   defaultColumnFilters?: ColumnFiltersState;
+  defaultPagination?: PaginationState;
+  autoResetPageIndex?: boolean;
 
   /** access the state from the parent component */
   columnFilters?: ColumnFiltersState;
   setColumnFilters?: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
   sorting?: SortingState;
   setSorting?: React.Dispatch<React.SetStateAction<SortingState>>;
+  pagination?: PaginationState;
+  setPagination?: React.Dispatch<React.SetStateAction<PaginationState>>;
 }
 
 export function DataTable<TData, TValue>({
@@ -62,18 +66,20 @@ export function DataTable<TData, TValue>({
   defaultSorting = [],
   defaultColumnVisibility = {},
   defaultColumnFilters = [],
+  defaultPagination = { pageIndex: 0, pageSize: 20 },
+  autoResetPageIndex = true,
   columnFilters,
   setColumnFilters,
   sorting,
   setSorting,
+  pagination,
+  setPagination,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 20,
-  });
+  const [internalPagination, setInternalPagination] =
+    React.useState<PaginationState>(defaultPagination);
   const [internalColumnFilters, setInternalColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
   const [internalSorting, setInternalSorting] =
@@ -84,6 +90,8 @@ export function DataTable<TData, TValue>({
   const setColumnFiltersState = setColumnFilters ?? setInternalColumnFilters;
   const sortingState = sorting ?? internalSorting;
   const setSortingState = setSorting ?? setInternalSorting;
+  const paginationState = pagination ?? internalPagination;
+  const setPaginationState = setPagination ?? setInternalPagination;
 
   const table = useReactTable({
     data,
@@ -92,7 +100,7 @@ export function DataTable<TData, TValue>({
       sorting: sortingState,
       columnVisibility,
       rowSelection,
-      pagination,
+      pagination: paginationState,
       columnFilters: columnFiltersState,
     },
     enableRowSelection: true,
@@ -100,7 +108,7 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSortingState,
     onColumnFiltersChange: setColumnFiltersState,
     onColumnVisibilityChange: setColumnVisibility,
-    onPaginationChange: setPagination,
+    onPaginationChange: setPaginationState,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -108,6 +116,7 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getExpandedRowModel: getExpandedRowModel(),
+    autoResetPageIndex,
     // @ts-expect-error as we have an id in the data
     getRowCanExpand: (row) => Boolean(row.original.id),
   });

@@ -17,6 +17,7 @@ import {
 import { Section } from "@/components/content/section";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
+import { PaginationState } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -32,12 +33,15 @@ import { DropdownTrigger } from "@/components/controls-search/dropdown-trigger";
 import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import { PopoverDate } from "@/components/controls-search/popover-date";
 import { exampleLogs } from "@/data/response-logs";
+import { useCallback, useMemo } from "react";
 
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
-  const [{ regions, status, selected, trigger, from, to }, setSearchParams] =
-    useQueryStates(searchParamsParsers);
+  const [
+    { regions, status, selected, trigger, from, to, pageIndex, pageSize },
+    setSearchParams,
+  ] = useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
@@ -51,6 +55,25 @@ export function Client() {
     ...trpc.tinybird.get.queryOptions({ id: selected, monitorId: id }),
     enabled: !!selected && enabled,
   });
+
+  const pagination = useMemo(
+    () => ({ pageIndex, pageSize }),
+    [pageIndex, pageSize]
+  );
+
+  const setPagination = useCallback(
+    (p: PaginationState | ((old: PaginationState) => PaginationState)) => {
+      const next = typeof p === "function" ? p({ pageIndex, pageSize }) : p;
+
+      if (next.pageIndex !== pageIndex || next.pageSize !== pageSize) {
+        setSearchParams({
+          pageIndex: next.pageIndex,
+          pageSize: next.pageSize,
+        });
+      }
+    },
+    [pageIndex, pageSize, setSearchParams]
+  );
 
   if (!workspace || !monitor) return null;
 
@@ -87,12 +110,16 @@ export function Client() {
               { id: "requestStatus", value: status },
               { id: "region", value: regions },
             ].filter((i) => Boolean(i.value))}
+            pagination={pagination}
+            setPagination={setPagination}
             paginationComponent={DataTablePagination}
             defaultColumnVisibility={
               monitor.jobType === "tcp"
                 ? { timing: false, statusCode: false }
                 : {}
             }
+            // NOTE: required to control the pagination
+            autoResetPageIndex={false}
           />
         )}
         <Sheet
