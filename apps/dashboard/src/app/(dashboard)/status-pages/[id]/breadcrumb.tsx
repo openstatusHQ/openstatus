@@ -27,7 +27,6 @@ export function Breadcrumb() {
         {
           type: "select",
           items: [
-            { value: "edit", label: "Edit", icon: Pencil },
             {
               value: "status-reports",
               label: "Status Reports",
@@ -35,6 +34,7 @@ export function Breadcrumb() {
             },
             { value: "maintenances", label: "Maintenances", icon: Hammer },
             { value: "subscribers", label: "Subscribers", icon: Users },
+            { value: "edit", label: "Edit", icon: Pencil },
           ],
         },
       ]}

@@ -114,7 +114,7 @@ function BillingPlaceholder() {
         <BillingOverlayButton asChild>
           <Link href="/settings/billing">
             <Lock />
-            Upgrade to Pro
+            Upgrade
           </Link>
         </BillingOverlayButton>
         <BillingOverlayDescription>

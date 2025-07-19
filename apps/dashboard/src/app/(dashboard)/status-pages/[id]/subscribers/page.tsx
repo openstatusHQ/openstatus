@@ -83,7 +83,7 @@ export default function Page() {
             <BillingOverlay>
               <BillingOverlayButton>
                 <Lock />
-                Upgrade to Starter
+                Upgrade
               </BillingOverlayButton>
               <BillingOverlayDescription>
                 Keep your users in the loop with status page updates.{" "}

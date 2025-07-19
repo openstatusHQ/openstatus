@@ -25,6 +25,7 @@ import { flyRegionsDict } from "@openstatus/utils";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
@@ -233,15 +234,12 @@ export function Sheet({
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex-1">
                             <span className="text-muted-foreground">
-                              {new Intl.NumberFormat("en-US", {
-                                maximumFractionDigits: 2,
-                              }).format((value / (data?.latency || 100)) * 100)}
-                              %
+                              {formatPercentage(value / (data?.latency || 100))}
                             </span>
                           </div>
                           <div className="flex w-full flex-1 items-center justify-end gap-2">
-                            <span className="text-muted-foreground">
-                              {value}ms
+                            <span className="text-muted-foreground text-nowrap">
+                              {formatMilliseconds(value)}
                             </span>
                             <div
                               className="h-4"

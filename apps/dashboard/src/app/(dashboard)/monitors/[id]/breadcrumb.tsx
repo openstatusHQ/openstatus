@@ -27,8 +27,8 @@ export function Breadcrumb() {
           items: [
             { value: "overview", label: "Overview", icon: LayoutGrid },
             { value: "logs", label: "Logs", icon: Logs },
-            { value: "edit", label: "Edit", icon: Pencil },
             { value: "incidents", label: "Incidents", icon: Siren },
+            { value: "edit", label: "Edit", icon: Pencil },
           ],
         },
       ]}

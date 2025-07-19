@@ -13,7 +13,10 @@ export default async function Layout({
 }) {
   const session = await auth();
   const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  const hasState = cookieStore.has("sidebar_state");
+  const defaultOpen = hasState
+    ? cookieStore.get("sidebar_state")?.value === "true"
+    : true;
 
   return (
     <SessionProvider session={session}>
