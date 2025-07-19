@@ -3,9 +3,7 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Pencil, Siren } from "lucide-react";
-import { Logs } from "lucide-react";
-import { LayoutGrid } from "lucide-react";
+import { Logs, Cog, Siren, LayoutGrid } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export function Breadcrumb() {
@@ -28,7 +26,7 @@ export function Breadcrumb() {
             { value: "overview", label: "Overview", icon: LayoutGrid },
             { value: "logs", label: "Logs", icon: Logs },
             { value: "incidents", label: "Incidents", icon: Siren },
-            { value: "edit", label: "Edit", icon: Pencil },
+            { value: "edit", label: "Settings", icon: Cog },
           ],
         },
       ]}
