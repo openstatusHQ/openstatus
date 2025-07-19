@@ -44,13 +44,13 @@ const installs = [
     },
   },
   {
-    title: "Export Monitors",
+    title: "Import Monitors",
     icon: FileDown,
-    description: "Export your workspace monitors to a YAML file.",
-    command: "openstatus monitors export",
+    description: "Import monitors from your workspace to a YAML file.",
+    command: "openstatus monitors import",
   },
   {
-    title: "Apply Changes",
+    title: "Manage Monitors",
     icon: FileJson,
     description:
       "Add, remove, or update monitors from a YAML file and apply your changes.",
