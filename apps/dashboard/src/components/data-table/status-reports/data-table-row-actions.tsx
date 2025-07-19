@@ -23,6 +23,14 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const actions = getActions({
     "create-update": () => buttonCreateRef.current?.click(),
     edit: () => buttonUpdateRef.current?.click(),
+    "view-report": () => {
+      if (typeof window !== "undefined") {
+        window.open(
+          `https://${row.original.page.customDomain || `${row.original.page.slug}.openstatus.dev/events/report/${row.original.id}`}`,
+          "_blank"
+        );
+      }
+    },
   });
   const trpc = useTRPC();
   const queryClient = useQueryClient();

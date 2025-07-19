@@ -6,6 +6,7 @@ import {
   insertStatusReportUpdateSchema,
   monitorsToStatusReport,
   page,
+  selectPageSchema,
   selectMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -381,6 +382,7 @@ export const statusReportRouter = createTRPCRouter({
         with: {
           statusReportUpdates: true,
           monitorsToStatusReports: { with: { monitor: true } },
+          page: true,
         },
         orderBy: (statusReport) => [
           opts.input.order === "asc"
@@ -392,8 +394,8 @@ export const statusReportRouter = createTRPCRouter({
       return selectStatusReportSchema
         .extend({
           updates: z.array(selectStatusReportUpdateSchema).default([]),
-          // monitors: z.number().array().default([]),
           monitors: z.array(selectMonitorSchema).default([]),
+          page: selectPageSchema,
         })
         .array()
         .parse(

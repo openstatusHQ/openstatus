@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Eye } from "lucide-react";
 
 export const actions = [
   {
@@ -14,6 +14,12 @@ export const actions = [
     variant: "default" as const,
   },
   {
+    id: "view-report",
+    label: "View Report",
+    icon: Eye,
+    variant: "default" as const,
+  },
+  {
     id: "delete",
     label: "Delete",
     icon: Trash2,
@@ -26,7 +32,7 @@ export type StatusReportUpdateAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<
     Record<StatusReportUpdateAction["id"], () => Promise<void> | void>
-  >,
+  >
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,
