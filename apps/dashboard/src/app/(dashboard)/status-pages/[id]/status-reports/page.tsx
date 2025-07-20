@@ -95,6 +95,9 @@ export default function Page() {
         <DataTable
           columns={columns}
           data={statusReports}
+          onRowClick={(row) =>
+            row.getCanExpand() ? row.toggleExpanded() : undefined
+          }
           rowComponent={({ row }) => (
             <UpdatesDataTable
               updates={row.original.updates}

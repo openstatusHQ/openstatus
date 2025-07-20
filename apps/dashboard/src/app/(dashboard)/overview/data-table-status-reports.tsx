@@ -16,6 +16,9 @@ export function DataTableStatusReports({
     <DataTable
       columns={statusReportsColumns}
       data={statusReports}
+      onRowClick={(row) =>
+        row.getCanExpand() ? row.toggleExpanded() : undefined
+      }
       rowComponent={({ row }) => (
         <UpdatesDataTable
           updates={row.original.updates}

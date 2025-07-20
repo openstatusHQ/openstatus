@@ -24,7 +24,10 @@ export const columns: ColumnDef<StatusReport>[] = [
         <Button
           {...{
             className: "size-7 shadow-none text-muted-foreground",
-            onClick: row.getToggleExpandedHandler(),
+            onClick: (e) => {
+              e.stopPropagation();
+              row.toggleExpanded();
+            },
             "aria-expanded": row.getIsExpanded(),
             "aria-label": row.getIsExpanded()
               ? `Collapse details for ${row.original.title}`
