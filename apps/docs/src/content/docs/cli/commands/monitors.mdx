@@ -1,35 +1,125 @@
 ---
-title: Monitors
+title: monitors
 description: "Manage your monitors in OpenStatus from the command line"
 ---
 
-The monitors command is used to manage your monitors. You trigger, view and list your monitors using this command.
+x
+### `monitors` command
 
-## Info
-You can get the details of a monitor using the following command.
-
-```bash
-openstatus monitors info <monitor-id>
-```
+The monitors command is used to manage your monitors. You can import, update, delete, trigger, view and list your monitors using this command.
 
 
-
-## List
-
-You can list all the monitors using the following command.
+Usage:
 
 ```bash
-openstatus monitors list
+$ openstatus [GLOBAL FLAGS] monitors [ARGUMENTS...]
 ```
 
-### Options
+### `monitors apply` subcommand
 
-- `--all` - List all the monitors including the inactive ones.
+Create or update monitors.
 
-## Trigger
+> openstatus monitors apply [options]
 
-You can trigger a monitor using the following command.
+Creates or updates monitors according to the OpenStatus configuration file.
+
+You can find some examples in the OpenStatus Template repository:
+
+[https://github.com/openstatusHQ/cli-template/](https://github.com/openstatusHQ/cli-template/)
+
+Usage:
 
 ```bash
-openstatus monitors trigger <monitor-id>
+$ openstatus [GLOBAL FLAGS] monitors apply [COMMAND FLAGS] [ARGUMENTS...]
 ```
+
+The following flags are supported:
+
+| Name                        | Description                                           |   Default value   |  Environment variables |
+|-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
+| `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
+| `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
+
+
+### `monitors import` subcommand
+
+Import all your monitors.
+
+> openstatus monitors import [options]
+
+Import all your monitors from your workspace to a YAML file; it will also create a lock file to manage your monitors with 'apply'.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors import [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 |   Default value   |  Environment variables |
+|-----------------------------|-----------------------------|:-----------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                   | `OPENSTATUS_API_TOKEN` |
+| `--output="…"` (`-o`)       | The output file name        | `openstatus.yaml` |         *none*         |
+
+### `monitors info` subcommand
+
+Get a monitor information.
+
+> openstatus monitors info [MonitorID]
+
+Fetch the monitor information. The monitor information includes details such as name, description, endpoint, method, frequency, locations, active status, public status, timeout, degraded after, and body. The body is truncated to 40 characters.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors info [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+
+### `monitors list` subcommand
+
+List all monitors.
+
+> openstatus monitors list [options]
+
+List all monitors. The list shows all your monitors attached to your workspace. It displays the ID, name, and URL of each monitor.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors list [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                               | Default value |  Environment variables |
+|-----------------------------|-------------------------------------------|:-------------:|:----------------------:|
+| `--all`                     | List all monitors including inactive ones |    `false`    |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
+
+### `monitors trigger` subcommand
+
+Trigger a monitor execution.
+
+> openstatus monitors trigger [MonitorId] [options]
+
+Trigger a monitor execution on demand. This command allows you to launch your tests on demand.
+
+Usage:
+
+```bash
+$ openstatus [GLOBAL FLAGS] monitors trigger [COMMAND FLAGS] [ARGUMENTS...]
+```
+
+The following flags are supported:
+
+| Name                        | Description                 | Default value |  Environment variables |
+|-----------------------------|-----------------------------|:-------------:|:----------------------:|
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
