@@ -49,7 +49,10 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
+import {
+  defaultFlyRegions,
+  monitorPeriodicity,
+} from "@openstatus/db/src/schema/constants";
 import { checkerRouter, testHttp, testTcp } from "./checker";
 
 export const monitorRouter = createTRPCRouter({
@@ -1387,6 +1390,9 @@ export const monitorRouter = createTRPCRouter({
         }
       }
 
+      // TBD: if we add random regions for starter/pro users
+      const regions = defaultFlyRegions;
+
       const newMonitor = await ctx.db
         .insert(monitor)
         .values({
@@ -1398,7 +1404,7 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           workspaceId: ctx.workspace.id,
           periodicity: "30m",
-          regions: "fra", // TODO: add default regions
+          regions: regions.join(","),
           assertions: serialize(assertions),
           updatedAt: new Date(),
         })

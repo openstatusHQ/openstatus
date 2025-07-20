@@ -38,6 +38,15 @@ export const flyRegions = [
   "yyz",
 ] as const;
 
+export const defaultFlyRegions = [
+  "iad",
+  "ams",
+  "gru",
+  "syd",
+  "hkg",
+  "jnb",
+] as const;
+
 export const monitorPeriodicity = [
   "30s",
   "1m",
