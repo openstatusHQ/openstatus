@@ -76,10 +76,13 @@ export function SidebarRight({
                   <SidebarTrigger />
                 </TooltipTrigger>
                 <TooltipContent side="left">
-                  <p className="mr-px inline-flex items-center gap-1">
+                  <p className="mr-px inline-flex items-center">
                     Toggle Sidebar{" "}
-                    <Kbd className="border-muted-foreground bg-primary text-background">
-                      ⌘+{SIDEBAR_KEYBOARD_SHORTCUT}
+                    <Kbd className="border-muted-foreground bg-primary text-background font-mono">
+                      ⌘
+                    </Kbd>
+                    <Kbd className="border-muted-foreground bg-primary text-background font-mono">
+                      {SIDEBAR_KEYBOARD_SHORTCUT}
                     </Kbd>
                   </p>
                 </TooltipContent>
