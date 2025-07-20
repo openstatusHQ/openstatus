@@ -153,7 +153,7 @@ export function NavMonitors() {
               // export: () => setOpenDialog(true),
             });
             return (
-              <SidebarMenuItem key={item.name}>
+              <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
                   className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11"
                   isActive={isActive}
