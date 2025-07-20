@@ -45,7 +45,7 @@ export const freeFlyRegions = [
   "syd",
   "hkg",
   "jnb",
-] as const;
+] as const satisfies (typeof flyRegions)[number][];
 
 export const monitorPeriodicity = [
   "30s",
