@@ -1,6 +1,5 @@
 "use client";
 
-import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,10 +17,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { isTRPCClientError } from "@trpc/client";
 import { NavFeedback } from "@/components/nav/nav-feedack";
+import type { RouterOutputs } from "@openstatus/api";
+import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
+import { deserialize } from "@openstatus/assertions";
+
+type TestTCP = RouterOutputs["checker"]["testTcp"];
+type TestHTTP = RouterOutputs["checker"]["testHttp"];
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
-  const [openDialog, setOpenDialog] = useState(false);
+  const [test, setTest] = useState<TestTCP | TestHTTP | null>(null);
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const router = useRouter();
@@ -64,7 +69,6 @@ export function NavActions() {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");
     },
-    // export: () => setOpenDialog(true),
     clone: () => {
       const promise = cloneMonitorMutation.mutateAsync({ id: parseInt(id) });
       toast.promise(promise, {
@@ -82,16 +86,21 @@ export function NavActions() {
 
   async function testAction() {
     if (monitor?.jobType === "http") {
+      const assertions = deserialize(monitor.assertions ?? "[]");
       const promise = testHttpMutation.mutateAsync({
         url: monitor.url,
         body: monitor.body,
         method: monitor.method,
         headers: monitor.headers,
+        assertions: assertions.map((a) => a.schema),
       });
 
       toast.promise(promise, {
         loading: "Testing HTTP request...",
-        success: "HTTP test completed successfully",
+        success: (data) => {
+          setTest(data);
+          return "HTTP test completed successfully";
+        },
         error: (error) => {
           if (isTRPCClientError(error)) {
             return error.message;
@@ -104,7 +113,10 @@ export function NavActions() {
 
       toast.promise(promise, {
         loading: "Testing TCP connection...",
-        success: "TCP test completed successfully",
+        success: (data) => {
+          setTest(data);
+          return "TCP test completed successfully";
+        },
         error: (error) => {
           if (isTRPCClientError(error)) {
             return error.message;
@@ -166,7 +178,14 @@ export function NavActions() {
           },
         }}
       />
-      <ExportCodeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      <DataTableSheetTest
+        data={test}
+        monitor={monitor}
+        onClose={async () => {
+          await new Promise((resolve) => setTimeout(() => resolve(true), 300));
+          setTest(null);
+        }}
+      />
     </div>
   );
 }

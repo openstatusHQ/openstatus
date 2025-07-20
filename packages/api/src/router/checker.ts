@@ -5,11 +5,11 @@ import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import {
-  headerAssertion,
-  textBodyAssertion,
-  jsonBodyAssertion,
-  statusAssertion,
   deserialize,
+  statusAssertion,
+  headerAssertion,
+  jsonBodyAssertion,
+  textBodyAssertion,
 } from "@openstatus/assertions";
 import { Events } from "@openstatus/analytics";
 

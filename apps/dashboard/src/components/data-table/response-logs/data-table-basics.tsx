@@ -20,6 +20,22 @@ import { flyRegionsDict } from "@openstatus/utils";
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
 export function DataTableBasics({ data }: { data: ResponseLog }) {
+  if (data.type === "http") {
+    return <DataTableBasicsHTTP data={data} />;
+  }
+  if (data.type === "tcp") {
+    return <DataTableBasicsTCP data={data} />;
+  }
+  return null;
+}
+
+export function DataTableBasicsHTTP({
+  data,
+}: {
+  data: Extract<ResponseLog, { type: "http" }> & {
+    trigger?: "cron" | "api" | "test" | null;
+  };
+}) {
   const regionConfig = flyRegionsDict[data.region];
   return (
     <Table className="table-fixed">
@@ -51,14 +67,16 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
             </div>
           </TableCell>
         </TableRow>
-        <TableRow className="[&>:not(:last-child)]:border-r">
-          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
-            ID
-          </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
-            {data.id}
-          </TableCell>
-        </TableRow>
+        {data.id ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+              ID
+            </TableHead>
+            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+              {data.id}
+            </TableCell>
+          </TableRow>
+        ) : null}
         <TableRow className="[&>:not(:last-child)]:border-r">
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Timestamp
@@ -70,48 +88,34 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
             />
           </TableCell>
         </TableRow>
-        {data.type === "http" ? (
-          <TableRow className="[&>:not(:last-child)]:border-r">
-            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
-              URL
-            </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
-              {data.url}
-            </TableCell>
-          </TableRow>
-        ) : null}
-        {data.type === "tcp" ? (
-          <TableRow className="[&>:not(:last-child)]:border-r">
-            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
-              URI
-            </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
-              {data.uri}
-            </TableCell>
-          </TableRow>
-        ) : null}
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            URL
+          </TableHead>
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            {data.url}
+          </TableCell>
+        </TableRow>
         {/* TODO: store method in TB 🤦 */}
         {/* <TableRow className="[&>:not(:last-child)]:border-r">
-          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+        <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Method
-          </TableHead>
-          <TableCell className="whitespace-normal font-mono">
+        </TableHead>
+        <TableCell className="whitespace-normal font-mono">
             {data?.method}
-          </TableCell>
+        </TableCell>
         </TableRow> */}
-        {data.type === "http" ? (
-          <TableRow className="[&>:not(:last-child)]:border-r">
-            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
-              Status
-            </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
-              <TableCellNumber
-                value={data.statusCode}
-                className={textColors[getStatusCodeVariant(data.statusCode)]}
-              />
-            </TableCell>
-          </TableRow>
-        ) : null}
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Status
+          </TableHead>
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCellNumber
+              value={data.statusCode}
+              className={textColors[getStatusCodeVariant(data.statusCode)]}
+            />
+          </TableCell>
+        </TableRow>
         <TableRow className="[&>:not(:last-child)]:border-r">
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Latency
@@ -131,15 +135,17 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
             </span>
           </TableCell>
         </TableRow>
-        <TableRow className="[&>:not(:last-child)]:border-r">
-          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
-            Trigger
-          </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
-            {data?.trigger}
-          </TableCell>
-        </TableRow>
-        {data.type === "http" && data.headers ? (
+        {data.trigger ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+              Trigger
+            </TableHead>
+            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+              {data?.trigger}
+            </TableCell>
+          </TableRow>
+        ) : null}
+        {data.headers ? (
           <>
             <TableRow>
               <TableHead colSpan={2}>Headers</TableHead>
@@ -168,7 +174,7 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
                               key={key}
                               className="[&>:not(:last-child)]:border-r"
                             >
-                              <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+                              <TableHead className="bg-muted/50 font-normal text-muted-foreground overflow-x-auto">
                                 {key}
                               </TableHead>
                               <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
@@ -190,7 +196,7 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
             </TableRow>
           </>
         ) : null}
-        {data.type === "http" && data.timing ? (
+        {data.timing ? (
           <>
             <TableRow>
               <TableHead colSpan={2}>Timing</TableHead>
@@ -225,7 +231,7 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
             ))}
           </>
         ) : null}
-        {data.type === "http" && data?.message ? (
+        {data?.message ? (
           <>
             <TableRow>
               <TableHead colSpan={2}>Message</TableHead>
@@ -239,21 +245,7 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
             </TableRow>
           </>
         ) : null}
-        {data.type === "tcp" && data?.errorMessage ? (
-          <>
-            <TableRow>
-              <TableHead colSpan={2}>Error Message</TableHead>
-            </TableRow>
-            <TableRow>
-              <TableCell colSpan={2} className="p-0">
-                <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
-                  {data.errorMessage}
-                </pre>
-              </TableCell>
-            </TableRow>
-          </>
-        ) : null}
-        {data.type === "http" ? (
+        {data.assertions ? (
           <>
             <TableRow>
               <TableHead colSpan={2}>Assertions</TableHead>
@@ -269,6 +261,121 @@ export function DataTableBasics({ data }: { data: ResponseLog }) {
                     {JSON.stringify(data.assertions, null, 2)}
                   </pre>
                 )}
+              </TableCell>
+            </TableRow>
+          </>
+        ) : null}
+      </TableBody>
+    </Table>
+  );
+}
+
+export function DataTableBasicsTCP({
+  data,
+}: {
+  data: Extract<ResponseLog, { type: "tcp" }> & {
+    trigger?: "cron" | "api" | "test" | null;
+  };
+}) {
+  const regionConfig = flyRegionsDict[data.region];
+  return (
+    <Table className="table-fixed">
+      <colgroup>
+        <col className="w-1/3" />
+        <col className="w-2/3" />
+      </colgroup>
+      <TableBody>
+        <TableRow>
+          <TableHead colSpan={2}>Request</TableHead>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Result
+          </TableHead>
+          {/* TODO: add colored square like list (see columns) */}
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <div className="flex items-center gap-2">
+              <div
+                className={cn("h-2.5 w-2.5 rounded-[2px] bg-muted", {
+                  "bg-destructive": data?.requestStatus === "error",
+                  "bg-warning": data?.requestStatus === "degraded",
+                  "bg-success": data?.requestStatus === "success",
+                })}
+              />
+              <div className="capitalize">
+                {data?.requestStatus ?? "unknown"}
+              </div>
+            </div>
+          </TableCell>
+        </TableRow>
+        {data.id ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+              ID
+            </TableHead>
+            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+              {data.id}
+            </TableCell>
+          </TableRow>
+        ) : null}
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Timestamp
+          </TableHead>
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCellDate
+              value={new Date(data.cronTimestamp)}
+              className="text-foreground"
+            />
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            URI
+          </TableHead>
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            {data.uri}
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Latency
+          </TableHead>
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCellNumber value={data?.latency} unit="ms" />
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Region
+          </TableHead>
+          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            {regionConfig?.flag} {regionConfig?.code}{" "}
+            <span className="text-muted-foreground">
+              {regionConfig?.location}
+            </span>
+          </TableCell>
+        </TableRow>
+        {data.trigger ? (
+          <TableRow className="[&>:not(:last-child)]:border-r">
+            <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+              Trigger
+            </TableHead>
+            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+              {data?.trigger}
+            </TableCell>
+          </TableRow>
+        ) : null}
+        {data?.errorMessage ? (
+          <>
+            <TableRow>
+              <TableHead colSpan={2}>Error Message</TableHead>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} className="p-0">
+                <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                  {data.errorMessage}
+                </pre>
               </TableCell>
             </TableRow>
           </>
