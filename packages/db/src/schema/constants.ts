@@ -38,7 +38,7 @@ export const flyRegions = [
   "yyz",
 ] as const;
 
-export const defaultFlyRegions = [
+export const freeFlyRegions = [
   "iad",
   "ams",
   "gru",
