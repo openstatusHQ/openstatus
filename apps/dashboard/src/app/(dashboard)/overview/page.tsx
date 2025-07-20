@@ -26,7 +26,7 @@ import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DataTableStatusReports } from "./data-table-status-reports";
-import { Note, NoteButton, NoteIcon } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
 import { Terminal } from "lucide-react";
 
 // FIXME: the page is server side
@@ -132,9 +132,7 @@ export default async function Page() {
     <HydrateClient>
       <SectionGroup>
         <Note>
-          <NoteIcon>
-            <Terminal className="size-4" />
-          </NoteIcon>
+          <Terminal />
           Use Monitoring as Code to manage your monitors with our CLI.
           <NoteButton variant="outline" asChild>
             <Link href="/cli">Learn more</Link>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cva, VariantProps } from "class-variance-authority";
 
 const noteVariants = cva(
-  "flex items-center gap-3 rounded-md border px-3 py-2",
+  "flex items-center gap-3 rounded-md border px-3 py-2 [&>svg]:size-4 [&>svg]:text-current [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -12,9 +12,10 @@ const noteVariants = cva(
       },
       color: {
         default: "text-foreground",
-        warning: "text-warning",
-        error: "text-destructive",
-        success: "text-success",
+        warning: "text-warning border-warning/50",
+        error: "text-destructive border-destructive/50",
+        success: "text-success border-success/50",
+        info: "text-info border-info/50",
       },
     },
     defaultVariants: {
@@ -39,24 +40,6 @@ export function Note({
     >
       {children}
     </div>
-  );
-}
-
-export function NoteIcon({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
-  return (
-    <span
-      className={cn(
-        "flex h-5 w-5 shrink-0 items-center justify-center",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </span>
   );
 }
 

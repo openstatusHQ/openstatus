@@ -10,7 +10,7 @@ import { DataTable } from "@/components/data-table/billing/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import { Note, NoteButton, NoteIcon } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
 import { CalendarClock } from "lucide-react";
 
 const PLANS = {
@@ -39,9 +39,7 @@ export function UpgradeDialog(props: DialogProps) {
         </DialogHeader>
         {restrictTo.length === 0 ? (
           <Note>
-            <NoteIcon>
-              <CalendarClock className="size-4" />
-            </NoteIcon>
+            <CalendarClock />
             You&apos;re already on our highest plan. Let&apos;s chat about your
             needs.
             <NoteButton variant="outline" asChild>

@@ -37,6 +37,8 @@ import { groupByContinent } from "@openstatus/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
+import { Note } from "@/components/common/note";
+import { Info } from "lucide-react";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
@@ -157,7 +159,12 @@ export function FormSchedulingRegions({
             />
           </FormCardContent>
           <FormCardSeparator />
-          <FormCardContent>
+          <FormCardContent className="grid gap-4">
+            <Note color="warning">
+              <Info />
+              To minimize false positives, we recommend monitoring your endpoint
+              in at least 3 regions.
+            </Note>
             <FormField
               control={form.control}
               name="regions"
