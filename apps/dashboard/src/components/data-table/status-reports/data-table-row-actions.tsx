@@ -36,6 +36,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const sendStatusReportUpdateMutation = useMutation(
+    trpc.emailRouter.sendStatusReport.mutationOptions()
+  );
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
       onSuccess: () => {
@@ -50,7 +53,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   );
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (update) => {
+        // TODO: move to server
+        if (update) {
+          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+        }
+        //
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
         });

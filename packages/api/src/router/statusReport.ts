@@ -422,9 +422,7 @@ export const statusReportRouter = createTRPCRouter({
       })
     )
     .mutation(async (opts) => {
-      // TODO: send email via eailRouter.sendStatusReport
-
-      opts.ctx.db.transaction(async (tx) => {
+      return opts.ctx.db.transaction(async (tx) => {
         const newStatusReport = await tx
           .insert(statusReport)
           .values({
@@ -436,7 +434,7 @@ export const statusReportRouter = createTRPCRouter({
           .returning()
           .get();
 
-        await tx
+        const newStatusReportUpdate = await tx
           .insert(statusReportUpdate)
           .values({
             statusReportId: newStatusReport.id,
@@ -459,6 +457,8 @@ export const statusReportRouter = createTRPCRouter({
             .returning()
             .get();
         }
+
+        return newStatusReportUpdate;
       });
     }),
 

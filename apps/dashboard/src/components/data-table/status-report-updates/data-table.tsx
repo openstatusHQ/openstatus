@@ -40,9 +40,17 @@ export function DataTable({
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const sendStatusReportUpdateMutation = useMutation(
+    trpc.emailRouter.sendStatusReport.mutationOptions()
+  );
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (update) => {
+        // TODO: move to server
+        if (update) {
+          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+        }
+        //
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
         });
