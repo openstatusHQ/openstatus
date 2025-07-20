@@ -128,7 +128,11 @@ export default function Page() {
           <SectionDescription>
             Get started with the CLI to export and manage your monitors in your
             code.{" "}
-            <Link href="https://docs.openstatus.dev/cli/getting-started/">
+            <Link
+              href="https://docs.openstatus.dev/cli/getting-started/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Read more
             </Link>
             .
@@ -185,13 +189,13 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Commands</SectionTitle>
           <SectionDescription>
-            We have a few more commands to run. Check{" "}
+            We have a few more commands to run. Check the{" "}
             <Link
               href="https://docs.openstatus.dev/cli/getting-started/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              the documentation
+              documentation
             </Link>{" "}
             to read more.
           </SectionDescription>
@@ -211,17 +215,21 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Templates</SectionTitle>
           <SectionDescription>
-            We have a few templates to help you get started. Check{" "}
-            <Link href="https://github.com/openstatusHQ/cli-template">
-              the repository
+            We have a few templates to help you get started. Check the{" "}
+            <Link
+              href="https://github.com/openstatusHQ/cli-template"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <code>@openstatusHQ/cli-template</code>
             </Link>{" "}
-            for more.
+            repository for more.
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-6">
           {templates.map((template, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {template.description}
               </p>
               <Code>{template.template}</Code>
