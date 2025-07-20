@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { useDomainStatus } from "./use-domain-status";
 import DomainStatusIcon from "./domain-status-icon";
 import { getSubdomain } from "@/lib/domains";
+import { Note } from "@/components/common/note";
+import { CircleCheck } from "lucide-react";
 
 export const InlineSnippet = ({
   className,
@@ -30,7 +32,15 @@ export const InlineSnippet = ({
 export default function DomainConfiguration({ domain }: { domain: string }) {
   const { status, domainJson } = useDomainStatus(domain);
 
-  if (!status || status === "Valid Configuration" || !domainJson) return null;
+  if (!status || !domainJson) return null;
+
+  if (status === "Valid Configuration")
+    return (
+      <Note color="success">
+        <CircleCheck />
+        Your domain is configured and you can use it to access your status page.
+      </Note>
+    );
 
   const subdomain =
     domainJson?.name && domainJson?.apexName
