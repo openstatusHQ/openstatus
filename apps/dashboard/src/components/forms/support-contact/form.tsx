@@ -89,9 +89,9 @@ export function ContactForm({
       try {
         const promise = new Promise((resolve) => setTimeout(resolve, 1000));
         toast.promise(promise, {
-          loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          loading: "Sending message...",
+          success: "Message sent. We'll get back to you soon.",
+          error: "Failed to send message. Please try again.",
         });
         await promise;
         onSubmit?.(values);

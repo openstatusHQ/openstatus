@@ -9,8 +9,9 @@ import {
 import { useState } from "react";
 import { ContactForm, type FormValues } from "./form";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@/components/common/link";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function FormDialogSupportContact({
   children,
@@ -20,8 +21,10 @@ export function FormDialogSupportContact({
   defaultValues?: FormValues;
 }) {
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const trpc = useTRPC();
   const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const feedbackMutation = useMutation(trpc.feedback.submit.mutationOptions());
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -45,7 +48,18 @@ export function FormDialogSupportContact({
             message: defaultValues?.message,
             blocker: defaultValues?.blocker,
           }}
-          onSubmit={() => setOpen(false)}
+          onSubmit={async (data) => {
+            await feedbackMutation.mutateAsync({
+              name: data.name,
+              email: data.email,
+              type: data.type,
+              message: data.message,
+              blocker: data.blocker,
+              path: window.location.pathname,
+              isMobile,
+            });
+            setOpen(false);
+          }}
         />
       </DialogContent>
     </Dialog>
