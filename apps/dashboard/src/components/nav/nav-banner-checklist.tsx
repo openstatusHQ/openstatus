@@ -12,9 +12,11 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, CircleDashed, X } from "lucide-react";
 
-// TODO: add a close action to localStorage
-
-export function NavChecklist() {
+export function NavBannerChecklist({
+  handleClose,
+}: {
+  handleClose: () => void;
+}) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
@@ -48,7 +50,10 @@ export function NavChecklist() {
     <SidebarGroup className="rounded-lg border bg-background group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>Getting Started</span>
-        <SidebarMenuAction className="relative top-0 right-0">
+        <SidebarMenuAction
+          className="relative top-0 right-0"
+          onClick={handleClose}
+        >
           <X className="text-muted-foreground" size={16} />
         </SidebarMenuAction>
       </SidebarGroupLabel>
@@ -60,12 +65,15 @@ export function NavChecklist() {
           >
             {item.checked ? (
               <>
-                <CircleCheck className="text-success" size={12} />
+                <CircleCheck className="text-success shrink-0" size={12} />
                 <span>{item.title}</span>
               </>
             ) : (
               <>
-                <CircleDashed className="text-muted-foreground/50" size={12} />
+                <CircleDashed
+                  className="text-muted-foreground/50 shrink-0"
+                  size={12}
+                />
                 <Link href={item.href}>{item.title}</Link>
               </>
             )}

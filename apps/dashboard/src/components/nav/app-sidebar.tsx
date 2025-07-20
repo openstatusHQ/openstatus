@@ -31,8 +31,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NavChecklist } from "./nav-checklist";
 import { NavHelp } from "./nav-help";
+import { NavBanner } from "./nav-banner";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "[";
 
@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavStatusPages />
         <NavMonitors />
         <div className="mt-auto px-2">
-          <NavChecklist />
+          <NavBanner />
         </div>
         <NavHelp />
       </SidebarContent>
