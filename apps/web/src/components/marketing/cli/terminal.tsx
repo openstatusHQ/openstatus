@@ -16,12 +16,9 @@ export function Terminal({ className, ...props }: React.ComponentProps<"pre">) {
   }
 
   return (
-    <div className="flex w-full items-center">
+    <div className="relative truncate">
       <pre
-        className={cn(
-          "flex w-full items-center gap-2 rounded-lg border bg-muted/50 px-4 py-2",
-          className,
-        )}
+        className={cn("rounded-lg border bg-muted/50 px-4 py-2", className)}
         {...props}
       >
         <code className="text-sm">
@@ -31,7 +28,7 @@ export function Terminal({ className, ...props }: React.ComponentProps<"pre">) {
           variant="ghost"
           size="icon"
           onClick={handleCopy}
-          className="-mr-2 ml-auto hover:bg-transparent"
+          className="hover:bg-transparent backdrop-blur-sm absolute right-1 top-1"
         >
           {isCopied ? (
             <CheckIcon className="size-4" />
