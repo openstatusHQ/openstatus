@@ -19,10 +19,10 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { columns } from "@/components/data-table/notifiers/columns";
-import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
+import { columns } from "@/components/data-table/notifications/columns";
+import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { config } from "@/data/notifiers.client";
+import { config } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -36,7 +36,7 @@ const BASE_URL =
 
 export function Client() {
   const trpc = useTRPC();
-  const { data: notifiers, refetch } = useQuery(
+  const { data: notifications, refetch } = useQuery(
     trpc.notification.list.queryOptions()
   );
   const [searchParams] = useQueryStates(searchParamsParsers);
@@ -48,30 +48,30 @@ export function Client() {
     })
   );
 
-  if (!notifiers || !monitors || !workspace) return null;
+  if (!notifications || !monitors || !workspace) return null;
 
   const limitReached =
-    notifiers.length >= workspace.limits["notification-channels"];
+    notifications.length >= workspace.limits["notification-channels"];
 
   return (
     <SectionGroup>
       <SectionHeader>
-        <SectionTitle>Notifiers</SectionTitle>
+        <SectionTitle>Notifications</SectionTitle>
       </SectionHeader>
       <Section>
-        {notifiers.length === 0 ? (
+        {notifications.length === 0 ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No notifier found</EmptyStateTitle>
           </EmptyStateContainer>
         ) : (
-          <DataTable columns={columns} data={notifiers} />
+          <DataTable columns={columns} data={notifications} />
         )}
       </Section>
       <Section>
         <SectionHeader>
           <SectionTitle>Create a new notifier</SectionTitle>
           <SectionDescription>
-            Define your notifiers to receive alerts when downtime occurs.{" "}
+            Define your notifications to receive alerts when downtime occurs.{" "}
             <Link
               href="https://docs.openstatus.dev/alerting/overview/"
               rel="noreferrer"

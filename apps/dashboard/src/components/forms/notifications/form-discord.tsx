@@ -10,68 +10,54 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { Link } from "@/components/common/link";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition, useEffect } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Label } from "@/components/ui/label";
+import { config } from "@/data/notifications.client";
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
-import { config } from "@/data/notifiers.client";
 import { Button } from "@/components/ui/button";
-import { useQueryState, parseAsString } from "nuqs";
-import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 
 const schema = z.object({
   name: z.string(),
-  provider: z.literal("pagerduty"),
+  provider: z.literal("discord"),
   data: z.string(),
   monitors: z.array(z.number()),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-export function FormPagerDuty({
-  monitors,
+export function FormDiscord({
   defaultValues,
   onSubmit,
   className,
+  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
-  const [searchConfig] = useQueryState("config", parseAsString);
-  console.log(searchConfig);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
-      provider: "pagerduty",
+      provider: "discord",
       data: "",
       monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (searchConfig) {
-      const data = PagerDutySchema.safeParse(searchConfig);
-      if (data.success) {
-        form.setValue("data", JSON.stringify(data.data));
-      } else {
-        toast.error("Invalid PagerDuty configuration");
-      }
-    }
-  }, [searchConfig, form]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -103,12 +89,7 @@ export function FormPagerDuty({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(
-          data as unknown as {
-            url: string;
-            integrationKey: string;
-          }
-        );
+        const promise = config[provider].sendTest(data);
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
@@ -155,24 +136,27 @@ export function FormPagerDuty({
             name="data"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Config</FormLabel>
+                <FormLabel>Webhook URL</FormLabel>
                 <FormControl>
-                  <Input placeholder="..." disabled {...field} />
+                  <Input placeholder="https://example.com/webhook" {...field} />
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
-                  The PagerDuty configuration that is being used.
+                  Enter the webhook URL to your Discord channel.{" "}
+                  <Link
+                    href="https://docs.openstatus.dev/alerting/providers/discord/"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Read more
+                  </Link>
+                  .
                 </FormDescription>
               </FormItem>
             )}
           />
           <div>
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={testAction}
-            >
+            <Button variant="outline" size="sm" onClick={testAction}>
               Send Test
             </Button>
           </div>

@@ -21,23 +21,23 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Label } from "@/components/ui/label";
-import { config } from "@/data/notifiers.client";
+import { config } from "@/data/notifications.client";
+import { Button } from "@/components/ui/button";
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   name: z.string(),
-  provider: z.literal("discord"),
-  data: z.string(),
+  provider: z.literal("slack"),
+  data: z.string().url(),
   monitors: z.array(z.number()),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-export function FormDiscord({
+export function FormSlack({
   defaultValues,
   onSubmit,
   className,
@@ -52,7 +52,7 @@ export function FormDiscord({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
-      provider: "discord",
+      provider: "slack",
       data: "",
       monitors: [],
     },
@@ -142,9 +142,9 @@ export function FormDiscord({
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
-                  Enter the webhook URL to your Discord channel.{" "}
+                  Enter the webhook URL to your Slack channel.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/alerting/providers/discord/"
+                    href="https://docs.openstatus.dev/alerting/providers/slack/"
                     rel="noreferrer"
                     target="_blank"
                   >
@@ -156,7 +156,12 @@ export function FormDiscord({
             )}
           />
           <div>
-            <Button variant="outline" size="sm" onClick={testAction}>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={testAction}
+            >
               Send Test
             </Button>
           </div>

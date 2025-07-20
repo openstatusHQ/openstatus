@@ -1,8 +1,8 @@
 "use client";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
-import { getActions } from "@/data/notifiers.client";
+import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
+import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

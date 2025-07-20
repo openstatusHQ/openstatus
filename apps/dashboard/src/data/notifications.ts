@@ -1,4 +1,4 @@
-export const notifiers = [
+export const notifications = [
   {
     id: 1,
     name: "Email",
@@ -7,4 +7,4 @@ export const notifiers = [
   },
 ];
 
-export type Notifier = (typeof notifiers)[number];
+export type Notification = (typeof notifications)[number];

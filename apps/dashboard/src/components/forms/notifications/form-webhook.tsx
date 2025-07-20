@@ -25,7 +25,7 @@ import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
-import { config } from "@/data/notifiers.client";
+import { config } from "@/data/notifications.client";
 import { Button } from "@/components/ui/button";
 
 const schema = z.object({

@@ -10,54 +10,68 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { Link } from "@/components/common/link";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Label } from "@/components/ui/label";
-import { config } from "@/data/notifiers.client";
-import { Button } from "@/components/ui/button";
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
+import { config } from "@/data/notifications.client";
+import { Button } from "@/components/ui/button";
+import { useQueryState, parseAsString } from "nuqs";
+import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 
 const schema = z.object({
   name: z.string(),
-  provider: z.literal("slack"),
-  data: z.string().url(),
+  provider: z.literal("pagerduty"),
+  data: z.string(),
   monitors: z.array(z.number()),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-export function FormSlack({
+export function FormPagerDuty({
+  monitors,
   defaultValues,
   onSubmit,
   className,
-  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
+  const [searchConfig] = useQueryState("config", parseAsString);
+  console.log(searchConfig);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
-      provider: "slack",
+      provider: "pagerduty",
       data: "",
       monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (searchConfig) {
+      const data = PagerDutySchema.safeParse(searchConfig);
+      if (data.success) {
+        form.setValue("data", JSON.stringify(data.data));
+      } else {
+        toast.error("Invalid PagerDuty configuration");
+      }
+    }
+  }, [searchConfig, form]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -89,7 +103,12 @@ export function FormSlack({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(data);
+        const promise = config[provider].sendTest(
+          data as unknown as {
+            url: string;
+            integrationKey: string;
+          }
+        );
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
@@ -136,21 +155,13 @@ export function FormSlack({
             name="data"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Webhook URL</FormLabel>
+                <FormLabel>Config</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://example.com/webhook" {...field} />
+                  <Input placeholder="..." disabled {...field} />
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
-                  Enter the webhook URL to your Slack channel.{" "}
-                  <Link
-                    href="https://docs.openstatus.dev/alerting/providers/slack/"
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Read more
-                  </Link>
-                  .
+                  The PagerDuty configuration that is being used.
                 </FormDescription>
               </FormItem>
             )}

@@ -84,14 +84,14 @@ export function Sidebar() {
           ],
         },
         {
-          label: "Notifiers",
+          label: "Notifications",
           items: monitor.notifications.flatMap((notification) => {
             const arr = [];
             arr.push({
               label: "Name",
               value: (
                 <TableCellLink
-                  href={`/notifiers/${notification.id}`}
+                  href={`/notifications/${notification.id}`}
                   value={notification.name}
                 />
               ),

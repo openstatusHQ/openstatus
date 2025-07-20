@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Label } from "@/components/ui/label";
-import { config } from "@/data/notifiers.client";
+import { config } from "@/data/notifications.client";
 import {
   FormCardContent,
   FormCardSeparator,

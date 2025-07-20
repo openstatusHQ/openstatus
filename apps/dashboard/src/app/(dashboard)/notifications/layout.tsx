@@ -20,7 +20,7 @@ export default async function Layout({
       <AppHeader>
         <AppHeaderContent>
           <AppSidebarTrigger />
-          <NavBreadcrumb items={[{ type: "page", label: "Notifiers" }]} />
+          <NavBreadcrumb items={[{ type: "page", label: "Notifications" }]} />
         </AppHeaderContent>
         <AppHeaderActions>
           <NavActions />

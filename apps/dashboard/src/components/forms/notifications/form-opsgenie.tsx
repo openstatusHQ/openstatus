@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { config } from "@/data/notifiers.client";
+import { config } from "@/data/notifications.client";
 import {
   FormCardContent,
   FormCardSeparator,

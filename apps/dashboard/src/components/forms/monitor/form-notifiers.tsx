@@ -84,7 +84,7 @@ export function FormNotifiers({
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
           <FormCardHeader>
-            <FormCardTitle>Notifiers</FormCardTitle>
+            <FormCardTitle>Notifications</FormCardTitle>
             <FormCardDescription>
               Get notified when your monitor is degraded or down.
             </FormCardDescription>
@@ -176,7 +176,7 @@ export function FormNotifiers({
               />
             ) : (
               <EmptyStateContainer>
-                <EmptyStateTitle>No notifiers</EmptyStateTitle>
+                <EmptyStateTitle>No notifications</EmptyStateTitle>
               </EmptyStateContainer>
             )}
           </FormCardContent>

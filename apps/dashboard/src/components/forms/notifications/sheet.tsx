@@ -11,7 +11,7 @@ import {
   FormSheetTrigger,
 } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
-import { config } from "@/data/notifiers.client";
+import { config } from "@/data/notifications.client";
 import { useState } from "react";
 import type { FormValues } from "./form";
 

@@ -60,8 +60,8 @@ const data = {
       icon: PanelTop,
     },
     {
-      name: "Notifiers",
-      url: "/notifiers",
+      name: "Notifications",
+      url: "/notifications",
       icon: Bell,
     },
     {

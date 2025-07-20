@@ -22,9 +22,9 @@ export function NavChecklist() {
 
   const hasMonitors = workspace.usage?.monitors ?? 0 > 0;
   const hasStatusPages = workspace.usage?.pages ?? 0 > 0;
-  const hasNotifiers = workspace.usage?.notifications ?? 0 > 0;
+  const hastNotifications = workspace.usage?.notifications ?? 0 > 0;
 
-  if (hasMonitors && hasStatusPages && hasNotifiers) return null;
+  if (hasMonitors && hasStatusPages && hastNotifications) return null;
 
   const items = [
     {
@@ -38,9 +38,9 @@ export function NavChecklist() {
       href: "/status-pages/create",
     },
     {
-      title: "Create Notifier",
-      checked: hasNotifiers,
-      href: "/notifiers",
+      title: "Create Notification",
+      checked: hastNotifications,
+      href: "/notifications",
     },
   ];
 

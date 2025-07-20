@@ -37,7 +37,7 @@ const moreActions = [
     id: "notifier",
     title: "Create a notifier",
     description: "Get notified when your website or API is down.",
-    href: "/notifiers",
+    href: "/notifications",
   },
   {
     id: "workspace",

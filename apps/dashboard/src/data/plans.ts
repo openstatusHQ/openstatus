@@ -73,8 +73,8 @@ export const config: Record<
       },
     ],
   },
-  notifiers: {
-    label: "Notifiers",
+  notifications: {
+    label: "Notifications",
     features: [
       {
         value: "notifications",

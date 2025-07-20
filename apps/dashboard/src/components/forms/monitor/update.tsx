@@ -25,7 +25,9 @@ export function FormMonitorUpdate() {
     trpc.monitor.get.queryOptions({ id: parseInt(id) })
   );
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
-  const { data: notifiers } = useQuery(trpc.notification.list.queryOptions());
+  const { data: notifications } = useQuery(
+    trpc.notification.list.queryOptions()
+  );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const updateRetryMutation = useMutation(
     trpc.monitor.updateRetry.mutationOptions({
@@ -97,7 +99,7 @@ export function FormMonitorUpdate() {
     })
   );
 
-  if (!monitor || !statusPages || !notifiers || !workspace) return null;
+  if (!monitor || !statusPages || !notifications || !workspace) return null;
 
   return (
     <FormCardGroup>
@@ -185,7 +187,7 @@ export function FormMonitorUpdate() {
         }}
       />
       <FormNotifiers
-        notifiers={notifiers}
+        notifiers={notifications}
         defaultValues={{
           notifiers: monitor.notifications.map(({ id }) => id),
         }}
