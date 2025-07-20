@@ -7,15 +7,15 @@ const noteVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-border bg-sidebar",
+        default: "border-border",
         ghost: "border-none bg-transparent",
       },
       color: {
-        default: "text-foreground",
-        warning: "text-warning border-warning/50",
-        error: "text-destructive border-destructive/50",
-        success: "text-success border-success/50",
-        info: "text-info border-info/50",
+        default: "text-foreground bg-sidebar",
+        warning: "text-warning border-warning/50 bg-warning/5",
+        error: "text-destructive border-destructive/50 bg-destructive/5",
+        success: "text-success border-success/50 bg-success/5",
+        info: "text-info border-info/50 bg-info/5",
       },
     },
     defaultVariants: {
