@@ -1332,6 +1332,7 @@ export const monitorRouter = createTRPCRouter({
             jsonBodyAssertion,
           ])
         ),
+        active: z.boolean().default(false),
         saveCheck: z.boolean().default(false),
         skipCheck: z.boolean().default(false),
       })
@@ -1402,6 +1403,7 @@ export const monitorRouter = createTRPCRouter({
           method: input.method,
           headers: input.headers ? JSON.stringify(input.headers) : undefined,
           body: input.body,
+          active: input.active,
           workspaceId: ctx.workspace.id,
           periodicity: "30m",
           regions: regions.join(","),
