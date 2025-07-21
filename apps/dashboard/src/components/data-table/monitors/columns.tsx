@@ -14,6 +14,7 @@ import { TableCellNumber } from "../table-cell-number";
 import { TableCellDate } from "../table-cell-date";
 import { TableCellSkeleton } from "../dable-cell-skeleton";
 import { TableCellUnavailable } from "../table-cell-unavailable";
+import { formatDistanceToNow } from "date-fns";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
   globalMetrics?:
@@ -148,6 +149,28 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("lastIncident");
       return <TableCellDate value={value} formatStr="LLL dd, y" />;
+    },
+    enableHiding: false,
+  },
+  {
+    id: "lastTimestamp",
+    header: "Last Checked",
+    accessorFn: (row) =>
+      typeof row.globalMetrics === "object"
+        ? row.globalMetrics.lastTimestamp
+        : row.globalMetrics,
+    cell: ({ row }) => {
+      const value = row.getValue("lastTimestamp");
+      if (value === undefined) return <TableCellSkeleton />;
+      return (
+        <TableCellDate
+          value={
+            typeof value === "number"
+              ? formatDistanceToNow(new Date(value), { addSuffix: true })
+              : value
+          }
+        />
+      );
     },
     enableHiding: false,
   },

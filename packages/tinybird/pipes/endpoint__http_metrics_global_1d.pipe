@@ -14,6 +14,7 @@ SQL >
         round(quantile(0.9)(latency), 0) as p90Latency,
         round(quantile(0.95)(latency), 0) as p95Latency,
         round(quantile(0.99)(latency), 0) as p99Latency,
+        max(cronTimestamp) as lastTimestamp,
         count() as count,
         monitorId
     FROM mv__http_1d__v0
