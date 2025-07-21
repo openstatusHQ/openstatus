@@ -36,6 +36,7 @@ export function mapMetrics(metrics: RouterOutputs["tinybird"]["metrics"]) {
       uptime: (metric.success + metric.degraded) / metric.count,
       degraded: metric.degraded,
       error: metric.error,
+      lastTimestamp: metric.lastTimestamp,
     };
   });
 }
@@ -56,6 +57,10 @@ export const metricsCards = {
   total: {
     label: "REQUESTS",
     variant: "default",
+  },
+  lastTimestamp: {
+    label: "LAST CHECKED",
+    variant: "ghost",
   },
   p50: {
     label: "P50",

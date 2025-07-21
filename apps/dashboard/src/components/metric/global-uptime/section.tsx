@@ -19,6 +19,7 @@ import {
   formatPercentage,
 } from "@/lib/formatter";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { formatDistanceToNow } from "date-fns";
 
 type Metric = {
   label: string;
@@ -63,22 +64,32 @@ export function GlobalUptimeSection({
       (acc, metric) => {
         Object.entries(metric).forEach(([key, value]) => {
           const k = key as keyof typeof acc;
-          const isPercentage = k.startsWith("p");
-          const isUptime = k === "uptime";
-          const v = isUptime
-            ? formatPercentage(value ?? 0)
-            : isPercentage
-              ? formatMilliseconds(value ?? 0)
-              : formatNumber(value ?? 0);
+          const v = (() => {
+            if (k === "lastTimestamp") {
+              return formatDistanceToNow(new Date(value ?? 0), {
+                addSuffix: true,
+              });
+            }
+            if (k === "uptime") {
+              return formatPercentage(value ?? 0);
+            }
+            if (k.startsWith("p")) {
+              return formatMilliseconds(value ?? 0);
+            }
+            return formatNumber(value ?? 0);
+          })();
 
           if (k in acc) {
             const trend = acc[k]?.raw
-              ? isUptime
+              ? k === "uptime"
                 ? acc[k]?.raw / (value ?? 0)
                 : (value ?? 0) / acc[k]?.raw
               : 1;
             const hasTrend =
-              !isNaN(trend) && trend !== Infinity && k !== "total";
+              !isNaN(trend) &&
+              trend !== Infinity &&
+              k !== "total" &&
+              k !== "lastTimestamp";
             acc[k] = {
               label: metricsCards[k].label,
               variant: metricsCards[k].variant,
@@ -111,7 +122,7 @@ export function GlobalUptimeSection({
       "degraded",
       "error",
       "total",
-      null,
+      "lastTimestamp",
       "p50",
       "p75",
       "p90",
