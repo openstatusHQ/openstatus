@@ -23,9 +23,13 @@ test("create a valid monitor", async () => {
       public: true,
     }),
   });
-
-  const result = MonitorSchema.safeParse(await res.json());
-
+  const r = await res.json()
+  console.log(r)
+  const result = MonitorSchema.safeParse(r);
+  if(result.error){
+    console.error(result.error);
+    throw new Error("Invalid monitor payload");
+  }
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
 });

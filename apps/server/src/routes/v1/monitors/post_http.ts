@@ -85,7 +85,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       ? Object.entries(input.request.headers)
       : undefined;
 
-    const otelHeadersEntries = openTelemetry.headers
+    const otelHeadersEntries = openTelemetry?.headers
       ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
           key: key,
           value: value,
@@ -110,7 +110,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
         headers: headersEntries ? JSON.stringify(headersEntries) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
-        otelEndpoint: openTelemetry.endpoint,
+        otelEndpoint: openTelemetry?.endpoint,
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
@@ -118,7 +118,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse({ ..._newMonitor, openTelemetry: {headers: _newMonitor.otelHeaders, endpoint: _newMonitor.otelEndpoint} });
+    const data = MonitorSchema.parse({ ..._newMonitor, openTelemetry: _newMonitor.otelEndpoint ? {headers: _newMonitor.otelHeaders ?? undefined, endpoint: _newMonitor.otelEndpoint ?? undefined} : undefined });
 
     return c.json(data, 200);
   });

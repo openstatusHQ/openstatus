@@ -117,7 +117,7 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse({ ..._newMonitor, openTelemetry: {headers: _newMonitor.otelHeaders, endpoint: _newMonitor.otelEndpoint} });
+    const data = MonitorSchema.parse({ ..._newMonitor, openTelemetry: _newMonitor.otelEndpoint ? {headers: _newMonitor.otelHeaders ?? undefined, endpoint: _newMonitor.otelEndpoint ?? undefined} : undefined });
     return c.json(data, 200);
   });
 }

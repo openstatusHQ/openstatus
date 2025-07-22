@@ -351,7 +351,7 @@ const baseRequest = z.object({
         description: "Headers to send with the OTEL request",
         examples: [{ "Content-Type": "application/json" }],
       }),
-  }),
+  }).nullish(),
 });
 
 const httpRequestSchema = z.object({

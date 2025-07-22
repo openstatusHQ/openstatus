@@ -9,6 +9,7 @@ test("return the monitor", async () => {
       "x-openstatus-key": "1",
     },
   });
+
   const result = MonitorSchema.safeParse(await res.json());
 
   expect(res.status).toBe(200);
