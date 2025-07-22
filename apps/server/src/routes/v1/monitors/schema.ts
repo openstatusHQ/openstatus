@@ -326,14 +326,21 @@ const baseRequest = z.object({
     description: "Regions to run the request in",
   }),
   openTelemetry: z.object({
-    endpoint: z.string().url().optional().openapi({
-      description: "OTEL endpoint to send metrics to",
-      examples: ["https://otel.example.com"],
-    }),
-    headers: z.record(z.string(), z.string()).optional().openapi({
-      description: "Headers to send with the OTEL request",
-      examples: [{ "Content-Type": "application/json" }],
-    }),
+    endpoint: z
+      .string()
+      .url()
+      .optional()
+      .openapi({
+        description: "OTEL endpoint to send metrics to",
+        examples: ["https://otel.example.com"],
+      }),
+    headers: z
+      .record(z.string(), z.string())
+      .optional()
+      .openapi({
+        description: "Headers to send with the OTEL request",
+        examples: [{ "Content-Type": "application/json" }],
+      }),
   }),
 });
 
