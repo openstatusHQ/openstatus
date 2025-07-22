@@ -325,21 +325,16 @@ const baseRequest = z.object({
   regions: z.array(z.enum(flyRegions)).openapi({
     description: "Regions to run the request in",
   }),
-  otelEndpoint: z
-    .string()
-    .url()
-    .optional()
-    .openapi({
+  openTelemetry: z.object({
+    endpoint: z.string().url().optional().openapi({
       description: "OTEL endpoint to send metrics to",
       examples: ["https://otel.example.com"],
     }),
-  otelHeaders: z
-    .record(z.string(), z.string())
-    .optional()
-    .openapi({
+    headers: z.record(z.string(), z.string()).optional().openapi({
       description: "Headers to send with the OTEL request",
       examples: [{ "Content-Type": "application/json" }],
     }),
+  }),
 });
 
 const httpRequestSchema = z.object({
