@@ -77,8 +77,8 @@ export const ParamsSchema = z.object({
     }),
 });
 
-export const MonitorSchema =
-  z.object({
+export const MonitorSchema = z
+  .object({
     id: z.number().openapi({
       example: 123,
       description: "The id of the monitor",
@@ -206,16 +206,24 @@ export const MonitorSchema =
     jobType: z.enum(monitorJobTypes).optional().default("http").openapi({
       description: "The type of the monitor",
     }),
-    openTelemetry: z.object({
-      endpoint: z.string().url().optional().default("http://localhost:4317").openapi({
-        description: "The endpoint of the OpenTelemetry collector",
+    openTelemetry: z
+      .object({
+        endpoint: z
+          .string()
+          .url()
+          .optional()
+          .default("http://localhost:4317")
+          .openapi({
+            description: "The endpoint of the OpenTelemetry collector",
+          }),
+        headers: z.record(z.string()).optional().default({}).openapi({
+          description: "The headers to send to the OpenTelemetry collector",
+        }),
+      })
+      .optional()
+      .openapi({
+        description: "The OpenTelemetry configuration",
       }),
-      headers: z.record(z.string()).optional().default({}).openapi({
-        description: "The headers to send to the OpenTelemetry collector",
-      }),
-    }).optional().openapi({
-      description: "The OpenTelemetry configuration",
-    }),
   })
   .openapi("Monitor");
 
@@ -335,23 +343,25 @@ const baseRequest = z.object({
   regions: z.array(z.enum(flyRegions)).openapi({
     description: "Regions to run the request in",
   }),
-  openTelemetry: z.object({
-    endpoint: z
-      .string()
-      .url()
-      .optional()
-      .openapi({
-        description: "OTEL endpoint to send metrics to",
-        examples: ["https://otel.example.com"],
-      }),
-    headers: z
-      .record(z.string(), z.string())
-      .optional()
-      .openapi({
-        description: "Headers to send with the OTEL request",
-        examples: [{ "Content-Type": "application/json" }],
-      }),
-  }).nullish(),
+  openTelemetry: z
+    .object({
+      endpoint: z
+        .string()
+        .url()
+        .optional()
+        .openapi({
+          description: "OTEL endpoint to send metrics to",
+          examples: ["https://otel.example.com"],
+        }),
+      headers: z
+        .record(z.string(), z.string())
+        .optional()
+        .openapi({
+          description: "Headers to send with the OTEL request",
+          examples: [{ "Content-Type": "application/json" }],
+        }),
+    })
+    .nullish(),
 });
 
 const httpRequestSchema = z.object({

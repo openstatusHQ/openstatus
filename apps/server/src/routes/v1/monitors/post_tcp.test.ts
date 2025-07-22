@@ -23,10 +23,10 @@ test("create a valid monitor", async () => {
       public: true,
     }),
   });
-  const r = await res.json()
-  console.log(r)
+  const r = await res.json();
+  console.log(r);
   const result = MonitorSchema.safeParse(r);
-  if(result.error){
+  if (result.error) {
     console.error(result.error);
     throw new Error("Invalid monitor payload");
   }

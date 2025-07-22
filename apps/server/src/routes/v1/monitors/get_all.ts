@@ -38,13 +38,17 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
       )
       .all();
 
-    const data = z.array(MonitorSchema).parse(_monitors.map((monitor) => ({
-      ...monitor,
-      openTelemetry: monitor.otelEndpoint ? {
-        endpoint: monitor.otelEndpoint ?? undefined,
-        headers: monitor.otelHeaders ?? undefined,
-      } : undefined,
-    })));
+    const data = z.array(MonitorSchema).parse(
+      _monitors.map((monitor) => ({
+        ...monitor,
+        openTelemetry: monitor.otelEndpoint
+          ? {
+              endpoint: monitor.otelEndpoint ?? undefined,
+              headers: monitor.otelHeaders ?? undefined,
+            }
+          : undefined,
+      })),
+    );
 
     return c.json(data, 200);
   });

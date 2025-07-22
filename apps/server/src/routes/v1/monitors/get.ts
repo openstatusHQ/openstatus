@@ -6,7 +6,6 @@ import { monitor } from "@openstatus/db/src/schema";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
-import { endTime } from "hono/timing";
 
 const getRoute = createRoute({
   method: "get",
@@ -53,7 +52,15 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       });
     }
 
-    const data = MonitorSchema.parse({ ..._monitor, openTelemetry: _monitor.otelEndpoint ? {headers: _monitor.otelHeaders ?? undefined, endpoint: _monitor.otelEndpoint ?? undefined} : undefined });
+    const data = MonitorSchema.parse({
+      ..._monitor,
+      openTelemetry: _monitor.otelEndpoint
+        ? {
+            headers: _monitor.otelHeaders ?? undefined,
+            endpoint: _monitor.otelEndpoint ?? undefined,
+          }
+        : undefined,
+    });
 
     return c.json(data, 200);
   });
