@@ -90,10 +90,10 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
       });
     }
 
-    const { request, regions, otelHeaders, ...rest } = input;
+    const { request, regions, openTelemetry, ...rest } = input;
 
-    const otelHeadersEntries = otelHeaders
-      ? Object.entries(otelHeaders).map(([key, value]) => ({
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
           key: key,
           value: value,
         }))
@@ -109,6 +109,7 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
+        otelEndpoint: openTelemetry?.endpoint,
         timeout: input.timeout || 45000,
         updatedAt: new Date(),
       })
@@ -116,7 +117,7 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
+    const data = MonitorSchema.parse({ ..._newMonitor, openTelemetry: {headers: _newMonitor.otelHeaders, endpoint: _newMonitor.otelEndpoint} });
     return c.json(data, 200);
   });
 }

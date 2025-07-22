@@ -6,6 +6,7 @@ import { monitor } from "@openstatus/db/src/schema";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
+import { endTime } from "hono/timing";
 
 const getRoute = createRoute({
   method: "get",
@@ -52,7 +53,7 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       });
     }
 
-    const data = MonitorSchema.parse(_monitor);
+    const data = MonitorSchema.parse({ ..._monitor, openTelemetry: {headers: _monitor.otelHeaders, endpoint: _monitor.otelEndpoint} });
 
     return c.json(data, 200);
   });

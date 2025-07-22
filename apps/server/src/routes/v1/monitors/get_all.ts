@@ -38,7 +38,13 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
       )
       .all();
 
-    const data = z.array(MonitorSchema).parse(_monitors);
+    const data = z.array(MonitorSchema).parse(_monitors.map((monitor) => ({
+      ...monitor,
+      openTelemetry: monitor.otelEndpoint ? {
+        endpoint: monitor.otelEndpoint,
+        headers: monitor.otelHeaders,
+      } : undefined,
+    })));
 
     return c.json(data, 200);
   });

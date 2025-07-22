@@ -118,7 +118,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
+    const data = MonitorSchema.parse({ ..._newMonitor, openTelemetry: {headers: _newMonitor.otelHeaders, endpoint: _newMonitor.otelEndpoint} });
 
     return c.json(data, 200);
   });
