@@ -102,8 +102,8 @@ async function main() {
         method: "GET",
         regions: "gru",
         public: true,
-        otelEndpoint:"https://otel.com:4337",
-        otelHeaders:'[{"key":"Authorization","value":"Basic"}]'
+        otelEndpoint: "https://otel.com:4337",
+        otelHeaders: '[{"key":"Authorization","value":"Basic"}]',
       },
     ])
     .onConflictDoNothing()
