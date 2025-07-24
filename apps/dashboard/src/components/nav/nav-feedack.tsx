@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Kbd } from "@/components/common/kbd";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AudioLines, Mic } from "lucide-react";
+import { AudioLines, Inbox, Mic } from "lucide-react";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -111,13 +111,20 @@ export function NavFeedback() {
         error: "Failed to send feedback",
       });
       await promise;
-      setOpen(false);
+      setTimeout(() => {
+        setOpen(false);
+        feedbackMutation.reset();
+      }, 3000);
     },
     [feedbackMutation, setOpen, isMobile]
   );
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      if (open && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        form.handleSubmit(onSubmit)();
+      }
+
       const target = e.target as HTMLElement;
       const isTyping =
         target.tagName === "INPUT" ||
@@ -132,9 +139,6 @@ export function NavFeedback() {
           setOpen(true);
         }
         return;
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        form.handleSubmit(onSubmit)();
       }
     };
     document.addEventListener("keydown", down);
@@ -166,53 +170,63 @@ export function NavFeedback() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="relative p-0 border-none">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <FormField
-              control={form.control}
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="sr-only">Feedback</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Ideas, bugs, or anything else..."
-                      className="resize-none p-3 field-sizing-fixed"
-                      rows={4}
-                      {...field}
-                    />
-                  </FormControl>
-                </FormItem>
+        {feedbackMutation.isSuccess ? (
+          <div className="p-3 h-[110px] flex flex-col gap-1 items-center justify-center rounded-md border border-input text-base shadow-xs">
+            <Inbox className="size-4 shrink-0" />
+            <p className="font-medium">Your feedback was sent</p>
+            <p className="text-muted-foreground text-sm">
+              We&apos;ll get in touch soon.
+            </p>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="sr-only">Feedback</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ideas, bugs, or anything else..."
+                        className="resize-none p-3 field-sizing-fixed h-[110px]"
+                        rows={4}
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              {recognitionRef.current && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="absolute group bottom-1.5 left-1.5 gap-0"
+                  onClick={toggleListening}
+                >
+                  {isListening ? (
+                    <AudioLines className="size-4 animate-pulse" />
+                  ) : (
+                    <Mic className="size-4" />
+                  )}
+                </Button>
               )}
-            />
-            {recognitionRef.current && (
               <Button
-                type="button"
                 size="sm"
                 variant="ghost"
-                className="absolute group bottom-1.5 left-1.5 gap-0"
-                onClick={toggleListening}
+                className="absolute group bottom-1.5 right-1.5 gap-0"
+                type="submit"
+                disabled={feedbackMutation.isPending}
               >
-                {isListening ? (
-                  <AudioLines className="size-4 animate-pulse" />
-                ) : (
-                  <Mic className="size-4" />
-                )}
+                Send
+                <Kbd className="group-hover:text-foreground font-mono">⌘</Kbd>
+                <Kbd className="group-hover:text-foreground font-mono">↵</Kbd>
               </Button>
-            )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="absolute group bottom-1.5 right-1.5 gap-0"
-              type="submit"
-              disabled={feedbackMutation.isPending}
-            >
-              Send
-              <Kbd className="group-hover:text-foreground font-mono">⌘</Kbd>
-              <Kbd className="group-hover:text-foreground font-mono">↵</Kbd>
-            </Button>
-          </form>
-        </Form>
+            </form>
+          </Form>
+        )}
       </PopoverContent>
     </Popover>
   );
