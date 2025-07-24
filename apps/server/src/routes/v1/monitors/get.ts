@@ -1,4 +1,4 @@
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
@@ -51,12 +51,16 @@ export function registerGetMonitor(api: typeof monitorsApi) {
         message: `Monitor ${id} not found`,
       });
     }
+    const otelHeader = _monitor.otelHeaders ? z.array(z.object({
+      key: z.string(),
+      value: z.string()
+    })).parse(JSON.parse(_monitor.otelHeaders)).reduce((a,v) => ({...a, [v.key]: v.value}), {}) : undefined
 
     const data = MonitorSchema.parse({
       ..._monitor,
       openTelemetry: _monitor.otelEndpoint
         ? {
-            headers: _monitor.otelHeaders ?? undefined,
+            headers: otelHeader,
             endpoint: _monitor.otelEndpoint ?? undefined,
           }
         : undefined,
