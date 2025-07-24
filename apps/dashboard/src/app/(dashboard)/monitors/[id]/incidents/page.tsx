@@ -38,7 +38,15 @@ export default function Page() {
       <Section>
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
-          <SectionDescription>{monitor.url}</SectionDescription>
+          <SectionDescription>
+            {monitor.jobType === "http" ? (
+              <a href={monitor.url} target="_blank" rel="noopener noreferrer">
+                {monitor.url}
+              </a>
+            ) : (
+              monitor.url
+            )}
+          </SectionDescription>
         </SectionHeader>
         {incidents.length === 0 ? (
           <EmptyStateContainer>

@@ -64,7 +64,15 @@ export function Client() {
       <Section>
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
-          <SectionDescription>{monitor.url}</SectionDescription>
+          <SectionDescription>
+            {monitor.jobType === "http" ? (
+              <a href={monitor.url} target="_blank" rel="noopener noreferrer">
+                {monitor.url}
+              </a>
+            ) : (
+              monitor.url
+            )}
+          </SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
           <div>
