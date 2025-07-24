@@ -60,7 +60,7 @@ export type FormValues = z.infer<typeof schema>;
 
 interface ContactFormProps {
   defaultValues?: Partial<FormValues>;
-  onSubmit?: (data: FormValues) => Promise<void> | void;
+  onSubmit: (data: FormValues) => Promise<void>;
   className?: string;
 }
 
@@ -87,14 +87,13 @@ export function ContactForm({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Sending message...",
           success: "Message sent. We'll get back to you soon.",
           error: "Failed to send message. Please try again.",
         });
         await promise;
-        onSubmit?.(values);
       } catch (error) {
         console.error(error);
       }

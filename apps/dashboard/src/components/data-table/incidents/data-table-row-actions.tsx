@@ -16,32 +16,85 @@ import {
 import { getActions } from "@/data/incidents.client";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { RouterOutputs } from "@openstatus/api";
+import { isTRPCClientError } from "@trpc/client";
 
-interface DataTableRowActionsProps<TData> {
-  row?: Row<TData>;
+type Incident = RouterOutputs["incident"]["list"][number];
+
+interface DataTableRowActionsProps {
+  row: Row<Incident>;
 }
 
-export function DataTableRowActions<TData>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>,
-) {
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [isPending, startTransition] = useTransition();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const acknowledgeIncidentMutation = useMutation(
+    trpc.incident.acknowledge.mutationOptions({
+      onSuccess: () => {
+        queryClient.refetchQueries({
+          queryKey: trpc.incident.list.queryKey({
+            monitorId: row.original.monitorId,
+          }),
+        });
+      },
+    })
+  );
+  const resolveIncidentMutation = useMutation(
+    trpc.incident.resolve.mutationOptions({
+      onSuccess: () => {
+        queryClient.refetchQueries({
+          queryKey: trpc.incident.list.queryKey({
+            monitorId: row.original.monitorId,
+          }),
+        });
+      },
+    })
+  );
+  const deleteIncidentMutation = useMutation(
+    trpc.incident.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.refetchQueries({
+          queryKey: trpc.incident.list.queryKey({
+            monitorId: row.original.monitorId,
+          }),
+        });
+      },
+    })
+  );
+
   const [type, setType] = useState<"acknowledge" | "resolve" | null>(null);
   const open = useMemo(() => type !== null, [type]);
 
   const actions = getActions({
-    acknowledge: () => setType("acknowledge"),
-    resolve: () => setType("resolve"),
+    acknowledge: row.original.acknowledgedAt
+      ? undefined
+      : () => setType("acknowledge"),
+    resolve: row.original.resolvedAt ? undefined : () => setType("resolve"),
   });
 
   const handleConfirm = async () => {
     try {
       startTransition(async () => {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const promise =
+          type === "acknowledge"
+            ? acknowledgeIncidentMutation.mutateAsync({
+                id: row.original.id,
+              })
+            : resolveIncidentMutation.mutateAsync({
+                id: row.original.id,
+              });
         toast.promise(promise, {
           loading: "Confirming...",
           success: "Confirmed",
-          error: "Failed to confirm",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to confirm";
+          },
         });
         await promise;
         setType(null);
@@ -58,6 +111,11 @@ export function DataTableRowActions<TData>(
         deleteAction={{
           title: "Incident",
           confirmationValue: "delete incident",
+          submitAction: async () => {
+            await deleteIncidentMutation.mutateAsync({
+              id: row.original.id,
+            });
+          },
         }}
       />
       <AlertDialog open={open} onOpenChange={() => setType(null)}>

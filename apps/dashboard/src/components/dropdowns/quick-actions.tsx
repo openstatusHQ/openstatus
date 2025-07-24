@@ -112,6 +112,7 @@ export function QuickActions({
               <DropdownMenuGroup key={item.id}>
                 <DropdownMenuItem
                   variant={item.variant}
+                  disabled={!item.onClick}
                   onClick={(e) => {
                     e.stopPropagation();
                     item.onClick?.();

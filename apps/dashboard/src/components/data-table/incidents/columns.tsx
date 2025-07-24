@@ -39,11 +39,11 @@ export const columns: ColumnDef<Incident>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "acknowledged",
+    accessorKey: "acknowledgedAt",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Acknowledged" />
     ),
-    cell: ({ row }) => <TableCellDate value={row.getValue("acknowledged")} />,
+    cell: ({ row }) => <TableCellDate value={row.getValue("acknowledgedAt")} />,
     enableHiding: false,
   },
   {

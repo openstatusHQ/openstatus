@@ -18,6 +18,7 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
 
 export const incidentRouter = createTRPCRouter({
   // TODO: rename getIncidentsByWorkspace to make it consistent with the other methods
@@ -185,7 +186,7 @@ export const incidentRouter = createTRPCRouter({
               gte: z.date().optional(),
             })
             .optional(),
-          monitorId: z.number().optional(),
+          monitorId: z.number().nullish(),
           order: z.enum(["asc", "desc"]).optional(),
         })
         .optional()
@@ -222,5 +223,89 @@ export const incidentRouter = createTRPCRouter({
         })
         .array()
         .parse(result);
+    }),
+
+  acknowledge: protectedProcedure
+    .meta({ track: Events.AcknowledgeIncident })
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const currentIncident = await opts.ctx.db
+        .select()
+        .from(schema.incidentTable)
+        .where(
+          and(
+            eq(schema.incidentTable.id, opts.input.id),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
+        )
+        .get();
+      if (!currentIncident) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Incident not found",
+        });
+      }
+      if (currentIncident.acknowledgedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Incident already acknowledged",
+        });
+      }
+      await opts.ctx.db
+        .update(schema.incidentTable)
+        .set({
+          acknowledgedAt: new Date(),
+          acknowledgedBy: opts.ctx.user.id,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.incidentTable.id, opts.input.id),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
+        );
+      return true;
+    }),
+
+  resolve: protectedProcedure
+    .meta({ track: Events.ResolveIncident })
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const currentIncident = await opts.ctx.db
+        .select()
+        .from(schema.incidentTable)
+        .where(
+          and(
+            eq(schema.incidentTable.id, opts.input.id),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
+        )
+        .get();
+      if (!currentIncident) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Incident not found",
+        });
+      }
+      if (currentIncident.resolvedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Incident already resolved",
+        });
+      }
+      await opts.ctx.db
+        .update(schema.incidentTable)
+        .set({
+          resolvedAt: new Date(),
+          resolvedBy: opts.ctx.user.id,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(schema.incidentTable.id, opts.input.id),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
+          )
+        );
+      return true;
     }),
 });

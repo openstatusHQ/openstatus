@@ -24,8 +24,10 @@ export const actions = [
 export type IncidentAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<IncidentAction["id"], () => Promise<void> | void>>,
-): (IncidentAction & { onClick?: () => Promise<void> | void })[] => {
+  props: Partial<Record<IncidentAction["id"], () => Promise<void> | void>>
+): (IncidentAction & {
+  onClick?: () => Promise<void> | void;
+})[] => {
   return actions.map((action) => ({
     ...action,
     onClick: props[action.id as keyof typeof props],
