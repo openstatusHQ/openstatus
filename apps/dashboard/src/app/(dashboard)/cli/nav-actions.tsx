@@ -1,4 +1,4 @@
-import { NavFeedback } from "@/components/nav/nav-feedack";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@/components/ui/button";
 import { Book } from "lucide-react";
 import {

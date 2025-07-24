@@ -1,4 +1,4 @@
-import { NavFeedback } from "@/components/nav/nav-feedack";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 
 export function NavActions() {
   return (

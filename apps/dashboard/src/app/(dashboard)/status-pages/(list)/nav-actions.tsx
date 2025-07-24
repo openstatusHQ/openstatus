@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { NavFeedback } from "@/components/nav/nav-feedack";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import { useState } from "react";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 

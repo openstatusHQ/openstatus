@@ -1,7 +1,7 @@
 "use client";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { NavFeedback } from "@/components/nav/nav-feedack";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

@@ -173,9 +173,9 @@ export function NavFeedback() {
         {feedbackMutation.isSuccess ? (
           <div className="p-3 h-[110px] flex flex-col gap-1 items-center justify-center rounded-md border border-input text-base shadow-xs">
             <Inbox className="size-4 shrink-0" />
-            <p className="font-medium">Your feedback was sent</p>
+            <p className="font-medium">Your feedback was sent!</p>
             <p className="text-muted-foreground text-sm">
-              We&apos;ll get in touch soon.
+              We might get back to you.
             </p>
           </div>
         ) : (

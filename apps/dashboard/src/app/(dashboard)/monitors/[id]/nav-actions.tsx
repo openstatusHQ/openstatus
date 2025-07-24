@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { isTRPCClientError } from "@trpc/client";
-import { NavFeedback } from "@/components/nav/nav-feedack";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import type { RouterOutputs } from "@openstatus/api";
 import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
 import { deserialize } from "@openstatus/assertions";
