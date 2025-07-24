@@ -1,4 +1,4 @@
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
@@ -116,12 +116,24 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
       .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
+    const otelHeader = _newMonitor.otelHeaders
+      ? z
+          .array(
+            z.object({
+              key: z.string(),
+              value: z.string(),
+            }),
+          )
+          .parse(JSON.parse(_newMonitor.otelHeaders))
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+          .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+      : undefined;
 
     const data = MonitorSchema.parse({
       ..._newMonitor,
       openTelemetry: _newMonitor.otelEndpoint
         ? {
-            headers: _newMonitor.otelHeaders ?? undefined,
+            headers: otelHeader,
             endpoint: _newMonitor.otelEndpoint ?? undefined,
           }
         : undefined,

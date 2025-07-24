@@ -93,6 +93,18 @@ async function main() {
         headers: '[{"key":"key", "value":"value"}]',
         body: '{"hello":"world"}',
       },
+      {
+        id: 4,
+        active: true,
+        workspaceId: 1,
+        periodicity: "10m",
+        url: "https://www.google.com",
+        method: "GET",
+        regions: "gru",
+        public: true,
+        otelEndpoint: "https://otel.com:4337",
+        otelHeaders: '[{"key":"Authorization","value":"Basic"}]',
+      },
     ])
     .onConflictDoNothing()
     .run();
