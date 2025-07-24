@@ -28,7 +28,7 @@ export function FormSheetStatusReport({
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
-  warning?: string;
+  warning?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -37,7 +37,7 @@ export function FormSheetStatusReport({
       <FormSheetTrigger asChild>{children}</FormSheetTrigger>
       <FormSheetContent>
         <FormSheetHeader>
-          <FormSheetTitle>Status Report Update</FormSheetTitle>
+          <FormSheetTitle>Status Report</FormSheetTitle>
           <FormSheetDescription>
             Configure and update the status of your report.
           </FormSheetDescription>

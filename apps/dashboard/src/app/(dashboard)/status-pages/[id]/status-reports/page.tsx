@@ -65,9 +65,13 @@ export default function Page() {
           <div>
             <FormSheetStatusReport
               warning={
-                hasUnresolvedIssue
-                  ? "An unresolved report already exists. Consider adding a status report update instead."
-                  : undefined
+                hasUnresolvedIssue ? (
+                  <>
+                    An unresolved report already exists. Consider adding a{" "}
+                    <span className="font-semibold">status report update</span>{" "}
+                    instead.
+                  </>
+                ) : undefined
               }
               monitors={monitors}
               onSubmit={async (values) => {
