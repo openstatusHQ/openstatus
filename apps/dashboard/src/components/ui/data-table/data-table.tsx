@@ -75,6 +75,8 @@ export function DataTable<TData, TValue>({
   pagination,
   setPagination,
 }: DataTableProps<TData, TValue>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [globalFilter, setGlobalFilter] = React.useState<any>();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>(defaultColumnVisibility);
@@ -102,6 +104,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
       pagination: paginationState,
       columnFilters: columnFiltersState,
+      globalFilter,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
@@ -109,6 +112,7 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFiltersState,
     onColumnVisibilityChange: setColumnVisibility,
     onPaginationChange: setPaginationState,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

@@ -185,7 +185,11 @@ export function Client() {
           setColumnFilters={setColumnFilters}
           sorting={sorting}
           setSorting={setSorting}
-          defaultColumnVisibility={{ active: false }}
+          defaultColumnVisibility={{
+            active: false,
+            url: false,
+            jobType: false,
+          }}
         />
       </Section>
     </SectionGroup>

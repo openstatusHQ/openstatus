@@ -65,6 +65,26 @@ export const columns: ColumnDef<Monitor>[] = [
     },
   },
   {
+    accessorKey: "url",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Endpoint" />
+    ),
+    cell: ({ row }) => {
+      return (
+        <TableCellLink value={row.getValue("url")} href={row.original.url} />
+      );
+    },
+    enableHiding: true,
+    meta: {
+      cellClassName: "max-w-[150px] min-w-max",
+    },
+  },
+  {
+    accessorKey: "jobType",
+    header: "Type",
+    enableHiding: true,
+  },
+  {
     id: "status",
     accessorFn: (row) => {
       console.log(row);
@@ -99,10 +119,12 @@ export const columns: ColumnDef<Monitor>[] = [
     },
     enableSorting: false,
     enableHiding: false,
+    enableGlobalFilter: false,
   },
   {
     accessorKey: "active",
     enableHiding: true,
+    enableGlobalFilter: false,
   },
   {
     accessorKey: "tags",
@@ -125,7 +147,7 @@ export const columns: ColumnDef<Monitor>[] = [
                 className="size-2.5 rounded-full"
                 style={{ backgroundColor: tag.color }}
               />
-              {tag.name}
+              <span>{tag.name}</span>
             </Badge>
           ))}
         </div>
@@ -141,6 +163,7 @@ export const columns: ColumnDef<Monitor>[] = [
     getUniqueValues: (row) => row.tags.map((tag) => tag.id),
     enableSorting: false,
     enableHiding: false,
+    enableGlobalFilter: false,
   },
   {
     id: "lastIncident",
@@ -151,6 +174,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return <TableCellDate value={value} formatStr="LLL dd, y" />;
     },
     enableHiding: false,
+    enableGlobalFilter: false,
   },
   {
     id: "lastTimestamp",
@@ -173,6 +197,7 @@ export const columns: ColumnDef<Monitor>[] = [
       );
     },
     enableHiding: false,
+    enableGlobalFilter: false,
   },
   {
     id: "p50",
@@ -207,6 +232,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
+    enableGlobalFilter: false,
   },
   {
     id: "p95",
@@ -224,6 +250,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return <TableCellNumber value={value} unit="ms" />;
     },
     enableHiding: false,
+    enableGlobalFilter: false,
   },
   {
     id: "actions",
