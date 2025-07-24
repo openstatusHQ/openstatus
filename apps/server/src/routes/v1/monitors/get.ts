@@ -52,7 +52,15 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       });
     }
 
-    const data = MonitorSchema.parse(_monitor);
+    const data = MonitorSchema.parse({
+      ..._monitor,
+      openTelemetry: _monitor.otelEndpoint
+        ? {
+            headers: _monitor.otelHeaders ?? undefined,
+            endpoint: _monitor.otelEndpoint ?? undefined,
+          }
+        : undefined,
+    });
 
     return c.json(data, 200);
   });

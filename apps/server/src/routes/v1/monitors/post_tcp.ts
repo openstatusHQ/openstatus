@@ -76,9 +76,9 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
       }
     }
 
-    const { request, regions, otelHeaders, ...rest } = input;
-    const otelHeadersEntries = otelHeaders
-      ? Object.entries(otelHeaders).map(([key, value]) => ({
+    const { request, regions, openTelemetry, ...rest } = input;
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
           key: key,
           value: value,
         }))
@@ -99,11 +99,20 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
+        otelEndpoint: openTelemetry?.endpoint,
       })
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
+    const data = MonitorSchema.parse({
+      ..._newMonitor,
+      openTelemetry: _newMonitor.otelEndpoint
+        ? {
+            headers: _newMonitor.otelHeaders ?? undefined,
+            endpoint: _newMonitor.otelEndpoint ?? undefined,
+          }
+        : undefined,
+    });
 
     return c.json(data, 200);
   });
