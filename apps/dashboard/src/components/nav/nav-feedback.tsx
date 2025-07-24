@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Kbd } from "@/components/common/kbd";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AudioLines, Inbox, Mic } from "lucide-react";
+import { AudioLines, Inbox, LoaderCircle, Mic } from "lucide-react";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -111,13 +111,16 @@ export function NavFeedback() {
         error: "Failed to send feedback",
       });
       await promise;
-      setTimeout(() => {
-        setOpen(false);
-        feedbackMutation.reset();
-      }, 3000);
     },
-    [feedbackMutation, setOpen, isMobile]
+    [feedbackMutation, isMobile]
   );
+
+  useEffect(() => {
+    if (!open && feedbackMutation.isSuccess) {
+      // NOTE: the popover takes 300ms to close, so we need to wait for that
+      setTimeout(() => feedbackMutation.reset(), 300);
+    }
+  }, [open, feedbackMutation]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -173,9 +176,9 @@ export function NavFeedback() {
         {feedbackMutation.isSuccess ? (
           <div className="p-3 h-[110px] flex flex-col gap-1 items-center justify-center rounded-md border border-input text-base shadow-xs">
             <Inbox className="size-4 shrink-0" />
-            <p className="font-medium">Your feedback was sent!</p>
-            <p className="text-muted-foreground text-sm">
-              We might get back to you.
+            <p className="font-medium text-center">Thanks for sharing!</p>
+            <p className="text-muted-foreground text-sm text-center">
+              We&apos;ll get in touch if there&apos;s a follow-up.
             </p>
           </div>
         ) : (
@@ -220,9 +223,19 @@ export function NavFeedback() {
                 type="submit"
                 disabled={feedbackMutation.isPending}
               >
-                Send
-                <Kbd className="group-hover:text-foreground font-mono">⌘</Kbd>
-                <Kbd className="group-hover:text-foreground font-mono">↵</Kbd>
+                {feedbackMutation.isPending ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <>
+                    Send
+                    <Kbd className="group-hover:text-foreground font-mono">
+                      ⌘
+                    </Kbd>
+                    <Kbd className="group-hover:text-foreground font-mono">
+                      ↵
+                    </Kbd>
+                  </>
+                )}
               </Button>
             </form>
           </Form>
