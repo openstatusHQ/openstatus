@@ -289,7 +289,7 @@ importers:
         specifier: 4.1.11
         version: 4.1.11
       '@types/dom-speech-recognition':
-        specifier: ^0.0.6
+        specifier: 0.0.6
         version: 0.0.6
       '@types/node':
         specifier: 24.0.8
@@ -735,7 +735,7 @@ importers:
         version: 0.7.3(typescript@5.7.2)
       '@content-collections/mdx':
         specifier: 0.2.0
-        version: 0.2.0(@content-collections/core@0.7.3(typescript@5.7.2))(acorn@8.15.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        version: 0.2.0(@content-collections/core@0.7.3(typescript@5.7.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@content-collections/next':
         specifier: 0.2.4
         version: 0.2.4(@content-collections/core@0.7.3(typescript@5.7.2))(next@15.3.4(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -14233,11 +14233,11 @@ snapshots:
     dependencies:
       '@content-collections/core': 0.7.3(typescript@5.7.2)
 
-  '@content-collections/mdx@0.2.0(@content-collections/core@0.7.3(typescript@5.7.2))(acorn@8.15.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+  '@content-collections/mdx@0.2.0(@content-collections/core@0.7.3(typescript@5.7.2))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@content-collections/core': 0.7.3(typescript@5.7.2)
       esbuild: 0.21.5
-      mdx-bundler: 10.0.3(acorn@8.15.0)(esbuild@0.21.5)
+      mdx-bundler: 10.0.3(esbuild@0.21.5)
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
       unified: 11.0.5
@@ -15408,7 +15408,7 @@ snapshots:
     dependencies:
       unist-util-visit: 1.4.1
 
-  '@mdx-js/esbuild@3.1.0(acorn@8.15.0)(esbuild@0.21.5)':
+  '@mdx-js/esbuild@3.1.0(esbuild@0.21.5)':
     dependencies:
       '@mdx-js/mdx': 3.1.0(acorn@8.15.0)
       '@types/unist': 3.0.3
@@ -22692,12 +22692,12 @@ snapshots:
 
   mdn-data@2.12.2: {}
 
-  mdx-bundler@10.0.3(acorn@8.15.0)(esbuild@0.21.5):
+  mdx-bundler@10.0.3(esbuild@0.21.5):
     dependencies:
       '@babel/runtime': 7.26.0
       '@esbuild-plugins/node-resolve': 0.2.2(esbuild@0.21.5)
       '@fal-works/esbuild-plugin-global-externals': 2.1.2
-      '@mdx-js/esbuild': 3.1.0(acorn@8.15.0)(esbuild@0.21.5)
+      '@mdx-js/esbuild': 3.1.0(esbuild@0.21.5)
       esbuild: 0.21.5
       gray-matter: 4.0.3
       remark-frontmatter: 5.0.0
