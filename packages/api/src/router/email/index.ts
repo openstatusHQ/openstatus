@@ -25,6 +25,11 @@ export const emailRouter = createTRPCRouter({
             with: {
               statusReport: {
                 with: {
+                  monitorsToStatusReports: {
+                    with: {
+                      monitor: true,
+                    },
+                  },
                   page: {
                     with: {
                       pageSubscribers: {
@@ -56,9 +61,10 @@ export const emailRouter = createTRPCRouter({
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
           date: new Date(_statusReportUpdate.date).toISOString(),
-          monitors: _statusReportUpdate.statusReport.page.monitorsToPages.map(
-            (i) => i.monitor.name
-          ),
+          monitors:
+            _statusReportUpdate.statusReport.monitorsToStatusReports.map(
+              (i) => i.monitor.name
+            ),
         });
       }
     }),

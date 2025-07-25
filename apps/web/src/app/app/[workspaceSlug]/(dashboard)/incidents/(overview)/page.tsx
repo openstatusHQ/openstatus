@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { columns } from "@/components/data-table/incident/columns";
 import { DataTable } from "@/components/data-table/incident/data-table";

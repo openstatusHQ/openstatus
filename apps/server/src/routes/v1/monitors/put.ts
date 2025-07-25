@@ -118,7 +118,28 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
+    const otelHeader = _newMonitor.otelHeaders
+      ? z
+          .array(
+            z.object({
+              key: z.string(),
+              value: z.string(),
+            }),
+          )
+          .parse(JSON.parse(_newMonitor.otelHeaders))
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+          .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+      : undefined;
+
+    const data = MonitorSchema.parse({
+      ..._newMonitor,
+      openTelemetry: _newMonitor.otelEndpoint
+        ? {
+            headers: otelHeader,
+            endpoint: _newMonitor.otelEndpoint ?? undefined,
+          }
+        : undefined,
+    });
     return c.json(data, 200);
   });
 }

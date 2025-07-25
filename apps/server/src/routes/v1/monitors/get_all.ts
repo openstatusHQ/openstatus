@@ -38,7 +38,31 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
       )
       .all();
 
-    const data = z.array(MonitorSchema).parse(_monitors);
+    const data = z.array(MonitorSchema).parse(
+      _monitors.map((monitor) => {
+        const otelHeader = monitor.otelHeaders
+          ? z
+              .array(
+                z.object({
+                  key: z.string(),
+                  value: z.string(),
+                }),
+              )
+              .parse(JSON.parse(monitor.otelHeaders))
+              // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+              .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+          : undefined;
+        return {
+          ...monitor,
+          openTelemetry: monitor.otelEndpoint
+            ? {
+                endpoint: monitor.otelEndpoint ?? undefined,
+                headers: otelHeader,
+              }
+            : undefined,
+        };
+      }),
+    );
 
     return c.json(data, 200);
   });

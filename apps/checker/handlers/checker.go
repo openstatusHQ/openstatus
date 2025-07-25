@@ -28,6 +28,7 @@ type PingData struct {
 	WorkspaceID   string `json:"workspaceId"`
 	MonitorID     string `json:"monitorId"`
 	URL           string `json:"url"`
+	Method        string `json:"method"`
 	Region        string `json:"region"`
 	Message       string `json:"message,omitempty"`
 	Timing        string `json:"timing,omitempty"`
@@ -149,6 +150,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Timestamp:     res.Timestamp,
 			CronTimestamp: req.CronTimestamp,
 			URL:           req.URL,
+			Method:        req.Method,
 			Timing:        string(timingAsString),
 			Headers:       string(headersAsString),
 			Body:          string(res.Body),
@@ -293,6 +295,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		data := PingData{
 			ID:            id.String(),
 			URL:           req.URL,
+			Method:        req.Method,
 			Region:        h.Region,
 			Message:       err.Error(),
 			CronTimestamp: req.CronTimestamp,

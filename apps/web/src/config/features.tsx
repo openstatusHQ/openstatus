@@ -102,4 +102,28 @@ export const cardConfig = {
       },
     ],
   },
+  cli: {
+    icon: "terminal",
+    title: "CLI",
+    features: [
+      {
+        icon: "sparkles",
+        catchline: "No ClickOps",
+        description: (
+          <p>
+            Use your config file to manage or trigger your monitors. Never leave
+            your terminal.{" "}
+            <a
+              className="text-foreground"
+              href="https://docs.openstatus.dev/cli/getting-started/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Learn more
+            </a>
+          </p>
+        ),
+      },
+    ],
+  },
 } satisfies Record<string, Feature>;

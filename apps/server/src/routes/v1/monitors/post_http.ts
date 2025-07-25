@@ -10,7 +10,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import type { monitorsApi } from "./index";
 import { HTTPMonitorSchema, MonitorSchema } from "./schema";
-import { getAssertionNew, getAssertions } from "./utils";
+import { getAssertionNew } from "./utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -86,14 +86,14 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       }
     }
 
-    const { request, regions, assertions, otelHeaders, ...rest } = input;
+    const { request, regions, assertions, openTelemetry, ...rest } = input;
 
     const headers = input.request.headers
       ? Object.entries(input.request.headers)
       : undefined;
 
-    const otelHeadersEntries = otelHeaders
-      ? Object.entries(otelHeaders).map(([key, value]) => ({
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
           key: key,
           value: value,
         }))
@@ -108,6 +108,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       .values({
         ...rest,
         periodicity: input.frequency,
+        jobType: "http",
         url: request.url,
         method: request.method,
         body: request.body,
@@ -116,6 +117,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
         headers: headersEntries ? JSON.stringify(headersEntries) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
+        otelEndpoint: openTelemetry?.endpoint,
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
@@ -123,7 +125,28 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
+    const otelHeader = _newMonitor.otelHeaders
+      ? z
+          .array(
+            z.object({
+              key: z.string(),
+              value: z.string(),
+            }),
+          )
+          .parse(JSON.parse(_newMonitor.otelHeaders))
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+          .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+      : undefined;
+
+    const data = MonitorSchema.parse({
+      ..._newMonitor,
+      openTelemetry: _newMonitor.otelEndpoint
+        ? {
+            headers: otelHeader,
+            endpoint: _newMonitor.otelEndpoint ?? undefined,
+          }
+        : undefined,
+    });
 
     return c.json(data, 200);
   });

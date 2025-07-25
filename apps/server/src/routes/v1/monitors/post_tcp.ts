@@ -83,9 +83,9 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
       }
     }
 
-    const { request, regions, otelHeaders, ...rest } = input;
-    const otelHeadersEntries = otelHeaders
-      ? Object.entries(otelHeaders).map(([key, value]) => ({
+    const { request, regions, openTelemetry, ...rest } = input;
+    const otelHeadersEntries = openTelemetry?.headers
+      ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
           key: key,
           value: value,
         }))
@@ -95,6 +95,8 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
       .insert(monitor)
       .values({
         ...rest,
+        jobType: "tcp",
+        periodicity: input.frequency,
         url: `${request.host}:${request.port}`,
         workspaceId: workspaceId,
         regions: regions ? regions.join(",") : undefined,
@@ -104,11 +106,33 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
         otelHeaders: otelHeadersEntries
           ? JSON.stringify(otelHeadersEntries)
           : undefined,
+        otelEndpoint: openTelemetry?.endpoint,
       })
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
+    const otelHeader = _newMonitor.otelHeaders
+      ? z
+          .array(
+            z.object({
+              key: z.string(),
+              value: z.string(),
+            }),
+          )
+          .parse(JSON.parse(_newMonitor.otelHeaders))
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
+          .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
+      : undefined;
+
+    const data = MonitorSchema.parse({
+      ..._newMonitor,
+      openTelemetry: _newMonitor.otelEndpoint
+        ? {
+            headers: otelHeader,
+            endpoint: _newMonitor.otelEndpoint ?? undefined,
+          }
+        : undefined,
+    });
 
     return c.json(data, 200);
   });

@@ -1,0 +1,15 @@
+# OpenStatus
+
+> OpenStatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.
+
+## Features
+
+- Uptime Monitoring: Monitor the availability and performance of your services globally.
+- Status Page: Create a custom status page to display the status of your services.
+- Monitoring as Code: Define your monitoring checks using YAML.
+- Alerting: Configure email, Slack, or other notification channels for alerts.
+- CLI: Manage OpenStatus using a command-line interface.
+
+## Documentation
+
+- [Documentation](https://docs.openstatus.dev/)

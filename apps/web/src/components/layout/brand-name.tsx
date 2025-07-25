@@ -1,5 +1,4 @@
 import Link from "next/link";
-import * as React from "react";
 
 // Hottake: you don't need a features page if you have a changelog page
 // Except for SEO

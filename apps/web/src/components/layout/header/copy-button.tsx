@@ -25,7 +25,7 @@ export function CopyButton({ id }: { id: string | number }) {
               });
             }}
           >
-            <Copy className="h-4 w-4 mr-2 text-muted-foreground" />
+            <Copy className="mr-2 h-4 w-4 text-muted-foreground" />
             {id}
           </Button>
         </TooltipTrigger>

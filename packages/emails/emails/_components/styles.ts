@@ -3,6 +3,7 @@ export const colors = {
   danger: "#ec6041",
   warning: "#ffd60a",
   info: "#3d9eff",
+  border: "#dedede",
 };
 
 export const styles = {

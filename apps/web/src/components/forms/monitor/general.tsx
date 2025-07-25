@@ -1,13 +1,7 @@
 "use client";
-
-import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import type {
-  InsertMonitor,
-  MonitorTag,
-  WorkspacePlan,
-} from "@openstatus/db/src/schema";
+import type { InsertMonitor, MonitorTag } from "@openstatus/db/src/schema";
 import {
   FormControl,
   FormDescription,

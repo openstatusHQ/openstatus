@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
-
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { CustomDomainForm } from "@/components/forms/custom-domain-form";
 import { api } from "@/trpc/server";

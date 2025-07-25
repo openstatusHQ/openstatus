@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import { periodFormatter } from "@/lib/monitor/utils";
 import type { Period } from "@/lib/monitor/utils";
 import { SearchParamsPreset } from "./search-params-preset";

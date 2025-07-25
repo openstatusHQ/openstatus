@@ -67,7 +67,7 @@ export function FeatureNotifications(
       title="Integrate your channels."
       subTitle="Get notified when your services are down. Slack, Discord, Email, and more."
       component={
-        <div className="scale-[0.80] my-auto">
+        <div className="my-auto scale-[0.80]">
           <NotificationsFormExample />
         </div>
       }
@@ -119,7 +119,7 @@ export function FeatureCharts(
         </div>
       }
       component={
-        <div className="origin-top my-auto scale-[0.80]">
+        <div className="my-auto origin-top scale-[0.80]">
           <Suspense fallback={<Skeleton />}>
             <Chart {...mockChartData} />
           </Suspense>
@@ -240,7 +240,7 @@ export function FeatureOperationalBanner(
       subTitle="Showcase your reliability to your users, and reduce the number of customer service tickets."
       component={<StatusCheck />}
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <Link href="https://status.openstatus.dev">Status Page</Link>
         </Button>
       }
@@ -308,7 +308,7 @@ export function FeatureResponseDetails(
       title="Optimize Web Performance."
       subTitle="Analyze DNS, TCP, TLS, and TTFB for every request and inspect Response Headers as needed."
       component={
-        <div className="scale-[0.80] origin-top">
+        <div className="origin-top scale-[0.80]">
           <Suspense fallback={<Skeleton />}>
             <ResponseDetailTabs
               {...mockResponseData}
@@ -336,7 +336,7 @@ export function FeatureRaycastIntegration(
       subTitle="Check status pages and incidents without leaving your flow."
       component={<RaycastExample />}
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <a
             href="https://www.raycast.com/thibaultleouay/openstatus"
             rel="noreferrer"
@@ -376,7 +376,7 @@ export function FeatureAPIMonitoring(
         />
       }
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <a
             href="https://docs.openstatus.dev/cli/getting-started"
             rel="noreferrer"
@@ -417,7 +417,7 @@ export function FeatureTerraformProvider(
         />
       }
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <a
             href="https://registry.terraform.io/providers/openstatusHQ/openstatus/latest"
             rel="noreferrer"
@@ -459,7 +459,7 @@ export function FeatureGitHubAction(
         />
       }
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <a
             href="https://github.com/marketplace/actions/openstatus-synthetics-ci"
             rel="noreferrer"
@@ -490,15 +490,15 @@ export function FeatureCLI(
       icon="terminal"
       iconText="CLI"
       title="Run everywhere."
-      subTitle="Check your monitors from your favorite terminal."
+      subTitle="Create your monitors from your favorite terminal."
       component={
         <Mdx
           code={blockCLI.mdx}
-          className="max-w-none prose-pre:overflow-hidden my-auto"
+          className="my-auto max-w-none prose-pre:overflow-hidden"
         />
       }
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <a
             href="https://docs.openstatus.dev/cli/getting-started"
             rel="noreferrer"
@@ -538,7 +538,7 @@ export function FeatureOpenTelemetry(
         />
       }
       action={
-        <Button variant="outline" className="rounded-full w-max" asChild>
+        <Button variant="outline" className="w-max rounded-full" asChild>
           <a
             href="https://docs.openstatus.dev/monitoring/opentelemetry"
             rel="noreferrer"

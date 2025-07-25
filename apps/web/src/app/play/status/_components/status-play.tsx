@@ -6,7 +6,6 @@ import {
   CardTitle,
 } from "@/components/marketing/card";
 import { Tracker } from "@/components/tracker/tracker";
-import { env } from "@/env";
 import { prepareStatusByPeriod } from "@/lib/tb";
 import { getServerTimezoneFormat } from "@/lib/timezone";
 

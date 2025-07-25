@@ -7,7 +7,6 @@ import { Button } from "@openstatus/ui/src/components/button";
 
 import { getGitHubStars } from "@/lib/github";
 import { cn, numberFormatter } from "@/lib/utils";
-import { SpeedCheckerButton } from "./speed-checker-button";
 
 export function Hero() {
   return (
@@ -32,7 +31,7 @@ export function Hero() {
             "bg-linear-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent",
           )}
         >
-          A better way to monitor your services.
+          Showcase your uptime with a status page
         </h1>
         <p className="mx-auto max-w-md text-lg text-muted-foreground md:max-w-xl md:text-xl">
           Monitor your API and website globally, identify performance issues,

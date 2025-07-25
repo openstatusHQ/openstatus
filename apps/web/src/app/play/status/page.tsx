@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-
-import { BackButton } from "@/components/layout/back-button";
 import StatusPlay from "./_components/status-play";
 
 export const metadata: Metadata = {

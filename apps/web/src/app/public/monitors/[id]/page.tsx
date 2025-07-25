@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import * as React from "react";
 
 import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";

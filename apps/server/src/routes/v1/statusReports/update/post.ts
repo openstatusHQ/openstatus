@@ -3,14 +3,11 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
-  monitor,
-  page,
   pageSubscriber,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails/src/client";
-import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
@@ -87,7 +84,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .get();
 
     if (limits.notifications && _statusReport.pageId) {
-      const allInfo = await db.query.statusReport.findFirst({
+      const _statusReportWithRelations = await db.query.statusReport.findFirst({
         where: eq(statusReport.id, Number(id)),
         with: {
           monitorsToStatusReports: {
@@ -110,15 +107,15 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         )
         .all();
 
-      if (allInfo?.page) {
+      if (_statusReportWithRelations?.page) {
         await emailClient.sendStatusReportUpdate({
           to: subscribers.map((subscriber) => subscriber.email),
-          pageTitle: allInfo.page.title,
-          reportTitle: allInfo.title,
-          status: allInfo.status,
+          pageTitle: _statusReportWithRelations.page.title,
+          reportTitle: _statusReportWithRelations.title,
+          status: _statusReportWithRelations.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
-          monitors: allInfo.monitorsToStatusReports.map(
+          monitors: _statusReportWithRelations.monitorsToStatusReports.map(
             (monitor) => monitor.monitor.name,
           ),
         });

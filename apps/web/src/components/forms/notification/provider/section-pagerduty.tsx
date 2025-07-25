@@ -4,12 +4,9 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toastAction } from "@/lib/toast";
-import {
-  type InsertNotificationWithData,
-  InsertNotificationWithDataSchema,
-  NotificationDataSchema,
-  type WorkspacePlan,
-  selectNotificationSchema,
+import type {
+  InsertNotificationWithData,
+  WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 import { Button } from "@openstatus/ui";

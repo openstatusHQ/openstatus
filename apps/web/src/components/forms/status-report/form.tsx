@@ -6,11 +6,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 
 import { insertStatusReportSchema } from "@openstatus/db/src/schema";
-import type {
-  InsertStatusReport,
-  Monitor,
-  Page,
-} from "@openstatus/db/src/schema";
+import type { InsertStatusReport, Monitor } from "@openstatus/db/src/schema";
 import { Form } from "@openstatus/ui";
 
 import {

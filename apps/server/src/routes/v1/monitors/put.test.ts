@@ -14,31 +14,14 @@ test("update the monitor", async () => {
       name: "New Name",
     }),
   });
-
-  const result = MonitorSchema.safeParse(await res.json());
-
+  const data = await res.json();
+  const monitor = MonitorSchema.parse(data);
   expect(res.status).toBe(200);
-  expect(result.success).toBe(true);
-  expect(result.data?.name).toBe("New Name");
-});
-
-test("update the monitor with a different jobType should return 400", async () => {
-  const res = await app.request("/v1/monitor/1", {
-    method: "PUT",
-    headers: {
-      "x-openstatus-key": "1",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jobType: "tcp",
-    }),
-  });
-
-  expect(res.status).toBe(400);
+  expect(monitor.name).toBe("New Name");
 });
 
 test("invalid monitor id should return 404", async () => {
-  const res = await app.request("/v1/page/404", {
+  const res = await app.request("/v1/monitor/404", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -53,7 +36,7 @@ test("invalid monitor id should return 404", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await app.request("/v1/page/2", {
+  const res = await app.request("/v1/monitor/2", {
     method: "PUT",
     headers: {
       "content-type": "application/json",

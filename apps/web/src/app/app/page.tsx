@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import * as React from "react";
 
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/header/app-header";

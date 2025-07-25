@@ -59,8 +59,10 @@ async function checkTCP(url: string, region: MonitorFlyRegion) {
   const data = TCPResponse.safeParse(json);
 
   if (!data.success) {
+    console.error(res);
+    console.error(JSON.stringify(json));
     console.error(
-      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+      `something went wrong with request to ${url} error ${data.error.message}`,
     );
     throw new Error(data.error.message);
   }
