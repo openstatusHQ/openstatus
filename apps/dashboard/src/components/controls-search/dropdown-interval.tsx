@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { parseAsNumberLiteral, useQueryState } from "nuqs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +9,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React from "react";
-import { Check } from "lucide-react";
 import { INTERVALS } from "@/data/metrics.client";
+import { Check } from "lucide-react";
+import { parseAsNumberLiteral, useQueryState } from "nuqs";
 
 const MAPPING = {
   5: "5 minutes",

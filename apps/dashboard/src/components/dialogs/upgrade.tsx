@@ -1,3 +1,5 @@
+import { Note, NoteButton } from "@/components/common/note";
+import { DataTable } from "@/components/data-table/billing/data-table";
 import {
   Dialog,
   DialogContent,
@@ -5,12 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { DialogProps } from "@radix-ui/react-dialog";
-import { DataTable } from "@/components/data-table/billing/data-table";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import { Note, NoteButton } from "@/components/common/note";
+import type { DialogProps } from "@radix-ui/react-dialog";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
 
 const PLANS = {

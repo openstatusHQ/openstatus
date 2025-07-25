@@ -2,15 +2,14 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
+  type SQL,
   and,
-  asc,
   desc,
   eq,
   gte,
   inArray,
   isNull,
   lte,
-  type SQL,
   sql,
 } from "@openstatus/db";
 import {
@@ -31,8 +30,8 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { env } from "../env";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
@@ -45,7 +44,7 @@ async function addDomainToVercel(domain: string) {
         "Content-Type": "application/json",
       },
       method: "POST",
-    }
+    },
   );
   return data.json();
 }
@@ -58,7 +57,7 @@ async function removeDomainFromVercel(domain: string) {
         Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
       },
       method: "DELETE",
-    }
+    },
   );
   return data.json();
 }
@@ -112,7 +111,7 @@ export const pageRouter = createTRPCRouter({
           where: and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
+            isNull(monitor.deletedAt),
           ),
         });
 
@@ -140,7 +139,7 @@ export const pageRouter = createTRPCRouter({
       const firstPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id)
+          eq(page.workspaceId, opts.ctx.workspace.id),
         ),
         with: {
           monitorsToPages: {
@@ -181,8 +180,8 @@ export const pageRouter = createTRPCRouter({
         .where(
           and(
             eq(page.id, pageInput.id),
-            eq(page.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(page.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning()
         .get();
@@ -193,7 +192,7 @@ export const pageRouter = createTRPCRouter({
           where: and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
+            isNull(monitor.deletedAt),
           ),
         });
 
@@ -222,8 +221,8 @@ export const pageRouter = createTRPCRouter({
           .where(
             and(
               inArray(monitorsToPages.monitorId, removedMonitors),
-              eq(monitorsToPages.pageId, currentPage.id)
-            )
+              eq(monitorsToPages.pageId, currentPage.id),
+            ),
           );
       }
 
@@ -266,7 +265,7 @@ export const pageRouter = createTRPCRouter({
         maintenancesToPages: {
           where: and(
             lte(maintenance.from, new Date()),
-            gte(maintenance.to, new Date())
+            gte(maintenance.to, new Date()),
           ),
         },
         statusReports: {
@@ -294,7 +293,7 @@ export const pageRouter = createTRPCRouter({
         .select()
         .from(page)
         .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`
+          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         )
         .get();
 
@@ -314,7 +313,10 @@ export const pageRouter = createTRPCRouter({
           .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
           .where(
             // make sur only active monitors are returned!
-            and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true))
+            and(
+              eq(monitorsToPages.pageId, result.id),
+              eq(monitor.active, true),
+            ),
           )
           .all(),
       ]);
@@ -322,7 +324,7 @@ export const pageRouter = createTRPCRouter({
       // FIXME: There is probably a better way to do this
 
       const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId
+        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
       );
 
       const statusReports = await opts.ctx.db.query.statusReport.findMany({
@@ -344,8 +346,8 @@ export const pageRouter = createTRPCRouter({
                 and(
                   inArray(monitor.id, monitorsId),
                   eq(monitor.active, true),
-                  isNull(monitor.deletedAt)
-                ) // REMINDER: this is hardcoded
+                  isNull(monitor.deletedAt),
+                ), // REMINDER: this is hardcoded
               )
               .all()
           : [];
@@ -408,7 +410,7 @@ export const pageRouter = createTRPCRouter({
 
   addCustomDomain: protectedProcedure
     .input(
-      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() })
+      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
     )
     .mutation(async (opts) => {
       if (opts.input.customDomain.toLowerCase().includes("openstatus")) {
@@ -446,7 +448,7 @@ export const pageRouter = createTRPCRouter({
         .object({
           order: z.enum(["asc", "desc"]).optional(),
         })
-        .optional()
+        .optional(),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -510,7 +512,7 @@ export const pageRouter = createTRPCRouter({
         slug: z.string().toLowerCase(),
         icon: z.string().nullish(),
         description: z.string().nullish(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const pageNumbers = (
@@ -565,7 +567,7 @@ export const pageRouter = createTRPCRouter({
         slug: z.string().toLowerCase(),
         description: z.string().nullish(),
         icon: z.string().nullish(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const whereConditions: SQL[] = [
@@ -698,7 +700,7 @@ export const pageRouter = createTRPCRouter({
         id: z.number(),
         passwordProtected: z.boolean(),
         password: z.string().nullish(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const whereConditions: SQL[] = [
@@ -737,7 +739,7 @@ export const pageRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         monitors: z.array(z.object({ id: z.number(), order: z.number() })),
-      })
+      }),
     )
     .mutation(async (opts) => {
       // check if the monitors are in the workspace
@@ -745,9 +747,9 @@ export const pageRouter = createTRPCRouter({
         where: and(
           inArray(
             monitor.id,
-            opts.input.monitors.map((m) => m.id)
+            opts.input.monitors.map((m) => m.id),
           ),
-          eq(monitor.workspaceId, opts.ctx.workspace.id)
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
         ),
       });
 
@@ -768,7 +770,7 @@ export const pageRouter = createTRPCRouter({
             pageId: opts.input.id,
             monitorId: m.id,
             order: m.order,
-          }))
+          })),
         );
       });
     }),

@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 import {
+  type SQL,
   and,
-  desc,
   asc,
+  desc,
   eq,
   gte,
   isNull,
   schema,
-  type SQL,
 } from "@openstatus/db";
 import {
   incidentTable,
@@ -17,8 +17,8 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const incidentRouter = createTRPCRouter({
   // TODO: rename getIncidentsByWorkspace to make it consistent with the other methods
@@ -31,13 +31,13 @@ export const incidentRouter = createTRPCRouter({
         .where(eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id))
         .leftJoin(
           schema.monitor,
-          eq(schema.incidentTable.monitorId, schema.monitor.id)
+          eq(schema.incidentTable.monitorId, schema.monitor.id),
         )
         .all();
       return z
         .array(selectIncidentSchema)
         .parse(
-          result.map((r) => ({ ...r.incident, monitorName: r.monitor?.name }))
+          result.map((r) => ({ ...r.incident, monitorName: r.monitor?.name })),
         );
     }),
 
@@ -51,12 +51,12 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .leftJoin(
           schema.monitor,
-          eq(schema.incidentTable.monitorId, schema.monitor.id)
+          eq(schema.incidentTable.monitorId, schema.monitor.id),
         )
         .get();
 
@@ -73,8 +73,8 @@ export const incidentRouter = createTRPCRouter({
       .where(
         and(
           eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
-          isNull(schema.incidentTable.resolvedAt)
-        )
+          isNull(schema.incidentTable.resolvedAt),
+        ),
       )
       .all();
   }),
@@ -89,8 +89,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!currentIncident) {
@@ -109,8 +109,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         );
       return true;
     }),
@@ -124,8 +124,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!currentIncident) {
@@ -147,8 +147,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         );
       return true;
     }),
@@ -163,8 +163,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!incidentToDelete) return;
@@ -189,7 +189,7 @@ export const incidentRouter = createTRPCRouter({
           monitorId: z.number().nullish(),
           order: z.enum(["asc", "desc"]).optional(),
         })
-        .optional()
+        .optional(),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -198,7 +198,7 @@ export const incidentRouter = createTRPCRouter({
 
       if (opts.input?.startedAt?.gte) {
         whereConditions.push(
-          gte(incidentTable.startedAt, opts.input.startedAt.gte)
+          gte(incidentTable.startedAt, opts.input.startedAt.gte),
         );
       }
 
@@ -235,8 +235,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!currentIncident) {
@@ -261,8 +261,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         );
       return true;
     }),
@@ -277,8 +277,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!currentIncident) {
@@ -303,8 +303,8 @@ export const incidentRouter = createTRPCRouter({
         .where(
           and(
             eq(schema.incidentTable.id, opts.input.id),
-            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
         );
       return true;
     }),

@@ -1,5 +1,12 @@
 "use client";
 
+import { Link } from "@/components/common/link";
+import {
+  BillingOverlay,
+  BillingOverlayButton,
+  BillingOverlayDescription,
+} from "@/components/content/billing-overlay";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -9,12 +16,6 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
-import { Check, Lock } from "lucide-react";
-import { parseAsStringLiteral, parseAsArrayOf, useQueryState } from "nuqs";
-import React from "react";
-import { groupByContinent } from "@openstatus/utils";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -22,17 +23,15 @@ import {
 } from "@/components/ui/popover";
 import { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
-import {
-  BillingOverlay,
-  BillingOverlayButton,
-  BillingOverlayDescription,
-} from "@/components/content/billing-overlay";
-import { Link } from "@/components/common/link";
+import { Check, Lock } from "lucide-react";
+import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 export const parseRegions = (regions: (typeof REGIONS)[number][]) =>
   parseAsArrayOf(
-    parseAsStringLiteral(REGIONS.filter((region) => regions.includes(region)))
+    parseAsStringLiteral(REGIONS.filter((region) => regions.includes(region))),
   ).withDefault(regions as unknown as (typeof REGIONS)[number][]);
 
 export function CommandRegion({
@@ -44,7 +43,7 @@ export function CommandRegion({
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const [selectedRegions, setSelectedRegions] = useQueryState(
     "regions",
-    parseRegions(regions)
+    parseRegions(regions),
   );
 
   const limited = workspace?.plan === "free";
@@ -60,7 +59,7 @@ export function CommandRegion({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[200px] p-0 relative overflow-hidden"
+        className="relative w-[200px] overflow-hidden p-0"
       >
         <Command>
           <CommandInput placeholder="Search region..." disabled={limited} />
@@ -69,7 +68,7 @@ export function CommandRegion({
               <CommandItem
                 onSelect={() => {
                   const items = document.querySelectorAll(
-                    '[data-slot="command-item"][data-disabled="false"]'
+                    '[data-slot="command-item"][data-disabled="false"]',
                   );
                   const codes: (typeof REGIONS)[number][] = [];
 
@@ -96,7 +95,7 @@ export function CommandRegion({
             {Object.entries(groupByContinent).map(
               ([continent, continentRegions]) => {
                 const allowedRegions = continentRegions.filter((region) =>
-                  regions.includes(region.code)
+                  regions.includes(region.code),
                 );
 
                 if (allowedRegions.length === 0) {
@@ -119,7 +118,7 @@ export function CommandRegion({
                           setSelectedRegions((prev) =>
                             prev.includes(region.code)
                               ? prev.filter((r) => r !== region.code)
-                              : [...prev, region.code]
+                              : [...prev, region.code],
                           );
                         }}
                       >
@@ -133,14 +132,14 @@ export function CommandRegion({
                             "ml-auto",
                             selectedRegions.includes(region.code)
                               ? "opacity-100"
-                              : "opacity-0"
+                              : "opacity-0",
                           )}
                         />
                       </CommandItem>
                     ))}
                   </CommandGroup>
                 );
-              }
+              },
             )}
             <CommandEmpty>No region found.</CommandEmpty>
           </CommandList>

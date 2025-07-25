@@ -29,8 +29,8 @@ export function DataTableColumnHeader<TData, TValue>({
         column.toggleSorting(undefined);
       }}
       className={cn(
-        "py-0 px-0 h-7 hover:bg-transparent dark:hover:bg-transparent flex gap-2 items-center justify-between w-full",
-        className
+        "flex h-7 w-full items-center justify-between gap-2 px-0 py-0 hover:bg-transparent dark:hover:bg-transparent",
+        className,
       )}
       {...props}
     >
@@ -41,7 +41,7 @@ export function DataTableColumnHeader<TData, TValue>({
             "-mb-0.5 size-3",
             column.getIsSorted() === "asc"
               ? "text-accent-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         />
         <ChevronDown
@@ -49,7 +49,7 @@ export function DataTableColumnHeader<TData, TValue>({
             "-mt-0.5 size-3",
             column.getIsSorted() === "desc"
               ? "text-accent-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         />
       </span>

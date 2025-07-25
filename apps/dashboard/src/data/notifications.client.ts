@@ -10,6 +10,12 @@ import { DiscordIcon } from "@/components/icons/discord";
 import { OpsGenieIcon } from "@/components/icons/opsgenie";
 import { PagerDutyIcon } from "@/components/icons/pagerduty";
 import { SlackIcon } from "@/components/icons/slack";
+import { sendTestDiscordMessage as sendTestDiscord } from "@openstatus/notification-discord";
+import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
+import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
+import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
+import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
+import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
   Mail,
@@ -18,12 +24,6 @@ import {
   Trash2,
   Webhook,
 } from "lucide-react";
-import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
-import { sendTestDiscordMessage as sendTestDiscord } from "@openstatus/notification-discord";
-import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
-import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
-import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
-import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
 
 export const actions = [
   {
@@ -43,7 +43,7 @@ export const actions = [
 export type NotifierAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>
+  props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>,
 ): (NotifierAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

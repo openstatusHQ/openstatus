@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { cn } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
 
 export function Code({
@@ -16,8 +16,8 @@ export function Code({
     <div className="relative">
       <pre
         className={cn(
-          "rounded-md border bg-muted p-2 text-xs overflow-x-auto",
-          className
+          "overflow-x-auto rounded-md border bg-muted p-2 text-xs",
+          className,
         )}
         {...props}
       >

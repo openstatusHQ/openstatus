@@ -1,9 +1,9 @@
 "use client";
 
+import { formatDate } from "@/lib/formatter";
+import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
-import type { RouterOutputs } from "@openstatus/api";
-import { formatDate } from "@/lib/formatter";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 

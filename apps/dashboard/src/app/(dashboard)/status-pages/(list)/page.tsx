@@ -1,4 +1,4 @@
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { Client } from "./client";
 
 export default async function Page() {

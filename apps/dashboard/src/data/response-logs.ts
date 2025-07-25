@@ -37,5 +37,5 @@ export const exampleLogs: ResponseLog[] = Array.from({ length: 10 }).map(
     monitorId: "1",
     cronTimestamp: today.getTime() + i * 1000 * 60,
     trigger: "cron" as const satisfies "cron" | "api",
-  })
+  }),
 );

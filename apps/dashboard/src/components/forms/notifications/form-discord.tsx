@@ -11,22 +11,22 @@ import {
 } from "@/components/ui/form";
 
 import { Link } from "@/components/common/link";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-import { isTRPCClientError } from "@trpc/client";
-import { Label } from "@/components/ui/label";
-import { config } from "@/data/notifications.client";
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { config } from "@/data/notifications.client";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),
@@ -180,7 +180,7 @@ export function FormDiscord({
                         checked={field.value?.length === monitors.length}
                         onCheckedChange={(checked) => {
                           field.onChange(
-                            checked ? monitors.map((m) => m.id) : []
+                            checked ? monitors.map((m) => m.id) : [],
                           );
                         }}
                       />

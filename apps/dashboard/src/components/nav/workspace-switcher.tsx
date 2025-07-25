@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronsUpDown, Plus } from "lucide-react";
-import * as React from "react";
 
 import {
   DropdownMenu,
@@ -17,9 +16,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Link } from "../common/link";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "../common/link";
 
 export function WorkspaceSwitcher() {
   const { isMobile, setOpenMobile } = useSidebar();
@@ -42,10 +41,10 @@ export function WorkspaceSwitcher() {
             <SidebarMenuButton
               size="lg"
               // FIXME: group-data-[collapsible=icon]:mx-8! (incl. nav-user)
-              className="px-4 h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
+              className="h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
-                <div className="size-8 rounded-lg overflow-hidden">
+                <div className="size-8 overflow-hidden rounded-lg">
                   <img
                     src={`https://api.dicebear.com/9.x/glass/svg?seed=${workspace.slug}`}
                     alt="avatar"
@@ -87,7 +86,7 @@ export function WorkspaceSwitcher() {
                 <span className="truncate">
                   {workspace.name || "Untitled Workspace"}
                 </span>
-                <span className="font-mono text-muted-foreground text-xs truncate">
+                <span className="truncate font-mono text-muted-foreground text-xs">
                   {workspace.slug}
                 </span>
               </DropdownMenuItem>

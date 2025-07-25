@@ -15,25 +15,25 @@ import {
 } from "@/components/content/section";
 
 import { Section } from "@/components/content/section";
-import { DataTable } from "@/components/ui/data-table/data-table";
-import { useTRPC } from "@/lib/trpc/client";
-import { PaginationState } from "@tanstack/react-table";
-import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
-import { useParams } from "next/navigation";
+import { ButtonReset } from "@/components/controls-search/button-reset";
 import { CommandRegion } from "@/components/controls-search/command-region";
 import { DropdownStatus } from "@/components/controls-search/dropdown-status";
-import { ButtonReset } from "@/components/controls-search/button-reset";
-import { searchParamsParsers } from "./search-params";
-import { useQueryStates } from "nuqs";
-import { columns } from "@/components/data-table/response-logs/columns";
-import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { DropdownTrigger } from "@/components/controls-search/dropdown-trigger";
-import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import { PopoverDate } from "@/components/controls-search/popover-date";
+import { columns } from "@/components/data-table/response-logs/columns";
+import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
+import { DataTableSkeleton } from "@/components/ui/data-table/data-table-skeleton";
 import { exampleLogs } from "@/data/response-logs";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import type { PaginationState } from "@tanstack/react-table";
+import { Lock } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
+import { searchParamsParsers } from "./search-params";
 
 export function Client() {
   const trpc = useTRPC();
@@ -44,7 +44,7 @@ export function Client() {
   ] = useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const enabled = workspace && workspace?.plan !== "free";
   const { data: _logs, isLoading } = useQuery({
@@ -58,7 +58,7 @@ export function Client() {
 
   const pagination = useMemo(
     () => ({ pageIndex, pageSize }),
-    [pageIndex, pageSize]
+    [pageIndex, pageSize],
   );
 
   const setPagination = useCallback(
@@ -72,7 +72,7 @@ export function Client() {
         });
       }
     },
-    [pageIndex, pageSize, setSearchParams]
+    [pageIndex, pageSize, setSearchParams],
   );
 
   if (!workspace || !monitor) return null;
@@ -92,7 +92,7 @@ export function Client() {
             )}
           </SectionDescription>
         </SectionHeader>
-        <div className="flex items-center flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <PopoverDate />
           {monitor.jobType === "http" ? <DropdownStatus /> : null}
           <DropdownTrigger />

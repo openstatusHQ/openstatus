@@ -1,5 +1,6 @@
 "use client";
 
+import { ProcessMessage } from "@/components/content/process-message";
 import {
   FormCardContent,
   FormCardSeparator,
@@ -30,18 +31,17 @@ import { TabsContent } from "@/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { colors } from "@/data/status-report-updates.client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
+import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { colors } from "@/data/status-report-updates.client";
-import { isTRPCClientError } from "@trpc/client";
-import { ProcessMessage } from "@/components/content/process-message";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),
@@ -116,7 +116,7 @@ export function FormStatusReportUpdate({
                     <SelectTrigger
                       className={cn(
                         colors[field.value],
-                        "font-mono capitalize"
+                        "font-mono capitalize",
                       )}
                     >
                       <SelectValue placeholder="Select a status" />
@@ -156,7 +156,7 @@ export function FormStatusReportUpdate({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          !field.value && "text-muted-foreground",
                         )}
                       >
                         {field.value ? (
@@ -201,7 +201,7 @@ export function FormStatusReportUpdate({
                                   .split("T")[0];
 
                                 field.onChange(
-                                  new Date(`${date}T${e.target.value}`)
+                                  new Date(`${date}T${e.target.value}`),
                                 );
                               } catch (error) {
                                 console.error(error);

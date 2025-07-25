@@ -1,19 +1,19 @@
 "use client";
 
 import {
-  SectionDescription,
   Section,
-  SectionHeader,
+  SectionDescription,
   SectionGroup,
+  SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
+import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { useTransition } from "react";
-import { toast } from "sonner";
 import { isTRPCClientError } from "@trpc/client";
 import { useQueryStates } from "nuqs";
+import { useTransition } from "react";
+import { toast } from "sonner";
 import { searchParamsParsers } from "./search-params";
 
 export function Client() {
@@ -31,7 +31,7 @@ export function Client() {
         document.cookie = `workspace-slug=${workspace.slug}; path=/;`;
         window.location.href = "/overview";
       },
-    })
+    }),
   );
 
   // TODO: check if we can have a high level wrapper for isTRPCClientError errors

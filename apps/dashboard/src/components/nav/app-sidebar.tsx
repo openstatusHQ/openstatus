@@ -31,8 +31,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { NavHelp } from "./nav-help";
 import { NavBanner } from "./nav-banner";
+import { NavHelp } from "./nav-help";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "[";
 
@@ -80,7 +80,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="flex p-0 gap-0 h-14 justify-center border-b">
+      <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
@@ -92,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
         <NavHelp />
       </SidebarContent>
-      <SidebarFooter className="p-0 gap-0 h-14 border-t flex flex-col justify-center">
+      <SidebarFooter className="flex h-14 flex-col justify-center gap-0 border-t p-0">
         <NavUser />
       </SidebarFooter>
       <SidebarRail />
@@ -128,10 +128,10 @@ export function AppSidebarTrigger() {
         <TooltipContent side="right">
           <p className="mr-px inline-flex items-center">
             Toggle Sidebar{" "}
-            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
+            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
               ⌘
             </Kbd>
-            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
+            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
               {SIDEBAR_KEYBOARD_SHORTCUT}
             </Kbd>
           </p>

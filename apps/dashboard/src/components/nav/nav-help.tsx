@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { DiscordIcon } from "@/components/icons/discord";
 import { GitHubIcon } from "@/components/icons/github";

@@ -3,8 +3,8 @@ import { z } from "zod";
 import { flyRegions } from "../../db/src/schema/constants";
 import {
   headersSchema,
-  timingSchema,
   timingPhasesSchema,
+  timingSchema,
   triggers,
 } from "./schema";
 

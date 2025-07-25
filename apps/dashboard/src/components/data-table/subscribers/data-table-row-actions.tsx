@@ -2,7 +2,7 @@
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useTRPC } from "@/lib/trpc/client";
-import { RouterOutputs } from "@openstatus/api";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 
@@ -17,13 +17,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { refetch } = useQuery(
     trpc.pageSubscriber.list.queryOptions({
       pageId: row.original.pageId,
-    })
+    }),
   );
 
   const deleteAction = useMutation(
     trpc.pageSubscriber.delete.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   return (

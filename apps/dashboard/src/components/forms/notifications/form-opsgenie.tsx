@@ -10,15 +10,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
-import { isTRPCClientError } from "@trpc/client";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -28,11 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { config } from "@/data/notifications.client";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),
@@ -102,7 +102,7 @@ export function FormOpsGenie({
           data as unknown as {
             apiKey: string;
             region: "eu" | "us";
-          }
+          },
         );
         toast.promise(promise, {
           loading: "Sending test...",
@@ -214,7 +214,7 @@ export function FormOpsGenie({
                         checked={field.value?.length === monitors.length}
                         onCheckedChange={(checked) => {
                           field.onChange(
-                            checked ? monitors.map((m) => m.id) : []
+                            checked ? monitors.map((m) => m.id) : [],
                           );
                         }}
                       />

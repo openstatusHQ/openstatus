@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { Events } from "@openstatus/analytics";
-import { and, db, eq, gte, isNull, SQL } from "@openstatus/db";
+import { type SQL, and, db, eq, gte, isNull } from "@openstatus/db";
 import {
   insertInvitationSchema,
   invitation,
@@ -35,7 +35,7 @@ export const invitationRouter = createTRPCRouter({
           where: and(
             eq(invitation.workspaceId, opts.ctx.workspace.id),
             gte(invitation.expiresAt, new Date()),
-            isNull(invitation.acceptedAt)
+            isNull(invitation.acceptedAt),
           ),
         })
       ).length;
@@ -61,7 +61,7 @@ export const invitationRouter = createTRPCRouter({
 
       if (process.env.NODE_ENV === "development") {
         console.log(
-          `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `
+          `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `,
         );
       }
 
@@ -77,8 +77,8 @@ export const invitationRouter = createTRPCRouter({
         .where(
           and(
             eq(invitation.id, opts.input.id),
-            eq(invitation.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(invitation.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -88,7 +88,7 @@ export const invitationRouter = createTRPCRouter({
       where: and(
         eq(invitation.workspaceId, opts.ctx.workspace.id),
         gte(invitation.expiresAt, new Date()),
-        isNull(invitation.acceptedAt)
+        isNull(invitation.acceptedAt),
       ),
     });
     return _invitations;
@@ -118,13 +118,13 @@ export const invitationRouter = createTRPCRouter({
       z.object({
         message: z.string(),
         data: selectWorkspaceSchema.optional(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const _invitation = await opts.ctx.db.query.invitation.findFirst({
         where: and(
           eq(invitation.token, opts.input.token),
-          isNull(invitation.acceptedAt)
+          isNull(invitation.acceptedAt),
         ),
         with: {
           workspace: true,
@@ -207,7 +207,7 @@ export const invitationRouter = createTRPCRouter({
           eq(invitation.token, opts.input.token),
           isNull(invitation.acceptedAt),
           gte(invitation.expiresAt, new Date()),
-          eq(invitation.email, opts.ctx.user.email)
+          eq(invitation.email, opts.ctx.user.email),
         ),
       });
 
@@ -238,7 +238,7 @@ export const invitationRouter = createTRPCRouter({
           eq(invitation.id, opts.input.id),
           eq(invitation.email, opts.ctx.user.email),
           isNull(invitation.acceptedAt),
-          gte(invitation.expiresAt, new Date())
+          gte(invitation.expiresAt, new Date()),
         ),
       });
 

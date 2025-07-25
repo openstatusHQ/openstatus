@@ -2,9 +2,9 @@
 
 import { Link } from "@/components/common/link";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
-import type { RouterOutputs } from "@openstatus/api";
 
 type StatusPage = RouterOutputs["page"]["list"][number];
 

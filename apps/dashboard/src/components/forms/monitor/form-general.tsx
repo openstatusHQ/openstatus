@@ -11,6 +11,16 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -30,35 +40,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  headerAssertion,
+  jsonBodyAssertion,
+  numberCompareDictionary,
+  statusAssertion,
+  stringCompareDictionary,
+  textBodyAssertion,
+} from "@openstatus/assertions";
+import { monitorMethods } from "@openstatus/db/src/schema";
 import { isTRPCClientError } from "@trpc/client";
 import { Globe, Network, Plus, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import {
-  textBodyAssertion,
-  statusAssertion,
-  headerAssertion,
-  numberCompareDictionary,
-  stringCompareDictionary,
-  jsonBodyAssertion,
-} from "@openstatus/assertions";
-import { monitorMethods } from "@openstatus/db/src/schema";
-import { cn } from "@/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-} from "@/components/ui/alert-dialog";
-import { Switch } from "@/components/ui/switch";
 
 const TYPES = ["http", "tcp"] as const;
 const ASSERTION_TYPES = ["status", "header", "textBody"] as const;
@@ -72,7 +72,7 @@ const schema = z.object({
     z.object({
       key: z.string(),
       value: z.string(),
-    })
+    }),
   ),
   active: z.boolean().optional().default(true),
   assertions: z.array(
@@ -81,7 +81,7 @@ const schema = z.object({
       headerAssertion,
       textBodyAssertion,
       jsonBodyAssertion,
-    ])
+    ]),
   ),
   body: z.string().optional(),
   skipCheck: z.boolean().optional().default(false),
@@ -208,7 +208,7 @@ export function FormGeneral({
               Configure your monitor settings and endpoints.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid sm:grid-cols-3 gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="name"
@@ -262,7 +262,7 @@ export function FormGeneral({
                           // FIXME: ugly af
                           defaultValues &&
                             defaultValues.type !== "http" &&
-                            "opacity-50 pointer-events-none"
+                            "pointer-events-none opacity-50",
                         )}
                       >
                         <FormControl>
@@ -286,7 +286,7 @@ export function FormGeneral({
                           "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
                           defaultValues &&
                             defaultValues.type !== "tcp" &&
-                            "opacity-50 pointer-events-none"
+                            "pointer-events-none opacity-50",
                         )}
                       >
                         <FormControl>
@@ -406,7 +406,7 @@ export function FormGeneral({
                             variant="ghost"
                             onClick={() => {
                               const newHeaders = field.value.filter(
-                                (_, i) => i !== index
+                                (_, i) => i !== index,
                               );
                               field.onChange(newHeaders);
                             }}
@@ -513,14 +513,14 @@ export function FormGeneral({
                                   <SelectContent>
                                     {assertion.type === "status"
                                       ? Object.entries(
-                                          numberCompareDictionary
+                                          numberCompareDictionary,
                                         ).map(([key, value]) => (
                                           <SelectItem key={key} value={key}>
                                             {value}
                                           </SelectItem>
                                         ))
                                       : Object.entries(
-                                          stringCompareDictionary
+                                          stringCompareDictionary,
                                         ).map(([key, value]) => (
                                           <SelectItem key={key} value={key}>
                                             {value}
@@ -566,7 +566,7 @@ export function FormGeneral({
                                   onChange={(e) => {
                                     const value =
                                       assertion.type === "status"
-                                        ? parseInt(e.target.value) || 0
+                                        ? Number.parseInt(e.target.value) || 0
                                         : e.target.value;
                                     field.onChange(value);
                                   }}
@@ -581,7 +581,7 @@ export function FormGeneral({
                             type="button"
                             onClick={() => {
                               const newAssertions = field.value.filter(
-                                (_, i) => i !== index
+                                (_, i) => i !== index,
                               );
                               field.onChange(newAssertions);
                             }}
@@ -734,8 +734,8 @@ export function FormGeneral({
                 failed. Do you want to save the monitor anyway?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="p-2 border border-destructive/20 rounded-md bg-destructive/10">
-              <p className="font-mono text-sm text-destructive whitespace-pre-wrap">
+            <div className="rounded-md border border-destructive/20 bg-destructive/10 p-2">
+              <p className="whitespace-pre-wrap font-mono text-destructive text-sm">
                 {error}
               </p>
             </div>

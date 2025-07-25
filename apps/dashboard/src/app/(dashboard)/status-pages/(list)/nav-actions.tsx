@@ -1,12 +1,12 @@
 "use client";
 
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { NavFeedback } from "@/components/nav/nav-feedback";
+import Link from "next/link";
 import { useState } from "react";
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
 
 export function NavActions() {
   const [openDialog, setOpenDialog] = useState(false);

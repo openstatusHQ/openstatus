@@ -1,8 +1,8 @@
-import { SearchParams } from "nuqs";
-import { searchParamsCache } from "./search-params";
-import { Client } from "./client";
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { redirect } from "next/navigation";
+import type { SearchParams } from "nuqs";
+import { Client } from "./client";
+import { searchParamsCache } from "./search-params";
 
 export default async function InvitePage(props: {
   searchParams: Promise<SearchParams>;

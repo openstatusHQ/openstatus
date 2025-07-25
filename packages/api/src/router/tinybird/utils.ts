@@ -1,4 +1,4 @@
-export function calculatePeriod(from: Date | undefined, to: Date | undefined) {
+export function calculatePeriod(from: Date | undefined, _to: Date | undefined) {
   const today = new Date();
   const diffTime = Math.abs(today.getTime() - (from?.getTime() ?? 0));
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));

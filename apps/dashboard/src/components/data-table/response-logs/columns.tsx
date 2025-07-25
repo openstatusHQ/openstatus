@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/tooltip";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
+import { flyRegionsDict } from "@openstatus/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";
-import type { RouterOutputs } from "@openstatus/api";
-import { flyRegionsDict } from "@openstatus/utils";
 
 type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
 
@@ -53,7 +53,7 @@ export const columns: ColumnDef<ResponseLog>[] = [
       const value = new Date(row.getValue("timestamp"));
       return (
         <HoverCardTimestamp date={value}>
-          <TableCellDate value={value} className="text-foreground font-mono" />
+          <TableCellDate value={value} className="font-mono text-foreground" />
         </HoverCardTimestamp>
       );
     },

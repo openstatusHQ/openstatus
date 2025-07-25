@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { DevelopmentIndicator } from "@/components/development-indicator";
+import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import LocalFont from "next/font/local";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import LocalFont from "next/font/local";
 
 const cal = LocalFont({
   src: "../../public/fonts/CalSans-SemiBold.ttf",
@@ -45,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cal.variable} antialiased`}
+        className={`${geistSans.variable}${geistMono.variable}${cal.variable} antialiased`}
       >
         <NuqsAdapter>
           <ThemeProvider

@@ -5,7 +5,7 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
-import { RouterOutputs } from "@openstatus/api";
+import type { RouterOutputs } from "@openstatus/api";
 
 type ApiKey = RouterOutputs["apiKey"]["get"];
 

@@ -11,10 +11,10 @@ import {
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
 
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Check, Copy } from "lucide-react";
 import { z } from "zod";
-import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 
 const schema = z.object({
   slug: z.string().min(1),
@@ -59,7 +59,7 @@ export function FormSlug({ defaultValues }: { defaultValues?: FormValues }) {
             <Button
               variant="ghost"
               size="sm"
-              className="px-0 py-0 hover:bg-transparent dark:hover:bg-transparent text-accent-foreground"
+              className="px-0 py-0 text-accent-foreground hover:bg-transparent dark:hover:bg-transparent"
             >
               Let us know
             </Button>

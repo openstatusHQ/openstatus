@@ -74,8 +74,8 @@ export function FormSheetTrigger({
   return (
     <SheetTrigger
       className={cn(
-        "cursor-pointer data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none",
-        className
+        "cursor-pointer data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
+        className,
       )}
       data-disabled={disabled}
       disabled={disabled}

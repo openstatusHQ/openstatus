@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, X, Plus } from "lucide-react";
+import { Lock, Plus, X } from "lucide-react";
 import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -145,7 +145,7 @@ export function FormOtel({
                         variant="ghost"
                         onClick={() => {
                           const newHeaders = field.value.filter(
-                            (_, i) => i !== index
+                            (_, i) => i !== index,
                           );
                           field.onChange(newHeaders);
                         }}

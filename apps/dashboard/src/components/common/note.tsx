@@ -1,6 +1,6 @@
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { cva, VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+import { type VariantProps, cva } from "class-variance-authority";
 
 const noteVariants = cva(
   "flex items-center gap-3 rounded-md border px-3 py-2 [&>svg]:size-4 [&>svg]:text-current [&>svg]:shrink-0",
@@ -22,7 +22,7 @@ const noteVariants = cva(
       variant: "default",
       color: "default",
     },
-  }
+  },
 );
 
 export function Note({
@@ -51,7 +51,7 @@ export function NoteButton({
   return (
     <Button
       size="sm"
-      className={cn("ml-auto -mr-1 shrink-0", className)}
+      className={cn("-mr-1 ml-auto shrink-0", className)}
       {...props}
     >
       {children}

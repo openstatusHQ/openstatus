@@ -48,7 +48,7 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
         .select({ count: sql<number>`count(*)` })
         .from(monitor)
         .where(
-          and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt))
+          and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
         )
         .all()
     )[0].count;

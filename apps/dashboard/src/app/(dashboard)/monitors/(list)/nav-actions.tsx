@@ -1,11 +1,11 @@
 "use client";
 
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { NavFeedback } from "@/components/nav/nav-feedback";
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import Link from "next/link";
 import { useState } from "react";
 
 export function NavActions() {
@@ -16,7 +16,7 @@ export function NavActions() {
 
   if (!workspace || !monitors) return null;
 
-  const limitReached = monitors.length >= workspace.limits["monitors"];
+  const limitReached = monitors.length >= workspace.limits.monitors;
 
   return (
     <div className="flex items-center gap-2 text-sm">

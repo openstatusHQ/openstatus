@@ -1,3 +1,5 @@
+import { Code } from "@/components/common/code";
+import { Link } from "@/components/common/link";
 import {
   SectionDescription,
   SectionGroup,
@@ -5,10 +7,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import { Code } from "@/components/common/code";
-import { FileDown, Terminal, FileJson, Key } from "lucide-react";
-import { Link } from "@/components/common/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileDown, FileJson, Key, Terminal } from "lucide-react";
 import React from "react";
 
 const OS = ["macOs", "Windows", "Linux"] as const;
@@ -156,11 +156,11 @@ export default function Page() {
                 return (
                   <div key={i} className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
-                      <p className="flex items-center gap-2 text-sm font-medium">
+                      <p className="flex items-center gap-2 font-medium text-sm">
                         <step.icon className="size-4" />
                         {step.title}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {step.description}
                       </p>
                     </div>
@@ -203,7 +203,7 @@ export default function Page() {
         <ul className="flex flex-col gap-2">
           {commands.map((command, i) => (
             <li key={i} className="flex flex-col gap-0.5">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {command.description}
               </p>
               <Code>{command.command}</Code>
@@ -229,7 +229,7 @@ export default function Page() {
         <div className="flex flex-col gap-6">
           {templates.map((template, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {template.description}
               </p>
               <Code>{template.template}</Code>

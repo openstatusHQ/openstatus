@@ -18,7 +18,7 @@ import {
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import type { flyRegions } from "@openstatus/db/src/schema/constants";
 import { formatDistanceToNow } from "date-fns";
 
 type Metric = {
@@ -50,7 +50,7 @@ export function GlobalUptimeSection({
       period,
       type: jobType,
       regions,
-    })
+    }),
   );
 
   // Helper to transform the data the same way it used to be in the page
@@ -87,8 +87,8 @@ export function GlobalUptimeSection({
                 : (value ?? 0) / acc[k]?.raw
               : 1;
             const hasTrend =
-              !isNaN(trend) &&
-              trend !== Infinity &&
+              !Number.isNaN(trend) &&
+              trend !== Number.POSITIVE_INFINITY &&
               k !== "total" &&
               k !== "lastTimestamp";
             acc[k] = {
@@ -113,7 +113,7 @@ export function GlobalUptimeSection({
       {} as Record<
         keyof ReturnType<typeof mapMetrics>[number],
         Metric & { raw: number }
-      >
+      >,
     );
   }
 

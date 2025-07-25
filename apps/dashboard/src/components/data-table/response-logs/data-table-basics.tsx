@@ -10,12 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Braces, TableProperties } from "lucide-react";
-import type { RouterOutputs } from "@openstatus/api";
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
-import { cn } from "@/lib/utils";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
+import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
 import { flyRegionsDict } from "@openstatus/utils";
+import { Braces, TableProperties } from "lucide-react";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
@@ -52,7 +52,7 @@ export function DataTableBasicsHTTP({
             Result
           </TableHead>
           {/* TODO: add colored square like list (see columns) */}
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <div className="flex items-center gap-2">
               <div
                 className={cn("h-2.5 w-2.5 rounded-[2px] bg-muted", {
@@ -72,7 +72,7 @@ export function DataTableBasicsHTTP({
             <TableHead className="bg-muted/50 font-normal text-muted-foreground">
               ID
             </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
               {data.id}
             </TableCell>
           </TableRow>
@@ -81,7 +81,7 @@ export function DataTableBasicsHTTP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Timestamp
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <TableCellDate
               value={new Date(data.cronTimestamp)}
               className="text-foreground"
@@ -92,7 +92,7 @@ export function DataTableBasicsHTTP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             URL
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             {data.url}
           </TableCell>
         </TableRow>
@@ -109,7 +109,7 @@ export function DataTableBasicsHTTP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Status
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <TableCellNumber
               value={data.statusCode}
               className={textColors[getStatusCodeVariant(data.statusCode)]}
@@ -120,7 +120,7 @@ export function DataTableBasicsHTTP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Latency
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <TableCellNumber value={data?.latency} unit="ms" />
           </TableCell>
         </TableRow>
@@ -128,7 +128,7 @@ export function DataTableBasicsHTTP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Region
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             {regionConfig?.flag} {regionConfig?.code}{" "}
             <span className="text-muted-foreground">
               {regionConfig?.location}
@@ -140,7 +140,7 @@ export function DataTableBasicsHTTP({
             <TableHead className="bg-muted/50 font-normal text-muted-foreground">
               Trigger
             </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
               {data?.trigger}
             </TableCell>
           </TableRow>
@@ -174,20 +174,20 @@ export function DataTableBasicsHTTP({
                               key={key}
                               className="[&>:not(:last-child)]:border-r"
                             >
-                              <TableHead className="bg-muted/50 font-normal text-muted-foreground overflow-x-auto">
+                              <TableHead className="overflow-x-auto bg-muted/50 font-normal text-muted-foreground">
                                 {key}
                               </TableHead>
-                              <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                              <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
                                 {value}
                               </TableCell>
                             </TableRow>
-                          )
+                          ),
                         )}
                       </TableBody>
                     </Table>
                   </TabsContent>
                   <TabsContent value="raw">
-                    <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm overflow-x-auto max-w-full">
+                    <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm">
                       {JSON.stringify(data?.headers, null, 2)}
                     </pre>
                   </TabsContent>
@@ -206,7 +206,7 @@ export function DataTableBasicsHTTP({
                 <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   <span className="uppercase">{key}</span>
                 </TableHead>
-                <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+                <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex-1">
                       <span className="text-muted-foreground">
@@ -214,7 +214,7 @@ export function DataTableBasicsHTTP({
                       </span>
                     </div>
                     <div className="flex w-full flex-1 items-center justify-end gap-2">
-                      <span className="text-muted-foreground text-nowrap">
+                      <span className="text-nowrap text-muted-foreground">
                         {formatMilliseconds(value)}
                       </span>
                       <div
@@ -238,7 +238,7 @@ export function DataTableBasicsHTTP({
             </TableRow>
             <TableRow>
               <TableCell colSpan={2} className="p-0">
-                <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
                   {data.message}
                 </pre>
               </TableCell>
@@ -253,11 +253,11 @@ export function DataTableBasicsHTTP({
             <TableRow>
               <TableCell colSpan={2} className="p-0">
                 {!data.assertions || data.assertions === "[]" ? (
-                  <div className="text-muted-foreground text-sm font-mono p-2">
+                  <div className="p-2 font-mono text-muted-foreground text-sm">
                     Default status code 2xx assertion
                   </div>
                 ) : (
-                  <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                  <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
                     {JSON.stringify(data.assertions, null, 2)}
                   </pre>
                 )}
@@ -293,7 +293,7 @@ export function DataTableBasicsTCP({
             Result
           </TableHead>
           {/* TODO: add colored square like list (see columns) */}
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <div className="flex items-center gap-2">
               <div
                 className={cn("h-2.5 w-2.5 rounded-[2px] bg-muted", {
@@ -313,7 +313,7 @@ export function DataTableBasicsTCP({
             <TableHead className="bg-muted/50 font-normal text-muted-foreground">
               ID
             </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
               {data.id}
             </TableCell>
           </TableRow>
@@ -322,7 +322,7 @@ export function DataTableBasicsTCP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Timestamp
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <TableCellDate
               value={new Date(data.cronTimestamp)}
               className="text-foreground"
@@ -333,7 +333,7 @@ export function DataTableBasicsTCP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             URI
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             {data.uri}
           </TableCell>
         </TableRow>
@@ -341,7 +341,7 @@ export function DataTableBasicsTCP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Latency
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             <TableCellNumber value={data?.latency} unit="ms" />
           </TableCell>
         </TableRow>
@@ -349,7 +349,7 @@ export function DataTableBasicsTCP({
           <TableHead className="bg-muted/50 font-normal text-muted-foreground">
             Region
           </TableHead>
-          <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+          <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
             {regionConfig?.flag} {regionConfig?.code}{" "}
             <span className="text-muted-foreground">
               {regionConfig?.location}
@@ -361,7 +361,7 @@ export function DataTableBasicsTCP({
             <TableHead className="bg-muted/50 font-normal text-muted-foreground">
               Trigger
             </TableHead>
-            <TableCell className="whitespace-normal font-mono overflow-x-auto max-w-full">
+            <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
               {data?.trigger}
             </TableCell>
           </TableRow>
@@ -373,7 +373,7 @@ export function DataTableBasicsTCP({
             </TableRow>
             <TableRow>
               <TableCell colSpan={2} className="p-0">
-                <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm overflow-x-auto max-w-full">
+                <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
                   {data.errorMessage}
                 </pre>
               </TableCell>

@@ -25,19 +25,19 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  monitorPeriodicity,
   type MonitorFlyRegion,
+  monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { groupByContinent } from "@openstatus/utils";
-import { isTRPCClientError } from "@trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useTRPC } from "@/lib/trpc/client";
 import { Note } from "@/components/common/note";
+import { useTRPC } from "@/lib/trpc/client";
+import { groupByContinent } from "@openstatus/utils";
+import { useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { Info } from "lucide-react";
 
 const DEFAULT_PERIODICITY = "10m";
@@ -98,7 +98,7 @@ export function FormSchedulingRegions({
 
   if (!workspace) return null;
 
-  const allowedRegions = workspace.limits["regions"];
+  const allowedRegions = workspace.limits.regions;
   const maxRegions = workspace.limits["max-regions"];
   const periodicity = workspace.limits.periodicity;
 
@@ -132,7 +132,7 @@ export function FormSchedulingRegions({
                         }}
                         className={cn(
                           !periodicity.includes(watchPeriodicity) &&
-                            "[&_[data-slot=slider-range]]:bg-destructive"
+                            "[&_[data-slot=slider-range]]:bg-destructive",
                         )}
                       />
                       <span
@@ -205,7 +205,7 @@ export function FormSchedulingRegions({
                                   size="sm"
                                   type="button"
                                   className={cn(
-                                    isAllSelected && "text-muted-foreground"
+                                    isAllSelected && "text-muted-foreground",
                                   )}
                                   disabled={disabled}
                                   onClick={() => {
@@ -213,7 +213,7 @@ export function FormSchedulingRegions({
                                       // Add all regions from this continent
                                       const newRegions = [...watchRegions];
                                       r.filter((r) =>
-                                        allowedRegions.includes(r.code)
+                                        allowedRegions.includes(r.code),
                                       ).forEach((region) => {
                                         if (!newRegions.includes(region.code)) {
                                           newRegions.push(region.code);
@@ -229,9 +229,9 @@ export function FormSchedulingRegions({
                                             !r
                                               .map(({ code }) => code)
                                               .includes(
-                                                region as MonitorFlyRegion
-                                              )
-                                        )
+                                                region as MonitorFlyRegion,
+                                              ),
+                                        ),
                                       );
                                     }
                                   }}
@@ -248,12 +248,12 @@ export function FormSchedulingRegions({
                                       name="regions"
                                       render={({ field }) => {
                                         const checked = field.value?.includes(
-                                          region.code
+                                          region.code,
                                         );
                                         const disabled = checked
                                           ? false
                                           : !allowedRegions.includes(
-                                              region.code
+                                              region.code,
                                             ) || isMaxed;
                                         return (
                                           <FormItem
@@ -267,7 +267,7 @@ export function FormSchedulingRegions({
                                               onCheckedChange={(checked) => {
                                                 console.log(
                                                   checked,
-                                                  field.value
+                                                  field.value,
                                                 );
                                                 if (checked) {
                                                   field.onChange([
@@ -277,8 +277,8 @@ export function FormSchedulingRegions({
                                                 } else {
                                                   field.onChange(
                                                     field.value?.filter(
-                                                      (r) => r !== region.code
-                                                    )
+                                                      (r) => r !== region.code,
+                                                    ),
                                                   );
                                                 }
                                               }}
@@ -303,7 +303,7 @@ export function FormSchedulingRegions({
                               </div>
                             </div>
                           );
-                        }
+                        },
                       )}
                     </div>
                   </FormControl>

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
+import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
 import {
   Section,
@@ -9,24 +10,23 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
+import { ButtonReset } from "@/components/controls-search/button-reset";
+import { CommandRegion } from "@/components/controls-search/command-region";
+import { DropdownInterval } from "@/components/controls-search/dropdown-interval";
+import { DropdownPercentile } from "@/components/controls-search/dropdown-percentile";
+import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
+import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import type { RegionMetric } from "@/data/region-metrics";
 import { mapRegionMetrics } from "@/data/metrics.client";
+import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { searchParamsParsers } from "./search-params";
 import React from "react";
-import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
-import { CommandRegion } from "@/components/controls-search/command-region";
-import { ButtonReset } from "@/components/controls-search/button-reset";
-import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
-import { DropdownPercentile } from "@/components/controls-search/dropdown-percentile";
-import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
-import { DropdownInterval } from "@/components/controls-search/dropdown-interval";
+import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
 
@@ -36,7 +36,7 @@ export function Client() {
   const [{ period, regions: selectedRegions, percentile, interval }] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   const regionTimelineQuery = {
@@ -102,7 +102,7 @@ export function Client() {
           type={monitor.jobType as "http" | "tcp"}
           period={period}
           regions={monitor.regions.filter((region) =>
-            selectedRegions.includes(region)
+            selectedRegions.includes(region),
           )}
         />
       </Section>

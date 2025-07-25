@@ -37,7 +37,7 @@ const BASE_URL =
 export function Client() {
   const trpc = useTRPC();
   const { data: notifications, refetch } = useQuery(
-    trpc.notification.list.queryOptions()
+    trpc.notification.list.queryOptions(),
   );
   const [searchParams] = useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -45,7 +45,7 @@ export function Client() {
   const createNotifierMutation = useMutation(
     trpc.notification.new.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   if (!notifications || !monitors || !workspace) return null;
@@ -104,7 +104,7 @@ export function Client() {
                   key={key}
                   href={PAGERDUTY_URL}
                   data-disabled={!enabled}
-                  className="data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none"
+                  className="data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50"
                 >
                   <ActionCard className="h-full w-full">
                     <ActionCardHeader>

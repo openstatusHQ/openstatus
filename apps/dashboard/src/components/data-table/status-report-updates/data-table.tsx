@@ -1,5 +1,6 @@
 "use client";
 
+import { ProcessMessage } from "@/components/content/process-message";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,22 +11,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { icons } from "@/data/icons";
-import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
-import { DataTableRowActions } from "./data-table-row-actions";
-import { RouterOutputs } from "@openstatus/api";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import { colors } from "@/data/status-report-updates.client";
-import { ProcessMessage } from "@/components/content/process-message";
 import {
-  TooltipContent,
   Tooltip,
+  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { icons } from "@/data/icons";
+import { colors } from "@/data/status-report-updates.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReportUpdates =
   RouterOutputs["statusReport"]["list"][number]["updates"];
@@ -41,7 +41,7 @@ export function DataTable({
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions()
+    trpc.emailRouter.sendStatusReport.mutationOptions(),
   );
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
@@ -52,13 +52,15 @@ export function DataTable({
         }
         //
         queryClient.invalidateQueries({
-          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+          queryKey: trpc.statusReport.list.queryKey({
+            pageId: Number.parseInt(id),
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   return (

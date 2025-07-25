@@ -24,7 +24,6 @@ export const endingLink = (opts?: {
       fetch: opts?.fetch,
       transformer: superjson,
       // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } satisfies Partial<HTTPBatchLinkOptions<any>>;
 
     const edgeLink = httpBatchLink({

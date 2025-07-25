@@ -25,22 +25,26 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     trpc.statusReport.updateStatusReportUpdate.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+          queryKey: trpc.statusReport.list.queryKey({
+            pageId: Number.parseInt(id),
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const deleteStatusReportUpdateMutation = useMutation(
     trpc.statusReport.deleteUpdate.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+          queryKey: trpc.statusReport.list.queryKey({
+            pageId: Number.parseInt(id),
+          }),
         });
       },
-    })
+    }),
   );
   const actions = getActions({
     edit: () => buttonRef.current?.click(),

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { MoreHorizontal, Plus } from "lucide-react";
 
@@ -17,6 +17,7 @@ import {
   SidebarMenuSkeleton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -24,14 +25,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getActions } from "@/data/monitors.client";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
-import { isTRPCClientError } from "@trpc/client";
 
 const STATUS = {
   degraded: "bg-warning border border-warning",
@@ -62,7 +62,7 @@ export function NavMonitors() {
           queryKey: trpc.workspace.get.queryKey(),
         });
       },
-    })
+    }),
   );
   const cloneMonitorMutation = useMutation(
     trpc.monitor.clone.mutationOptions({
@@ -73,12 +73,12 @@ export function NavMonitors() {
         });
         router.push(`/monitors/${newMonitor.id}`);
       },
-    })
+    }),
   );
 
   if (!workspace || !monitors) return null;
 
-  const limitReached = monitors.length >= workspace.limits["monitors"];
+  const limitReached = monitors.length >= workspace.limits.monitors;
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -170,14 +170,14 @@ export function NavMonitors() {
                   data-sidebar="menu-dot"
                   className={cn(
                     "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                    isMobile && "right-6"
+                    isMobile && "right-6",
                   )}
                 >
                   <div className="relative flex items-center justify-center">
                     <div
                       className={cn(
                         "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
-                        STATUS[item.active ? item.status : "inactive"]
+                        STATUS[item.active ? item.status : "inactive"],
                       )}
                     >
                       <span className="sr-only">{item.status}</span>

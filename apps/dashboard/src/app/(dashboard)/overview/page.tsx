@@ -5,6 +5,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 
+import { Note, NoteButton } from "@/components/common/note";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -20,14 +21,13 @@ import {
   MetricCardValue,
 } from "@/components/metric/metric-card";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { List, Search } from "lucide-react";
-import Link from "next/link";
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
-import { formatDistanceToNowStrict } from "date-fns";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-import { DataTableStatusReports } from "./data-table-status-reports";
-import { Note, NoteButton } from "@/components/common/note";
+import { formatDistanceToNowStrict } from "date-fns";
+import { List, Search } from "lucide-react";
 import { Terminal } from "lucide-react";
+import Link from "next/link";
+import { DataTableStatusReports } from "./data-table-status-reports";
 
 // FIXME: the page is server side
 // whenever I change the maintenances, the page is not updated
@@ -37,7 +37,7 @@ export default async function Page() {
   const queryClient = getQueryClient();
 
   const monitors = await queryClient.fetchQuery(
-    trpc.monitor.list.queryOptions()
+    trpc.monitor.list.queryOptions(),
   );
   const pages = await queryClient.fetchQuery(trpc.page.list.queryOptions());
   const incidents = await queryClient.fetchQuery(
@@ -46,7 +46,7 @@ export default async function Page() {
       startedAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
-    })
+    }),
   );
   const statusReports = await queryClient.fetchQuery(
     trpc.statusReport.list.queryOptions({
@@ -54,7 +54,7 @@ export default async function Page() {
       createdAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
-    })
+    }),
   );
   const maintenances = await queryClient.fetchQuery(
     trpc.maintenance.list.queryOptions({
@@ -62,7 +62,7 @@ export default async function Page() {
       createdAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
-    })
+    }),
   );
 
   const lastIncident = incidents.length > 0 ? incidents[0] : null;

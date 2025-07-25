@@ -1,10 +1,10 @@
 "use client";
 
-import { createTRPCContext } from "@trpc/tanstack-react-query";
+import { endingLink } from "@/lib/trpc/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCClient, loggerLink } from "@trpc/client";
+import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
-import { endingLink } from "@/lib/trpc/shared";
 
 import type { AppRouter } from "@openstatus/api";
 
@@ -52,7 +52,7 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
           },
         }),
       ],
-    })
+    }),
   );
 
   return (

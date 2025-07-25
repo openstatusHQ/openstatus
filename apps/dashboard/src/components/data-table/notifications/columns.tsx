@@ -1,11 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTableRowActions } from "./data-table-row-actions";
-import { RouterOutputs } from "@openstatus/api";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { RouterOutputs } from "@openstatus/api";
+import type { ColumnDef } from "@tanstack/react-table";
 import { TableCellBadge } from "../table-cell-badge";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
 

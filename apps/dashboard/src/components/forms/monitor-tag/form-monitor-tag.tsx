@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -9,16 +10,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Trash2 } from "lucide-react";
 import { useTransition } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
 
 const tagSchema = z.object({
   id: z.number().optional(),
@@ -101,13 +101,13 @@ export function FormMonitorTag({
               size="sm"
               onClick={() => append({ name: "", color: "#00008B" })}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Add Tag
             </Button>
           </div>
 
           {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-4 items-start">
+            <div key={field.id} className="flex items-start gap-4">
               <FormField
                 control={form.control}
                 name={`tags.${index}.color`}
@@ -116,7 +116,7 @@ export function FormMonitorTag({
                     <FormControl>
                       <Input
                         type="color"
-                        className="size-7 p-0 rounded-full overflow-hidden"
+                        className="size-7 overflow-hidden rounded-full p-0"
                         style={{ backgroundColor: field.value }}
                         {...field}
                       />

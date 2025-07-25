@@ -23,7 +23,7 @@ export function Sidebar() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   if (!statusPage) return null;
@@ -63,7 +63,7 @@ export function Sidebar() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger className="align-middle">
-                      <img className="h-5" src={BADGE_URL} />
+                      <img className="h-5" src={BADGE_URL} alt="badge" />
                     </TooltipTrigger>
                     <TooltipContent>Learn more about the badge.</TooltipContent>
                   </Tooltip>
@@ -112,7 +112,7 @@ export function Sidebar() {
           typeof window !== "undefined" &&
           window.open(
             `https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`,
-            "_blank"
+            "_blank",
           ),
         children: (
           <>

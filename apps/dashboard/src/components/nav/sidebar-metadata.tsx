@@ -112,6 +112,7 @@ function SidebarMetadataTableCell({
   const { copy, isCopied } = useCopyToClipboard();
   const [open, setOpen] = React.useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   React.useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
@@ -134,7 +135,7 @@ function SidebarMetadataTableCell({
       ref={ref}
       className={cn(
         typeof props.children === "string" && "cursor-pointer",
-        className
+        className,
       )}
       onClick={handleClick}
     >

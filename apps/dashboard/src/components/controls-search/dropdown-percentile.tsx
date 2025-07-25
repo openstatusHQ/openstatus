@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,17 +9,17 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React from "react";
-import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { PERCENTILES } from "@/data/metrics.client";
+import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 
 const parsePercentile = parseAsStringLiteral(PERCENTILES).withDefault("p50");
 
 export function DropdownPercentile() {
   const [percentile, setPercentile] = useQueryState(
     "percentile",
-    parsePercentile
+    parsePercentile,
   );
 
   return (

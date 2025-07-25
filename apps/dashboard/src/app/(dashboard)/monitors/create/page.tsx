@@ -28,7 +28,7 @@ export default function Page() {
         });
         router.push(`/monitors/${data.id}/edit`);
       },
-    })
+    }),
   );
 
   return (

@@ -54,7 +54,7 @@ export const emailRouter = createTRPCRouter({
 
         await emailClient.sendStatusReportUpdate({
           to: _statusReportUpdate.statusReport.page.pageSubscribers.map(
-            (subscriber) => subscriber.email
+            (subscriber) => subscriber.email,
           ),
           pageTitle: _statusReportUpdate.statusReport.page.title,
           reportTitle: _statusReportUpdate.statusReport.title,
@@ -63,7 +63,7 @@ export const emailRouter = createTRPCRouter({
           date: new Date(_statusReportUpdate.date).toISOString(),
           monitors:
             _statusReportUpdate.statusReport.monitorsToStatusReports.map(
-              (i) => i.monitor.name
+              (i) => i.monitor.name,
             ),
         });
       }
@@ -77,7 +77,7 @@ export const emailRouter = createTRPCRouter({
         const _invitation = await opts.ctx.db.query.invitation.findFirst({
           where: and(
             eq(invitation.id, opts.input.id),
-            eq(invitation.workspaceId, opts.ctx.workspace.id)
+            eq(invitation.workspaceId, opts.ctx.workspace.id),
           ),
         });
 

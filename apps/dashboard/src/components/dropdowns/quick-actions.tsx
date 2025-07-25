@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
-import { toast } from "sonner";
 import { isTRPCClientError } from "@trpc/client";
+import { toast } from "sonner";
 
 interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   align?: DropdownMenuContentProps["align"];

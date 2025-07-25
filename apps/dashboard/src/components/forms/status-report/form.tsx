@@ -1,5 +1,6 @@
 "use client";
 
+import { ProcessMessage } from "@/components/content/process-message";
 import {
   FormCardContent,
   FormCardSeparator,
@@ -34,6 +35,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { colors } from "@/data/status-report-updates.client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
@@ -44,8 +46,6 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { colors } from "@/data/status-report-updates.client";
-import { ProcessMessage } from "@/components/content/process-message";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),
@@ -147,7 +147,7 @@ export function FormStatusReport({
                     <SelectTrigger
                       className={cn(
                         colors[field.value],
-                        "font-mono capitalize"
+                        "font-mono capitalize",
                       )}
                     >
                       <SelectValue placeholder="Select a status" />
@@ -157,7 +157,7 @@ export function FormStatusReport({
                         <SelectItem
                           key={status}
                           value={status}
-                          className={cn("capitalize font-mono", colors[status])}
+                          className={cn("font-mono capitalize", colors[status])}
                         >
                           {status}
                         </SelectItem>
@@ -189,7 +189,7 @@ export function FormStatusReport({
                             size="sm"
                             className={cn(
                               "w-[240px] pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (
@@ -234,7 +234,7 @@ export function FormStatusReport({
                                       .split("T")[0];
 
                                     field.onChange(
-                                      new Date(`${date}T${e.target.value}`)
+                                      new Date(`${date}T${e.target.value}`),
                                     );
                                   } catch (error) {
                                     console.error(error);
@@ -311,7 +311,7 @@ export function FormStatusReport({
                         checked={field.value?.length === monitors.length}
                         onCheckedChange={(checked) => {
                           field.onChange(
-                            checked ? monitors.map((m) => m.id) : []
+                            checked ? monitors.map((m) => m.id) : [],
                           );
                         }}
                       />

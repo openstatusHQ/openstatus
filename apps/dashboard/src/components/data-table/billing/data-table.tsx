@@ -14,12 +14,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { plans, config as featureGroups } from "@/data/plans";
-import { cn } from "@/lib/utils";
-import { useTRPC } from "@/lib/trpc/client";
+import { config as featureGroups, plans } from "@/data/plans";
 import { getStripe } from "@/lib/stripe";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -39,13 +39,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         const stripe = await getStripe();
         stripe?.redirectToCheckout({ sessionId: data.id });
       },
-    })
+    }),
   );
 
   if (!workspace) return null;
 
   const filteredPlans = Object.values(plans).filter((plan) =>
-    restrictTo ? restrictTo.includes(plan.id) : true
+    restrictTo ? restrictTo.includes(plan.id) : true,
   );
 
   return (
@@ -65,7 +65,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                 key={id}
                 className={cn(
                   "h-auto p-2 align-bottom text-foreground",
-                  id === "starter" ? "bg-muted/30" : ""
+                  id === "starter" ? "bg-muted/30" : "",
                 )}
               >
                 <div className="flex h-full flex-col justify-between gap-1">
@@ -164,7 +164,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                         key={plan.id + value}
                         className={cn(
                           "font-mono",
-                          plan.id === "starter" && "bg-muted/30"
+                          plan.id === "starter" && "bg-muted/30",
                         )}
                       >
                         {renderContent()}
@@ -175,7 +175,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                 </TableRow>
               ))}
             </Fragment>
-          )
+          ),
         )}
       </TableBody>
     </Table>

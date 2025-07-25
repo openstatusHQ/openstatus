@@ -17,11 +17,11 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { RouterOutputs } from "@openstatus/api";
 import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { isTRPCClientError } from "@trpc/client";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -68,7 +68,7 @@ export function MonitorDataTableActionBar({
         // Clear selection once deletion succeeds
         table.toggleAllRowsSelected(false);
       },
-    })
+    }),
   );
 
   const updateMonitorsMutation = useMutation(
@@ -78,12 +78,12 @@ export function MonitorDataTableActionBar({
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   const confirmationValue = React.useMemo(
     () => `delete monitor${rows.length === 1 ? "" : "s"}`,
-    [rows.length]
+    [rows.length],
   );
 
   const handleDelete = async () => {
@@ -134,7 +134,7 @@ export function MonitorDataTableActionBar({
                   }
                   return "Failed to update";
                 },
-              }
+              },
             );
           }}
         >

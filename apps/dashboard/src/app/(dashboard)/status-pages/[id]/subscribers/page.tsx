@@ -8,8 +8,8 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
-  EmptyStateDescription,
   EmptyStateContainer,
+  EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -54,10 +54,10 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: page } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: subscribers } = useQuery(
-    trpc.pageSubscriber.list.queryOptions({ pageId: parseInt(id) })
+    trpc.pageSubscriber.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 

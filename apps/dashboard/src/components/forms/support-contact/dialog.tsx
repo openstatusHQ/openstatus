@@ -1,3 +1,4 @@
+import { Link } from "@/components/common/link";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +7,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState } from "react";
-import { ContactForm, type FormValues } from "./form";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link } from "@/components/common/link";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import { ContactForm, type FormValues } from "./form";
 
 export function FormDialogSupportContact({
   children,

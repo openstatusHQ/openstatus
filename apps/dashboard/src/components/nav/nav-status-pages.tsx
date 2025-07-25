@@ -24,12 +24,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "@/lib/trpc/client";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-import { UpgradeDialog } from "@/components/dialogs/upgrade";
 
 const STATUS = {
   operational: "bg-success border border-success",
@@ -58,7 +58,7 @@ export function NavStatusPages() {
           queryKey: trpc.workspace.get.queryKey(),
         });
       },
-    })
+    }),
   );
 
   if (!workspace || !statusPages) return null;
@@ -121,7 +121,7 @@ export function NavStatusPages() {
               },
             });
             const hasActiveStatusReport = item.statusReports.some(
-              (report) => report.status !== "resolved"
+              (report) => report.status !== "resolved",
             );
 
             return (
@@ -142,7 +142,7 @@ export function NavStatusPages() {
                   data-sidebar="menu-dot"
                   className={cn(
                     "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                    isMobile && "right-6"
+                    isMobile && "right-6",
                   )}
                 >
                   <div className="relative flex items-center justify-center">
@@ -151,7 +151,7 @@ export function NavStatusPages() {
                         "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
                         STATUS[
                           hasActiveStatusReport ? "degraded" : "operational"
-                        ]
+                        ],
                       )}
                     />
                   </div>

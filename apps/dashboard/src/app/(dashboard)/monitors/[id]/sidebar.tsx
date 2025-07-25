@@ -3,19 +3,19 @@
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+import { deserialize } from "@openstatus/assertions";
+import { useQuery } from "@tanstack/react-query";
 import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { formatMilliseconds } from "@/lib/formatter";
-import { deserialize } from "@openstatus/assertions";
 
 export function Sidebar() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   if (!monitor) return null;
@@ -57,7 +57,7 @@ export function Sidebar() {
                     <Badge
                       key={tag.id}
                       variant="outline"
-                      className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1 rounded-full"
+                      className="relative flex translate-x-0 items-center gap-1.5 rounded-full bg-background transition-transform hover:z-10 hover:translate-x-1"
                     >
                       <div
                         className="size-2.5 rounded-full"

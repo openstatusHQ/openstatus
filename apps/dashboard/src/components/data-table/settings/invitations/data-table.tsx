@@ -19,12 +19,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 export function DataTable() {
   const trpc = useTRPC();
   const { data: invitations, refetch } = useQuery(
-    trpc.invitation.list.queryOptions()
+    trpc.invitation.list.queryOptions(),
   );
   const deleteInvitationMutation = useMutation(
     trpc.invitation.delete.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   if (!invitations) return null;

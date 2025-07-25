@@ -13,6 +13,7 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,7 +26,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
@@ -152,17 +152,17 @@ export function FormStatusPages({
                         type="button"
                         className={cn(
                           watchStatusPages.length === statusPages.length &&
-                            "text-muted-foreground"
+                            "text-muted-foreground",
                         )}
                         onClick={() => {
                           const allSelected = statusPages.every((item) =>
-                            watchStatusPages.includes(item.id)
+                            watchStatusPages.includes(item.id),
                           );
 
                           if (!allSelected) {
                             form.setValue(
                               "statusPages",
-                              statusPages.map((item) => item.id)
+                              statusPages.map((item) => item.id),
                             );
                           } else {
                             form.setValue("statusPages", []);
@@ -196,8 +196,8 @@ export function FormStatusPages({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
+                                            (value) => value !== item.id,
+                                          ),
                                         );
                                   }}
                                 />
@@ -206,7 +206,7 @@ export function FormStatusPages({
                                 {item.title}{" "}
                                 <Badge
                                   variant="secondary"
-                                  className="text-[10px] px-1.5 py-px font-mono"
+                                  className="px-1.5 py-px font-mono text-[10px]"
                                 >
                                   {item.slug}
                                 </Badge>

@@ -16,7 +16,7 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   if (!statusPage) return null;

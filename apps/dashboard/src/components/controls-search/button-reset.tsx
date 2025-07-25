@@ -26,7 +26,7 @@ export function ButtonReset({ only }: { only?: string[] }) {
       router.push(
         query
           ? `${window.location.pathname}?${query}`
-          : window.location.pathname
+          : window.location.pathname,
       );
     } else {
       // No `only` prop provided – remove all query parameters

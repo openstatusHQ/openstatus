@@ -21,14 +21,14 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useTransition } from "react";
 import { useQueryStates } from "nuqs";
-import { searchParamsParsers } from "./search-params";
+import { useEffect, useMemo, useTransition } from "react";
 import { toast } from "sonner";
-import { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { searchParamsParsers } from "./search-params";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -79,7 +79,7 @@ export function Client() {
         if (!url) return;
         router.push(url);
       },
-    })
+    }),
   );
   const { data: httpWorkspace30d } = useQuery({
     ...trpc.tinybird.workspace30d.queryOptions({
@@ -110,11 +110,11 @@ export function Client() {
   const totalRequests = useMemo(() => {
     const httpRequests = httpWorkspace30d?.data?.reduce(
       (acc, curr) => acc + curr.count,
-      0
+      0,
     );
     const tcpRequests = tcpWorkspace30d?.data?.reduce(
       (acc, curr) => acc + curr.count,
-      0
+      0,
     );
     return (httpRequests ?? 0) + (tcpRequests ?? 0);
   }, [httpWorkspace30d, tcpWorkspace30d]);

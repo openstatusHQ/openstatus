@@ -1,5 +1,8 @@
 import { apiKeyRouter } from "./router/apiKey";
+import { blobRouter } from "./router/blob";
+import { checkerRouter } from "./router/checker";
 import { domainRouter } from "./router/domain";
+import { feedbackRouter } from "./router/feedback";
 import { incidentRouter } from "./router/incident";
 import { integrationRouter } from "./router/integration";
 import { invitationRouter } from "./router/invitation";
@@ -15,9 +18,6 @@ import { tinybirdRouter } from "./router/tinybird";
 import { userRouter } from "./router/user";
 import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
-import { checkerRouter } from "./router/checker";
-import { blobRouter } from "./router/blob";
-import { feedbackRouter } from "./router/feedback";
 
 // Deployed to /trpc/edge/**
 export const edgeRouter = createTRPCRouter({

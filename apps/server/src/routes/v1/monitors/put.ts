@@ -80,8 +80,8 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           isNull(monitor.deletedAt),
-          eq(monitor.workspaceId, workspaceId)
-        )
+          eq(monitor.workspaceId, workspaceId),
+        ),
       )
       .get();
 

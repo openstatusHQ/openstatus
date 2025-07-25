@@ -13,9 +13,9 @@ import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { Plus } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -23,14 +23,14 @@ export default function Page() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: page } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: statusReports, refetch } = useQuery(
-    trpc.statusReport.list.queryOptions({ pageId: parseInt(id) })
+    trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions()
+    trpc.emailRouter.sendStatusReport.mutationOptions(),
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
@@ -43,13 +43,13 @@ export default function Page() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   if (!statusReports || !monitors || !page) return null;
 
   const hasUnresolvedIssue = statusReports.some(
-    (report) => report.status !== "resolved"
+    (report) => report.status !== "resolved",
   );
 
   return (
@@ -81,7 +81,7 @@ export default function Page() {
                   await createStatusReportMutation.mutateAsync({
                     title: values.title,
                     status: values.status,
-                    pageId: parseInt(id),
+                    pageId: Number.parseInt(id),
                     monitors: values.monitors,
                     date: values.date,
                     message: values.message,

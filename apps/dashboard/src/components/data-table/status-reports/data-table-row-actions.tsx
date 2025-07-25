@@ -6,10 +6,10 @@ import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { getActions } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
-import type { Row } from "@tanstack/react-table";
-import { useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Row } from "@tanstack/react-table";
 import { useParams } from "next/navigation";
+import { useRef } from "react";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
@@ -27,7 +27,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       if (typeof window !== "undefined") {
         window.open(
           `https://${row.original.page.customDomain || `${row.original.page.slug}.openstatus.dev/events/report/${row.original.id}`}`,
-          "_blank"
+          "_blank",
         );
       }
     },
@@ -37,19 +37,21 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { id } = useParams<{ id: string }>();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions()
+    trpc.emailRouter.sendStatusReport.mutationOptions(),
   );
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+          queryKey: trpc.statusReport.list.queryKey({
+            pageId: Number.parseInt(id),
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const createStatusReportUpdateMutation = useMutation(
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
@@ -60,25 +62,29 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }
         //
         queryClient.invalidateQueries({
-          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+          queryKey: trpc.statusReport.list.queryKey({
+            pageId: Number.parseInt(id),
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const deleteStatusReportMutation = useMutation(
     trpc.statusReport.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+          queryKey: trpc.statusReport.list.queryKey({
+            pageId: Number.parseInt(id),
+          }),
         });
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   if (!monitors) return null;

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { Badge } from "../ui/badge";
 import { useEffect, useRef, useState } from "react";
+import { Badge } from "../ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -17,6 +17,7 @@ export function TableCellBadge({
   const [isTruncated, setIsTruncated] = useState(false);
   const [open, setOpen] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
@@ -27,9 +28,9 @@ export function TableCellBadge({
     <Badge
       variant="outline"
       className={cn(
-        "font-mono max-w-16 truncate",
+        "max-w-16 truncate font-mono",
         value ? "text-foreground" : "text-foreground/70",
-        className
+        className,
       )}
       {...props}
     >

@@ -8,10 +8,10 @@ import {
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
 import { Button } from "@/components/ui/button";
-import { Check, Copy } from "lucide-react";
-import type { RouterOutputs } from "@openstatus/api";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Separator } from "@/components/ui/separator";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import type { RouterOutputs } from "@openstatus/api";
+import { Check, Copy } from "lucide-react";
 import { DataTableBasics } from "./data-table-basics";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];

@@ -44,8 +44,8 @@ export function FormSheetMonitorTag({
             Configure and update the monitor tag.
           </FormSheetDescription>
         </FormSheetHeader>
-        <FormCardGroup className="overflow-y-auto flex-1">
-          <FormCard className="overflow-auto border-none rounded-none flex-1">
+        <FormCardGroup className="flex-1 overflow-y-auto">
+          <FormCard className="flex-1 overflow-auto rounded-none border-none">
             <FormCardContent>
               <FormMonitorTag
                 onSubmit={onSubmit}

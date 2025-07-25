@@ -1,6 +1,10 @@
 "use client";
 
 import { FormCardGroup } from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+import { deserialize } from "@openstatus/assertions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormNotifiers } from "./form-notifiers";
@@ -11,10 +15,6 @@ import { FormSchedulingRegions } from "./form-scheduling-regions";
 import { FormStatusPages } from "./form-status-pages";
 import { FormTags } from "./form-tags";
 import { FormVisibility } from "./form-visibility";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "@/lib/trpc/client";
-import { useParams, useRouter } from "next/navigation";
-import { deserialize } from "@openstatus/assertions";
 
 export function FormMonitorUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -22,42 +22,42 @@ export function FormMonitorUpdate() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: monitor, refetch } = useQuery(
-    trpc.monitor.get.queryOptions({ id: parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
   const { data: notifications } = useQuery(
-    trpc.notification.list.queryOptions()
+    trpc.notification.list.queryOptions(),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const updateRetryMutation = useMutation(
     trpc.monitor.updateRetry.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
   const updateOtelMutation = useMutation(
     trpc.monitor.updateOtel.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
   const updatePublicMutation = useMutation(
     trpc.monitor.updatePublic.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
   const updateSchedulingRegionsMutation = useMutation(
     trpc.monitor.updateSchedulingRegions.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
   const updateResponseTimeMutation = useMutation(
     trpc.monitor.updateResponseTime.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
   const updateTagsMutation = useMutation(
     trpc.monitor.updateTags.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const updateGeneralMutation = useMutation(
@@ -73,19 +73,19 @@ export function FormMonitorUpdate() {
         // TODO: open dialog
         console.error(err);
       },
-    })
+    }),
   );
 
   const updateStatusPagesMutation = useMutation(
     trpc.monitor.updateStatusPages.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const updateNotifiersMutation = useMutation(
     trpc.monitor.updateNotifiers.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const deleteMonitorMutation = useMutation(
@@ -96,7 +96,7 @@ export function FormMonitorUpdate() {
         });
         router.push("/monitors");
       },
-    })
+    }),
   );
 
   if (!monitor || !statusPages || !notifications || !workspace) return null;
@@ -121,7 +121,7 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updateGeneralMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             name: values.name,
             jobType: values.type,
             url: values.url,
@@ -142,7 +142,7 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updateResponseTimeMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             timeout: values.timeout,
             degradedAfter: values.degradedAfter ?? undefined,
           });
@@ -154,7 +154,7 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updateTagsMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             tags: values.tags.map((tag) => tag.id),
           });
         }}
@@ -166,7 +166,7 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updateSchedulingRegionsMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             regions: values.regions,
             periodicity: values.periodicity,
           });
@@ -180,7 +180,7 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updateStatusPagesMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             statusPages: values.statusPages,
             description: values.description,
           });
@@ -193,7 +193,7 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updateNotifiersMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             notifiers: values.notifiers,
           });
         }}
@@ -204,20 +204,20 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) =>
           await updateRetryMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             retry: values.retry,
           })
         }
       />
       <FormOtel
-        locked={workspace.limits["otel"] === false}
+        locked={workspace.limits.otel === false}
         defaultValues={{
           endpoint: monitor.otelEndpoint ?? "",
           headers: monitor.otelHeaders ?? [],
         }}
         onSubmit={async (values) => {
           await updateOtelMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             otelEndpoint: values.endpoint,
             otelHeaders: values.headers,
           });
@@ -229,14 +229,14 @@ export function FormMonitorUpdate() {
         }}
         onSubmit={async (values) => {
           await updatePublicMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             public: values.visibility,
           });
         }}
       />
       <FormDangerZone
         onSubmit={async () => {
-          await deleteMonitorMutation.mutateAsync({ id: parseInt(id) });
+          await deleteMonitorMutation.mutateAsync({ id: Number.parseInt(id) });
         }}
       />
     </FormCardGroup>

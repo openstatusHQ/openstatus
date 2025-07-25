@@ -1,29 +1,30 @@
-import { endOfDay, startOfDay, subDays, subHours } from "date-fns";
+import { DatePicker } from "@/components/date-picker";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/date-picker";
+import { formatDateRange } from "@/lib/formatter";
+import { endOfDay, startOfDay, subDays, subHours } from "date-fns";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatDateRange } from "@/lib/formatter";
-import { DateRange } from "react-day-picker";
+import type { DateRange } from "react-day-picker";
 
 export function PopoverDate() {
   const [open, setOpen] = useState(false);
   const today = useRef(new Date());
   const [from, setFrom] = useQueryState(
     "from",
-    parseAsIsoDateTime.withDefault(startOfDay(today.current))
+    parseAsIsoDateTime.withDefault(startOfDay(today.current)),
   );
   const [to, setTo] = useQueryState(
     "to",
-    parseAsIsoDateTime.withDefault(endOfDay(today.current))
+    parseAsIsoDateTime.withDefault(endOfDay(today.current)),
   );
   const [range, setRange] = useState<DateRange>({ from, to });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const presets = useMemo(
     () => [
       {
@@ -90,7 +91,7 @@ export function PopoverDate() {
         shortcut: "b",
       },
     ],
-    [today]
+    [today],
   );
 
   //   instead use `range` state
@@ -101,12 +102,12 @@ export function PopoverDate() {
     );
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!open) {
       setFrom(range.from ?? null);
       setTo(range.to ?? null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

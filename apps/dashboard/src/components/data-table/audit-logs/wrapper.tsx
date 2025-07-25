@@ -11,7 +11,6 @@ import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
 
 import { columns } from "./columns";
 
@@ -25,13 +24,13 @@ export function AuditLogsWrapper({
   const trpc = useTRPC();
 
   const { data: auditLogs, isLoading } = useQuery(
-    trpc.tinybird.auditLog.queryOptions({ monitorId, interval })
+    trpc.tinybird.auditLog.queryOptions({ monitorId, interval }),
   );
 
   if (isLoading) {
     return (
-      <div className="flex flex-col h-full min-h-48 max-h-48">
-        <Skeleton className="flex-1 h-full w-full" />
+      <div className="flex h-full max-h-48 min-h-48 flex-col">
+        <Skeleton className="h-full w-full flex-1" />
       </div>
     );
   }

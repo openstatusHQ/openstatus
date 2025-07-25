@@ -31,10 +31,10 @@ export default function Page() {
           queryKey: trpc.workspace.get.queryKey(),
         });
       },
-    })
+    }),
   );
   const sendInvitationMutation = useMutation(
-    trpc.emailRouter.sendTeamInvitation.mutationOptions()
+    trpc.emailRouter.sendTeamInvitation.mutationOptions(),
   );
   const createInvitationMutation = useMutation(
     trpc.invitation.create.mutationOptions({
@@ -44,7 +44,7 @@ export default function Page() {
           queryKey: trpc.invitation.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   if (!workspace) return null;

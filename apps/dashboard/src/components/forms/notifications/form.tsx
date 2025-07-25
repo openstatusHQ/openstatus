@@ -134,7 +134,7 @@ export function NotifierForm({
                       checked={field.value?.length === monitors.length}
                       onCheckedChange={(checked) => {
                         field.onChange(
-                          checked ? monitors.map((m) => m.id) : []
+                          checked ? monitors.map((m) => m.id) : [],
                         );
                       }}
                     />

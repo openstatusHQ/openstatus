@@ -9,10 +9,10 @@ import {
   type TRPCQueryOptions,
   createTRPCOptionsProxy,
 } from "@trpc/tanstack-react-query";
-import { makeQueryClient } from "./query-client";
-import { endingLink } from "./shared";
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { makeQueryClient } from "./query-client";
+import { endingLink } from "./shared";
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -58,15 +58,13 @@ export function HydrateClient(props: { children: React.ReactNode }) {
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
-  queryOptions: T
+  queryOptions: T,
 ) {
   const queryClient = getQueryClient();
 
   if (queryOptions.queryKey[1]?.type === "infinite") {
     // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     void queryClient.prefetchInfiniteQuery(queryOptions as any);
   } else {
     void queryClient.prefetchQuery(queryOptions);
@@ -74,16 +72,14 @@ export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
-  queryOptionsArray: T[]
+  queryOptionsArray: T[],
 ) {
   const queryClient = getQueryClient();
 
   for (const queryOptions of queryOptionsArray) {
     if (queryOptions.queryKey[1]?.type === "infinite") {
       // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       void queryClient.prefetchInfiniteQuery(queryOptions as any);
     } else {
       void queryClient.prefetchQuery(queryOptions);

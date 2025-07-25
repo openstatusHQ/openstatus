@@ -4,11 +4,11 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { RouterOutputs } from "@openstatus/api";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
@@ -23,7 +23,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     edit: () => buttonRef.current?.click(),
   });
   const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: row.original.pageId ?? 0 })
+    trpc.page.get.queryOptions({ id: row.original.pageId ?? 0 }),
   );
   const queryClient = useQueryClient();
   const updateMaintenanceMutation = useMutation(
@@ -35,7 +35,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           }),
         });
       },
-    })
+    }),
   );
 
   const deleteMaintenanceMutation = useMutation(
@@ -47,7 +47,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           }),
         });
       },
-    })
+    }),
   );
 
   return (

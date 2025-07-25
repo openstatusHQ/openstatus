@@ -3,14 +3,14 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Cog, Hammer, Megaphone, Users } from "lucide-react";
 import { useParams } from "next/navigation";
-import { Hammer, Megaphone, Cog, Users } from "lucide-react";
 
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   if (!statusPage) return null;

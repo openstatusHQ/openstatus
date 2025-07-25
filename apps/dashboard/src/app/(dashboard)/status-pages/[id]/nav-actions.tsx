@@ -24,7 +24,7 @@ export function NavActions() {
   const pathname = usePathname();
 
   const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   const deleteStatusPageMutation = useMutation(
@@ -37,7 +37,7 @@ export function NavActions() {
           router.push("/status-pages");
         }
       },
-    })
+    }),
   );
 
   const actions = getActions({
@@ -60,6 +60,7 @@ export function NavActions() {
               <a
                 href={`https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`}
                 target="_blank"
+                rel="noreferrer"
               >
                 <Globe className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
               </a>
@@ -75,7 +76,7 @@ export function NavActions() {
           confirmationValue: "delete status page",
           submitAction: async () => {
             await deleteStatusPageMutation.mutateAsync({
-              id: parseInt(id),
+              id: Number.parseInt(id),
             });
           },
         }}

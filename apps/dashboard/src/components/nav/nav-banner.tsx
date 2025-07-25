@@ -1,7 +1,7 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { useCookieState } from "@/hooks/use-cookie-state";
+import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { NavBannerChecklist } from "./nav-banner-checklist";
 import { NavBannerUpgrade } from "./nav-banner-upgrade";
@@ -14,12 +14,12 @@ export function NavBanner() {
   const [openChecklist, setOpenChecklist] = useCookieState<"true" | "false">(
     "sidebar_banner_checklist",
     "true",
-    { expires: EXPIRES_IN }
+    { expires: EXPIRES_IN },
   );
   const [openUpgrade, setOpenUpgrade] = useCookieState<"true" | "false">(
     "sidebar_banner_upgrade",
     "true",
-    { expires: EXPIRES_IN }
+    { expires: EXPIRES_IN },
   );
 
   if (!workspace) return null;

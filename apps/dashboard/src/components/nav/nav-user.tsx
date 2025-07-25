@@ -11,7 +11,6 @@ import {
   User,
 } from "lucide-react";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -32,10 +31,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 
 export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();
@@ -55,7 +55,7 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="px-4 h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
+              className="h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user?.photoUrl ?? undefined} alt={userName} />

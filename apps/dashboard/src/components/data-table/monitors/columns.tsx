@@ -8,13 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-import type { RouterOutputs } from "@openstatus/api";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { TableCellNumber } from "../table-cell-number";
-import { TableCellDate } from "../table-cell-date";
-import { TableCellSkeleton } from "../dable-cell-skeleton";
-import { TableCellUnavailable } from "../table-cell-unavailable";
+import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNow } from "date-fns";
+import { TableCellSkeleton } from "../dable-cell-skeleton";
+import { TableCellDate } from "../table-cell-date";
+import { TableCellNumber } from "../table-cell-number";
+import { TableCellUnavailable } from "../table-cell-unavailable";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
   globalMetrics?:
@@ -141,7 +141,7 @@ export const columns: ColumnDef<Monitor>[] = [
             <Badge
               key={tag.id}
               variant="outline"
-              className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1 rounded-full"
+              className="relative flex translate-x-0 items-center gap-1.5 rounded-full bg-background transition-transform hover:z-10 hover:translate-x-1"
             >
               <div
                 className="size-2.5 rounded-full"

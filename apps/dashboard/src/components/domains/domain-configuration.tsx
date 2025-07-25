@@ -3,11 +3,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-import { useDomainStatus } from "./use-domain-status";
-import DomainStatusIcon from "./domain-status-icon";
-import { getSubdomain } from "@/lib/domains";
 import { Note } from "@/components/common/note";
+import { getSubdomain } from "@/lib/domains";
 import { CircleCheck } from "lucide-react";
+import DomainStatusIcon from "./domain-status-icon";
+import { useDomainStatus } from "./use-domain-status";
 
 export const InlineSnippet = ({
   className,
@@ -20,7 +20,7 @@ export const InlineSnippet = ({
     <span
       className={cn(
         "inline-block rounded-md bg-muted px-1 py-0.5 font-mono",
-        className
+        className,
       )}
     >
       {children}
@@ -77,7 +77,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                   0,
                   txtVerification.domain.length -
                     (domainJson?.apexName?.length || 0) -
-                    1
+                    1,
                 )}
               </p>
             </div>

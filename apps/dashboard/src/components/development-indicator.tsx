@@ -1,14 +1,14 @@
 "use client";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import * as Portal from "@radix-ui/react-portal";
+import { Kbd } from "./common/kbd";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "./ui/tooltip";
-import { Kbd } from "./common/kbd";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export function DevelopmentIndicator() {
   const isMobile = useIsMobile();
@@ -23,7 +23,7 @@ export function DevelopmentIndicator() {
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger>
-                <div className="bg-destructive text-background w-fit font-mono text-xs rounded-t px-2 py-1">
+                <div className="w-fit rounded-t bg-destructive px-2 py-1 font-mono text-background text-xs">
                   In Beta
                 </div>
               </TooltipTrigger>

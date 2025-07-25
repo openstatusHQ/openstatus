@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, XCircle, LoaderCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
 

@@ -1,13 +1,22 @@
 import { z } from "zod";
 
-import { and, desc, asc, eq, gte, inArray, SQL, sql } from "@openstatus/db";
+import {
+  type SQL,
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  sql,
+} from "@openstatus/db";
 import {
   insertStatusReportSchema,
   insertStatusReportUpdateSchema,
   monitorsToStatusReport,
   page,
-  selectPageSchema,
   selectMonitorSchema,
+  selectPageSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
   selectStatusReportUpdateSchema,
@@ -18,8 +27,8 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
@@ -44,7 +53,7 @@ export const statusReportRouter = createTRPCRouter({
             monitors.map((monitor) => ({
               monitorId: monitor,
               statusReportId: newStatusReport.id,
-            }))
+            })),
           )
           .returning()
           .get();
@@ -63,8 +72,8 @@ export const statusReportRouter = createTRPCRouter({
         .where(
           and(
             eq(statusReport.id, opts.input.statusReportId),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(statusReport.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning()
         .get();
@@ -98,8 +107,8 @@ export const statusReportRouter = createTRPCRouter({
         .where(
           and(
             eq(statusReport.id, statusReportInput.id),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(statusReport.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning()
         .get();
@@ -108,7 +117,7 @@ export const statusReportRouter = createTRPCRouter({
         .select()
         .from(monitorsToStatusReport)
         .where(
-          eq(monitorsToStatusReport.statusReportId, currentStatusReport.id)
+          eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
         )
         .all();
 
@@ -116,7 +125,7 @@ export const statusReportRouter = createTRPCRouter({
         (x) =>
           !currentMonitorsToStatusReport
             .map(({ monitorId }) => monitorId)
-            .includes(x)
+            .includes(x),
       );
 
       if (addedMonitors.length) {
@@ -138,8 +147,8 @@ export const statusReportRouter = createTRPCRouter({
           .where(
             and(
               eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
-              inArray(monitorsToStatusReport.monitorId, removedMonitors)
-            )
+              inArray(monitorsToStatusReport.monitorId, removedMonitors),
+            ),
           )
           .run();
       }
@@ -174,8 +183,8 @@ export const statusReportRouter = createTRPCRouter({
         .where(
           and(
             eq(statusReport.id, opts.input.id),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(statusReport.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!statusReportToDelete) return;
@@ -215,7 +224,7 @@ export const statusReportRouter = createTRPCRouter({
                 statusReportId: z.number(),
                 monitorId: z.number(),
                 monitor: selectMonitorSchema,
-              })
+              }),
             )
             .default([]),
           statusReportUpdates: z.array(selectStatusReportUpdateSchema),
@@ -229,7 +238,7 @@ export const statusReportRouter = createTRPCRouter({
           // only allow to fetch status report if it belongs to the page
           opts.input.pageId
             ? eq(statusReport.pageId, opts.input.pageId)
-            : undefined
+            : undefined,
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
@@ -263,7 +272,7 @@ export const statusReportRouter = createTRPCRouter({
             statusReportId: z.number(),
             monitorId: z.number(),
             monitor: selectMonitorSchema,
-          })
+          }),
         )
         .default([]),
       statusReportUpdates: z.array(selectStatusReportUpdateSchema),
@@ -296,7 +305,7 @@ export const statusReportRouter = createTRPCRouter({
               statusReportId: z.number(),
               monitorId: z.number(),
               monitor: selectMonitorSchema,
-            })
+            }),
           )
           .default([]),
         statusReportUpdates: z.array(selectStatusReportUpdateSchema),
@@ -305,7 +314,7 @@ export const statusReportRouter = createTRPCRouter({
       const result = await opts.ctx.db.query.statusReport.findMany({
         where: and(
           eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          eq(statusReport.pageId, opts.input.id)
+          eq(statusReport.pageId, opts.input.id),
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
@@ -333,7 +342,7 @@ export const statusReportRouter = createTRPCRouter({
         where: and(
           eq(statusReport.id, opts.input.id),
           eq(statusReport.pageId, result.id),
-          eq(statusReport.workspaceId, result.workspaceId)
+          eq(statusReport.workspaceId, result.workspaceId),
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
@@ -360,7 +369,7 @@ export const statusReportRouter = createTRPCRouter({
           .optional(),
         order: z.enum(["asc", "desc"]).optional(),
         pageId: z.number().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -369,7 +378,7 @@ export const statusReportRouter = createTRPCRouter({
 
       if (opts.input?.createdAt?.gte) {
         whereConditions.push(
-          gte(statusReport.createdAt, opts.input.createdAt.gte)
+          gte(statusReport.createdAt, opts.input.createdAt.gte),
         );
       }
 
@@ -403,9 +412,9 @@ export const statusReportRouter = createTRPCRouter({
             ...report,
             updates: report.statusReportUpdates,
             monitors: report.monitorsToStatusReports.map(
-              ({ monitor }) => monitor
+              ({ monitor }) => monitor,
             ),
-          }))
+          })),
         );
     }),
 
@@ -419,7 +428,7 @@ export const statusReportRouter = createTRPCRouter({
         monitors: z.array(z.number()),
         date: z.coerce.date(),
         message: z.string(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       return opts.ctx.db.transaction(async (tx) => {
@@ -452,7 +461,7 @@ export const statusReportRouter = createTRPCRouter({
               opts.input.monitors.map((monitor) => ({
                 monitorId: monitor,
                 statusReportId: newStatusReport.id,
-              }))
+              })),
             )
             .returning()
             .get();
@@ -470,7 +479,7 @@ export const statusReportRouter = createTRPCRouter({
         monitors: z.array(z.number()),
         title: z.string(),
         status: z.enum(statusReportStatus),
-      })
+      }),
     )
     .mutation(async (opts) => {
       opts.ctx.db.transaction(async (tx) => {
@@ -484,8 +493,8 @@ export const statusReportRouter = createTRPCRouter({
           .where(
             and(
               eq(statusReport.id, opts.input.id),
-              eq(statusReport.workspaceId, opts.ctx.workspace.id)
-            )
+              eq(statusReport.workspaceId, opts.ctx.workspace.id),
+            ),
           )
           .run();
 
@@ -501,7 +510,7 @@ export const statusReportRouter = createTRPCRouter({
               opts.input.monitors.map((monitor) => ({
                 monitorId: monitor,
                 statusReportId: opts.input.id,
-              }))
+              })),
             )
             .run();
         }

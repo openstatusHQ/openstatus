@@ -23,7 +23,7 @@ export const stripeRouter = createTRPCRouter({
 
   getUserCustomerPortal: protectedProcedure
     .input(
-      z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() })
+      z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),
     )
     .mutation(async (opts) => {
       const result = await opts.ctx.db
@@ -86,7 +86,7 @@ export const stripeRouter = createTRPCRouter({
         successUrl: z.string().optional(),
         cancelUrl: z.string().optional(),
         // TODO: plan: workspacePlanSchema
-      })
+      }),
     )
     .mutation(async (opts) => {
       console.log("getCheckoutSession");

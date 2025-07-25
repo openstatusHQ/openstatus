@@ -12,19 +12,8 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
+import { type SQL, and, count, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  inArray,
-  isNull,
-  type SQL,
-  sql,
-} from "@openstatus/db";
-import {
-  incidentTable,
   insertMonitorSchema,
   maintenancesToMonitors,
   monitor,
@@ -40,7 +29,6 @@ import {
   selectIncidentSchema,
   selectMaintenanceSchema,
   selectMonitorSchema,
-  selectMonitorStatusSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
   selectPageSchema,
@@ -48,13 +36,13 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import {
-  freeFlyRegions,
   flyRegions,
+  freeFlyRegions,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
-import { checkerRouter, testHttp, testTcp } from "./checker";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { testHttp, testTcp } from "./checker";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -1071,12 +1059,12 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      console.log(input.regions, limits["regions"]);
+      console.log(input.regions, limits.regions);
 
       if (
         input.regions.length > 0 &&
         !input.regions.every((r) =>
-          limits["regions"].includes(r as (typeof limits)["regions"][number])
+          limits.regions.includes(r as (typeof limits)["regions"][number])
         )
       ) {
         throw new TRPCError({

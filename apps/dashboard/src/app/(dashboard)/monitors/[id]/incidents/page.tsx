@@ -15,8 +15,8 @@ import {
 import { columns } from "@/components/data-table/incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -24,11 +24,11 @@ export default function Page() {
   const trpc = useTRPC();
   const { data: incidents } = useQuery(
     trpc.incident.list.queryOptions({
-      monitorId: parseInt(id),
-    })
+      monitorId: Number.parseInt(id),
+    }),
   );
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   if (!incidents || !monitor) return null;

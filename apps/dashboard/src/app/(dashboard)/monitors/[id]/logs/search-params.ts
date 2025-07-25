@@ -1,3 +1,7 @@
+import { PERIODS, STATUS, TRIGGER } from "@/data/metrics.client";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { endOfDay } from "date-fns";
+import { startOfDay } from "date-fns";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
@@ -6,16 +10,12 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { PERIODS, STATUS, TRIGGER } from "@/data/metrics.client";
-import { endOfDay } from "date-fns";
-import { startOfDay } from "date-fns";
 
 export const searchParamsParsers = {
   period: parseAsStringLiteral(PERIODS).withDefault("1d"),
   regions: parseAsArrayOf(parseAsStringLiteral(flyRegions)).withDefault(
     // FIXME: readonly
-    flyRegions as unknown as (typeof flyRegions)[number][]
+    flyRegions as unknown as (typeof flyRegions)[number][],
   ),
   status: parseAsStringLiteral(STATUS),
   trigger: parseAsStringLiteral(TRIGGER),

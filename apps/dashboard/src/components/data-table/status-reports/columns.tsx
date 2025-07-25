@@ -1,15 +1,15 @@
 "use client";
 
+import { TableCellBadge } from "@/components/data-table/table-cell-badge";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { TableCellBadge } from "@/components/data-table/table-cell-badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { colors } from "@/data/status-report-updates.client";
+import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
-import { colors } from "@/data/status-report-updates.client";
-import { cn } from "@/lib/utils";
 
 import type { RouterOutputs } from "@openstatus/api";
 
@@ -63,7 +63,7 @@ export const columns: ColumnDef<StatusReport>[] = [
         <div
           className={cn(
             "font-mono capitalize",
-            colors[value as keyof typeof colors]
+            colors[value as keyof typeof colors],
           )}
         >
           {value}

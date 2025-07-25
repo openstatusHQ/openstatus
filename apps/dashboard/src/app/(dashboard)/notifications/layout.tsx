@@ -5,7 +5,7 @@ import {
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { NavActions } from "./nav-actions";
 
 export default async function Layout({

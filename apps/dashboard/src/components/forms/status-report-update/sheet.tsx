@@ -37,7 +37,7 @@ export function FormSheetStatusReportUpdate({
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-scroll">
-          <FormCard className="overflow-auto border-none rounded-none">
+          <FormCard className="overflow-auto rounded-none border-none">
             <FormStatusReportUpdate
               id="status-report-update-form"
               className="my-4"

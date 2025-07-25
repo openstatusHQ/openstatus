@@ -1,4 +1,4 @@
-import { StatusReportStatus } from "@openstatus/db/src/schema";
+import type { StatusReportStatus } from "@openstatus/db/src/schema";
 import { Pencil, Trash2 } from "lucide-react";
 
 export const actions = [
@@ -21,7 +21,7 @@ export type StatusReportUpdateAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<
     Record<StatusReportUpdateAction["id"], () => Promise<void> | void>
-  >
+  >,
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

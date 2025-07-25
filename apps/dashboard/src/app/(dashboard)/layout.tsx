@@ -1,10 +1,10 @@
-import { TRPCReactProvider } from "@/lib/trpc/client";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
+import { TRPCReactProvider } from "@/lib/trpc/client";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { SessionProvider } from "next-auth/react";
 import { cookies } from "next/headers";
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,

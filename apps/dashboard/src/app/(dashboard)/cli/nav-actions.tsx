@@ -1,12 +1,12 @@
 import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@/components/ui/button";
-import { Book } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Book } from "lucide-react";
 
 export function NavActions() {
   return (
@@ -17,8 +17,9 @@ export function NavActions() {
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
               <a
-                href={`https://docs.openstatus.dev/cli/getting-started/`}
+                href={"https://docs.openstatus.dev/cli/getting-started/"}
                 target="_blank"
+                rel="noreferrer"
               >
                 <Book className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
               </a>

@@ -3,14 +3,14 @@
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
+import { Kbd } from "@/components/common/kbd";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { formatDateForInput } from "@/lib/formatter";
 import { endOfDay } from "date-fns";
-import { Kbd } from "@/components/common/kbd";
 
 type DatePickerProps = {
   range: DateRange;
@@ -28,7 +28,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
         <div className="relative py-4">
           <div className="h-full">
             <div className="flex flex-col px-1">
-              <div className="font-medium text-muted-foreground text-xs px-3 py-1">
+              <div className="px-3 py-1 font-medium text-muted-foreground text-xs">
                 Presets
               </div>
               {presets.map((preset) => {
@@ -41,13 +41,13 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
                     key={preset.id}
                     variant={isSelected ? "outline" : "ghost"}
                     size="sm"
-                    className="w-full justify-between border-transparent border"
+                    className="w-full justify-between border border-transparent"
                     onClick={() => {
                       onSelect(preset.values);
                     }}
                   >
                     <span>{preset.label}</span>
-                    <Kbd className="uppercase font-mono">{preset.shortcut}</Kbd>
+                    <Kbd className="font-mono uppercase">{preset.shortcut}</Kbd>
                   </Button>
                 );
               })}
@@ -55,7 +55,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
           </div>
         </div>
         <Separator orientation="vertical" className="h-auto! w-px" />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <Calendar
             mode="range"
             selected={range}
@@ -77,7 +77,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
       </div>
       <Separator />
       <div className="flex flex-col gap-2 px-3 py-4">
-        <p className="font-medium text-muted-foreground text-xs px-1">
+        <p className="px-1 font-medium text-muted-foreground text-xs">
           Custom Range
         </p>
         <div className="grid gap-2 sm:grid-cols-2">

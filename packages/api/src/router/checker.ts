@@ -1,17 +1,17 @@
 import { TRPCError } from "@trpc/server";
 
-import { z } from "zod";
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
-import { env } from "../env";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { Events } from "@openstatus/analytics";
 import {
   deserialize,
-  statusAssertion,
   headerAssertion,
   jsonBodyAssertion,
+  statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { Events } from "@openstatus/analytics";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
+import { z } from "zod";
+import { env } from "../env";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
 
@@ -41,7 +41,7 @@ const httpTestInput = z.object({
         headerAssertion,
         textBodyAssertion,
         jsonBodyAssertion,
-      ])
+      ]),
     )
     .default([]),
 });
@@ -71,7 +71,7 @@ export const tcpTextOutput = z
     z.object({
       state: z.literal("error").default("error"),
       message: z.string(),
-    })
+    }),
   );
 
 export const httpOutput = z
@@ -101,7 +101,7 @@ export const httpOutput = z
     z.object({
       state: z.literal("error").default("error"),
       message: z.string(),
-    })
+    }),
   );
 
 export async function testHttp(input: z.infer<typeof httpTestInput>) {
@@ -131,12 +131,12 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
               if (!key) return acc;
               return { ...acc, [key]: value };
             },
-            {} as Record<string, string>
+            {} as Record<string, string>,
           ),
           body: input.body,
         }),
         signal: AbortSignal.timeout(ABORT_TIMEOUT),
-      }
+      },
     );
 
     const json = await res.json();
@@ -145,7 +145,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
     if (!result.success) {
       console.error(
         `Checker HTTP test failed for ${input.url}:`,
-        result.error.message
+        result.error.message,
       );
       throw new TRPCError({
         code: "BAD_REQUEST",
@@ -170,7 +170,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
             body: body ?? "",
             header: headers ?? {},
             status: status,
-          })
+          }),
       );
 
       if (assertions.some((assertion) => !assertion.success)) {
@@ -213,7 +213,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
         },
         body: JSON.stringify({ uri: input.url }),
         signal: AbortSignal.timeout(ABORT_TIMEOUT),
-      }
+      },
     );
 
     const json = await res.json();
@@ -222,7 +222,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
     if (!result.success) {
       console.error(
         `Checker TCP test failed for ${input.url}:`,
-        result.error.message
+        result.error.message,
       );
       throw new TRPCError({
         code: "BAD_REQUEST",

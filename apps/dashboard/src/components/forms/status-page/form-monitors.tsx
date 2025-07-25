@@ -73,13 +73,13 @@ const schema = z.object({
       id: z.number(),
       order: z.number(),
       type: z.enum(["all", "hide", "none"]),
-    })
+    }),
   ),
 });
 
 const getSortedMonitors = (
   monitors: Monitor[],
-  monitorData: { id: number; order: number }[]
+  monitorData: { id: number; order: number }[],
 ) => {
   const orderMap = new Map(monitorData?.map((m) => [m.id, m.order]) ?? []);
 
@@ -111,9 +111,10 @@ export function FormMonitors({
   const [isPending, startTransition] = useTransition();
   const watchMonitors = form.watch("monitors");
   const [data, setData] = useState<Monitor[]>(
-    getSortedMonitors(monitors, defaultValues?.monitors ?? [])
+    getSortedMonitors(monitors, defaultValues?.monitors ?? []),
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (watchMonitors.length !== data.length) {
       setData(getSortedMonitors(monitors, watchMonitors));
@@ -130,14 +131,15 @@ export function FormMonitors({
           id: m.id,
           order: index,
           type: "none" as const,
-        }))
+        })),
       );
     },
-    [form]
+    [form],
   );
 
   const getItemValue = useCallback((item: Monitor) => item.id, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const renderOverlay = useCallback(
     ({ value }: { value: UniqueIdentifier }) => {
       const monitor = data.find((monitor) => monitor.id === value);
@@ -146,7 +148,7 @@ export function FormMonitors({
       return <MonitorRow monitor={monitor} form={form} />;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data]
+    [data],
   );
 
   function submitAction(values: FormValues) {
@@ -197,7 +199,7 @@ export function FormMonitors({
                           role="combobox"
                           className={cn(
                             "w-[200px] justify-between",
-                            !field.value && "text-muted-foreground"
+                            !field.value && "text-muted-foreground",
                           )}
                           size="sm"
                         >
@@ -228,8 +230,8 @@ export function FormMonitors({
                                     form.setValue(
                                       "monitors",
                                       field.value.filter(
-                                        (m) => m.id !== monitor.id
-                                      )
+                                        (m) => m.id !== monitor.id,
+                                      ),
                                     );
                                   } else {
                                     form.setValue("monitors", [
@@ -249,7 +251,7 @@ export function FormMonitors({
                                     "ml-auto",
                                     field.value.some((m) => m.id === monitor.id)
                                       ? "opacity-100"
-                                      : "opacity-0"
+                                      : "opacity-0",
                                   )}
                                 />
                               </CommandItem>

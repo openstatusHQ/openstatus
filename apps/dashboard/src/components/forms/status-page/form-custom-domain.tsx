@@ -22,12 +22,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Link } from "@/components/common/link";
+import DomainConfiguration from "@/components/domains/domain-configuration";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { isTRPCClientError } from "@trpc/client";
 import type React from "react";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import DomainConfiguration from "@/components/domains/domain-configuration";
-import { isTRPCClientError } from "@trpc/client";
 
 const schema = z.object({
   domain: z.string(),

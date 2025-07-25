@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 export function useCookieState<T extends string>(
   name: string,
   defaultValue?: T,
-  config?: { expires?: number }
+  config?: { expires?: number },
 ) {
   const [state, setState] = useState<T | undefined>();
 
@@ -20,7 +20,7 @@ export function useCookieState<T extends string>(
         setState(value);
       }
     },
-    [name, config]
+    [name, config],
   );
 
   useEffect(() => {

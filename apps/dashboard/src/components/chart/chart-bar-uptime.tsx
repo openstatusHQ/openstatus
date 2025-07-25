@@ -10,12 +10,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { mapUptime, PERIODS } from "@/data/metrics.client";
-import { Region } from "@openstatus/db/src/schema/constants";
-import { endOfDay, startOfDay, subDays } from "date-fns";
+import { type PERIODS, mapUptime } from "@/data/metrics.client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTRPC } from "@/lib/trpc/client";
+import type { Region } from "@openstatus/db/src/schema/constants";
+import { useQuery } from "@tanstack/react-query";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 
 const chartConfig = {
   ok: {
@@ -69,7 +69,7 @@ export function ChartBarUptime({
       regions,
       interval,
       type,
-    })
+    }),
   );
 
   const refinedUptime = uptime ? mapUptime(uptime) : [];

@@ -6,8 +6,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { RouterOutputs } from "@openstatus/api";
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import type { RouterOutputs } from "@openstatus/api";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 type MonitorTag = RouterOutputs["monitorTag"]["list"][number];

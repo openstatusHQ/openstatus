@@ -16,7 +16,7 @@ export const feedbackRouter = createTRPCRouter({
         email: z.string().email().optional(),
         blocker: z.boolean().optional(),
         type: z.string().optional(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       if (!env.SLACK_FEEDBACK_WEBHOOK_URL) {

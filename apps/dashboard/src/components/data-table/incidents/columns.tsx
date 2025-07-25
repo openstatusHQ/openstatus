@@ -4,10 +4,10 @@ import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
 import { DataTableRowActions } from "./data-table-row-actions";
-import type { RouterOutputs } from "@openstatus/api";
 
 type Incident = RouterOutputs["incident"]["list"][number];
 

@@ -33,8 +33,8 @@ export const monitorTagRouter = createTRPCRouter({
         .where(
           and(
             eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-            eq(monitorTag.id, opts.input.id)
-          )
+            eq(monitorTag.id, opts.input.id),
+          ),
         )
         .returning()
         .get();
@@ -48,8 +48,8 @@ export const monitorTagRouter = createTRPCRouter({
         .where(
           and(
             eq(monitorTag.id, opts.input.id),
-            eq(monitorTag.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(monitorTag.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -93,12 +93,12 @@ export const monitorTagRouter = createTRPCRouter({
         const keepTagIds = new Set(
           opts.input
             .map((tag) => tag.id)
-            .filter((id): id is number => id !== undefined)
+            .filter((id): id is number => id !== undefined),
         );
 
         // Delete tags that are not in the input
         const tagsToDelete = existingTags.filter(
-          (tag) => !keepTagIds.has(tag.id)
+          (tag) => !keepTagIds.has(tag.id),
         );
         if (tagsToDelete.length > 0) {
           await tx
@@ -108,9 +108,9 @@ export const monitorTagRouter = createTRPCRouter({
                 eq(monitorTag.workspaceId, workspaceId),
                 inArray(
                   monitorTag.id,
-                  tagsToDelete.map((t) => t.id)
-                )
-              )
+                  tagsToDelete.map((t) => t.id),
+                ),
+              ),
             )
             .run();
         }
@@ -130,24 +130,23 @@ export const monitorTagRouter = createTRPCRouter({
                 .where(
                   and(
                     eq(monitorTag.workspaceId, workspaceId),
-                    eq(monitorTag.id, tag.id)
-                  )
+                    eq(monitorTag.id, tag.id),
+                  ),
                 )
                 .returning()
                 .get();
-            } else {
-              // Create new tag
-              return tx
-                .insert(monitorTag)
-                .values({
-                  name: tag.name,
-                  color: tag.color,
-                  workspaceId,
-                })
-                .returning()
-                .get();
             }
-          })
+            // Create new tag
+            return tx
+              .insert(monitorTag)
+              .values({
+                name: tag.name,
+                color: tag.color,
+                workspaceId,
+              })
+              .returning()
+              .get();
+          }),
         );
 
         console.error(results);

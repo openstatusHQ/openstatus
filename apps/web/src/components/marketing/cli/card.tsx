@@ -22,7 +22,6 @@ export function CLICard() {
         <Terminal />
         <CardFeatureContainer>
           {features?.map((feature, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <CardFeature key={i} {...feature} />
           ))}
         </CardFeatureContainer>

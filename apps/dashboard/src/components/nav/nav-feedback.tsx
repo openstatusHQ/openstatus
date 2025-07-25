@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Kbd } from "@/components/common/kbd";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -12,18 +9,21 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Kbd } from "@/components/common/kbd";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { AudioLines, Inbox, LoaderCircle, Mic } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -53,9 +53,9 @@ export function NavFeedback() {
     }
 
     const SpeechRecognitionCtor =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       (window as any).webkitSpeechRecognition ||
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       (window as any).SpeechRecognition;
 
     // Browser not supported
@@ -72,7 +72,7 @@ export function NavFeedback() {
         .join(" ");
       form.setValue(
         "message",
-        `${form.getValues("message") ?? ""}${transcript} `
+        `${form.getValues("message") ?? ""}${transcript} `,
       );
     };
 
@@ -112,7 +112,7 @@ export function NavFeedback() {
       });
       await promise;
     },
-    [feedbackMutation, isMobile]
+    [feedbackMutation, isMobile],
   );
 
   useEffect(() => {
@@ -164,20 +164,20 @@ export function NavFeedback() {
         <Button
           variant="ghost"
           size="sm"
-          className="group gap-0 px-2 text-sm text-muted-foreground hover:text-foreground hover:bg-transparent data-[state=open]:text-foreground"
+          className="group gap-0 px-2 text-muted-foreground text-sm hover:bg-transparent hover:text-foreground data-[state=open]:text-foreground"
         >
           Feedback{" "}
-          <Kbd className="group-data-[state=open]:text-foreground group-hover:text-foreground font-mono">
+          <Kbd className="font-mono group-hover:text-foreground group-data-[state=open]:text-foreground">
             F
           </Kbd>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="relative p-0 border-none">
+      <PopoverContent align="end" className="relative border-none p-0">
         {feedbackMutation.isSuccess ? (
-          <div className="p-3 h-[110px] flex flex-col gap-1 items-center justify-center rounded-md border border-input text-base shadow-xs">
+          <div className="flex h-[110px] flex-col items-center justify-center gap-1 rounded-md border border-input p-3 text-base shadow-xs">
             <Inbox className="size-4 shrink-0" />
-            <p className="font-medium text-center">Thanks for sharing!</p>
-            <p className="text-muted-foreground text-sm text-center">
+            <p className="text-center font-medium">Thanks for sharing!</p>
+            <p className="text-center text-muted-foreground text-sm">
               We&apos;ll get in touch if there&apos;s a follow-up.
             </p>
           </div>
@@ -193,7 +193,7 @@ export function NavFeedback() {
                     <FormControl>
                       <Textarea
                         placeholder="Ideas, bugs, or anything else..."
-                        className="resize-none p-3 field-sizing-fixed h-[110px]"
+                        className="field-sizing-fixed h-[110px] resize-none p-3"
                         rows={4}
                         {...field}
                       />
@@ -206,7 +206,7 @@ export function NavFeedback() {
                   type="button"
                   size="sm"
                   variant="ghost"
-                  className="absolute group bottom-1.5 left-1.5 gap-0"
+                  className="group absolute bottom-1.5 left-1.5 gap-0"
                   onClick={toggleListening}
                 >
                   {isListening ? (
@@ -219,7 +219,7 @@ export function NavFeedback() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="absolute group bottom-1.5 right-1.5 gap-0"
+                className="group absolute right-1.5 bottom-1.5 gap-0"
                 type="submit"
                 disabled={feedbackMutation.isPending}
               >
@@ -228,10 +228,10 @@ export function NavFeedback() {
                 ) : (
                   <>
                     Send
-                    <Kbd className="group-hover:text-foreground font-mono">
+                    <Kbd className="font-mono group-hover:text-foreground">
                       ⌘
                     </Kbd>
-                    <Kbd className="group-hover:text-foreground font-mono">
+                    <Kbd className="font-mono group-hover:text-foreground">
                       ↵
                     </Kbd>
                   </>

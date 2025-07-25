@@ -26,7 +26,7 @@ function ExampleTrackerFallback() {
   return <Tracker data={[]} name="Ping" description="Pong" />;
 }
 
-async function ExampleTracker() {
+export async function ExampleTracker() {
   const res = await prepareStatusByPeriod("45d").getData({
     monitorId: "1",
   });

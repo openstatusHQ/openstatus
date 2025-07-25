@@ -17,22 +17,22 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
-import { useTransition, useState } from "react";
-import { toast } from "sonner";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   AlertDialog,
-  AlertDialogDescription,
-  AlertDialogTitle,
   AlertDialogContent,
+  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Copy } from "lucide-react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 // we should prefetch the api key on the server (layout)
 
@@ -45,7 +45,7 @@ export function FormApiKey() {
     key: string;
   } | null>(null);
   const { data: workspace } = useQuery(
-    trpc.workspace.getWorkspace.queryOptions()
+    trpc.workspace.getWorkspace.queryOptions(),
   );
   const { data: apiKey, refetch } = useQuery(trpc.apiKey.get.queryOptions());
   const createApiKeyMutation = useMutation(
@@ -57,12 +57,12 @@ export function FormApiKey() {
           throw new Error("Failed to create API key");
         }
       },
-    })
+    }),
   );
   const revokeApiKeyMutation = useMutation(
     trpc.apiKey.revoke.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   // FIXME: Why is unkey caching so hardly? I have to hard refresh.

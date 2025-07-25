@@ -50,7 +50,7 @@ const schema = z.object({
       id: z.number(),
       name: z.string(),
       color: z.string(),
-    })
+    }),
   ),
 });
 
@@ -69,7 +69,7 @@ export function FormTags({
   const syncTagsMutation = useMutation(
     trpc.monitorTag.syncTags.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const form = useForm<FormValues>({
@@ -112,7 +112,7 @@ export function FormTags({
             id: tag.id,
             name: tag.name,
             color: tag.color,
-          })) ?? []
+          })) ?? [],
       );
     }
   }, [tags, form]);
@@ -148,7 +148,7 @@ export function FormTags({
                           role="combobox"
                           className={cn(
                             "h-auto min-h-9 w-full justify-between",
-                            !field.value?.length && "text-muted-foreground"
+                            !field.value?.length && "text-muted-foreground",
                           )}
                         >
                           <div className="group/badges -space-x-2 flex flex-wrap">
@@ -157,7 +157,7 @@ export function FormTags({
                                 <Badge
                                   key={tag.id}
                                   variant="outline"
-                                  className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1 rounded-full"
+                                  className="relative flex translate-x-0 items-center gap-1.5 rounded-full bg-background transition-transform hover:z-10 hover:translate-x-1"
                                 >
                                   <div
                                     className={cn("size-2.5 rounded-full")}
@@ -195,8 +195,8 @@ export function FormTags({
                                     form.setValue(
                                       "tags",
                                       field.value.filter(
-                                        (value) => value.id !== tag.id
-                                      )
+                                        (value) => value.id !== tag.id,
+                                      ),
                                     );
                                   } else {
                                     form.setValue("tags", [
@@ -222,7 +222,7 @@ export function FormTags({
                                       ?.map((tag) => tag.id)
                                       ?.includes(tag.id)
                                       ? "opacity-100"
-                                      : "opacity-0"
+                                      : "opacity-0",
                                   )}
                                 />
                               </CommandItem>

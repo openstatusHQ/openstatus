@@ -1,6 +1,8 @@
 "use client";
 
+import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -9,17 +11,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getActions } from "@/data/monitors.client";
+import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
+import { deserialize } from "@openstatus/assertions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { Zap } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useTRPC } from "@/lib/trpc/client";
-import { isTRPCClientError } from "@trpc/client";
-import { NavFeedback } from "@/components/nav/nav-feedback";
-import type { RouterOutputs } from "@openstatus/api";
-import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
-import { deserialize } from "@openstatus/assertions";
 
 type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
@@ -33,7 +33,7 @@ export function NavActions() {
   const pathname = usePathname();
 
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   const deleteMonitorMutation = useMutation(
@@ -46,7 +46,7 @@ export function NavActions() {
           router.push("/monitors");
         }
       },
-    })
+    }),
   );
 
   const cloneMonitorMutation = useMutation(
@@ -57,7 +57,7 @@ export function NavActions() {
         });
         router.push(`/monitors/${newMonitor.id}`);
       },
-    })
+    }),
   );
 
   const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
@@ -70,7 +70,9 @@ export function NavActions() {
       toast.success("Monitor ID copied to clipboard");
     },
     clone: () => {
-      const promise = cloneMonitorMutation.mutateAsync({ id: parseInt(id) });
+      const promise = cloneMonitorMutation.mutateAsync({
+        id: Number.parseInt(id),
+      });
       toast.promise(promise, {
         loading: "Cloning monitor...",
         success: "Monitor cloned",
@@ -174,7 +176,9 @@ export function NavActions() {
           title: "Monitor",
           confirmationValue: "delete monitor",
           submitAction: async () => {
-            await deleteMonitorMutation.mutateAsync({ id: parseInt(id) });
+            await deleteMonitorMutation.mutateAsync({
+              id: Number.parseInt(id),
+            });
           },
         }}
       />

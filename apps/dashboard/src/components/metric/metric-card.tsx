@@ -2,11 +2,11 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { cn } from "@/lib/utils";
-import React from "react";
+import type React from "react";
 
 const metricCardVariants = cva(
   "flex flex-col gap-1 border rounded-lg px-3 py-2 text-card-foreground",
@@ -23,7 +23,7 @@ const metricCardVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export function MetricCard({
@@ -67,7 +67,7 @@ export function MetricCardHeader({
         "group-data-[variant=destructive]:text-destructive",
         "group-data-[variant=success]:text-success",
         "group-data-[variant=warning]:text-warning",
-        className
+        className,
       )}
       {...props}
     >
@@ -97,7 +97,7 @@ export function MetricCardGroup({
     <div
       className={cn(
         "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
-        className
+        className,
       )}
       {...props}
     >
@@ -154,7 +154,7 @@ export function MetricCardBadge({
 }
 
 const metricCardButtonVariants = cva(
-  "group w-full text-left transition-all rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 cursor-pointer"
+  "group w-full text-left transition-all rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 cursor-pointer",
   // TODO: discuss if we want rings
 );
 
@@ -170,7 +170,7 @@ export function MetricCardButton({
       data-variant={variant}
       className={cn(
         metricCardVariants({ variant, className }),
-        metricCardButtonVariants()
+        metricCardButtonVariants(),
       )}
       {...props}
     >
@@ -189,7 +189,7 @@ export function MetricCardSkeleton({
         "group-data-[variant=destructive]:bg-destructive/50",
         "group-data-[variant=success]:bg-success/50",
         "group-data-[variant=warning]:bg-warning/50",
-        className
+        className,
       )}
       {...props}
     />

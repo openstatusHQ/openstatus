@@ -1,6 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { Sidebar } from "../sidebar";
-import { HydrateClient, trpc, getQueryClient } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,
@@ -12,7 +12,7 @@ export default async function Layout({
   const queryClient = getQueryClient();
   const { id } = await params;
   await queryClient.prefetchQuery(
-    trpc.statusReport.list.queryOptions({ pageId: parseInt(id) })
+    trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
 
   return (

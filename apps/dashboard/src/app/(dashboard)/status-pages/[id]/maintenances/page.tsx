@@ -21,17 +21,17 @@ export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
   const { data: statusPage } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: maintenances, refetch } = useQuery(
     trpc.maintenance.list.queryOptions({
-      pageId: parseInt(id),
-    })
+      pageId: Number.parseInt(id),
+    }),
   );
   const createStatusPageMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   if (!statusPage || !maintenances) return null;
@@ -51,7 +51,7 @@ export default function Page() {
               monitors={statusPage.monitors}
               onSubmit={async (values) => {
                 await createStatusPageMutation.mutateAsync({
-                  pageId: parseInt(id),
+                  pageId: Number.parseInt(id),
                   title: values.title,
                   message: values.message,
                   startDate: values.startDate,

@@ -17,7 +17,7 @@ export function DataTable() {
   const deleteMemberMutation = useMutation(
     trpc.member.delete.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   if (!members) return null;

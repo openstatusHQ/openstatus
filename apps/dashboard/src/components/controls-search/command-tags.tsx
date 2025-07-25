@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -8,18 +9,16 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
-import { parseAsArrayOf, useQueryState, parseAsString } from "nuqs";
-import React from "react";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { Check } from "lucide-react";
+import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 export function CommandTags() {
   const trpc = useTRPC();
@@ -28,7 +27,7 @@ export function CommandTags() {
     "tags",
     parseAsArrayOf(parseAsString).withDefault([]).withOptions({
       shallow: false,
-    })
+    }),
   );
 
   return (
@@ -42,7 +41,7 @@ export function CommandTags() {
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[200px] p-0 relative overflow-hidden"
+        className="relative w-[200px] overflow-hidden p-0"
       >
         <Command>
           <CommandInput placeholder="Search tag..." />
@@ -57,7 +56,7 @@ export function CommandTags() {
                     setSelectedTags((prev) =>
                       prev.includes(tag.name)
                         ? prev.filter((r) => r !== tag.name)
-                        : [...prev, tag.name]
+                        : [...prev, tag.name],
                     );
                   }}
                 >
@@ -73,7 +72,7 @@ export function CommandTags() {
                       "ml-auto",
                       selectedTags.includes(tag.name)
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>

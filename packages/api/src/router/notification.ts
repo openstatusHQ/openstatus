@@ -1,10 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, count, db, eq, inArray, type SQL } from "@openstatus/db";
+import { type SQL, and, count, db, eq, inArray } from "@openstatus/db";
 import {
   NotificationDataSchema,
-  NotificationProvider,
   insertNotificationSchema,
   monitor,
   notification,
@@ -107,8 +106,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(notification.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning()
         .get();
@@ -119,7 +118,7 @@ export const notificationRouter = createTRPCRouter({
         const allMonitors = await opts.ctx.db.query.monitor.findMany({
           where: and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            inArray(monitor.id, monitors)
+            inArray(monitor.id, monitors),
           ),
         });
 
@@ -135,7 +134,7 @@ export const notificationRouter = createTRPCRouter({
         .select()
         .from(notificationsToMonitors)
         .where(
-          eq(notificationsToMonitors.notificationId, currentNotification.id)
+          eq(notificationsToMonitors.notificationId, currentNotification.id),
         )
         .all();
 
@@ -149,8 +148,11 @@ export const notificationRouter = createTRPCRouter({
           .where(
             and(
               inArray(notificationsToMonitors.monitorId, removedMonitors),
-              eq(notificationsToMonitors.notificationId, currentNotification.id)
-            )
+              eq(
+                notificationsToMonitors.notificationId,
+                currentNotification.id,
+              ),
+            ),
           );
       }
 
@@ -178,8 +180,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.id, opts.input.id)
-          )
+            eq(notification.id, opts.input.id),
+          ),
         )
         .run();
     }),
@@ -191,7 +193,7 @@ export const notificationRouter = createTRPCRouter({
         where: and(
           eq(notification.id, opts.input.id),
           eq(notification.id, opts.input.id),
-          eq(notification.workspaceId, opts.ctx.workspace.id)
+          eq(notification.workspaceId, opts.ctx.workspace.id),
         ),
         // FIXME: plural
         with: { monitor: { with: { monitor: true } } },
@@ -201,7 +203,7 @@ export const notificationRouter = createTRPCRouter({
         monitor: z.array(
           z.object({
             monitor: selectMonitorSchema,
-          })
+          }),
         ),
       });
 
@@ -221,7 +223,7 @@ export const notificationRouter = createTRPCRouter({
       monitor: z.array(
         z.object({
           monitor: selectMonitorSchema,
-        })
+        }),
       ),
     });
 
@@ -261,7 +263,7 @@ export const notificationRouter = createTRPCRouter({
         notifications.map((notification) => ({
           ...notification,
           monitors: notification.monitor.map(({ monitor }) => monitor),
-        }))
+        })),
       );
   }),
 
@@ -274,10 +276,10 @@ export const notificationRouter = createTRPCRouter({
         name: z.string(),
         data: z.record(
           z.string(),
-          z.string().or(z.record(z.string(), z.string()))
+          z.string().or(z.record(z.string(), z.string())),
         ),
         monitors: z.array(z.number()),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const whereCondition: SQL[] = [
@@ -288,7 +290,7 @@ export const notificationRouter = createTRPCRouter({
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.monitors)
+          inArray(monitor.id, opts.input.monitors),
         ),
       });
 
@@ -312,14 +314,14 @@ export const notificationRouter = createTRPCRouter({
         await tx
           .delete(notificationsToMonitors)
           .where(
-            and(eq(notificationsToMonitors.notificationId, opts.input.id))
+            and(eq(notificationsToMonitors.notificationId, opts.input.id)),
           );
 
         await tx.insert(notificationsToMonitors).values(
           opts.input.monitors.map((monitorId) => ({
             notificationId: opts.input.id,
             monitorId,
-          }))
+          })),
         );
       });
     }),
@@ -331,11 +333,11 @@ export const notificationRouter = createTRPCRouter({
         provider: z.enum(notificationProvider),
         data: z.record(
           z.enum(notificationProvider),
-          z.record(z.string(), z.string()).or(z.string())
+          z.record(z.string(), z.string()).or(z.string()),
         ),
         name: z.string(),
         monitors: z.array(z.number()).default([]),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const limits = opts.ctx.workspace.limits;
@@ -357,7 +359,7 @@ export const notificationRouter = createTRPCRouter({
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.monitors)
+          inArray(monitor.id, opts.input.monitors),
         ),
       });
 
@@ -369,6 +371,7 @@ export const notificationRouter = createTRPCRouter({
       }
 
       const limitedProviders = ["sms", "pagerduty", "opsgenie"] as const;
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       if (limitedProviders.includes(opts.input.provider as any)) {
         const isAllowed =
           opts.ctx.workspace.limits[
@@ -409,7 +412,7 @@ export const notificationRouter = createTRPCRouter({
             opts.input.monitors.map((monitorId) => ({
               notificationId: _notification.id,
               monitorId,
-            }))
+            })),
           );
         }
 
@@ -428,8 +431,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(notification.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),

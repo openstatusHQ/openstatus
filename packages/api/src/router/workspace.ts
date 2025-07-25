@@ -3,7 +3,7 @@ import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
 import { Events } from "@openstatus/analytics";
-import { and, eq, gte, isNull, SQL, sql } from "@openstatus/db";
+import { type SQL, and, eq, gte, isNull, sql } from "@openstatus/db";
 import {
   application,
   monitor,
@@ -128,7 +128,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
 
@@ -145,8 +145,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -158,7 +158,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
 
@@ -212,8 +212,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         );
       const pages = await tx
         .select({ count: sql<number>`count(*)` })
@@ -226,8 +226,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(monitorRun.workspaceId, opts.ctx.workspace.id),
-            gte(monitorRun.createdAt, new Date(lastMonth))
-          )
+            gte(monitorRun.createdAt, new Date(lastMonth)),
+          ),
         )
         .all();
 

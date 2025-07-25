@@ -46,7 +46,7 @@ export function FormSheetNotifier({
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
-          <FormCard className="overflow-auto border-none rounded-none">
+          <FormCard className="overflow-auto rounded-none border-none">
             {Form && (
               <Form
                 id={`notifier-form-${provider}`}

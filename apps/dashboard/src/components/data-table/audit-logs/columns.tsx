@@ -1,11 +1,11 @@
 "use client";
 
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { config, metadata } from "@/data/audit-logs.client";
 import { cn } from "@/lib/utils";
-import type { ColumnDef } from "@tanstack/react-table";
-import { TableCellDate } from "@/components/data-table/table-cell-date";
 import type { RouterOutputs } from "@openstatus/api";
+import type { ColumnDef } from "@tanstack/react-table";
 
 type AuditLog = RouterOutputs["tinybird"]["auditLog"]["data"][number];
 
@@ -50,7 +50,7 @@ export const columns: ColumnDef<AuditLog>[] = [
         <div className="flex flex-wrap gap-2">
           {Object.entries(value)
             .filter(([key, value]) =>
-              metadata[key as keyof typeof metadata]?.visible(value)
+              metadata[key as keyof typeof metadata]?.visible(value),
             )
             .map(([key, value]) => (
               <Pill
@@ -78,7 +78,7 @@ export const columns: ColumnDef<AuditLog>[] = [
         );
       }
       const date = new Date(Number(value));
-      if (isNaN(date.getTime())) {
+      if (Number.isNaN(date.getTime())) {
         return <div className="font-mono">{String(value)}</div>;
       }
 

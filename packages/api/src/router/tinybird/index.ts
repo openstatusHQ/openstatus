@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { OSTinybird } from "@openstatus/tinybird";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { OSTinybird } from "@openstatus/tinybird";
 
+import { type SQL, and, db, eq, inArray } from "@openstatus/db";
+import { monitor } from "@openstatus/db/src/schema";
+import { TRPCError } from "@trpc/server";
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { and, db, eq, inArray, SQL } from "@openstatus/db";
-import { TRPCError } from "@trpc/server";
-import { monitor } from "@openstatus/db/src/schema";
 import { calculatePeriod } from "./utils";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
@@ -141,7 +141,7 @@ function getUptime30dProcedure(type: Type) {
 }
 
 // TODO: missing pipes for other periods
-function getMetricsLatencyProcedure(period: Period, type: Type) {
+function getMetricsLatencyProcedure(_period: Period, type: Type) {
   return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
 }
 
@@ -157,7 +157,7 @@ export const tinybirdRouter = createTRPCRouter({
         monitorId: z.string(),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       return await tb.httpGetMonthly(opts.input);
@@ -172,7 +172,7 @@ export const tinybirdRouter = createTRPCRouter({
         cronTimestamp: z.number().int().optional(),
         from: z.coerce.date().optional(),
         to: z.coerce.date().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -195,7 +195,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getListProcedure(
         period,
-        _monitor.jobType as "http" | "tcp"
+        _monitor.jobType as "http" | "tcp",
       );
       return await procedure({
         ...opts.input,
@@ -213,7 +213,7 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.number().int().optional(), // in minutes, default 30
         regions: z.enum(flyRegions).array().optional(),
         type: z.enum(types).default("http"),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -241,7 +241,7 @@ export const tinybirdRouter = createTRPCRouter({
       z.object({
         monitorId: z.string(),
         interval: z.number().int().default(30), // in days
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -274,7 +274,7 @@ export const tinybirdRouter = createTRPCRouter({
         type: z.enum(types).default("http"),
         regions: z.array(z.enum(flyRegions)).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -309,7 +309,7 @@ export const tinybirdRouter = createTRPCRouter({
         type: z.enum(types).default("http"),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -330,7 +330,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getMetricsByRegionProcedure(
         opts.input.period,
-        opts.input.type
+        opts.input.type,
       );
       return await procedure(opts.input);
     }),
@@ -343,7 +343,7 @@ export const tinybirdRouter = createTRPCRouter({
         type: z.enum(types).default("http"),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -364,7 +364,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getMetricsByIntervalProcedure(
         opts.input.period,
-        opts.input.type
+        opts.input.type,
       );
       return await procedure(opts.input);
     }),
@@ -379,7 +379,7 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.number().int().optional(),
         regions: z.array(z.enum(flyRegions)).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -404,7 +404,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getMetricsRegionsProcedure(
         opts.input.period,
-        opts.input.type
+        opts.input.type,
       );
       return await procedure(opts.input);
     }),
@@ -417,7 +417,7 @@ export const tinybirdRouter = createTRPCRouter({
         type: z.enum(types).default("http"),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -446,7 +446,7 @@ export const tinybirdRouter = createTRPCRouter({
         id: z.string().nullable(),
         monitorId: z.string(),
         period: z.enum(["14d"]).default("14d"),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -467,7 +467,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getGetProcedure(
         opts.input.period,
-        _monitor.jobType as "http" | "tcp"
+        _monitor.jobType as "http" | "tcp",
       );
       return await procedure(opts.input);
     }),
@@ -477,7 +477,7 @@ export const tinybirdRouter = createTRPCRouter({
       z.object({
         monitorIds: z.string().array(),
         type: z.enum(types).default("http"),
-      })
+      }),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -507,7 +507,7 @@ export const tinybirdRouter = createTRPCRouter({
         period: z.enum(periods),
         regions: z.array(z.enum(flyRegions)).optional(),
         type: z.enum(types).default("http"),
-      })
+      }),
     )
     .query(async (opts) => {
       if (opts.ctx.workspace.plan === "free") {
@@ -516,7 +516,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getMetricsLatencyProcedure(
         opts.input.period,
-        opts.input.type
+        opts.input.type,
       );
       return await procedure(opts.input);
     }),
@@ -529,7 +529,7 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.number().int().optional(),
         regions: z.array(z.enum(flyRegions)).optional(),
         type: z.literal("http"),
-      })
+      }),
     )
     .query(async (opts) => {
       if (opts.ctx.workspace.plan === "free") {
@@ -552,7 +552,7 @@ export const tinybirdRouter = createTRPCRouter({
     .input(
       z.object({
         type: z.enum(types).default("http"),
-      })
+      }),
     )
     .query(async (opts) => {
       const procedure = getWorkspace30dProcedure(opts.input.type);

@@ -15,8 +15,8 @@ import {
   type FormValues,
 } from "@/components/forms/status-report/form";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
+import { useState } from "react";
 
 export function FormSheetStatusReport({
   children,
@@ -44,12 +44,12 @@ export function FormSheetStatusReport({
         </FormSheetHeader>
         {warning ? (
           <>
-            <p className="text-sm text-warning px-4 py-4">{warning}</p>
+            <p className="px-4 py-4 text-sm text-warning">{warning}</p>
             <Separator />
           </>
         ) : null}
         <FormCardGroup className="overflow-y-scroll">
-          <FormCard className="overflow-auto border-none rounded-none">
+          <FormCard className="overflow-auto rounded-none border-none">
             <FormStatusReport
               id="status-report-form"
               className="my-4"

@@ -34,7 +34,7 @@ export function NavBannerUpgrade({ handleClose }: { handleClose: () => void }) {
       </SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem className="flex items-center gap-2 text-sm">
-          <Rocket className="text-info shrink-0" size={12} />
+          <Rocket className="shrink-0 text-info" size={12} />
           <span>
             Unlock custom domains, teams, 1 min. checks, subscriptions and more.
           </span>

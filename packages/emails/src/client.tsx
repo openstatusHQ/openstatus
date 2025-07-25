@@ -58,7 +58,7 @@ export class EmailClient {
         subject: "How's it going with OpenStatus?",
         to: subscriber,
         html,
-      }))
+      })),
     );
 
     if (result.error) {
@@ -68,7 +68,7 @@ export class EmailClient {
       }
       //  Otherwise let's log the error and continue
       console.error(
-        `Error sending follow up email to ${req.to}: ${result.error}`
+        `Error sending follow up email to ${req.to}: ${result.error}`,
       );
       return;
     }
@@ -77,11 +77,11 @@ export class EmailClient {
   }
 
   public async sendStatusReportUpdate(
-    req: StatusReportProps & { to: string[] }
+    req: StatusReportProps & { to: string[] },
   ) {
     if (process.env.NODE_ENV === "development") {
       console.log(
-        `Sending status report update emails to ${req.to.join(", ")}`
+        `Sending status report update emails to ${req.to.join(", ")}`,
       );
       return;
     }
@@ -94,7 +94,7 @@ export class EmailClient {
           subject: req.reportTitle,
           to: subscriber,
           html,
-        }))
+        })),
       );
 
       if (!result.error) {
@@ -106,7 +106,7 @@ export class EmailClient {
     } catch (err) {
       console.error(
         `Error sending status report update email to ${req.to}`,
-        err
+        err,
       );
     }
   }
@@ -168,7 +168,7 @@ export class EmailClient {
   }
 
   public async sendPageSubscription(
-    req: PageSubscriptionProps & { to: string }
+    req: PageSubscriptionProps & { to: string },
   ) {
     if (process.env.NODE_ENV === "development") {
       console.log(`Sending page subscription email to ${req.to}`);

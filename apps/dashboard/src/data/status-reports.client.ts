@@ -1,4 +1,4 @@
-import { Pencil, Plus, Trash2, Eye } from "lucide-react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 
 export const actions = [
   {
@@ -32,7 +32,7 @@ export type StatusReportUpdateAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<
     Record<StatusReportUpdateAction["id"], () => Promise<void> | void>
-  >
+  >,
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

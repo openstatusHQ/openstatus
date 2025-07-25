@@ -14,12 +14,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { getActions } from "@/data/incidents.client";
+import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RouterOutputs } from "@openstatus/api";
-import { isTRPCClientError } from "@trpc/client";
 
 type Incident = RouterOutputs["incident"]["list"][number];
 
@@ -40,7 +40,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           }),
         });
       },
-    })
+    }),
   );
   const resolveIncidentMutation = useMutation(
     trpc.incident.resolve.mutationOptions({
@@ -51,7 +51,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           }),
         });
       },
-    })
+    }),
   );
   const deleteIncidentMutation = useMutation(
     trpc.incident.delete.mutationOptions({
@@ -62,7 +62,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           }),
         });
       },
-    })
+    }),
   );
 
   const [type, setType] = useState<"acknowledge" | "resolve" | null>(null);

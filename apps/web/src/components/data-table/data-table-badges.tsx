@@ -27,7 +27,6 @@ export function DataTableBadges({ names }: { names: string[] }) {
             </TooltipTrigger>
             <TooltipContent side="top" className="flex gap-2">
               {rest.map((name, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                 <Badge key={i} variant="outline">
                   {name}
                 </Badge>

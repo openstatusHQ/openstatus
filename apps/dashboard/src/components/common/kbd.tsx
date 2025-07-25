@@ -15,7 +15,7 @@ const kbdVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export function Kbd({

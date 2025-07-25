@@ -139,7 +139,7 @@ export function FormMaintenance({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          !field.value && "text-muted-foreground",
                         )}
                       >
                         {field.value ? (
@@ -181,7 +181,7 @@ export function FormMaintenance({
                                   .split("T")[0];
 
                                 field.onChange(
-                                  new Date(`${date}T${e.target.value}`)
+                                  new Date(`${date}T${e.target.value}`),
                                 );
                               } catch (error) {
                                 console.error(error);
@@ -219,7 +219,7 @@ export function FormMaintenance({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          !field.value && "text-muted-foreground",
                         )}
                       >
                         {field.value ? (
@@ -261,7 +261,7 @@ export function FormMaintenance({
                                   .split("T")[0];
 
                                 field.onChange(
-                                  new Date(`${date}T${e.target.value}`)
+                                  new Date(`${date}T${e.target.value}`),
                                 );
                               } catch (error) {
                                 console.error(error);
@@ -336,7 +336,7 @@ export function FormMaintenance({
                           checked={field.value?.length === monitors.length}
                           onCheckedChange={(checked) => {
                             field.onChange(
-                              checked ? monitors.map((m) => m.id) : []
+                              checked ? monitors.map((m) => m.id) : [],
                             );
                           }}
                         />

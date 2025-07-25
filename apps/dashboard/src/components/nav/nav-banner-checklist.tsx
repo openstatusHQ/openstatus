@@ -22,9 +22,9 @@ export function NavBannerChecklist({
 
   if (!workspace) return null;
 
-  const hasMonitors = workspace.usage?.monitors ?? 0 > 0;
-  const hasStatusPages = workspace.usage?.pages ?? 0 > 0;
-  const hastNotifications = workspace.usage?.notifications ?? 0 > 0;
+  const hasMonitors = (workspace.usage?.monitors ?? 0) > 0;
+  const hasStatusPages = (workspace.usage?.pages ?? 0) > 0;
+  const hastNotifications = (workspace.usage?.notifications ?? 0) > 0;
 
   if (hasMonitors && hasStatusPages && hastNotifications) return null;
 
@@ -65,13 +65,13 @@ export function NavBannerChecklist({
           >
             {item.checked ? (
               <>
-                <CircleCheck className="text-success shrink-0" size={12} />
+                <CircleCheck className="shrink-0 text-success" size={12} />
                 <span>{item.title}</span>
               </>
             ) : (
               <>
                 <CircleDashed
-                  className="text-muted-foreground/50 shrink-0"
+                  className="shrink-0 text-muted-foreground/50"
                   size={12}
                 />
                 <Link href={item.href}>{item.title}</Link>

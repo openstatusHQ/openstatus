@@ -7,16 +7,16 @@ import { useEffect } from "react";
 export function useDomainStatus(domain: string) {
   const trpc = useTRPC();
   const { data: domainJson, refetch: refetchDomain } = useQuery(
-    trpc.domain.getDomainResponse.queryOptions({ domain })
+    trpc.domain.getDomainResponse.queryOptions({ domain }),
   );
   const { data: configJson, refetch: refetchConfig } = useQuery(
-    trpc.domain.getConfigResponse.queryOptions({ domain })
+    trpc.domain.getConfigResponse.queryOptions({ domain }),
   );
   const { data: verificationJson, refetch: refetchVerification } = useQuery(
     trpc.domain.verifyDomain.queryOptions(
       { domain },
-      { enabled: !domainJson?.verified }
-    )
+      { enabled: !domainJson?.verified },
+    ),
   );
 
   // NOTE: refetch every 5 seconds to check for the status

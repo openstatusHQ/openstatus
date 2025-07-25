@@ -35,7 +35,7 @@ export function Client() {
           router.push(`/status-pages/${data.id}/edit`);
         });
       },
-    })
+    }),
   );
 
   return (

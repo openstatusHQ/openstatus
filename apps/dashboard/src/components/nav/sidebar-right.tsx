@@ -15,6 +15,8 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { PanelRight } from "lucide-react";
 import { Kbd } from "../common/kbd";
@@ -25,8 +27,6 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "]";
 const SIDEBAR_WIDTH = "18rem";
@@ -78,10 +78,10 @@ export function SidebarRight({
                 <TooltipContent side="left">
                   <p className="mr-px inline-flex items-center">
                     Toggle Sidebar{" "}
-                    <Kbd className="border-muted-foreground bg-primary text-background font-mono">
+                    <Kbd className="border-muted-foreground bg-primary font-mono text-background">
                       ⌘
                     </Kbd>
-                    <Kbd className="border-muted-foreground bg-primary text-background font-mono">
+                    <Kbd className="border-muted-foreground bg-primary font-mono text-background">
                       {SIDEBAR_KEYBOARD_SHORTCUT}
                     </Kbd>
                   </p>

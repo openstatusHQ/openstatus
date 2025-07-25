@@ -4,7 +4,7 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { RouterOutputs } from "@openstatus/api";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
@@ -30,7 +30,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           queryKey: trpc.notification.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const deleteNotifierMutation = useMutation(
     trpc.notification.delete.mutationOptions({
@@ -39,7 +39,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           queryKey: trpc.notification.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   return (

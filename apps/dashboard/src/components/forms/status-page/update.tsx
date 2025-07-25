@@ -1,19 +1,19 @@
 import { FormCardGroup } from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams, useRouter } from "next/navigation";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormMonitors } from "./form-monitors";
 import { FormPasswordProtection } from "./form-password-protection";
-import { useParams, useRouter } from "next/navigation";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function FormStatusPageUpdate() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const trpc = useTRPC();
   const { data: statusPage, refetch } = useQuery(
-    trpc.page.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const queryClient = useQueryClient();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
@@ -27,25 +27,25 @@ export function FormStatusPageUpdate() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   const updatePasswordProtectionMutation = useMutation(
     trpc.page.updatePasswordProtection.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const updateMonitorsMutation = useMutation(
     trpc.page.updateMonitors.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const updateCustomDomainMutation = useMutation(
     trpc.page.updateCustomDomain.mutationOptions({
       onSuccess: () => refetch(),
-    })
+    }),
   );
 
   const deleteStatusPageMutation = useMutation(
@@ -61,7 +61,7 @@ export function FormStatusPageUpdate() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   if (!statusPage || !monitors || !workspace) return null;
@@ -77,7 +77,7 @@ export function FormStatusPageUpdate() {
         }}
         onSubmit={async (values) => {
           await updateStatusPageMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             title: values.title,
             slug: values.slug,
             description: values.description ?? "",
@@ -97,7 +97,7 @@ export function FormStatusPageUpdate() {
         }}
         onSubmit={async (values) => {
           await updateMonitorsMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             monitors: values.monitors,
           });
         }}
@@ -109,7 +109,7 @@ export function FormStatusPageUpdate() {
         }}
         onSubmit={async (values) => {
           await updateCustomDomainMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             customDomain: values.domain,
           });
         }}
@@ -122,7 +122,7 @@ export function FormStatusPageUpdate() {
         }}
         onSubmit={async (values) => {
           await updatePasswordProtectionMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
             passwordProtected: values.passwordProtected ?? false,
             password: values.password,
           });
@@ -131,7 +131,7 @@ export function FormStatusPageUpdate() {
       <FormDangerZone
         onSubmit={async () => {
           await deleteStatusPageMutation.mutateAsync({
-            id: parseInt(id),
+            id: Number.parseInt(id),
           });
         }}
       />

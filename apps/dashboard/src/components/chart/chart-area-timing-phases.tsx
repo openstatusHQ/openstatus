@@ -19,13 +19,17 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
+  type INTERVALS,
+  type PERCENTILES,
+  mapTimingPhases,
+} from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+import type { flyRegions } from "@openstatus/db/src/schema/constants";
+import { useQuery } from "@tanstack/react-query";
+import {
   ChartTooltipNumber,
   ChartTooltipNumberRaw,
 } from "./chart-tooltip-number";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { INTERVALS, mapTimingPhases, PERCENTILES } from "@/data/metrics.client";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 const chartConfig = {
   dns: {
@@ -78,7 +82,7 @@ export function ChartAreaTimingPhases({
       type,
       interval,
       regions,
-    })
+    }),
   );
 
   const refinedTimingPhases = timingPhases
@@ -131,7 +135,7 @@ export function ChartAreaTimingPhases({
                     <ChartTooltipNumberRaw
                       value={total}
                       label="Total"
-                      className="text-foreground flex basis-full items-center border-t text-xs h-0 font-medium"
+                      className="flex h-0 basis-full items-center border-t font-medium text-foreground text-xs"
                     />
                   </>
                 );

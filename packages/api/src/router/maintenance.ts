@@ -1,14 +1,21 @@
 import { z } from "zod";
 
-import { and, asc, desc, eq, gte, inArray, lte, SQL } from "@openstatus/db";
+import {
+  type SQL,
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  lte,
+} from "@openstatus/db";
 import {
   insertMaintenanceSchema,
   maintenance,
   maintenancesToMonitors,
   monitor,
-  monitorsToPages,
   selectMaintenanceSchema,
-  selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -33,7 +40,7 @@ export const maintenanceRouter = createTRPCRouter({
             opts.input.monitors.map((monitorId) => ({
               maintenanceId: _maintenance.id,
               monitorId,
-            }))
+            })),
           )
           .returning()
           .get();
@@ -50,8 +57,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(maintenance.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
 
@@ -76,7 +83,7 @@ export const maintenanceRouter = createTRPCRouter({
     const _maintenances = await opts.ctx.db.query.maintenance.findMany({
       where: and(
         eq(maintenance.workspaceId, opts.ctx.workspace.id),
-        gte(maintenance.from, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+        gte(maintenance.from, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
       ),
       with: { maintenancesToMonitors: true },
     });
@@ -94,8 +101,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.pageId, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(maintenance.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .all();
       // TODO:
@@ -109,8 +116,8 @@ export const maintenanceRouter = createTRPCRouter({
         and(
           eq(maintenance.workspaceId, opts.ctx.workspace.id),
           gte(maintenance.to, new Date()),
-          lte(maintenance.from, new Date())
-        )
+          lte(maintenance.from, new Date()),
+        ),
       )
       .all();
     return _maintenances;
@@ -133,8 +140,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(maintenance.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning()
         .get();
@@ -146,11 +153,11 @@ export const maintenanceRouter = createTRPCRouter({
         .all();
 
       const _monitorsIds = _maintenancesToMonitors.map(
-        ({ monitorId }) => monitorId
+        ({ monitorId }) => monitorId,
       );
 
       const added = opts.input.monitors?.filter(
-        (monitor) => !_monitorsIds.includes(monitor)
+        (monitor) => !_monitorsIds.includes(monitor),
       );
 
       if (added?.length) {
@@ -160,14 +167,14 @@ export const maintenanceRouter = createTRPCRouter({
             added.map((monitorId) => ({
               maintenanceId: _maintenance.id,
               monitorId,
-            }))
+            })),
           )
           .returning()
           .get();
       }
 
       const removed = _monitorsIds.filter(
-        (monitor) => !opts.input.monitors?.includes(monitor)
+        (monitor) => !opts.input.monitors?.includes(monitor),
       );
 
       if (removed?.length) {
@@ -176,8 +183,8 @@ export const maintenanceRouter = createTRPCRouter({
           .where(
             and(
               eq(maintenancesToMonitors.maintenanceId, _maintenance.id),
-              inArray(maintenancesToMonitors.monitorId, removed)
-            )
+              inArray(maintenancesToMonitors.monitorId, removed),
+            ),
           )
           .run();
       }
@@ -193,8 +200,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(maintenance.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning();
     }),
@@ -213,7 +220,7 @@ export const maintenanceRouter = createTRPCRouter({
           pageId: z.number().optional(),
           order: z.enum(["asc", "desc"]).optional(),
         })
-        .optional()
+        .optional(),
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
@@ -222,7 +229,7 @@ export const maintenanceRouter = createTRPCRouter({
 
       if (opts.input?.createdAt?.gte) {
         whereConditions.push(
-          gte(maintenance.createdAt, opts.input.createdAt.gte)
+          gte(maintenance.createdAt, opts.input.createdAt.gte),
         );
       }
 
@@ -245,7 +252,7 @@ export const maintenanceRouter = createTRPCRouter({
         result.map((m) => ({
           ...m,
           monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
-        }))
+        })),
       );
     }),
 
@@ -259,7 +266,7 @@ export const maintenanceRouter = createTRPCRouter({
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         monitors: z.array(z.number()).optional(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       // Check if the user has access to the monitors
@@ -301,7 +308,7 @@ export const maintenanceRouter = createTRPCRouter({
             opts.input.monitors.map((monitorId) => ({
               maintenanceId: newMaintenance.id,
               monitorId,
-            }))
+            })),
           );
         }
 
@@ -319,7 +326,7 @@ export const maintenanceRouter = createTRPCRouter({
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         monitors: z.array(z.number()).optional(),
-      })
+      }),
     )
     .mutation(async (opts) => {
       // Check if the user has access to the monitors
@@ -375,7 +382,7 @@ export const maintenanceRouter = createTRPCRouter({
             opts.input.monitors.map((monitorId) => ({
               maintenanceId: _maintenance.id,
               monitorId,
-            }))
+            })),
           );
         }
 

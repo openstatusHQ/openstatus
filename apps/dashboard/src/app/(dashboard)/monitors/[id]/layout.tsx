@@ -4,9 +4,9 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
-import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,
@@ -19,7 +19,7 @@ export default async function Layout({
   const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery(
-    trpc.monitor.get.queryOptions({ id: parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   await queryClient.prefetchQuery(trpc.notification.list.queryOptions());

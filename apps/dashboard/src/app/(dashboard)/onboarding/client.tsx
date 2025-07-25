@@ -25,12 +25,12 @@ import {
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
 import { CreatePageForm } from "@/components/forms/onboarding/create-page";
 import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "./search-params";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const moreActions = [
   {
@@ -84,7 +84,7 @@ export function Client() {
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const createPageMutation = useMutation(
     trpc.page.create.mutationOptions({
@@ -94,7 +94,7 @@ export function Client() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
 
   return (

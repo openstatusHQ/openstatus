@@ -18,11 +18,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartTooltipNumber } from "./chart-tooltip-number";
+import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
+import type { flyRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
-import { mapLatency, type PERCENTILES } from "@/data/metrics.client";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
   latency: {
@@ -56,7 +56,7 @@ export function ChartAreaLatency({
       period,
       type,
       regions,
-    })
+    }),
   );
 
   const refinedLatency = latency ? mapLatency(latency, percentile) : [];

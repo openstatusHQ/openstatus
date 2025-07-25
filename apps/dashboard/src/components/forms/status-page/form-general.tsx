@@ -23,16 +23,16 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import Image from "next/image";
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { isTRPCClientError } from "@trpc/client";
-import { useTRPC } from "@/lib/trpc/client";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import Image from "next/image";
 
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";
@@ -95,8 +95,8 @@ export function FormGeneral({
   const { data: isUnique } = useQuery(
     trpc.page.getSlugUniqueness.queryOptions(
       { slug: debouncedSlug },
-      { enabled: debouncedSlug.length > 0 }
-    )
+      { enabled: debouncedSlug.length > 0 },
+    ),
   );
 
   useEffect(() => {

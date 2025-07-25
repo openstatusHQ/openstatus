@@ -3,7 +3,7 @@
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { RouterOutputs } from "@openstatus/api";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
@@ -26,7 +26,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const actions = getActions({
     edit: () => router.push(`/status-pages/${row.original.id}/edit`),
