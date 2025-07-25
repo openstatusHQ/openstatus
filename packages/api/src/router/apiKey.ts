@@ -27,7 +27,10 @@ export const apiKeyRouter = createTRPCRouter({
       const allowedIds = allowedWorkspaces.map((i) => i.workspace.id);
 
       if (!allowedIds.includes(input.ownerId)) {
-        throw new Error("Unauthorized");
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Unauthorized",
+        });
       }
 
       const key = await unkey.keys.create({
