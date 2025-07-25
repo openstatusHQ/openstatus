@@ -141,7 +141,7 @@ export const Events = {
     channel: "workspace",
   },
   UpgradeWorkspace: {
-    name: "workspace_updated",
+    name: "workspace_upgraded",
     channel: "billing",
   },
   StripePortal: {

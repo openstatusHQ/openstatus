@@ -5,17 +5,17 @@ import { Events } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
+import { TRPCError } from "@trpc/server";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-
-const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 
 export const apiKeyRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreateAPI })
     .input(z.object({ ownerId: z.number() }))
     .mutation(async ({ input, ctx }) => {
+      const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
+
       const allowedWorkspaces = await db
         .select()
         .from(usersToWorkspaces)
@@ -45,11 +45,15 @@ export const apiKeyRouter = createTRPCRouter({
     .meta({ track: Events.RevokeAPI })
     .input(z.object({ keyId: z.string() }))
     .mutation(async ({ input }) => {
+      const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
+
       const res = await unkey.keys.delete({ keyId: input.keyId });
       return res;
     }),
 
   get: protectedProcedure.query(async ({ ctx }) => {
+    const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
+
     const data = await unkey.apis.listKeys({
       apiId: env.UNKEY_API_ID,
       ownerId: String(ctx.workspace.id),
