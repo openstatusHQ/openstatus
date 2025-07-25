@@ -13,7 +13,7 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "@t3-oss/env-core": "0.7.0",
+    "@t3-oss/env-core": "0.7.1",
     "@trpc/client": "11.4.3",
     "@trpc/server": "11.4.3",
     "@unkey/api": "0.26.1",

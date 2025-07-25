@@ -849,8 +849,8 @@ importers:
         specifier: 1.0.0
         version: 1.0.0
       '@t3-oss/env-core':
-        specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.24.1)
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.1)
       zod:
         specifier: 3.24.1
         version: 3.24.1
@@ -886,8 +886,8 @@ importers:
         specifier: workspace:*
         version: link:../tinybird
       '@t3-oss/env-core':
-        specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.24.1)
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.1)
       '@trpc/client':
         specifier: 11.4.3
         version: 11.4.3(@trpc/server@11.4.3(typescript@5.7.2))(typescript@5.7.2)
@@ -954,8 +954,8 @@ importers:
         specifier: 0.14.0
         version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
-        specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.24.1)
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.1)
       drizzle-orm:
         specifier: 0.35.3
         version: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.8)(better-sqlite3@11.4.0)(bun-types@1.2.17)(react@19.1.0)
@@ -1018,8 +1018,8 @@ importers:
         specifier: 1.0.5
         version: 1.0.5(react@19.1.0)
       '@t3-oss/env-core':
-        specifier: 0.13.8
-        version: 0.13.8(typescript@5.7.2)(zod@3.24.1)
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.1)
       react-email:
         specifier: 4.0.17
         version: 4.0.17(@opentelemetry/api@1.9.0)(bufferutil@4.0.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(utf-8-validate@6.0.5)
@@ -6131,23 +6131,6 @@ packages:
 
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
-
-  '@t3-oss/env-core@0.13.8':
-    resolution: {integrity: sha512-L1inmpzLQyYu4+Q1DyrXsGJYCXbtXjC4cICw1uAKv0ppYPQv656lhZPU91Qd1VS6SO/bou1/q5ufVzBGbNsUpw==}
-    peerDependencies:
-      arktype: ^2.1.0
-      typescript: '>=5.0.0'
-      valibot: ^1.0.0-beta.7 || ^1.0.0
-      zod: ^3.24.0 || ^4.0.0-beta.0
-    peerDependenciesMeta:
-      arktype:
-        optional: true
-      typescript:
-        optional: true
-      valibot:
-        optional: true
-      zod:
-        optional: true
 
   '@t3-oss/env-core@0.7.0':
     resolution: {integrity: sha512-cgunN82CqgQOOyuMOK/bGtujX5/ooXQTwGMJVWI6mCowq6WE5EgRLOqF/DRcrElI0gSFGA9i9GrxzCnk73HZLQ==}
@@ -18107,11 +18090,6 @@ snapshots:
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
-
-  '@t3-oss/env-core@0.13.8(typescript@5.7.2)(zod@3.24.1)':
-    optionalDependencies:
-      typescript: 5.7.2
-      zod: 3.24.1
 
   '@t3-oss/env-core@0.7.0(typescript@5.7.2)(zod@3.24.1)':
     dependencies:
