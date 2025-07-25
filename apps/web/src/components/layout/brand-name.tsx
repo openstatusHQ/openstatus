@@ -29,7 +29,15 @@ export function BrandName() {
       <ContextMenuContent>
         <ContextMenuItem asChild>
           <a href="/assets/logos/OpenStatus.svg" download="openstatus.svg">
-            Download SVG
+            Download Name SVG
+          </a>
+        </ContextMenuItem>
+        <ContextMenuItem asChild>
+          <a
+            href="/assets/logos/OpenStatus-Logo.svg"
+            download="openstatus-logo.svg"
+          >
+            Download Logo SVG
           </a>
         </ContextMenuItem>
       </ContextMenuContent>
