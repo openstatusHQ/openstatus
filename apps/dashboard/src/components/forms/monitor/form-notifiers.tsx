@@ -26,6 +26,7 @@ import {
 import { config } from "@/data/notifications.client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { NotificationProvider } from "@openstatus/db/src/schema";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -46,7 +47,7 @@ export function FormNotifiers({
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  notifiers: { id: number; name: string; provider: string }[];
+  notifiers: { id: number; name: string; provider: NotificationProvider }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
