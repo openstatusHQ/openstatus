@@ -109,7 +109,6 @@ export function Tracker({
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
           {tracker.days.map((props, i) => {
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             return <Bar key={i} showValues={showValues} {...props} />;
           })}
         </div>

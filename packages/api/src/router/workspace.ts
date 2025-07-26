@@ -2,7 +2,8 @@ import { TRPCError } from "@trpc/server";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq, gte, isNull, sql } from "@openstatus/db";
+import { Events } from "@openstatus/analytics";
+import { type SQL, and, eq, gte, isNull, sql } from "@openstatus/db";
 import {
   application,
   monitor,
@@ -10,11 +11,13 @@ import {
   notification,
   page,
   selectApplicationSchema,
+  selectUserSchema,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
   workspace,
   workspacePlanSchema,
+  workspaceRole,
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
@@ -109,11 +112,12 @@ export const workspaceRouter = createTRPCRouter({
   }),
 
   updateWorkspace: protectedProcedure
+    .meta({ track: Events.UpdateWorkspace })
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
       return await opts.ctx.db
         .update(workspace)
-        .set({ name: opts.input.name })
+        .set({ name: opts.input.name, updatedAt: new Date() })
         .where(eq(workspace.id, opts.ctx.workspace.id));
     }),
 
@@ -190,7 +194,7 @@ export const workspaceRouter = createTRPCRouter({
 
       await opts.ctx.db
         .update(workspace)
-        .set({ plan: opts.input.plan })
+        .set({ plan: opts.input.plan, updatedAt: new Date() })
         .where(eq(workspace.id, opts.ctx.workspace.id));
     }),
 
@@ -237,4 +241,75 @@ export const workspaceRouter = createTRPCRouter({
 
     return currentNumbers;
   }),
+
+  // DASHBOARD
+
+  get: protectedProcedure.query(async (opts) => {
+    const whereConditions: SQL[] = [eq(workspace.id, opts.ctx.workspace.id)];
+
+    const result = await opts.ctx.db.query.workspace.findFirst({
+      where: and(...whereConditions),
+      with: {
+        pages: true,
+        monitors: {
+          where: isNull(monitor.deletedAt),
+        },
+        notifications: true,
+      },
+    });
+
+    return selectWorkspaceSchema.parse({
+      ...result,
+      usage: {
+        monitors: result?.monitors?.length || 0,
+        notifications: result?.notifications?.length || 0,
+        pages: result?.pages?.length || 0,
+        // checks: result?.checks?.length || 0,
+        checks: 0,
+      },
+    });
+  }),
+
+  getMembers: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
+      where: eq(usersToWorkspaces.userId, opts.ctx.workspace.id),
+      with: {
+        user: true,
+      },
+    });
+
+    return z
+      .object({
+        role: z.enum(workspaceRole),
+        createdAt: z.coerce.date(),
+        user: selectUserSchema,
+      })
+      .array()
+      .parse(result);
+  }),
+
+  list: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
+      where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
+      with: {
+        workspace: true,
+      },
+    });
+
+    return selectWorkspaceSchema
+      .array()
+      .parse(result.map(({ workspace }) => workspace));
+  }),
+
+  updateName: protectedProcedure
+    .meta({ track: Events.UpdateWorkspace })
+    .input(z.object({ name: z.string() }))
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [eq(workspace.id, opts.ctx.workspace.id)];
+
+      await opts.ctx.db
+        .update(workspace)
+        .set({ name: opts.input.name, updatedAt: new Date() })
+        .where(and(...whereConditions));
+    }),
 });

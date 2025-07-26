@@ -1,11 +1,16 @@
 ---
-title: Run
+title: run
 description: "How to run a list of synthetic checks in OpenStatus from the command line"
 ---
 
-This command is used to run a list of synthetic check.
+### `run` command (aliases: `r`)
 
-You need to create file `config.openstatus.yaml` in the root of your project. The file should contain the following information.
+Run your synthetics tests.
+
+> openstatus run [options]
+
+Run the synthetic tests defined in the `config.openstatus.yaml`.
+The config file should be in the following format:
 
 ```yaml
 tests:
@@ -14,12 +19,15 @@ tests:
      - monitor-id-2
 ```
 
-You can run the synthetic checks using the following command.
+Usage:
 
 ```bash
-openstatus run
+$ openstatus [GLOBAL FLAGS] run [COMMAND FLAGS] [ARGUMENTS...]
 ```
 
-### Options
+The following flags are supported:
 
-- `--config` - Path to the config file. Default is `config.openstatus.yaml`.
+| Name                        | Description                 |      Default value       |  Environment variables |
+|-----------------------------|-----------------------------|:------------------------:|:----------------------:|
+| `--config="…"`              | The configuration file      | `config.openstatus.yaml` |         *none*         |
+| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                          | `OPENSTATUS_API_TOKEN` |

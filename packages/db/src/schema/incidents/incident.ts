@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
@@ -61,3 +62,22 @@ export const incidentTable = sqliteTable(
     };
   },
 );
+
+export const incidentRelations = relations(incidentTable, ({ one }) => ({
+  monitor: one(monitor, {
+    fields: [incidentTable.monitorId],
+    references: [monitor.id],
+  }),
+  workspace: one(workspace, {
+    fields: [incidentTable.workspaceId],
+    references: [workspace.id],
+  }),
+  acknowledgedByUser: one(user, {
+    fields: [incidentTable.acknowledgedBy],
+    references: [user.id],
+  }),
+  resolvedByUser: one(user, {
+    fields: [incidentTable.resolvedBy],
+    references: [user.id],
+  }),
+}));

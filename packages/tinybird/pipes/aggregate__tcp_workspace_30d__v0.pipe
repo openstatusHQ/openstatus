@@ -1,0 +1,20 @@
+TAGS "tcp"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        workspaceId,
+        ifNull(trigger, 'cron') AS trigger,
+        countState() AS count_state
+    FROM tcp_response__v0
+    GROUP BY
+        time,
+        workspaceId,
+        trigger
+
+TYPE materialized
+DATASOURCE mv__tcp_workspace_30d__v0
+
+

@@ -136,8 +136,12 @@ export const Events = {
     name: "api_key_revoked",
     channel: "api_key",
   },
-  UpgradeWorkspace: {
+  UpdateWorkspace: {
     name: "workspace_updated",
+    channel: "workspace",
+  },
+  UpgradeWorkspace: {
+    name: "workspace_upgraded",
     channel: "billing",
   },
   StripePortal: {

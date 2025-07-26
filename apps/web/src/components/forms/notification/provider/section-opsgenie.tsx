@@ -32,7 +32,7 @@ interface Props {
   plan: WorkspacePlan;
 }
 
-export function SectionOpsGenie({ form, plan }: Props) {
+export function SectionOpsGenie({ form }: Props) {
   const [isTestPending, startTestTransition] = useTransition();
   const watchApiKey = form.watch("data.opsgenie.apiKey");
   const watchRegion = form.watch("data.opsgenie.region");

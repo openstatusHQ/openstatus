@@ -27,7 +27,6 @@ export function MonitoringCard() {
         <Globe />
         <CardFeatureContainer>
           {features?.map((feature, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <CardFeature key={i} {...feature} />
           ))}
           <div className="order-first flex items-center justify-center gap-2 text-center md:order-0">

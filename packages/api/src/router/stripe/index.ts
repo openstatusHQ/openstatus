@@ -22,7 +22,9 @@ export const stripeRouter = createTRPCRouter({
   webhooks: webhookRouter,
 
   getUserCustomerPortal: protectedProcedure
-    .input(z.object({ workspaceSlug: z.string() }))
+    .input(
+      z.object({ workspaceSlug: z.string(), returnUrl: z.string().optional() }),
+    )
     .mutation(async (opts) => {
       const result = await opts.ctx.db
         .select()
@@ -69,7 +71,8 @@ export const stripeRouter = createTRPCRouter({
 
       const session = await stripe.billingPortal.sessions.create({
         customer: stripeId,
-        return_url: `${url}/app/${result.slug}/settings`,
+        return_url:
+          opts.input.returnUrl || `${url}/app/${result.slug}/settings`,
       });
 
       return session.url;
@@ -80,6 +83,8 @@ export const stripeRouter = createTRPCRouter({
       z.object({
         workspaceSlug: z.string(),
         plan: z.enum(workspacePlans),
+        successUrl: z.string().optional(),
+        cancelUrl: z.string().optional(),
         // TODO: plan: workspacePlanSchema
       }),
     )
@@ -145,8 +150,11 @@ export const stripeRouter = createTRPCRouter({
           },
         ],
         mode: "subscription",
-        success_url: `${url}/app/${result.slug}/settings/billing?success=true`,
-        cancel_url: `${url}/app/${result.slug}/settings/billing`,
+        success_url:
+          opts.input.successUrl ||
+          `${url}/app/${result.slug}/settings/billing?success=true`,
+        cancel_url:
+          opts.input.cancelUrl || `${url}/app/${result.slug}/settings/billing`,
       });
 
       return session;

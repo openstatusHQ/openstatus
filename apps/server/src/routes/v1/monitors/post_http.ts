@@ -70,6 +70,13 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       });
     }
 
+    if (limits["max-regions"] < input.regions.length) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for more regions",
+      });
+    }
+
     for (const region of input.regions) {
       if (!limits.regions.includes(region)) {
         throw new OpenStatusApiError({

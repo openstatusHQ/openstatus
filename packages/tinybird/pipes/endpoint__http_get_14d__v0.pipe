@@ -1,0 +1,14 @@
+TAGS "http"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT *
+    FROM mv__http_full_14d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1', required=True) }}
+        AND id = {{ String(id, '', required=True) }}
+    ORDER BY time DESC
+
+

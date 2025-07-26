@@ -44,7 +44,6 @@ export const GlobalMonitoring = () => {
       </CardHeader>
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
         {features?.map((feature, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <CardFeature key={i} {...feature} />
         ))}
       </ul>

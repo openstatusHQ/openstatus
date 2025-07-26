@@ -1,0 +1,84 @@
+---
+title: Monitoring as Code
+description: "How to manage monitors as code with OpenStatus?"
+---
+
+## Introduction
+
+Monitoring as code is a practice that allows you to define and manage your monitoring configurations using code. This approach provides several benefits, including:
+
+- **Version control**: You can track changes to your monitoring configurations using version control systems like Git.
+- **Reproducibility**: Your monitoring configurations can be easily reproduced across environments.
+- **Automation**: You can automate the deployment and management of your monitoring configurations using tools like CI/CD pipelines.
+
+
+## Getting Started
+
+OpenStatus provides a [CLI](/cli/getting-started) tool that allows you to create, update, and delete monitors as code. To get started, you need to install the CLI tool.
+
+## Examples
+
+### Uptime Monitoring
+
+```yaml
+# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+uptime-monitor:
+  name: "Uptime Monitor"
+  description: "Uptime monitoring example"
+  frequency: "10m"
+  active: true
+  regions:
+    - iad
+    - ams
+    - syd
+    - jnb
+    - gru
+  retry: 3
+  kind: http
+  request:
+    url: https://openstat.us
+    method: GET
+    headers:
+      User-Agent: OpenStatus
+  assertions:
+    - kind: statusCode
+      compare: eq
+      target: 200
+```
+
+#### Monitoring a MCP Server:
+
+```yaml
+# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+
+mcp-server:
+  name: "HF MCP Server "
+  description: "Hugging Face MCP server monitoring"
+  frequency: "1m"
+  active: true
+  regions: ["iad", "ams", "lax"]
+  retry: 3
+  kind: http
+  request:
+    url: https://hf.co/mcp
+    method: POST
+    body: >
+      {
+        "jsonrpc": "2.0",
+        "id": "openstatus",
+        "method": "ping"
+      }
+    headers:
+      User-Agent: OpenStatus
+      Accept: application/json, text/event-stream
+      Content-Type: application/json
+  assertions:
+    - kind: statusCode
+      compare: eq
+      target: 200
+    - kind: textBody
+      compare: eq
+      target: '{"result":{},"jsonrpc":"2.0","id":"openstatus"}'
+```
+
+You can find more examples in the [OpenStatus Template GitHub repository](https://github.com/openstatusHQ/cli-template/).

@@ -1,0 +1,20 @@
+TAGS "http"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        workspaceId,
+        ifNull(trigger, 'cron') AS trigger,
+        countState() AS count_state
+    FROM ping_response__v8
+    GROUP BY
+        time,
+        workspaceId,
+        trigger
+
+TYPE materialized
+DATASOURCE mv__http_workspace_30d__v0
+
+

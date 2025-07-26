@@ -74,12 +74,16 @@ export default defineConfig({
                 ],
               },
               {
-                label: "Synthetic Monitoring",
+                label: "Monitoring",
                 items: [
                   { label: "Overview", slug: "monitoring/overview" },
                   {
-                    label: "Create a synthetic check",
+                    label: "Create a monitor",
                     slug: "monitoring/create-monitor",
+                  },
+                  {
+                    label: "Monitoring as Code",
+                    slug: "monitoring/monitoring-as-code",
                   },
                   {
                     label: "View your results data",
@@ -212,28 +216,6 @@ export default defineConfig({
             ],
           },
           {
-            label: "Guides",
-            icon: "rocket",
-            link: "/guides/introduction",
-            items: [
-              {
-                label: "Guides",
-                autogenerate: { directory: "guides" },
-              },
-            ],
-          },
-          {
-            label: "Contributing",
-            icon: "heart",
-            link: "/contributing/getting-started",
-            items: [
-              {
-                label: "Contributing",
-                autogenerate: { directory: "contributing" },
-              },
-            ],
-          },
-          {
             label: "CLI",
             icon: "seti:powershell",
             link: "/cli/getting-started",
@@ -257,6 +239,28 @@ export default defineConfig({
             label: "API Reference",
             icon: "puzzle",
             link: "https://api.openstatus.dev/v1",
+          },
+          {
+            label: "Guides",
+            icon: "rocket",
+            link: "/guides/introduction",
+            items: [
+              {
+                label: "Guides",
+                autogenerate: { directory: "guides" },
+              },
+            ],
+          },
+          {
+            label: "Contributing",
+            icon: "heart",
+            link: "/contributing/getting-started",
+            items: [
+              {
+                label: "Contributing",
+                autogenerate: { directory: "contributing" },
+              },
+            ],
           },
         ]),
         starlightLlmsTxt({

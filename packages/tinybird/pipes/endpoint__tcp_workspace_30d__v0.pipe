@@ -1,0 +1,15 @@
+TAGS "tcp"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT
+        time as day,
+        countMerge(count_state) as count
+    FROM mv__tcp_workspace_30d__v0
+    WHERE workspaceId = {{ Int32(workspaceId, 1, required=True) }}
+    GROUP BY day
+    ORDER BY day DESC
+
+

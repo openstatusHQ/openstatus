@@ -14,27 +14,46 @@ import CLI from '../../../assets/cli/CLI.png';
 
 
 
-You can use the OpenStatus CLI to manage and run your synthetic checks. The CLI is a powerful tool that allows you to interact with OpenStatus from your terminal.
+You can use the OpenStatus CLI to manage and run your monitors. The CLI is a powerful tool that allows you to interact with OpenStatus from your terminal.
 
 ## Installation
 
 You can install the OpenStatus CLI using brew.
 
-```bash
-brew tap openstatusHQ/cli
+#### Windows
+```powershell
+iwr instl.sh/openstatushq/cli/windows | iex
 ```
 
-<br/>
+#### macOS
+```bash
+brew install openstatusHQ/cli/openstatus --cask
+```
+
+or
+
 
 ```bash
-brew install openstatus --cask
+curl -sSL instl.sh/openstatushq/cli/macos | bash
 ```
+
+
+
+#### Linux
+```bash
+curl -sSL instl.sh/openstatushq/cli/linux | bash
+```
+
+
 
 Then you can run the following command to verify the installation.
 
 ```bash
 openstatus --help
 ```
+
+
+##  Usage
 
 You need to get an API token to use the CLI. You can get an API key by signing up on the OpenStatus website.
 

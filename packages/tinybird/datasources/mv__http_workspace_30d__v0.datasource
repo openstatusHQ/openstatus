@@ -1,0 +1,12 @@
+# Data Source created from Pipe 'aggregate__http_workspace_30d__v0'
+
+SCHEMA >
+    `time` DateTime('UTC'),
+    `workspaceId` String,
+    `trigger` String,
+    `count_state` AggregateFunction(count)
+
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "workspaceId, time, trigger"
+ENGINE_TTL "time + toIntervalDay(30)"

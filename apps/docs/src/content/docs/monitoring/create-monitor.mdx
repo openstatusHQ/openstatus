@@ -1,5 +1,5 @@
 ---
-title: How to create a synthetic check?
+title: How to create your first monitor?
 description: "How to create your first monitor with OpenStatus"
 ---
 
@@ -15,26 +15,34 @@ import { ShowcaseYouTube } from 'starlight-showcases'
     alt="Charts with status code and response time"
   />
 
-First you need to create a monitor to start monitoring your services.
 
-## What is a monitor?
+## Creating Your First Monitor
 
-A monitor is a job that runs periodically or on-demand and checks the status of a service. A monitor will do some synthetic checks to ensure that your service is working as expected.
+A monitor is your automated watchdog for your services. 🕵️‍♀️ It periodically checks your endpoints to ensure they are up, performant, and returning the correct data. Think of it as a curl command that runs 24/7.
+
+This guide will walk you through creating and configuring your first HTTP monitor.
 
 
-## Create your first monitor
+## Get Started in 1 Minute
 
-Go to the **Monitors** page and click on the **Create Monitor** button.
+Let's get your first endpoint check up and running.
 
-## Configure your monitor
+### 1. Create the Monitor
 
-Your endpoint check requires:
+Navigate to the Monitors page from the sidebar and click the + Create Monitor button.
 
-- a **name** to identify your monitor
-- the **URL** to checked
+### 2. Configure the Basics
 
-We will store the **response time**, the **status code**, the **headers**
-returned, and the **timing metrics** of your endpoint.
+To get started, you only need two things:
+- **Name** : A descriptive name so you can easily identify it (e.g., "API - Production Health Check").
+- **URL** : The full URL of the endpoint you want to test (e.g., https://openstat.us).
+
+Once you've set the URL, we'll automatically begin tracking key metrics for every check:
+- **Response Time**
+- **Status Code**
+- **Response Headers**
+- **Detailed Timing Metrics** (DNS lookup, TCP connection, TLS handshake, etc.)
+
 
   <Image
     src={monitorDetail}
@@ -42,30 +50,38 @@ returned, and the **timing metrics** of your endpoint.
   />
 
 
-### HTTP Request
+### 3. Customizing the HTTP Request
 
-Customize the request sent to your endpoint.
+You can customize the HTTP request to simulate real user traffic or test specific scenarios.
 
-Choose between one of the request **HTTP Method**: `GET` (default), `POST` or
-`HEAD`.
+#### HTTP Method
 
-Add custom key-value **HTTP Headers** to your request.
+Choose the HTTP method for your check. While `GET` is the default, you can also use `POST` or `HEAD` or any other HTTP method.
 
-> OpenStatus automatically set the `"User-Agent": "OpenStatus/1.0"` header to
-> your request. This header is used to identify the request as a ping request
-> and can be exluded from your analytics.
+- `GET`: Retrieve data from an endpoint. The most common choice for health checks.
+- `POST`: Send data to an endpoint, for example, to test a form submission or API creation endpoint.
+- `HEAD`: Same as `GET`, but without the response body. Useful for quickly checking if a resource exists.
+
+#### Request Body
+
+If you select the `POST` method, you can specify a Body to send with your request. This is perfect for testing API endpoints that require a JSON payload.
+
+#### Custom Headers
+
+You can add any number of custom HTTP headers to your request. This is useful for:
+
+- Sending an `Authorization` token to test a protected endpoint.
+- Setting an `Accept` header to request a specific content type (e.g., `application/json`).
+- Simulating a request from a specific device or client.
+
+    Heads Up: We've got your User-Agent covered!
+    OpenStatus automatically includes the `"User-Agent": "OpenStatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
 
 
 
-If you select the `POST` method, you can add a custom **HTTP Body** to your
-request.
+## Fine-Tuning Your Monitor ⚙️
 
-
-
-
-## Customization
-
-You can customize your monitor with the following options:
+Once you've set up the basics, you can further refine your monitor's behavior with these advanced options:
 
 <CardGrid>
     <LinkCard
@@ -88,9 +104,9 @@ You can customize your monitor with the following options:
 
 
 
-## Known Limitations
-
-<Aside>If you are monitoring an endpoint you don't own (e.g google.com), your request might be blocked by the remote server.</Aside>
+## Important Considerations
+### Monitoring Third-Party Endpoints
+<Aside>If you're monitoring a URL you don't own (like `google.com` or a partner API), your requests might be blocked by firewalls or rate limiters (e.g., Cloudflare). This is a security measure on their end to prevent scraping or denial-of-service attacks.</Aside>
 
 
 

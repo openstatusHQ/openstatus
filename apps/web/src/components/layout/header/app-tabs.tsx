@@ -38,7 +38,7 @@ export function AppTabs() {
 }
 
 // FIXME: use react-query - once the user resolves the incident, the dot should disappear without refresh
-function IncidentsDot() {
+export function IncidentsDot() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {

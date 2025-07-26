@@ -167,14 +167,13 @@ export function PricingTable({
                               Array.isArray(limitValue) &&
                               limitValue.length > 0
                             ) {
-                              return limitValue[0];
+                              return limitValue.length;
                             }
                             return limitValue;
                           }
 
                           return (
                             <TableCell
-                              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                               key={key + value + _i}
                               className={cn(
                                 "p-3 font-mono",

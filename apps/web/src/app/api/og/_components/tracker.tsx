@@ -19,7 +19,6 @@ export function Tracker({ data }: TrackerProps) {
         {/* Empty State */}
         <div tw="flex flex-row relative">
           {new Array(data.length).fill(null).map((_, i) => {
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             return <div key={i} tw="h-16 w-3 rounded-full mr-1 bg-black/20" />;
           })}
           <div tw="flex flex-row-reverse absolute left-0">
@@ -28,7 +27,6 @@ export function Tracker({ data }: TrackerProps) {
               if (isBlackListed) {
                 return (
                   <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     key={i}
                     tw="h-16 w-3 rounded-full mr-1 bg-status-operational/90"
                   />
@@ -36,7 +34,6 @@ export function Tracker({ data }: TrackerProps) {
               }
               return (
                 <div
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   key={i}
                   tw={cn(
                     "h-16 w-3 rounded-full mr-1",
