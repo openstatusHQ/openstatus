@@ -1,4 +1,3 @@
-import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { AlertCard } from "@/components/marketing/alert/card";
 import { CLICard } from "@/components/marketing/cli/card";
 import { Hero } from "@/components/marketing/hero";
@@ -11,21 +10,19 @@ import { StatusPageCard } from "@/components/marketing/status-page/card";
 
 export const revalidate = 600;
 
-export default async function Page() {
+export default async function LandingPage() {
   return (
-    <MarketingLayout>
-      <div className="grid gap-12">
-        <Hero />
-        <Partners />
-        <MonitoringCard />
-        <Stats />
-        <MiddleCTA />
-        <StatusPageCard />
-        <AlertCard />
-        <CLICard />
-        <BottomCTA />
-        <LatestChangelogs />
-      </div>
-    </MarketingLayout>
+    <div className="grid gap-12">
+      <Hero />
+      <Partners />
+      <MonitoringCard />
+      <Stats />
+      <MiddleCTA />
+      <StatusPageCard />
+      <AlertCard />
+      <CLICard />
+      <BottomCTA />
+      <LatestChangelogs />
+    </div>
   );
 }

@@ -53,8 +53,7 @@ import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "../search-params";
 
 const FloatingActionNoSSR = dynamic(
-  () =>
-    import("../_components/floating-action").then((mod) => mod.FloatingAction),
+  () => import("./floating-action").then((mod) => mod.FloatingAction),
   {
     ssr: false,
     loading: () => <></>,

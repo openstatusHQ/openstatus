@@ -4,8 +4,6 @@ import { z } from "zod";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@openstatus/ui";
 
-import { MarketingLayout } from "@/components/layout/marketing-layout";
-
 const OSSFriendSchema = z.object({
   href: z.string(),
   name: z.string(),
@@ -17,7 +15,7 @@ const OpenSourceFriends = async () => {
   const data = await res.json();
   const openSourceFriends = z.array(OSSFriendSchema).parse(data.data);
   return (
-    <MarketingLayout>
+    <>
       <h1 className="mb-5 font-cal text-4xl text-foreground">
         Our OpenSource Friends
       </h1>
@@ -41,7 +39,7 @@ const OpenSourceFriends = async () => {
           </Link>
         ))}
       </div>
-    </MarketingLayout>
+    </>
   );
 };
 
