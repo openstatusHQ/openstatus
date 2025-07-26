@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { type NotifierProvider, config } from "@/data/notifications.client";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { TableCellBadge } from "../table-cell-badge";
@@ -23,9 +24,12 @@ export const columns: ColumnDef<Notifier>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
+      const provider = row.getValue("provider") as NotifierProvider;
+      const Icon = config[provider].icon;
       return (
         <Badge variant="secondary" className="px-1.5 font-mono text-[10px]">
-          {row.getValue("provider")}
+          <Icon className="size-2.5" />
+          {config[provider].label}
         </Badge>
       );
     },

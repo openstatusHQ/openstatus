@@ -23,6 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { config } from "@/data/notifications.client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
@@ -98,7 +99,7 @@ export function FormNotifiers({
                   <FormItem>
                     <div className="flex items-center justify-between">
                       <FormLabel className="text-base">
-                        List of Status Pages
+                        List of Notifications
                       </FormLabel>
                       <Button
                         variant="ghost"
@@ -132,6 +133,8 @@ export function FormNotifiers({
                         control={form.control}
                         name="notifiers"
                         render={({ field }) => {
+                          const Icon = config[item.provider].icon;
+                          const label = config[item.provider].label;
                           return (
                             <FormItem
                               key={item.id}
@@ -162,7 +165,8 @@ export function FormNotifiers({
                                   variant="secondary"
                                   className="px-1.5 py-px font-mono text-[10px]"
                                 >
-                                  {item.provider}
+                                  <Icon className="size-2.5" />
+                                  {label}
                                 </Badge>
                               </FormLabel>
                             </FormItem>
