@@ -65,9 +65,6 @@ export function FormApiKey() {
     }),
   );
 
-  // FIXME: Why is unkey caching so hardly? I have to hard refresh.
-  console.log(apiKey);
-
   async function createAction() {
     if (isPending || !workspace) return;
 
@@ -84,31 +81,6 @@ export function FormApiKey() {
               return error.message;
             }
             return "Failed to create API key";
-          },
-        });
-        await promise;
-      } catch (error) {
-        console.error(error);
-      }
-    });
-  }
-
-  async function revokeAction() {
-    if (isPending || !apiKey) return;
-
-    startTransition(async () => {
-      try {
-        const promise = revokeApiKeyMutation.mutateAsync({
-          keyId: apiKey.id,
-        });
-        toast.promise(promise, {
-          loading: "Revoking...",
-          success: () => "Revoked",
-          error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
-            }
-            return "Failed to revoke API key";
           },
         });
         await promise;
@@ -159,7 +131,9 @@ export function FormApiKey() {
             title="API Key"
             confirmationValue="delete api key"
             submitAction={async () => {
-              await revokeAction();
+              await revokeApiKeyMutation.mutateAsync({
+                keyId: apiKey.id,
+              });
             }}
           />
         )}
@@ -169,7 +143,8 @@ export function FormApiKey() {
           <AlertDialogHeader>
             <AlertDialogTitle>API Key</AlertDialogTitle>
             <AlertDialogDescription>
-              Ensure you copy your API key before closing this dialog.
+              Ensure you copy your API key before closing this dialog. You will
+              not see it again.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
