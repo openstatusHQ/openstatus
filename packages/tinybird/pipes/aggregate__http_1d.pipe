@@ -1,6 +1,4 @@
-VERSION 0
-
-TAGS http
+TAGS "http"
 
 NODE aggregate
 SQL >
@@ -9,6 +7,7 @@ SQL >
         toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
         latency,
         error,
+        requestStatus,
         region,
         trigger,
         statusCode,
@@ -19,10 +18,6 @@ SQL >
     FROM ping_response__v8
 
 TYPE materialized
-DATASOURCE mv__http_1d__v0
-ENGINE "MergeTree"
-ENGINE_PARTITION_KEY "toYYYYMM(time)"
-ENGINE_SORTING_KEY "monitorId, time"
-ENGINE_TTL "time + toIntervalDay(1)"
+DATASOURCE mv__http_1d__v1
 
 

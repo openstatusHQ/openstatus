@@ -38,6 +38,15 @@ export const flyRegions = [
   "yyz",
 ] as const;
 
+export const freeFlyRegions = [
+  "iad",
+  "ams",
+  "gru",
+  "syd",
+  "hkg",
+  "jnb",
+] as const satisfies (typeof flyRegions)[number][];
+
 export const monitorPeriodicity = [
   "30s",
   "1m",

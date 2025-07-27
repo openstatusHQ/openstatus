@@ -22,6 +22,7 @@ export const limitsSchema = z.object({
     .default(["ams", "gru", "iad", "jnb", "hkg", "syd"]),
   "private-locations": z.boolean().default(false),
   screenshots: z.boolean().default(false),
+  "response-logs": z.boolean().default(false),
   otel: z.boolean().default(false),
   /**
    * Status page limits

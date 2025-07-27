@@ -1,7 +1,17 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, gte, inArray, isNull, lte, sql } from "@openstatus/db";
+import {
+  type SQL,
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  sql,
+} from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
@@ -9,6 +19,9 @@ import {
   monitor,
   monitorsToPages,
   page,
+  selectMaintenanceSchema,
+  selectMonitorSchema,
+  selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
@@ -17,7 +30,37 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
+import { env } from "../env";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+// Helper functions to reuse Vercel API logic
+async function addDomainToVercel(domain: string) {
+  const data = await fetch(
+    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
+    {
+      body: JSON.stringify({ name: domain }),
+      headers: {
+        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    },
+  );
+  return data.json();
+}
+
+async function removeDomainFromVercel(domain: string) {
+  const data = await fetch(
+    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${env.TEAM_ID_VERCEL}`,
+    {
+      headers: {
+        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
+      },
+      method: "DELETE",
+    },
+  );
+  return data.json();
+}
 
 export const pageRouter = createTRPCRouter({
   create: protectedProcedure
@@ -203,16 +246,17 @@ export const pageRouter = createTRPCRouter({
     .meta({ track: Events.DeletePage })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.id, opts.input.id),
+        eq(page.workspaceId, opts.ctx.workspace.id),
+      ];
+
       await opts.ctx.db
         .delete(page)
-        .where(
-          and(
-            eq(page.id, opts.input.id),
-            eq(page.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
+        .where(and(...whereConditions))
         .run();
     }),
+
   getPagesByWorkspace: protectedProcedure.query(async (opts) => {
     const allPages = await opts.ctx.db.query.page.findMany({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
@@ -369,10 +413,17 @@ export const pageRouter = createTRPCRouter({
       z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
     )
     .mutation(async (opts) => {
+      if (opts.input.customDomain.toLowerCase().includes("openstatus")) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Domain cannot contain 'openstatus'",
+        });
+      }
+
       // TODO Add some check ?
       await opts.ctx.db
         .update(page)
-        .set({ customDomain: opts.input.customDomain })
+        .set({ customDomain: opts.input.customDomain, updatedAt: new Date() })
         .where(eq(page.id, opts.input.pageId))
         .returning()
         .get();
@@ -388,4 +439,339 @@ export const pageRouter = createTRPCRouter({
 
     return pageNumbers >= pageLimit;
   }),
+
+  // DASHBOARD
+
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          order: z.enum(["asc", "desc"]).optional(),
+        })
+        .optional(),
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const result = await opts.ctx.db.query.page.findMany({
+        where: and(...whereConditions),
+        with: {
+          statusReports: true,
+        },
+        orderBy: (pages, { asc }) => [
+          opts.input?.order === "asc"
+            ? asc(pages.createdAt)
+            : desc(pages.createdAt),
+        ],
+      });
+
+      return result;
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      const data = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+        with: {
+          monitorsToPages: { with: { monitor: true } },
+          maintenancesToPages: true,
+        },
+      });
+
+      return selectPageSchema
+        .extend({
+          monitors: z
+            .array(selectMonitorSchema.extend({ order: z.number().default(0) }))
+            .default([]),
+          maintenances: z.array(selectMaintenanceSchema).default([]),
+        })
+        .parse({
+          ...data,
+          monitors: data?.monitorsToPages.map((m) => ({
+            ...m.monitor,
+            order: m.order,
+          })),
+          maintenances: data?.maintenancesToPages,
+        });
+    }),
+
+  // TODO: rename to create
+  new: protectedProcedure
+    .meta({ track: Events.CreatePage, trackProps: ["slug"] })
+    .input(
+      z.object({
+        title: z.string(),
+        slug: z.string().toLowerCase(),
+        icon: z.string().nullish(),
+        description: z.string().nullish(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const pageNumbers = (
+        await opts.ctx.db.query.page.findMany({
+          where: eq(page.workspaceId, opts.ctx.workspace.id),
+        })
+      ).length;
+
+      const limit = opts.ctx.workspace.limits;
+
+      // the user has reached the status page number limits
+      if (pageNumbers >= limit["status-pages"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your status-page limits.",
+        });
+      }
+
+      const result = await opts.ctx.db.query.page.findMany({
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
+      });
+
+      if (subdomainSafeList.includes(opts.input.slug) || result?.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This slug is already taken. Please choose another one.",
+        });
+      }
+
+      const newPage = await opts.ctx.db
+        .insert(page)
+        .values({
+          workspaceId: opts.ctx.workspace.id,
+          title: opts.input.title,
+          slug: opts.input.slug,
+          description: opts.input.description ?? "",
+          icon: opts.input.icon ?? "",
+          customDomain: "", // TODO: make nullable
+        })
+        .returning()
+        .get();
+
+      return newPage;
+    }),
+
+  updateGeneral: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+        slug: z.string().toLowerCase(),
+        description: z.string().nullish(),
+        icon: z.string().nullish(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      const result = await opts.ctx.db.query.page.findMany({
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
+      });
+
+      const oldSlug = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (
+        subdomainSafeList.includes(opts.input.slug) ||
+        (oldSlug?.slug !== opts.input.slug && result?.length > 0)
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This slug is already taken. Please choose another one.",
+        });
+      }
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          title: opts.input.title,
+          slug: opts.input.slug,
+          description: opts.input.description ?? "",
+          icon: opts.input.icon ?? "",
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateCustomDomain: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(z.object({ id: z.number(), customDomain: z.string().toLowerCase() }))
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      if (opts.input.customDomain.includes("openstatus")) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Domain cannot contain 'openstatus'",
+        });
+      }
+
+      // Get the current page to check the existing custom domain
+      const currentPage = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!currentPage) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
+      const oldDomain = currentPage.customDomain;
+      const newDomain = opts.input.customDomain;
+
+      try {
+        // Handle domain changes
+        if (newDomain && !oldDomain) {
+          // Adding a new domain
+          await opts.ctx.db
+            .update(page)
+            .set({ customDomain: newDomain, updatedAt: new Date() })
+            .where(and(...whereConditions))
+            .run();
+
+          // Add domain to Vercel using the domain router logic
+          await addDomainToVercel(newDomain);
+        } else if (oldDomain && newDomain !== oldDomain) {
+          // Changing domain - remove old and add new
+          await opts.ctx.db
+            .update(page)
+            .set({ customDomain: newDomain, updatedAt: new Date() })
+            .where(and(...whereConditions))
+            .run();
+
+          // Remove old domain from Vercel
+          await removeDomainFromVercel(oldDomain);
+
+          // Add new domain to Vercel
+          if (newDomain) {
+            await addDomainToVercel(newDomain);
+          }
+        } else if (oldDomain && newDomain === "") {
+          // Removing domain
+          await opts.ctx.db
+            .update(page)
+            .set({ customDomain: "", updatedAt: new Date() })
+            .where(and(...whereConditions))
+            .run();
+
+          // Remove domain from Vercel
+          await removeDomainFromVercel(oldDomain);
+        } else {
+          // No change needed, just update the database
+          await opts.ctx.db
+            .update(page)
+            .set({ customDomain: newDomain, updatedAt: new Date() })
+            .where(and(...whereConditions))
+            .run();
+        }
+      } catch (error) {
+        // If Vercel operations fail, we should rollback the database change
+        // For now, we'll just throw the error
+        console.error("Error updating custom domain:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update custom domain",
+        });
+      }
+    }),
+
+  updatePasswordProtection: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        passwordProtected: z.boolean(),
+        password: z.string().nullish(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      const limit = opts.ctx.workspace.limits;
+
+      // the user is not eligible for password protection
+      if (
+        limit["password-protection"] === false &&
+        opts.input.passwordProtected === true
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Password protection is not available for your current plan.",
+        });
+      }
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          passwordProtected: opts.input.passwordProtected,
+          password: opts.input.password,
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateMonitors: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        monitors: z.array(z.object({ id: z.number(), order: z.number() })),
+      }),
+    )
+    .mutation(async (opts) => {
+      // check if the monitors are in the workspace
+      const monitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          inArray(
+            monitor.id,
+            opts.input.monitors.map((m) => m.id),
+          ),
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (monitors.length !== opts.input.monitors.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to all the monitors.",
+        });
+      }
+
+      await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(monitorsToPages)
+          .where(eq(monitorsToPages.pageId, opts.input.id));
+
+        await tx.insert(monitorsToPages).values(
+          opts.input.monitors.map((m) => ({
+            pageId: opts.input.id,
+            monitorId: m.id,
+            order: m.order,
+          })),
+        );
+      });
+    }),
 });

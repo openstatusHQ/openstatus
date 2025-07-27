@@ -1,0 +1,17 @@
+VERSION 1
+
+TAGS endpoint
+
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT action, id, metadata, timestamp
+    FROM audit_log__v0
+    WHERE
+        id = {{String(monitorId, 'monitor:1', required=True)}}
+        AND timestamp > toUnixTimestamp(now() - INTERVAL {{ Int64(interval, 30) }} day) * 1000
+    ORDER BY timestamp DESC
+
+

@@ -1,0 +1,27 @@
+VERSION 0
+
+TAGS "http, statuspage"
+
+NODE aggregate
+SQL >
+
+    WITH
+        if(requestStatus = 'success', 1, NULL) AS is_success,
+        if(requestStatus = 'degraded', 1, NULL) AS is_degraded,
+        if(requestStatus = 'error', 1, NULL) AS is_error
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        monitorId,
+        countState() AS total,
+        countState(is_success) AS success,
+        countState(is_degraded) AS degraded,
+        countState(is_error) AS error
+    FROM ping_response__v8
+    GROUP BY
+        time,
+        monitorId
+
+TYPE materialized
+DATASOURCE mv_http_status_14d__v0
+
+

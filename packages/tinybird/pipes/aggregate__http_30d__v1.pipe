@@ -1,0 +1,21 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        id,
+        latency,
+        region,
+        trigger,
+        statusCode,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        requestStatus,
+        timing
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE mv__http_30d__v1
+
+

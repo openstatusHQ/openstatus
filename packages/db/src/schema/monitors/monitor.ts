@@ -7,7 +7,9 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import { monitorPeriodicity } from "../constants";
+import { incidentTable } from "../incidents/incident";
 import { maintenancesToMonitors } from "../maintenances";
+import { monitorStatusTable } from "../monitor_status/monitor_status";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { page } from "../pages";
@@ -74,6 +76,8 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
   }),
   monitorsToNotifications: many(notificationsToMonitors),
   maintenancesToMonitors: many(maintenancesToMonitors),
+  incidents: many(incidentTable),
+  monitorStatus: many(monitorStatusTable),
 }));
 
 export const monitorsToPages = sqliteTable(

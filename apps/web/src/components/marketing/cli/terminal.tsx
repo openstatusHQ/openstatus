@@ -28,7 +28,7 @@ export function Terminal({ className, ...props }: React.ComponentProps<"pre">) {
           variant="ghost"
           size="icon"
           onClick={handleCopy}
-          className="hover:bg-transparent backdrop-blur-sm absolute right-1 top-1"
+          className="absolute top-1 right-1 backdrop-blur-sm hover:bg-transparent"
         >
           {isCopied ? (
             <CheckIcon className="size-4" />

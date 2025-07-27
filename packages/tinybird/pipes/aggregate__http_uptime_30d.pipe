@@ -1,0 +1,19 @@
+VERSION 1
+
+TAGS http
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        region,
+        requestStatus,
+        monitorId,
+        workspaceId
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE mv__http_uptime_30d__v1
+
+

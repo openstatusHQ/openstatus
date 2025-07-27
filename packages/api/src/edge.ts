@@ -1,8 +1,13 @@
+import { apiKeyRouter } from "./router/apiKey";
+import { blobRouter } from "./router/blob";
+import { checkerRouter } from "./router/checker";
 import { domainRouter } from "./router/domain";
+import { feedbackRouter } from "./router/feedback";
 import { incidentRouter } from "./router/incident";
 import { integrationRouter } from "./router/integration";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
+import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
@@ -16,6 +21,7 @@ import { createTRPCRouter } from "./trpc";
 
 // Deployed to /trpc/edge/**
 export const edgeRouter = createTRPCRouter({
+  apiKey: apiKeyRouter,
   workspace: workspaceRouter,
   monitor: monitorRouter,
   page: pageRouter,
@@ -30,4 +36,8 @@ export const edgeRouter = createTRPCRouter({
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,
   maintenance: maintenanceRouter,
+  member: memberRouter,
+  checker: checkerRouter,
+  blob: blobRouter,
+  feedback: feedbackRouter,
 });

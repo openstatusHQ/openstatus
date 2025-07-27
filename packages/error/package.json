@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {},
   "dependencies": {
-    "zod": "3.24.4"
+    "zod": "3.24.1"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

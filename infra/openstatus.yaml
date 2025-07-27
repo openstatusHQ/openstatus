@@ -1,0 +1,219 @@
+# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+
+"openstatus":
+  active: true
+  description: "Our website \U0001F310"
+  frequency: 10m
+  kind: http
+  name: 'OpenStatus '
+  public: true
+  regions:
+  - ams
+  - iad
+  - jnb
+  - hkg
+  - gru
+  - syd
+  - mad
+  - cdg
+  - bom
+  - sin
+  - fra
+  - otp
+  - lhr
+  - arn
+  - waw
+  - atl
+  - bos
+  - den
+  - dfw
+  - ord
+  - gdl
+  - lax
+  - mia
+  - qro
+  - phx
+  - yul
+  - sjc
+  - sea
+  - ewr
+  - yyz
+  - bog
+  - eze
+  - gig
+  - scl
+  request:
+    method: GET
+    url: https://www.openstatus.dev
+  retry: 3
+"openstatus status page":
+  active: true
+  description: "We are monitoring our own Status Page  \U0001F4DD"
+  frequency: 10m
+  kind: http
+  name: OpenStatus  Status Page
+  public: true
+  regions:
+  - ams
+  - iad
+  - jnb
+  - hkg
+  - gru
+  - syd
+  - bom
+  - sin
+  - fra
+  - otp
+  - lhr
+  - mad
+  - cdg
+  - waw
+  - arn
+  - atl
+  - bos
+  - den
+  - dfw
+  - ord
+  - gdl
+  - lax
+  - mia
+  - qro
+  - phx
+  - sjc
+  - yul
+  - sea
+  - ewr
+  - yyz
+  - bog
+  - scl
+  - eze
+  - gig
+  request:
+    method: GET
+    url: https://status.openstatus.dev/
+  retry: 3
+"openstatus api server":
+  active: true
+  description: "Our API Server \U0001F50C"
+  frequency: 10m
+  kind: http
+  name: OpenStatus API
+  public: true
+  regions:
+  - ams
+  - iad
+  - jnb
+  - hkg
+  - gru
+  - syd
+  - nrt
+  - fra
+  - lhr
+  - bom
+  - otp
+  - sin
+  - cdg
+  - mad
+  - waw
+  - arn
+  - atl
+  - bos
+  - den
+  - dfw
+  - ord
+  - gdl
+  - lax
+  - mia
+  - qro
+  - phx
+  - yul
+  - sjc
+  - sea
+  - ewr
+  - yyz
+  - bog
+  - eze
+  - gig
+  - scl
+  request:
+    method: GET
+    url: https://api.openstatus.dev/ping
+  retry: 3
+"openstat.us":
+  active: true
+  frequency: 1m
+  kind: http
+  name: openstat.us
+  public: true
+  regions:
+  - ams
+  - iad
+  - syd
+  - gru
+  - sin
+  request:
+    method: GET
+    url: https://openstat.us
+  retry: 3
+"openstatus astro status page":
+  active: true
+  frequency: 1h
+  kind: http
+  name: OpenStatus Astro Status Page
+  public: true
+  regions:
+  - ams
+  - iad
+  - hkg
+  - jnb
+  - syd
+  - gru
+  request:
+    method: GET
+    url: https://astro.openstat.us/
+  retry: 3
+"openstatus tcp check":
+  active: true
+  frequency: 1m
+  kind: tcp
+  name: 'OpenStatus TCP'
+  regions:
+  - ams
+  - arn
+  - atl
+  - bog
+  - bom
+  - bos
+  - cdg
+  - den
+  - dfw
+  - ewr
+  - eze
+  - fra
+  - gdl
+  - gig
+  - gru
+  - hkg
+  - iad
+  - jnb
+  - lax
+  - lhr
+  - mad
+  - mia
+  - nrt
+  - ord
+  - otp
+  - phx
+  - qro
+  - scl
+  - sea
+  - sin
+  - sjc
+  - syd
+  - waw
+  - yul
+  - yyz
+  request:
+    host: openstatus.dev
+    port: 443
+  retry: 3

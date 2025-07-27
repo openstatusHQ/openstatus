@@ -1,0 +1,15 @@
+TAGS "http"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT
+        time as day,
+        countMerge(count_state) as count
+    FROM mv__http_workspace_30d__v0
+    WHERE workspaceId = {{ String(workspaceId, '1', required=True) }}
+    GROUP BY day
+    ORDER BY day DESC
+
+

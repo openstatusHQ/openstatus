@@ -13,16 +13,18 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "@t3-oss/env-core": "0.7.0",
-    "@trpc/client": "11.4.0",
-    "@trpc/server": "11.4.0",
+    "@t3-oss/env-core": "0.7.1",
+    "@trpc/client": "11.4.3",
+    "@trpc/server": "11.4.3",
+    "@unkey/api": "0.26.1",
+    "@vercel/blob": "0.23.3",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
-    "next": "15.2.4",
+    "next": "15.3.4",
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "1.13.3",
-    "zod": "3.24.4"
+    "zod": "3.24.1"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

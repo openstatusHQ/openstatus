@@ -28,7 +28,7 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
-  const [{ pageSize }, setSearchParams] = useQueryStates({
+  const [_, setSearchParams] = useQueryStates({
     pageSize: parseAsInteger.withDefault(10),
     // pageIndex: parseAsInteger.withDefault(0),
   });

@@ -1,0 +1,35 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        region,
+        trigger,
+        statusCode,
+        monitorId,
+        workspaceId,
+        requestStatus,
+
+        -- Compute actual durations from timing phases
+        if(isNull(JSONExtractInt(timing, 'dnsStart')) OR isNull(JSONExtractInt(timing, 'dnsDone')), NULL,
+           JSONExtractInt(timing, 'dnsDone') - JSONExtractInt(timing, 'dnsStart')) AS dns,
+
+        if(isNull(JSONExtractInt(timing, 'connectStart')) OR isNull(JSONExtractInt(timing, 'connectDone')), NULL,
+           JSONExtractInt(timing, 'connectDone') - JSONExtractInt(timing, 'connectStart')) AS connect,
+
+        if(isNull(JSONExtractInt(timing, 'tlsHandshakeStart')) OR isNull(JSONExtractInt(timing, 'tlsHandshakeDone')), NULL,
+           JSONExtractInt(timing, 'tlsHandshakeDone') - JSONExtractInt(timing, 'tlsHandshakeStart')) AS tls,
+
+        if(isNull(JSONExtractInt(timing, 'firstByteStart')) OR isNull(JSONExtractInt(timing, 'firstByteDone')), NULL,
+           JSONExtractInt(timing, 'firstByteDone') - JSONExtractInt(timing, 'firstByteStart')) AS firstByte,
+
+        if(isNull(JSONExtractInt(timing, 'transferStart')) OR isNull(JSONExtractInt(timing, 'transferDone')), NULL,
+           JSONExtractInt(timing, 'transferDone') - JSONExtractInt(timing, 'transferStart')) AS transfer
+
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE mv__http_timing_phases_14d__v1
+
+

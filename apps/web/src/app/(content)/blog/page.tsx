@@ -87,7 +87,6 @@ export default async function Post(props: {
                 {Array.from({ length: MAX_PAGE_INDEX + 1 }).map((_, index) => {
                   return (
                     <PaginationLink
-                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                       key={index}
                       href={`?pageIndex=${index}`}
                       isActive={pageIndex === index}

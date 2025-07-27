@@ -1,0 +1,22 @@
+TAGS "tcp"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        error,
+        region,
+        trigger,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        requestStatus,
+        id
+    FROM tcp_response__v0
+
+TYPE materialized
+DATASOURCE mv__tcp_1d__v1
+
+

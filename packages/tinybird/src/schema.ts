@@ -36,6 +36,25 @@ export const httpTimingSchema = z.object({
   transferDone: z.number(),
 });
 
+export function transformTiming(val: string) {
+  if (!val) return null;
+  const value = httpTimingSchema.safeParse(JSON.parse(val));
+  if (value.success) return value.data;
+  return null;
+}
+
+export function calculateTiming(obj: z.infer<typeof httpTimingSchema>) {
+  if (!obj) return null;
+
+  return {
+    dns: obj.dnsDone - obj.dnsStart,
+    connect: obj.connectDone - obj.connectStart,
+    tls: obj.tlsHandshakeDone - obj.tlsHandshakeStart,
+    ttfb: obj.firstByteDone - obj.firstByteStart,
+    transfer: obj.transferDone - obj.transferStart,
+  };
+}
+
 export const timingSchema = z
   .string()
   .nullable()
@@ -44,5 +63,16 @@ export const timingSchema = z
     if (!val) return null;
     const value = httpTimingSchema.safeParse(JSON.parse(val));
     if (value.success) return value.data;
+    return null;
+  });
+
+export const timingPhasesSchema = z
+  .string()
+  .nullable()
+  .optional()
+  .transform((val) => {
+    if (!val) return null;
+    const value = httpTimingSchema.safeParse(JSON.parse(val));
+    if (value.success) return calculateTiming(value.data);
     return null;
   });
