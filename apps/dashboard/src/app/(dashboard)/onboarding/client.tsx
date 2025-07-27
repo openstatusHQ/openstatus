@@ -24,6 +24,7 @@ import {
 } from "@/components/forms/form-card";
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
 import { CreatePageForm } from "@/components/forms/onboarding/create-page";
+import { LearnFromForm } from "@/components/forms/onboarding/learn-from";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -75,7 +76,7 @@ export function Client() {
   const [{ step }, setSearchParams] = useQueryStates(searchParamsParsers);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const workspace = useQuery(trpc.workspace.get.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const createMonitorMutation = useMutation(
     trpc.monitor.create.mutationOptions({
       onSuccess: () => {
@@ -95,6 +96,9 @@ export function Client() {
         });
       },
     }),
+  );
+  const createFeedbackMutation = useMutation(
+    trpc.feedback.submit.mutationOptions({}),
   );
 
   return (
@@ -137,7 +141,7 @@ export function Client() {
                     regions: ["ams", "iad", "syd"],
                     active: true,
                     public: false,
-                    workspaceId: workspace.data?.id,
+                    workspaceId: workspace?.id,
                   });
                 }}
               />
@@ -167,7 +171,7 @@ export function Client() {
               <CreatePageForm
                 id="create-page-form"
                 onSubmit={async (values) => {
-                  if (!workspace.data?.id) return;
+                  if (!workspace?.id) return;
 
                   await createPageMutation.mutateAsync({
                     slug: values.slug,
@@ -176,7 +180,7 @@ export function Client() {
                     monitors: createMonitorMutation.data?.id
                       ? [{ monitorId: createMonitorMutation.data.id, order: 0 }]
                       : [],
-                    workspaceId: workspace.data.id,
+                    workspaceId: workspace.id,
                   });
                 }}
               />
@@ -188,45 +192,62 @@ export function Client() {
         </Section>
       )}
       {step === "next" && (
-        <Section>
-          <SectionHeader>
-            <SectionDescription className="tabular-nums">
-              What&apos;s next?
-            </SectionDescription>
-          </SectionHeader>
-          <ActionCardGroup className="sm:grid-cols-2">
-            {moreActions.map((action) => {
-              const isExternal = action.href.startsWith("http");
-              const isMonitor = action.id === "monitor";
-              const href =
-                isMonitor && createMonitorMutation.data?.id
-                  ? `${action.href}/${createMonitorMutation.data.id}`
-                  : action.href;
-              return (
-                <Link
-                  key={action.id}
-                  href={href}
-                  target={isExternal ? "_blank" : undefined}
-                  rel={isExternal ? "noopener noreferrer" : undefined}
-                >
-                  <ActionCard className="h-full w-full">
-                    <ActionCardHeader>
-                      <ActionCardTitle className="flex items-center justify-between gap-2">
-                        {action.title}
-                        {isExternal && (
-                          <ArrowUpRight className="size-4 shrink-0 text-muted-foreground group-hover/action-card:text-foreground" />
-                        )}
-                      </ActionCardTitle>
-                      <ActionCardDescription>
-                        {action.description}
-                      </ActionCardDescription>
-                    </ActionCardHeader>
-                  </ActionCard>
-                </Link>
-              );
-            })}
-          </ActionCardGroup>
-        </Section>
+        <>
+          <Section>
+            <SectionHeader>
+              <SectionDescription>
+                We&apos;d love to know how you heard about us. This will help us
+                improve our product and services.
+              </SectionDescription>
+            </SectionHeader>
+            <LearnFromForm
+              onSubmit={async (values) => {
+                await createFeedbackMutation.mutateAsync({
+                  message: `I learned about OpenStatus from ${values.from}${values.other ? `: ${values.other}` : ""}`,
+                });
+              }}
+            />
+          </Section>
+          <Section>
+            <SectionHeader>
+              <SectionDescription className="tabular-nums">
+                What&apos;s next?
+              </SectionDescription>
+            </SectionHeader>
+            <ActionCardGroup className="sm:grid-cols-2">
+              {moreActions.map((action) => {
+                const isExternal = action.href.startsWith("http");
+                const isMonitor = action.id === "monitor";
+                const href =
+                  isMonitor && createMonitorMutation.data?.id
+                    ? `${action.href}/${createMonitorMutation.data.id}`
+                    : action.href;
+                return (
+                  <Link
+                    key={action.id}
+                    href={href}
+                    target={isExternal ? "_blank" : undefined}
+                    rel={isExternal ? "noopener noreferrer" : undefined}
+                  >
+                    <ActionCard className="h-full w-full">
+                      <ActionCardHeader>
+                        <ActionCardTitle className="flex items-center justify-between gap-2">
+                          {action.title}
+                          {isExternal && (
+                            <ArrowUpRight className="size-4 shrink-0 text-muted-foreground group-hover/action-card:text-foreground" />
+                          )}
+                        </ActionCardTitle>
+                        <ActionCardDescription>
+                          {action.description}
+                        </ActionCardDescription>
+                      </ActionCardHeader>
+                    </ActionCard>
+                  </Link>
+                );
+              })}
+            </ActionCardGroup>
+          </Section>
+        </>
       )}
     </SectionGroup>
   );
