@@ -3,12 +3,12 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-const FLAG = false;
+const DASHBOARD_V2 = false;
 
 export default function ContentLayout({ children }: { children: ReactNode }) {
   return (
     <>
-      {FLAG ? <Banner /> : null}
+      {DASHBOARD_V2 ? <Banner /> : null}
       <MarketingLayout>{children}</MarketingLayout>
     </>
   );

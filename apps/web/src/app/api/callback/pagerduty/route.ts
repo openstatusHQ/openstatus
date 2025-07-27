@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-const NEW_ENDPOINT = true;
+const DASHBOARD_V2 = false;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -18,5 +18,5 @@ export async function GET(request: Request) {
       : "https://www.openstatus.dev"
   }/app/${workspace}/notifications/new/pagerduty?${searchParams}`;
 
-  redirect(NEW_ENDPOINT ? APP_URL : WWW_URL);
+  redirect(DASHBOARD_V2 ? APP_URL : WWW_URL);
 }
