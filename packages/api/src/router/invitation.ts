@@ -6,6 +6,7 @@ import { type SQL, and, db, eq, gte, isNull } from "@openstatus/db";
 import {
   insertInvitationSchema,
   invitation,
+  selectInvitationSchema,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
@@ -209,6 +210,9 @@ export const invitationRouter = createTRPCRouter({
           gte(invitation.expiresAt, new Date()),
           eq(invitation.email, opts.ctx.user.email),
         ),
+        with: {
+          workspace: true,
+        },
       });
 
       if (!result) {
@@ -218,7 +222,11 @@ export const invitationRouter = createTRPCRouter({
         });
       }
 
-      return result;
+      return selectInvitationSchema
+        .extend({
+          workspace: selectWorkspaceSchema,
+        })
+        .parse(result);
     }),
 
   accept: protectedProcedure
@@ -231,8 +239,6 @@ export const invitationRouter = createTRPCRouter({
         });
       }
 
-      console.log(opts.input);
-
       const _invitation = await opts.ctx.db.query.invitation.findFirst({
         where: and(
           eq(invitation.id, opts.input.id),
@@ -240,6 +246,9 @@ export const invitationRouter = createTRPCRouter({
           isNull(invitation.acceptedAt),
           gte(invitation.expiresAt, new Date()),
         ),
+        with: {
+          workspace: true,
+        },
       });
 
       if (!_invitation) {

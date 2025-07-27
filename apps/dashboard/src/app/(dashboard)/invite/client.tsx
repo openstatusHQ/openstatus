@@ -59,7 +59,13 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Invitation</SectionTitle>
           <SectionDescription>
-            You&apos;ve been invited to join the workspace.
+            You&apos;ve been invited to join the workspace
+            {invitation.workspace.name ? (
+              <span className="font-semibold">{` ${invitation.workspace.name}`}</span>
+            ) : (
+              ""
+            )}
+            .
           </SectionDescription>
         </SectionHeader>
         <Button

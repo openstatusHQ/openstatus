@@ -65,26 +65,27 @@ export function QuickActions({
   const [open, setOpen] = useState(false);
 
   const handleDelete = async () => {
-    try {
-      startTransition(async () => {
-        if (!deleteAction?.submitAction) return;
-        const promise = deleteAction.submitAction();
-        toast.promise(promise, {
-          loading: "Deleting...",
-          success: "Deleted",
-          error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
-            }
-            return "Failed to delete";
-          },
-        });
-        await promise;
-        setOpen(false);
+    startTransition(async () => {
+      if (!deleteAction?.submitAction) return;
+      const promise = deleteAction.submitAction();
+      toast.promise(promise, {
+        loading: "Deleting...",
+        success: "Deleted",
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "Failed to delete";
+        },
       });
-    } catch (error) {
-      console.error("Failed to delete:", error);
-    }
+      try {
+        await promise;
+      } catch (error) {
+        console.error("Failed to delete:", error);
+      } finally {
+        setOpen(false);
+      }
+    });
   };
 
   return (

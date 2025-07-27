@@ -15,7 +15,7 @@ import { FormWorkspace } from "@/components/forms/settings/form-workspace";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-const BASE_URL = "https://app.openstatus.dev/";
+const BASE_URL = "https://app.openstatus.dev/invite";
 
 export default function Page() {
   const trpc = useTRPC();

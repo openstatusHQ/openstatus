@@ -13,10 +13,9 @@ export default auth(async (req) => {
     return response;
   }
 
-  const encodedSearchParams = `${url.pathname}?${url.search}`;
-
   if (!req.auth && url.pathname !== "/login") {
     const newURL = new URL("/login", req.url);
+    const encodedSearchParams = `${url.pathname}${url.search}`;
 
     if (encodedSearchParams) {
       newURL.searchParams.append("redirectTo", encodedSearchParams);
