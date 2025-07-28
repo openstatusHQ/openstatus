@@ -17,7 +17,7 @@ import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "../../shared-metadata";
+} from "../../../shared-metadata";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
