@@ -2,6 +2,7 @@ import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
@@ -44,6 +45,12 @@ export function FormStatusPageUpdate() {
 
   const updateCustomDomainMutation = useMutation(
     trpc.page.updateCustomDomain.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
+  const updatePageAppearanceMutation = useMutation(
+    trpc.page.updateAppearance.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -111,6 +118,17 @@ export function FormStatusPageUpdate() {
           await updateCustomDomainMutation.mutateAsync({
             id: Number.parseInt(id),
             customDomain: values.domain,
+          });
+        }}
+      />
+      <FormAppearance
+        defaultValues={{
+          forceTheme: statusPage.forceTheme ?? "system",
+        }}
+        onSubmit={async (values) => {
+          await updatePageAppearanceMutation.mutateAsync({
+            id: Number.parseInt(id),
+            forceTheme: values.forceTheme,
           });
         }}
       />

@@ -26,7 +26,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     "view-report": () => {
       if (typeof window !== "undefined") {
         window.open(
-          `https://${row.original.page.customDomain || `${row.original.page.slug}.openstatus.dev/events/report/${row.original.id}`}`,
+          `https://${row.original.page.customDomain || `${row.original.page.slug}.openstatus.dev`}/events/report/${row.original.id}`,
           "_blank",
         );
       }

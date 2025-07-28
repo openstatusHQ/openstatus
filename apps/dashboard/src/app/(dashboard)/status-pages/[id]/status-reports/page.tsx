@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import {
   Section,
   SectionDescription,
@@ -59,7 +60,11 @@ export default function Page() {
           <SectionHeader>
             <SectionTitle>{page.title}</SectionTitle>
             <SectionDescription>
-              See our uptime history and status reports.
+              List of all status reports. Looking for{" "}
+              <Link href={`/status-pages/${id}/maintenances`}>
+                maintenances
+              </Link>
+              ?
             </SectionDescription>
           </SectionHeader>
           <div>

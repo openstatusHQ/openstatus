@@ -276,7 +276,7 @@ export function FormMaintenance({
                     </div>
                   </PopoverContent>
                 </Popover>
-                <FormDescription>When the maintenance ends</FormDescription>
+                <FormDescription>When the maintenance ends.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
