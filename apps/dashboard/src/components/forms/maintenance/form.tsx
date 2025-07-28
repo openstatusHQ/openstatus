@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import type React from "react";
 import { useTransition } from "react";
@@ -42,13 +42,18 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const schema = z.object({
-  title: z.string(),
-  message: z.string(),
-  startDate: z.date(),
-  endDate: z.date(),
-  monitors: z.array(z.number()),
-});
+const schema = z
+  .object({
+    title: z.string().min(1, "Title is required"),
+    message: z.string(),
+    startDate: z.date(),
+    endDate: z.date(),
+    monitors: z.array(z.number()),
+  })
+  .refine((data) => data.endDate > data.startDate, {
+    message: "End date cannot be earlier than start date.",
+    path: ["endDate"],
+  });
 
 export type FormValues = z.infer<typeof schema>;
 
@@ -69,7 +74,7 @@ export function FormMaintenance({
       title: "",
       message: "",
       startDate: new Date(),
-      endDate: new Date(),
+      endDate: addDays(new Date(), 1),
       monitors: [],
     },
   });
