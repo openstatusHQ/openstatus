@@ -733,6 +733,27 @@ export const pageRouter = createTRPCRouter({
         .run();
     }),
 
+  updateAppearance: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        forceTheme: z.enum(["light", "dark", "system"]),
+      }),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      await opts.ctx.db
+        .update(page)
+        .set({ forceTheme: opts.input.forceTheme, updatedAt: new Date() })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
   updateMonitors: protectedProcedure
     .meta({ track: Events.UpdatePage })
     .input(

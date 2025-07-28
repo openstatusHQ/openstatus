@@ -146,21 +146,21 @@ export function Client() {
       </Section>
       <Section>
         <SectionHeader>
-          <SectionTitle>Timeline</SectionTitle>
-          <SectionDescription>
-            What happened to your monitor over the last {TIMELINE_INTERVAL} days
-          </SectionDescription>
-        </SectionHeader>
-        <AuditLogsWrapper monitorId={id} interval={TIMELINE_INTERVAL} />
-      </Section>
-      <Section>
-        <SectionHeader>
           <SectionTitle>Regions</SectionTitle>
           <SectionDescription>
             Every region&apos;s latency over the last 24 hours
           </SectionDescription>
         </SectionHeader>
         <DataTable data={regionMetrics} columns={regionColumns} />
+      </Section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Timeline</SectionTitle>
+          <SectionDescription>
+            What happened to your monitor over the last {TIMELINE_INTERVAL} days
+          </SectionDescription>
+        </SectionHeader>
+        <AuditLogsWrapper monitorId={id} interval={TIMELINE_INTERVAL} />
       </Section>
     </SectionGroup>
   );

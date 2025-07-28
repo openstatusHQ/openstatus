@@ -45,7 +45,9 @@ export function DataTable() {
             </TableCell>
             <TableCell>{item.user.email}</TableCell>
             <TableCell>{item.role}</TableCell>
-            <TableCell>{formatDate(item.createdAt)}</TableCell>
+            <TableCell>
+              {formatDate(item.user.createdAt ?? item.createdAt)}
+            </TableCell>
             <TableCell>
               <div className="flex justify-end">
                 <QuickActions

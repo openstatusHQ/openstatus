@@ -68,9 +68,7 @@ export default function Page() {
       <Section>
         <SectionHeader>
           <SectionTitle>{page?.title}</SectionTitle>
-          <SectionDescription>
-            Allow your users to subscribe to status page updates.
-          </SectionDescription>
+          <SectionDescription>List of all subscribers.</SectionDescription>
         </SectionHeader>
       </Section>
       <Section>
