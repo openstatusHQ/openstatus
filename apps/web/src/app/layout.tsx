@@ -1,6 +1,5 @@
 import "@/styles/globals.css";
 
-import { Toaster } from "@/components/ui/sonner";
 import { OpenPanelComponent } from "@openpanel/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -11,12 +10,9 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
 import { TRPCReactQueryProvider } from "@/trpc/rq-client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,13 +45,7 @@ export default function RootLayout({
         } ${calSans.variable}`}
       >
         <NuqsAdapter>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-            <TRPCReactQueryProvider>
-              <Background>{children}</Background>
-              <Toaster richColors closeButton />
-              <TailwindIndicator />
-            </TRPCReactQueryProvider>
-          </ThemeProvider>
+          <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
         </NuqsAdapter>
         {env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
           <OpenPanelComponent

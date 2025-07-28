@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
+import Background from "@/app/_components/background";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
+import { TailwindIndicator } from "@/components/tailwind-indicator";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { getRequestHeaderTimezone } from "@/lib/timezone";
 import { api } from "@/trpc/server";
 import { Footer } from "./_components/footer";
@@ -62,15 +66,25 @@ export default async function StatusPageLayout(props: Props) {
   }
 
   return (
-    <div className="relative mx-auto flex min-h-screen w-full max-w-4xl flex-col space-y-6 p-4 md:p-8">
-      <Header navigation={navigation} plan={plan} page={page} />
-      <main className="flex h-full w-full flex-1 flex-col">
-        <Shell className="mx-auto h-full flex-1 rounded-2xl px-4 py-4 md:p-8">
-          {children}
-        </Shell>
-      </main>
-      <Footer plan={plan} timeZone={timeZone} />
-    </div>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme={page.forceTheme ?? "light"}
+      enableSystem
+    >
+      <Background>
+        <div className="relative mx-auto flex min-h-screen w-full max-w-4xl flex-col space-y-6 p-4 md:p-8">
+          <Header navigation={navigation} plan={plan} page={page} />
+          <main className="flex h-full w-full flex-1 flex-col">
+            <Shell className="mx-auto h-full flex-1 rounded-2xl px-4 py-4 md:p-8">
+              {children}
+            </Shell>
+          </main>
+          <Footer plan={plan} timeZone={timeZone} />
+        </div>
+      </Background>
+      <Toaster richColors closeButton />
+      <TailwindIndicator />
+    </ThemeProvider>
   );
 }
 
