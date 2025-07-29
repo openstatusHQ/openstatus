@@ -1,0 +1,13 @@
+# Data Source created from Pipe 'aggregate__http_uptime_7d__v1'
+
+SCHEMA >
+    `time` DateTime,
+    `region` LowCardinality(String),
+    `requestStatus` Nullable(String),
+    `monitorId` String,
+    `workspaceId` String
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(7)"

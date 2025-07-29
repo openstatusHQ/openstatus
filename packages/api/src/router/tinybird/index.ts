@@ -136,8 +136,15 @@ function getGlobalMetricsProcedure(type: Type) {
   return type === "http" ? tb.httpGlobalMetricsDaily : tb.tcpGlobalMetricsDaily;
 }
 
-function getUptime30dProcedure(type: Type) {
-  return type === "http" ? tb.httpUptime30d : tb.tcpUptime30d;
+function getUptimeProcedure(period: "7d" | "30d", type: Type) {
+  switch (period) {
+    case "7d":
+      return type === "http" ? tb.httpUptimeWeekly : tb.tcpUptimeWeekly;
+    case "30d":
+      return type === "http" ? tb.httpUptime30d : tb.tcpUptime30d;
+    default:
+      return type === "http" ? tb.httpUptime30d : tb.httpUptime30d;
+  }
 }
 
 // TODO: missing pipes for other periods
@@ -213,6 +220,7 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.number().int().optional(), // in minutes, default 30
         regions: z.enum(flyRegions).array().optional(),
         type: z.enum(types).default("http"),
+        period: z.enum(["7d", "30d"]).default("30d"),
       }),
     )
     .query(async (opts) => {
@@ -232,7 +240,7 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      const procedure = getUptime30dProcedure(opts.input.type);
+      const procedure = getUptimeProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),
 

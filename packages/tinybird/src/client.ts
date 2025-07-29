@@ -1144,9 +1144,47 @@ export class OSTinybird {
     });
   }
 
+  public get httpUptimeWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_uptime_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(flyRegions).array().optional(),
+        interval: z.number().int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.number().int(),
+        degraded: z.number().int(),
+        error: z.number().int(),
+      }),
+    });
+  }
+
   public get httpUptime30d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_uptime_30d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(flyRegions).array().optional(),
+        interval: z.number().int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.number().int(),
+        degraded: z.number().int(),
+        error: z.number().int(),
+      }),
+    });
+  }
+
+  public get tcpUptimeWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_uptime_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
         fromDate: z.string().optional(),

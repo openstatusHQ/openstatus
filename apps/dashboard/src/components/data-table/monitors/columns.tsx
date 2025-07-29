@@ -1,13 +1,12 @@
 "use client";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
-// import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-// import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
+import { ChartBarUptimeLight } from "@/components/chart/chart-bar-uptime-light";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNow } from "date-fns";
@@ -165,13 +164,28 @@ export const columns: ColumnDef<Monitor>[] = [
     enableHiding: false,
     enableGlobalFilter: false,
   },
+  // {
+  //   id: "lastIncident",
+  //   header: "Last Incident",
+  //   accessorFn: (row) => row.incidents?.[0]?.createdAt,
+  //   cell: ({ row }) => {
+  //     const value = row.getValue("lastIncident");
+  //     return <TableCellDate value={value} formatStr="LLL dd, y" />;
+  //   },
+  //   enableHiding: false,
+  //   enableGlobalFilter: false,
+  // },
   {
-    id: "lastIncident",
-    header: "Last Incident",
-    accessorFn: (row) => row.incidents?.[0]?.createdAt,
+    id: "uptime",
+    accessorFn: (row) => `uptime-${row.id}`,
+    header: "Last Week",
     cell: ({ row }) => {
-      const value = row.getValue("lastIncident");
-      return <TableCellDate value={value} formatStr="LLL dd, y" />;
+      return (
+        <ChartBarUptimeLight
+          monitorId={String(row.original.id)}
+          type={row.original.jobType as "http" | "tcp"}
+        />
+      );
     },
     enableHiding: false,
     enableGlobalFilter: false,
@@ -185,7 +199,7 @@ export const columns: ColumnDef<Monitor>[] = [
         : row.globalMetrics,
     cell: ({ row }) => {
       const value = row.getValue("lastTimestamp");
-      if (value === undefined) return <TableCellSkeleton />;
+      if (value === undefined) return <TableCellSkeleton className="w-full" />;
       return (
         <TableCellDate
           value={
