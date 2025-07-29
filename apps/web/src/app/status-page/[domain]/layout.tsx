@@ -68,7 +68,7 @@ export default async function StatusPageLayout(props: Props) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme={page.forceTheme ?? "light"}
+      defaultTheme={page.forceTheme}
       enableSystem
     >
       <Background>
