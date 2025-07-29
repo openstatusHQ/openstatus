@@ -23,7 +23,7 @@ export const page = sqliteTable("page", {
 
   forceTheme: text("force_theme", { enum: ["dark", "light", "system"] })
     .notNull()
-    .default("system"),
+    .default("light"),
 
   // Password protecting the status page - no specific restriction on password
   password: text("password", { length: 256 }),

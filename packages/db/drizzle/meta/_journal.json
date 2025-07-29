@@ -316,6 +316,13 @@
       "when": 1753730490635,
       "tag": "0044_illegal_turbo",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "6",
+      "when": 1753813566112,
+      "tag": "0045_last_cobalt_man",
+      "breakpoints": true
     }
   ]
 }
