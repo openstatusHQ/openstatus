@@ -198,7 +198,7 @@ export function FormGeneral({
             <FormField
               control={form.control}
               name="icon"
-              render={({ field }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>Icon</FormLabel>
                   <FormControl>
@@ -207,7 +207,7 @@ export function FormGeneral({
                         <>
                           <div className="size-[36px] overflow-hidden rounded-md border bg-muted">
                             <Image
-                              src={field.value}
+                              src={watchIcon}
                               width={36}
                               height={36}
                               alt="Icon preview"
