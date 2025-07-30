@@ -70,6 +70,18 @@ const moreActions = [
     description: "See what's new in OpenStatus.",
     href: "https://openstatus.dev/changelog",
   },
+  {
+    id: "discord",
+    title: "Discord",
+    description: "Join our Discord server if you get stuck.",
+    href: "https://discord.gg/openstatus",
+  },
+  {
+    id: "github",
+    title: "GitHub",
+    description: "Give us a star on GitHub, request features or report issues.",
+    href: "https://github.com/openstatus-dev/openstatus",
+  },
 ];
 
 export function Client() {
@@ -85,7 +97,7 @@ export function Client() {
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
-    }),
+    })
   );
   const createPageMutation = useMutation(
     trpc.page.create.mutationOptions({
@@ -95,10 +107,10 @@ export function Client() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    }),
+    })
   );
   const createFeedbackMutation = useMutation(
-    trpc.feedback.submit.mutationOptions({}),
+    trpc.feedback.submit.mutationOptions({})
   );
 
   return (
