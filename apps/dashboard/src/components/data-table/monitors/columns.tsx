@@ -6,7 +6,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-import { ChartBarUptimeLight } from "@/components/chart/chart-bar-uptime-light";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNow } from "date-fns";
@@ -164,32 +163,32 @@ export const columns: ColumnDef<Monitor>[] = [
     enableHiding: false,
     enableGlobalFilter: false,
   },
-  // {
-  //   id: "lastIncident",
-  //   header: "Last Incident",
-  //   accessorFn: (row) => row.incidents?.[0]?.createdAt,
-  //   cell: ({ row }) => {
-  //     const value = row.getValue("lastIncident");
-  //     return <TableCellDate value={value} formatStr="LLL dd, y" />;
-  //   },
-  //   enableHiding: false,
-  //   enableGlobalFilter: false,
-  // },
   {
-    id: "uptime",
-    accessorFn: (row) => `uptime-${row.id}`,
-    header: "Last Week",
+    id: "lastIncident",
+    header: "Last Incident",
+    accessorFn: (row) => row.incidents?.[0]?.createdAt,
     cell: ({ row }) => {
-      return (
-        <ChartBarUptimeLight
-          monitorId={String(row.original.id)}
-          type={row.original.jobType as "http" | "tcp"}
-        />
-      );
+      const value = row.getValue("lastIncident");
+      return <TableCellDate value={value} formatStr="LLL dd, y" />;
     },
     enableHiding: false,
     enableGlobalFilter: false,
   },
+  // {
+  //   id: "uptime",
+  //   accessorFn: (row) => `uptime-${row.id}`,
+  //   header: "Last Week",
+  //   cell: ({ row }) => {
+  //     return (
+  //       <ChartBarUptimeLight
+  //         monitorId={String(row.original.id)}
+  //         type={row.original.jobType as "http" | "tcp"}
+  //       />
+  //     );
+  //   },
+  //   enableHiding: false,
+  //   enableGlobalFilter: false,
+  // },
   {
     id: "lastTimestamp",
     header: "Last Checked",
