@@ -91,6 +91,7 @@ export function FormGeneral({
   const uploadMutation = useMutation(trpc.blob.upload.mutationOptions());
   const watchSlug = form.watch("slug");
   const watchTitle = form.watch("title");
+  const watchIcon = form.watch("icon");
   const debouncedSlug = useDebounce(watchSlug, 500);
   const { data: isUnique } = useQuery(
     trpc.page.getSlugUniqueness.queryOptions(
@@ -202,7 +203,7 @@ export function FormGeneral({
                   <FormLabel>Icon</FormLabel>
                   <FormControl>
                     <div className="flex items-center space-x-2">
-                      {field.value ? (
+                      {watchIcon ? (
                         <>
                           <div className="size-[36px] overflow-hidden rounded-md border bg-muted">
                             <Image
