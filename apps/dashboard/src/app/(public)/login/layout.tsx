@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
@@ -14,8 +13,8 @@ export default async function AuthLayout({
 
   return (
     <div className="grid min-h-screen grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-      <aside className="col-span-1 flex w-full flex-col gap-4 border border-border p-4 backdrop-blur-[2px] md:p-8 xl:col-span-2">
-        <Link href="/" className="relative h-8 w-8">
+      <aside className="col-span-1 flex w-full flex-col gap-4 border border-border p-4 backdrop-blur-[2px] md:p-8 xl:col-span-2 bg-sidebar">
+        <a href="https://openstatus.dev" className="relative h-8 w-8">
           <Image
             src="https://openstatus.dev/icon.png"
             alt="OpenStatus"
@@ -23,7 +22,7 @@ export default async function AuthLayout({
             width={32}
             className="rounded-full border border-border"
           />
-        </Link>
+        </a>
         <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 text-center md:text-left">
           <div className="mx-auto grid gap-3">
             <h1 className="font-cal text-3xl text-foreground">
