@@ -19,6 +19,8 @@ import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
 import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
+import { PopoverQuantile } from "@/components/popovers/popover-quantile";
+import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
@@ -118,8 +120,10 @@ export function Client() {
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
           <div>
-            The <DropdownPercentile /> quantile within a <DropdownInterval />{" "}
-            resolution
+            The <DropdownPercentile />{" "}
+            <PopoverQuantile>quantile</PopoverQuantile> within a{" "}
+            <DropdownInterval />{" "}
+            <PopoverResolution>resolution</PopoverResolution>
           </div>
           <div>
             <ButtonReset only={["percentile", "interval"]} />
@@ -155,7 +159,8 @@ export function Client() {
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
           <div>
-            The <DropdownPercentile /> quantile trend over the{" "}
+            The <DropdownPercentile />{" "}
+            <PopoverQuantile>quantile</PopoverQuantile> trend over the{" "}
             <DropdownPeriod />
           </div>
           <div>
