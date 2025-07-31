@@ -173,7 +173,14 @@ export function Client() {
             <TabsTrigger value="chart">Chart</TabsTrigger>
           </TabsList>
           <TabsContent value="table">
-            <DataTable data={regionMetrics} columns={regionColumns} />
+            <DataTable
+              data={regionMetrics}
+              columns={regionColumns}
+              defaultPagination={{
+                pageIndex: 0,
+                pageSize: selectedRegions.length,
+              }}
+            />
           </TabsContent>
           <TabsContent value="chart">
             <ChartLineRegions
