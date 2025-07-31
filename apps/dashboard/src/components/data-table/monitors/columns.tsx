@@ -1,10 +1,8 @@
 "use client";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
-// import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-// import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -176,6 +174,21 @@ export const columns: ColumnDef<Monitor>[] = [
     enableHiding: false,
     enableGlobalFilter: false,
   },
+  // {
+  //   id: "uptime",
+  //   accessorFn: (row) => `uptime-${row.id}`,
+  //   header: "Last Week",
+  //   cell: ({ row }) => {
+  //     return (
+  //       <ChartBarUptimeLight
+  //         monitorId={String(row.original.id)}
+  //         type={row.original.jobType as "http" | "tcp"}
+  //       />
+  //     );
+  //   },
+  //   enableHiding: false,
+  //   enableGlobalFilter: false,
+  // },
   {
     id: "lastTimestamp",
     header: "Last Checked",
@@ -185,7 +198,7 @@ export const columns: ColumnDef<Monitor>[] = [
         : row.globalMetrics,
     cell: ({ row }) => {
       const value = row.getValue("lastTimestamp");
-      if (value === undefined) return <TableCellSkeleton />;
+      if (value === undefined) return <TableCellSkeleton className="w-full" />;
       return (
         <TableCellDate
           value={

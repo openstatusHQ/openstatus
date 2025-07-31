@@ -12,6 +12,15 @@ import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
 
+// split an array into chunks of a given size.
+function chunk<T>(array: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
 export class EmailClient {
   public readonly client: Resend;
 
@@ -88,21 +97,27 @@ export class EmailClient {
 
     try {
       const html = await render(<StatusReportEmail {...req} />);
-      const result = await this.client.batch.send(
-        req.to.map((subscriber) => ({
-          from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-          subject: req.reportTitle,
-          to: subscriber,
-          html,
-        })),
-      );
 
-      if (!result.error) {
-        console.log(`Sent status report update email to ${req.to}`);
-        return;
+      for (const recipients of chunk(req.to, 100)) {
+        const result = await this.client.batch.send(
+          recipients.map((subscriber) => ({
+            from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+            subject: req.reportTitle,
+            to: subscriber,
+            html,
+          })),
+        );
+
+        if (result.error) {
+          console.error(
+            `Error sending status report update batch to ${recipients}: ${result.error}`,
+          );
+        }
       }
 
-      throw result.error;
+      console.log(
+        `Sent status report update email to ${req.to.length} subscribers`,
+      );
     } catch (err) {
       console.error(
         `Error sending status report update email to ${req.to}`,

@@ -1,0 +1,15 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        region,
+        requestStatus,
+        monitorId,
+        workspaceId
+    FROM tcp_response__v0
+
+TYPE materialized
+DATASOURCE mv__tcp_uptime_7d__v1
+
+

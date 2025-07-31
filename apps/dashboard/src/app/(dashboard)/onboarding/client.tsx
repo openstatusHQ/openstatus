@@ -70,17 +70,32 @@ const moreActions = [
     description: "See what's new in OpenStatus.",
     href: "https://openstatus.dev/changelog",
   },
+  {
+    id: "discord",
+    title: "Discord",
+    description: "Join our Discord server if you get stuck.",
+    href: "https://discord.gg/openstatus",
+  },
+  {
+    id: "github",
+    title: "GitHub",
+    description: "Leave a star on GitHub, request features or report issues.",
+    href: "https://github.com/openstatus-dev/openstatus",
+  },
 ];
 
 export function Client() {
   const [{ step }, setSearchParams] = useQueryStates(searchParamsParsers);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: workspace, refetch } = useQuery(
+    trpc.workspace.get.queryOptions(),
+  );
   const createMonitorMutation = useMutation(
     trpc.monitor.create.mutationOptions({
       onSuccess: () => {
         setSearchParams({ step: "2" });
+        refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
@@ -91,6 +106,7 @@ export function Client() {
     trpc.page.create.mutationOptions({
       onSuccess: () => {
         setSearchParams({ step: "next" });
+        refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
@@ -203,7 +219,9 @@ export function Client() {
             <LearnFromForm
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
-                  message: `I learned about OpenStatus from ${values.from}${values.other ? `: ${values.other}` : ""}`,
+                  message: `I learned about OpenStatus from *${values.from}${
+                    values.other ? `: ${values.other}` : ""
+                  }*`,
                 });
               }}
             />

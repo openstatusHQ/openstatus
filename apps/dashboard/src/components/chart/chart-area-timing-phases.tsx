@@ -103,7 +103,6 @@ export function ChartAreaTimingPhases({
         />
         <ChartTooltip
           cursor={false}
-          defaultIndex={10}
           content={
             <ChartTooltipContent
               indicator="dot"

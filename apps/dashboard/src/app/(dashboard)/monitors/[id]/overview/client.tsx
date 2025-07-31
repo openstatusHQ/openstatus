@@ -3,6 +3,7 @@
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
+import { ChartLineRegions } from "@/components/chart/chart-line-regions";
 import {
   Section,
   SectionDescription,
@@ -18,7 +19,10 @@ import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
 import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
+import { PopoverQuantile } from "@/components/popovers/popover-quantile";
+import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
@@ -54,8 +58,8 @@ export function Client() {
   const { data: regionTimeline } = useQuery(regionTimelineQuery);
 
   const regionMetrics: RegionMetric[] = React.useMemo(() => {
-    return mapRegionMetrics(regionTimeline, monitor?.regions ?? []);
-  }, [regionTimeline, monitor]);
+    return mapRegionMetrics(regionTimeline, monitor?.regions ?? [], percentile);
+  }, [regionTimeline, monitor, percentile]);
 
   if (!monitor) return null;
 
@@ -94,7 +98,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Uptime</SectionTitle>
           <SectionDescription>
-            Uptime accross all the regions
+            Uptime accross all the selected regions
           </SectionDescription>
         </SectionHeader>
         <ChartBarUptime
@@ -116,8 +120,10 @@ export function Client() {
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
           <div>
-            The <DropdownPercentile /> quantile within a <DropdownInterval />{" "}
-            resolution
+            The <DropdownPercentile />{" "}
+            <PopoverQuantile>quantile</PopoverQuantile> within a{" "}
+            <DropdownInterval />{" "}
+            <PopoverResolution>resolution</PopoverResolution>
           </div>
           <div>
             <ButtonReset only={["percentile", "interval"]} />
@@ -148,10 +154,55 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Regions</SectionTitle>
           <SectionDescription>
-            Every region&apos;s latency over the last 24 hours
+            Every selected region&apos;s latency trend
           </SectionDescription>
         </SectionHeader>
-        <DataTable data={regionMetrics} columns={regionColumns} />
+        <div className="flex flex-wrap gap-2">
+          <div>
+            The <DropdownPercentile />{" "}
+            <PopoverQuantile>quantile</PopoverQuantile> trend over the{" "}
+            <DropdownPeriod />
+          </div>
+          <div>
+            <ButtonReset only={["percentile", "period"]} />
+          </div>
+        </div>
+        <Tabs defaultValue="table">
+          <TabsList>
+            <TabsTrigger value="table">Table</TabsTrigger>
+            <TabsTrigger value="chart">Chart</TabsTrigger>
+          </TabsList>
+          <TabsContent value="table">
+            <DataTable data={regionMetrics} columns={regionColumns} />
+          </TabsContent>
+          <TabsContent value="chart">
+            <ChartLineRegions
+              className="mt-3"
+              regions={monitor.regions.filter((region) =>
+                selectedRegions.includes(region),
+              )}
+              data={regionMetrics.reduce(
+                (acc, region) => {
+                  region.trend.forEach((t) => {
+                    const existing = acc.find(
+                      (d) => d.timestamp === t.timestamp,
+                    );
+                    if (existing) {
+                      existing[region.region] = t[region.region];
+                    } else {
+                      acc.push({
+                        timestamp: t.timestamp,
+                        [region.region]: t[region.region],
+                      });
+                    }
+                  });
+                  return acc;
+                },
+                [] as { timestamp: number; [key: string]: number }[],
+              )}
+            />
+          </TabsContent>
+        </Tabs>
       </Section>
       <Section>
         <SectionHeader>
