@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,7 +46,13 @@ export function CreatePageForm({
         toast.promise(promise, {
           loading: "Saving...",
           success: () => "Saved",
-          error: "Failed to save",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            console.error(error);
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {

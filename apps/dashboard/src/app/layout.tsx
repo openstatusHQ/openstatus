@@ -5,6 +5,7 @@ import { DevelopmentIndicator } from "@/components/development-indicator";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ogMetadata, twitterMetadata } from "./metadata";
@@ -45,7 +46,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable}${geistMono.variable}${cal.variable} antialiased`}
+        className={cn(
+          geistSans.variable,
+          geistMono.variable,
+          cal.variable,
+          "antialiased",
+        )}
       >
         <NuqsAdapter>
           <ThemeProvider

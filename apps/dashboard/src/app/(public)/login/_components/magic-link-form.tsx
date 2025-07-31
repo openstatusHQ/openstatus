@@ -32,7 +32,7 @@ export default function MagicLinkForm() {
         <Input id="email" name="email" type="email" required />
       </div>
       <Button variant="secondary" className="w-full">
-        {pending ? "Logging..." : "Log magic link"}
+        {pending ? "Logging..." : "Log Magic Link"}
       </Button>
     </form>
   );
