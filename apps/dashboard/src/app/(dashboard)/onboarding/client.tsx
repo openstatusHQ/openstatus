@@ -219,9 +219,9 @@ export function Client() {
             <LearnFromForm
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
-                  message: `I learned about OpenStatus from ${values.from}${
+                  message: `I learned about OpenStatus from *${values.from}${
                     values.other ? `: ${values.other}` : ""
-                  }`,
+                  }*`,
                 });
               }}
             />
