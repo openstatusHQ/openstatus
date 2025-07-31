@@ -97,7 +97,7 @@ export function Client() {
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const createPageMutation = useMutation(
     trpc.page.create.mutationOptions({
@@ -107,10 +107,10 @@ export function Client() {
           queryKey: trpc.page.list.queryKey(),
         });
       },
-    })
+    }),
   );
   const createFeedbackMutation = useMutation(
-    trpc.feedback.submit.mutationOptions({})
+    trpc.feedback.submit.mutationOptions({}),
   );
 
   return (

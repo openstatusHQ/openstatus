@@ -222,7 +222,7 @@ export const groupedRegions = regions.reduce(
     acc[continent].push(region.code);
     return acc;
   },
-  {} as Record<string, Region[]>
+  {} as Record<string, Region[]>,
 );
 
 export const regionColors = {

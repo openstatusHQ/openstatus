@@ -38,7 +38,7 @@ export function Client() {
   const [{ period, regions: selectedRegions, percentile, interval }] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   const regionTimelineQuery = {
@@ -56,8 +56,8 @@ export function Client() {
   const { data: regionTimeline } = useQuery(regionTimelineQuery);
 
   const regionMetrics: RegionMetric[] = React.useMemo(() => {
-    return mapRegionMetrics(regionTimeline, monitor?.regions ?? []);
-  }, [regionTimeline, monitor]);
+    return mapRegionMetrics(regionTimeline, monitor?.regions ?? [], percentile);
+  }, [regionTimeline, monitor, percentile]);
 
   if (!monitor) return null;
 
@@ -96,7 +96,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Uptime</SectionTitle>
           <SectionDescription>
-            Uptime accross all the regions
+            Uptime accross all the selected regions
           </SectionDescription>
         </SectionHeader>
         <ChartBarUptime
@@ -104,7 +104,7 @@ export function Client() {
           type={monitor.jobType as "http" | "tcp"}
           period={period}
           regions={monitor.regions.filter((region) =>
-            selectedRegions.includes(region)
+            selectedRegions.includes(region),
           )}
         />
       </Section>
@@ -150,28 +150,37 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Regions</SectionTitle>
           <SectionDescription>
-            Every region&apos;s P50 latency trend over the selected period.
+            Every selected region&apos;s latency trend
           </SectionDescription>
         </SectionHeader>
-        <Tabs defaultValue="separated">
+        <div className="flex flex-wrap gap-2">
+          <div>
+            The <DropdownPercentile /> quantile trend over the{" "}
+            <DropdownPeriod />
+          </div>
+          <div>
+            <ButtonReset only={["percentile", "period"]} />
+          </div>
+        </div>
+        <Tabs defaultValue="table">
           <TabsList>
-            <TabsTrigger value="separated">Separated</TabsTrigger>
-            <TabsTrigger value="combined">Combined</TabsTrigger>
+            <TabsTrigger value="table">Table</TabsTrigger>
+            <TabsTrigger value="chart">Chart</TabsTrigger>
           </TabsList>
-          <TabsContent value="separated">
+          <TabsContent value="table">
             <DataTable data={regionMetrics} columns={regionColumns} />
           </TabsContent>
-          <TabsContent value="combined">
+          <TabsContent value="chart">
             <ChartLineRegions
-              className="mt-4"
+              className="mt-3"
               regions={monitor.regions.filter((region) =>
-                selectedRegions.includes(region)
+                selectedRegions.includes(region),
               )}
               data={regionMetrics.reduce(
                 (acc, region) => {
                   region.trend.forEach((t) => {
                     const existing = acc.find(
-                      (d) => d.timestamp === t.timestamp
+                      (d) => d.timestamp === t.timestamp,
                     );
                     if (existing) {
                       existing[region.region] = t[region.region];
@@ -184,7 +193,7 @@ export function Client() {
                   });
                   return acc;
                 },
-                [] as { timestamp: number; [key: string]: number }[]
+                [] as { timestamp: number; [key: string]: number }[],
               )}
             />
           </TabsContent>
