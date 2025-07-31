@@ -11,6 +11,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { regionColors } from "@/data/regions";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { flyRegionsDict } from "@openstatus/utils";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
@@ -67,6 +68,7 @@ export function ChartLineRegions({
   data: TrendPoint[];
   regions: string[];
 }) {
+  const isMobile = useIsMobile();
   const trendData = data ?? [];
 
   console.log({ data, regions });
@@ -130,10 +132,12 @@ export function ChartLineRegions({
           orientation="right"
           tickFormatter={(value) => `${value}ms`}
         />
-        <ChartLegend
-          className="flex-wrap"
-          content={<ChartLegendContent className="text-nowrap" />}
-        />
+        {regions.length <= 6 && !isMobile ? (
+          <ChartLegend
+            className="flex-wrap"
+            content={<ChartLegendContent className="text-nowrap" />}
+          />
+        ) : null}
       </LineChart>
     </ChartContainer>
   );
