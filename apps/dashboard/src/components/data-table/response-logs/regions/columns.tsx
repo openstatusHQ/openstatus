@@ -50,7 +50,11 @@ export const columns: ColumnDef<RegionMetric>[] = [
   },
   {
     accessorKey: "trend",
-    header: "Trend",
+    header: () => (
+      <>
+        Trend <span className="text-muted-foreground">(P50)</span>
+      </>
+    ),
     cell: ({ row }) => {
       return <TrendCell trend={row.original.trend} />;
     },

@@ -6,21 +6,33 @@ export const regionMetrics = [
     p50: 100,
     p90: 150,
     p99: 200,
-    trend: [{ latency: 100, timestamp: 1716729600 }],
+    trend: [{ ams: 100, timestamp: 1716729600, latency: 100 }] as {
+      [key: string]: number;
+      timestamp: number;
+      latency: number;
+    }[],
   },
   {
     region: "fra" as const satisfies Region,
     p50: 110,
     p90: 155,
     p99: 220,
-    trend: [{ latency: 100, timestamp: 1716729600 }],
+    trend: [{ fra: 100, timestamp: 1716729600, latency: 100 }] as {
+      [key: string]: number;
+      timestamp: number;
+      latency: number;
+    }[],
   },
   {
     region: "gru" as const satisfies Region,
     p50: 120,
     p90: 160,
     p99: 230,
-    trend: [{ latency: 100, timestamp: 1716729600 }],
+    trend: [{ gru: 100, timestamp: 1716729600, latency: 100 }] as {
+      [key: string]: number;
+      timestamp: number;
+      latency: number;
+    }[],
   },
 ];
 

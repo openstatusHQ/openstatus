@@ -3,6 +3,7 @@
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
+import { ChartLineRegions } from "@/components/chart/chart-line-regions";
 import {
   Section,
   SectionDescription,
@@ -19,6 +20,7 @@ import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
@@ -36,7 +38,7 @@ export function Client() {
   const [{ period, regions: selectedRegions, percentile, interval }] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
   );
 
   const regionTimelineQuery = {
@@ -102,7 +104,7 @@ export function Client() {
           type={monitor.jobType as "http" | "tcp"}
           period={period}
           regions={monitor.regions.filter((region) =>
-            selectedRegions.includes(region),
+            selectedRegions.includes(region)
           )}
         />
       </Section>
@@ -148,10 +150,45 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Regions</SectionTitle>
           <SectionDescription>
-            Every region&apos;s latency over the last 24 hours
+            Every region&apos;s P50 latency trend over the selected period.
           </SectionDescription>
         </SectionHeader>
-        <DataTable data={regionMetrics} columns={regionColumns} />
+        <Tabs defaultValue="separated">
+          <TabsList>
+            <TabsTrigger value="separated">Separated</TabsTrigger>
+            <TabsTrigger value="combined">Combined</TabsTrigger>
+          </TabsList>
+          <TabsContent value="separated">
+            <DataTable data={regionMetrics} columns={regionColumns} />
+          </TabsContent>
+          <TabsContent value="combined">
+            <ChartLineRegions
+              className="mt-4"
+              regions={monitor.regions.filter((region) =>
+                selectedRegions.includes(region)
+              )}
+              data={regionMetrics.reduce(
+                (acc, region) => {
+                  region.trend.forEach((t) => {
+                    const existing = acc.find(
+                      (d) => d.timestamp === t.timestamp
+                    );
+                    if (existing) {
+                      existing[region.region] = t[region.region];
+                    } else {
+                      acc.push({
+                        timestamp: t.timestamp,
+                        [region.region]: t[region.region],
+                      });
+                    }
+                  });
+                  return acc;
+                },
+                [] as { timestamp: number; [key: string]: number }[]
+              )}
+            />
+          </TabsContent>
+        </Tabs>
       </Section>
       <Section>
         <SectionHeader>
