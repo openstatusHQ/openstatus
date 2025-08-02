@@ -27,10 +27,12 @@ When it came to building our CLI, the choice of Golang was clear, we are already
 
 As we were building openstatus, we listened closely to our users. A recurring theme emerged: while dashboards are great for an overview, more and more developers want to move beyond pure ClickOps. They want to integrate their monitoring directly into their development workflows, automate tasks, and manage their infrastructure as code.
 
+We already have a [Terraform](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) provider but we wanted to use the same cli to trigger and modify monitors. Also we think YAML is more readable than HCL.
+
 The openstatus CLI directly addresses these needs. Imagine being able to:
 
 
-### Export and manage monitors as code:
+### Export and manage monitors as code
 
 We've made it possible to import your existing monitors from your openstatus dashboard.
 Just run `openstatus monitors import`
@@ -41,7 +43,7 @@ This isn't just about convenience; it's about empowerment. The openstatus CLI al
 
 
 
-### Trigger checks directly from your GitHub Actions:
+### Trigger checks directly from your GitHub Actions
 
 Integrate monitoring into your CI/CD pipeline, ensuring that every deployment is thoroughly tested before it goes live.
 
@@ -86,4 +88,6 @@ https://github.com/openstatusHQ/openstatus/actions/workflows/synthetic.yml
 
 We're incredibly excited about the openstatus CLI and believe it will fundamentally change how you interact with your monitoring. It's a significant step towards a more integrated, efficient, and developer-friendly monitoring experience.
 
-Ready to take your monitoring to the next level? Head over to our [documentation](https://docs.openstatus.dev/cli/getting-started/) to learn how to install and start using the openstatus CLI today. We can't wait to hear what you think of it.
+Ready to take your monitoring to the next level? Head over to our [documentation](https://docs.openstatus.dev/cli/getting-started/) to learn how to install and start using the openstatus CLI today.
+
+We can't wait to hear what you think of it.
