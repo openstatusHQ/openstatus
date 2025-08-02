@@ -213,6 +213,32 @@ export default function Page() {
       </Section>
       <Section>
         <SectionHeader>
+          <SectionTitle>GitHub Action</SectionTitle>
+          <SectionDescription>
+            We provide you with a github action in case you'd like to use the
+            CLI within your CI/CD workflows. Check the{" "}
+            <Link
+              href="https://github.com/openstatusHQ/openstatus-github-action"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              GitHub integration
+            </Link>{" "}
+            page or our{" "}
+            <Link
+              href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              guide
+            </Link>{" "}
+            to to run synthetic tests in a GitHub action.
+          </SectionDescription>
+        </SectionHeader>
+        {/* TODO: add code example */}
+      </Section>
+      <Section>
+        <SectionHeader>
           <SectionTitle>Templates</SectionTitle>
           <SectionDescription>
             We have a few templates to help you get started. Check the{" "}

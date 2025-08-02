@@ -1,0 +1,144 @@
+---
+title: We Are So Back
+description: New dashboard - rebuilt for clarity, speed and insights.
+author:
+  name: Maximilian Kaske
+  url: https://x.com/mxkaske
+  avatar: /assets/authors/max.png
+publishedAt: 2025-08-03
+image: /assets/posts/new-dashboard-we-are-so-back/we-are-so-back.png
+tag: company
+---
+
+With a few days delay exactly two years ago (30.07.2023), we launched openstatus with Thibault. Today marks the day we sit together for the second time in real life and are launching the new version of our dashboard. What a blast!
+
+%% PHOTO: as og image? with zine, caps and stickers! %%
+
+It didn’t start from nowhere. Over the last few months, we’ve collected users feedback, worked on our product strategy and listened to our core heart: monitoring and status pages.
+
+Before diving in, if you are new - create an account - or just login with your existing one!
+
+→ https://app.openstatus.dev
+
+## New Dashboard - What has changed?
+### Layout
+
+The new design will be clearly different to what you know from OpenStatus and it might look more familiar - maybe boring. We started from day one, two years ago, with shadcn as our component library (call it what you want) - when it just started as well. It's been in our dna. So we are keeping everything you already know, but with different color templates and the removal of the dotted background. (Please let us know if you really miss it).
+
+Obviously, the biggest change on first eyesight will be the layout: we are embracing the sidebar navigation to share even more informations: every individual status page / monitor will be shown there which will facilitate the fast navigation across your entries and creating new entries on the fly. It has been heavily inspired by Tinybird's dashboard sidebar that is delightful.
+We are adding an additional right handed sidebar with additional informations to the page you are looking at. It allows us to hide informations while making it visible if needed. Again, inspiration taken from Axiom.
+
+> The products you use inspire the products you build.
+
+You’ll notice that we got rid of the top-level ‘Incidents’ navigation. It just took too much visual space and had almost zero impact on how users interacted - which is normal as we haven’t put a lot of effort into it. We don’t want to solve everything related to uptime monitoring. What we want to solve, we want to solve good. And that requires focus - otherwise you’ll start over bloating the dashboard. Instead, each incident lives in the corresponding monitors subpage. We will not compete with other tools like incidentio, instead we will be building integrations so that you can pick your favorite tool. (Please contact us if you are missing an integration)
+
+### More Elements
+
+We have been collecting data that we never displayed. Sometimes you design something internally but your users could profit from it as well. That was the case with our tb audit logs (add link to the gh). We are tracking from which region your monitor fails, is degraded, when we send a notification to which channel,.. and until now, was invisible in the dashboard. We are adding the **Timeline Table** so that you can keep track of internal state changes.
+
+But there’s more. We’re introducing three more visual components to help you better understand your monitors at a glance:
+
+- **Timing Phase Area Chart**: Shows the full breakdown of request timing phases (DNS, transfer, TTFB,...) across all selected regions, making it easy to spot where delays are happening.
+- **Uptime Bar Chart**: Provides a more granular view of uptime, along with the number of pings we’ve sent to your endpoint and the request status (_success_, _degraded_ or _error_)
+- **Degraded Overview Card**: Highlights requests that didn’t fail outright but were still degraded, helping you catch subtle performance issues before they escalate.
+
+Additionally, we've been reworking the **Response Logs Table**. Within the page, we allow you to now filter by custom data ranges, all within the last 14 days period.
+
+## New @shadcn template
+
+We are dropping a new dashboard template free to use! The [`openstatus-template`](https://github.com/OpenStatusHQ/openstatus-template) is a full shadcn x Nextjs SPA (so BYO router) starter kit with some dashboard components ready to use via shadcn CLI. 
+
+→ https://template.openstatus.dev
+
+Everybody's dashboard requires some high-level components for sections, forms, action cards. That's what makes the component part of react so simple. We've been embracing the CSS pattern to name every component with a `data-slot="name"` so that the siblings, children or parent component change if the component exists.
+
+For example is our `FormCardContent` using the following tailwind class:
+
+```tsx
+const formCardContent = "px-4 group-has-data-[slot=card-upgrade]:opacity-50 group-has-data-[slot=card-upgrade]:pointer-events-none"
+// you should still add <input disable={LOCKED} /> within the form
+```
+
+That way, whenever we add the `FormCardUpgrade` component into the mix, it will automatically change the behavior of the content.
+
+We are providing them to you via shadcn cli, like:
+
+```bash
+pnpm dlx shadcn@latest add https://template.openstatus.dev/r/form-card.json
+```
+
+The following components are ready to be quick-installed:
+- `form-card` (inspired by Vercel's settings cards, that include visual separators between the the different options and the footer)
+- `metric-card` (inspired by Checkly's overview cards)
+- `action-card`
+- `section`
+- `empty-state`
+
+Refer to the [README](https://github.com/openstatusHQ/openstatus-template) for more informations. 
+
+**Use it, star it, share it!**
+
+## How did we approach it?
+
+### Phase 1: Vision - finding our value
+
+We had to first understand our value in this wide ecosystem and what we want to focus on. We can't do everything our users ask for - otherwise we will loose sight of our true goal: empower devs to easily monitor APIs and Websites and connect to their users if something unexpected happened. Should be simple right?
+
+Read more about how we worked on our [product strategy](https://openstatus.dev/blog/product-strategy-a-reality-check) with Emily Omier.
+
+### Phase 2: Frontend - experimenting around
+
+Everything starts with some sketches.
+
+> How big can the canvas be? Yes
+
+<Image
+  alt="Excalidraw sketches from the dashboard"
+  src="/assets/posts/new-dashboard-we-are-so-back/excalidraw.png"
+  width={650}
+  height={575}
+/>
+
+We started by only the frontend as full `openstatus-template`, which is a full @nextjs x @shadcn SPA (so BYO router) starter kit, where we've added dummy data to not bother about the rest and fully embrace the UI/UX and iterate quicky on a lightweight nextjs project. It frees your mind from the overbloated (some call it design debt, which just naturally happens over time - see linear blog post **TODO**) vision and is much faster to run. The benefit for you? You have one more template to have fun with!
+
+>"If your product evolves fast, you should be paying this design debt every 2-3 years." - [linear.app](https://linear.app/blog/a-design-reset)
+
+We've created a few high-level shadcn dashboard components to make our life easier. The rely a lot on compound components and css state like `data-variant="default"` to change variant or disable elements. Once it clicks, you're not going back.
+
+>Tailwind + shadcn is faster to design as dev than starting with Figma.
+
+When it comes to the marketing page, it does not reflect the new dashboard. Time is limited and we can't wait until "everything" is finished. Otherwise it will never.
+
+### Phase 3: Backend - connecting the dots
+
+We've taken a new approach, inspired by [midday](https://midday.ai) to prefetch trpc queries on the server and hydrate them on the client.We've also optimized the number of procedure calls and db calls to get data which makes it overall quicker to navigate.
+
+As we had most of the dummy data structure similar to our db schema, it was easy to update/create trpc calls.
+
+---
+
+We have to thank all our early tests that provided incredible feedback and helped us shape the new dashboard. Starting from the template itself to once the dashboard was ready to be used. We really appreciate you.
+
+>Ask! Don't be scared to ask - people in the OSS space are increadibly helpfull and will let you know how they see your product.
+
+## New CLI page
+
+You can now `export` your current monitors from the GUI into a YML file and `apply` any changes to the settings - or `trigger` checks if you're hesitent. Devs don't wanna switch context and want to keep track of changes within a version control. Let's enable them!
+
+Read more about the latest changes in our newly published [blog post](https://www.openstatus.dev/blog/introducing-openstatus-cli) in our [documentation](https://docs.openstatus.dev).
+
+To push `monitoring as code`, we are not only referring to our CLI docs but also create a dedicated `/cli` page with the most important commands, templates and links.
+
+We'd love to here from what your use cases are and how you handle infra/monitoring as code.
+
+## Same Pricing. More Monitors.
+
+To better align with the new changes, we've updated our pricing plans. [Read more](https://openstatus.dev/blog/same-pricing-more-monitors).
+
+---
+
+That's a wrap! We are back on track and more focused than ever.
+
+But first of all, we'll tank summer vibes and come back stronger. Expect then improvements towards the status page.
+
+Cheers
