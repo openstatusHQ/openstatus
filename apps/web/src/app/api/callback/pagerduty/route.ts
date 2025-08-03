@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-const DASHBOARD_V2 = false;
+const DASHBOARD_V2 = true;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

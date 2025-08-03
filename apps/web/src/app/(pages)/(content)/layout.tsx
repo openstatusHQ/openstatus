@@ -3,7 +3,7 @@ import { ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-const DASHBOARD_V2 = false;
+const DASHBOARD_V2 = true;
 
 export default function ContentLayout({ children }: { children: ReactNode }) {
   return (
@@ -16,13 +16,13 @@ export default function ContentLayout({ children }: { children: ReactNode }) {
 
 function Banner() {
   return (
-    <div className="border-b bg-muted/50 p-2 backdrop-blur-3xl">
-      <Link href="/blog">
+    <div className="border-b bg-muted/50 px-2 py-3 backdrop-blur-3xl">
+      <Link href="/blog/new-dashboard-we-are-so-back">
         <div className="group mx-auto flex w-full max-w-4xl flex-row items-center justify-between">
-          <p>
-            New Dashboard. New Pricing. We are reworking the whole experience.
+          <p className="font-medium">
+            We Are So Back - New Dashboard. More Monitors.
           </p>
-          <div>
+          <div className="text-nowrap">
             <span className="mr-1">Read more</span>
             <ArrowRight className="relative mb-px inline h-4 w-0 transition-all group-hover:w-4" />
             <ChevronRight className="relative mb-px inline h-4 w-4 transition-all group-hover:w-0" />
