@@ -20,7 +20,7 @@ function Banner() {
       <Link href="/blog/new-dashboard-we-are-so-back">
         <div className="group mx-auto flex w-full max-w-4xl flex-row items-center justify-between">
           <p className="font-medium">
-            New Dashboard. More Monitors. We Are So Back.
+            We Are So Back - New Dashboard. More Monitors.
           </p>
           <div className="text-nowrap">
             <span className="mr-1">Read more</span>

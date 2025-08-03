@@ -22,13 +22,38 @@ https://app.openstatus.dev
 
 ## New Dashboard - What has changed?
 
-### Layout
+Let's **compare** right away: old (1) vs new (2) dashboard!
+
+<figure>
+  <Image
+    alt="View of the old dashboard"
+    src="/assets/posts/new-dashboard-we-are-so-back/dashboard-before.png"
+    width={650}
+    height={575}
+  />
+  <figcaption>Old Dashboard with top tab navigation</figcaption>
+</figure>
+
+<figure>
+  <Image
+    alt="View of the new dashboard"
+    src="/assets/posts/new-dashboard-we-are-so-back/dashboard-after.png"
+    width={650}
+    height={575}
+  />
+  <figcaption>New Dashboard with left sidebar navigation</figcaption>
+</figure>
+
+
+### Different Layout
 
 The new design will look different to what you know from openstatus and might _look more familiar - maybe boring_. From day one, we used shadcn as our design system - back when it had just started as well. It's been in our DNA. We're keeping everything you already know, but with different color templates and the removal of the dotted background. We hope you won't miss it too much.
 
 Obviously, the biggest change on first sight is the layout: we are embracing the **sidebar navigation** to share more informations. Every individual status page or monitor will be shown there, making it easier to navigate accross entries and create new ones on the fly. They also include the status of the current entry (e.g. _active_, _error_, _degraded_) - heavily inspired by Tinybird's dashboard sidebar.
 
-We’ve also added a **right-hand sidebar** with additional information about the page you’re viewing. This allows us to hide details while making them visible when needed - inspired by Axiom.
+Since we moved the main navigation to the sidebar, the top header now shows **breadcrumb navigation** and lets you quickly switch between subpages via a select option.
+
+We’ve also added a **right-hand sidebar** with additional information about the page you’re viewing. It’s hidden by default to avoid overwhelming you, but can be revealed when you need it – inspired by Axiom.
 
 > The products you use, inspire the products you build.
 
@@ -103,12 +128,16 @@ Everything starts with some sketches: Reassemble all picked components from diff
 
 > How big can the canvas be? Yes
 
-<Image
-  alt="Excalidraw sketches from the dashboard"
-  src="/assets/posts/new-dashboard-we-are-so-back/excalidraw.png"
-  width={650}
-  height={575}
-/>
+<figure>
+  <Image
+    alt="Excalidraw sketches from the dashboard"
+    src="/assets/posts/new-dashboard-we-are-so-back/excalidraw.png"
+    width={650}
+    height={575}
+  />
+  <figcaption>Excalidraw screenshot of the dashboard brainstorming.</figcaption>
+</figure>
+
 
 We started by only the frontend as full decoupled template, where we've added dummy data to not bother about the rest and fully embrace the UI/UX and iterate quicky on a lightweight nextjs project. It frees your mind from the overbloated (some call it design debt, which just naturally happens over time) vision and is much faster to run. The benefit for you? You have one more template to have fun with!
 
