@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { DevelopmentIndicator } from "@/components/development-indicator";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -61,7 +60,6 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <DevelopmentIndicator />
             <TailwindIndicator />
             <Toaster richColors expand />
           </ThemeProvider>
