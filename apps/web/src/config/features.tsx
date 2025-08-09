@@ -107,7 +107,7 @@ export const cardConfig = {
     title: "CLI",
     features: [
       {
-        icon: "file",
+        icon: "file-text",
         catchline: "YAML file configuration",
         description: "Use version control to keep track of all your changes.",
       },

@@ -21,6 +21,7 @@ import {
   FeatureSubscriptions,
   FeatureTerraformProvider,
   FeatureTimingAssertions,
+  FeatureYAML,
   SpeedBanner,
 } from "@/components/marketing/feature";
 
@@ -97,6 +98,7 @@ export const landingsConfig = {
       "Use configuration files to define your monitoring and store them in your codebase.",
     blocks: [
       <FeatureCLI key="feature-cli" />,
+      <FeatureYAML key="feature-yaml-file" position="top" />,
       <FeatureGitHubAction key="feature-github-action" />,
       <EnterpriseBanner key="enterprise-banner" />,
       <FeatureAPIMonitoring key="feature-api-monitoring" />,

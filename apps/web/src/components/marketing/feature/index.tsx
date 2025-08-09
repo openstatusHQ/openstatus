@@ -475,6 +475,36 @@ export function FeatureGitHubAction(
   );
 }
 
+const blockYaml = allUnrelateds.find(
+  (unrelated) => unrelated.slug === "yaml-file",
+);
+
+export function FeatureYAML(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  if (!blockYaml) {
+    throw new Error("YAML file block not found");
+  }
+
+  return (
+    <InteractiveFeature
+      icon="file-text"
+      iconText="YAML File"
+      title="Monitoring as Code."
+      subTitle="Use any version control system to manage your monitors."
+      className="max-h-max"
+      component={
+        <Mdx
+          code={blockYaml.mdx}
+          className="max-w-none prose-pre:overflow-hidden"
+        />
+      }
+      col={2}
+      position={props.position || "right"}
+    />
+  );
+}
+
 export function FeatureCLI(
   props: Partial<Pick<InteractiveFeatureProps, "position">>,
 ) {
@@ -490,7 +520,7 @@ export function FeatureCLI(
       icon="terminal"
       iconText="CLI"
       title="Run everywhere."
-      subTitle="Create your monitors from your favorite terminal."
+      subTitle="Manage and trigger your monitors from your favorite terminal."
       component={
         <Mdx
           code={blockCLI.mdx}
