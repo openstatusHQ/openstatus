@@ -107,22 +107,21 @@ export const cardConfig = {
     title: "CLI",
     features: [
       {
+        icon: "file",
+        catchline: "YAML file configuration",
+        description: "Use version control to keep track of all your changes.",
+      },
+      {
         icon: "sparkles",
-        catchline: "No ClickOps",
-        description: (
-          <p>
-            Use your config file to manage or trigger your monitors. Never leave
-            your terminal.{" "}
-            <a
-              className="text-foreground"
-              href="https://docs.openstatus.dev/cli/getting-started/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Learn more
-            </a>
-          </p>
-        ),
+        catchline: "Monitoring as Code",
+        description:
+          "Apply changes to your monitors directly from the terminal.",
+      },
+      {
+        icon: "workflow",
+        catchline: "CI/CD",
+        description:
+          "Trigger a specific monitor or run your file within your workflows.",
       },
     ],
   },
