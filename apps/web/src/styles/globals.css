@@ -215,4 +215,24 @@
   [data-highlighted-line] {
     @apply bg-muted rounded;
   }
+
+  [data-rehype-pretty-code-caption] {
+    @apply mt-1 text-muted-foreground text-sm;
+  }
+
+  [data-rehype-pretty-code-title] {
+    @apply mb-1 text-muted-foreground text-sm;
+  }
+
+  .dark [data-theme='dark'] {
+    display: block;
+  }
+  
+  [data-theme='light'] {
+    display: block;
+  }
+  
+  .dark [data-theme='light'] {
+    display: none;
+  }
 }
