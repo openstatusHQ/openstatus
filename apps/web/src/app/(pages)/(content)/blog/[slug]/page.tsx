@@ -18,6 +18,7 @@ import {
   BreadcrumbSeparator,
 } from "@openstatus/ui";
 import Link from "next/link";
+import type { BlogPosting, WithContext } from "schema-dts";
 
 // export const dynamic = "force-static";
 
@@ -77,8 +78,32 @@ export default async function PostPage(props: {
 
   if (!post) notFound();
 
+  const jsonLDBlog: WithContext<BlogPosting> = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    name: `${post.title} | openstatus`,
+    headline: post.title,
+    datePublished: post.publishedAt.toISOString(),
+    author: {
+      '@type': 'Person',
+      name: post.author.name,
+      url: post.author.url,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': 'https://www.openstatus.dev',
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDBlog).replace(/</g, '\\u003c'),
+        }}
+      />
       <Breadcrumb className="mb-4 px-3 md:px-6">
         <BreadcrumbList>
           <BreadcrumbItem>

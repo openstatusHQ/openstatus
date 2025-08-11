@@ -82,6 +82,7 @@
     "remark-parse": "10.0.2",
     "remark-rehype": "10.1.0",
     "resend": "4.0.1",
+    "schema-dts": "^1.1.5",
     "shiki": "0.14.4",
     "sonner": "1.7.1",
     "stripe": "13.8.0",
