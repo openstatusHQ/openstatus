@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
 
-import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
+import { OG_DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { Background } from "./_components/background";
 import {
   DEFAULT_URL,
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
 
   const description =
     (searchParams.has("description") && searchParams.get("description")) ||
-    DESCRIPTION;
+    OG_DESCRIPTION;
 
   const image =
     (searchParams.has("image") && searchParams.get("image")) || IMAGE;

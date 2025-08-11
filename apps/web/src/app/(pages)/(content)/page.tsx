@@ -7,6 +7,7 @@ import { MonitoringCard } from "@/components/marketing/monitor/card";
 import { Partners } from "@/components/marketing/partners";
 import { Stats } from "@/components/marketing/stats";
 import { StatusPageCard } from "@/components/marketing/status-page/card";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Organization, Product, WebPage, WithContext } from "schema-dts";
 
 export const revalidate = 600;
@@ -21,6 +22,13 @@ const jsonLdProduct: WithContext<Product> = {
     name: "openstatus",
     logo: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
   },
+  offers: Object.entries(allPlans).map(([_, value]) => ({
+    "@type": "Offer",
+    price: value.price,
+    name: value.title,
+    priceCurrency: "EUR",
+    availability: "https://schema.org/InStock",
+  })),
 };
 
 const jsonLdOrganization: WithContext<Organization> = {

@@ -4,6 +4,8 @@ export const TITLE = "openstatus";
 export const DESCRIPTION =
   "Monitor your API and your website globally. Don't let downtime or a slow response time ruin your user experience. Try the open-source uptime and synthetic monitoring platform for free!";
 
+export const OG_DESCRIPTION = "Open-source status page and uptime monitoring system";
+
 export const defaultMetadata: Metadata = {
   title: {
     template: `%s | ${TITLE}`,
