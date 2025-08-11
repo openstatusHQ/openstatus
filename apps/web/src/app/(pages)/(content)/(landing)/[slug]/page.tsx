@@ -8,6 +8,7 @@ import { Button } from "@openstatus/ui";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { WebPage, WithContext } from "schema-dts";
 
 export async function generateStaticParams() {
   return Object.keys(landingsConfig).map((slug) => ({ slug }));
@@ -60,11 +61,31 @@ export default async function Page({
     notFound();
   }
 
+  const jsonLDWebPage: WithContext<WebPage> = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${landing.title} | openstatus`,
+    headline: landing.description,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": "https://www.openstatus.dev",
+    },
+  };
+
   return (
-    <div className="grid gap-12">
-      <Hero hero={landing.hero} description={landing.description} />
-      {landing.blocks.map((block) => block)}
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDWebPage).replace(/</g, "\\u003c"),
+        }}
+      />
+      <div className="grid gap-12">
+        <Hero hero={landing.hero} description={landing.description} />
+        {landing.blocks.map((block) => block)}
+      </div>
+    </>
   );
 }
 
