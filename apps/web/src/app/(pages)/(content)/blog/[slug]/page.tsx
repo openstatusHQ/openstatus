@@ -79,19 +79,19 @@ export default async function PostPage(props: {
   if (!post) notFound();
 
   const jsonLDBlog: WithContext<BlogPosting> = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
     name: `${post.title} | openstatus`,
     headline: post.title,
     datePublished: post.publishedAt.toISOString(),
     author: {
-      '@type': 'Person',
+      "@type": "Person",
       name: post.author.name,
       url: post.author.url,
     },
     mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': 'https://www.openstatus.dev',
+      "@type": "WebPage",
+      "@id": "https://www.openstatus.dev",
     },
   };
 
@@ -101,7 +101,7 @@ export default async function PostPage(props: {
         type="application/ld+json"
         // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBlog).replace(/</g, '\\u003c'),
+          __html: JSON.stringify(jsonLDBlog).replace(/</g, "\\u003c"),
         }}
       />
       <Breadcrumb className="mb-4 px-3 md:px-6">
