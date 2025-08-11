@@ -1,4 +1,6 @@
 import { cardConfig } from "@/config/features";
+import { Button } from "@openstatus/ui";
+import Link from "next/link";
 import {
   CardContainer,
   CardContent,
@@ -8,7 +10,7 @@ import {
   CardIcon,
   CardTitle,
 } from "../card";
-import { Terminal } from "./terminal";
+import { Code } from "./code";
 
 export function CLICard() {
   const { icon, title, features } = cardConfig.cli;
@@ -19,11 +21,22 @@ export function CLICard() {
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <Terminal />
+        <Code />
         <CardFeatureContainer>
           {features?.map((feature, i) => (
             <CardFeature key={i} {...feature} />
           ))}
+          <div className="text-center">
+            <Button className="rounded-full" asChild>
+              <Link
+                href="https://docs.openstatus.dev/cli/getting-started/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Learn more
+              </Link>
+            </Button>
+          </div>
         </CardFeatureContainer>
       </CardContent>
     </CardContainer>
