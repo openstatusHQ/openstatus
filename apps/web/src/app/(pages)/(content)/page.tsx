@@ -16,7 +16,7 @@ const jsonLdProduct: WithContext<Product> = {
   "@context": "https://schema.org",
   "@type": "Product",
   name: "openstatus",
-  description: "Opensource uptime and synthetic monitoring.",
+  description: "Open-source uptime and synthetic monitoring with status pages.",
   brand: {
     "@type": "Brand",
     name: "openstatus",
@@ -56,7 +56,7 @@ const jsonLDWebpage: WithContext<WebPage> = {
   "@context": "https://schema.org",
   "@type": "WebPage",
   name: "openstatus",
-  description: "Opensource uptime and synthetic monitoring.",
+  description: "Open-source uptime and synthetic monitoring with status pages.",
   url: "https://openstatus.dev",
   image: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
   headline: "Showcase your uptime with a status page",
