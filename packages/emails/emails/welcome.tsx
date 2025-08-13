@@ -25,17 +25,19 @@ const WelcomeEmail = () => {
           CLI
         </a>{" "}
         to create, update and trigger your monitors.
-        <br />- Learn how to monitor a
+        <br />- Learn how to monitor a{" "}
         <a href="https://docs.openstatus.dev/guides/how-to-monitor-mcp-server?ref=email-onboarding">
           MCP server
-        </a>
+        </a>.
+        <br />- Explore our uptime monitoring as code {" "}<a href="https://github.com/openstatusHQ/cli-template/?ref=email-onboarding">
+template directory</a>.
         <br />- Build your own status page with our{" "}
         <a href="https://api.openstatus.dev/v1">API</a> and host it where you
         want. Here's our{" "}
         <a href="https://github.com/openstatusHQ/astro-status-page">
           Astro template
         </a>{" "}
-        that you can easily host on CloudFlare
+        that you can easily host on CloudFlare.
         <br />
         <br />
         Quick question: How did you learn about us? and why did you sign up?
