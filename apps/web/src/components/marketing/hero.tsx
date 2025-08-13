@@ -34,7 +34,9 @@ export function Hero() {
           Showcase your uptime with a status page
         </h1>
         <p className="mx-auto max-w-md text-lg text-muted-foreground md:max-w-xl md:text-xl">
-          Proactively monitor your API and website worldwide to detect and resolve performance issues and downtime, ensuring your users are never impacted.
+          Proactively monitor your API and website worldwide to detect and
+          resolve performance issues and downtime, ensuring your users are never
+          impacted.
         </p>
       </div>
       <div className="my-4 grid gap-2 sm:grid-cols-2">
