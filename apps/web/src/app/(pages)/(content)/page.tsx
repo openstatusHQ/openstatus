@@ -72,8 +72,8 @@ export default async function LandingPage() {
         <Stats />
         <MiddleCTA />
         <StatusPageCard />
-        <AlertCard />
         <CLICard />
+        <AlertCard />
         <BottomCTA />
         <LatestChangelogs />
       </div>

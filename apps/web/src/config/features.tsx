@@ -31,7 +31,7 @@ export const specialCardConfig = {
 export const cardConfig = {
   monitors: {
     icon: "activity",
-    title: "Synthetic Monitoring",
+    title: "Monitoring",
     features: [
       {
         icon: "globe",
@@ -82,6 +82,12 @@ export const cardConfig = {
     title: "Alerting",
     features: [
       {
+        icon: "bell",
+        catchline: "Get alerted.",
+        description:
+          "Get notified via Email, SMS, Slack, Discord,... before your users do.",
+      },
+      {
         icon: "sparkles",
         catchline: "Reduce fatigue.",
         description:
@@ -93,13 +99,7 @@ export const cardConfig = {
         catchline: "Escalation.",
         description: "Notify and escalate an alert to the right team member.",
         badge: "Coming soon",
-      },
-      {
-        icon: "bell",
-        catchline: "Get alerted.",
-        description:
-          "Get notified via Email, SMS, Slack, Discord,... before your users do.",
-      },
+      }
     ],
   },
   cli: {
