@@ -88,11 +88,10 @@ export const cardConfig = {
           "Get notified via Email, SMS, Slack, Discord,... before your users do.",
       },
       {
-        icon: "sparkles",
-        catchline: "Reduce fatigue.",
+        icon: "eye",
+        catchline: "Know the activity.",
         description:
-          "Reduce your alerts fatigue with automatic noise reduction.",
-        badge: "Coming soon",
+          "All recoveries, incidents,.. in one timeline.",
       },
       {
         icon: "zap",
