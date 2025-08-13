@@ -90,8 +90,7 @@ export const cardConfig = {
       {
         icon: "eye",
         catchline: "Know the activity.",
-        description:
-          "All recoveries, incidents,.. in one timeline.",
+        description: "All recoveries, incidents,.. in one timeline.",
       },
       {
         icon: "zap",
