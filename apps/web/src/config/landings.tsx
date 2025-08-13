@@ -94,8 +94,7 @@ export const landingsConfig = {
     icon: "terminal",
     title: "Monitoring as Code",
     hero: "Get rid of ClickOps for your uptime monitoring configuration",
-    description:
-      "Define your Monitors with YAML. Control Them with Our CLI.",
+    description: "Define your Monitors with YAML. Control Them with Our CLI.",
     blocks: [
       <FeatureCLI key="feature-cli" />,
       <FeatureYAML key="feature-yaml-file" position="top" />,
