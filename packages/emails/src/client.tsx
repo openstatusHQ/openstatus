@@ -37,7 +37,8 @@ export class EmailClient {
     try {
       const html = await render(<FollowUpEmail />);
       const result = await this.client.emails.send({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
+        replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
         subject: "How's it going with OpenStatus?",
         to: req.to,
         html,

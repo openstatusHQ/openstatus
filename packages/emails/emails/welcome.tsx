@@ -6,35 +6,42 @@ const WelcomeEmail = () => {
   return (
     <Html>
       <Head>
-        <title>Welcome to OpenStatus</title>
+        <title>Welcome to openstatus</title>
       </Head>
-      <Preview>Few tips to get started</Preview>
+      <Preview>Few tips to get started with your uptime monitoring</Preview>
 
       <Body>
         Hey 👋
         <br />
         <br />
-        I'm Thibault, the co-founder of OpenStatus, the open-source synthetic
-        monitoring platform. <br />
+        Welcome to openstatus <br />
         <br />
         <br />
-        Here are a few things you can do with OpenStatus:
-        <br />- Run your synthetics checks in your{" "}
-        <a href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action?ref=email-onboarding">
-          GitHub Actions
-        </a>
+        Openstatus is global uptime monitoring service with status page.
+        <br />
+        Here are a few things you can do with openstatus:
         <br />- Use our{" "}
-        <a href="https://docs.openstatus.dev/tools/terraform?ref=email-onboarding">
-          Terraform provider
+        <a href="https://docs.openstatus.dev/cli/getting-started/?ref=email-onboarding">
+          CLI
         </a>{" "}
-        to manage your monitors
+        to create, update and trigger your monitors.
+        <br />- Learn how to monitor a{" "}
+        <a href="https://docs.openstatus.dev/guides/how-to-monitor-mcp-server?ref=email-onboarding">
+          MCP server
+        </a>
+        .
+        <br />- Explore our uptime monitoring as code{" "}
+        <a href="https://github.com/openstatusHQ/cli-template/?ref=email-onboarding">
+          template directory
+        </a>
+        .
         <br />- Build your own status page with our{" "}
         <a href="https://api.openstatus.dev/v1">API</a> and host it where you
         want. Here's our{" "}
-        <a href="https://github.com/openstatusHQ/astro-status-page?ref=email-onboarding">
+        <a href="https://github.com/openstatusHQ/astro-status-page">
           Astro template
         </a>{" "}
-        that you can easily host on CloudFlare
+        that you can easily host on CloudFlare.
         <br />
         <br />
         Quick question: How did you learn about us? and why did you sign up?
@@ -42,7 +49,7 @@ const WelcomeEmail = () => {
         Thank you,
         <br />
         <br />
-        Thibault Le Ouay Ducasse
+        Thibault Le Ouay Ducasse, co-founder of openstatus
         <br />
       </Body>
     </Html>

@@ -84,7 +84,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (params.user.tenantId) return;
 
       await sendEmail({
-        from: "Thibault from OpenStatus <thibault@openstatus.dev>",
+        from: "Thibault from OpenStatus <welcome@openstatus.dev>",
+        reply_to: "Thibault from OpenStatus <thibault@openstatus.dev>",
         subject: "Welcome to OpenStatus.",
         to: [params.user.email],
         react: WelcomeEmail(),
