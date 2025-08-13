@@ -74,7 +74,7 @@ export const landingsConfig = {
   "synthetic-monitoring": {
     icon: "network",
     title: "Synthetic Monitoring",
-    hero: "Monitor your application's performance from anywhere, anytime",
+    hero: "Stop Guessing. Start Knowing. Monitor Your API's Performance Globally.",
     description:
       "Proactively identify and resolve application issues across the globe.",
     blocks: [
@@ -93,9 +93,8 @@ export const landingsConfig = {
   "monitoring-as-code": {
     icon: "terminal",
     title: "Monitoring as Code",
-    hero: "Get rid of ClickOps",
-    description:
-      "Use configuration files to define your monitoring and store them in your codebase.",
+    hero: "Get rid of ClickOps for your uptime monitoring configuration",
+    description: "Define your Monitors with YAML. Control Them with Our CLI.",
     blocks: [
       <FeatureCLI key="feature-cli" />,
       <FeatureYAML key="feature-yaml-file" position="top" />,
