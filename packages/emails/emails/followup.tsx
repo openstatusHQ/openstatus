@@ -6,14 +6,14 @@ const FollowUpEmail = () => {
   return (
     <Html>
       <Head>
-        <title>How's it going with OpenStatus?</title>
+        <title>How's it going with openstatus?</title>
       </Head>
-      <Preview>How's it going with OpenStatus?</Preview>
+      <Preview>How's it going with openstatus?</Preview>
       <Body>
         Hey
         <br />
         <br />
-        How’s everything going with OpenStatus so far? Let me know if you run
+        How’s everything going with openstatus so far? Let me know if you run
         into any issues, or have any feedback, good or bad!
         <br />
         <br />
