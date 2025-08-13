@@ -85,12 +85,13 @@ export const cardConfig = {
         icon: "bell",
         catchline: "Get alerted.",
         description:
-          "Get notified via Email, SMS, Slack, Discord,... before your users do.",
+          "Receive notifications via Email, SMS, Slack, or Discord, ... so you're always aware before your users are.",
       },
       {
         icon: "eye",
         catchline: "Know the activity.",
-        description: "All recoveries, incidents,.. in one timeline.",
+        description:
+          "Gain complete visibility: All recoveries, incidents and notifications, together in one timeline.",
       },
       {
         icon: "zap",
