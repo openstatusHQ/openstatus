@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
 export const DESCRIPTION =
-  "Monitor your API and your website globally. Don't let downtime or a slow response time ruin your user experience. Try the open-source uptime and synthetic monitoring platform for free!";
+  "Monitor your API and website globally. Showcase your reliability with a public status page. Get started for free with our open-source uptime and synthetic monitoring platform!";
 
 export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";
