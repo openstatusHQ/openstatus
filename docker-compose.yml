@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Database (Required dependency)
@@ -9,8 +9,8 @@ services:
       - "8080:8080"
     volumes:
       - turso_data:/var/lib/sqld
-    environment:
-      - SQLD_NODE=primary
+    env_file:
+      - .env
     restart: unless-stopped
 
   # Redis (Required dependency)
@@ -31,12 +31,8 @@ services:
     container_name: openstatus-web
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=libsql://turso:8080
-      - REDIS_URL=redis://redis:6379
-      - NEXTAUTH_URL=http://localhost:3000
-      - NEXTAUTH_SECRET=your-nextauth-secret-here
+    env_file:
+      - .env
     depends_on:
       - turso
       - redis
@@ -50,10 +46,8 @@ services:
     container_name: openstatus-dashboard
     ports:
       - "3001:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=libsql://turso:8080
-      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
     depends_on:
       - turso
       - redis
@@ -67,10 +61,8 @@ services:
     container_name: openstatus-server
     ports:
       - "8000:8000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=libsql://turso:8080
-      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
     depends_on:
       - turso
       - redis
@@ -82,10 +74,8 @@ services:
       context: .
       dockerfile: apps/checker/Dockerfile
     container_name: openstatus-checker
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=libsql://turso:8080
-      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
     depends_on:
       - turso
       - redis
@@ -98,10 +88,8 @@ services:
       context: .
       dockerfile: apps/workflows/Dockerfile
     container_name: openstatus-workflows
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=libsql://turso:8080
-      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
     depends_on:
       - turso
       - redis

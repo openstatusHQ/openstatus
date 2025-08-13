@@ -52,9 +52,13 @@ This guide will help you self-host OpenStatus using Docker Compose.
 
 ## Configuration
 
-### Required Environment Variables
+### Environment Variables
 
-The following variables must be configured in your `.env` file:
+All environment variables are now loaded from a single `.env` file using Docker Compose's `env_file` directive. This keeps all configuration centralized and the docker-compose.yml file clean.
+
+#### Required Environment Variables
+
+Create a `.env` file in the project root with the following variables:
 
 ```bash
 # Database
@@ -70,6 +74,24 @@ NEXTAUTH_SECRET=your-super-secret-nextauth-secret-here-change-this
 # Application
 NODE_ENV=production
 NEXT_PUBLIC_URL=http://localhost:3000
+
+# Docker Compose Configuration
+SQLD_NODE=primary
+```
+
+#### Environment File Setup
+
+The docker-compose.yml now uses `env_file: - .env` for all services, which means:
+
+- **All environment variables are loaded from the `.env` file**
+- **No environment variables are hardcoded in docker-compose.yml**
+- **You must create a `.env` file before running `docker-compose up`**
+
+To get started quickly:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+docker-compose up -d
 ```
 
 ### Optional Services
