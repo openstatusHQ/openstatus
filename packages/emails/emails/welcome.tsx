@@ -28,9 +28,13 @@ const WelcomeEmail = () => {
         <br />- Learn how to monitor a{" "}
         <a href="https://docs.openstatus.dev/guides/how-to-monitor-mcp-server?ref=email-onboarding">
           MCP server
-        </a>.
-        <br />- Explore our uptime monitoring as code {" "}<a href="https://github.com/openstatusHQ/cli-template/?ref=email-onboarding">
-template directory</a>.
+        </a>
+        .
+        <br />- Explore our uptime monitoring as code{" "}
+        <a href="https://github.com/openstatusHQ/cli-template/?ref=email-onboarding">
+          template directory
+        </a>
+        .
         <br />- Build your own status page with our{" "}
         <a href="https://api.openstatus.dev/v1">API</a> and host it where you
         want. Here's our{" "}
