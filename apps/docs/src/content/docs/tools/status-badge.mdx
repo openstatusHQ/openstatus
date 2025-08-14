@@ -1,0 +1,75 @@
+---
+title: Status Badge
+description: "Easily embed a badge into your website"
+---
+
+## PNG Badge
+
+```html
+<img src='https://[slug].openstatus.dev/badge'>
+```
+
+This will return a PNG image with the status of your page. It will look like this:
+<img src='https://status.openstatus.dev/badge' />
+
+You can customize the theme by adding `?theme=dark` and the size of it by adding `?size=lg`.
+
+Supported themes:
+- `dark`
+- `light` (default)
+
+Supported sizes:
+- `sm` (default)
+- `md`
+- `lg`
+- `xl`
+
+It will display the following labels based on the current status of the status page:
+
+```
+Operational
+Degraded
+Outage
+Incident
+Maintenance
+Unknown
+```
+
+## SVG Badge (v2)
+
+```html
+<img src='https://[slug].openstatus.dev/badge/v2'>
+```
+
+This will return a PNG image with the status of your page. It will look like this:
+<img src='https://status.openstatus.dev/badge/v2' />
+
+You can customize the theme by adding `?theme=dark` and the size of it by adding `?size=lg`.
+
+Supported themes:
+- `dark`
+- `light` (default)
+
+Supported sizes:
+- `sm` (default)
+- `md`
+- `lg`
+- `xl`
+
+Compared to the PNG badge, we let you define the `border` and `border-radius` of the SVG badge and the font is mono.
+
+It will display the following labels based on the current status of the status page:
+
+```
+All Systems Operational
+Degraded Performance
+Partial Outage
+Major Outage
+Ongoing Incident
+Under Maintenance
+Unknown
+```
+
+---
+
+Read more on which status is being shown [here](/tools/status-widget/#how-does-it-work).
