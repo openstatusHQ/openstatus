@@ -10,14 +10,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";
-
-// NOTE:
-const BADGE_URL =
-  "https://openstatus.dev/status-page/hello-world/badge?size=sm&theme=light";
 
 export function Sidebar() {
   const { id } = useParams<{ id: string }>();
@@ -25,8 +22,11 @@ export function Sidebar() {
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const { copy } = useCopyToClipboard();
 
   if (!statusPage) return null;
+
+  const BADGE_URL = `https://${statusPage.slug}.openstatus.dev/badge/v2`;
 
   return (
     <SidebarRight
@@ -39,7 +39,10 @@ export function Sidebar() {
               label: "Slug",
               value: (
                 <Link
-                  href={`https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`}
+                  href={`https://${
+                    statusPage.customDomain ||
+                    `${statusPage.slug}.openstatus.dev`
+                  }`}
                   target="_blank"
                 >
                   {statusPage.slug}
@@ -63,9 +66,19 @@ export function Sidebar() {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger className="align-middle">
-                      <img className="h-5" src={BADGE_URL} alt="badge" />
+                      <img
+                        className="h-5 border rounded-sm"
+                        src={BADGE_URL}
+                        alt="badge"
+                      />
                     </TooltipTrigger>
-                    <TooltipContent>Learn more about the badge.</TooltipContent>
+                    <TooltipContent
+                      className="cursor-pointer"
+                      side="left"
+                      onClick={() => copy(BADGE_URL, { withToast: true })}
+                    >
+                      {BADGE_URL}
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               ),
@@ -111,7 +124,9 @@ export function Sidebar() {
         onClick: () =>
           typeof window !== "undefined" &&
           window.open(
-            `https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`,
+            `https://${
+              statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
+            }`,
             "_blank",
           ),
         children: (
