@@ -32,7 +32,7 @@ const statusDictionary: Record<Status, { label: string; color: string }> = {
   },
   under_maintenance: {
     label: "Maintenance",
-    color: "bg-gray-500",
+    color: "bg-blue-500",
   },
 } as const;
 
