@@ -4,7 +4,7 @@
 
   <p align="center">
   <a href="https://status.openstatus.dev">
-  <img src='https://status.openstatus.dev/badge'>
+  <img src='https://status.openstatus.dev/badge/v2'>
   </a>
   </p>
 
