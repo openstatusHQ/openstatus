@@ -57,7 +57,7 @@ function getTextWidth(text: string, fontSize: number): number {
 
 export async function GET(
   req: NextRequest,
-  props: { params: Promise<{ domain: string }> }
+  props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
   const { status } = await getStatus(params.domain);
@@ -80,8 +80,8 @@ export async function GET(
         ${label}
       </text>
       <circle cx="${width - padding - radius}" cy="${
-    height / 2
-  }" r="${radius}" fill="${hexColor}"/>
+        height / 2
+      }" r="${radius}" fill="${hexColor}"/>
     </svg>
   `;
 
