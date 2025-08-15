@@ -76,7 +76,9 @@ export async function GET(
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    <rect width="${width}" height="${height}" fill="${bgColor}" stroke="${borderColor}" />
+    <rect x="0.5" y="0.5" width="${width - 1}" height="${
+      height - 1
+    }"  fill="${bgColor}" stroke="${borderColor}" stroke-width="1" rx="${radius}" ry="${radius}" />
       <text x="${padding}" y="50%" dominant-baseline="middle"
             font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="${fontSize}" font-weight="600" fill="${textColor}">
         ${label}
