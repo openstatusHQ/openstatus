@@ -75,7 +75,8 @@ export const landingsConfig = {
     icon: "terminal",
     title: "API Monitoring",
     hero: "Avoid costly API failures with proactive global monitoring.",
-    description: "Don't let slow APIs frustrate your users. Ensure smooth experiences with global monitoring.",
+    description:
+      "Don't let slow APIs frustrate your users. Ensure smooth experiences with global monitoring.",
     blocks: [
       <SpeedBanner key="speed-banner" />,
       <FeatureYAML key="feature-yaml-file" position="top" />,
@@ -120,5 +121,4 @@ export const landingsConfig = {
       <BookingBanner key="booking-banner" />,
     ],
   },
-
 } satisfies Record<string, Landing>;
