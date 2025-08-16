@@ -8,16 +8,16 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
-import { z } from "zod";
-import { env } from "../env";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import { z } from "zod";
+import { env } from "../env";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 const ABORT_TIMEOUT = 10000;
 
@@ -253,7 +253,9 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
   }
 }
 
-export async function triggerChecker(input: z.infer<typeof selectMonitorSchema>) {
+export async function triggerChecker(
+  input: z.infer<typeof selectMonitorSchema>,
+) {
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
@@ -307,27 +309,21 @@ export async function triggerChecker(input: z.infer<typeof selectMonitorSchema>)
   const allResult = [];
 
   for (const region of input.regions) {
-
-    const res =  fetch(
-      generateUrl({ row: input }),
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${env.CRON_SECRET}`,
-          "Content-Type": "application/json",
-          "fly-prefer-region": region,
-        },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    const res = fetch(generateUrl({ row: input }), {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${env.CRON_SECRET}`,
+        "Content-Type": "application/json",
+        "fly-prefer-region": region,
       },
-    );
-    allResult.push(res)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(ABORT_TIMEOUT),
+    });
+    allResult.push(res);
   }
 
   await Promise.allSettled(allResult);
-
 }
-
 
 function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
   switch (row.jobType) {
@@ -355,7 +351,9 @@ export const checkerRouter = createTRPCRouter({
       return testTcp(input);
     }),
 
-  triggerChecker: protectedProcedure.input(selectMonitorSchema).mutation(async ({ input }) => {
-    return triggerChecker(input)
-  }),
+  triggerChecker: protectedProcedure
+    .input(selectMonitorSchema)
+    .mutation(async ({ input }) => {
+      return triggerChecker(input);
+    }),
 });
