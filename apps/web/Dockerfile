@@ -15,13 +15,13 @@ RUN \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
     --mount=type=bind,target=packages/error/package.json,source=packages/error/package.json \
     --mount=type=bind,target=packages/header-analysis/package.json,source=packages/header-analysis/package.json \
-    --mount=type=bind,target=packages/notification-discord/package.json,source=packages/notification-discord/package.json \
-    --mount=type=bind,target=packages/notification-emails/package.json,source=packages/notification-emails/package.json \
-    --mount=type=bind,target=packages/notification-ntfy/package.json,source=packages/notification-ntfy/package.json \
-    --mount=type=bind,target=packages/notification-opsgenie/package.json,source=packages/notification-opsgenie/package.json \
-    --mount=type=bind,target=packages/notification-pagerduty/package.json,source=packages/notification-pagerduty/package.json \
-    --mount=type=bind,target=packages/notification-slack/package.json,source=packages/notification-slack/package.json \
-    --mount=type=bind,target=packages/notification-webhook/package.json,source=packages/notification-webhook/package.json \
+    --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
+    --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
+    --mount=type=bind,target=packages/notifications/ntfy/package.json,source=packages/notifications/ntfy/package.json \
+    --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
+    --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
+    --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
+    --mount=type=bind,target=packages/notifications/webhook/package.json,source=packages/notifications/webhook/package.json \
     --mount=type=bind,target=packages/react/package.json,source=packages/react/package.json \
     --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \
     --mount=type=bind,target=packages/tracker/package.json,source=packages/tracker/package.json \
@@ -30,12 +30,11 @@ RUN \
     --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
-    bun install --production --ignore-scripts --frozen-lockfile --verbose
+    bun install --ignore-scripts --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:78f46b81b82d767ee8d729411f6f95089a403c21f17c20a5789df00263d7c5b5 AS build
-ENV NODE_ENV="production"
-WORKDIR /app/apps/web
+FROM oven/bun@sha256:78f46b81b82d767ee8d729411f6f95089a403c21f17c20a5789df00263d7c5b5 AS builder
+WORKDIR /app
 COPY \
     --link \
     "." "/app/"
@@ -43,16 +42,28 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
-RUN bun build --compile --sourcemap src/index.ts --outfile=app
+WORKDIR /app/apps/web
+RUN bun run build
+
+ENV NODE_ENV="production"
 
 # runtime
-FROM debian@sha256:c2c58af6e3ceeb3ed40adba85d24cfa62b7432091597ada9b76b56a51b62f4c6 AS runtime
-COPY \
-    --from=build \
-    --chown=1000:1000 \
-    --chmod=555 \
-    --link \
-    "/app/apps/web/app" "/bin/"
-USER 1000:1000
+FROM oven/bun@sha256:78f46b81b82d767ee8d729411f6f95089a403c21f17c20a5789df00263d7c5b5 AS runtime
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs nextjs
+
+WORKDIR /app
+
+# Copy the public folder
+COPY --from=builder /app/apps/web/public ./public
+
+# Copy the standalone output
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+
+USER nextjs
 EXPOSE 3000
-ENTRYPOINT ["/bin/app"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["bun", "apps/web/server.js"]
