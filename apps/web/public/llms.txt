@@ -13,3 +13,5 @@
 ## Documentation
 
 - [Documentation](https://docs.openstatus.dev/)
+- [Documentation llms docs](https://docs.openstatus.dev/llms.txt)
+- [Documentation llms docs full](https://docs.openstatus.dev/llms-full.txt)

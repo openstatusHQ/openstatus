@@ -71,22 +71,17 @@ export const landingsConfig = {
       <BookingBanner key="booking-banner" />,
     ],
   },
-  "synthetic-monitoring": {
-    icon: "network",
-    title: "Synthetic Monitoring",
-    hero: "Stop Guessing. Start Knowing. Monitor Your API's Performance Globally.",
-    description:
-      "Proactively identify and resolve application issues across the globe.",
+  "api-monitoring": {
+    icon: "terminal",
+    title: "API Monitoring",
+    hero: "Avoid costly API failures with proactive global monitoring.",
+    description: "Don't let slow APIs frustrate your users. Ensure smooth experiences with global monitoring.",
     blocks: [
-      <FeatureRegions key="feature-regions" />,
       <SpeedBanner key="speed-banner" />,
-      <FeatureTimingAssertions key="feature-timing-assertions" />,
+      <FeatureYAML key="feature-yaml-file" position="top" />,
+      <EnterpriseBanner key="enterprise-banner" />,
       <FeatureAPIMonitoring key="feature-api-monitoring" />,
-      <FeatureResponseDetails
-        key="feature-response-details"
-        position="right"
-      />,
-      <FeatureTerraformProvider key="feature-terraform-provider" />,
+      <FeatureOpenTelemetry key="feature-open-telemetry" />,
       <BookingBanner key="booking-banner" />,
     ],
   },
@@ -106,4 +101,24 @@ export const landingsConfig = {
       <BookingBanner key="booking-banner" />,
     ],
   },
+  "synthetic-monitoring": {
+    icon: "network",
+    title: "Synthetic Monitoring",
+    hero: "Stop Guessing. Start Knowing. Monitor Your API's Performance Globally.",
+    description:
+      "Proactively identify and resolve application issues across the globe.",
+    blocks: [
+      <FeatureRegions key="feature-regions" />,
+      <SpeedBanner key="speed-banner" />,
+      <FeatureTimingAssertions key="feature-timing-assertions" />,
+      <FeatureAPIMonitoring key="feature-api-monitoring" />,
+      <FeatureResponseDetails
+        key="feature-response-details"
+        position="right"
+      />,
+      <FeatureTerraformProvider key="feature-terraform-provider" />,
+      <BookingBanner key="booking-banner" />,
+    ],
+  },
+
 } satisfies Record<string, Landing>;
