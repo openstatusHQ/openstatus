@@ -1305,6 +1305,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   new: protectedProcedure
+    .meta({ track: Events.CreateMonitor, trackProps: ["url", "jobType"] })
     .input(
       z.object({
         name: z.string(),
@@ -1399,7 +1400,7 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           active: input.active,
           workspaceId: ctx.workspace.id,
-          periodicity: "30m",
+          periodicity: ctx.workspace.plan === "free" ? "30m" : "1m",
           regions: regions.join(","),
           assertions: serialize(assertions),
           updatedAt: new Date(),

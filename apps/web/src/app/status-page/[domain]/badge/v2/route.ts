@@ -62,6 +62,7 @@ export async function GET(
   const params = await props.params;
   const { status } = await getStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme") ?? "light";
+  const variant = req.nextUrl.searchParams.get("variant") ?? "default";
   const size = req.nextUrl.searchParams.get("size") ?? "sm";
 
   const { height, padding, gap, radius, fontSize } = SIZE[size] ?? SIZE.sm;
@@ -71,10 +72,13 @@ export async function GET(
 
   const textColor = theme === "dark" ? "#d1d5db" : "#374151";
   const bgColor = theme === "dark" ? "#111827" : "#ffffff";
+  const borderColor = variant === "outline" ? "#d1d5db" : "transparent";
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-      <rect width="${width}" height="${height}" fill="${bgColor}"/>
+    <rect x="0.5" y="0.5" width="${width - 1}" height="${
+      height - 1
+    }"  fill="${bgColor}" stroke="${borderColor}" stroke-width="1" rx="${radius}" ry="${radius}" />
       <text x="${padding}" y="50%" dominant-baseline="middle"
             font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace" font-size="${fontSize}" font-weight="600" fill="${textColor}">
         ${label}

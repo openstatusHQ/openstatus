@@ -44,17 +44,23 @@ Unknown
 This will return a PNG image with the status of your page. It will look like this:
 <img src='https://status.openstatus.dev/badge/v2' />
 
-You can customize the theme by adding `?theme=dark` and the size of it by adding `?size=lg`.
+You can customize the theme by adding `?theme=dark`, the size of it by adding `?size=lg` and the variant `?variant=outline` - use what fits best to you!
 
 Supported themes:
-- `dark`
 - `light` (default)
+- `dark`
 
 Supported sizes:
 - `sm` (default)
 - `md`
 - `lg`
 - `xl`
+
+Supported variants:
+- `default` (default)
+- `outline`
+
+The **outline** variant simply adds a slightly rounded border to the svg `rect`. It mainly can be used for GitHub README or Markdown where styling is not supported.
 
 Compared to the PNG badge, we let you define the `border` and `border-radius` of the SVG badge and the font is mono.
 
