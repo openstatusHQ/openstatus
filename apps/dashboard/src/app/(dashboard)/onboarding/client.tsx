@@ -92,7 +92,7 @@ export function Client() {
     trpc.workspace.get.queryOptions(),
   );
   const createMonitorMutation = useMutation(
-    trpc.monitor.create.mutationOptions({
+    trpc.monitor.new.mutationOptions({
       onSuccess: () => {
         setSearchParams({ step: "2" });
         refetch();
@@ -149,15 +149,11 @@ export function Client() {
                   await createMonitorMutation.mutateAsync({
                     url: values.url,
                     name: new URL(values.url).hostname,
-                    // FIXME: undefined values should be allowed
+                    method: "GET",
                     headers: [],
-                    assertions: undefined,
+                    assertions: [],
                     jobType: "http",
-                    // FIXME: check which regions are available on free plan
-                    regions: ["ams", "iad", "syd"],
                     active: true,
-                    public: false,
-                    workspaceId: workspace?.id,
                   });
                 }}
               />
