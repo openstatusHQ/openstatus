@@ -912,6 +912,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   clone: protectedProcedure
+    .meta({ track: Events.CloneMonitor })
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const whereConditions: SQL[] = [
@@ -967,6 +968,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateRetry: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), retry: z.number() }))
     .mutation(async ({ ctx, input }) => {
       const whereConditions: SQL[] = [
@@ -983,6 +985,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateOtel: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(
       z.object({
         id: z.number(),
@@ -1013,6 +1016,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updatePublic: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), public: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const whereConditions: SQL[] = [
@@ -1029,6 +1033,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateSchedulingRegions: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(
       z.object({
         id: z.number(),
@@ -1085,6 +1090,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateResponseTime: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(
       z.object({
         id: z.number(),
@@ -1111,6 +1117,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateTags: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), tags: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
       const allTags = await ctx.db.query.monitorTag.findMany({
@@ -1144,6 +1151,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateStatusPages: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(
       z.object({
         id: z.number(),
@@ -1191,6 +1199,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateGeneral: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(
       z.object({
         id: z.number(),
@@ -1272,6 +1281,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   updateNotifiers: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), notifiers: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
       const allNotifiers = await ctx.db.query.notification.findMany({

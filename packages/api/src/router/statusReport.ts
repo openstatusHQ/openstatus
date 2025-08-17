@@ -63,6 +63,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   createStatusReportUpdate: protectedProcedure
+    .meta({ track: Events.CreateReportUpdate })
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       // update parent status report with latest status
@@ -157,6 +158,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   updateStatusReportUpdate: protectedProcedure
+    .meta({ track: Events.UpdateReportUpdate })
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       const statusReportUpdateInput = opts.input;
@@ -196,6 +198,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   deleteStatusReportUpdate: protectedProcedure
+    .meta({ track: Events.DeleteReportUpdate })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const statusReportUpdateToDelete = await opts.ctx.db
@@ -535,6 +538,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   deleteUpdate: protectedProcedure
+    .meta({ track: Events.DeleteReportUpdate })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       await opts.ctx.db.transaction(async (tx) => {

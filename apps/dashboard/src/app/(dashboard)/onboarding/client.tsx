@@ -220,7 +220,7 @@ export function Client() {
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
                   message: `I learned about OpenStatus from *${values.from}${
-                    values.other ? `: ${values.other}` : ""
+                    values.other ? `: ${values.other || "others"}` : ""
                   }*`,
                 });
               }}
