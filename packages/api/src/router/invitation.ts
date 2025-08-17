@@ -19,7 +19,6 @@ export const invitationRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.InviteUser, trackProps: ["email"] })
     .input(insertInvitationSchema.pick({ email: true }))
-    .meta({ track: Events.InviteUser })
     .mutation(async (opts) => {
       const { email } = opts.input;
 
