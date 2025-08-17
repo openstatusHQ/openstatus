@@ -1325,7 +1325,6 @@ export const monitorRouter = createTRPCRouter({
         active: z.boolean().default(false),
         saveCheck: z.boolean().default(false),
         skipCheck: z.boolean().default(false),
-        periodicity: z.literal("30m").default("30m"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1401,7 +1400,7 @@ export const monitorRouter = createTRPCRouter({
           body: input.body,
           active: input.active,
           workspaceId: ctx.workspace.id,
-          periodicity: "30m",
+          periodicity: ctx.workspace.plan === "free" ? "30m" : "1m",
           regions: regions.join(","),
           assertions: serialize(assertions),
           updatedAt: new Date(),
