@@ -52,6 +52,10 @@ export const Events = {
     name: "page_updated",
     channel: "page",
   },
+  UpdatePageDomain: {
+    name: "page_domain_updated",
+    channel: "page",
+  },
   DeletePage: {
     name: "page_deleted",
     channel: "page",
@@ -70,6 +74,18 @@ export const Events = {
   },
   DeleteReport: {
     name: "report_deleted",
+    channel: "report",
+  },
+  CreateReportUpdate: {
+    name: "report_update_created",
+    channel: "report",
+  },
+  UpdateReportUpdate: {
+    name: "report_update_updated",
+    channel: "report",
+  },
+  DeleteReportUpdate: {
+    name: "report_update_deleted",
     channel: "report",
   },
   CreateMaintenance: {

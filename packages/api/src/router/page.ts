@@ -607,7 +607,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   updateCustomDomain: protectedProcedure
-    .meta({ track: Events.UpdatePage })
+    .meta({ track: Events.UpdatePageDomain, trackProps: ["customDomain"] })
     .input(z.object({ id: z.number(), customDomain: z.string().toLowerCase() }))
     .mutation(async (opts) => {
       const whereConditions: SQL[] = [
