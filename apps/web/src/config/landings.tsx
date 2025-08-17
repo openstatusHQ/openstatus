@@ -24,6 +24,7 @@ import {
   FeatureYAML,
   SpeedBanner,
 } from "@/components/marketing/feature";
+import { MonitoringCard } from "@/components/marketing/monitor/card";
 
 type Landing = {
   title: string;
@@ -74,10 +75,11 @@ export const landingsConfig = {
   "api-monitoring": {
     icon: "terminal",
     title: "API Monitoring",
-    hero: "Avoid costly API failures with proactive global monitoring.",
+    hero: "API Reliability: We've Got You Covered.",
     description:
       "Don't let slow APIs frustrate your users. Ensure smooth experiences with global monitoring.",
     blocks: [
+      <MonitoringCard key="monitoring-card" />,
       <SpeedBanner key="speed-banner" />,
       <FeatureYAML key="feature-yaml-file" position="top" />,
       <EnterpriseBanner key="enterprise-banner" />,
