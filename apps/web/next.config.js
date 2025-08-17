@@ -57,6 +57,11 @@ const nextConfig = {
         destination: "/status-page",
         permanent: true,
       },
+      {
+        source: "/app/:path*",
+        destination: "https://app.openstatus.dev/",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
