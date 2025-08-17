@@ -8,6 +8,7 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
+import { and, db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import {
@@ -18,7 +19,6 @@ import {
 import { z } from "zod";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { and, db, eq } from "@openstatus/db";
 
 const ABORT_TIMEOUT = 10000;
 
@@ -262,8 +262,8 @@ export async function triggerChecker(
     | z.infer<typeof tpcPayloadSchema>
     | null = null;
 
-  if(process.env.NODE_ENV !== "production"){
-    return
+  if (process.env.NODE_ENV !== "production") {
+    return;
   }
 
   const timestamp = Date.now();
@@ -357,11 +357,23 @@ export const checkerRouter = createTRPCRouter({
     }),
 
   triggerChecker: protectedProcedure
-    .input(z.object({id: z.number()}))
+    .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const m = await db.select().from(monitor).where(and(eq(monitor.id, opts.input.id), eq(monitor.workspaceId, opts.ctx.workspace.id))).get();
-      if(!m){
-        throw new TRPCError({code: "NOT_FOUND", message: "Monitor not found"});
+      const m = await db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.id, opts.input.id),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .get();
+      if (!m) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
       }
       const input = selectMonitorSchema.parse(m);
 

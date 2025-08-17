@@ -92,8 +92,7 @@ export function Client() {
     trpc.workspace.get.queryOptions(),
   );
   const triggerCheckMutation = useMutation(
-    trpc.checker.triggerChecker.mutationOptions({
-    }),
+    trpc.checker.triggerChecker.mutationOptions({}),
   );
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({

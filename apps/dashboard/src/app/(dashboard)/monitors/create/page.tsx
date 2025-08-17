@@ -22,8 +22,7 @@ export default function Page() {
   const router = useRouter();
 
   const triggerCheckMutation = useMutation(
-    trpc.checker.triggerChecker.mutationOptions({
-    }),
+    trpc.checker.triggerChecker.mutationOptions({}),
   );
 
   const createMonitorMutation = useMutation(
