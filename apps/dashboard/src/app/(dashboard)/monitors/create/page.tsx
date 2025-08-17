@@ -20,12 +20,18 @@ export default function Page() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+
+  const triggerCheckMutation = useMutation(
+    trpc.checker.triggerChecker.mutationOptions({}),
+  );
+
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: (data) => {
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
+        triggerCheckMutation.mutate({ id: data.id });
         router.push(`/monitors/${data.id}/edit`);
       },
     }),

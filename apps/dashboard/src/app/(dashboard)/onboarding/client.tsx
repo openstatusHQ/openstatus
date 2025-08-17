@@ -91,10 +91,14 @@ export function Client() {
   const { data: workspace, refetch } = useQuery(
     trpc.workspace.get.queryOptions(),
   );
+  const triggerCheckMutation = useMutation(
+    trpc.checker.triggerChecker.mutationOptions({}),
+  );
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
         setSearchParams({ step: "2" });
+        triggerCheckMutation.mutate({ id: data.id });
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
