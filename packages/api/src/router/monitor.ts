@@ -1305,6 +1305,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   new: protectedProcedure
+    .meta({ track: Events.CreateMonitor, trackProps: ["url", "jobType"] })
     .input(
       z.object({
         name: z.string(),
@@ -1324,6 +1325,7 @@ export const monitorRouter = createTRPCRouter({
         active: z.boolean().default(false),
         saveCheck: z.boolean().default(false),
         skipCheck: z.boolean().default(false),
+        periodicity: z.literal("30m").default("30m"),
       }),
     )
     .mutation(async ({ ctx, input }) => {
