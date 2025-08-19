@@ -16,10 +16,14 @@ export function getPlanConfig(plan: WorkspacePlan | null) {
 
 export function getCurrency({
   continent,
+  country,
 }: {
   continent: string;
   country: string;
 }) {
+  if (country === "IN") {
+    return "INR";
+  }
   if (continent === "EU") {
     return "EUR";
   }

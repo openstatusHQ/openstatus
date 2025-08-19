@@ -85,7 +85,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                         style: "currency",
                         currency: price.currency,
                       }).format(price.value)}
-                    </span>{" "}
+                    </span>
                     <span className="font-light text-muted-foreground text-sm">
                       /month
                     </span>

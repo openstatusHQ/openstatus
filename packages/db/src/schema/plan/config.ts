@@ -11,6 +11,7 @@ export const allPlans: Record<
     price: {
       USD: number;
       EUR: number;
+      INR: number;
     };
     limits: Limits;
   }
@@ -22,6 +23,7 @@ export const allPlans: Record<
     price: {
       USD: 0,
       EUR: 0,
+      INR: 0,
     },
     limits: {
       monitors: 1,
@@ -58,6 +60,7 @@ export const allPlans: Record<
     price: {
       USD: 30,
       EUR: 30,
+      INR: 3000,
     },
     limits: {
       monitors: 20,
@@ -130,6 +133,7 @@ export const allPlans: Record<
     price: {
       USD: 100,
       EUR: 100,
+      INR: 10000,
     },
     limits: {
       monitors: 50,
