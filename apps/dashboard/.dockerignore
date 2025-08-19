@@ -5,6 +5,7 @@ node_modules
 /apps/docs
 /apps/server
 /apps/checker
-/apps/dashboard
+/apps/web
 /apps/screenshot-service
 /apps/workflows
+/packages/notifications/twillio-sms
