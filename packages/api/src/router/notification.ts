@@ -19,7 +19,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
-    .meta({ track: Events.CreateNotification })
+    .meta({ track: Events.CreateNotification, trackProps: ["provider"] })
     .input(insertNotificationSchema)
     .mutation(async (opts) => {
       const { monitors, ...props } = opts.input;
@@ -327,7 +327,7 @@ export const notificationRouter = createTRPCRouter({
     }),
 
   new: protectedProcedure
-    .meta({ track: Events.CreateNotification })
+    .meta({ track: Events.CreateNotification, trackProps: ["provider"] })
     .input(
       z.object({
         provider: z.enum(notificationProvider),
