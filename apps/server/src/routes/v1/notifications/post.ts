@@ -19,7 +19,7 @@ const postRoute = createRoute({
   tags: ["notification"],
   summary: "Create a notification",
   path: "/",
-  middleware: [trackMiddleware(Events.CreateNotification)],
+  middleware: [trackMiddleware(Events.CreateNotification, ["provider"])],
   request: {
     body: {
       description: "The notification to create",
