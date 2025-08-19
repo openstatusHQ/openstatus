@@ -8,7 +8,10 @@ export const allPlans: Record<
     title: "Hobby" | "Starter" | "Pro";
     id: WorkspacePlan;
     description: string;
-    price: number;
+    price: {
+      USD: number;
+      EUR: number;
+    };
     limits: Limits;
   }
 > = {
@@ -16,7 +19,10 @@ export const allPlans: Record<
     title: "Hobby",
     id: "free",
     description: "Perfect for personal projects",
-    price: 0,
+    price: {
+      USD: 0,
+      EUR: 0,
+    },
     limits: {
       monitors: 1,
       "synthetic-checks": 30,
@@ -49,7 +55,10 @@ export const allPlans: Record<
     title: "Starter",
     id: "starter",
     description: "Perfect for uptime monitoring",
-    price: 30,
+    price: {
+      USD: 30,
+      EUR: 30,
+    },
     limits: {
       monitors: 20,
       "synthetic-checks": 100,
@@ -118,7 +127,10 @@ export const allPlans: Record<
     title: "Pro",
     id: "team",
     description: "Perfect for global synthetic monitoring",
-    price: 100,
+    price: {
+      USD: 100,
+      EUR: 100,
+    },
     limits: {
       monitors: 50,
       "synthetic-checks": 300,

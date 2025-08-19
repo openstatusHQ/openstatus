@@ -20,8 +20,10 @@ import {
 import { pricingTableConfig } from "../../../config/pricing-table";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { useCookieState } from "@/hooks/use-cookie-state";
 import { cn } from "@/lib/utils";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { getPriceConfig } from "@openstatus/db/src/schema/plan/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +43,7 @@ export function PricingTable({
   isLoading?: boolean;
 }) {
   const router = useRouter();
+  const [currency] = useCookieState("x-currency", "USD");
   const selectedPlans = Object.entries(allPlans)
     .filter(([key, _]) => plans.includes(key as keyof typeof allPlans))
     .map(([key, value]) => ({ key: key as keyof typeof allPlans, ...value }));
@@ -56,6 +59,8 @@ export function PricingTable({
           </TableHead>
           {selectedPlans.map(({ key, ...plan }) => {
             const isCurrentPlan = key === currentPlan;
+            const price = getPriceConfig(key, currency);
+            console.log(price);
             return (
               <TableHead
                 key={key}
@@ -71,7 +76,12 @@ export function PricingTable({
                   {plan.description}
                 </p>
                 <p className="mb-2 text-right">
-                  <span className="font-cal text-xl">{plan.price}€</span>{" "}
+                  <span className="font-cal text-xl">
+                    {new Intl.NumberFormat(price.locale, {
+                      style: "currency",
+                      currency: price.currency,
+                    }).format(price.value)}
+                  </span>
                   <span className="font-light text-muted-foreground text-sm">
                     /month
                   </span>

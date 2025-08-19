@@ -24,9 +24,9 @@ const jsonLdProduct: WithContext<Product> = {
   },
   offers: Object.entries(allPlans).map(([_, value]) => ({
     "@type": "Offer",
-    price: value.price,
+    price: value.price.USD,
     name: value.title,
-    priceCurrency: "EUR",
+    priceCurrency: "USD",
     availability: "https://schema.org/InStock",
   })),
 };

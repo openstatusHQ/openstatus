@@ -34,7 +34,11 @@ export function PricingPlanRadio({
           >
             <span className="text-sm capitalize">{allPlans[key].title}</span>
             <span className="mt-1 font-light text-muted-foreground text-xs">
-              {allPlans[key].price}€/month
+              {new Intl.NumberFormat("us", {
+                style: "currency",
+                currency: "USD",
+              }).format(allPlans[key].price.USD)}
+              /month
             </span>
           </Label>
         </div>

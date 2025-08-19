@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { db } from "@openstatus/db/src/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 
 import { auth } from "@/lib/auth";
 import { eq } from "@openstatus/db";
@@ -48,6 +49,9 @@ const publicAppPaths = [
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
+  const continent = req.headers.get("x-vercel-ip-continent") || "NA";
+  const country = req.headers.get("x-vercel-ip-country") || "US";
+  const currency = getCurrency({ continent, country });
 
   if (url.pathname.includes("api/trpc")) {
     return NextResponse.next();
@@ -129,9 +133,14 @@ export default auth(async (req) => {
   // reset workspace slug cookie if no auth
   if (!req.auth && req.cookies.has("workspace-slug")) {
     const response = NextResponse.next();
+    response.cookies.set("x-currency", currency);
     response.cookies.delete("workspace-slug");
     return response;
   }
+
+  const response = NextResponse.next();
+  response.cookies.set("x-currency", currency);
+  return response;
 });
 
 export const config = {
