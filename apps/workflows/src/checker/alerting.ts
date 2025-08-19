@@ -48,27 +48,46 @@ export const triggerNotifications = async ({
     .all();
   for (const notif of notifications) {
     // for sms check we are in the quota
-    if(notif.notification.provider === "sms" ){
-      if(notif.notification.workspaceId === null) {
+    if (notif.notification.provider === "sms") {
+      if (notif.notification.workspaceId === null) {
         continue;
       }
-      const workspace = await db.select().from(schema.workspace).where(eq(schema.workspace.id, notif.notification.workspaceId))
+      const workspace = await db
+        .select()
+        .from(schema.workspace)
+        .where(eq(schema.workspace.id, notif.notification.workspaceId));
 
-      const data = selectWorkspaceSchema.parse(workspace[0])
-      if(workspace.length !== 1) {
+      const data = selectWorkspaceSchema.parse(workspace[0]);
+      if (workspace.length !== 1) {
         continue;
       }
 
-      const monitorsIds = await db.select({id: schema.monitor.id}).from(schema.monitor).where(eq(schema.monitor.workspaceId, notif.notification.workspaceId));
+      const monitorsIds = await db
+        .select({ id: schema.monitor.id })
+        .from(schema.monitor)
+        .where(eq(schema.monitor.workspaceId, notif.notification.workspaceId));
       const ids = monitorsIds.map((monitor) => monitor.id);
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      const smsSent = await db.select({count: count()}).from(schema.notificationTrigger).where(and(gte(schema.notificationTrigger.cronTimestamp, Math.floor(oneMonthAgo.getTime() / 1000)), inArray(schema.notificationTrigger.monitorId, ids))).all();
-      if(smsSent.length > data.limits["sms-limit"]) {
-        console.log(`SMS quota exceeded for workspace ${notif.notification.workspaceId}`);
+      const smsSent = await db
+        .select({ count: count() })
+        .from(schema.notificationTrigger)
+        .where(
+          and(
+            gte(
+              schema.notificationTrigger.cronTimestamp,
+              Math.floor(oneMonthAgo.getTime() / 1000),
+            ),
+            inArray(schema.notificationTrigger.monitorId, ids),
+          ),
+        )
+        .all();
+      if (smsSent.length > data.limits["sms-limit"]) {
+        console.log(
+          `SMS quota exceeded for workspace ${notif.notification.workspaceId}`,
+        );
         continue;
       }
-
     }
     console.log(
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
