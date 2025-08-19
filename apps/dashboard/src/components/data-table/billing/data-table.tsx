@@ -15,10 +15,12 @@ import {
 } from "@/components/ui/table";
 
 import { config as featureGroups, plans } from "@/data/plans";
+import { useCookieState } from "@/hooks/use-cookie-state";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import { getPriceConfig } from "@openstatus/db/src/schema/plan/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 const BASE_URL =
@@ -27,6 +29,7 @@ const BASE_URL =
     : "http://localhost:3000";
 
 export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
+  const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const [isPending, startTransition] = useTransition();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -60,6 +63,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
           </TableHead>
           {filteredPlans.map(({ id, ...plan }) => {
             const isCurrentPlan = workspace.plan === id;
+            const price = getPriceConfig(id, currency);
             return (
               <TableHead
                 key={id}
@@ -76,7 +80,12 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                     </p>
                   </div>
                   <p className="text-right">
-                    <span className="font-cal text-lg">{plan.price}€</span>{" "}
+                    <span className="font-cal text-lg">
+                      {new Intl.NumberFormat(price.locale, {
+                        style: "currency",
+                        currency: price.currency,
+                      }).format(price.value)}
+                    </span>
                     <span className="font-light text-muted-foreground text-sm">
                       /month
                     </span>

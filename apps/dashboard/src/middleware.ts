@@ -4,10 +4,18 @@ import { auth } from "@/lib/auth";
 
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
   const response = NextResponse.next();
+
+  const continent = req.headers.get("x-vercel-ip-continent") || "NA";
+  const country = req.headers.get("x-vercel-ip-country") || "US";
+  const currency = getCurrency({ continent, country });
+
+  // NOTE: used in the pricing table to display the currency based on user's location
+  response.cookies.set("x-currency", currency);
 
   if (url.pathname.includes("api/trpc")) {
     return response;
