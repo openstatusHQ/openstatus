@@ -15,13 +15,13 @@
     "@openstatus/utils": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
-    "@trpc/client": "11.4.3",
-    "@trpc/server": "11.4.3",
+    "@trpc/client": "11.4.4",
+    "@trpc/server": "11.4.4",
     "@unkey/api": "0.26.1",
     "@vercel/blob": "0.23.3",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
-    "next": "15.3.4",
+    "next": "15.4.7",
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "1.13.3",
@@ -30,7 +30,9 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "bun-types": "1.0.8",
-    "typescript": "5.7.2"
+    "typescript": "5.7.2",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7"
   },
   "keywords": [],
   "author": "",
