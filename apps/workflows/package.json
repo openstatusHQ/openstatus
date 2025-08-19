@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@google-cloud/tasks": "4.0.1",
-    "@hono/sentry": "1.2.0",
+    "@hono/sentry": "1.2.2",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
