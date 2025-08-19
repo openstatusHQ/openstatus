@@ -306,7 +306,10 @@ export function FormGeneral({
                         </FormLabel>
                       </FormItem>
                       <div className="col-span-2 self-end text-muted-foreground text-xs sm:place-self-end">
-                        Missing a type? <Link href="mailto:ping@openstatus.dev">Contact us</Link>
+                        Missing a type?{" "}
+                        <Link href="mailto:ping@openstatus.dev">
+                          Contact us
+                        </Link>
                       </div>
                     </RadioGroup>
                   </FormControl>
