@@ -49,7 +49,7 @@ export const sendAlert = async ({
             text: {
               type: "mrkdwn",
               text: `
-*🚨 Alert <${monitor.url}/|${name}>*\n\n
+*🚨 Alert <${monitor.url}|${name}>*\n\n
 Status Code: ${statusCode || "_empty_"}\n
 Message: ${message || "_empty_"}\n
 Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
