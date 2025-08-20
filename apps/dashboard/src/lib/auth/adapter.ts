@@ -19,12 +19,21 @@ export const adapter: Adapter = {
     sessionsTable: session,
     verificationTokensTable: verificationToken,
   }),
-  // @ts-expect-error some issues with types
   createUser: async (data) => {
-    return await createUser(data);
+    const user = await createUser(data);
+    return {
+      ...user,
+      id: user.id.toString(),
+      email: user.email || "",
+    };
   },
-  // @ts-expect-error some issues with types
   getUser: async (id) => {
-    return await getUser(id);
+    const user = await getUser(id);
+    if (!user) return null;
+    return {
+      ...user,
+      id: user.id.toString(),
+      email: user.email || "",
+    };
   },
 };
