@@ -41,6 +41,7 @@ export const limitsSchema = z.object({
   pagerduty: z.boolean().default(false),
   opsgenie: z.boolean().default(false),
   sms: z.boolean().default(false),
+  "sms-limit": z.number().default(0),
   "notification-channels": z.number().default(1),
   /**
    * Collaboration limits

@@ -1,8 +1,9 @@
-import { db, eq, schema } from "@openstatus/db";
+import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
+  selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 
 import type {
@@ -46,6 +47,58 @@ export const triggerNotifications = async ({
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
+    // for sms check we are in the quota
+    if (notif.notification.provider === "sms") {
+      if (notif.notification.workspaceId === null) {
+        continue;
+      }
+
+      const workspace = await db
+        .select()
+        .from(schema.workspace)
+        .where(eq(schema.workspace.id, notif.notification.workspaceId));
+
+      if (workspace.length !== 1) {
+        continue;
+      }
+
+      const data = selectWorkspaceSchema.parse(workspace[0]);
+
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+      const smsNotification = await db
+        .select()
+        .from(schema.notification)
+        .where(
+          and(
+            eq(schema.notification.workspaceId, notif.notification.workspaceId),
+            eq(schema.notification.provider, "sms"),
+          ),
+        );
+      const ids = smsNotification.map((notification) => notification.id);
+
+      const smsSent = await db
+        .select({ count: count() })
+        .from(schema.notificationTrigger)
+        .where(
+          and(
+            gte(
+              schema.notificationTrigger.cronTimestamp,
+              Math.floor(oneMonthAgo.getTime() / 1000),
+            ),
+            inArray(schema.notificationTrigger.notificationId, ids),
+          ),
+        )
+        .all();
+
+      if ((smsSent[0]?.count ?? 0) > data.limits["sms-limit"]) {
+        console.log(
+          `SMS quota exceeded for workspace ${notif.notification.workspaceId}`,
+        );
+        continue;
+      }
+    }
     console.log(
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
