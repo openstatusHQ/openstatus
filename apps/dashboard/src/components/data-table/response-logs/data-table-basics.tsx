@@ -1,5 +1,6 @@
 "use client";
 
+import { BlockWrapper } from "@/components/content/block-wrapper";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import {
@@ -181,7 +182,7 @@ export function DataTableBasicsHTTP({
                                 {value}
                               </TableCell>
                             </TableRow>
-                          ),
+                          )
                         )}
                       </TableBody>
                     </Table>
@@ -241,6 +242,22 @@ export function DataTableBasicsHTTP({
                 <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
                   {data.message}
                 </pre>
+              </TableCell>
+            </TableRow>
+          </>
+        ) : null}
+        {data.body ? (
+          <>
+            <TableRow>
+              <TableHead colSpan={2}>Body</TableHead>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} className="p-0">
+                <BlockWrapper autoOpen>
+                  <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
+                    {data.body}
+                  </pre>
+                </BlockWrapper>
               </TableCell>
             </TableRow>
           </>

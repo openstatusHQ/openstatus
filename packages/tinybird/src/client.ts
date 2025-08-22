@@ -497,6 +497,7 @@ export class OSTinybird {
         headers: headersSchema,
         timing: timingPhasesSchema,
         assertions: z.string().nullable(),
+        body: z.string().nullable(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
         workspaceId: z.string(),
