@@ -62,6 +62,7 @@ export function DataTableSheetTest({
                   monitorId: String(monitor.id),
                   assertions: monitor.assertions,
                   message: null,
+                  body: data.body ?? null,
                 }
               : {
                   id: null,

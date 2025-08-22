@@ -13,15 +13,30 @@ import { cn } from "@/lib/utils";
 export function BlockWrapper({
   className,
   children,
+  autoOpen,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  autoOpen?: boolean;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
   const [isOpened, setIsOpened] = React.useState(false);
+
+  React.useEffect(() => {
+    if (ref.current && autoOpen) {
+      const height = ref.current.scrollHeight;
+      // NOTE: max-h-48 in tw equals 192px (48 * 4px)
+      if (height <= 192) {
+        setIsOpened(true);
+      }
+    }
+  }, [autoOpen]);
 
   return (
     <Collapsible open={isOpened} onOpenChange={setIsOpened}>
       <div className={cn("relative overflow-hidden", className)} {...props}>
         <CollapsibleContent
           forceMount
+          ref={ref}
           className={cn("overflow-hidden", !isOpened && "max-h-48")}
         >
           {children}
