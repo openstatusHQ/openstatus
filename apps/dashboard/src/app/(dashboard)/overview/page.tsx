@@ -37,7 +37,7 @@ export default async function Page() {
   const queryClient = getQueryClient();
 
   const monitors = await queryClient.fetchQuery(
-    trpc.monitor.list.queryOptions(),
+    trpc.monitor.list.queryOptions()
   );
   const pages = await queryClient.fetchQuery(trpc.page.list.queryOptions());
   const incidents = await queryClient.fetchQuery(
@@ -46,7 +46,7 @@ export default async function Page() {
       startedAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
-    }),
+    })
   );
   const statusReports = await queryClient.fetchQuery(
     trpc.statusReport.list.queryOptions({
@@ -54,7 +54,7 @@ export default async function Page() {
       createdAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
-    }),
+    })
   );
   const maintenances = await queryClient.fetchQuery(
     trpc.maintenance.list.queryOptions({
@@ -62,7 +62,7 @@ export default async function Page() {
       createdAt: {
         gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       },
-    }),
+    })
   );
 
   const lastIncident = incidents.length > 0 ? incidents[0] : null;
@@ -103,11 +103,13 @@ export default async function Page() {
       icon: List,
     },
     {
-      title: "Recent Incident",
+      title: lastIncident?.resolvedAt ? "Recent Incident" : "Active Incident",
       value: incidentDistance,
       disabled: !lastIncident?.monitorId,
       href: `/monitors/${lastIncident?.monitorId}/incidents`,
-      variant: "default" as const,
+      variant: lastIncident?.resolvedAt
+        ? ("default" as const)
+        : ("warning" as const),
       icon: Search,
     },
     {
