@@ -20,7 +20,7 @@
     "@dnd-kit/utilities": "3.2.2",
     "@hookform/devtools": "4.4.0",
     "@hookform/resolvers": "3.9.1",
-    "@libsql/client": "0.15.9",
+    "@libsql/client": "0.15.12",
     "@openpanel/nextjs": "1.0.8",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
