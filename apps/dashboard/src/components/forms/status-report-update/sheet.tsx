@@ -29,7 +29,7 @@ export function FormSheetStatusReportUpdate({
   return (
     <FormSheet open={open} onOpenChange={setOpen}>
       <FormSheetTrigger asChild>{children}</FormSheetTrigger>
-      <FormSheetContent>
+      <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Status Report Update</FormSheetTitle>
           <FormSheetDescription>
