@@ -182,7 +182,7 @@ export function DataTableBasicsHTTP({
                                 {value}
                               </TableCell>
                             </TableRow>
-                          )
+                          ),
                         )}
                       </TableBody>
                     </Table>

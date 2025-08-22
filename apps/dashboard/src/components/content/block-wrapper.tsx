@@ -29,7 +29,7 @@ export function BlockWrapper({
         setIsOpened(true);
       }
     }
-  }, [ref.current, autoOpen]);
+  }, [autoOpen]);
 
   return (
     <Collapsible open={isOpened} onOpenChange={setIsOpened}>
@@ -45,7 +45,7 @@ export function BlockWrapper({
           <div
             className={cn(
               "absolute flex items-center justify-center bg-gradient-to-b from-transparent to-90% to-background p-2",
-              isOpened ? "inset-x-0 bottom-0 h-12" : "inset-0"
+              isOpened ? "inset-x-0 bottom-0 h-12" : "inset-0",
             )}
           >
             <CollapsibleTrigger asChild>
