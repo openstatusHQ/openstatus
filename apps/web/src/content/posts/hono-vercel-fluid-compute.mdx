@@ -96,8 +96,6 @@ We have deployed it using the [openstatus cli](https://docs.openstatus.dev/cli/g
 openstatus monitors apply
 ```
 
-The results of our monitoring are publicly available on this [page](https://verce-hono.openstatus.dev/monitors)
-
 
 ### Our metrics
 
@@ -152,8 +150,7 @@ These are our metrics for both cold and warm deployments from the last 24 hours.
 
 When we compare our results, the warm server's performance is significantly faster, as expected. Its p99 latency is 524ms, while the cold server's p99 latency is 639ms. This 115ms difference highlights the overhead of a cold start. However, when we compare this to a similar test we ran with the previous Node.js runtime, the performance is notably better.
 
-
-[https://www.openstatus.dev/blog/monitoring-latency-vercel-edge-vs-serverless](Compare edge runtime vs node runtime on vercel)
+> Read our blog post: [Monitoring latency: Vercel Serverless Function vs Vercel Edge Function](https://www.openstatus.dev/blog/monitoring-latency-vercel-edge-vs-serverless)
 
 ### The Good
 

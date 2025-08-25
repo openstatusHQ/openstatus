@@ -26,13 +26,11 @@
     "ord",
     "otp",
     "phx",
-    "qro",
     "scl",
     "sjc",
     "sea",
     "sin",
     "syd",
-    "waw",
     "yul",
     "yyz"
   ],
@@ -12207,24 +12205,7 @@
       }
     ]
   },
-  "metricsByRegion": {
-    "meta": [
-      { "name": "region", "type": "LowCardinality(String)" },
-      { "name": "p50Latency", "type": "Float64" },
-      { "name": "p75Latency", "type": "Float64" },
-      { "name": "p90Latency", "type": "Float64" },
-      { "name": "p95Latency", "type": "Float64" },
-      { "name": "p99Latency", "type": "Float64" },
-      { "name": "count", "type": "UInt64" },
-      { "name": "ok", "type": "UInt64" }
-    ],
-    "rows": 33,
-    "statistics": {
-      "elapsed": 0.457881894,
-      "rows_read": 355491,
-      "bytes_read": 8169873
-    },
-    "data": [
+  "metricsByRegion":  [
       {
         "region": "mad",
         "count": 10080,
@@ -12556,5 +12537,5 @@
         "p99Latency": 543
       }
     ]
-  }
+
 }
