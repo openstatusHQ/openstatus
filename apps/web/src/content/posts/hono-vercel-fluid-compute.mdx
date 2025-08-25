@@ -117,7 +117,12 @@ These are our metrics for both cold and warm deployments from the last 24 hours.
   <MetricsCard title="p99" value={524} suffix="ms" />
 </div>
 
-
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/hono-vercel-fluid-compute/hono-warm.json"
+    caption="hono warm p50 latency between 18. Augh and 25. Aug 2025 aggregated in a 1h window."
+  />
+</div>
 
 #### Cold
 
@@ -137,8 +142,8 @@ These are our metrics for both cold and warm deployments from the last 24 hours.
 
 <div className="mt-4">
   <SimpleChart
-    staticFile="/assets/posts/monitoring-vercel/vercel-edge.json"
-    caption="Vercel edge p50 latency between 10. Mar and 13. Mar 2024 aggregated in a 1h window."
+    staticFile="/assets/posts/hono-vercel-fluid-compute/hono-cold.json"
+    caption="Vercel edge p50 latency between 18. Augh and 25. Aug 2025 aggregated in a 1h window."
   />
 </div>
 
