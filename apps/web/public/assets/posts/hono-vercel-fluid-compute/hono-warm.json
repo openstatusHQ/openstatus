@@ -12205,337 +12205,336 @@
       }
     ]
   },
-  "metricsByRegion":  [
-      {
-        "region": "mad",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 306,
-        "p75Latency": 319,
-        "p90Latency": 339,
-        "p95Latency": 358,
-        "p99Latency": 451
-      },
-      {
-        "region": "sin",
-        "count": 10075,
-        "ok": 10075,
-        "p50Latency": 324,
-        "p75Latency": 403,
-        "p90Latency": 426,
-        "p95Latency": 469,
-        "p99Latency": 571
-      },
-      {
-        "region": "bos",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 91,
-        "p75Latency": 100,
-        "p90Latency": 112,
-        "p95Latency": 123,
-        "p99Latency": 203
-      },
-      {
-        "region": "lhr",
-        "count": 10116,
-        "ok": 10116,
-        "p50Latency": 125,
-        "p75Latency": 133,
-        "p90Latency": 144,
-        "p95Latency": 159,
-        "p99Latency": 279
-      },
-      {
-        "region": "yul",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 92,
-        "p75Latency": 101,
-        "p90Latency": 112,
-        "p95Latency": 123,
-        "p99Latency": 186
-      },
-      {
-        "region": "dfw",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 157,
-        "p75Latency": 164,
-        "p90Latency": 178,
-        "p95Latency": 202,
-        "p99Latency": 289
-      },
-      {
-        "region": "phx",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 176,
-        "p75Latency": 184,
-        "p90Latency": 195,
-        "p95Latency": 208,
-        "p99Latency": 311
-      },
-      {
-        "region": "gig",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 194,
-        "p75Latency": 210,
-        "p90Latency": 349,
-        "p95Latency": 359,
-        "p99Latency": 428
-      },
-      {
-        "region": "bog",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 342,
-        "p75Latency": 378,
-        "p90Latency": 404,
-        "p95Latency": 461,
-        "p99Latency": 576
-      },
-      {
-        "region": "sea",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 144,
-        "p75Latency": 153,
-        "p90Latency": 168,
-        "p95Latency": 179,
-        "p99Latency": 278
-      },
-      {
-        "region": "syd",
-        "count": 10076,
-        "ok": 10076,
-        "p50Latency": 273,
-        "p75Latency": 285,
-        "p90Latency": 325,
-        "p95Latency": 416,
-        "p99Latency": 463
-      },
-      {
-        "region": "gru",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 169,
-        "p75Latency": 183,
-        "p90Latency": 201,
-        "p95Latency": 249,
-        "p99Latency": 348
-      },
-      {
-        "region": "scl",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 314,
-        "p75Latency": 345,
-        "p90Latency": 488,
-        "p95Latency": 501,
-        "p99Latency": 549
-      },
-      {
-        "region": "ewr",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 113,
-        "p75Latency": 122,
-        "p90Latency": 133,
-        "p95Latency": 162,
-        "p99Latency": 221
-      },
-      {
-        "region": "mia",
-        "count": 10074,
-        "ok": 10074,
-        "p50Latency": 136,
-        "p75Latency": 153,
-        "p90Latency": 172,
-        "p95Latency": 185,
-        "p99Latency": 251
-      },
-      {
-        "region": "iad",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 99,
-        "p75Latency": 127,
-        "p90Latency": 152,
-        "p95Latency": 201,
-        "p99Latency": 399
-      },
-      {
-        "region": "ams",
-        "count": 10092,
-        "ok": 10092,
-        "p50Latency": 161,
-        "p75Latency": 168,
-        "p90Latency": 179,
-        "p95Latency": 192,
-        "p99Latency": 276
-      },
-      {
-        "region": "arn",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 174,
-        "p75Latency": 182,
-        "p90Latency": 196,
-        "p95Latency": 207,
-        "p99Latency": 318
-      },
-      {
-        "region": "atl",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 112,
-        "p75Latency": 129,
-        "p90Latency": 154,
-        "p95Latency": 198,
-        "p99Latency": 355
-      },
-      {
-        "region": "yyz",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 121,
-        "p75Latency": 128,
-        "p90Latency": 140,
-        "p95Latency": 152,
-        "p99Latency": 243
-      },
-      {
-        "region": "sjc",
-        "count": 10074,
-        "ok": 10074,
-        "p50Latency": 117,
-        "p75Latency": 124,
-        "p90Latency": 134,
-        "p95Latency": 146,
-        "p99Latency": 237
-      },
-      {
-        "region": "den",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 207,
-        "p75Latency": 218,
-        "p90Latency": 240,
-        "p95Latency": 264,
-        "p99Latency": 331
-      },
-      {
-        "region": "nrt",
-        "count": 10078,
-        "ok": 10078,
-        "p50Latency": 210,
-        "p75Latency": 243,
-        "p90Latency": 342,
-        "p95Latency": 431,
-        "p99Latency": 484
-      },
-      {
-        "region": "cdg",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 131,
-        "p75Latency": 137,
-        "p90Latency": 149,
-        "p95Latency": 164,
-        "p99Latency": 281
-      },
-      {
-        "region": "lax",
-        "count": 10078,
-        "ok": 10078,
-        "p50Latency": 138,
-        "p75Latency": 145,
-        "p90Latency": 155,
-        "p95Latency": 169,
-        "p99Latency": 270
-      },
-      {
-        "region": "ord",
-        "count": 10069,
-        "ok": 10069,
-        "p50Latency": 122,
-        "p75Latency": 132,
-        "p90Latency": 146,
-        "p95Latency": 176,
-        "p99Latency": 247
-      },
-      {
-        "region": "gdl",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 464,
-        "p75Latency": 492,
-        "p90Latency": 575,
-        "p95Latency": 618,
-        "p99Latency": 683
-      },
-      {
-        "region": "bom",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 268,
-        "p75Latency": 278,
-        "p90Latency": 292,
-        "p95Latency": 306,
-        "p99Latency": 399
-      },
-      {
-        "region": "eze",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 265,
-        "p75Latency": 277,
-        "p90Latency": 441,
-        "p95Latency": 455,
-        "p99Latency": 496
-      },
-      {
-        "region": "hkg",
-        "count": 10080,
-        "ok": 10080,
-        "p50Latency": 259,
-        "p75Latency": 315,
-        "p90Latency": 339,
-        "p95Latency": 398,
-        "p99Latency": 586
-      },
-      {
-        "region": "fra",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 142,
-        "p75Latency": 148,
-        "p90Latency": 159,
-        "p95Latency": 172,
-        "p99Latency": 264
-      },
-      {
-        "region": "otp",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 242,
-        "p75Latency": 264,
-        "p90Latency": 278,
-        "p95Latency": 294,
-        "p99Latency": 374
-      },
-      {
-        "region": "jnb",
-        "count": 10079,
-        "ok": 10079,
-        "p50Latency": 340,
-        "p75Latency": 358,
-        "p90Latency": 390,
-        "p95Latency": 505,
-        "p99Latency": 543
-      }
-    ]
-
+  "metricsByRegion": [
+    {
+      "region": "mad",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 306,
+      "p75Latency": 319,
+      "p90Latency": 339,
+      "p95Latency": 358,
+      "p99Latency": 451
+    },
+    {
+      "region": "sin",
+      "count": 10075,
+      "ok": 10075,
+      "p50Latency": 324,
+      "p75Latency": 403,
+      "p90Latency": 426,
+      "p95Latency": 469,
+      "p99Latency": 571
+    },
+    {
+      "region": "bos",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 91,
+      "p75Latency": 100,
+      "p90Latency": 112,
+      "p95Latency": 123,
+      "p99Latency": 203
+    },
+    {
+      "region": "lhr",
+      "count": 10116,
+      "ok": 10116,
+      "p50Latency": 125,
+      "p75Latency": 133,
+      "p90Latency": 144,
+      "p95Latency": 159,
+      "p99Latency": 279
+    },
+    {
+      "region": "yul",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 92,
+      "p75Latency": 101,
+      "p90Latency": 112,
+      "p95Latency": 123,
+      "p99Latency": 186
+    },
+    {
+      "region": "dfw",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 157,
+      "p75Latency": 164,
+      "p90Latency": 178,
+      "p95Latency": 202,
+      "p99Latency": 289
+    },
+    {
+      "region": "phx",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 176,
+      "p75Latency": 184,
+      "p90Latency": 195,
+      "p95Latency": 208,
+      "p99Latency": 311
+    },
+    {
+      "region": "gig",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 194,
+      "p75Latency": 210,
+      "p90Latency": 349,
+      "p95Latency": 359,
+      "p99Latency": 428
+    },
+    {
+      "region": "bog",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 342,
+      "p75Latency": 378,
+      "p90Latency": 404,
+      "p95Latency": 461,
+      "p99Latency": 576
+    },
+    {
+      "region": "sea",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 144,
+      "p75Latency": 153,
+      "p90Latency": 168,
+      "p95Latency": 179,
+      "p99Latency": 278
+    },
+    {
+      "region": "syd",
+      "count": 10076,
+      "ok": 10076,
+      "p50Latency": 273,
+      "p75Latency": 285,
+      "p90Latency": 325,
+      "p95Latency": 416,
+      "p99Latency": 463
+    },
+    {
+      "region": "gru",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 169,
+      "p75Latency": 183,
+      "p90Latency": 201,
+      "p95Latency": 249,
+      "p99Latency": 348
+    },
+    {
+      "region": "scl",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 314,
+      "p75Latency": 345,
+      "p90Latency": 488,
+      "p95Latency": 501,
+      "p99Latency": 549
+    },
+    {
+      "region": "ewr",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 113,
+      "p75Latency": 122,
+      "p90Latency": 133,
+      "p95Latency": 162,
+      "p99Latency": 221
+    },
+    {
+      "region": "mia",
+      "count": 10074,
+      "ok": 10074,
+      "p50Latency": 136,
+      "p75Latency": 153,
+      "p90Latency": 172,
+      "p95Latency": 185,
+      "p99Latency": 251
+    },
+    {
+      "region": "iad",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 99,
+      "p75Latency": 127,
+      "p90Latency": 152,
+      "p95Latency": 201,
+      "p99Latency": 399
+    },
+    {
+      "region": "ams",
+      "count": 10092,
+      "ok": 10092,
+      "p50Latency": 161,
+      "p75Latency": 168,
+      "p90Latency": 179,
+      "p95Latency": 192,
+      "p99Latency": 276
+    },
+    {
+      "region": "arn",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 174,
+      "p75Latency": 182,
+      "p90Latency": 196,
+      "p95Latency": 207,
+      "p99Latency": 318
+    },
+    {
+      "region": "atl",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 112,
+      "p75Latency": 129,
+      "p90Latency": 154,
+      "p95Latency": 198,
+      "p99Latency": 355
+    },
+    {
+      "region": "yyz",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 121,
+      "p75Latency": 128,
+      "p90Latency": 140,
+      "p95Latency": 152,
+      "p99Latency": 243
+    },
+    {
+      "region": "sjc",
+      "count": 10074,
+      "ok": 10074,
+      "p50Latency": 117,
+      "p75Latency": 124,
+      "p90Latency": 134,
+      "p95Latency": 146,
+      "p99Latency": 237
+    },
+    {
+      "region": "den",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 207,
+      "p75Latency": 218,
+      "p90Latency": 240,
+      "p95Latency": 264,
+      "p99Latency": 331
+    },
+    {
+      "region": "nrt",
+      "count": 10078,
+      "ok": 10078,
+      "p50Latency": 210,
+      "p75Latency": 243,
+      "p90Latency": 342,
+      "p95Latency": 431,
+      "p99Latency": 484
+    },
+    {
+      "region": "cdg",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 131,
+      "p75Latency": 137,
+      "p90Latency": 149,
+      "p95Latency": 164,
+      "p99Latency": 281
+    },
+    {
+      "region": "lax",
+      "count": 10078,
+      "ok": 10078,
+      "p50Latency": 138,
+      "p75Latency": 145,
+      "p90Latency": 155,
+      "p95Latency": 169,
+      "p99Latency": 270
+    },
+    {
+      "region": "ord",
+      "count": 10069,
+      "ok": 10069,
+      "p50Latency": 122,
+      "p75Latency": 132,
+      "p90Latency": 146,
+      "p95Latency": 176,
+      "p99Latency": 247
+    },
+    {
+      "region": "gdl",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 464,
+      "p75Latency": 492,
+      "p90Latency": 575,
+      "p95Latency": 618,
+      "p99Latency": 683
+    },
+    {
+      "region": "bom",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 268,
+      "p75Latency": 278,
+      "p90Latency": 292,
+      "p95Latency": 306,
+      "p99Latency": 399
+    },
+    {
+      "region": "eze",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 265,
+      "p75Latency": 277,
+      "p90Latency": 441,
+      "p95Latency": 455,
+      "p99Latency": 496
+    },
+    {
+      "region": "hkg",
+      "count": 10080,
+      "ok": 10080,
+      "p50Latency": 259,
+      "p75Latency": 315,
+      "p90Latency": 339,
+      "p95Latency": 398,
+      "p99Latency": 586
+    },
+    {
+      "region": "fra",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 142,
+      "p75Latency": 148,
+      "p90Latency": 159,
+      "p95Latency": 172,
+      "p99Latency": 264
+    },
+    {
+      "region": "otp",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 242,
+      "p75Latency": 264,
+      "p90Latency": 278,
+      "p95Latency": 294,
+      "p99Latency": 374
+    },
+    {
+      "region": "jnb",
+      "count": 10079,
+      "ok": 10079,
+      "p50Latency": 340,
+      "p75Latency": 358,
+      "p90Latency": 390,
+      "p95Latency": 505,
+      "p99Latency": 543
+    }
+  ]
 }
