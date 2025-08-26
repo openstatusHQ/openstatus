@@ -26,25 +26,23 @@ const bodyToStringSchema = z.preprocess((val) => {
   return String(val);
 }, z.string());
 
-const headersToArraySchema = z.preprocess(
-  (val) => {
-    // early return in case the header is already an array
-    if (Array.isArray(val)) {
-      return val;
-    }
-    if (typeof val === "string" && String(val).length > 0) {
-      return JSON.parse(String(val));
-    }
-    return [];
-  },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-);
+const headersToArraySchema = z.preprocess((val) => {
+  // early return in case the header is already an array
+  if (Array.isArray(val)) {
+    return val;
+  }
+  if (typeof val === "string" && String(val).length > 0) {
+    return JSON.parse(String(val));
+  }
+  return [];
+}, z.array(z.object({ key: z.string(), value: z.string() })).default([]));
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
   status: monitorStatusSchema.default("active"),
   jobType: monitorJobTypesSchema.default("http"),
   timeout: z.number().default(45),
+  followRedirects: z.boolean().default(true),
   retry: z.number().default(3),
   regions: regionsToArraySchema.default([]),
 }).extend({

@@ -1,0 +1,1 @@
+ALTER TABLE `monitor` ADD `follow_redirects` integer DEFAULT true;

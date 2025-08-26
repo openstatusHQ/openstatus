@@ -76,6 +76,13 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	requestClient := &http.Client{
 		Timeout: time.Duration(req.Timeout) * time.Millisecond,
 	}
+	
+	// Configure redirect policy based on FollowRedirects setting
+	if !req.FollowRedirects {
+		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
 	defer requestClient.CloseIdleConnections()
 
 	// Might be a more efficient way to do it
@@ -97,7 +104,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	var result checker.Response
 
 	var retry int
-	if req.Retry == 0  {
+	if req.Retry == 0 {
 		retry = int(req.Retry)
 	} else {
 		retry = 3
