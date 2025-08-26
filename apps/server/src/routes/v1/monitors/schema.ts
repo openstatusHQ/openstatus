@@ -92,26 +92,23 @@ export const MonitorSchema = z
       description: "The url to monitor",
     }),
     regions: z
-      .preprocess(
-        (val) => {
-          try {
-            if (Array.isArray(val)) return val;
-            if (String(val).length > 0) {
-              return String(val).split(",");
-            }
-            return [];
-          } catch (e) {
-            throw new ZodError([
-              {
-                code: "custom",
-                path: ["headers"],
-                message: e instanceof Error ? e.message : "Invalid value",
-              },
-            ]);
+      .preprocess((val) => {
+        try {
+          if (Array.isArray(val)) return val;
+          if (String(val).length > 0) {
+            return String(val).split(",");
           }
-        },
-        z.array(z.enum(flyRegions)),
-      )
+          return [];
+        } catch (e) {
+          throw new ZodError([
+            {
+              code: "custom",
+              path: ["headers"],
+              message: e instanceof Error ? e.message : "Invalid value",
+            },
+          ]);
+        }
+      }, z.array(z.enum(flyRegions)))
       .default([])
       .openapi({
         example: ["ams"],
@@ -137,26 +134,23 @@ export const MonitorSchema = z
         description: "The body",
       }),
     headers: z
-      .preprocess(
-        (val) => {
-          try {
-            if (Array.isArray(val)) return val;
-            if (String(val).length > 0) {
-              return JSON.parse(String(val));
-            }
-            return [];
-          } catch (e) {
-            throw new ZodError([
-              {
-                code: "custom",
-                path: ["headers"],
-                message: e instanceof Error ? e.message : "Invalid value",
-              },
-            ]);
+      .preprocess((val) => {
+        try {
+          if (Array.isArray(val)) return val;
+          if (String(val).length > 0) {
+            return JSON.parse(String(val));
           }
-        },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-      )
+          return [];
+        } catch (e) {
+          throw new ZodError([
+            {
+              code: "custom",
+              path: ["headers"],
+              message: e instanceof Error ? e.message : "Invalid value",
+            },
+          ]);
+        }
+      }, z.array(z.object({ key: z.string(), value: z.string() })).default([]))
       .nullish()
       .openapi({
         description: "The headers of your request",
@@ -202,6 +196,9 @@ export const MonitorSchema = z
     }),
     retry: z.number().default(3).openapi({
       description: "The number of retries to attempt",
+    }),
+    followRedirects: z.boolean().default(true).openapi({
+      description: "If the monitor should follow redirects",
     }),
     jobType: z.enum(monitorJobTypes).optional().default("http").openapi({
       description: "The type of the monitor",
