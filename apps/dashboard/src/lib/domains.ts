@@ -32,9 +32,10 @@ export function extractDomain(url: string) {
     if (parts.length === 2) {
       // no subdomain
       return parts[0]; // "mxkaske"
-    } else if (parts.length > 2) {
+    }
+    if (parts.length > 2) {
       // has subdomain(s)
-      return parts.slice(0, -2).join("-") + "-" + parts[parts.length - 2];
+      return `${parts.slice(0, -2).join("-")}-${parts[parts.length - 2]}`;
       // "craft-mxkaske"
     }
     return "";

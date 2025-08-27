@@ -58,7 +58,7 @@ export function CreatePageForm({
     } else {
       form.clearErrors("slug");
     }
-  }, [isUnique, form, debouncedSlug, defaultValues?.slug]);
+  }, [isUnique, form]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
