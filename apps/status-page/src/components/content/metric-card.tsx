@@ -3,10 +3,8 @@ import { cva } from "class-variance-authority";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import { cn } from "@/lib/utils";
-import type React from "react";
 
 const metricCardVariants = cva(
   "flex flex-col gap-1 border rounded-lg px-3 py-2 text-card-foreground",
@@ -35,7 +33,7 @@ export function MetricCard({
   return (
     <div
       data-variant={variant}
-      className={cn(metricCardVariants({ variant, className }), "group")}
+      className={cn(metricCardVariants({ variant, className }), "group/metric")}
       {...props}
     >
       {children}
@@ -49,7 +47,7 @@ export function MetricCardTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-medium text-sm", className)} {...props}>
+    <p className={cn("text-sm font-medium", className)} {...props}>
       {children}
     </p>
   );
@@ -64,9 +62,9 @@ export function MetricCardHeader({
     <div
       className={cn(
         "text-muted-foreground",
-        "group-data-[variant=destructive]:text-destructive",
-        "group-data-[variant=success]:text-success",
-        "group-data-[variant=warning]:text-warning",
+        "group-data-[variant=destructive]/metric:text-destructive",
+        "group-data-[variant=success]/metric:text-success",
+        "group-data-[variant=warning]/metric:text-warning",
         className,
       )}
       {...props}
@@ -82,7 +80,7 @@ export function MetricCardValue({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-semibold text-foreground", className)} {...props}>
+    <p className={cn("text-foreground font-semibold", className)} {...props}>
       {children}
     </p>
   );
@@ -96,7 +94,7 @@ export function MetricCardGroup({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
+        "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4",
         className,
       )}
       {...props}
@@ -176,22 +174,5 @@ export function MetricCardButton({
     >
       {children}
     </button>
-  );
-}
-
-export function MetricCardSkeleton({
-  className,
-  ...props
-}: React.ComponentProps<typeof Skeleton>) {
-  return (
-    <Skeleton
-      className={cn(
-        "group-data-[variant=destructive]:bg-destructive/50",
-        "group-data-[variant=success]:bg-success/50",
-        "group-data-[variant=warning]:bg-warning/50",
-        className,
-      )}
-      {...props}
-    />
   );
 }
