@@ -109,7 +109,7 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
 export function mapRegionMetrics(
   timeline: RouterOutputs["tinybird"]["metricsRegions"] | undefined,
   regions: Region[],
-  percentile: (typeof PERCENTILES)[number]
+  percentile: (typeof PERCENTILES)[number],
 ): RegionMetric[] {
   if (!timeline)
     return (regions
@@ -181,7 +181,7 @@ export function mapRegionMetrics(
 }
 
 export function mapGlobalMetrics(
-  metrics: RouterOutputs["tinybird"]["globalMetrics"]
+  metrics: RouterOutputs["tinybird"]["globalMetrics"],
 ) {
   return metrics.data?.map((metric) => {
     return {
@@ -248,7 +248,7 @@ export function getMonitorListMetrics(
   data: {
     p95Latency: number;
     monitorId: string;
-  }[] = []
+  }[] = [],
 ): readonly MonitorListMetric[] {
   const variantMap: Record<
     (typeof globalCards)[number],
@@ -266,12 +266,12 @@ export function getMonitorListMetrics(
     switch (key) {
       case "active":
         value = monitors.filter(
-          (m) => m.status === "active" && m.active
+          (m) => m.status === "active" && m.active,
         ).length;
         break;
       case "degraded":
         value = monitors.filter(
-          (m) => m.status === "degraded" && m.active
+          (m) => m.status === "degraded" && m.active,
         ).length;
         break;
       case "error":
@@ -298,7 +298,7 @@ export function getMonitorListMetrics(
 
 export function mapLatency(
   latency: RouterOutputs["tinybird"]["metricsLatency"],
-  percentile: (typeof PERCENTILES)[number]
+  percentile: (typeof PERCENTILES)[number],
 ) {
   return latency.data?.map((metric) => {
     return {
@@ -310,7 +310,7 @@ export function mapLatency(
 
 export function mapTimingPhases(
   timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"],
-  percentile: (typeof PERCENTILES)[number]
+  percentile: (typeof PERCENTILES)[number],
 ) {
   return timingPhases.data?.map((metric) => {
     return {
