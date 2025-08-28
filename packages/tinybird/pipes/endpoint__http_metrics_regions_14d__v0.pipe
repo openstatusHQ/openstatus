@@ -16,7 +16,7 @@ SQL >
     FROM mv__http_14d__v0
     WHERE
         monitorId = {{ String(monitorId, '1', required=True) }}
-        AND region IN {{ Array(regions, 'String', 'ams,fra') }}
+        {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
     GROUP BY h, region
     ORDER BY h DESC
 
