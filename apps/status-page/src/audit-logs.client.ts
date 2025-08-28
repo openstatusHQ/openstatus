@@ -1,9 +1,9 @@
 import {
-  CircleAlert,
-  CircleCheck,
   CircleMinus,
-  Send,
   Siren,
+  Send,
+  CircleCheck,
+  CircleAlert,
 } from "lucide-react";
 
 export const config = {
