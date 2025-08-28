@@ -112,12 +112,12 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	start := time.Now()
 
 	response, err := client.Do(req)
-	timing.TransferDone = time.Now().UTC().UnixMilli()
-	latency := time.Since(start).Milliseconds()
+
 	if err != nil {
 
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
+			latency := time.Since(start).Milliseconds()
 			return Response{
 				Latency:   latency,
 				Timing:    timing,
@@ -134,6 +134,10 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
+
+	timing.TransferDone = time.Now().UTC().UnixMilli()
+	latency := time.Since(start).Milliseconds()
+
 	if err != nil {
 		return Response{
 			Latency:   latency,
