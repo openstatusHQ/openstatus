@@ -6,6 +6,7 @@
     "env": "bun env.ts",
     "lint": "biome lint .",
     "format": "pnpm biome format . --write && pnpm biome check . --write ",
+    "format:fix": "pnpm biome check --fix --unsafe .",
     "lint:fix": "pnpm biome lint --write --unsafe .",
     "lint:turbo": "turbo run lint",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
