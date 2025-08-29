@@ -139,6 +139,10 @@ export default defineConfig({
                         label: "Timing",
                         slug: "monitoring/customization/timing",
                       },
+                      {
+                        label: "Follow Redirects",
+                        slug: "monitoring/customization/follow-redirects",
+                      },
                     ],
                   },
                 ],
