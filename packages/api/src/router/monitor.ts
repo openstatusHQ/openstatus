@@ -984,6 +984,26 @@ export const monitorRouter = createTRPCRouter({
         .run();
     }),
 
+  updateFollowRedirects: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
+    .input(z.object({ id: z.number(), followRedirects: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({
+          followRedirects: input.followRedirects,
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
   updateOtel: protectedProcedure
     .meta({ track: Events.UpdateMonitor })
     .input(

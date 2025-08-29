@@ -45,6 +45,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   status: monitorStatusSchema.default("active"),
   jobType: monitorJobTypesSchema.default("http"),
   timeout: z.number().default(45),
+  followRedirects: z.boolean().default(true),
   retry: z.number().default(3),
   regions: regionsToArraySchema.default([]),
 }).extend({

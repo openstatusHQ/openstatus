@@ -81,6 +81,10 @@ export function Sidebar() {
             },
             { label: "Public", value: String(monitor.public) },
             { label: "Active", value: String(monitor.active) },
+            {
+              label: "Follow redirects",
+              value: String(monitor.followRedirects),
+            },
           ],
         },
         {

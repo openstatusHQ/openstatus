@@ -1,0 +1,12 @@
+---
+title: Follow Redirects
+description: "What are follow redirects on a monitor in OpenStatus"
+---
+
+The Follow Redirects option controls whether your monitor should automatically follow HTTP redirects. **By default, we follow the redirects.**
+
+When enabled, the monitor will follow any `3xx` redirect responses (e.g. `301 Moved Permanently`, `302 Found`) until it reaches the final destination URL. The monitor will then report the status of the final response.
+
+Enable this option if:
+- You are monitoring a URL that often redirects (e.g. from http:// to https://, or from a short link to the final page).
+- You want to verify that the final destination is available and returns the expected response.
