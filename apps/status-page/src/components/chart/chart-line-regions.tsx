@@ -142,9 +142,9 @@ export function ChartLineRegions({
             stroke={`var(--color-${item})`}
             dot={false}
             hide={!activeSeries.includes(item)}
+            connectNulls
           />
         ))}
-
         <YAxis
           domain={["dataMin", "dataMax"]}
           tickLine={false}

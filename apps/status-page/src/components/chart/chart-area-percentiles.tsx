@@ -215,6 +215,7 @@ export function ChartAreaPercentiles({
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         <Area
           hide={!activeSeries.includes("p75Latency")}
@@ -225,6 +226,7 @@ export function ChartAreaPercentiles({
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         {/* <Area
           hide={!activeSeries.includes("p90Latency")}
@@ -235,6 +237,7 @@ export function ChartAreaPercentiles({
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         /> */}
         <Area
           hide={!activeSeries.includes("p95Latency")}
@@ -245,6 +248,7 @@ export function ChartAreaPercentiles({
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         <Area
           hide={!activeSeries.includes("p99Latency")}
@@ -255,6 +259,7 @@ export function ChartAreaPercentiles({
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         <YAxis
           domain={yAxisDomain}
