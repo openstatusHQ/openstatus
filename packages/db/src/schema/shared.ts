@@ -39,6 +39,7 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
       z.object({
         monitorId: z.number(),
         maintenanceId: z.number(),
+        monitor: selectPublicMonitorSchema,
       }),
     )
     .default([]),

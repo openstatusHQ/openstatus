@@ -97,6 +97,8 @@ export function StatusMonitorDescription({
   const isTouch = useMediaQuery("(hover: none)");
   const [open, setOpen] = useState(false);
 
+  if (!children) return null;
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip open={open} onOpenChange={setOpen}>

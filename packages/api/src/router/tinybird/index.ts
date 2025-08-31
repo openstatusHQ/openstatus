@@ -149,7 +149,20 @@ function getUptimeProcedure(period: "7d" | "30d", type: Type) {
 
 // TODO: missing pipes for other periods
 function getMetricsLatencyProcedure(_period: Period, type: Type) {
-  return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+  switch (_period) {
+    case "1d":
+      return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+    case "7d":
+      return type === "http" ? tb.httpMetricsLatency7d : tb.tcpMetricsLatency7d;
+    default:
+      return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+  }
+}
+
+function getMetricsLatencyMultiProcedure(_period: Period, type: Type) {
+  return type === "http"
+    ? tb.httpMetricsLatency1dMulti
+    : tb.tcpMetricsLatency1dMulti;
 }
 
 function getTimingPhasesProcedure(type: Type) {
@@ -553,6 +566,22 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
+      return await procedure(opts.input);
+    }),
+
+  metricsLatencyMulti: protectedProcedure
+    .input(
+      z.object({
+        monitorIds: z.string().array(),
+        period: z.enum(["1d"]).default("1d"),
+        type: z.enum(types).default("http"),
+      }),
+    )
+    .query(async (opts) => {
+      const procedure = getMetricsLatencyMultiProcedure(
+        opts.input.period,
+        opts.input.type,
+      );
       return await procedure(opts.input);
     }),
 

@@ -1360,6 +1360,41 @@ export class OSTinybird {
     });
   }
 
+  public get httpMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get httpMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_1d_multi__v1",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        monitorId: z.string(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
   public get tcpMetricsLatency1d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_latency_1d__v1",
@@ -1369,6 +1404,41 @@ export class OSTinybird {
       }),
       data: z.object({
         timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get tcpMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get tcpMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_1d_multi__v1",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        monitorId: z.string(),
         p50Latency: z.number().int(),
         p75Latency: z.number().int(),
         p90Latency: z.number().int(),

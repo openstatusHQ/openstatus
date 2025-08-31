@@ -1,10 +1,6 @@
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type Maintenance, maintenances } from "@/data/maintenances";
-import { type StatusReport, statusReports } from "@/data/status-reports";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { formatDate, formatTime } from "@/lib/formatter";
+import { formatTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { UTCDate } from "@date-fns/utc";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
@@ -14,7 +10,6 @@ import {
   formatDistanceToNowStrict,
 } from "date-fns";
 import { Check, Copy } from "lucide-react";
-import Link from "next/link";
 import {
   HoverCard,
   HoverCardContent,
@@ -22,88 +17,11 @@ import {
 } from "../ui/hover-card";
 
 const STATUS_LABELS = {
-  operational: "Resolved",
+  resolved: "Resolved",
   monitoring: "Monitoring",
   identified: "Identified",
   investigating: "Investigating",
 };
-
-// TODO: move to page level
-export function StatusEventsTabs() {
-  return (
-    <Tabs defaultValue="reports" className="gap-4">
-      <TabsList>
-        <TabsTrigger value="reports">Reports</TabsTrigger>
-        <TabsTrigger value="maintenances">Maintenances</TabsTrigger>
-      </TabsList>
-      <TabsContent value="reports" className="flex flex-col gap-4">
-        {statusReports.map((report) => (
-          <StatusEvent key={report.id}>
-            <StatusEventAside>
-              <span className="font-medium text-foreground/80">
-                {formatDate(report.startedAt, { month: "short" })}
-              </span>
-            </StatusEventAside>
-            <Link href="/status-page/events/report" className="rounded-lg">
-              <StatusEventContent>
-                <StatusEventTitle>{report.name}</StatusEventTitle>
-                <StatusEventAffected className="flex flex-wrap gap-1">
-                  {report.affected.map((affected) => (
-                    <Badge
-                      key={affected}
-                      variant="outline"
-                      className="text-[10px]"
-                    >
-                      {affected}
-                    </Badge>
-                  ))}
-                </StatusEventAffected>
-                <StatusEventTimelineReport updates={report.updates} />
-              </StatusEventContent>
-            </Link>
-          </StatusEvent>
-        ))}
-      </TabsContent>
-      <TabsContent value="maintenances" className="flex flex-col gap-4">
-        {maintenances.map((maintenance) => {
-          const isFuture = maintenance.startDate > new Date();
-          return (
-            <StatusEvent key={maintenance.id}>
-              <StatusEventAside>
-                <span className="font-medium text-foreground/80">
-                  {formatDate(maintenance.startDate, { month: "short" })}
-                </span>
-                {isFuture ? (
-                  <span className="text-info text-sm">Upcoming</span>
-                ) : null}
-              </StatusEventAside>
-              <Link
-                href="/status-page/events/maintenance"
-                className="rounded-lg"
-              >
-                <StatusEventContent>
-                  <StatusEventTitle>{maintenance.title}</StatusEventTitle>
-                  <StatusEventAffected className="flex flex-wrap gap-1">
-                    {maintenance.affected.map((affected) => (
-                      <Badge
-                        key={affected}
-                        variant="outline"
-                        className="text-[10px]"
-                      >
-                        {affected}
-                      </Badge>
-                    ))}
-                  </StatusEventAffected>
-                  <StatusEventTimelineMaintenance maintenance={maintenance} />
-                </StatusEventContent>
-              </Link>
-            </StatusEvent>
-          );
-        })}
-      </TabsContent>
-    </Tabs>
-  );
-}
 
 // TODO: rename file to status-event and move the `StatusEvents` component to the page level.
 
@@ -193,7 +111,12 @@ export function StatusEventTimelineReport({
   updates,
   ...props
 }: React.ComponentProps<"div"> & {
-  updates: StatusReport["updates"];
+  // TODO: remove unused props
+  updates: {
+    date: Date;
+    message: string;
+    status: "investigating" | "identified" | "monitoring" | "resolved";
+  }[];
 }) {
   const startedAt = new Date(updates[0].date);
   const endedAt = new Date(updates[updates.length - 1].date);
@@ -205,12 +128,10 @@ export function StatusEventTimelineReport({
         .sort((a, b) => b.date.getTime() - a.date.getTime())
         .map((update, index) => (
           <StatusEventTimelineReportUpdate
-            key={update.id}
+            key={index}
             report={update}
             duration={
-              index === 0 && update.status === "operational"
-                ? duration
-                : undefined
+              index === 0 && update.status === "resolved" ? duration : undefined
             }
             withSeparator={index !== updates.length - 1}
           />
@@ -224,7 +145,11 @@ function StatusEventTimelineReportUpdate({
   duration,
   withSeparator = true,
 }: {
-  report: StatusReport["updates"][number];
+  report: {
+    date: Date;
+    message: string;
+    status: "investigating" | "identified" | "monitoring" | "resolved";
+  };
   withSeparator?: boolean;
   duration?: string;
 }) {
@@ -265,11 +190,14 @@ function StatusEventTimelineReportUpdate({
 export function StatusEventTimelineMaintenance({
   maintenance,
 }: {
-  maintenance: Maintenance;
+  maintenance: {
+    title: string;
+    message: string;
+    from: Date;
+    to: Date;
+  };
 }) {
-  const start = new Date(maintenance.startDate);
-  const end = new Date(maintenance.endDate);
-  const duration = formatDistanceStrict(start, end);
+  const duration = formatDistanceStrict(maintenance.from, maintenance.to);
   return (
     <div data-variant="maintenance" className="group">
       <div className="flex flex-row items-center justify-between gap-2">
@@ -284,14 +212,14 @@ export function StatusEventTimelineMaintenance({
               <span>Maintenance</span>{" "}
               <span className="font-mono text-muted-foreground/70 text-xs">
                 <span className="underline decoration-dashed underline-offset-2">
-                  <StatusEventDateHoverCard date={new Date(start)}>
-                    {formatTime(start)}
+                  <StatusEventDateHoverCard date={maintenance.from}>
+                    {formatTime(maintenance.from)}
                   </StatusEventDateHoverCard>
                 </span>
                 {" - "}
                 <span className="underline decoration-dashed underline-offset-2">
-                  <StatusEventDateHoverCard date={new Date(end)}>
-                    {formatTime(end)}
+                  <StatusEventDateHoverCard date={maintenance.to}>
+                    {formatTime(maintenance.to)}
                   </StatusEventDateHoverCard>
                 </span>
               </span>{" "}

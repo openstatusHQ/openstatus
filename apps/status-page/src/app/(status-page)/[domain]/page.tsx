@@ -16,19 +16,27 @@ import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 import { chartData } from "@/components/status-page/utils";
 import { monitors } from "@/data/monitors";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { Newspaper } from "lucide-react";
+import { useParams } from "next/navigation";
 
 export default function Page() {
+  const { domain } = useParams<{ domain: string }>();
+  const trpc = useTRPC();
+  const { data: page } = useQuery(
+    trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
   const { variant, cardType, barType, showUptime } = useStatusPage();
+
+  if (!page) return null;
 
   return (
     <div className="flex flex-col gap-6">
       <Status variant={variant}>
         <StatusHeader>
-          <StatusTitle>Craft</StatusTitle>
-          <StatusDescription>
-            Stay informed about the stability
-          </StatusDescription>
+          <StatusTitle>{page.title}</StatusTitle>
+          <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
         <StatusBanner />
         <StatusContent>
