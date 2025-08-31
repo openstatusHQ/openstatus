@@ -7,6 +7,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
+import { THEMES } from "@/components/status-page/community-themes";
 import { COMMUNITY_THEME } from "@/components/status-page/floating-button";
 import {
   Status,
@@ -19,7 +20,6 @@ import {
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { chartData } from "@/components/status-page/utils";
 import { monitors } from "@/data/monitors";
-import { THEMES } from "@/components/status-page/community-themes";
 import { cn } from "@/lib/utils";
 
 export default function Page() {
@@ -57,7 +57,7 @@ export default function Page() {
                   </ThemeGroup>
                 </div>
               );
-            }
+            },
           )}
         </div>
       </Section>
