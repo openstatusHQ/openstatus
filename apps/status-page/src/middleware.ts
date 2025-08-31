@@ -19,6 +19,10 @@ export default async function middleware(req: NextRequest) {
     prefix = pathnames[1].toLowerCase();
   }
 
+  if (url.pathname === "/") {
+    return response;
+  }
+
   const _page = await db.select().from(page).where(eq(page.slug, prefix)).get();
 
   if (!_page) {
