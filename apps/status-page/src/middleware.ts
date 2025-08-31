@@ -14,7 +14,8 @@ export default async function middleware(req: NextRequest) {
   const hostnames = url.host.split(".");
   const pathnames = url.pathname.split("/");
   if (
-    (hostnames.length > 2 && hostnames[0] !== "www") ||
+    hostnames.length > 2 &&
+    hostnames[0] !== "www" &&
     !url.host.endsWith(".vercel.app")
   ) {
     prefix = hostnames[0].toLowerCase();

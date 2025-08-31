@@ -13,7 +13,7 @@ export default async function Layout({
     trpc.statusPage.getMonitor.queryOptions({
       id: Number(id),
       slug: domain,
-    })
+    }),
   );
   return <HydrateClient>{children}</HydrateClient>;
 }
