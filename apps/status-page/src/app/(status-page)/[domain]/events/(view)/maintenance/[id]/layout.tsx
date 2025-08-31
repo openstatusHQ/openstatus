@@ -5,14 +5,15 @@ export default async function Layout({
   params,
 }: {
   children: React.ReactNode;
-  params: { id: string; domain: string };
+  params: Promise<{ id: string; domain: string }>;
 }) {
+  const { id, domain } = await params;
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery(
     trpc.statusPage.getMaintenance.queryOptions({
-      id: Number(params.id),
-      slug: params.domain,
-    }),
+      id: Number(id),
+      slug: domain,
+    })
   );
   return <HydrateClient>{children}</HydrateClient>;
 }
