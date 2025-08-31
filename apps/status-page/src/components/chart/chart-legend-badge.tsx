@@ -87,7 +87,7 @@ export function ChartLegendBadge({
                 />
               )}
               {itemConfig?.label}
-              {suffix ? (
+              {suffix !== undefined ? (
                 <span className="font-mono text-[10px] text-muted-foreground">
                   {suffix}
                 </span>

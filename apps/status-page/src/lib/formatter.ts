@@ -15,6 +15,14 @@ export function formatMilliseconds(ms: number) {
   }).format(ms)}`;
 }
 
+export function formatMillisecondsRange(min: number, max: number) {
+  if ((min > 1000 && max > 1000) || (min < 1000 && max < 1000)) {
+    return `${formatNumber(min / 1000)} - ${formatMilliseconds(max)}`;
+  }
+
+  return `${formatMilliseconds(min)} - ${formatMilliseconds(max)}`;
+}
+
 export function formatPercentage(value: number) {
   if (Number.isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {

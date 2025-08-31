@@ -16,6 +16,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
 import { regions } from "@/data/regions";
 import { formatMilliseconds } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
@@ -23,100 +24,74 @@ import { useState } from "react";
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
-const r = regions.filter((r) =>
-  ["ams", "bog", "arn", "atl", "bom", "syd", "fra"].includes(r.code),
-);
-
-const randomizer = Math.random() * 50;
-
-const chartData = Array.from({ length: 30 }, (_, i) => ({
-  timestamp: new Date(
-    new Date().setMinutes(new Date().getMinutes() - i),
-  ).toLocaleString("default", {
-    hour: "numeric",
-    minute: "numeric",
-  }),
-  ams: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-  bog: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-  arn: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-  atl: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-  bom: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-  syd: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-  fra: Math.floor(Math.random() * randomizer) * 100 * 0.75,
-}));
-
-const s = r.sort((a, b) => {
-  const aAvg = avg(
-    chartData.map((d) => {
-      const value = d[a.code as keyof typeof d];
-      if (typeof value === "number") {
-        return value;
-      }
-      return 0;
-    }),
-  );
-  const bAvg = avg(
-    chartData.map((d) => {
-      const value = d[b.code as keyof typeof d];
-      if (typeof value === "number") {
-        return value;
-      }
-      return 0;
-    }),
-  );
-  return bAvg - aAvg;
-});
-
-const chartConfig = s
-  .map((item, index) => ({
-    code: item.code,
-    label: item.code,
-    color: `var(--rainbow-${index + 1})`,
-  }))
-  .reduce(
-    (acc, item) => {
-      acc[item.code] = item;
-      return acc;
-    },
-    {} as Record<string, { label: string; color: string }>,
-  ) satisfies ChartConfig;
-
-function avg(values: number[]) {
-  return Math.round(
-    values.reduce((acc, curr) => acc + curr, 0) / values.length,
-  );
+function avg(values: (number | null | string)[]) {
+  const n = values.filter((val): val is number => typeof val === "number");
+  return Math.round(n.reduce((acc, curr) => acc + curr, 0) / n.length);
 }
 
-const annotation = r.reduce(
-  (acc, item) => {
-    acc[item.code] = formatMilliseconds(
-      avg(
-        chartData.map((d) => {
-          const value = d[item.code as keyof typeof d];
-          if (typeof value === "number") {
-            return value;
-          }
-          return 0;
-        }),
-      ),
-    );
-    return acc;
-  },
-  {} as Record<string, string>,
-);
+function formatAnnotation(values: (number | null | string)[]) {
+  if (values.length === 0) return "N/A";
+  return formatMilliseconds(avg(values));
+}
 
-const tooltip = r.reduce(
-  (acc, item) => {
-    acc[item.code] = item.location;
-    return acc;
-  },
-  {} as Record<string, string>,
-);
+function getChartConfig(
+  data: {
+    timestamp: string;
+    [key: string]: string | number | null;
+  }[],
+): ChartConfig {
+  const regions =
+    data.length > 0
+      ? Object.keys(data[0]).filter((item) => item !== "timestamp")
+      : [];
 
-export function ChartLineRegions({ className }: { className?: string }) {
+  return regions
+    .sort((a, b) => {
+      return (
+        avg(data.map((item) => item[b])) - avg(data.map((item) => item[a]))
+      );
+    })
+    .map((region, index) => ({
+      code: region,
+      color: `var(--rainbow-${((index + 5) % 17) + 1})`,
+    }))
+    .reduce(
+      (acc, item) => {
+        acc[item.code] = {
+          label: item.code,
+          color: item.color,
+        };
+        return acc;
+      },
+      {} as Record<string, { label: string; color: string }>,
+    ) satisfies ChartConfig;
+}
+
+export function ChartLineRegions({
+  className,
+  data,
+}: {
+  className?: string;
+  data: {
+    timestamp: string;
+    [key: string]: string | number | null;
+  }[];
+}) {
+  const chartConfig = getChartConfig(data);
   const [activeSeries, setActiveSeries] = useState<
     Array<keyof typeof chartConfig>
-  >([s[0].code, s[1].code]);
+  >(Object.keys(chartConfig).slice(0, 2));
+
+  const annotation = Object.keys(chartConfig).reduce(
+    (acc, region) => {
+      acc[region] = formatAnnotation(data.map((item) => item[region]));
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+
+  // TODO: tooltip
+
   return (
     <ChartContainer
       config={chartConfig}
@@ -124,7 +99,7 @@ export function ChartLineRegions({ className }: { className?: string }) {
     >
       <LineChart
         accessibilityLayer
-        data={chartData}
+        data={data}
         margin={{
           left: 0,
           right: 0,
@@ -159,14 +134,14 @@ export function ChartLineRegions({ className }: { className?: string }) {
             />
           }
         />
-        {r.map((item) => (
+        {Object.keys(chartConfig).map((item) => (
           <Line
-            key={item.code}
-            dataKey={item.code}
+            key={item}
+            dataKey={item}
             type="monotone"
-            stroke={`var(--color-${item.code})`}
+            stroke={`var(--color-${item})`}
             dot={false}
-            hide={!activeSeries.includes(item.code)}
+            hide={!activeSeries.includes(item)}
           />
         ))}
 
@@ -195,14 +170,25 @@ export function ChartLineRegions({ className }: { className?: string }) {
                 });
               }}
               active={activeSeries}
-              maxActive={3}
               annotation={annotation}
-              tooltip={tooltip}
+              maxActive={3}
               className="justify-start overflow-x-scroll ps-1 pt-1 font-mono"
             />
           }
         />
       </LineChart>
     </ChartContainer>
+  );
+}
+
+export function ChartLineRegionsSkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
+  return (
+    <Skeleton
+      className={cn("h-[100px] w-full rounded-lg", className)}
+      {...props}
+    />
   );
 }

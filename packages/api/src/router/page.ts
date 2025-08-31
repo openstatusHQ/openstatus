@@ -285,9 +285,9 @@ export const pageRouter = createTRPCRouter({
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
-    .output(selectPublicPageSchemaWithRelation.optional())
+    .output(selectPublicPageSchemaWithRelation.nullish())
     .query(async (opts) => {
-      if (!opts.input.slug) return;
+      if (!opts.input.slug) return null;
 
       const result = await opts.ctx.db
         .select()
@@ -297,9 +297,7 @@ export const pageRouter = createTRPCRouter({
         )
         .get();
 
-      if (!result) {
-        return;
-      }
+      if (!result) return null;
 
       const [workspaceResult, monitorsToPagesResult] = await Promise.all([
         opts.ctx.db
