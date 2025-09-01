@@ -275,7 +275,7 @@ export function StatusEventTimelineDot({
     <div
       className={cn(
         "size-2.5 shrink-0 rounded-full bg-muted",
-        "group-data-[variant=operational]:bg-success",
+        "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",
         "group-data-[variant=investigating]:bg-destructive",
@@ -296,7 +296,7 @@ export function StatusEventTimelineSeparator({
       orientation="vertical"
       className={cn(
         "mx-auto flex-1",
-        "group-data-[variant=operational]:bg-success",
+        "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",
         "group-data-[variant=investigating]:bg-destructive",
