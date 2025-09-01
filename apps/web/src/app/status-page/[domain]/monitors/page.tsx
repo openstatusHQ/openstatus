@@ -15,6 +15,12 @@ import { searchParamsCache } from "./search-params";
 
 // Add loading page
 
+/**
+ * Workspace slugs that should have the URL hidden
+ */
+const WORKSPACES_HIDE_URL =
+  process.env.WORKSPACES_HIDE_URL?.split(",").map(Number) || [];
+
 export const metadata: Metadata = {
   title: "Monitors",
 };
@@ -82,9 +88,14 @@ export default async function Page(props: {
                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
                     <div className="w-full min-w-0">
                       <p className="font-semibold text-sm">{monitor.name}</p>
-                      <p className="truncate text-muted-foreground text-sm">
-                        {monitor.url}
-                      </p>
+                      {monitor.workspaceId &&
+                      WORKSPACES_HIDE_URL.includes(
+                        monitor.workspaceId,
+                      ) ? null : (
+                        <p className="truncate text-muted-foreground text-sm">
+                          {monitor.url}
+                        </p>
+                      )}
                     </div>
                     <Button variant="link" size="sm" asChild>
                       <Link href={`./monitors/${monitor.id}`}>
