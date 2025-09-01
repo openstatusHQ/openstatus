@@ -83,6 +83,14 @@ export function registerPostStatusReportUpdate(
       .returning()
       .get();
 
+    await db
+      .update(statusReport)
+      .set({
+        status: input.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(statusReport.id, _statusReport.id));
+
     if (limits["status-subscribers"] && _statusReport.pageId) {
       const subscribers = await db
         .select()
