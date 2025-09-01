@@ -76,11 +76,19 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	requestClient := &http.Client{
 		Timeout: time.Duration(req.Timeout) * time.Millisecond,
 	}
-	
+
 	// Configure redirect policy based on FollowRedirects setting
 	if !req.FollowRedirects {
 		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
+		}
+	} else {
+		// Explicitly limit the number of redirects to 10 (Go's default)
+		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return http.ErrUseLastResponse
+			}
+			return nil
 		}
 	}
 	defer requestClient.CloseIdleConnections()
