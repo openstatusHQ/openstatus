@@ -50,19 +50,20 @@ type HttpCheckerRequest struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
-	WorkspaceID   string            `json:"workspaceId"`
-	URL           string            `json:"url"`
-	MonitorID     string            `json:"monitorId"`
-	Method        string            `json:"method"`
-	Status        string            `json:"status"`
-	Body          string            `json:"body"`
-	Trigger       string            `json:"trigger,omitempty"`
-	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
-	CronTimestamp int64             `json:"cronTimestamp"`
-	Timeout       int64             `json:"timeout"`
-	DegradedAfter int64             `json:"degradedAfter,omitempty"`
-	Retry         int64             `json:"retry,omitempty"`
-	OtelConfig    struct {
+	WorkspaceID     string            `json:"workspaceId"`
+	URL             string            `json:"url"`
+	MonitorID       string            `json:"monitorId"`
+	Method          string            `json:"method"`
+	Status          string            `json:"status"`
+	Body            string            `json:"body"`
+	Trigger         string            `json:"trigger,omitempty"`
+	RawAssertions   []json.RawMessage `json:"assertions,omitempty"`
+	CronTimestamp   int64             `json:"cronTimestamp"`
+	Timeout         int64             `json:"timeout"`
+	DegradedAfter   int64             `json:"degradedAfter,omitempty"`
+	Retry           int64             `json:"retry,omitempty"`
+	FollowRedirects bool              `json:"followRedirects,omitempty"`
+	OtelConfig      struct {
 		Endpoint string            `json:"endpoint"`
 		Headers  map[string]string `json:"headers,omitempty"`
 	} `json:"otelConfig,omitempty"`

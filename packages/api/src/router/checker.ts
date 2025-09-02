@@ -289,7 +289,7 @@ export async function triggerChecker(
           }
         : undefined,
       retry: input.retry || 3,
-      followRedirects: true,
+      followRedirects: input.followRedirects || true,
     };
   }
   if (input.jobType === "tcp") {
@@ -310,6 +310,7 @@ export async function triggerChecker(
             headers: transformHeaders(input.otelHeaders),
           }
         : undefined,
+      followRedirects: input.followRedirects || true,
     };
   }
   const allResult = [];

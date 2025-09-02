@@ -56,6 +56,10 @@ export const monitor = sqliteTable("monitor", {
 
   retry: integer("retry").default(3),
 
+  followRedirects: integer("follow_redirects", { mode: "boolean" }).default(
+    true,
+  ),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
