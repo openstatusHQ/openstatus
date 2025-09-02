@@ -83,6 +83,14 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .returning()
       .get();
 
+    await db
+      .update(statusReport)
+      .set({
+        status: input.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(statusReport.id, _statusReport.id));
+
     if (limits.notifications && _statusReport.pageId) {
       const _statusReportWithRelations = await db.query.statusReport.findFirst({
         where: eq(statusReport.id, Number(id)),
@@ -112,7 +120,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           to: subscribers.map((subscriber) => subscriber.email),
           pageTitle: _statusReportWithRelations.page.title,
           reportTitle: _statusReportWithRelations.title,
-          status: _statusReportWithRelations.status,
+          status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _statusReportWithRelations.monitorsToStatusReports.map(

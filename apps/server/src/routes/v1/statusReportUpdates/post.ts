@@ -119,7 +119,7 @@ export function registerPostStatusReportUpdate(
           to: subscribers.map((subscriber) => subscriber.email),
           pageTitle: _page.title,
           reportTitle: _statusReport.title,
-          status: _statusReport.status,
+          status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _statusReport.monitorsToStatusReports.map(
