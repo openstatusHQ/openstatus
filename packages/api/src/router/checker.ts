@@ -289,6 +289,7 @@ export async function triggerChecker(
           }
         : undefined,
       retry: input.retry || 3,
+      followRedirects: true,
     };
   }
   if (input.jobType === "tcp") {
