@@ -24,6 +24,12 @@ import {
   searchParamsCache,
 } from "./search-params";
 
+/**
+ * Workspace slugs that should have the URL hidden
+ */
+const WORKSPACES_HIDE_URL =
+  process.env.WORKSPACES_HIDE_URL?.split(",").map(Number) || [];
+
 export default async function Page(props: {
   params: Promise<{ workspaceSlug: string; id: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -49,6 +55,9 @@ export default async function Page(props: {
 
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
+
+  const hideURL =
+    monitor.workspaceId && WORKSPACES_HIDE_URL.includes(monitor.workspaceId);
 
   const [metrics, data, metricsByRegion] = await Promise.all([
     prepareMetricsByPeriod(period, type).getData({
@@ -76,14 +85,16 @@ export default async function Page(props: {
       <Shell className="sticky top-2 z-10 flex items-center justify-between gap-2 bg-background/80 backdrop-blur-xs">
         <div className="min-w-0">
           <p className="font-semibold text-sm">{monitor.name}</p>
-          <a
-            href={monitor.url}
-            target="_blank"
-            rel="noreferrer"
-            className="truncate text-base text-muted-foreground"
-          >
-            {monitor.url}
-          </a>
+          {hideURL ? null : (
+            <a
+              href={monitor.url}
+              target="_blank"
+              rel="noreferrer"
+              className="truncate text-base text-muted-foreground"
+            >
+              {monitor.url}
+            </a>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {isDirty ? <ButtonReset /> : null}
@@ -99,7 +110,7 @@ export default async function Page(props: {
           quantile={quantile}
           interval={interval}
           regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
-          monitor={monitor}
+          monitor={{ ...monitor, url: hideURL ? "" : monitor.url }}
           isQuantileDisabled={isQuantileDisabled}
           metricsByRegion={metricsByRegion.data}
           preferredSettings={preferredSettings}
