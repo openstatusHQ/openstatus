@@ -26,6 +26,7 @@ import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor"
 import { CreatePageForm } from "@/components/forms/onboarding/create-page";
 import { LearnFromForm } from "@/components/forms/onboarding/learn-from";
 import { Button } from "@/components/ui/button";
+import { extractDomain } from "@/lib/domains";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
@@ -133,11 +134,19 @@ export function Client() {
       </Section>
       {step === "1" && (
         <Section>
-          <SectionHeader>
+          <SectionHeader className="h-8 flex-row items-center justify-between">
             <SectionDescription className="tabular-nums">
               Step <span className="font-medium text-foreground">1</span> of{" "}
               <span className="font-medium text-foreground">2</span>
             </SectionDescription>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => setSearchParams({ step: "2" })}
+            >
+              Skip
+            </Button>
           </SectionHeader>
           <FormCard>
             <FormCardHeader>
@@ -170,11 +179,19 @@ export function Client() {
       )}
       {step === "2" && (
         <Section>
-          <SectionHeader>
+          <SectionHeader className="h-8 flex-row items-center justify-between">
             <SectionDescription className="tabular-nums">
               Step <span className="font-medium text-foreground">2</span> of{" "}
               <span className="font-medium text-foreground">2</span>
             </SectionDescription>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => setSearchParams({ step: "next" })}
+            >
+              Skip
+            </Button>
           </SectionHeader>
           <FormCard>
             <FormCardHeader>
@@ -186,6 +203,9 @@ export function Client() {
             <FormCardContent>
               <CreatePageForm
                 id="create-page-form"
+                defaultValues={{
+                  slug: extractDomain(createMonitorMutation.data?.url ?? ""),
+                }}
                 onSubmit={async (values) => {
                   if (!workspace?.id) return;
 
@@ -210,7 +230,7 @@ export function Client() {
       {step === "next" && (
         <>
           <Section>
-            <SectionHeader>
+            <SectionHeader className="h-8 flex-row items-center justify-between">
               <SectionDescription>
                 We&apos;d love to know how you heard about us. This will help us
                 improve our product and services.

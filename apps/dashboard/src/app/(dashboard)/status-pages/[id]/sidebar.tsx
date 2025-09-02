@@ -67,7 +67,7 @@ export function Sidebar() {
                   <Tooltip>
                     <TooltipTrigger className="align-middle">
                       <img
-                        className="h-5 border rounded-sm"
+                        className="h-5 rounded-sm border"
                         src={BADGE_URL}
                         alt="badge"
                       />

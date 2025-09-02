@@ -171,6 +171,8 @@ async function createCronTask({
       degradedAfter: monitor.degradedAfter,
       timeout: monitor.timeout,
       trigger: "cron",
+      retry: monitor.retry || 3,
+      followRedirects: true,
     } satisfies z.infer<typeof httpPayloadSchema>;
     url = `https://openstatus-checker.fly.dev/checker/http?monitor_id=${monitor.id}`;
   }
@@ -185,6 +187,7 @@ async function createCronTask({
       degradedAfter: monitor.degradedAfter,
       timeout: monitor.timeout,
       trigger: "cron",
+      retry: monitor.retry || 3,
     } satisfies z.infer<typeof tpcPayloadSchema>;
     url = `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${monitor.id}`;
   }

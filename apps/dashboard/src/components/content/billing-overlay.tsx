@@ -21,7 +21,7 @@ export function BillingOverlay({
   return (
     <div
       className={cn(
-        "absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-transparent to-50% to-background",
+        "absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-transparent to-50% to-background p-2",
         className,
       )}
       {...props}

@@ -27,6 +27,12 @@ import {
 
 export const revalidate = 120;
 
+/**
+ * Workspace slugs that should have the URL hidden
+ */
+const WORKSPACES_HIDE_URL =
+  process.env.WORKSPACES_HIDE_URL?.split(",").map(Number) || [];
+
 export async function generateMetadata(props: {
   params: Promise<{ domain: string; id: string }>;
 }): Promise<Metadata> {
@@ -87,11 +93,17 @@ export default async function Page(props: {
     interval !== DEFAULT_INTERVAL ||
     flyRegions.length !== regions.length;
 
-  console.log({ metrics: metrics.data });
-
   return (
     <div className="relative flex w-full flex-col gap-6">
-      <Header title={monitor.name} description={monitor.url} />
+      <Header
+        title={monitor.name}
+        description={
+          monitor.workspaceId &&
+          WORKSPACES_HIDE_URL.includes(monitor.workspaceId)
+            ? undefined
+            : monitor.url
+        }
+      />
       <div className="flex items-center justify-between gap-2">
         <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}
