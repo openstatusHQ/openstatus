@@ -179,7 +179,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           to: subscribers.map((subscriber) => subscriber.email),
           pageTitle: pageInfo.title,
           reportTitle: _newStatusReport.title,
-          status: _newStatusReport.status,
+          status: _newStatusReportUpdate.status,
           message: _newStatusReportUpdate.message,
           date: _newStatusReportUpdate.date.toISOString(),
           monitors: _statusReport.monitorsToStatusReports.map(
