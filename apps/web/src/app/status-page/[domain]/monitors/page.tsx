@@ -41,6 +41,8 @@ export default async function Page(props: {
   // filter monitor by public or not
 
   const publicMonitors = page.monitors.filter((monitor) => monitor.public);
+  const hideURL =
+    page.workspaceId && WORKSPACES_HIDE_URL.includes(page.workspaceId);
 
   const monitorsWithData =
     publicMonitors.length > 0
@@ -88,10 +90,7 @@ export default async function Page(props: {
                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
                     <div className="w-full min-w-0">
                       <p className="font-semibold text-sm">{monitor.name}</p>
-                      {monitor.workspaceId &&
-                      WORKSPACES_HIDE_URL.includes(
-                        monitor.workspaceId,
-                      ) ? null : (
+                      {hideURL ? null : (
                         <p className="truncate text-muted-foreground text-sm">
                           {monitor.url}
                         </p>

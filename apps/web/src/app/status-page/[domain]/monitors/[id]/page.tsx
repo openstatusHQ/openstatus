@@ -74,6 +74,9 @@ export default async function Page(props: {
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
+  const hideURL =
+    monitor.workspaceId && WORKSPACES_HIDE_URL.includes(monitor.workspaceId);
+
   const [metrics, data, metricsByRegion] = await Promise.all([
     prepareMetricsByPeriod(period, type).getData({
       monitorId: id,
@@ -102,12 +105,7 @@ export default async function Page(props: {
     <div className="relative flex w-full flex-col gap-6">
       <Header
         title={monitor.name}
-        description={
-          monitor.workspaceId &&
-          WORKSPACES_HIDE_URL.includes(monitor.workspaceId)
-            ? undefined
-            : monitor.url
-        }
+        description={hideURL ? undefined : monitor.url}
       />
       <div className="flex items-center justify-between gap-2">
         <DatePickerPreset defaultValue={period} values={periods} />
@@ -121,7 +119,7 @@ export default async function Page(props: {
         quantile={quantile}
         interval={interval}
         regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
-        monitor={monitor}
+        monitor={{ ...monitor, url: hideURL ? "" : monitor.url }}
         isQuantileDisabled={isQuantileDisabled}
         metricsByRegion={metricsByRegion.data}
         preferredSettings={preferredSettings}
