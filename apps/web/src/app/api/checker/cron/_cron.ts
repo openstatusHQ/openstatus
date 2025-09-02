@@ -207,6 +207,7 @@ const createCronTask = async ({
             headers: transformHeaders(row.otelHeaders),
           }
         : undefined,
+      followRedirects: true,
     };
   }
 
