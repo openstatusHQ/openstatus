@@ -16,6 +16,8 @@ export const selectPublicMonitorSchema = selectMonitorSchema.omit({
   body: true,
   headers: true,
   method: true,
+  otelEndpoint: true,
+  otelHeaders: true,
 });
 
 export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
