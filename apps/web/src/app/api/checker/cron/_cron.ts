@@ -187,6 +187,8 @@ const createCronTask = async ({
           }
         : undefined,
       retry: row.retry || 3,
+      followRedirects: true,
+
     };
   }
   if (row.jobType === "tcp") {
@@ -207,7 +209,6 @@ const createCronTask = async ({
             headers: transformHeaders(row.otelHeaders),
           }
         : undefined,
-      followRedirects: true,
     };
   }
 
