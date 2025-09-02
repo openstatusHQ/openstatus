@@ -453,6 +453,7 @@ export const httpPayloadSchema = z.object({
     })
     .optional(),
   retry: z.number().default(3),
+  followRedirects: z.boolean().default(true),
 });
 
 export type HttpPayload = z.infer<typeof httpPayloadSchema>;
@@ -474,7 +475,6 @@ export const tpcPayloadSchema = z.object({
     })
     .optional(),
   retry: z.number().default(3),
-  followRedirects: z.boolean().default(true),
 });
 
 export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
