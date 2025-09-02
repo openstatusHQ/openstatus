@@ -20,8 +20,8 @@ export class OSTinybird {
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
+      this.tb = new Client({ token });
     }
-    this.tb = new Client({ token });
   }
 
   public get homeStats() {
@@ -184,6 +184,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_1d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -229,6 +230,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_7d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -274,6 +276,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_14d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -380,6 +383,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_by_region_1d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         region: z.enum(flyRegions),
@@ -400,6 +404,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_by_region_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         region: z.enum(flyRegions),
@@ -420,6 +425,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_by_region_14d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         region: z.enum(flyRegions),
@@ -703,6 +709,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_1d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -749,6 +756,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_7d__v0",
       parameters: z.object({
         interval: z.number().int().optional(),
+        regions: z.array(z.enum(flyRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -793,6 +801,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_14d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -838,6 +847,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_by_interval_1d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -858,6 +868,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_by_interval_7d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -878,6 +889,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_by_interval_14d__v0",
       parameters: z.object({
+        regions: z.array(z.enum(flyRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -899,6 +911,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_by_region_1d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         region: z.enum(flyRegions),
@@ -919,6 +932,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_by_region_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         region: z.enum(flyRegions),
@@ -939,6 +953,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_by_region_14d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(flyRegions)).optional(),
       }),
       data: z.object({
         region: z.enum(flyRegions),

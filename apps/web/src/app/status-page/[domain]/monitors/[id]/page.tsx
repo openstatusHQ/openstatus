@@ -75,13 +75,18 @@ export default async function Page(props: {
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
   const [metrics, data, metricsByRegion] = await Promise.all([
-    prepareMetricsByPeriod(period, type).getData({ monitorId: id }),
+    prepareMetricsByPeriod(period, type).getData({
+      monitorId: id,
+      regions: monitor.regions,
+    }),
     prepareMetricByIntervalByPeriod(period, type).getData({
       monitorId: id,
       interval: minutes,
+      regions: monitor.regions,
     }),
     prepareMetricByRegionByPeriod(period, type).getData({
       monitorId: id,
+      regions: monitor.regions,
     }),
   ]);
 
