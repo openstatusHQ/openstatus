@@ -16,11 +16,7 @@ export async function createUser(data: AdapterUser) {
       firstName: rest.firstName,
       lastName: rest.lastName,
     })
-    .returning({
-      id: user.id,
-      email: user.email,
-      emailVerified: user.emailVerified,
-    })
+    .returning()
     .get();
 
   let slug: string | undefined = undefined;
@@ -60,13 +56,7 @@ export async function createUser(data: AdapterUser) {
 
 export async function getUser(id: string) {
   const _user = await db
-    .select({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      photoUrl: user.photoUrl,
-    })
+    .select()
     .from(user)
     .where(eq(user.id, Number(id)))
     .get();

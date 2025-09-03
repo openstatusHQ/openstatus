@@ -11,12 +11,12 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@auth/core": "0.34.1",
-    "@auth/drizzle-adapter": "1.9.1",
+    "@auth/core": "0.40.0",
+    "@auth/drizzle-adapter": "1.10.0",
     "@google-cloud/tasks": "4.0.1",
     "@hookform/resolvers": "3.9.1",
-    "@libsql/client": "0.14.0",
-    "@openpanel/nextjs": "^1.0.8",
+    "@libsql/client": "0.15.14",
+    "@openpanel/nextjs": "1.0.8",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
     "@openstatus/assertions": "workspace:*",
