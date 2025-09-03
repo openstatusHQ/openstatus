@@ -15,7 +15,7 @@
     "@auth/drizzle-adapter": "1.10.0",
     "@google-cloud/tasks": "4.0.1",
     "@hookform/resolvers": "3.9.1",
-    "@libsql/client": "0.15.12",
+    "@libsql/client": "0.15.14",
     "@openpanel/nextjs": "1.0.8",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
