@@ -13,13 +13,12 @@ import { createUser, getUser } from "./helpers";
 
 export const adapter: Adapter = {
   ...DrizzleAdapter(db, {
-    // @ts-ignore
+    // @ts-expect-error: problem with type
     usersTable: user,
-    // @ts-ignore
+    // @ts-expect-error: problem with type
     accountsTable: account,
-    // @ts-ignore
+    // @ts-expect-error: problem with type
     sessionsTable: session,
-    // @ts-ignore
     verificationTokensTable: verificationToken,
   }),
   createUser: async (data) => {
