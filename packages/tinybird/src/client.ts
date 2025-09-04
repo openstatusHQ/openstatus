@@ -21,7 +21,7 @@ export class OSTinybird {
     } else {
       this.tb = new Client({ token });
     }
-    // this.tb = new Client({ token });
+    this.tb = new Client({ token });
   }
 
   public get homeStats() {
