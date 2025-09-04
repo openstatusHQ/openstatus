@@ -15,7 +15,7 @@ import { formatDistanceStrict, isSameDay } from "date-fns";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { type BarType, type CardType, VARIANT } from "./floating-button";
-import { messages, requests } from "./messages";
+import { requests } from "./messages";
 import { type ChartData, chartConfig, getHighestPriorityStatus } from "./utils";
 
 // TODO: keyboard arrow navigation
@@ -213,6 +213,18 @@ export function StatusTracker({
 function StatusTrackerTriggerAbsolute({ item }: { item: ChartData }) {
   const total = item.success + item.degraded + item.info + item.error;
 
+  if (total === 0) {
+    return (
+      <div
+        key={`${item.timestamp}-empty`}
+        className="w-full transition-all h-full"
+        style={{
+          backgroundColor: chartConfig.empty.color,
+        }}
+      />
+    );
+  }
+
   return STATUS.map((status) => {
     const value = item[status as keyof typeof item] as number;
     if (value === 0) return null;
@@ -247,74 +259,84 @@ function StatusTrackerTriggerDominant({ item }: { item: ChartData }) {
 }
 
 function StatusTrackerContentDuration({ item }: { item: ChartData }) {
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) {
+    return <StatusTrackerContent status="empty" value="" />;
+  }
+
   return STATUS.map((status) => {
     const value = item[status];
     if (value === 0) return null;
 
-    // const percentage = ((value / total) * 100).toFixed(1);
+    const percentage = Math.round((value / total) * 1000) / 1000;
+    const isToday = isSameDay(new Date(item.timestamp), new Date());
+
+    const hours = isToday ? new Date().getUTCHours() : 24;
 
     const now = new Date();
     const duration = formatDistanceStrict(
       now,
-      new Date(now.getTime() + value * 60 * 1000),
+      new Date(now.getTime() + percentage * hours * 60 * 60 * 1000),
     );
 
     return (
-      <div key={status} className="flex items-baseline gap-4">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-2.5 w-2.5 rounded-sm"
-            style={{
-              backgroundColor: chartConfig[status].color,
-            }}
-          />
-          <div className="text-sm">{messages.short[status]}</div>
-        </div>
-        <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
-          {duration}
-        </div>
-      </div>
+      <StatusTrackerContent key={status} status={status} value={duration} />
     );
   });
 }
 
 function StatusTrackerContentDominant({ item }: { item: ChartData }) {
-  const highestPriorityStatus = getHighestPriorityStatus(item);
-  return (
-    <div className="flex min-w-32 items-baseline gap-4">
-      <div className="flex items-center gap-2">
-        <div
-          className="h-2.5 w-2.5 rounded-sm"
-          style={{
-            backgroundColor: chartConfig[highestPriorityStatus].color,
-          }}
-        />
-        <div className="text-sm">{messages.short[highestPriorityStatus]}</div>
-      </div>
-    </div>
-  );
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) {
+    return <StatusTrackerContent status="empty" value="" />;
+  }
+
+  const status = getHighestPriorityStatus(item);
+
+  return <StatusTrackerContent key={status} status={status} value={""} />;
 }
 
 function StatusTrackerContentRequests({ item }: { item: ChartData }) {
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) {
+    return <StatusTrackerContent status="empty" value="" />;
+  }
+
   return STATUS.map((status) => {
     const value = item[status];
     if (value === 0) return null;
 
     return (
-      <div key={status} className="flex items-baseline gap-4">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-2.5 w-2.5 rounded-sm"
-            style={{
-              backgroundColor: chartConfig[status].color,
-            }}
-          />
-          <div className="text-sm">{requests[status]}</div>
-        </div>
-        <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
-          {value} req
-        </div>
-      </div>
+      <StatusTrackerContent
+        key={status}
+        status={status}
+        value={`${value} req`}
+      />
     );
   });
+}
+
+function StatusTrackerContent({
+  status,
+  value,
+}: {
+  status: "success" | "degraded" | "error" | "info" | "empty";
+  value: string;
+}) {
+  return (
+    <div key={status} className="flex min-w-32 items-baseline gap-4">
+      <div className="flex items-center gap-2">
+        <div
+          className="h-2.5 w-2.5 rounded-sm"
+          style={{
+            backgroundColor: chartConfig[status].color,
+          }}
+        />
+        <div className="text-sm">{requests[status]}</div>
+      </div>
+      <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
+        {value}
+      </div>
+    </div>
+  );
 }

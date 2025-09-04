@@ -66,6 +66,10 @@ export const chartConfig = {
     label: "info",
     color: "var(--info)",
   },
+  empty: {
+    label: "empty",
+    color: "var(--muted)",
+  },
 } satisfies ChartConfig;
 
 export const PRIORITY = {
@@ -73,12 +77,13 @@ export const PRIORITY = {
   degraded: 2,
   info: 1,
   success: 0,
+  empty: -1,
 } as const; // satisfies Record<XXX, number>;
 
 export function getHighestPriorityStatus(item: ChartData) {
   return (
     VARIANT.filter((status) => item[status] > 0).sort(
       (a, b) => PRIORITY[b] - PRIORITY[a],
-    )[0] || "success"
+    )[0] || "empty"
   );
 }
