@@ -7,8 +7,9 @@ import Link from "next/link";
 
 export function ButtonBack({
   className,
+  href = "/",
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & { href?: string }) {
   return (
     <Button
       variant="ghost"
@@ -17,7 +18,7 @@ export function ButtonBack({
       asChild
       {...props}
     >
-      <Link href="../">
+      <Link href={href}>
         <ArrowLeft />
         Back
       </Link>

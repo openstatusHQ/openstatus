@@ -171,7 +171,7 @@ export function ChartLineRegions({
               }}
               active={activeSeries}
               annotation={annotation}
-              maxActive={3}
+              maxActive={6}
               className="justify-start overflow-x-scroll ps-1 pt-1 font-mono"
             />
           }
