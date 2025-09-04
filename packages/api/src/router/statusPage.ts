@@ -14,12 +14,20 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import {
+  getMetricsLatencyMultiProcedure,
+  getMetricsLatencyProcedure,
+  getMetricsRegionsProcedure,
+  getUptimeProcedure,
+} from "./tinybird";
 
 // NOTE: publicProcedure is used to get the status page
 // TODO: improve performance of SQL query (make a single query with joins)
 
 // IMPORTANT: we cannot use the tinybird procedure because it has protectedProcedure
 // instead, we should add TB logic in here!!!!
+
+// NOTE: this router is used on status pages only - do not confuse with the page router which is used in the dashboard for the config
 
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
@@ -190,39 +198,148 @@ export const statusPageRouter = createTRPCRouter({
       return _report;
     }),
 
+  getMonitors: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      // NOTE: revalidate the public monitors first
+      const data = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          monitorsToPages: {
+            with: {
+              monitor: true,
+            },
+          },
+        },
+      });
+
+      if (!data) return null;
+
+      const publicMonitors = data.monitorsToPages.filter(
+        (m) => m.monitor.public,
+      );
+
+      const monitorsByType = {
+        http: publicMonitors.filter((m) => m.monitor.jobType === "http"),
+        tcp: publicMonitors.filter((m) => m.monitor.jobType === "tcp"),
+      };
+
+      const proceduresByType = {
+        http: getMetricsLatencyMultiProcedure("1d", "http"),
+        tcp: getMetricsLatencyMultiProcedure("1d", "tcp"),
+      };
+
+      const [metricsLatencyMultiHttp, metricsLatencyMultiTcp] =
+        await Promise.all(
+          Object.entries(proceduresByType).map(([type, procedure]) => {
+            const monitorIds = monitorsByType[
+              type as keyof typeof proceduresByType
+            ].map((m) => m.monitor.id.toString());
+            if (monitorIds.length === 0) return null;
+            return procedure({ monitorIds });
+          }),
+        );
+
+      const metricsDataByMonitorId = new Map<
+        string,
+        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
+      >();
+
+      if (metricsLatencyMultiHttp?.data) {
+        metricsLatencyMultiHttp.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      if (metricsLatencyMultiTcp?.data) {
+        metricsLatencyMultiTcp.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      return publicMonitors.map((m) => {
+        const monitorId = m.monitor.id.toString();
+        const monitorMetrics = metricsDataByMonitorId.get(monitorId) || [];
+
+        return {
+          ...selectPublicMonitorSchema.parse(m.monitor),
+          data: monitorMetrics,
+        };
+      });
+    }),
+
   getMonitor: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const _page = await opts.ctx.db
-        .select()
-        .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-        )
-        .get();
-
-      if (!_page) return null;
-
-      const _monitor = await opts.ctx.db.query.monitor.findFirst({
-        where: and(
-          eq(monitor.id, opts.input.id),
-          eq(monitor.public, true),
-          isNull(monitor.deletedAt),
-        ),
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           monitorsToPages: {
-            where: eq(monitorsToPages.pageId, _page.id),
+            where: eq(monitorsToPages.monitorId, opts.input.id),
+            with: {
+              monitor: true,
+            },
           },
         },
       });
 
+      if (!_page) return null;
+
+      const _monitor = _page.monitorsToPages.find(
+        (m) => m.monitorId === opts.input.id,
+      )?.monitor;
+
       if (!_monitor) return null;
+      if (!_monitor.public) return null;
+      if (_monitor.deletedAt) return null;
 
-      if (!_monitor.monitorsToPages.some((m) => m.pageId === _page.id))
-        return null;
+      const type = _monitor.jobType as "http" | "tcp";
 
-      return selectPublicMonitorSchema.parse(_monitor);
+      const proceduresByType = {
+        http: {
+          latency: getMetricsLatencyProcedure("7d", "http"),
+          regions: getMetricsRegionsProcedure("7d", "http"),
+          uptime: getUptimeProcedure("7d", "http"),
+        },
+        tcp: {
+          latency: getMetricsLatencyProcedure("7d", "tcp"),
+          regions: getMetricsRegionsProcedure("7d", "tcp"),
+          uptime: getUptimeProcedure("7d", "tcp"),
+        },
+      };
+
+      const [latency, regions, uptime] = await Promise.all([
+        await proceduresByType[type].latency({
+          monitorId: _monitor.id.toString(),
+        }),
+        await proceduresByType[type].regions({
+          monitorId: _monitor.id.toString(),
+        }),
+        await proceduresByType[type].uptime({
+          monitorId: _monitor.id.toString(),
+        }),
+      ]);
+
+      return {
+        ...selectPublicMonitorSchema.parse(_monitor),
+        data: {
+          latency,
+          regions,
+          uptime,
+        },
+      };
     }),
 });

@@ -52,41 +52,24 @@ import { useMemo } from "react";
 export default function Page() {
   const trpc = useTRPC();
   const { id, domain } = useParams<{ id: string; domain: string }>();
-  const { data: monitor } = useQuery(
+  const { data: page } = useQuery(
+    trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
+
+  const tempMonitor = useMemo(() => {
+    return page?.monitors.find((monitor) => monitor.id === Number(id));
+  }, [page, id]);
+
+  if (!page) return null;
+
+  const { data: monitor, isLoading } = useQuery(
     trpc.statusPage.getMonitor.queryOptions({ id: Number(id), slug: domain }),
   );
 
-  if (!monitor) return null;
-
-  const { data: globalLatency, isLoading: isLoadingGlobal } = useQuery(
-    trpc.tinybird.metricsLatency.queryOptions({
-      monitorId: monitor.id.toString(),
-      type: monitor.jobType as "http" | "tcp",
-      period: "7d",
-    }),
-  );
-
-  const { data: regionLatency, isLoading: isLoadingRegion } = useQuery(
-    trpc.tinybird.metricsRegions.queryOptions({
-      monitorId: monitor.id.toString(),
-      type: monitor.jobType as "http" | "tcp",
-      period: "7d",
-    }),
-  );
-
-  const { data: uptime, isLoading: isLoadingUptime } = useQuery(
-    trpc.tinybird.uptime.queryOptions({
-      monitorId: monitor.id.toString(),
-      interval: 60, // 1 hour
-      type: monitor.jobType as "http" | "tcp",
-      period: "7d",
-    }),
-  );
-
   const globalLatencyData = useMemo(() => {
-    if (!globalLatency?.data) return [];
+    if (!monitor?.data.latency?.data) return [];
 
-    return globalLatency.data
+    return monitor.data.latency.data
       .sort((a, b) => a.timestamp - b.timestamp)
       .map((item) => ({
         ...item,
@@ -98,12 +81,12 @@ export default function Page() {
           timeZoneName: "short",
         }),
       }));
-  }, [globalLatency]);
+  }, [monitor?.data.latency?.data]);
 
   const regionLatencyData = useMemo(() => {
-    if (!regionLatency?.data) return [];
+    if (!monitor?.data.regions?.data) return [];
 
-    const grouped = regionLatency.data.reduce(
+    const grouped = monitor.data.regions.data.reduce(
       (acc, item) => {
         const timestamp = new Date(item.timestamp).toLocaleString("default", {
           day: "numeric",
@@ -126,11 +109,11 @@ export default function Page() {
     );
 
     return Object.values(grouped);
-  }, [regionLatency]);
+  }, [monitor?.data.regions?.data]);
 
   const uptimeData = useMemo(() => {
-    if (!uptime?.data) return [];
-    return uptime.data.map((item) => ({
+    if (!monitor?.data.uptime?.data) return [];
+    return monitor.data.uptime.data.map((item) => ({
       timestamp: item.interval.toLocaleString("default", {
         day: "numeric",
         month: "short",
@@ -140,7 +123,7 @@ export default function Page() {
       }),
       ...item,
     }));
-  }, [uptime]);
+  }, [monitor?.data.uptime?.data]);
 
   const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
     useMemo(() => {
@@ -195,8 +178,6 @@ export default function Page() {
         }))
         .sort((a, b) => b.avgLatency - a.avgLatency)[0];
 
-      console.log({ p75Range });
-
       return {
         totalChecks: formatNumber(uptimeStats.total, {
           notation: "compact",
@@ -216,8 +197,8 @@ export default function Page() {
   return (
     <Status>
       <StatusHeader>
-        <StatusTitle>{monitor.name}</StatusTitle>
-        <StatusDescription>{monitor.description}</StatusDescription>
+        <StatusTitle>{tempMonitor?.name}</StatusTitle>
+        <StatusDescription>{tempMonitor?.description}</StatusDescription>
       </StatusHeader>
       <StatusContent className="flex flex-col gap-6">
         <div className="flex w-full flex-row items-center justify-between gap-2 py-0.5">
@@ -230,7 +211,7 @@ export default function Page() {
               <StatusMonitorTabsTriggerLabel>
                 Global Latency
               </StatusMonitorTabsTriggerLabel>
-              {isLoadingGlobal ? (
+              {isLoading ? (
                 <StatusMonitorTabsTriggerValueSkeleton />
               ) : (
                 <StatusMonitorTabsTriggerValue>
@@ -245,11 +226,11 @@ export default function Page() {
               <StatusMonitorTabsTriggerLabel>
                 Region Latency
               </StatusMonitorTabsTriggerLabel>
-              {isLoadingRegion ? (
+              {isLoading ? (
                 <StatusMonitorTabsTriggerValueSkeleton />
               ) : (
                 <StatusMonitorTabsTriggerValue>
-                  {monitor.regions.length} regions{" "}
+                  {tempMonitor?.regions.length} regions{" "}
                   <Badge
                     variant="outline"
                     className="py-px font-mono text-[10px]"
@@ -263,7 +244,7 @@ export default function Page() {
               <StatusMonitorTabsTriggerLabel>
                 Uptime
               </StatusMonitorTabsTriggerLabel>
-              {isLoadingUptime ? (
+              {isLoading ? (
                 <StatusMonitorTabsTriggerValueSkeleton />
               ) : (
                 <StatusMonitorTabsTriggerValue>
@@ -284,7 +265,7 @@ export default function Page() {
                   different <PopoverQuantile>quantiles</PopoverQuantile>.
                 </StatusChartDescription>
               </StatusChartHeader>
-              {isLoadingGlobal ? (
+              {isLoading ? (
                 <ChartAreaPercentilesSkeleton className="h-[250px]" />
               ) : (
                 <ChartAreaPercentiles
@@ -312,7 +293,7 @@ export default function Page() {
                   regions.
                 </StatusChartDescription>
               </StatusChartHeader>
-              {isLoadingRegion ? (
+              {isLoading ? (
                 <ChartLineRegionsSkeleton className="h-[250px]" />
               ) : (
                 <ChartLineRegions
@@ -330,7 +311,7 @@ export default function Page() {
                   Main values of uptime and availability, transparent.
                 </StatusChartDescription>
               </StatusChartHeader>
-              {isLoadingUptime ? (
+              {isLoading ? (
                 <ChartBarUptimeSkeleton className="h-[250px]" />
               ) : (
                 <ChartBarUptime className="h-[250px]" data={uptimeData} />
