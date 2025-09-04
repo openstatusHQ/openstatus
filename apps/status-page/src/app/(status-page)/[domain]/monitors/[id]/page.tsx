@@ -202,7 +202,7 @@ export default function Page() {
       </StatusHeader>
       <StatusContent className="flex flex-col gap-6">
         <div className="flex w-full flex-row items-center justify-between gap-2 py-0.5">
-          <ButtonBack />
+          <ButtonBack href="./" />
           <ButtonCopyLink />
         </div>
         <StatusMonitorTabs defaultValue="global">
@@ -289,7 +289,7 @@ export default function Page() {
                   <code className="font-medium text-foreground">p75</code>{" "}
                   <PopoverQuantile>quantile</PopoverQuantile>, sorted by slowest
                   region. Compare up to{" "}
-                  <code className="font-medium text-foreground">3</code>{" "}
+                  <code className="font-medium text-foreground">6</code>{" "}
                   regions.
                 </StatusChartDescription>
               </StatusChartHeader>

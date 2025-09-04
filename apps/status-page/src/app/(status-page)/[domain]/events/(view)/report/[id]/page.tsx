@@ -31,7 +31,7 @@ export default function ReportPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex w-full flex-row items-center justify-between gap-2 py-0.5">
-        <ButtonBack />
+        <ButtonBack href="../" />
         <ButtonCopyLink />
       </div>
       <StatusEvent>
