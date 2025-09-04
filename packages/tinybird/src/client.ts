@@ -1438,7 +1438,7 @@ export class OSTinybird {
       }),
       data: z.object({
         timestamp: z.number().int(),
-        monitorId: z.string(),
+        monitorId: z.coerce.string(),
         p50Latency: z.number().int(),
         p75Latency: z.number().int(),
         p90Latency: z.number().int(),
