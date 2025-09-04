@@ -6,7 +6,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Monitor } from "@/data/monitors";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -36,7 +35,10 @@ export function StatusMonitor({
   cardType?: CardType;
   barType?: BarType;
   showUptime?: boolean;
-  monitor: Monitor;
+  monitor: {
+    name: string;
+    description: string;
+  };
   data: ChartData[];
 }) {
   return (
@@ -67,9 +69,11 @@ export function StatusMonitor({
         {...props}
       >
         <div>
-          {formatDistanceToNowStrict(new Date(data[0].timestamp), {
-            unit: "day",
-          })}
+          {data.length > 0
+            ? formatDistanceToNowStrict(new Date(data[0]?.timestamp), {
+                unit: "day",
+              })
+            : "-"}
         </div>
         <div>today</div>
       </div>

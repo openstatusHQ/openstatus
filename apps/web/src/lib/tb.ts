@@ -167,8 +167,8 @@ export function prepareStatusByPeriod(
     }
     case "45d": {
       const getData = {
-        http: tb.httpStatus45d,
-        tcp: tb.tcpStatus45d,
+        http: tb.legacy_httpStatus45d,
+        tcp: tb.legacy_tcpStatus45d,
       } as const;
       return { getData: getData[type] };
     }
