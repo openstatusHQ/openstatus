@@ -272,6 +272,8 @@ export const statusPageRouter = createTRPCRouter({
         const monitorId = m.monitor.id.toString();
         const monitorMetrics = metricsDataByMonitorId.get(monitorId) || [];
 
+        console.log(m.monitor);
+
         return {
           ...selectPublicMonitorSchema.parse(m.monitor),
           data: monitorMetrics,
