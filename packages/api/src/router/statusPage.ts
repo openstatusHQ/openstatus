@@ -14,10 +14,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import { fillStatusDataFor45Days } from "./statusPage.utils";
 import {
   getMetricsLatencyMultiProcedure,
   getMetricsLatencyProcedure,
   getMetricsRegionsProcedure,
+  getStatusProcedure,
   getUptimeProcedure,
 } from "./tinybird";
 
@@ -165,6 +167,92 @@ export const statusPageRouter = createTRPCRouter({
       return _maintenance;
     }),
 
+  getStatus: publicProcedure
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        monitorIds: z.string().array(),
+      }),
+    )
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          monitorsToPages: {
+            where: inArray(
+              monitorsToPages.monitorId,
+              opts.input.monitorIds.map(Number),
+            ),
+            with: {
+              monitor: true,
+            },
+          },
+        },
+      });
+
+      if (!_page) return null;
+      if (_page.monitorsToPages.length !== opts.input.monitorIds.length)
+        return null;
+
+      const monitorsByType = {
+        http: _page.monitorsToPages.filter((m) => m.monitor.jobType === "http"),
+        tcp: _page.monitorsToPages.filter((m) => m.monitor.jobType === "tcp"),
+      };
+
+      const proceduresByType = {
+        http: getStatusProcedure("45d", "http"),
+        tcp: getStatusProcedure("45d", "tcp"),
+      };
+
+      const [statusHttp, statusTcp] = await Promise.all(
+        Object.entries(proceduresByType).map(([type, procedure]) => {
+          const monitorIds = monitorsByType[
+            type as keyof typeof proceduresByType
+          ].map((m) => m.monitor.id.toString());
+          if (monitorIds.length === 0) return null;
+          return procedure({ monitorIds });
+        }),
+      );
+
+      const statusDataByMonitorId = new Map<
+        string,
+        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
+      >();
+
+      if (statusHttp?.data) {
+        statusHttp.data.forEach((status) => {
+          const monitorId = status.monitorId;
+          if (!statusDataByMonitorId.has(monitorId)) {
+            statusDataByMonitorId.set(monitorId, []);
+          }
+          statusDataByMonitorId.get(monitorId)?.push(status);
+        });
+      }
+
+      if (statusTcp?.data) {
+        statusTcp.data.forEach((status) => {
+          const monitorId = status.monitorId;
+          if (!statusDataByMonitorId.has(monitorId)) {
+            statusDataByMonitorId.set(monitorId, []);
+          }
+          statusDataByMonitorId.get(monitorId)?.push(status);
+        });
+      }
+
+      return _page.monitorsToPages.map((m) => {
+        const monitorId = m.monitor.id.toString();
+        const rawData = statusDataByMonitorId.get(monitorId) || [];
+        const filledData = fillStatusDataFor45Days(rawData, monitorId);
+        return {
+          ...selectPublicMonitorSchema.parse(m.monitor),
+          data: filledData,
+        };
+      });
+    }),
+
   getReport: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
     .query(async (opts) => {
@@ -270,11 +358,11 @@ export const statusPageRouter = createTRPCRouter({
 
       return publicMonitors.map((m) => {
         const monitorId = m.monitor.id.toString();
-        const monitorMetrics = metricsDataByMonitorId.get(monitorId) || [];
+        const data = metricsDataByMonitorId.get(monitorId) || [];
 
         return {
           ...selectPublicMonitorSchema.parse(m.monitor),
-          data: monitorMetrics,
+          data,
         };
       });
     }),

@@ -13,9 +13,9 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
-import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
-import { chartData } from "@/components/status-page/utils";
-import { monitors } from "@/data/monitors";
+// import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
+// import { chartData } from "@/components/status-page/utils";
+// import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Newspaper } from "lucide-react";
@@ -26,6 +26,12 @@ export default function Page() {
   const trpc = useTRPC();
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
+  const { data: status } = useQuery(
+    trpc.statusPage.getStatus.queryOptions({
+      slug: domain,
+      monitorIds: page?.monitors.map((monitor) => monitor.id.toString()) || [],
+    }),
   );
   const { variant, cardType, barType, showUptime } = useStatusPage();
 
@@ -40,7 +46,27 @@ export default function Page() {
         </StatusHeader>
         <StatusBanner />
         <StatusContent>
-          <StatusMonitor
+          {page.monitors.map((monitor) => (
+            <StatusMonitor
+              key={monitor.id}
+              variant={variant}
+              cardType={cardType}
+              barType={barType}
+              data={
+                status
+                  ?.find((m) => m.id === monitor.id)
+                  ?.data.map((item) => ({
+                    ...item,
+                    success: item.ok,
+                    info: 0,
+                    timestamp: new Date(item.day).getTime(),
+                  })) || []
+              }
+              monitor={monitor}
+              showUptime={showUptime}
+            />
+          ))}
+          {/* <StatusMonitor
             variant={variant}
             cardType={cardType}
             barType={barType}
@@ -83,7 +109,7 @@ export default function Page() {
               monitor={monitors[1]}
               showUptime={showUptime}
             />
-          </StatusTrackerGroup>
+          </StatusTrackerGroup> */}
         </StatusContent>
         <StatusContent>
           <StatusEmptyState>

@@ -77,8 +77,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
     console.log("fetching from tinybird");
     const res =
       _monitor.jobType === "http"
-        ? await tb.httpStatus45d({ monitorId: id })
-        : await tb.tcpStatus45d({ monitorId: id });
+        ? await tb.legacy_httpStatus45d({ monitorId: id })
+        : await tb.legacy_tcpStatus45d({ monitorId: id });
 
     await redis.set(`${id}-daily-stats`, res.data, { ex: 600 });
 
