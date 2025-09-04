@@ -87,3 +87,19 @@ export function getHighestPriorityStatus(item: ChartData) {
     )[0] || "empty"
   );
 }
+
+export function getTotalUptime(item: ChartData[]) {
+  const { ok, total } = item.reduce(
+    (acc, item) => ({
+      ok: acc.ok + item.success + item.degraded + item.info,
+      total: acc.total + item.success + item.degraded + item.info + item.error,
+    }),
+    {
+      ok: 0,
+      total: 0,
+    },
+  );
+
+  if (total === 0) return 100;
+  return Math.round((ok / total) * 10000) / 100;
+}
