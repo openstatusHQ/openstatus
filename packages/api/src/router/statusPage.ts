@@ -14,6 +14,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { fillStatusDataFor45Days } from "./statusPage.utils";
 import {
@@ -450,6 +451,21 @@ export const statusPageRouter = createTRPCRouter({
 
       if (_page.workspace.plan === "free") return null;
 
+      const _alreadySubscribed =
+        await opts.ctx.db.query.pageSubscriber.findFirst({
+          where: and(
+            eq(pageSubscriber.pageId, _page.id),
+            eq(pageSubscriber.email, opts.input.email),
+          ),
+        });
+
+      if (_alreadySubscribed) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Email already subscribed",
+        });
+      }
+
       const _pageSubscriber = await opts.ctx.db
         .insert(pageSubscriber)
         .values({
@@ -462,5 +478,48 @@ export const statusPageRouter = createTRPCRouter({
         .get();
 
       return _pageSubscriber.id;
+    }),
+
+  verifyEmail: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase(), token: z.string() }))
+    .mutation(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+      });
+
+      if (!_page) return null;
+
+      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
+        where: and(
+          eq(pageSubscriber.token, opts.input.token),
+          eq(pageSubscriber.pageId, _page.id),
+        ),
+      });
+
+      if (_pageSubscriber?.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Email already verified",
+        });
+      }
+
+      if (!_pageSubscriber) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscription not found",
+        });
+      }
+
+      await opts.ctx.db
+        .update(pageSubscriber)
+        .set({
+          acceptedAt: new Date(),
+        })
+        .where(eq(pageSubscriber.id, _pageSubscriber.id))
+        .execute();
+
+      return _pageSubscriber;
     }),
 });

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -44,7 +45,12 @@ export function FormSubscribeEmail({
         toast.promise(promise, {
           loading: "Subscribing...",
           success: "Subscribed",
-          error: "Failed to subscribe",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to subscribe";
+          },
         });
         await promise;
       } catch (error) {

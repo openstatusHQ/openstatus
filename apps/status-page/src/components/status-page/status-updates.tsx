@@ -67,13 +67,8 @@ export function StatusUpdates({
                   <FormSubscribeEmail
                     id="email-form"
                     onSubmit={async (values) => {
-                      try {
-                        await onSubscribe?.(values.email);
-                        setSuccess(true);
-                      } catch (error) {
-                        // NOTE: we throw the error to be handled by the toast
-                        throw error;
-                      }
+                      await onSubscribe?.(values.email);
+                      setSuccess(true);
                     }}
                   />
                 </div>
