@@ -15,6 +15,7 @@ import {
 import {
   incidentTable,
   insertPageSchema,
+  legacy_selectPublicPageSchemaWithRelation,
   maintenance,
   monitor,
   monitorsToPages,
@@ -23,7 +24,6 @@ import {
   selectMonitorSchema,
   selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
-  selectPublicPageSchemaWithRelation,
   statusReport,
   subdomainSafeList,
   workspace,
@@ -285,7 +285,7 @@ export const pageRouter = createTRPCRouter({
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
-    .output(selectPublicPageSchemaWithRelation.nullish())
+    .output(legacy_selectPublicPageSchemaWithRelation.nullish())
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
@@ -371,7 +371,7 @@ export const pageRouter = createTRPCRouter({
         incidentsQuery,
       ]);
 
-      return selectPublicPageSchemaWithRelation.parse({
+      return legacy_selectPublicPageSchemaWithRelation.parse({
         ...result,
         // TODO: improve performance and move into SQLite query
         monitors: monitors.sort((a, b) => {

@@ -25,7 +25,7 @@ export default function PrivatePage() {
   );
 
   return (
-    <Section className="m-auto max-w-lg w-full border rounded-lg p-4">
+    <Section className="m-auto max-w-lg w-full border rounded-lg p-4 bg-card">
       <SectionHeader>
         <SectionTitle>Protected Page</SectionTitle>
         <SectionDescription>
