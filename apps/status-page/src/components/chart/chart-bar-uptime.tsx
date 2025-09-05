@@ -9,6 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { formatNumber } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Skeleton } from "../ui/skeleton";
@@ -17,7 +18,8 @@ import { ChartLegendBadge } from "./chart-legend-badge";
 const chartConfig = {
   success: {
     label: "success",
-    color: "var(--color-success)",
+    // WTF: why is var(--color-success) not working
+    color: "var(--success)",
   },
   degraded: {
     label: "degraded",
@@ -46,9 +48,9 @@ export function ChartBarUptime({
   >(["success", "error", "degraded"]);
 
   const annotation = {
-    success: data.reduce((acc, item) => acc + item.success, 0),
-    error: data.reduce((acc, item) => acc + item.error, 0),
-    degraded: data.reduce((acc, item) => acc + item.degraded, 0),
+    success: formatNumber(data.reduce((acc, item) => acc + item.success, 0)),
+    error: formatNumber(data.reduce((acc, item) => acc + item.error, 0)),
+    degraded: formatNumber(data.reduce((acc, item) => acc + item.degraded, 0)),
   };
 
   return (
