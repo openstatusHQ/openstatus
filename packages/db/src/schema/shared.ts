@@ -82,6 +82,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
   .omit({
     // workspaceId: true,
     id: true,
+    password: true,
   });
 
 export const selectPublicStatusReportSchemaWithRelation =
