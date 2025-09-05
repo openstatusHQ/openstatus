@@ -77,15 +77,35 @@ export const PRIORITY = {
   degraded: 2,
   info: 1,
   success: 0,
-  empty: -1,
 } as const; // satisfies Record<XXX, number>;
 
 export function getHighestPriorityStatus(item: ChartData) {
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) return "empty";
   return (
     VARIANT.filter((status) => item[status] > 0).sort(
       (a, b) => PRIORITY[b] - PRIORITY[a],
     )[0] || "empty"
   );
+}
+
+export const PERCENTAGE_PRIORITY = {
+  info: -1,
+  error: 0,
+  degraded: 0.75,
+  success: 0.95,
+} as const;
+
+export function getPercentagePriorityStatus(item: ChartData) {
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) return "empty";
+
+  const percentage = item.success / total;
+  if (percentage >= PERCENTAGE_PRIORITY.success) return "success";
+  if (percentage >= PERCENTAGE_PRIORITY.degraded) return "degraded";
+  if (percentage >= PERCENTAGE_PRIORITY.error) return "error";
+  if (percentage >= PERCENTAGE_PRIORITY.info) return "info";
+  return "info";
 }
 
 export function getTotalUptime(item: ChartData[]) {

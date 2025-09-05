@@ -26,10 +26,15 @@ import { THEMES } from "./community-themes";
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
 
-export const CARD_TYPE = ["duration", "requests", "dominant"] as const;
+export const CARD_TYPE = [
+  "duration",
+  "requests",
+  "dominant",
+  "manual",
+] as const;
 export type CardType = (typeof CARD_TYPE)[number];
 
-export const BAR_TYPE = ["absolute", "dominant"] as const;
+export const BAR_TYPE = ["absolute", "dominant", "manual"] as const;
 export type BarType = (typeof BAR_TYPE)[number];
 
 export const COMMUNITY_THEME = ["default", "github", "supabase"] as const;

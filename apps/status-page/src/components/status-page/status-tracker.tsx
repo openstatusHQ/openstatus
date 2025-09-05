@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { formatDateRange } from "@/lib/formatter";
+import { formatDateRange, formatNumber } from "@/lib/formatter";
 import {
   endOfDay,
   formatDistanceStrict,
@@ -20,7 +20,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { type BarType, type CardType, VARIANT } from "./floating-button";
 import { requests } from "./messages";
-import { type ChartData, chartConfig, getHighestPriorityStatus } from "./utils";
+import {
+  type ChartData,
+  chartConfig,
+  getPercentagePriorityStatus,
+} from "./utils";
 
 // TODO: keyboard arrow navigation
 // FIXME: on small screens, avoid pinned state
@@ -200,6 +204,12 @@ export function StatusTracker({
                           status={status}
                         />
                       );
+                    case "manual":
+                      return (
+                        <StatusTrackerTriggerManual
+                          status={status ?? "success"}
+                        />
+                      );
                     default:
                       return null;
                   }
@@ -228,6 +238,12 @@ export function StatusTracker({
                         return <StatusTrackerContentDominant item={item} />;
                       case "requests":
                         return <StatusTrackerContentRequests item={item} />;
+                      case "manual":
+                        return (
+                          <StatusTrackerContentManual
+                            status={status ?? "success"}
+                          />
+                        );
                       default:
                         return null;
                     }
@@ -237,6 +253,19 @@ export function StatusTracker({
                   <>
                     <Separator />
                     <div className="p-2">
+                      {i.length > 0
+                        ? i.map((incident) => {
+                            return (
+                              <StatusTrackerEvent
+                                key={incident.id}
+                                status="error"
+                                name="Incident"
+                                from={incident.from}
+                                to={incident.to}
+                              />
+                            );
+                          })
+                        : null}
                       {r.length > 0
                         ? r.map((report) => {
                             return (
@@ -344,16 +373,33 @@ function StatusTrackerTriggerDominant({
   status,
 }: StatusTrackerTriggerDominantProps) {
   const statusColor = status ? chartConfig[status].color : undefined;
-  const highestPriorityStatus = getHighestPriorityStatus(item);
+  const statusPriority = getPercentagePriorityStatus(item);
 
   return (
     <div
-      key={`${item.timestamp}-${highestPriorityStatus}`}
+      key={`${item.timestamp}-${statusPriority}`}
       className="w-full transition-all"
       style={{
         height: "100%",
-        backgroundColor:
-          statusColor ?? chartConfig[highestPriorityStatus].color,
+        backgroundColor: statusColor ?? chartConfig[statusPriority].color,
+      }}
+    />
+  );
+}
+
+interface StatusTrackerTriggerManualProps {
+  status: keyof typeof chartConfig;
+}
+
+function StatusTrackerTriggerManual({
+  status,
+}: StatusTrackerTriggerManualProps) {
+  return (
+    <div
+      className="w-full transition-all"
+      style={{
+        height: "100%",
+        backgroundColor: chartConfig[status].color,
       }}
     />
   );
@@ -392,7 +438,7 @@ function StatusTrackerContentDominant({ item }: { item: ChartData }) {
     return <StatusTrackerContent status="empty" value="" />;
   }
 
-  const status = getHighestPriorityStatus(item);
+  const status = getPercentagePriorityStatus(item);
 
   return <StatusTrackerContent key={status} status={status} value={""} />;
 }
@@ -411,10 +457,18 @@ function StatusTrackerContentRequests({ item }: { item: ChartData }) {
       <StatusTrackerContent
         key={status}
         status={status}
-        value={`${value} req`}
+        value={`${formatNumber(value)} reqs`}
       />
     );
   });
+}
+
+function StatusTrackerContentManual({
+  status,
+}: {
+  status: keyof typeof chartConfig;
+}) {
+  return <StatusTrackerContent status={status} value="" />;
 }
 
 function StatusTrackerContent({
