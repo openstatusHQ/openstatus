@@ -64,11 +64,15 @@ export function Header(props: React.ComponentProps<"header">) {
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
 
+  const sendPageSubscriptionMutation = useMutation(
+    trpc.emailRouter.sendPageSubscription.mutationOptions({}),
+  );
+
   const subscribeMutation = useMutation(
     trpc.statusPage.subscribe.mutationOptions({
       onSuccess: (id) => {
-        // TODO: send email mutation
-        console.log(id);
+        if (!id) return;
+        sendPageSubscriptionMutation.mutate({ id });
       },
     }),
   );
