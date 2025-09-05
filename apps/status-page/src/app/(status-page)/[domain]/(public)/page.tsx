@@ -72,7 +72,11 @@ export default function Page() {
             id: report.id,
             name: report.title,
             from: firstUpdate?.date,
-            to: lastUpdate?.status === "resolved" ? lastUpdate?.date : null,
+            to:
+              lastUpdate?.status === "resolved" ||
+              lastUpdate?.status === "monitoring"
+                ? lastUpdate?.date
+                : null,
           };
         });
 
