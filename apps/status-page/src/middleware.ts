@@ -10,6 +10,7 @@ export default async function middleware(req: NextRequest) {
   const cookies = req.cookies;
 
   let prefix = "";
+  let type: "hostname" | "pathname";
 
   const hostnames = url.host.split(".");
   const pathnames = url.pathname.split("/");
@@ -19,8 +20,10 @@ export default async function middleware(req: NextRequest) {
     !url.host.endsWith(".vercel.app")
   ) {
     prefix = hostnames[0].toLowerCase();
+    type = "hostname";
   } else {
     prefix = pathnames[1].toLowerCase();
+    type = "pathname";
   }
 
   if (url.pathname === "/") {
@@ -36,8 +39,23 @@ export default async function middleware(req: NextRequest) {
   if (_page?.passwordProtected) {
     const protectedCookie = cookies.get(createProtectedCookieKey(prefix));
     const password = protectedCookie ? protectedCookie.value : undefined;
-    if (password !== _page.password) {
-      return NextResponse.redirect(new URL("https://openstatus.dev"));
+    if (password !== _page.password && !url.pathname.endsWith("/protected")) {
+      const url = new URL(
+        `${req.nextUrl.origin}${
+          type === "pathname" ? `/${prefix}` : ""
+        }/protected?redirect=${encodeURIComponent(req.url)}`,
+      );
+      return NextResponse.redirect(url);
+    }
+    if (password === _page.password && url.pathname.endsWith("/protected")) {
+      const redirect = url.searchParams.get("redirect");
+      return NextResponse.redirect(
+        new URL(
+          `${req.nextUrl.origin}${
+            redirect ?? type === "pathname" ? `/${prefix}` : "/"
+          }`,
+        ),
+      );
     }
   }
 

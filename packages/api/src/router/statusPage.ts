@@ -522,4 +522,30 @@ export const statusPageRouter = createTRPCRouter({
 
       return _pageSubscriber;
     }),
+
+  verifyPassword: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase(), password: z.string() }))
+    .mutation(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+      });
+
+      if (!_page) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
+      if (_page.password !== opts.input.password) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid password",
+        });
+      }
+
+      return true;
+    }),
 });
