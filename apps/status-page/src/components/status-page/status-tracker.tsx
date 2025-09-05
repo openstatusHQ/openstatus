@@ -7,11 +7,15 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
-// TODO: make it a property of the component
-import { statusReports } from "@/data/status-reports";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { formatDateRange } from "@/lib/formatter";
-import { formatDistanceStrict, isSameDay } from "date-fns";
+import {
+  endOfDay,
+  formatDistanceStrict,
+  isSameDay,
+  isWithinInterval,
+  startOfDay,
+} from "date-fns";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { type BarType, type CardType, VARIANT } from "./floating-button";
@@ -32,10 +36,30 @@ export function StatusTracker({
   cardType = "duration",
   barType = "absolute",
   data,
+  maintenances,
+  incidents,
+  reports,
 }: {
   cardType?: CardType;
   barType?: BarType;
   data: ChartData[];
+  maintenances?: {
+    id: number;
+    name: string;
+    from: Date;
+    to: Date;
+  }[];
+  incidents?: {
+    id: number;
+    from: Date | null;
+    to: Date | null;
+  }[];
+  reports?: {
+    id: number;
+    name: string;
+    from: Date | null;
+    to: Date | null;
+  }[];
 }) {
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -98,11 +122,49 @@ export function StatusTracker({
       {data.map((item, index) => {
         const isPinned = pinnedIndex === index;
 
-        const reports = statusReports.filter((report) => {
-          const reportDate = new Date(report.startedAt);
-          const itemDate = new Date(item.timestamp);
-          return isSameDay(reportDate, itemDate);
-        });
+        const r =
+          reports?.filter((report) => {
+            if (!report.from) return false;
+            const reportFromDate = new Date(report.from);
+            const reportToDate = report.to ? new Date(report.to) : new Date();
+            const itemDate = new Date(item.timestamp);
+            return isWithinInterval(itemDate, {
+              start: startOfDay(reportFromDate),
+              end: endOfDay(reportToDate),
+            });
+          }) || [];
+
+        const m =
+          maintenances?.filter((maintenance) => {
+            if (!maintenance.from) return false;
+            const maintenanceStartDate = new Date(maintenance.from);
+            const maintenanceEndDate = new Date(maintenance.to);
+            const itemDate = new Date(item.timestamp);
+            return isWithinInterval(itemDate, {
+              start: startOfDay(maintenanceStartDate),
+              end: endOfDay(maintenanceEndDate),
+            });
+          }) || [];
+
+        const i =
+          incidents?.filter((incident) => {
+            if (!incident.from) return false;
+            const incidentFromDate = new Date(incident.from);
+            const incidentToDate = incident.to
+              ? new Date(incident.to)
+              : new Date();
+            const itemDate = new Date(item.timestamp);
+            return isWithinInterval(itemDate, {
+              start: startOfDay(incidentFromDate),
+              end: endOfDay(incidentToDate),
+            });
+          }) || [];
+
+        const hasMaintenances = m && m.length > 0;
+        const hasReports = r && r.length > 0;
+        const hasIncidents = i && i.length > 0;
+
+        console.log({ hasMaintenances, hasReports, hasIncidents });
 
         return (
           <HoverCard
@@ -151,44 +213,42 @@ export function StatusTracker({
                     }
                   })()}
                 </div>
-                {reports.length > 0 ? (
+                {r.length > 0 || m.length > 0 ? (
                   <>
                     <Separator />
                     <div className="p-2">
-                      {reports.map((report) => {
-                        const updates = report.updates.sort(
-                          (a, b) => a.date.getTime() - b.date.getTime(),
-                        );
-                        const startedAt = new Date(updates[0].date);
-                        const endedAt = new Date(
-                          updates[updates.length - 1].date,
-                        );
-                        const duration = formatDistanceStrict(
-                          startedAt,
-                          endedAt,
-                        );
-                        return (
-                          <Link
-                            key={report.id}
-                            href="/status-page/events/report"
-                          >
-                            <div className="group relative text-sm">
-                              {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
-                              {/* REMINDER: height needs to be equal the text height */}
-                              <div className="h-4 w-full" />
-                              <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
-                                <div className="truncate">{report.name}</div>
-                              </div>
-                              <div className="mt-1 text-muted-foreground text-xs">
-                                {formatDateRange(startedAt, endedAt)}{" "}
-                                <span className="ml-1.5 font-mono text-muted-foreground/70">
-                                  {duration}
-                                </span>
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
+                      {r.length > 0
+                        ? r.map((report) => {
+                            return (
+                              <Link
+                                key={report.id}
+                                href={`/events/report/${report.id}`}
+                              >
+                                <StatusTrackerEvent
+                                  name={report.name}
+                                  from={report.from}
+                                  to={report.to}
+                                />
+                              </Link>
+                            );
+                          })
+                        : null}
+                      {m.length > 0
+                        ? m.map((maintenance) => {
+                            return (
+                              <Link
+                                key={maintenance.id}
+                                href={`/events/maintenance/${maintenance.id}`}
+                              >
+                                <StatusTrackerEvent
+                                  name={maintenance.name}
+                                  from={maintenance.from}
+                                  to={maintenance.to}
+                                />
+                              </Link>
+                            );
+                          })
+                        : null}
                     </div>
                   </>
                 ) : null}
@@ -336,6 +396,35 @@ function StatusTrackerContent({
       </div>
       <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
         {value}
+      </div>
+    </div>
+  );
+}
+
+function StatusTrackerEvent({
+  name,
+  from,
+  to,
+}: {
+  name: string;
+  from?: Date | null;
+  to?: Date | null;
+}) {
+  if (!from) return null;
+  const duration = to ? formatDistanceStrict(from, to) : undefined;
+  return (
+    <div className="group relative text-sm">
+      {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
+      {/* REMINDER: height needs to be equal the text height */}
+      <div className="h-4 w-full" />
+      <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
+        <div className="truncate">{name}</div>
+      </div>
+      <div className="mt-1 text-muted-foreground text-xs">
+        {formatDateRange(from, to ?? undefined)}{" "}
+        <span className="ml-1.5 font-mono text-muted-foreground/70">
+          {duration}
+        </span>
       </div>
     </div>
   );

@@ -29,6 +29,9 @@ export function StatusMonitor({
   showUptime = true,
   data,
   monitor,
+  maintenances,
+  incidents,
+  reports,
   ...props
 }: React.ComponentProps<"div"> & {
   variant?: VariantType;
@@ -40,6 +43,23 @@ export function StatusMonitor({
     description: string;
   };
   data: ChartData[];
+  maintenances?: {
+    id: number;
+    name: string;
+    from: Date;
+    to: Date;
+  }[];
+  incidents?: {
+    id: number;
+    from: Date | null;
+    to: Date | null;
+  }[];
+  reports?: {
+    id: number;
+    name: string;
+    from: Date | null;
+    to: Date | null;
+  }[];
 }) {
   const uptime = getTotalUptime(data);
   return (
@@ -63,7 +83,14 @@ export function StatusMonitor({
           <StatusMonitorIcon />
         </div>
       </div>
-      <StatusTracker cardType={cardType} barType={barType} data={data} />
+      <StatusTracker
+        cardType={cardType}
+        barType={barType}
+        data={data}
+        maintenances={maintenances}
+        incidents={incidents}
+        reports={reports}
+      />
       <div
         className={cn(
           "flex flex-row items-center justify-between text-muted-foreground text-xs",
