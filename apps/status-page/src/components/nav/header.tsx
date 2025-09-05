@@ -10,10 +10,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Menu } from "lucide-react";
 import NextLink from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 function useNav() {
@@ -56,6 +58,25 @@ function useNav() {
 }
 
 export function Header(props: React.ComponentProps<"header">) {
+  const trpc = useTRPC();
+  const { domain } = useParams<{ domain: string }>();
+  const { data: page } = useQuery(
+    trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
+
+  const subscribeMutation = useMutation(
+    trpc.statusPage.subscribe.mutationOptions({
+      onSuccess: (id) => {
+        // TODO: send email mutation
+        console.log(id);
+      },
+    }),
+  );
+
+  const types = (
+    page?.workspacePlan === "free" ? ["rss", "atom"] : ["email", "rss", "atom"]
+  ) satisfies ("email" | "rss" | "atom")[];
+
   return (
     <header {...props}>
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
@@ -70,10 +91,21 @@ export function Header(props: React.ComponentProps<"header">) {
           </Link>
         </div>
         <NavDesktop className="hidden md:flex" />
-        <StatusUpdates className="hidden md:block" />
+        <StatusUpdates
+          className="hidden md:block"
+          types={types}
+          onSubscribe={async (email) => {
+            await subscribeMutation.mutateAsync({ slug: domain, email });
+          }}
+        />
         <div className="flex gap-3 md:hidden">
           <NavMobile />
-          <StatusUpdates />
+          <StatusUpdates
+            types={types}
+            onSubscribe={async (email) => {
+              await subscribeMutation.mutateAsync({ slug: domain, email });
+            }}
+          />
         </div>
       </nav>
     </header>

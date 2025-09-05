@@ -7,6 +7,7 @@ import {
   monitor,
   monitorsToPages,
   page,
+  pageSubscriber,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
   statusReport,
@@ -429,5 +430,37 @@ export const statusPageRouter = createTRPCRouter({
           uptime,
         },
       };
+    }),
+
+  subscribe: publicProcedure
+    .input(
+      z.object({ slug: z.string().toLowerCase(), email: z.string().email() }),
+    )
+    .mutation(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          workspace: true,
+        },
+      });
+
+      if (!_page) return null;
+
+      if (_page.workspace.plan === "free") return null;
+
+      const _pageSubscriber = await opts.ctx.db
+        .insert(pageSubscriber)
+        .values({
+          pageId: _page.id,
+          email: opts.input.email,
+          token: crypto.randomUUID(),
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        })
+        .returning()
+        .get();
+
+      return _pageSubscriber.id;
     }),
 });
