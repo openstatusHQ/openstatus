@@ -164,7 +164,13 @@ export function StatusTracker({
         const hasReports = r && r.length > 0;
         const hasIncidents = i && i.length > 0;
 
-        console.log({ hasMaintenances, hasReports, hasIncidents });
+        const status = hasIncidents
+          ? "error"
+          : hasReports
+            ? "degraded"
+            : hasMaintenances
+              ? "info"
+              : undefined;
 
         return (
           <HoverCard
@@ -181,16 +187,30 @@ export function StatusTracker({
                 {(() => {
                   switch (barType) {
                     case "absolute":
-                      return <StatusTrackerTriggerAbsolute item={item} />;
+                      return (
+                        <StatusTrackerTriggerAbsolute
+                          item={item}
+                          status={status}
+                        />
+                      );
                     case "dominant":
-                      return <StatusTrackerTriggerDominant item={item} />;
+                      return (
+                        <StatusTrackerTriggerDominant
+                          item={item}
+                          status={status}
+                        />
+                      );
                     default:
                       return null;
                   }
                 })()}
               </div>
             </HoverCardTrigger>
-            <HoverCardContent side="top" align="center" className="w-auto p-0">
+            <HoverCardContent
+              side="top"
+              align="center"
+              className="min-w-40 w-auto p-0"
+            >
               <div>
                 <div className="p-2 text-xs">
                   {new Date(item.timestamp).toLocaleDateString("default", {
@@ -225,6 +245,7 @@ export function StatusTracker({
                                 href={`/events/report/${report.id}`}
                               >
                                 <StatusTrackerEvent
+                                  status="degraded"
                                   name={report.name}
                                   from={report.from}
                                   to={report.to}
@@ -241,6 +262,7 @@ export function StatusTracker({
                                 href={`/events/maintenance/${maintenance.id}`}
                               >
                                 <StatusTrackerEvent
+                                  status="info"
                                   name={maintenance.name}
                                   from={maintenance.from}
                                   to={maintenance.to}
@@ -270,8 +292,17 @@ export function StatusTracker({
   );
 }
 
-function StatusTrackerTriggerAbsolute({ item }: { item: ChartData }) {
+interface StatusTrackerTriggerAbsoluteProps {
+  item: ChartData;
+  status?: keyof typeof chartConfig;
+}
+
+function StatusTrackerTriggerAbsolute({
+  item,
+  status,
+}: StatusTrackerTriggerAbsoluteProps) {
   const total = item.success + item.degraded + item.info + item.error;
+  const statusColor = status ? chartConfig[status].color : undefined;
 
   if (total === 0) {
     return (
@@ -279,7 +310,7 @@ function StatusTrackerTriggerAbsolute({ item }: { item: ChartData }) {
         key={`${item.timestamp}-empty`}
         className="w-full transition-all h-full"
         style={{
-          backgroundColor: chartConfig.empty.color,
+          backgroundColor: statusColor ?? chartConfig.empty.color,
         }}
       />
     );
@@ -303,7 +334,16 @@ function StatusTrackerTriggerAbsolute({ item }: { item: ChartData }) {
   });
 }
 
-function StatusTrackerTriggerDominant({ item }: { item: ChartData }) {
+interface StatusTrackerTriggerDominantProps {
+  item: ChartData;
+  status?: keyof typeof chartConfig;
+}
+
+function StatusTrackerTriggerDominant({
+  item,
+  status,
+}: StatusTrackerTriggerDominantProps) {
+  const statusColor = status ? chartConfig[status].color : undefined;
   const highestPriorityStatus = getHighestPriorityStatus(item);
 
   return (
@@ -312,7 +352,8 @@ function StatusTrackerTriggerDominant({ item }: { item: ChartData }) {
       className="w-full transition-all"
       style={{
         height: "100%",
-        backgroundColor: chartConfig[highestPriorityStatus].color,
+        backgroundColor:
+          statusColor ?? chartConfig[highestPriorityStatus].color,
       }}
     />
   );
@@ -321,7 +362,7 @@ function StatusTrackerTriggerDominant({ item }: { item: ChartData }) {
 function StatusTrackerContentDuration({ item }: { item: ChartData }) {
   const total = item.success + item.degraded + item.info + item.error;
   if (total === 0) {
-    return <StatusTrackerContent status="empty" value="" />;
+    return <StatusTrackerContent status="empty" value="1 day" />;
   }
 
   return STATUS.map((status) => {
@@ -359,7 +400,7 @@ function StatusTrackerContentDominant({ item }: { item: ChartData }) {
 function StatusTrackerContentRequests({ item }: { item: ChartData }) {
   const total = item.success + item.degraded + item.info + item.error;
   if (total === 0) {
-    return <StatusTrackerContent status="empty" value="" />;
+    return <StatusTrackerContent status="empty" value="1 day" />;
   }
 
   return STATUS.map((status) => {
@@ -384,7 +425,7 @@ function StatusTrackerContent({
   value: string;
 }) {
   return (
-    <div key={status} className="flex min-w-32 items-baseline gap-4">
+    <div className="flex items-baseline gap-4">
       <div className="flex items-center gap-2">
         <div
           className="h-2.5 w-2.5 rounded-sm"
@@ -405,20 +446,30 @@ function StatusTrackerEvent({
   name,
   from,
   to,
+  status,
 }: {
   name: string;
   from?: Date | null;
   to?: Date | null;
+  status: "success" | "degraded" | "error" | "info" | "empty";
 }) {
   if (!from) return null;
-  const duration = to ? formatDistanceStrict(from, to) : undefined;
+  const duration = to ? formatDistanceStrict(from, to) : "ongoing";
   return (
     <div className="group relative text-sm">
       {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
       {/* REMINDER: height needs to be equal the text height */}
       <div className="h-4 w-full" />
       <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
-        <div className="truncate">{name}</div>
+        <div className="flex items-center gap-2">
+          <div
+            className="h-2.5 w-2.5 rounded-sm shrink-0"
+            style={{
+              backgroundColor: chartConfig[status].color,
+            }}
+          />
+          <div className="truncate">{name}</div>
+        </div>
       </div>
       <div className="mt-1 text-muted-foreground text-xs">
         {formatDateRange(from, to ?? undefined)}{" "}
