@@ -86,43 +86,47 @@ export default function Page() {
   const regionLatencyData = useMemo(() => {
     if (!monitor?.data.regions?.data) return [];
 
-    const grouped = monitor.data.regions.data.reduce(
-      (acc, item) => {
-        const timestamp = new Date(item.timestamp).toLocaleString("default", {
-          day: "numeric",
-          month: "short",
-          hour: "numeric",
-          minute: "numeric",
-          timeZoneName: "short",
-        });
+    const grouped = monitor.data.regions.data
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .reduce(
+        (acc, item) => {
+          const timestamp = new Date(item.timestamp).toLocaleString("default", {
+            day: "numeric",
+            month: "short",
+            hour: "numeric",
+            minute: "numeric",
+            timeZoneName: "short",
+          });
 
-        if (!acc[timestamp]) {
-          acc[timestamp] = { timestamp };
-        }
-        acc[timestamp][item.region] = item.p75Latency;
-        return acc;
-      },
-      {} as Record<
-        string,
-        { timestamp: string; [region: string]: number | string | null }
-      >,
-    );
+          if (!acc[timestamp]) {
+            acc[timestamp] = { timestamp };
+          }
+          acc[timestamp][item.region] = item.p75Latency;
+          return acc;
+        },
+        {} as Record<
+          string,
+          { timestamp: string; [region: string]: number | string | null }
+        >,
+      );
 
     return Object.values(grouped);
   }, [monitor?.data.regions?.data]);
 
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
-    return monitor.data.uptime.data.map((item) => ({
-      timestamp: item.interval.toLocaleString("default", {
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "numeric",
-        timeZoneName: "short",
-      }),
-      ...item,
-    }));
+    return monitor.data.uptime.data
+      .sort((a, b) => a.interval.getTime() - b.interval.getTime())
+      .map((item) => ({
+        timestamp: item.interval.toLocaleString("default", {
+          day: "numeric",
+          month: "short",
+          hour: "numeric",
+          minute: "numeric",
+          timeZoneName: "short",
+        }),
+        ...item,
+      }));
   }, [monitor?.data.uptime?.data]);
 
   const { totalChecks, uptimePercentage, slowestRegion, p75Range } =

@@ -420,6 +420,7 @@ export const statusPageRouter = createTRPCRouter({
         }),
         await proceduresByType[type].uptime({
           monitorId: _monitor.id.toString(),
+          interval: 240,
         }),
       ]);
 
