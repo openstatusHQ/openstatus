@@ -19,7 +19,7 @@ import {
 import { useState } from "react";
 import type { BarType, CardType, VariantType } from "./floating-button";
 import { StatusTracker } from "./status-tracker";
-import { type ChartData, getTotalUptime } from "./utils";
+import { type ChartData, getTotalTime, getTotalUptime } from "./utils";
 
 export function StatusMonitor({
   className,
@@ -62,6 +62,7 @@ export function StatusMonitor({
   }[];
 }) {
   const uptime = getTotalUptime(data);
+  const reportsUptime = getTotalTime(reports || [], data.length);
   return (
     <div
       data-slot="status-monitor"
@@ -78,7 +79,9 @@ export function StatusMonitor({
         </div>
         <div className="flex flex-row items-center gap-2">
           {showUptime ? (
-            <StatusMonitorUptime>{uptime}%</StatusMonitorUptime>
+            <StatusMonitorUptime>
+              {barType === "manual" ? reportsUptime : uptime}%
+            </StatusMonitorUptime>
           ) : null}
           <StatusMonitorIcon />
         </div>
@@ -102,6 +105,7 @@ export function StatusMonitor({
           {data.length > 0
             ? formatDistanceToNowStrict(new Date(data[0]?.timestamp), {
                 unit: "day",
+                addSuffix: true,
               })
             : "-"}
         </div>

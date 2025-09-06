@@ -123,3 +123,17 @@ export function getTotalUptime(item: ChartData[]) {
   if (total === 0) return 100;
   return Math.round((ok / total) * 10000) / 100;
 }
+
+export function getTotalTime(
+  items: { from: Date | null; to: Date | null }[],
+  days: number,
+) {
+  const duration = items.reduce((acc, item) => {
+    if (!item.from) return acc;
+    return acc + ((item.to || new Date()).getTime() - item.from.getTime());
+  }, 0);
+
+  const total = days * 24 * 60 * 60 * 1000;
+
+  return Math.round(((total - duration) / total) * 10000) / 100;
+}
