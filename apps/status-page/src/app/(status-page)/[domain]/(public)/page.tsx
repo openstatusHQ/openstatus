@@ -13,14 +13,16 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { getHighestStatus } from "@/components/status-page/utils";
 // import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 // import { chartData } from "@/components/status-page/utils";
 // import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { isWithinInterval } from "date-fns";
 import { Newspaper } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
@@ -34,7 +36,7 @@ export default function Page() {
       monitorIds: page?.monitors.map((monitor) => monitor.id.toString()) || [],
     }),
   );
-  const { variant, cardType, barType, showUptime } = useStatusPage();
+  const { cardType, barType, showUptime } = useStatusPage();
 
   const getEvents = useCallback(
     (monitorId: number) => {
@@ -80,34 +82,61 @@ export default function Page() {
           };
         });
 
-      // TODO: move the logic in here!
+      const status =
+        incidents && incidents.some((incident) => incident.to === null)
+          ? ("error" as const)
+          : reports && reports.some((report) => report.to === null)
+            ? ("degraded" as const)
+            : maintenances &&
+                maintenances.some((maintenance) =>
+                  isWithinInterval(new Date(), {
+                    start: maintenance.from,
+                    end: maintenance.to,
+                  }),
+                )
+              ? ("info" as const)
+              : ("success" as const);
 
       return {
         maintenances,
         incidents,
         reports,
+        status,
       };
     },
     [page],
   );
 
+  const monitors = useMemo(() => {
+    return (
+      page?.monitors.map((monitor) => ({
+        ...monitor,
+        data: getEvents(monitor.id),
+      })) ?? []
+    );
+  }, [page, getEvents]);
+
   if (!page) return null;
 
   return (
     <div className="flex flex-col gap-6">
-      <Status variant={variant}>
+      <Status
+        variant={getHighestStatus(
+          monitors.map((monitor) => monitor.data.status),
+        )}
+      >
         <StatusHeader>
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
         <StatusBanner />
         <StatusContent>
-          {page.monitors.map((monitor) => {
-            const events = getEvents(monitor.id);
+          {monitors.map((monitor) => {
+            const events = monitor.data;
             return (
               <StatusMonitor
                 key={monitor.id}
-                variant={variant}
+                variant={events.status}
                 cardType={cardType}
                 barType={barType}
                 data={

@@ -1,5 +1,5 @@
 import type { ChartConfig } from "@/components/ui/chart";
-import { VARIANT } from "./floating-button";
+import { VARIANT, type VariantType } from "./floating-button";
 
 export const chartData = Array.from({ length: 45 }, (_, i) => {
   const date = new Date();
@@ -106,6 +106,13 @@ export function getPercentagePriorityStatus(item: ChartData) {
   if (percentage >= PERCENTAGE_PRIORITY.error) return "error";
   if (percentage >= PERCENTAGE_PRIORITY.info) return "info";
   return "info";
+}
+
+export function getHighestStatus(items: VariantType[]) {
+  if (items.some((item) => item === "error")) return "error";
+  if (items.some((item) => item === "degraded")) return "degraded";
+  if (items.some((item) => item === "info")) return "info";
+  return "success";
 }
 
 export function getTotalUptime(item: ChartData[]) {
