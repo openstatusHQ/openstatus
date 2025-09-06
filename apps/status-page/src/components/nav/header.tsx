@@ -10,33 +10,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Menu } from "lucide-react";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 function useNav() {
   const pathname = usePathname();
-  const [prefix, setPrefix] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hostnames = window.location.hostname.split(".");
-      const pathnames = window.location.pathname.split("/");
-      if (
-        hostnames.length > 2 &&
-        hostnames[0] !== "www" &&
-        !window.location.hostname.endsWith(".vercel.app")
-      ) {
-        setPrefix(hostnames[0]);
-      } else {
-        setPrefix(pathnames[1]);
-      }
-    }
-  }, []);
+  const prefix = usePathnamePrefix();
 
   return [
     {

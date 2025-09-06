@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDateRange, formatNumber } from "@/lib/formatter";
 import {
   endOfDay,
@@ -68,6 +69,7 @@ export function StatusTracker({
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isTouch = useMediaQuery("(hover: none)");
+  const prefix = usePathnamePrefix();
 
   // Window-level Escape key listener
   useEffect(() => {
@@ -271,7 +273,7 @@ export function StatusTracker({
                             return (
                               <Link
                                 key={report.id}
-                                href={`/events/report/${report.id}`}
+                                href={`/${prefix}/events/report/${report.id}`}
                               >
                                 <StatusTrackerEvent
                                   status="degraded"
@@ -288,7 +290,7 @@ export function StatusTracker({
                             return (
                               <Link
                                 key={maintenance.id}
-                                href={`/events/maintenance/${maintenance.id}`}
+                                href={`/${prefix}/events/maintenance/${maintenance.id}`}
                               >
                                 <StatusTrackerEvent
                                   status="info"
