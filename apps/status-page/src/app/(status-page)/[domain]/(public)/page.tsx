@@ -82,20 +82,18 @@ export default function Page() {
           };
         });
 
-      const status =
-        incidents && incidents.some((incident) => incident.to === null)
-          ? ("error" as const)
-          : reports && reports.some((report) => report.to === null)
-            ? ("degraded" as const)
-            : maintenances &&
-                maintenances.some((maintenance) =>
-                  isWithinInterval(new Date(), {
-                    start: maintenance.from,
-                    end: maintenance.to,
-                  }),
-                )
-              ? ("info" as const)
-              : ("success" as const);
+      const status = incidents?.some((incident) => incident.to === null)
+        ? ("error" as const)
+        : reports?.some((report) => report.to === null)
+          ? ("degraded" as const)
+          : maintenances?.some((maintenance) =>
+                isWithinInterval(new Date(), {
+                  start: maintenance.from,
+                  end: maintenance.to,
+                }),
+              )
+            ? ("info" as const)
+            : ("success" as const);
 
       return {
         maintenances,
