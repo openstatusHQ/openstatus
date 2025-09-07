@@ -72,11 +72,13 @@ export function Header(props: React.ComponentProps<"header">) {
         {/* NOTE: same width as the `StatusUpdates` button */}
         <div className="w-[105px] shrink-0">
           <Link href="/">
-            <img
-              src="https://www.openstatus.dev/icon.png"
-              alt="Craft"
-              className="size-8 rounded-full border"
-            />
+            {page?.icon ? (
+              <img
+                src={page.icon}
+                alt={`${page.title} status page`}
+                className="size-8 rounded-full border"
+              />
+            ) : null}
           </Link>
         </div>
         <NavDesktop className="hidden md:flex" />

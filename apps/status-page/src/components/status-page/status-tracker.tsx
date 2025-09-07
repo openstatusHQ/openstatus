@@ -314,6 +314,7 @@ export function StatusTracker({
                   {new Date(item.timestamp).toLocaleDateString("default", {
                     day: "numeric",
                     month: "short",
+                    year: "numeric",
                   })}
                 </div>
                 <Separator />
