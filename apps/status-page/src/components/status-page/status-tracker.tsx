@@ -60,6 +60,7 @@ export function StatusTracker({
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTouch = useMediaQuery("(hover: none)");
   const prefix = usePathnamePrefix();
 
@@ -91,11 +92,24 @@ export function StatusTracker({
     }
   }, [focusedIndex]);
 
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       setPinnedIndex(null);
       setFocusedIndex(null);
       setHoveredIndex(null);
+
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
       return;
     }
 
@@ -123,6 +137,11 @@ export function StatusTracker({
   };
 
   const handleBarClick = (index: number) => {
+    // Clear any pending hover timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
     if (pinnedIndex === index) {
       setPinnedIndex(null);
     } else {
@@ -147,10 +166,27 @@ export function StatusTracker({
   };
 
   const handleBarMouseEnter = (index: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
     setHoveredIndex(index);
   };
 
   const handleBarMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredIndex(null);
+    }, 100);
+  };
+
+  const handleHoverCardMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handleHoverCardMouseLeave = () => {
     setHoveredIndex(null);
   };
 
@@ -270,6 +306,8 @@ export function StatusTracker({
               align="center"
               // NOTE: remove animation and transition to avoid flickering
               className="![animation-duration:0ms] ![transition-duration:0ms] w-auto min-w-40 p-0"
+              onMouseEnter={handleHoverCardMouseEnter}
+              onMouseLeave={handleHoverCardMouseLeave}
             >
               <div>
                 <div className="p-2 text-xs">
