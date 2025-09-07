@@ -83,6 +83,7 @@ export const statusPageRouter = createTRPCRouter({
             incidents: m.monitor.incidents,
             reports: _page.statusReports,
             monitorId: m.monitor.id,
+            // pastDays
           });
 
           const status = events.some(

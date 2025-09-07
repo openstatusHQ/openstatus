@@ -81,6 +81,7 @@ export function getEventsByMonitorId({
   incidents,
   reports,
   monitorId,
+  pastDays = 45,
 }: {
   maintenances: (Maintenance & {
     maintenancesToMonitors: { monitorId: number }[];
@@ -91,13 +92,18 @@ export function getEventsByMonitorId({
     statusReportUpdates: StatusReportUpdate[];
   })[];
   monitorId: number;
+  pastDays?: number;
 }): Event[] {
   const events: Event[] = [];
+  const pastThreshod = new Date();
+  pastThreshod.setDate(pastThreshod.getDate() - pastDays);
+
   maintenances
     .filter((maintenance) =>
       maintenance.maintenancesToMonitors.some((m) => m.monitorId === monitorId),
     )
     .forEach((maintenance) => {
+      if (maintenance.from < pastThreshod) return;
       events.push({
         id: maintenance.id,
         name: maintenance.title,
@@ -110,7 +116,7 @@ export function getEventsByMonitorId({
   incidents
     .filter((incident) => incident.monitorId === monitorId)
     .forEach((incident) => {
-      if (!incident.createdAt) return;
+      if (!incident.createdAt || incident.createdAt < pastThreshod) return;
       events.push({
         id: incident.id,
         name: incident.title,
@@ -130,7 +136,7 @@ export function getEventsByMonitorId({
       );
       const firstUpdate = updates[0];
       const lastUpdate = updates[updates.length - 1];
-      if (!firstUpdate?.date) return;
+      if (!firstUpdate?.date || firstUpdate.date < pastThreshod) return;
       events.push({
         id: report.id,
         name: report.title,
