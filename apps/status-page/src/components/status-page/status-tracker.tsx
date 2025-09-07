@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDateRange, formatNumber } from "@/lib/formatter";
+import { cn } from "@/lib/utils";
 import {
   endOfDay,
   formatDistanceStrict,
@@ -219,7 +220,9 @@ export function StatusTracker({
           >
             <HoverCardTrigger asChild>
               <div
-                className="group relative flex h-full w-full cursor-pointer flex-col px-px hover:opacity-80 data-[aria-pressed=true]:opacity-80"
+                className={cn(
+                  "group relative flex h-full w-full cursor-pointer flex-col px-px hover:opacity-80 data-[aria-pressed=true]:opacity-80 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1",
+                )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}
                 onBlur={(e) => handleBarBlur(e, index)}
