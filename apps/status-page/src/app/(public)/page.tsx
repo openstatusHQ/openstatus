@@ -18,7 +18,6 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
-import { chartData } from "@/components/status-page/utils";
 import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
 
@@ -94,13 +93,13 @@ function ThemeCard({
             </StatusHeader>
             <StatusBanner />
             <StatusContent>
+              {/* TODO: create mock data */}
               <StatusMonitor
-                variant="success"
-                cardType="duration"
-                barType="absolute"
-                data={chartData}
+                status="success"
+                data={[]}
                 monitor={monitors[0]}
                 showUptime={true}
+                isLoading
               />
             </StatusContent>
           </Status>
