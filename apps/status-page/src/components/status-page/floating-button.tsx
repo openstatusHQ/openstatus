@@ -211,16 +211,23 @@ export function FloatingButton({ className }: { className?: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="card-type">Card Type</Label>
+                <Label htmlFor="bar-type">Bar Type</Label>
                 <Select
-                  value={cardType}
-                  onValueChange={(v) => setCardType(v as CardType)}
+                  value={barType}
+                  onValueChange={(v) => {
+                    setBarType(v as BarType);
+                    if (v !== "absolute") {
+                      setCardType(v as CardType);
+                    } else {
+                      setCardType("requests");
+                    }
+                  }}
                 >
-                  <SelectTrigger id="card-type" className="w-full capitalize">
+                  <SelectTrigger id="bar-type" className="w-full capitalize">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CARD_TYPE.map((v) => (
+                    {BAR_TYPE.map((v) => (
                       <SelectItem key={v} value={v} className="capitalize">
                         {v}
                       </SelectItem>
@@ -229,17 +236,23 @@ export function FloatingButton({ className }: { className?: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bar-type">Bar Type</Label>
+                <Label htmlFor="card-type">Card Type</Label>
                 <Select
-                  value={barType}
-                  onValueChange={(v) => setBarType(v as BarType)}
+                  value={cardType}
+                  onValueChange={(v) => setCardType(v as CardType)}
+                  disabled={barType !== "absolute"}
                 >
-                  <SelectTrigger id="bar-type" className="w-full capitalize">
+                  <SelectTrigger id="card-type" className="w-full capitalize">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {BAR_TYPE.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
+                    {CARD_TYPE.map((v) => (
+                      <SelectItem
+                        key={v}
+                        value={v}
+                        className="capitalize"
+                        disabled={["dominant", "manual"].includes(v)}
+                      >
                         {v}
                       </SelectItem>
                     ))}
