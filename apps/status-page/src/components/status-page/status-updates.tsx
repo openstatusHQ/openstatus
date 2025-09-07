@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { cn } from "@/lib/utils";
 import { Inbox } from "lucide-react";
 import { useState } from "react";
@@ -28,6 +29,7 @@ export function StatusUpdates({
   ...props
 }: StatusUpdatesProps) {
   const [success, setSuccess] = useState(false);
+  const prefix = usePathnamePrefix();
 
   return (
     <Popover>
@@ -83,7 +85,7 @@ export function StatusUpdates({
           <TabsContent value="rss" className="flex flex-col gap-2">
             <div className="border-b px-2 pb-2">
               <Input
-                placeholder="https://status.openstatus.dev/feed/rss"
+                placeholder={`https://${prefix}.openstatus.dev/feed/rss`}
                 className="disabled:opacity-90"
                 disabled
               />
@@ -91,14 +93,14 @@ export function StatusUpdates({
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
-                value="https://status.openstatus.dev/feed/rss"
+                value={`https://${prefix}.openstatus.dev/feed/rss`}
               />
             </div>
           </TabsContent>
           <TabsContent value="atom" className="flex flex-col gap-2">
             <div className="border-b px-2 pb-2">
               <Input
-                placeholder="https://status.openstatus.dev/feed/atom"
+                placeholder={`https://${prefix}.openstatus.dev/feed/atom`}
                 className="disabled:opacity-90"
                 disabled
               />
@@ -106,7 +108,7 @@ export function StatusUpdates({
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
-                value="https://status.openstatus.dev/feed/atom"
+                value={`https://${prefix}.openstatus.dev/feed/atom`}
               />
             </div>
           </TabsContent>

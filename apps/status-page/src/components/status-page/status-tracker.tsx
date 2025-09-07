@@ -232,7 +232,7 @@ export function StatusTracker({
             key={item.timestamp}
             openDelay={0}
             closeDelay={0}
-            open={isPinned || isFocused || isHovered ? true : false}
+            open={isPinned || isFocused || isHovered}
           >
             <HoverCardTrigger asChild>
               <div
