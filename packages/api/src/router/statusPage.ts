@@ -111,9 +111,19 @@ export const statusPageRouter = createTRPCRouter({
           return {
             ...m.monitor,
             events,
+            // FIXME!!!!!
+            // status: m.monitor.status, + incidents/reports/maintenances
             status,
           };
         });
+
+      const status = monitors.some((m) => m.status === "error")
+        ? "error"
+        : monitors.some((m) => m.status === "degraded")
+          ? "degraded"
+          : monitors.some((m) => m.status === "info")
+            ? "info"
+            : "success";
 
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
@@ -122,6 +132,7 @@ export const statusPageRouter = createTRPCRouter({
         statusReports: _page.statusReports ?? [],
         maintenances: _page.maintenances ?? [],
         workspacePlan: _page.workspace.plan,
+        status,
       });
     }),
 

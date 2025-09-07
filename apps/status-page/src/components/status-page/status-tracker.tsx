@@ -7,6 +7,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDateRange, formatNumber } from "@/lib/formatter";
@@ -366,6 +367,18 @@ export function StatusTracker({
         );
       })}
     </div>
+  );
+}
+
+export function StatusTrackerSkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
+  return (
+    <Skeleton
+      className={cn("h-[50px] w-full bg-muted rounded-none", className)}
+      {...props}
+    />
   );
 }
 

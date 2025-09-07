@@ -99,12 +99,15 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
           })
           .array()
           .nullish(),
-        status: z.enum(["success", "degraded", "error", "info"]),
+        status: z
+          .enum(["success", "degraded", "error", "info"])
+          .default("success"),
       })
       .array(),
     statusReports: z.array(selectStatusReportPageSchema),
     incidents: z.array(selectIncidentSchema),
     maintenances: z.array(selectMaintenancePageSchema),
+    status: z.enum(["success", "degraded", "error", "info"]).default("success"),
     workspacePlan: workspacePlanSchema
       .nullable()
       .default("free")

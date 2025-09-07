@@ -13,7 +13,6 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
-import { getHighestStatus } from "@/components/status-page/utils";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Newspaper } from "lucide-react";
@@ -21,27 +20,23 @@ import { useParams } from "next/navigation";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
+  const { cardType, barType, showUptime } = useStatusPage();
   const trpc = useTRPC();
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
-  const { data: uptime } = useQuery(
+  const { data: uptime, isLoading } = useQuery(
     trpc.statusPage.getUptime.queryOptions({
       slug: domain,
       monitorIds: page?.monitors?.map((monitor) => monitor.id.toString()) || [],
     }),
   );
-  const { cardType, barType, showUptime } = useStatusPage();
 
   if (!page) return null;
 
   return (
     <div className="flex flex-col gap-6">
-      <Status
-        variant={getHighestStatus(
-          page.monitors.map((monitor) => monitor.status),
-        )}
-      >
+      <Status variant={page.status}>
         <StatusHeader>
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
@@ -68,6 +63,7 @@ export default function Page() {
                 monitor={monitor}
                 showUptime={showUptime}
                 events={monitor.events ?? []}
+                isLoading={isLoading}
               />
             );
           })}
