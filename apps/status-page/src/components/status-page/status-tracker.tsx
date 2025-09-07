@@ -421,7 +421,7 @@ export function StatusTrackerSkeleton({
 }: React.ComponentProps<typeof Skeleton>) {
   return (
     <Skeleton
-      className={cn("h-[50px] w-full bg-muted rounded-none", className)}
+      className={cn("h-[50px] w-full rounded-none bg-muted", className)}
       {...props}
     />
   );
