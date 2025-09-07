@@ -236,7 +236,7 @@ export function StatusTracker({
           >
             <HoverCardTrigger asChild>
               <div
-                className="group relative flex h-full w-full cursor-pointer flex-col px-px hover:opacity-80"
+                className="group relative flex h-full w-full cursor-pointer flex-col px-px hover:opacity-80 data-[aria-pressed=true]:opacity-80"
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}
                 onBlur={(e) => handleBarBlur(e, index)}
