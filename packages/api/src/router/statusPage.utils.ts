@@ -444,10 +444,13 @@ export function getUptime({
   barType: "absolute" | "dominant" | "manual";
 }): string {
   if (barType === "manual") {
-    const duration = events.reduce((acc, item) => {
-      if (!item.from) return acc;
-      return acc + ((item.to || new Date()).getTime() - item.from.getTime());
-    }, 0);
+    const duration = events
+      // NOTE: we want only user events
+      .filter((e) => e.type === "report")
+      .reduce((acc, item) => {
+        if (!item.from) return acc;
+        return acc + ((item.to || new Date()).getTime() - item.from.getTime());
+      }, 0);
 
     const total = data.length * 24 * 60 * 60 * 1000;
 
