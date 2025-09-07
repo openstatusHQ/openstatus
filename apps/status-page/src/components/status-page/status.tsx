@@ -197,7 +197,7 @@ export function StatusEmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed px-3 py-2 sm:px-8 sm:py-6 text-center bg-muted/30",
+        "flex flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-center sm:px-8 sm:py-6",
         className,
       )}
       {...props}

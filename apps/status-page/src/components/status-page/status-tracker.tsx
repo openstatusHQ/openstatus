@@ -221,7 +221,7 @@ export function StatusTracker({
             <HoverCardTrigger asChild>
               <div
                 className={cn(
-                  "group relative flex h-full w-full cursor-pointer flex-col px-px hover:opacity-80 data-[aria-pressed=true]:opacity-80 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-1",
+                  "group relative flex h-full w-full cursor-pointer flex-col px-px outline-none hover:opacity-80 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
                 )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}
@@ -267,7 +267,7 @@ export function StatusTracker({
               side="top"
               align="center"
               // NOTE: remove animation and transition to avoid flickering
-              className="min-w-40 w-auto p-0 ![animation-duration:0ms] ![transition-duration:0ms]"
+              className="![animation-duration:0ms] ![transition-duration:0ms] w-auto min-w-40 p-0"
             >
               <div>
                 <div className="p-2 text-xs">
@@ -385,7 +385,7 @@ function StatusTrackerTriggerAbsolute({
     return (
       <div
         key={`${item.timestamp}-empty`}
-        className="w-full transition-all h-full"
+        className="h-full w-full transition-all"
         style={{
           backgroundColor: statusColor ?? chartConfig.empty.color,
         }}
@@ -568,7 +568,7 @@ function StatusTrackerEvent({
       <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
         <div className="flex items-center gap-2">
           <div
-            className="h-2.5 w-2.5 rounded-sm shrink-0"
+            className="h-2.5 w-2.5 shrink-0 rounded-sm"
             style={{
               backgroundColor: chartConfig[status].color,
             }}

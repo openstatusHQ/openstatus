@@ -76,15 +76,15 @@ function ThemeCard({
 }) {
   const t = THEMES[theme][mode];
   return (
-    <div className="group/theme-card border rounded-lg overflow-hidden">
+    <div className="group/theme-card overflow-hidden rounded-lg border">
       <div
         style={{
           ...t,
         }}
-        className="w-full h-full bg-background"
+        className="h-full w-full bg-background"
       >
         {/* NOTE: we use pointer-events-none to prevent the hover card or tooltip from being interactive - the Portal container is document body and we loose the styles */}
-        <div className="scale-85 bg-background text-foreground pointer-events-none group-hover/theme-card:scale-90 transition-all duration-300">
+        <div className="pointer-events-none scale-85 bg-background text-foreground transition-all duration-300 group-hover/theme-card:scale-90">
           <Status variant="success">
             <StatusHeader>
               <StatusTitle>Craft</StatusTitle>
@@ -112,7 +112,7 @@ function ThemeCard({
 
 function ThemeGroup({ children, className }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("grid grid-cols-1 sm:grid-cols-2 gap-4", className)}>
+    <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", className)}>
       {children}
     </div>
   );
@@ -123,12 +123,12 @@ function ThemeHeader({ children, className }: React.ComponentProps<"div">) {
 }
 
 function ThemeTitle({ children, className }: React.ComponentProps<"div">) {
-  return <div className={cn("text-base font-bold", className)}>{children}</div>;
+  return <div className={cn("font-bold text-base", className)}>{children}</div>;
 }
 
 function ThemeAuthor({ children, className }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("text-xs text-muted-foreground font-mono", className)}>
+    <div className={cn("font-mono text-muted-foreground text-xs", className)}>
       {children}
     </div>
   );

@@ -16,7 +16,7 @@ export default function Layout({
     <Hydrate params={params}>
       <StatusPageProvider>
         <div className="flex min-h-screen flex-col gap-4">
-          <main className="mx-auto flex flex-col w-full max-w-2xl flex-1 px-3 py-2">
+          <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-3 py-2">
             {children}
           </main>
           <Footer className="w-full border-t" />
