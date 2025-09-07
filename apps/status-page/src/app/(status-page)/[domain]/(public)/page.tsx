@@ -25,10 +25,14 @@ export default function Page() {
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
-  const { data: uptime, isLoading } = useQuery(
+  // NOTE: we can prefetch that to avoid loading state
+  const { data: uptimeData, isLoading } = useQuery(
     trpc.statusPage.getUptime.queryOptions({
       slug: domain,
       monitorIds: page?.monitors?.map((monitor) => monitor.id.toString()) || [],
+      // NOTE: this will be moved to db config
+      cardType,
+      barType,
     }),
   );
 
@@ -44,25 +48,16 @@ export default function Page() {
         <StatusBanner />
         <StatusContent>
           {page.monitors.map((monitor) => {
+            const { data, uptime } =
+              uptimeData?.find((m) => m.id === monitor.id) ?? {};
             return (
               <StatusMonitor
                 key={monitor.id}
-                variant={monitor.status}
-                cardType={cardType}
-                barType={barType}
-                data={
-                  uptime
-                    ?.find((m) => m.id === monitor.id)
-                    ?.data.map((item) => ({
-                      ...item,
-                      success: item.ok,
-                      info: 0,
-                      timestamp: new Date(item.day).getTime(),
-                    })) || []
-                }
+                status={monitor.status}
+                data={data}
                 monitor={monitor}
+                uptime={uptime}
                 showUptime={showUptime}
-                events={monitor.events ?? []}
                 isLoading={isLoading}
               />
             );

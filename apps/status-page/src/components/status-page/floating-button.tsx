@@ -179,6 +179,7 @@ export function FloatingButton({ className }: { className?: string }) {
                   <SelectTrigger
                     id="status-variant"
                     className="w-full capitalize"
+                    disabled
                   >
                     <SelectValue />
                   </SelectTrigger>

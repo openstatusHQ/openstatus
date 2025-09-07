@@ -16,6 +16,8 @@ import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   fillStatusDataFor45Days,
   getEventsByMonitorId,
+  getUptime,
+  setDataByType,
 } from "./statusPage.utils";
 import {
   getMetricsLatencyMultiProcedure,
@@ -83,39 +85,21 @@ export const statusPageRouter = createTRPCRouter({
             incidents: m.monitor.incidents,
             reports: _page.statusReports,
             monitorId: m.monitor.id,
-            // pastDays
           });
-
-          const status = events.some(
-            (e) => e.type === "incident" && e.to === null,
-          )
-            ? ("error" as const)
-            : events.some(
-                  (e) =>
-                    e.type === "report" &&
-                    (e.to === null ||
-                      (e.to &&
-                        e.to?.getTime() >= new Date().getTime() &&
-                        e.from.getTime() <= new Date().getTime())),
-                )
-              ? ("degraded" as const)
+          const status = events.some((e) => e.type === "incident" && !e.to)
+            ? "error"
+            : events.some((e) => e.type === "report" && !e.to)
+              ? "degraded"
               : events.some(
                     (e) =>
                       e.type === "maintenance" &&
                       e.to &&
-                      e.to?.getTime() >= new Date().getTime() &&
-                      e.from.getTime() <= new Date().getTime(),
+                      e.from.getTime() <= new Date().getTime() &&
+                      e.to.getTime() >= new Date().getTime(),
                   )
-                ? ("info" as const)
-                : ("success" as const);
-
-          return {
-            ...m.monitor,
-            events,
-            // FIXME!!!!!
-            // status: m.monitor.status, + incidents/reports/maintenances
-            status,
-          };
+                ? "info"
+                : "success";
+          return { ...m.monitor, status };
         });
 
       const status = monitors.some((m) => m.status === "error")
@@ -170,6 +154,10 @@ export const statusPageRouter = createTRPCRouter({
       z.object({
         slug: z.string().toLowerCase(),
         monitorIds: z.string().array(),
+        cardType: z
+          .enum(["requests", "duration", "dominant", "manual"])
+          .default("requests"),
+        barType: z.enum(["absolute", "dominant", "manual"]).default("dominant"),
       }),
     )
     .query(async (opts) => {
@@ -178,25 +166,44 @@ export const statusPageRouter = createTRPCRouter({
       const _page = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
+          maintenances: {
+            with: {
+              maintenancesToMonitors: true,
+            },
+          },
+          statusReports: {
+            with: {
+              monitorsToStatusReports: true,
+              statusReportUpdates: true,
+            },
+          },
           monitorsToPages: {
             where: inArray(
               monitorsToPages.monitorId,
               opts.input.monitorIds.map(Number),
             ),
             with: {
-              monitor: true,
+              monitor: {
+                with: {
+                  incidents: true,
+                },
+              },
             },
           },
         },
       });
 
       if (!_page) return null;
-      if (_page.monitorsToPages.length !== opts.input.monitorIds.length)
-        return null;
+
+      const monitors = _page.monitorsToPages.filter(
+        (m) => m.monitor.active && !m.monitor.deletedAt,
+      );
+
+      if (monitors.length !== opts.input.monitorIds.length) return null;
 
       const monitorsByType = {
-        http: _page.monitorsToPages.filter((m) => m.monitor.jobType === "http"),
-        tcp: _page.monitorsToPages.filter((m) => m.monitor.jobType === "tcp"),
+        http: monitors.filter((m) => m.monitor.jobType === "http"),
+        tcp: monitors.filter((m) => m.monitor.jobType === "tcp"),
       };
 
       const proceduresByType = {
@@ -240,13 +247,32 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      return _page.monitorsToPages.map((m) => {
+      return monitors.map((m) => {
         const monitorId = m.monitor.id.toString();
+        const events = getEventsByMonitorId({
+          maintenances: _page.maintenances,
+          incidents: m.monitor.incidents,
+          reports: _page.statusReports,
+          monitorId: m.monitor.id,
+        });
         const rawData = statusDataByMonitorId.get(monitorId) || [];
         const filledData = fillStatusDataFor45Days(rawData, monitorId);
+        const processedData = setDataByType({
+          events,
+          data: filledData,
+          cardType: opts.input.cardType,
+          barType: opts.input.barType,
+        });
+        const uptime = getUptime({
+          data: filledData,
+          events,
+          barType: opts.input.barType,
+        });
+
         return {
           ...selectPublicMonitorSchema.parse(m.monitor),
-          data: filledData,
+          data: processedData,
+          uptime,
         };
       });
     }),

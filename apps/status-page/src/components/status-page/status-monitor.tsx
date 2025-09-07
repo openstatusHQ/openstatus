@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNowStrict } from "date-fns";
 import {
   AlertCircleIcon,
@@ -18,51 +19,39 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { useState } from "react";
-import type { BarType, CardType, VariantType } from "./floating-button";
+import type { VariantType } from "./floating-button";
 import { StatusTracker, StatusTrackerSkeleton } from "./status-tracker";
-import { type ChartData, getManualUptime, getTotalUptime } from "./utils";
 
 // TODO: use status instead of variant
 
+type Data = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number]["data"];
+
 export function StatusMonitor({
   className,
-  variant = "success",
-  cardType = "duration",
-  barType = "absolute",
+  status = "success",
   showUptime = true,
-  data,
+  data = [],
   monitor,
-  events,
+  uptime,
   isLoading = false,
   ...props
 }: React.ComponentProps<"div"> & {
-  variant?: VariantType;
-  cardType?: CardType;
-  barType?: BarType;
+  status?: VariantType;
   showUptime?: boolean;
+  uptime?: string;
   monitor: {
     name: string;
     description: string;
   };
-  data: ChartData[];
-  events?: {
-    id: number;
-    name: string;
-    from: Date;
-    to: Date | null;
-    type: "maintenance" | "incident" | "report";
-  }[];
+  data?: Data;
   isLoading?: boolean;
 }) {
-  const uptime = getTotalUptime(data);
-  const reportsUptime = getManualUptime(
-    events?.filter((e) => e.type === "report") || [],
-    data.length,
-  );
   return (
     <div
       data-slot="status-monitor"
-      data-variant={variant}
+      data-variant={status}
       className={cn("group/monitor flex flex-col gap-1", className)}
       {...props}
     >
@@ -78,24 +67,13 @@ export function StatusMonitor({
             isLoading ? (
               <StatusMonitorUptimeSkeleton />
             ) : (
-              <StatusMonitorUptime>
-                {barType === "manual" ? reportsUptime : uptime}%
-              </StatusMonitorUptime>
+              <StatusMonitorUptime>{uptime}</StatusMonitorUptime>
             )
           ) : null}
           <StatusMonitorIcon />
         </div>
       </div>
-      {isLoading ? (
-        <StatusTrackerSkeleton />
-      ) : (
-        <StatusTracker
-          cardType={cardType}
-          barType={barType}
-          data={data}
-          events={events}
-        />
-      )}
+      {isLoading ? <StatusTrackerSkeleton /> : <StatusTracker data={data} />}
       <StatusMonitorFooter data={data} isLoading={isLoading} />
     </div>
   );
@@ -172,7 +150,7 @@ export function StatusMonitorFooter({
   data,
   isLoading,
 }: {
-  data: ChartData[];
+  data: Data;
   isLoading?: boolean;
 }) {
   return (
@@ -181,7 +159,7 @@ export function StatusMonitorFooter({
         {isLoading ? (
           <Skeleton className="h-4 w-18" />
         ) : data.length > 0 ? (
-          formatDistanceToNowStrict(new Date(data[0]?.timestamp), {
+          formatDistanceToNowStrict(new Date(data[0].day), {
             unit: "day",
             addSuffix: true,
           })

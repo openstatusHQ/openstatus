@@ -86,19 +86,9 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
+    // TODO: include status of the monitor
     monitors: selectPublicMonitorSchema
       .extend({
-        // NOTE: this is used to display the events on the status page
-        events: z
-          .object({
-            id: z.number(),
-            name: z.string(),
-            from: z.date(),
-            to: z.date().nullable(),
-            type: z.enum(["maintenance", "incident", "report"]),
-          })
-          .array()
-          .nullish(),
         status: z
           .enum(["success", "degraded", "error", "info"])
           .default("success"),

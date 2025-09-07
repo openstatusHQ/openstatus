@@ -10,24 +10,18 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDateRange, formatNumber } from "@/lib/formatter";
+import { formatDateRange } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
-import {
-  endOfDay,
-  formatDistanceStrict,
-  isSameDay,
-  isWithinInterval,
-  startOfDay,
-} from "date-fns";
+import type { RouterOutputs } from "@openstatus/api";
+import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { type BarType, type CardType, VARIANT } from "./floating-button";
 import { requests } from "./messages";
-import {
-  type ChartData,
-  chartConfig,
-  getPercentagePriorityStatus,
-} from "./utils";
+import { chartConfig } from "./utils";
+
+type UptimeData = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number]["data"];
 
 // TODO: keyboard arrow navigation
 // FIXME: on small screens, avoid pinned state
@@ -37,25 +31,7 @@ import {
 // TODO: support status page logo + onClick to homepage
 // TODO: widget type -> current status only | with status history
 
-const STATUS = VARIANT;
-
-export function StatusTracker({
-  cardType = "duration",
-  barType = "absolute",
-  data,
-  events,
-}: {
-  cardType?: CardType;
-  barType?: BarType;
-  data: ChartData[];
-  events?: {
-    id: number;
-    name: string;
-    from: Date | null;
-    to: Date | null;
-    type: "maintenance" | "incident" | "report";
-  }[];
-}) {
+export function StatusTracker({ data }: { data: UptimeData }) {
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -203,54 +179,9 @@ export function StatusTracker({
         const isFocused = focusedIndex === index;
         const isHovered = hoveredIndex === index;
 
-        const r =
-          events?.filter((report) => {
-            if (report.type !== "report") return false;
-            if (!report.from) return false;
-            const itemDate = new Date(item.timestamp);
-            return isWithinInterval(itemDate, {
-              start: startOfDay(report.from),
-              end: endOfDay(report.to ?? new Date()),
-            });
-          }) || [];
-
-        const m =
-          events?.filter((maintenance) => {
-            if (maintenance.type !== "maintenance") return false;
-            if (!maintenance.from || !maintenance.to) return false;
-            const itemDate = new Date(item.timestamp);
-            return isWithinInterval(itemDate, {
-              start: startOfDay(maintenance.from),
-              end: endOfDay(maintenance.to),
-            });
-          }) || [];
-
-        const i =
-          events?.filter((incident) => {
-            if (incident.type !== "incident") return false;
-            if (!incident.from) return false;
-            const itemDate = new Date(item.timestamp);
-            return isWithinInterval(itemDate, {
-              start: startOfDay(incident.from),
-              end: endOfDay(incident.to ?? new Date()),
-            });
-          }) || [];
-
-        const hasMaintenances = m && m.length > 0;
-        const hasReports = r && r.length > 0;
-        const hasIncidents = i && i.length > 0;
-
-        const status = hasIncidents
-          ? "error"
-          : hasReports
-            ? "degraded"
-            : hasMaintenances
-              ? "info"
-              : undefined;
-
         return (
           <HoverCard
-            key={item.timestamp}
+            key={item.day}
             openDelay={0}
             closeDelay={0}
             open={isPinned || isFocused || isHovered}
@@ -272,33 +203,17 @@ export function StatusTracker({
                 aria-label={`Day ${index + 1} status`}
                 aria-pressed={isPinned}
               >
-                {(() => {
-                  switch (barType) {
-                    case "absolute":
-                      return (
-                        <StatusTrackerTriggerAbsolute
-                          // TODO: override item with { degraded } IF has reports
-                          item={item}
-                          status={status}
-                        />
-                      );
-                    case "dominant":
-                      return (
-                        <StatusTrackerTriggerDominant
-                          item={item}
-                          status={status}
-                        />
-                      );
-                    case "manual":
-                      return (
-                        <StatusTrackerTriggerManual
-                          status={status ?? "success"}
-                        />
-                      );
-                    default:
-                      return null;
-                  }
-                })()}
+                {/* Render processed bar segments from backend */}
+                {item.bar.map((segment, segmentIndex) => (
+                  <div
+                    key={`${item.day}-${segment.status}-${segmentIndex}`}
+                    className="w-full transition-all"
+                    style={{
+                      height: `${segment.height}%`,
+                      backgroundColor: chartConfig[segment.status].color,
+                    }}
+                  />
+                ))}
               </div>
             </HoverCardTrigger>
             <HoverCardContent
@@ -311,7 +226,7 @@ export function StatusTracker({
             >
               <div>
                 <div className="p-2 text-xs">
-                  {new Date(item.timestamp).toLocaleDateString("default", {
+                  {new Date(item.day).toLocaleDateString("default", {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
@@ -319,84 +234,58 @@ export function StatusTracker({
                 </div>
                 <Separator />
                 <div className="space-y-1 p-2 text-sm">
-                  {(() => {
-                    switch (cardType) {
-                      case "duration":
-                        return <StatusTrackerContentDuration item={item} />;
-                      case "dominant":
-                        return (
-                          <StatusTrackerContentDominant
-                            item={item}
-                            status={status}
-                          />
-                        );
-                      case "requests":
-                        return <StatusTrackerContentRequests item={item} />;
-                      case "manual":
-                        return (
-                          <StatusTrackerContentManual
-                            status={status ?? "success"}
-                          />
-                        );
-                      default:
-                        return null;
-                    }
-                  })()}
+                  {/* Render processed card data from backend */}
+                  {item.card.map((cardItem, cardIndex) => (
+                    <StatusTrackerContent
+                      key={`${item.day}-card-${cardIndex}`}
+                      status={cardItem.status}
+                      value={cardItem.value}
+                    />
+                  ))}
                 </div>
-                {r.length > 0 || m.length > 0 ? (
+                {item.events.length > 0 && (
                   <>
                     <Separator />
                     <div className="p-2">
-                      {i.length > 0
-                        ? i.map((incident) => {
-                            return (
-                              <StatusTrackerEvent
-                                key={incident.id}
-                                status="error"
-                                name="Incident"
-                                from={incident.from}
-                                to={incident.to}
-                              />
-                            );
-                          })
-                        : null}
-                      {r.length > 0
-                        ? r.map((report) => {
-                            return (
-                              <Link
-                                key={report.id}
-                                href={`/${prefix}/events/report/${report.id}`}
-                              >
-                                <StatusTrackerEvent
-                                  status="degraded"
-                                  name={report.name}
-                                  from={report.from}
-                                  to={report.to}
-                                />
-                              </Link>
-                            );
-                          })
-                        : null}
-                      {m.length > 0
-                        ? m.map((maintenance) => {
-                            return (
-                              <Link
-                                key={maintenance.id}
-                                href={`/${prefix}/events/maintenance/${maintenance.id}`}
-                              >
-                                <StatusTrackerEvent
-                                  status="info"
-                                  name={maintenance.name}
-                                  from={maintenance.from}
-                                  to={maintenance.to}
-                                />
-                              </Link>
-                            );
-                          })
-                        : null}
+                      {item.events.map((event) => {
+                        const eventStatus =
+                          event.type === "incident"
+                            ? "error"
+                            : event.type === "report"
+                              ? "degraded"
+                              : "info";
+
+                        const content = (
+                          <StatusTrackerEvent
+                            key={event.id}
+                            status={eventStatus}
+                            name={event.name}
+                            from={event.from}
+                            to={event.to}
+                          />
+                        );
+
+                        // Wrap reports and maintenances with links
+                        if (
+                          event.type === "report" ||
+                          event.type === "maintenance"
+                        ) {
+                          return (
+                            <Link
+                              key={event.id}
+                              href={`/${prefix}/events/report/${event.id}`}
+                            >
+                              {content}
+                            </Link>
+                          );
+                        }
+
+                        // Incidents don't have links
+                        return content;
+                      })}
                     </div>
                   </>
-                ) : null}
+                )}
                 {isPinned && !isTouch && (
                   <>
                     <Separator />
@@ -425,166 +314,6 @@ export function StatusTrackerSkeleton({
       {...props}
     />
   );
-}
-
-interface StatusTrackerTriggerAbsoluteProps {
-  item: ChartData;
-  status?: keyof typeof chartConfig;
-}
-
-function StatusTrackerTriggerAbsolute({
-  item,
-  status,
-}: StatusTrackerTriggerAbsoluteProps) {
-  const total = item.success + item.degraded + item.info + item.error;
-  const statusColor = status ? chartConfig[status].color : undefined;
-
-  // NOTE: making sure to use the status color if it is provided
-  if (total === 0 || statusColor) {
-    return (
-      <div
-        key={`${item.timestamp}-empty`}
-        className="h-full w-full transition-all"
-        style={{
-          backgroundColor: statusColor ?? chartConfig.empty.color,
-        }}
-      />
-    );
-  }
-
-  return STATUS.map((status) => {
-    const value = item[status as keyof typeof item] as number;
-    if (value === 0) return null;
-    const heightPercentage = (value / total) * 100;
-    return (
-      <div
-        key={`${item.timestamp}-${status}`}
-        className="w-full transition-all"
-        style={{
-          height: `${heightPercentage}%`,
-          backgroundColor: chartConfig[status].color,
-          // IDEA: only for status === "success", make the color less pop to emphasize the other statuses
-        }}
-      />
-    );
-  });
-}
-
-interface StatusTrackerTriggerDominantProps {
-  item: ChartData;
-  status?: keyof typeof chartConfig;
-}
-
-function StatusTrackerTriggerDominant({
-  item,
-  status,
-}: StatusTrackerTriggerDominantProps) {
-  const statusColor = status ? chartConfig[status].color : undefined;
-  const statusPriority = getPercentagePriorityStatus(item);
-
-  return (
-    <div
-      key={`${item.timestamp}-${statusPriority}`}
-      className="w-full transition-all"
-      style={{
-        height: "100%",
-        backgroundColor: statusColor ?? chartConfig[statusPriority].color,
-      }}
-    />
-  );
-}
-
-interface StatusTrackerTriggerManualProps {
-  status: keyof typeof chartConfig;
-}
-
-function StatusTrackerTriggerManual({
-  status,
-}: StatusTrackerTriggerManualProps) {
-  return (
-    <div
-      className="w-full transition-all"
-      style={{
-        height: "100%",
-        backgroundColor: chartConfig[status].color,
-      }}
-    />
-  );
-}
-
-function StatusTrackerContentDuration({ item }: { item: ChartData }) {
-  const total = item.success + item.degraded + item.info + item.error;
-  if (total === 0) {
-    return <StatusTrackerContent status="empty" value="1 day" />;
-  }
-
-  return STATUS.map((status) => {
-    const value = item[status];
-    if (value === 0) return null;
-
-    const percentage = Math.round((value / total) * 1000) / 1000;
-    const isToday = isSameDay(new Date(item.timestamp), new Date());
-
-    const hours = isToday ? new Date().getUTCHours() : 24;
-
-    const now = new Date();
-    const duration = formatDistanceStrict(
-      now,
-      new Date(now.getTime() + percentage * hours * 60 * 60 * 1000),
-    );
-
-    // NOTE: skip seconds because they are too short and not useful
-    if (duration.endsWith("seconds")) return null;
-
-    return (
-      <StatusTrackerContent key={status} status={status} value={duration} />
-    );
-  });
-}
-
-function StatusTrackerContentDominant({
-  item,
-  status,
-}: {
-  item: ChartData;
-  status?: keyof typeof chartConfig;
-}) {
-  const total = item.success + item.degraded + item.info + item.error;
-  if (total === 0) {
-    return <StatusTrackerContent status={status ?? "empty"} value="" />;
-  }
-
-  const priorityStatus = getPercentagePriorityStatus(item);
-
-  return <StatusTrackerContent status={status ?? priorityStatus} value={""} />;
-}
-
-function StatusTrackerContentRequests({ item }: { item: ChartData }) {
-  const total = item.success + item.degraded + item.info + item.error;
-  if (total === 0) {
-    return <StatusTrackerContent status="empty" value="1 day" />;
-  }
-
-  return STATUS.map((status) => {
-    const value = item[status];
-    if (value === 0) return null;
-
-    return (
-      <StatusTrackerContent
-        key={status}
-        status={status}
-        value={`${formatNumber(value)} reqs`}
-      />
-    );
-  });
-}
-
-function StatusTrackerContentManual({
-  status,
-}: {
-  status: keyof typeof chartConfig;
-}) {
-  return <StatusTrackerContent status={status} value="" />;
 }
 
 function StatusTrackerContent({

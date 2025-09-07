@@ -5,24 +5,19 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 
-export function fillStatusDataFor45Days(
-  data: Array<{
-    day: string;
-    count: number;
-    ok: number;
-    degraded: number;
-    error: number;
-    monitorId: string;
-  }>,
-  monitorId: string,
-): Array<{
+type StatusData = {
   day: string;
   count: number;
   ok: number;
   degraded: number;
   error: number;
   monitorId: string;
-}> {
+};
+
+export function fillStatusDataFor45Days(
+  data: Array<StatusData>,
+  monitorId: string,
+): Array<StatusData> {
   const result = [];
   const dataByDay = new Map();
 
@@ -151,4 +146,325 @@ export function getEventsByMonitorId({
     });
 
   return events;
+}
+
+type UptimeData = {
+  day: string;
+  events: Event[];
+  bar: {
+    status: "success" | "degraded" | "error" | "info" | "empty";
+    height: number; // percentage
+  }[];
+  card: {
+    status: "success" | "degraded" | "error" | "info" | "empty";
+    value: string;
+  }[];
+};
+
+// Priority mapping for status types (higher number = higher priority)
+const STATUS_PRIORITY = {
+  error: 3,
+  degraded: 2,
+  info: 1,
+  success: 0,
+  empty: -1,
+} as const;
+
+// Helper to get highest priority status from data
+function getHighestPriorityStatus(
+  item: StatusData,
+): keyof typeof STATUS_PRIORITY {
+  if (item.error > 0) return "error";
+  if (item.degraded > 0) return "degraded";
+  if (item.ok > 0) return "success";
+
+  return "empty";
+}
+
+// Helper to format numbers
+function formatNumber(num: number): string {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+  return num.toString();
+}
+
+// Helper to check if date is today
+function isToday(date: Date): boolean {
+  const today = new Date();
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  );
+}
+
+// Helper to format duration from minutes
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (remainingMinutes === 0) return `${hours}h`;
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+// Helper to check if date is within event range
+function isDateWithinEvent(date: Date, event: Event): boolean {
+  const startOfDay = new Date(date);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  const eventStart = new Date(event.from);
+  const eventEnd = event.to ? new Date(event.to) : new Date();
+
+  return (
+    eventStart.getTime() <= endOfDay.getTime() &&
+    eventEnd.getTime() >= startOfDay.getTime()
+  );
+}
+
+export function setDataByType({
+  events,
+  data,
+  cardType,
+  barType,
+}: {
+  events: Event[];
+  data: StatusData[];
+  cardType: "requests" | "duration" | "dominant" | "manual";
+  barType: "absolute" | "dominant" | "manual";
+}): UptimeData[] {
+  return data.map((dayData) => {
+    const date = new Date(dayData.day);
+
+    // Find events for this day
+    const dayEvents = events.filter((event) => isDateWithinEvent(date, event));
+
+    // Determine status override based on events
+    const hasIncidents = dayEvents.some((e) => e.type === "incident");
+    const hasReports = dayEvents.some((e) => e.type === "report");
+    const hasMaintenances = dayEvents.some((e) => e.type === "maintenance");
+
+    const eventStatus = hasIncidents
+      ? "error"
+      : hasReports
+        ? "degraded"
+        : hasMaintenances
+          ? "info"
+          : undefined;
+
+    // Calculate bar data based on barType
+    let barData: UptimeData["bar"];
+
+    const total = dayData.ok + dayData.degraded + dayData.error;
+    const dataStatus = getHighestPriorityStatus(dayData);
+
+    switch (barType) {
+      case "absolute":
+        if (eventStatus) {
+          // If there's an event override, show single status
+          barData = [
+            {
+              status: eventStatus,
+              height: 100,
+            },
+          ];
+        } else if (total === 0) {
+          // Empty day
+          barData = [
+            {
+              status: "empty",
+              height: 100,
+            },
+          ];
+        } else {
+          // Multiple segments for absolute view
+          const segments = [
+            { status: "success" as const, count: dayData.ok },
+            { status: "degraded" as const, count: dayData.degraded },
+            { status: "error" as const, count: dayData.error },
+          ]
+            .filter((segment) => segment.count > 0)
+            .map((segment) => ({
+              status: segment.status,
+              height: (segment.count / total) * 100,
+            }));
+
+          barData = segments;
+        }
+        break;
+      case "dominant":
+        barData = [
+          {
+            status: eventStatus ?? dataStatus,
+            height: 100,
+          },
+        ];
+        break;
+      case "manual":
+        const manualEventStatus = hasReports
+          ? "degraded"
+          : hasMaintenances
+            ? "info"
+            : undefined;
+        barData = [
+          {
+            status: manualEventStatus || "success",
+            height: 100,
+          },
+        ];
+        break;
+      default:
+        // Default to dominant behavior
+        barData = [
+          {
+            status: eventStatus ?? dataStatus,
+            height: 100,
+          },
+        ];
+        break;
+    }
+
+    // Calculate card data based on cardType
+    let cardData: UptimeData["card"] = [];
+
+    switch (cardType) {
+      case "requests":
+        if (total === 0) {
+          cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
+        } else {
+          const entries = [
+            { status: "success" as const, count: dayData.ok },
+            { status: "degraded" as const, count: dayData.degraded },
+            { status: "error" as const, count: dayData.error },
+          ];
+
+          cardData = entries
+            .filter((entry) => entry.count > 0)
+            .map((entry) => ({
+              status: entry.status,
+              value: `${formatNumber(entry.count)} reqs`,
+            }));
+        }
+        break;
+
+      case "duration":
+        if (total === 0) {
+          cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
+        } else {
+          const dateIsToday = isToday(date);
+          const hoursInDay = dateIsToday ? new Date().getUTCHours() : 24;
+
+          const entries = [
+            { status: "error" as const, count: dayData.error },
+            { status: "degraded" as const, count: dayData.degraded },
+            { status: "success" as const, count: dayData.ok },
+          ];
+
+          cardData = entries
+            .map((entry) => {
+              // TODO: if status === "error", check for length of incident event
+              if (entry.count === 0) return null;
+
+              const percentage = entry.count / total;
+              const minutes = Math.round(percentage * hoursInDay * 60);
+
+              // Skip very small durations
+              if (minutes < 1) return null;
+
+              return {
+                status: entry.status,
+                value: formatDuration(minutes),
+              };
+            })
+            .filter((item): item is NonNullable<typeof item> => item !== null);
+        }
+        break;
+
+      case "dominant":
+        cardData = [
+          {
+            status: eventStatus ?? dataStatus,
+            value: "",
+          },
+        ];
+        break;
+
+      case "manual":
+        const manualEventStatus = hasReports
+          ? "degraded"
+          : hasMaintenances
+            ? "info"
+            : undefined;
+        cardData = [
+          {
+            status: manualEventStatus || "success",
+            value: "",
+          },
+        ];
+        break;
+      default:
+        // Default to requests behavior
+        if (total === 0) {
+          cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
+        } else {
+          const entries = [
+            { status: "error" as const, count: dayData.error },
+            { status: "degraded" as const, count: dayData.degraded },
+            { status: "success" as const, count: dayData.ok },
+          ];
+
+          cardData = entries
+            .filter((entry) => entry.count > 0)
+            .map((entry) => ({
+              status: entry.status,
+              value: `${formatNumber(entry.count)} reqs`,
+            }));
+        }
+        break;
+    }
+
+    return {
+      day: dayData.day,
+      events: dayEvents.filter((e) => e.type !== "incident"),
+      bar: barData,
+      card: cardData,
+    };
+  });
+}
+
+export function getUptime({
+  data,
+  events,
+  barType,
+}: {
+  data: StatusData[];
+  events: Event[];
+  barType: "absolute" | "dominant" | "manual";
+}): string {
+  if (barType === "manual") {
+    const duration = events.reduce((acc, item) => {
+      if (!item.from) return acc;
+      return acc + ((item.to || new Date()).getTime() - item.from.getTime());
+    }, 0);
+
+    const total = data.length * 24 * 60 * 60 * 1000;
+
+    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+  }
+
+  const { ok, total } = data.reduce(
+    (acc, item) => ({
+      ok: acc.ok + item.ok + item.degraded,
+      total: acc.total + item.ok + item.degraded + item.error,
+    }),
+    {
+      ok: 0,
+      total: 0,
+    },
+  );
+
+  if (total === 0) return "100%";
+  return `${Math.round((ok / total) * 10000) / 100}%`;
 }
