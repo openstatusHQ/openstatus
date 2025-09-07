@@ -262,7 +262,7 @@ export function setDataByType({
 
     switch (barType) {
       case "absolute":
-        if (eventStatus) {
+        if (eventStatus && eventStatus !== "error") {
           // If there's an event override, show single status
           barData = [
             {
@@ -364,14 +364,30 @@ export function setDataByType({
 
           cardData = entries
             .map((entry) => {
-              // TODO: if status === "error", check for length of incident event
+              if (entry.status === "error") {
+                const incident = events.find(
+                  (i) => i.type === "incident" && isDateWithinEvent(date, i),
+                );
+                // NOTE: override error with incident duration on "duration" type
+                if (incident?.from && incident.to) {
+                  const duration = Math.round(
+                    (incident.to.getTime() - incident.from.getTime()) /
+                      (1000 * 60),
+                  );
+                  return {
+                    status: entry.status,
+                    value: formatDuration(duration),
+                  };
+                }
+              }
+
               if (entry.count === 0) return null;
 
               const percentage = entry.count / total;
               const minutes = Math.round(percentage * hoursInDay * 60);
 
               // Skip very small durations
-              if (minutes < 1) return null;
+              if (minutes <= 1) return null;
 
               return {
                 status: entry.status,
