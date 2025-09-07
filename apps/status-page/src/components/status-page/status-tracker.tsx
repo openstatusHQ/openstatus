@@ -488,6 +488,9 @@ function StatusTrackerContentDuration({ item }: { item: ChartData }) {
       new Date(now.getTime() + percentage * hours * 60 * 60 * 1000),
     );
 
+    // NOTE: skip seconds because they are too short and not useful
+    if (duration.endsWith("seconds")) return null;
+
     return (
       <StatusTrackerContent key={status} status={status} value={duration} />
     );
