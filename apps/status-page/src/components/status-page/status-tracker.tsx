@@ -241,6 +241,7 @@ export function StatusTracker({
                     case "absolute":
                       return (
                         <StatusTrackerTriggerAbsolute
+                          // TODO: override item with { degraded } IF has reports
                           item={item}
                           status={status}
                         />
@@ -399,7 +400,8 @@ function StatusTrackerTriggerAbsolute({
   const total = item.success + item.degraded + item.info + item.error;
   const statusColor = status ? chartConfig[status].color : undefined;
 
-  if (total === 0) {
+  // NOTE: making sure to use the status color if it is provided
+  if (total === 0 || statusColor) {
     return (
       <div
         key={`${item.timestamp}-empty`}
