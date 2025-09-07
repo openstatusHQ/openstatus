@@ -67,23 +67,12 @@ export function StatusTracker({
   }[];
 }) {
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isTouch = useMediaQuery("(hover: none)");
   const prefix = usePathnamePrefix();
 
-  // Window-level Escape key listener
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && pinnedIndex !== null) {
-        setPinnedIndex(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [pinnedIndex]);
-
-  // Document-level outside click listener
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (
@@ -102,15 +91,48 @@ export function StatusTracker({
     }
   }, [pinnedIndex]);
 
-  // Handle keyboard events for accessibility (kept for fallback)
+  useEffect(() => {
+    if (focusedIndex !== null && containerRef.current) {
+      const buttons = containerRef.current.querySelectorAll('[role="button"]');
+      const targetButton = buttons[focusedIndex] as HTMLElement;
+      if (targetButton) {
+        targetButton.focus();
+      }
+    }
+  }, [focusedIndex]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       setPinnedIndex(null);
+      setFocusedIndex(null);
+      setHoveredIndex(null);
+      return;
+    }
+
+    if (focusedIndex !== null) {
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          setFocusedIndex((prev) =>
+            prev !== null && prev > 0 ? prev - 1 : data.length - 1,
+          );
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          setFocusedIndex((prev) =>
+            prev !== null && prev < data.length - 1 ? prev + 1 : 0,
+          );
+          break;
+        case "Enter":
+        case " ":
+          e.preventDefault();
+          handleBarClick(focusedIndex);
+          break;
+      }
     }
   };
 
   const handleBarClick = (index: number) => {
-    // Toggle pinned state: if clicking the same bar, unpin it; otherwise, pin the new bar
     if (pinnedIndex === index) {
       setPinnedIndex(null);
     } else {
@@ -118,15 +140,42 @@ export function StatusTracker({
     }
   };
 
+  const handleBarFocus = (index: number) => {
+    setFocusedIndex(index);
+  };
+
+  const handleBarBlur = (e: React.FocusEvent, _currentIndex: number) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    const isMovingToAnotherBar =
+      relatedTarget &&
+      relatedTarget.closest('[role="toolbar"]') === containerRef.current &&
+      relatedTarget.getAttribute("role") === "button";
+
+    if (!isMovingToAnotherBar) {
+      setFocusedIndex(null);
+    }
+  };
+
+  const handleBarMouseEnter = (index: number) => {
+    setHoveredIndex(index);
+  };
+
+  const handleBarMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
   return (
     <div
       ref={containerRef}
       className="flex h-[50px] w-full items-end"
       onKeyDown={handleKeyDown}
-      // tabIndex={0}
+      role="toolbar"
+      aria-label="Status tracker"
     >
       {data.map((item, index) => {
         const isPinned = pinnedIndex === index;
+        const isFocused = focusedIndex === index;
+        const isHovered = hoveredIndex === index;
 
         const r =
           reports?.filter((report) => {
@@ -183,12 +232,22 @@ export function StatusTracker({
             key={item.timestamp}
             openDelay={0}
             closeDelay={0}
-            open={isPinned ? true : undefined}
+            open={isPinned || isFocused || isHovered ? true : false}
           >
             <HoverCardTrigger asChild>
               <div
-                className="group relative flex h-full w-full cursor-pointer flex-col px-px transition-opacity hover:opacity-80" // sm:px-0.5
+                className="group relative flex h-full w-full cursor-pointer flex-col px-px hover:opacity-80"
                 onClick={() => handleBarClick(index)}
+                onFocus={() => handleBarFocus(index)}
+                onBlur={(e) => handleBarBlur(e, index)}
+                onMouseEnter={() => handleBarMouseEnter(index)}
+                onMouseLeave={handleBarMouseLeave}
+                tabIndex={
+                  index === 0 && focusedIndex === null ? 0 : isFocused ? 0 : -1
+                }
+                role="button"
+                aria-label={`Day ${index + 1} status`}
+                aria-pressed={isPinned}
               >
                 {(() => {
                   switch (barType) {
@@ -221,7 +280,8 @@ export function StatusTracker({
             <HoverCardContent
               side="top"
               align="center"
-              className="min-w-40 w-auto p-0"
+              // NOTE: remove animation and transition to avoid flickering
+              className="min-w-40 w-auto p-0 ![animation-duration:0ms] ![transition-duration:0ms]"
             >
               <div>
                 <div className="p-2 text-xs">

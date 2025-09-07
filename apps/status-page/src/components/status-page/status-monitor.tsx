@@ -145,6 +145,7 @@ export function StatusMonitorDescription({
             if (isTouch) setOpen((prev) => !prev);
             onClick?.(e);
           }}
+          className="rounded-full"
           {...props}
         >
           <InfoIcon className="size-4 text-muted-foreground" />
