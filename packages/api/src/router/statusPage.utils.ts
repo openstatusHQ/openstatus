@@ -1,3 +1,10 @@
+import type {
+  Incident,
+  Maintenance,
+  StatusReport,
+  StatusReportUpdate,
+} from "@openstatus/db/src/schema";
+
 export function fillStatusDataFor45Days(
   data: Array<{
     day: string;
@@ -59,4 +66,83 @@ export function fillStatusDataFor45Days(
   return result.sort(
     (a, b) => new Date(a.day).getTime() - new Date(b.day).getTime(),
   );
+}
+
+type Event = {
+  id: number;
+  name: string;
+  from: Date;
+  to: Date | null;
+  type: "maintenance" | "incident" | "report";
+};
+
+export function getEventsByMonitorId({
+  maintenances,
+  incidents,
+  reports,
+  monitorId,
+}: {
+  maintenances: (Maintenance & {
+    maintenancesToMonitors: { monitorId: number }[];
+  })[];
+  incidents: Incident[];
+  reports: (StatusReport & {
+    monitorsToStatusReports: { monitorId: number }[];
+    statusReportUpdates: StatusReportUpdate[];
+  })[];
+  monitorId: number;
+}): Event[] {
+  const events: Event[] = [];
+  maintenances
+    .filter((maintenance) =>
+      maintenance.maintenancesToMonitors.some((m) => m.monitorId === monitorId),
+    )
+    .forEach((maintenance) => {
+      events.push({
+        id: maintenance.id,
+        name: maintenance.title,
+        from: maintenance.from,
+        to: maintenance.to,
+        type: "maintenance",
+      });
+    });
+
+  incidents
+    .filter((incident) => incident.monitorId === monitorId)
+    .forEach((incident) => {
+      if (!incident.createdAt) return;
+      events.push({
+        id: incident.id,
+        name: incident.title,
+        from: incident.createdAt,
+        to: incident.resolvedAt,
+        type: "incident",
+      });
+    });
+
+  reports
+    .filter((report) =>
+      report.monitorsToStatusReports.some((m) => m.monitorId === monitorId),
+    )
+    .map((report) => {
+      const updates = report.statusReportUpdates.sort(
+        (a, b) => a.date.getTime() - b.date.getTime(),
+      );
+      const firstUpdate = updates[0];
+      const lastUpdate = updates[updates.length - 1];
+      if (!firstUpdate?.date) return;
+      events.push({
+        id: report.id,
+        name: report.title,
+        from: firstUpdate?.date,
+        to:
+          lastUpdate?.status === "resolved" ||
+          lastUpdate?.status === "monitoring"
+            ? lastUpdate?.date
+            : null,
+        type: "report",
+      });
+    });
+
+  return events;
 }

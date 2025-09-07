@@ -131,7 +131,7 @@ export function getTotalUptime(item: ChartData[]) {
   return Math.round((ok / total) * 10000) / 100;
 }
 
-export function getTotalTime(
+export function getManualUptime(
   items: { from: Date | null; to: Date | null }[],
   days: number,
 ) {

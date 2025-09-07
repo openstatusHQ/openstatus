@@ -41,29 +41,17 @@ export function StatusTracker({
   cardType = "duration",
   barType = "absolute",
   data,
-  maintenances,
-  incidents,
-  reports,
+  events,
 }: {
   cardType?: CardType;
   barType?: BarType;
   data: ChartData[];
-  maintenances?: {
-    id: number;
-    name: string;
-    from: Date;
-    to: Date;
-  }[];
-  incidents?: {
-    id: number;
-    from: Date | null;
-    to: Date | null;
-  }[];
-  reports?: {
+  events?: {
     id: number;
     name: string;
     from: Date | null;
     to: Date | null;
+    type: "maintenance" | "incident" | "report";
   }[];
 }) {
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
@@ -178,40 +166,35 @@ export function StatusTracker({
         const isHovered = hoveredIndex === index;
 
         const r =
-          reports?.filter((report) => {
+          events?.filter((report) => {
+            if (report.type !== "report") return false;
             if (!report.from) return false;
-            const reportFromDate = new Date(report.from);
-            const reportToDate = report.to ? new Date(report.to) : new Date();
             const itemDate = new Date(item.timestamp);
             return isWithinInterval(itemDate, {
-              start: startOfDay(reportFromDate),
-              end: endOfDay(reportToDate),
+              start: startOfDay(report.from),
+              end: endOfDay(report.to ?? new Date()),
             });
           }) || [];
 
         const m =
-          maintenances?.filter((maintenance) => {
-            if (!maintenance.from) return false;
-            const maintenanceStartDate = new Date(maintenance.from);
-            const maintenanceEndDate = new Date(maintenance.to);
+          events?.filter((maintenance) => {
+            if (maintenance.type !== "maintenance") return false;
+            if (!maintenance.from || !maintenance.to) return false;
             const itemDate = new Date(item.timestamp);
             return isWithinInterval(itemDate, {
-              start: startOfDay(maintenanceStartDate),
-              end: endOfDay(maintenanceEndDate),
+              start: startOfDay(maintenance.from),
+              end: endOfDay(maintenance.to),
             });
           }) || [];
 
         const i =
-          incidents?.filter((incident) => {
+          events?.filter((incident) => {
+            if (incident.type !== "incident") return false;
             if (!incident.from) return false;
-            const incidentFromDate = new Date(incident.from);
-            const incidentToDate = incident.to
-              ? new Date(incident.to)
-              : new Date();
             const itemDate = new Date(item.timestamp);
             return isWithinInterval(itemDate, {
-              start: startOfDay(incidentFromDate),
-              end: endOfDay(incidentToDate),
+              start: startOfDay(incident.from),
+              end: endOfDay(incident.to ?? new Date()),
             });
           }) || [];
 

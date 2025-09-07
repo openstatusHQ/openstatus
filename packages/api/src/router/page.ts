@@ -262,7 +262,7 @@ export const pageRouter = createTRPCRouter({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
       with: {
         monitorsToPages: { with: { monitor: true } },
-        maintenancesToPages: {
+        maintenances: {
           where: and(
             lte(maintenance.from, new Date()),
             gte(maintenance.to, new Date()),
@@ -278,7 +278,6 @@ export const pageRouter = createTRPCRouter({
         },
       },
     });
-    console.log(allPages.map((page) => page.statusReports));
     return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
   }),
 
@@ -480,7 +479,7 @@ export const pageRouter = createTRPCRouter({
         where: and(...whereConditions),
         with: {
           monitorsToPages: { with: { monitor: true } },
-          maintenancesToPages: true,
+          maintenances: true,
         },
       });
 
@@ -497,7 +496,7 @@ export const pageRouter = createTRPCRouter({
             ...m.monitor,
             order: m.order,
           })),
-          maintenances: data?.maintenancesToPages,
+          maintenances: data?.maintenances,
         });
     }),
 

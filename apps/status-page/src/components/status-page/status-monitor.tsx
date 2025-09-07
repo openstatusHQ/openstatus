@@ -19,7 +19,9 @@ import {
 import { useState } from "react";
 import type { BarType, CardType, VariantType } from "./floating-button";
 import { StatusTracker } from "./status-tracker";
-import { type ChartData, getTotalTime, getTotalUptime } from "./utils";
+import { type ChartData, getManualUptime, getTotalUptime } from "./utils";
+
+// TODO: use status instead of variant
 
 export function StatusMonitor({
   className,
@@ -29,9 +31,7 @@ export function StatusMonitor({
   showUptime = true,
   data,
   monitor,
-  maintenances,
-  incidents,
-  reports,
+  events,
   ...props
 }: React.ComponentProps<"div"> & {
   variant?: VariantType;
@@ -43,26 +43,19 @@ export function StatusMonitor({
     description: string;
   };
   data: ChartData[];
-  maintenances?: {
+  events?: {
     id: number;
     name: string;
     from: Date;
-    to: Date;
-  }[];
-  incidents?: {
-    id: number;
-    from: Date | null;
     to: Date | null;
-  }[];
-  reports?: {
-    id: number;
-    name: string;
-    from: Date | null;
-    to: Date | null;
+    type: "maintenance" | "incident" | "report";
   }[];
 }) {
   const uptime = getTotalUptime(data);
-  const reportsUptime = getTotalTime(reports || [], data.length);
+  const reportsUptime = getManualUptime(
+    events?.filter((e) => e.type === "report") || [],
+    data.length,
+  );
   return (
     <div
       data-slot="status-monitor"
@@ -90,9 +83,7 @@ export function StatusMonitor({
         cardType={cardType}
         barType={barType}
         data={data}
-        maintenances={maintenances}
-        incidents={incidents}
-        reports={reports}
+        events={events}
       />
       <div
         className={cn(

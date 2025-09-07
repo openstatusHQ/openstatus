@@ -61,7 +61,7 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
       monitor: selectMonitorSchema,
     }),
   ),
-  maintenancesToPages: selectMaintenanceSchema.array().default([]),
+  maintenances: selectMaintenanceSchema.array().default([]),
   statusReports: selectStatusReportSchema
     .extend({ statusReportUpdates: selectStatusReportUpdateSchema.array() })
     .array()
@@ -86,7 +86,22 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
-    monitors: z.array(selectPublicMonitorSchema),
+    monitors: selectPublicMonitorSchema
+      .extend({
+        // NOTE: this is used to display the events on the status page
+        events: z
+          .object({
+            id: z.number(),
+            name: z.string(),
+            from: z.date(),
+            to: z.date().nullable(),
+            type: z.enum(["maintenance", "incident", "report"]),
+          })
+          .array()
+          .nullish(),
+        status: z.enum(["success", "degraded", "error", "info"]),
+      })
+      .array(),
     statusReports: z.array(selectStatusReportPageSchema),
     incidents: z.array(selectIncidentSchema),
     maintenances: z.array(selectMaintenancePageSchema),

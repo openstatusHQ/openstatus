@@ -101,7 +101,7 @@ export function StatusBanner({ className }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 rounded-lg border px-3 py-2",
+        "flex items-center gap-3 rounded-lg border px-3 py-2 sm:px-4 sm:py-3",
         "group-data-[variant=success]:border-success/20 group-data-[variant=success]:bg-success/10",
         "group-data-[variant=degraded]:border-warning/20 group-data-[variant=degraded]:bg-warning/10",
         "group-data-[variant=error]:border-destructive/20 group-data-[variant=error]:bg-destructive/10",
@@ -172,7 +172,6 @@ export function StatusTimestamp({
   return (
     <TooltipProvider>
       <Tooltip>
-        {/* TODO: add outline focus */}
         <TooltipTrigger
           className={cn(
             "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
@@ -198,7 +197,7 @@ export function StatusEmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed px-3 py-2 text-center",
+        "flex flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed px-3 py-2 sm:px-8 sm:py-6 text-center bg-muted/30",
         className,
       )}
       {...props}

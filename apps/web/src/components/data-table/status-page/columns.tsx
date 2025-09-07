@@ -26,7 +26,7 @@ import { DataTableRowActions } from "./data-table-row-actions";
 export const columns: ColumnDef<
   Page & {
     monitorsToPages: { monitor: { name: string } }[];
-    maintenancesToPages: Maintenance[]; // we get only the active maintenances!
+    maintenances: Maintenance[]; // we get only the active maintenances!
     statusReports: (StatusReport & {
       statusReportUpdates: StatusReportUpdate[];
     })[];

@@ -1,22 +1,22 @@
 import { z } from "zod";
 
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
-  incidentTable,
   maintenance,
-  monitor,
   monitorsToPages,
   page,
   pageSubscriber,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
   statusReport,
-  workspace,
 } from "@openstatus/db/src/schema";
 
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { fillStatusDataFor45Days } from "./statusPage.utils";
+import {
+  fillStatusDataFor45Days,
+  getEventsByMonitorId,
+} from "./statusPage.utils";
 import {
   getMetricsLatencyMultiProcedure,
   getMetricsLatencyProcedure,
@@ -40,104 +40,88 @@ export const statusPageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return null;
 
-      const result = await opts.ctx.db
-        .select()
-        .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-        )
-        .get();
-
-      if (!result) return null;
-
-      const [workspaceResult, monitorsToPagesResult] = await Promise.all([
-        opts.ctx.db
-          .select()
-          .from(workspace)
-          .where(eq(workspace.id, result.workspaceId))
-          .get(),
-        opts.ctx.db
-          .select()
-          .from(monitorsToPages)
-          .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
-          .where(
-            // make sur only active monitors are returned!
-            and(
-              eq(monitorsToPages.pageId, result.id),
-              eq(monitor.active, true),
-            ),
-          )
-          .all(),
-      ]);
-
-      // FIXME: There is probably a better way to do this
-
-      const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
-      );
-
-      const statusReports = await opts.ctx.db.query.statusReport.findMany({
-        where: eq(statusReport.pageId, result.id),
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
-          statusReportUpdates: {
-            orderBy: (reports, { desc }) => desc(reports.date),
+          workspace: true,
+          statusReports: {
+            orderBy: (reports, { desc }) => desc(reports.createdAt),
+            with: {
+              statusReportUpdates: {
+                orderBy: (reports, { desc }) => desc(reports.date),
+              },
+              monitorsToStatusReports: { with: { monitor: true } },
+            },
           },
-          monitorsToStatusReports: { with: { monitor: true } },
+          maintenances: {
+            with: {
+              maintenancesToMonitors: { with: { monitor: true } },
+            },
+            orderBy: (maintenances, { desc }) => desc(maintenances.from),
+          },
+          monitorsToPages: {
+            with: {
+              monitor: {
+                with: {
+                  incidents: true,
+                },
+              },
+            },
+            orderBy: (monitorsToPages, { asc }) => asc(monitorsToPages.order),
+          },
         },
       });
 
-      const monitorQuery =
-        monitorsId.length > 0
-          ? opts.ctx.db
-              .select()
-              .from(monitor)
-              .where(
-                and(
-                  inArray(monitor.id, monitorsId),
-                  eq(monitor.active, true),
-                  isNull(monitor.deletedAt),
-                ), // REMINDER: this is hardcoded
-              )
-              .all()
-          : [];
+      if (!_page) return null;
 
-      const maintenancesQuery = opts.ctx.db.query.maintenance.findMany({
-        where: eq(maintenance.pageId, result.id),
-        with: { maintenancesToMonitors: { with: { monitor: true } } },
-        orderBy: (maintenances, { desc }) => desc(maintenances.from),
-      });
+      const monitors = _page.monitorsToPages
+        // NOTE: we cannot nested `where` in drizzle to filter active monitors
+        .filter((m) => m.monitor.active && !m.monitor.deletedAt)
+        .map((m) => {
+          const events = getEventsByMonitorId({
+            maintenances: _page.maintenances,
+            incidents: m.monitor.incidents,
+            reports: _page.statusReports,
+            monitorId: m.monitor.id,
+          });
 
-      const incidentsQuery =
-        monitorsId.length > 0
-          ? await opts.ctx.db
-              .select()
-              .from(incidentTable)
-              .where(inArray(incidentTable.monitorId, monitorsId))
-              .all()
-          : [];
-      // TODO: monitorsToPagesResult has the result already, no need to query again
-      const [monitors, maintenances, incidents] = await Promise.all([
-        monitorQuery,
-        maintenancesQuery,
-        incidentsQuery,
-      ]);
+          const status = events.some(
+            (e) => e.type === "incident" && e.to === null,
+          )
+            ? ("error" as const)
+            : events.some(
+                  (e) =>
+                    e.type === "report" &&
+                    (e.to === null ||
+                      (e.to &&
+                        e.to?.getTime() >= new Date().getTime() &&
+                        e.from.getTime() <= new Date().getTime())),
+                )
+              ? ("degraded" as const)
+              : events.some(
+                    (e) =>
+                      e.type === "maintenance" &&
+                      e.to &&
+                      e.to?.getTime() >= new Date().getTime() &&
+                      e.from.getTime() <= new Date().getTime(),
+                  )
+                ? ("info" as const)
+                : ("success" as const);
+
+          return {
+            ...m.monitor,
+            events,
+            status,
+          };
+        });
 
       return selectPublicPageSchemaWithRelation.parse({
-        ...result,
-        // TODO: improve performance and move into SQLite query
-        monitors: monitors.sort((a, b) => {
-          const aIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === a.id)
-              ?.monitors_to_pages.order || 0;
-          const bIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === b.id)
-              ?.monitors_to_pages.order || 0;
-          return aIndex - bIndex;
-        }),
-        incidents,
-        statusReports,
-        maintenances,
-        workspacePlan: workspaceResult?.plan,
+        ..._page,
+        monitors,
+        incidents: monitors.flatMap((m) => m.incidents) ?? [],
+        statusReports: _page.statusReports ?? [],
+        maintenances: _page.maintenances ?? [],
+        workspacePlan: _page.workspace.plan,
       });
     }),
 
@@ -169,7 +153,7 @@ export const statusPageRouter = createTRPCRouter({
       return _maintenance;
     }),
 
-  getStatus: publicProcedure
+  getUptime: publicProcedure
     .input(
       z.object({
         slug: z.string().toLowerCase(),
