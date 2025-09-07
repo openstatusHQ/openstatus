@@ -134,4 +134,6 @@ export type StatusReportWithUpdates = z.infer<
   typeof selectStatusReportPageSchema
 >;
 export type PublicMonitor = z.infer<typeof selectPublicMonitorSchema>;
-export type PublicPage = z.infer<typeof selectPublicPageSchemaWithRelation>;
+export type PublicPage = z.infer<
+  typeof legacy_selectPublicPageSchemaWithRelation
+>;
