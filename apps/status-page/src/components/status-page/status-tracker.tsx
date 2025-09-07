@@ -284,7 +284,12 @@ export function StatusTracker({
                       case "duration":
                         return <StatusTrackerContentDuration item={item} />;
                       case "dominant":
-                        return <StatusTrackerContentDominant item={item} />;
+                        return (
+                          <StatusTrackerContentDominant
+                            item={item}
+                            status={status}
+                          />
+                        );
                       case "requests":
                         return <StatusTrackerContentRequests item={item} />;
                       case "manual":
@@ -496,15 +501,21 @@ function StatusTrackerContentDuration({ item }: { item: ChartData }) {
   });
 }
 
-function StatusTrackerContentDominant({ item }: { item: ChartData }) {
+function StatusTrackerContentDominant({
+  item,
+  status,
+}: {
+  item: ChartData;
+  status?: keyof typeof chartConfig;
+}) {
   const total = item.success + item.degraded + item.info + item.error;
   if (total === 0) {
-    return <StatusTrackerContent status="empty" value="" />;
+    return <StatusTrackerContent status={status ?? "empty"} value="" />;
   }
 
-  const status = getPercentagePriorityStatus(item);
+  const priorityStatus = getPercentagePriorityStatus(item);
 
-  return <StatusTrackerContent key={status} status={status} value={""} />;
+  return <StatusTrackerContent status={status ?? priorityStatus} value={""} />;
 }
 
 function StatusTrackerContentRequests({ item }: { item: ChartData }) {
