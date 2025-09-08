@@ -10,6 +10,7 @@ import {
   Camera,
   CandlestickChart,
   Check,
+  ChevronsLeftRightEllipsis,
   Clock,
   Cog,
   Command,
@@ -143,6 +144,7 @@ export const Icons = {
   server: Server,
   command: Command,
   radar: Radar,
+  "chevron-left-right-ellipsis":ChevronsLeftRightEllipsis,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
