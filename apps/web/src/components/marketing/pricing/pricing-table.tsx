@@ -175,9 +175,13 @@ export function PricingTable({
                             }
                             if (
                               Array.isArray(limitValue) &&
-                              limitValue.length > 0
+                              limitValue.length > 0 && value !== 'periodicity'
                             ) {
                               return limitValue.length;
+                            }
+
+                            if(value === 'periodicity' && Array.isArray(limitValue) && limitValue.length > 0){
+                              return limitValue[0];
                             }
                             return limitValue;
                           }

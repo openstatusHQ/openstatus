@@ -73,7 +73,7 @@ export const landingsConfig = {
     ],
   },
   "api-monitoring": {
-    icon: "terminal",
+    icon: "chevron-left-right-ellipsis",
     title: "API Monitoring",
     hero: "API Reliability: We've Got You Covered.",
     description:
