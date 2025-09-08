@@ -175,12 +175,17 @@ export function PricingTable({
                             }
                             if (
                               Array.isArray(limitValue) &&
-                              limitValue.length > 0 && value !== 'periodicity'
+                              limitValue.length > 0 &&
+                              value !== "periodicity"
                             ) {
                               return limitValue.length;
                             }
 
-                            if(value === 'periodicity' && Array.isArray(limitValue) && limitValue.length > 0){
+                            if (
+                              value === "periodicity" &&
+                              Array.isArray(limitValue) &&
+                              limitValue.length > 0
+                            ) {
                               return limitValue[0];
                             }
                             return limitValue;
