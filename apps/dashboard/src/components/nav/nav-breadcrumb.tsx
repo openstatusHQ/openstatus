@@ -26,10 +26,12 @@ interface NavBreadcrumbProps {
         type: "link";
         label: string;
         href: string;
+        icon?: LucideIcon;
       }
     | {
         type: "page";
         label: string;
+        icon?: LucideIcon;
       }
     | {
         type: "select";
@@ -46,17 +48,27 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
   return (
     <Breadcrumb>
       <BreadcrumbList>
+        <BreadcrumbSeparator className="hidden md:block" />
         {items.map((item, i) => (
           <Fragment key={`${item.type}-${i}`}>
             <BreadcrumbItem>
               {item.type === "link" ? (
                 <BreadcrumbLink className="hidden md:block" asChild>
-                  <Link href={item.href}>{item.label}</Link>
+                  <>
+                    {item.icon && <item.icon size={16} aria-hidden="true" />}
+                    <Link href={item.href} className="font-commit-mono">
+                      {item.label}
+                    </Link>
+                  </>
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
-                <BreadcrumbPage className="hidden max-w-[120px] truncate md:block lg:max-w-[200px]">
-                  {item.label}
+                <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono md:block lg:max-w-[200px] ">
+                  <span className="flex items-center gap-1.5">
+                    {item.icon && <item.icon size={16} aria-hidden="true" />}
+
+                    {item.label}
+                  </span>
                 </BreadcrumbPage>
               ) : null}
               {item.type === "select" ? (
@@ -68,14 +80,18 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 >
                   <SelectTrigger
                     id="select-option"
-                    className="text-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
+                    className="font-commit-mono text-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
                     aria-label="Select option"
                   >
                     <SelectValue placeholder="Select option" />
                   </SelectTrigger>
                   <SelectContent>
                     {item.items.map((item, i) => (
-                      <SelectItem key={i} value={item.value}>
+                      <SelectItem
+                        key={i}
+                        value={item.value}
+                        className="font-commit-mono"
+                      >
                         <item.icon size={16} aria-hidden="true" />
                         {item.label}
                       </SelectItem>

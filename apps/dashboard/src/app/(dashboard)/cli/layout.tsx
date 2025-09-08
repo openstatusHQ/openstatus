@@ -5,7 +5,7 @@ import {
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 
-import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
+import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -14,7 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <AppHeader>
         <AppHeaderContent>
           <AppSidebarTrigger />
-          <NavBreadcrumb items={[{ type: "page", label: "CLI" }]} />
+          <Breadcrumb />
         </AppHeaderContent>
         <AppHeaderActions>
           <NavActions />

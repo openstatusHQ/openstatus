@@ -3,7 +3,7 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Cog, Hammer, Megaphone, Users } from "lucide-react";
+import { Cog, Hammer, Megaphone, PanelTop, Users } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export function Breadcrumb() {
@@ -22,6 +22,7 @@ export function Breadcrumb() {
           type: "link",
           label: "Status Pages",
           href: "/status-pages",
+          icon: PanelTop,
         },
         { type: "page", label: statusPage.title },
         {
