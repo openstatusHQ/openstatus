@@ -87,7 +87,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {item.items.map((item, i) => (
-                      <SelectItem key={i} value={item.value}>
+                      <SelectItem key={i} value={item.value} className="font-commit-mono">
                         <item.icon size={16} aria-hidden="true" />
                         {item.label}
                       </SelectItem>
