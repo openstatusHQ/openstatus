@@ -11,7 +11,7 @@ export function Breadcrumb() {
           type: "link",
           label: "Status Pages",
           href: "/status-pages",
-          icon: PanelTop
+          icon: PanelTop,
         },
         { type: "page", label: "Create Status Page" },
       ]}

@@ -56,18 +56,18 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 <BreadcrumbLink className="hidden md:block" asChild>
                   <>
                     {item.icon && <item.icon size={16} aria-hidden="true" />}
-                    <Link href={item.href} className="font-commit-mono">{item.label}</Link>
+                    <Link href={item.href} className="font-commit-mono">
+                      {item.label}
+                    </Link>
                   </>
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
                 <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono md:block lg:max-w-[200px] ">
-
                   <span className="flex items-center gap-1.5">
+                    {item.icon && <item.icon size={16} aria-hidden="true" />}
 
-                  {item.icon && <item.icon size={16} aria-hidden="true" />}
-
-                  {item.label}
+                    {item.label}
                   </span>
                 </BreadcrumbPage>
               ) : null}
