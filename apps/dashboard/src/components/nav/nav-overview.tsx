@@ -36,7 +36,7 @@ export function NavOverview({
               asChild
               tooltip={item.name}
             >
-              <Link href={item.url} onClick={() => setOpenMobile(false)}>
+              <Link href={item.url} onClick={() => setOpenMobile(false)} className="font-commit-mono">
                 <item.icon />
                 <span>{item.name}</span>
               </Link>

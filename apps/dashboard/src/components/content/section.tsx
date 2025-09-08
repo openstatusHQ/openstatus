@@ -48,7 +48,7 @@ export function SectionDescription({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <p className={cn("font-commit-mono text-muted-foreground text-sm", className)} {...props}>
       {children}
     </p>
   );
