@@ -82,9 +82,8 @@ export default function RootLayout({
           geistMono.variable,
           cal.variable,
           commitMono.variable,
-          inter.className,
           inter.variable,
-          "antialiased",
+          "font-sans antialiased ",
         )}
       >
         <NuqsAdapter>
