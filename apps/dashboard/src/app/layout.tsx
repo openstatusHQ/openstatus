@@ -19,33 +19,32 @@ const commitMono = LocalFont({
   src: [
     {
       path: "../../public/fonts/CommitMono-400-Regular.otf",
-      weight: '400',
-      style: 'normal',
+      weight: "400",
+      style: "normal",
     },
     {
       path: "../../public/fonts/CommitMono-400-Italic.otf",
-      weight: '400',
-      style: 'italic',
+      weight: "400",
+      style: "italic",
     },
     {
       path: "../../public/fonts/CommitMono-700-Regular.otf",
-      weight: '700',
-      style: 'normal',
+      weight: "700",
+      style: "normal",
     },
     {
       path: "../../public/fonts/CommitMono-700-Italic.otf",
-      weight: '700',
-      style: 'italic',
+      weight: "700",
+      style: "italic",
     },
   ],
   variable: "--font-commit-mono",
 });
 
-
 const inter = Inter({
-  subsets: ['latin'],
-  variable: "--font-inter"
-})
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

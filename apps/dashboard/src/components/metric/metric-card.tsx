@@ -49,7 +49,10 @@ export function MetricCardTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-commit-mono font-medium text-sm ", className)} {...props}>
+    <p
+      className={cn("font-commit-mono font-medium text-sm ", className)}
+      {...props}
+    >
       {children}
     </p>
   );
