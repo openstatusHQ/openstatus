@@ -49,7 +49,10 @@ export function MetricCardTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-medium text-sm", className)} {...props}>
+    <p
+      className={cn("font-commit-mono font-medium text-sm ", className)}
+      {...props}
+    >
       {children}
     </p>
   );
@@ -82,7 +85,7 @@ export function MetricCardValue({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-semibold text-foreground", className)} {...props}>
+    <p className={cn("font-medium text-foreground", className)} {...props}>
       {children}
     </p>
   );

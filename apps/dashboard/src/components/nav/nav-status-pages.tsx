@@ -134,6 +134,7 @@ export function NavStatusPages() {
                   <Link
                     href={`/status-pages/${item.id}/status-reports`}
                     onClick={() => setOpenMobile(false)}
+                    className="font-commit-mono"
                   >
                     <span>{item.title}</span>
                   </Link>

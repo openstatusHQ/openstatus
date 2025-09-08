@@ -12,6 +12,8 @@
 
 @theme inline {
   --font-cal: var(--font-cal-sans);
+  --font-commit-mono: var(--font-commit-mono);
+  --font-sans: var(--font-inter);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
