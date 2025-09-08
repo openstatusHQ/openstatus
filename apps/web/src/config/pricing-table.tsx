@@ -39,7 +39,7 @@ export const pricingTableConfig: Record<
     features: [
       {
         value: "periodicity",
-        label: "Frequency",
+        label: "Check Interval",
       },
       {
         value: "monitors",

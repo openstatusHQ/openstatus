@@ -57,7 +57,7 @@ export const alternativesConfig = {
       "Monitor your endpoints globally. Learn how OpenStatus compares to Uptime Kuma.",
     logo: "/assets/alternatives/uptime-kuma.png",
     features: [
-      opensource(),
+      opensource(true),
       global(),
       selfhost(),
       managed(),
