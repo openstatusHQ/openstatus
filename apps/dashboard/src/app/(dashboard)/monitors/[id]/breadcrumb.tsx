@@ -3,7 +3,7 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Cog, LayoutGrid, Logs, Siren } from "lucide-react";
+import { Activity, Cog, LayoutGrid, Logs, Siren } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export function Breadcrumb() {
@@ -18,7 +18,7 @@ export function Breadcrumb() {
   return (
     <NavBreadcrumb
       items={[
-        { type: "link", label: "Monitors", href: "/monitors" },
+        { type: "link", label: "Monitors", href: "/monitors", icon: Activity },
         { type: "page", label: monitor.name },
         {
           type: "select",

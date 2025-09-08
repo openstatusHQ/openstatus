@@ -7,7 +7,7 @@ export function Breadcrumb() {
   return (
     <NavBreadcrumb
       items={[
-        { type: "page", label: "Settings" },
+        { type: "page", label: "Settings", icon: Cog },
         {
           type: "select",
           items: [

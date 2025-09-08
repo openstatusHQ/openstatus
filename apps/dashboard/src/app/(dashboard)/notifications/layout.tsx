@@ -4,9 +4,9 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
-import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import { NavActions } from "./nav-actions";
+import { Breadcrumb } from "./breadcrumb";
 
 export default async function Layout({
   children,
@@ -20,7 +20,7 @@ export default async function Layout({
       <AppHeader>
         <AppHeaderContent>
           <AppSidebarTrigger />
-          <NavBreadcrumb items={[{ type: "page", label: "Notifications" }]} />
+          <Breadcrumb />
         </AppHeaderContent>
         <AppHeaderActions>
           <NavActions />
