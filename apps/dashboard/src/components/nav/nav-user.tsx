@@ -96,7 +96,9 @@ export function NavUser() {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{userName}</span>
-                  <span className="truncate text-xs">{user?.email}</span>
+                  <span className="truncate font-commit-mono text-xs">
+                    {user?.email}
+                  </span>
                 </div>
               </div>
             </DropdownMenuLabel>

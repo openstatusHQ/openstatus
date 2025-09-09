@@ -2,8 +2,10 @@ import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, envField } from "astro/config";
+import starlightImageZoom from "starlight-image-zoom";
 import starlightLlmsTxt from "starlight-llms-txt";
 import starlightSidebarTopics from "starlight-sidebar-topics";
+
 import Icons from "unplugin-icons/vite";
 
 // https://astro.build/config
@@ -272,6 +274,7 @@ export default defineConfig({
           description:
             "OpenStatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.",
         }),
+        starlightImageZoom(),
       ],
     }),
   ],
