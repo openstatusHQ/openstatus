@@ -89,14 +89,14 @@ export default async function Page() {
 
   const metrics = [
     {
-      title: "Total Monitors",
+      title: "Monitors",
       value: monitors.length,
       href: "/monitors",
       variant: "default" as const,
       icon: List,
     },
     {
-      title: "Total Status Pages",
+      title: "Status Pages",
       value: pages.length,
       href: "/status-pages",
       variant: "default" as const,
