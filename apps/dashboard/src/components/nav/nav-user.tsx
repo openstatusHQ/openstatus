@@ -70,7 +70,9 @@ export function NavUser() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{userName}</span>
-                <span className="truncate font-commit-mono text-xs">{user?.email}</span>
+                <span className="truncate font-commit-mono text-xs">
+                  {user?.email}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -160,7 +162,10 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()} className="font-commit-mono">
+            <DropdownMenuItem
+              onClick={() => signOut()}
+              className="font-commit-mono"
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
