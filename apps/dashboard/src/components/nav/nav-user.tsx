@@ -70,7 +70,9 @@ export function NavUser() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{userName}</span>
-                <span className="truncate text-xs">{user?.email}</span>
+                <span className="truncate font-commit-mono text-xs">
+                  {user?.email}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -105,6 +107,7 @@ export function NavUser() {
                   <Link
                     href="/settings/billing"
                     onClick={() => setOpenMobile(false)}
+                    className="font-commit-mono"
                   >
                     <Sparkles />
                     Upgrade Workspace
@@ -113,7 +116,7 @@ export function NavUser() {
                 <DropdownMenuSeparator />
               </>
             ) : null}
-            <DropdownMenuGroup>
+            <DropdownMenuGroup className="font-commit-mono">
               <DropdownMenuItem asChild>
                 <Link
                   href="/settings/account"
@@ -135,7 +138,7 @@ export function NavUser() {
                   Theme
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
+                  <DropdownMenuSubContent className="font-commit-mono">
                     <DropdownMenuItem onClick={() => setTheme("light")}>
                       <Sun /> Light
                     </DropdownMenuItem>
@@ -159,7 +162,10 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem
+              onClick={() => signOut()}
+              className="font-commit-mono"
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>
