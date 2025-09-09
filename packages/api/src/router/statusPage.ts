@@ -99,7 +99,7 @@ export const statusPageRouter = createTRPCRouter({
                   )
                 ? "info"
                 : "success";
-          return { ...m.monitor, status };
+          return { ...m.monitor, status, events };
         });
 
       const status = monitors.some((m) => m.status === "error")
@@ -110,6 +110,16 @@ export const statusPageRouter = createTRPCRouter({
             ? "info"
             : "success";
 
+      const threshold = new Date().getTime() - 7 * 24 * 60 * 60 * 1000;
+      const lastEvents = monitors
+        .flatMap((m) => m.events)
+        .filter((e) => {
+          if (e.type !== "incident") return false;
+          if (!e.to || e.to.getTime() >= threshold) return true;
+          return false;
+        })
+        .sort((a, b) => a.from.getTime() - b.from.getTime());
+
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         monitors,
@@ -117,6 +127,7 @@ export const statusPageRouter = createTRPCRouter({
         statusReports: _page.statusReports ?? [],
         maintenances: _page.maintenances ?? [],
         workspacePlan: _page.workspace.plan,
+        events: lastEvents,
         status,
       });
     }),

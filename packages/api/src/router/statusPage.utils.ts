@@ -224,6 +224,41 @@ function isDateWithinEvent(date: Date, event: Event): boolean {
   );
 }
 
+function getTotalEventsDurationMs(events: Event[], date: Date): number {
+  if (events.length === 0) return 0;
+
+  const startOfDay = new Date(date);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(date);
+  endOfDay.setUTCHours(23, 59, 59, 999);
+
+  const total = events.reduce((acc, curr) => {
+    if (!curr.from) return acc;
+
+    const eventStart = new Date(curr.from);
+    const eventEnd = curr.to ? new Date(curr.to) : new Date();
+
+    // Only count events that overlap with this date
+    if (
+      eventEnd.getTime() < startOfDay.getTime() ||
+      eventStart.getTime() > endOfDay.getTime()
+    ) {
+      return acc;
+    }
+
+    // Calculate the overlapping duration within the date boundaries
+    const overlapStart = Math.max(eventStart.getTime(), startOfDay.getTime());
+    const overlapEnd = Math.min(eventEnd.getTime(), endOfDay.getTime());
+
+    const duration = overlapEnd - overlapStart;
+    return acc + Math.max(0, duration);
+  }, 0);
+
+  // Cap at 24 hours (86400000 milliseconds) per day
+  return Math.min(total, 24 * 60 * 60 * 1000);
+}
+
 export function setDataByType({
   events,
   data,
@@ -242,9 +277,13 @@ export function setDataByType({
     const dayEvents = events.filter((event) => isDateWithinEvent(date, event));
 
     // Determine status override based on events
-    const hasIncidents = dayEvents.some((e) => e.type === "incident");
-    const hasReports = dayEvents.some((e) => e.type === "report");
-    const hasMaintenances = dayEvents.some((e) => e.type === "maintenance");
+    const incidents = dayEvents.filter((e) => e.type === "incident");
+    const reports = dayEvents.filter((e) => e.type === "report");
+    const maintenances = dayEvents.filter((e) => e.type === "maintenance");
+
+    const hasIncidents = incidents.length > 0;
+    const hasReports = reports.length > 0;
+    const hasMaintenances = maintenances.length > 0;
 
     const eventStatus = hasIncidents
       ? "error"
@@ -255,6 +294,7 @@ export function setDataByType({
           : undefined;
 
     // Calculate bar data based on barType
+    // TODO: transform into a new Map<type, number>();
     let barData: UptimeData["bar"];
 
     const total = dayData.ok + dayData.degraded + dayData.error;
@@ -262,7 +302,7 @@ export function setDataByType({
 
     switch (barType) {
       case "absolute":
-        if (eventStatus && eventStatus !== "error") {
+        if (eventStatus) {
           // If there's an event override, show single status
           barData = [
             {
@@ -327,6 +367,7 @@ export function setDataByType({
     }
 
     // Calculate card data based on cardType
+    // TODO: transform into a new Map<type, number>();
     let cardData: UptimeData["card"] = [];
 
     switch (cardType) {
@@ -338,6 +379,7 @@ export function setDataByType({
             { status: "success" as const, count: dayData.ok },
             { status: "degraded" as const, count: dayData.degraded },
             { status: "error" as const, count: dayData.error },
+            { status: "info" as const, count: 0 },
           ];
 
           cardData = entries
@@ -353,46 +395,68 @@ export function setDataByType({
         if (total === 0) {
           cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
         } else {
-          const dateIsToday = isToday(date);
-          const hoursInDay = dateIsToday ? new Date().getUTCHours() : 24;
-
           const entries = [
             { status: "error" as const, count: dayData.error },
             { status: "degraded" as const, count: dayData.degraded },
             { status: "success" as const, count: dayData.ok },
+            { status: "info" as const, count: 0 },
           ];
+
+          const map = new Map<
+            "error" | "degraded" | "success" | "info",
+            number
+          >();
 
           cardData = entries
             .map((entry) => {
               if (entry.status === "error") {
-                const incident = events.find(
-                  (i) => i.type === "incident" && isDateWithinEvent(date, i),
-                );
-                // NOTE: override error with incident duration on "duration" type
-                if (incident?.from && incident.to) {
-                  const duration = Math.round(
-                    (incident.to.getTime() - incident.from.getTime()) /
-                      (1000 * 60),
-                  );
-                  return {
-                    status: entry.status,
-                    value: formatDuration(duration),
-                  };
-                }
+                const totalDuration = getTotalEventsDurationMs(incidents, date);
+                const minutes = Math.round(totalDuration / (1000 * 60));
+                map.set("error", minutes);
+                if (minutes === 0) return null;
+                return {
+                  status: entry.status,
+                  value: formatDuration(minutes),
+                };
               }
 
-              if (entry.count === 0) return null;
+              if (entry.status === "degraded") {
+                const totalDuration = getTotalEventsDurationMs(reports, date);
+                const minutes = Math.round(totalDuration / (1000 * 60));
+                map.set("degraded", minutes);
+                if (minutes === 0) return null;
+                return {
+                  status: entry.status,
+                  value: formatDuration(minutes),
+                };
+              }
 
-              const percentage = entry.count / total;
-              const minutes = Math.round(percentage * hoursInDay * 60);
+              if (entry.status === "info") {
+                const totalDuration = getTotalEventsDurationMs(
+                  maintenances,
+                  date,
+                );
+                const minutes = Math.round(totalDuration / (1000 * 60));
+                map.set("info", minutes);
+                if (minutes === 0) return null;
+                return {
+                  status: entry.status,
+                  value: formatDuration(minutes),
+                };
+              }
 
-              // Skip very small durations
-              if (minutes <= 1) return null;
-
-              return {
-                status: entry.status,
-                value: formatDuration(minutes),
-              };
+              if (entry.status === "success") {
+                let total = 0;
+                // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+                map.forEach((d) => (total += d));
+                const day = 24 * 60;
+                const minutes = Math.max(day - total, 0);
+                if (minutes === 0) return null;
+                return {
+                  status: entry.status,
+                  value: formatDuration(minutes),
+                };
+              }
             })
             .filter((item): item is NonNullable<typeof item> => item !== null);
         }
@@ -443,7 +507,7 @@ export function setDataByType({
 
     return {
       day: dayData.day,
-      events: dayEvents.filter((e) => e.type !== "incident"),
+      events: [...reports, ...maintenances],
       bar: barData,
       card: cardData,
     };

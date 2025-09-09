@@ -63,14 +63,19 @@ export function StatusMonitor({
           </StatusMonitorDescription>
         </div>
         <div className="flex flex-row items-center gap-2">
+          {/* TODO: check if we can improve that cuz its looking ugly */}
           {showUptime ? (
-            isLoading ? (
-              <StatusMonitorUptimeSkeleton />
-            ) : (
-              <StatusMonitorUptime>{uptime}</StatusMonitorUptime>
-            )
-          ) : null}
-          <StatusMonitorIcon />
+            <>
+              {isLoading ? (
+                <StatusMonitorUptimeSkeleton />
+              ) : (
+                <StatusMonitorUptime>{uptime}</StatusMonitorUptime>
+              )}
+              <StatusMonitorIcon />
+            </>
+          ) : (
+            <StatusMonitorStatus className="text-sm" />
+          )}
         </div>
       </div>
       {isLoading ? <StatusTrackerSkeleton /> : <StatusTracker data={data} />}
@@ -199,7 +204,16 @@ export function StatusMonitorStatus({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn(className)} {...props}>
+    <div
+      className={cn(
+        "group-data-[variant=success]/monitor:text-success",
+        "group-data-[variant=degraded]/monitor:text-warning",
+        "group-data-[variant=error]/monitor:text-destructive",
+        "group-data-[variant=info]/monitor:text-info",
+        className,
+      )}
+      {...props}
+    >
       <span className="hidden group-data-[variant=success]/monitor:block">
         Operational
       </span>

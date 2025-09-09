@@ -6,16 +6,15 @@ import {
   StatusBanner,
   StatusContent,
   StatusDescription,
-  StatusEmptyState,
-  StatusEmptyStateDescription,
-  StatusEmptyStateTitle,
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Newspaper } from "lucide-react";
+import { subDays } from "date-fns";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -46,6 +45,7 @@ export default function Page() {
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
         <StatusBanner />
+        {/* TODO: check how to display current events */}
         <StatusContent>
           {page.monitors.map((monitor) => {
             const { data, uptime } =
@@ -63,14 +63,43 @@ export default function Page() {
             );
           })}
         </StatusContent>
+        <Separator />
         <StatusContent>
-          <StatusEmptyState>
-            <Newspaper className="size-4 text-muted-foreground" />
-            <StatusEmptyStateTitle>No recent reports</StatusEmptyStateTitle>
-            <StatusEmptyStateDescription>
-              There have been no reports within the last 7 days.
-            </StatusEmptyStateDescription>
-          </StatusEmptyState>
+          <StatusTitle>Recent Events</StatusTitle>
+          <StatusFeed
+            statusReports={page.statusReports
+              .filter((report) => {
+                const isRecent = report.statusReportUpdates.some(
+                  (update) =>
+                    update.date.getTime() > subDays(new Date(), 7).getTime(),
+                );
+                const isOpen = !report.statusReportUpdates.some(
+                  (update) =>
+                    update.status === "monitoring" ||
+                    update.status === "resolved",
+                );
+                return isRecent || isOpen;
+              })
+              .map((report) => ({
+                ...report,
+                affected: report.monitorsToStatusReports.map(
+                  (monitor) => monitor.monitor.name,
+                ),
+                updates: report.statusReportUpdates,
+              }))}
+            maintenances={page.maintenances
+              .filter((maintenance) => {
+                const isRecent =
+                  maintenance.from.getTime() > subDays(new Date(), 7).getTime();
+                return isRecent;
+              })
+              .map((maintenance) => ({
+                ...maintenance,
+                affected: maintenance.maintenancesToMonitors.map(
+                  (monitor) => monitor.monitor.name,
+                ),
+              }))}
+          />
         </StatusContent>
       </Status>
     </div>
