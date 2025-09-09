@@ -5,15 +5,12 @@ description: "How to create your first monitor with OpenStatus"
 
 import { Image } from 'astro:assets';
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
-import monitorDetail from '../../../assets/monitor/monitor-detail.png';
-import createMonitor from '../../../assets/monitor/create-monitor.png';
+import monitorOverview from '../../../assets/monitor/create-monitor/monitor-overview.png';
+import createMonitor from '../../../assets/monitor/create-monitor/create-monitor-1.png';
+import createMonitor2 from '../../../assets/monitor/create-monitor/create-monitor-2.png';
 
 import { ShowcaseYouTube } from 'starlight-showcases'
 
-  <Image
-    src={createMonitor}
-    alt="Charts with status code and response time"
-  />
 
 
 ## Creating Your First Monitor
@@ -29,9 +26,22 @@ Let's get your first endpoint check up and running.
 
 ### 1. Create the Monitor
 
+  <Image
+    src={createMonitor}
+    alt="Charts with status code and response time"
+  />
+
 Navigate to the Monitors page from the sidebar and click the + Create Monitor button.
 
+
+
+
 ### 2. Configure the Basics
+
+  <Image
+    src={createMonitor2}
+    alt="Charts with status code and response time"
+  />
 
 To get started, you only need two things:
 - **Name** : A descriptive name so you can easily identify it (e.g., "API - Production Health Check").
@@ -45,7 +55,7 @@ Once you've set the URL, we'll automatically begin tracking key metrics for ever
 
 
   <Image
-    src={monitorDetail}
+    src={monitorOverview}
     alt="Charts with status code and response time"
   />
 
