@@ -226,7 +226,7 @@ importers:
         version: 15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
+        version: 5.0.0-beta.29(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -339,6 +339,9 @@ importers:
       sharp:
         specifier: 0.33.5
         version: 0.33.5
+      starlight-image-zoom:
+        specifier: 0.13.0
+        version: 0.13.0(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))
       starlight-llms-txt:
         specifier: 0.5.1
         version: 0.5.1(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))
@@ -677,7 +680,7 @@ importers:
         version: 15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
+        version: 5.0.0-beta.29(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -924,7 +927,7 @@ importers:
         version: 15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
+        version: 5.0.0-beta.29(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       next-plausible:
         specifier: 3.12.4
         version: 3.12.4(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -1260,7 +1263,7 @@ importers:
         version: 0.31.4
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
+        version: 5.0.0-beta.29(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)
       typescript:
         specifier: 5.7.2
         version: 5.7.2
@@ -10687,6 +10690,12 @@ packages:
     resolution: {integrity: sha512-KJP1OCML99+8fhOHxwwzyWrlUuVX5GQ0ZpJTd1DFXhdkrvg1szxfHhawXUZ3g9TkXORQd4/WG68jMlQZ2p8wlg==}
     engines: {node: '>=6'}
 
+  starlight-image-zoom@0.13.0:
+    resolution: {integrity: sha512-7K/7gshnKooYd4ePy5vtyv1jFoFVNUb8IoXWDcnY69+nxvmLATNrmOzD2M4TJ/aKynPSBSM6j9ia4s/PPy/JGA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@astrojs/starlight': '>=0.32.0'
+
   starlight-llms-txt@0.5.1:
     resolution: {integrity: sha512-EPhTZ7jOhMxp6BBSpYNWuaJezzI+4eRgkwlFGV/XNNGSjNibo9JHrCvCbJO6BDk4znXcTWi0x8N7FO7ckNXLGQ==}
     engines: {node: ^18.17.1 || ^20.3.0 || >=21.0.0}
@@ -13848,7 +13857,7 @@ snapshots:
 
   '@jridgewell/source-map@0.3.9':
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.11
+      '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.28
 
   '@jridgewell/sourcemap-codec@1.4.15': {}
@@ -17306,7 +17315,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.13':
     dependencies:
-      '@babel/parser': 7.27.7
+      '@babel/parser': 7.28.4
       '@vue/shared': 3.5.13
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -17321,13 +17330,13 @@ snapshots:
 
   '@vue/compiler-sfc@3.5.13':
     dependencies:
-      '@babel/parser': 7.27.7
+      '@babel/parser': 7.28.4
       '@vue/compiler-core': 3.5.13
       '@vue/compiler-dom': 3.5.13
       '@vue/compiler-ssr': 3.5.13
       '@vue/shared': 3.5.13
       estree-walker: 2.0.2
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       postcss: 8.5.6
       source-map-js: 1.2.1
     optional: true
@@ -20986,7 +20995,7 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next-auth@5.0.0-beta.29(next@15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1):
+  next-auth@5.0.0-beta.29(next@15.4.7(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1):
     dependencies:
       '@auth/core': 0.40.0
       next: 15.4.7(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -22606,6 +22615,16 @@ snapshots:
   stacktrace-parser@0.1.10:
     dependencies:
       type-fest: 0.7.1
+
+  starlight-image-zoom@0.13.0(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))):
+    dependencies:
+      '@astrojs/starlight': 0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))
+      mdast-util-mdx-jsx: 3.2.0
+      rehype-raw: 7.0.0
+      unist-util-visit: 5.0.0
+      unist-util-visit-parents: 6.0.1
+    transitivePeerDependencies:
+      - supports-color
 
   starlight-llms-txt@0.5.1(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)):
     dependencies:
