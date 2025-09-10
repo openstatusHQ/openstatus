@@ -93,7 +93,11 @@ export default defineConfig({
             },
             {
               label: "TCP Monitor",
-              slug: "getting-started/introduction",
+              slug: "reference/tcp-monitor",
+            },
+            {
+              label: "Notification",
+              slug: "reference/notification",
             },
             {
               label: "Status Page",
@@ -105,7 +109,7 @@ export default defineConfig({
             },
             {
               label: "CLI Reference",
-              slug: "getting-started/introduction",
+              slug: "reference/cli-reference",
             },
             {
               label: "API Reference",
