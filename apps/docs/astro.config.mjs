@@ -71,20 +71,22 @@ export default defineConfig({
             },
           ],
         },
-        {label: "Tutorials",
-        items: [
-
-          {
-            label: "How to create a monitor",
-            slug: "tutorial/how-to-create-monitor",
-          },
-          {
-            label: "How to create a status page",
-            slug: "tutorial/how-to-create-status-page",
-          },
-        ]},
-        {label: "Reference",
-          items:[
+        {
+          label: "Tutorials",
+          items: [
+            {
+              label: "How to create a monitor",
+              slug: "tutorial/how-to-create-monitor",
+            },
+            {
+              label: "How to create a status page",
+              slug: "tutorial/how-to-create-status-page",
+            },
+          ],
+        },
+        {
+          label: "Reference",
+          items: [
             {
               label: "HTTP Monitor",
               slug: "reference/http-monitor",
@@ -105,28 +107,30 @@ export default defineConfig({
               label: "CLI Reference",
               slug: "getting-started/introduction",
             },
-            {label: "API Reference",
+            {
+              label: "API Reference",
               link: "https://api.openstatus.dev/v1",
-             attrs: {
-               target: "_blank",
-             }}
-
-          ]},
-        {label: "Guides",
-        items: [
-
-          {
-            label: "Monitor your MCP Server",
-            slug: "guides/how-to-monitor-mcp-server",
-          },
-          {
-            label: "Run check in GitHub Actions",
-            slug: "guides/how-to-run-synthetic-test-github-action",
-          },
-        ]},
+              attrs: {
+                target: "_blank",
+              },
+            },
+          ],
+        },
+        {
+          label: "Guides",
+          items: [
+            {
+              label: "Monitor your MCP Server",
+              slug: "guides/how-to-monitor-mcp-server",
+            },
+            {
+              label: "Run check in GitHub Actions",
+              slug: "guides/how-to-run-synthetic-test-github-action",
+            },
+          ],
+        },
       ],
       plugins: [
-
         starlightLlmsTxt({
           projectName: "OpenStatus Documentation",
           description:
