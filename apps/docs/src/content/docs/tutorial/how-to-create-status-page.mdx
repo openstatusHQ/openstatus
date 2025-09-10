@@ -1,0 +1,24 @@
+---
+title: How to create a status page?
+description: "How to create a status page in OpenStatus"
+---
+
+import { Image } from 'astro:assets';
+
+import StatusPageEmpty from '../../../assets/status-page/status-page-empty.png';
+
+When you create your first status page, you will see an empty page.
+
+In order to create your status page, you need to create at least one monitor.
+
+<Image
+    src={StatusPageEmpty}
+    alt="Create your status page"
+/>
+
+
+Then you need to give your status page a name and choose a slug.
+
+Your status page will be available at `https://<slug>.openstatus.dev/`.
+
+You can also set a [custom domain](/status-page/advanced/custom-domain) for your status page.
