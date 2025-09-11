@@ -252,7 +252,10 @@ export const statusPageRouter = createTRPCRouter({
             type as keyof typeof proceduresByType
           ].map((m) => m.monitor.id.toString());
           if (monitorIds.length === 0) return null;
-          return procedure({ monitorIds });
+          // NOTE: if manual mode, don't fetch data from tinybird
+          return opts.input.barType === "manual"
+            ? null
+            : procedure({ monitorIds });
         }),
       );
 
