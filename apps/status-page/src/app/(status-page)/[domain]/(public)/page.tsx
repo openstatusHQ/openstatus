@@ -3,16 +3,17 @@
 import { useStatusPage } from "@/components/status-page/floating-button";
 import {
   Status,
-  StatusBanner,
   StatusContent,
   StatusDescription,
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import { StatusEventTimelineReport } from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
 import { useParams } from "next/navigation";
@@ -37,6 +38,8 @@ export default function Page() {
 
   if (!page) return null;
 
+  const event = page.statusReports[0];
+
   return (
     <div className="flex flex-col gap-6">
       <Status variant={page.status}>
@@ -44,7 +47,42 @@ export default function Page() {
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
-        <StatusBanner />
+        {/* <StatusBanner /> */}
+        <div
+          className={cn(
+            "rounded-lg border overflow-hidden",
+            "group-data-[variant=success]:border-success",
+            "group-data-[variant=degraded]:border-warning",
+            "group-data-[variant=error]:border-destructive",
+            "group-data-[variant=info]:border-info",
+          )}
+        >
+          <div
+            className={cn(
+              "px-3 py-2 sm:px-4 sm:py-3 text-background",
+              "group-data-[variant=success]:bg-success",
+              "group-data-[variant=degraded]:bg-warning",
+              "group-data-[variant=error]:bg-destructive",
+              "group-data-[variant=info]:bg-info",
+            )}
+          >
+            {event.title}
+          </div>
+          <Separator
+            className={cn(
+              "group-data-[variant=success]:bg-success",
+              "group-data-[variant=degraded]:bg-warning",
+              "group-data-[variant=error]:bg-destructive",
+              "group-data-[variant=info]:bg-info",
+            )}
+          />
+          <div className="px-3 py-2 sm:px-4 sm:py-3">
+            <StatusEventTimelineReport
+              updates={event.statusReportUpdates}
+              withDot={false}
+            />
+          </div>
+        </div>
         {/* TODO: check how to display current events */}
         <StatusContent>
           {page.monitors.map((monitor) => {

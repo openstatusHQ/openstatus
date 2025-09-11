@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { formatTime } from "@/lib/formatter";
+import { formatDateTime, formatTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { UTCDate } from "@date-fns/utc";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
@@ -109,6 +109,7 @@ export function StatusEventAside({
 export function StatusEventTimelineReport({
   className,
   updates,
+  withDot = true,
   ...props
 }: React.ComponentProps<"div"> & {
   // TODO: remove unused props
@@ -117,6 +118,7 @@ export function StatusEventTimelineReport({
     message: string;
     status: "investigating" | "identified" | "monitoring" | "resolved";
   }[];
+  withDot?: boolean;
 }) {
   const startedAt = new Date(updates[0].date);
   const endedAt = new Date(updates[updates.length - 1].date);
@@ -134,6 +136,7 @@ export function StatusEventTimelineReport({
               index === 0 && update.status === "resolved" ? duration : undefined
             }
             withSeparator={index !== updates.length - 1}
+            withDot={withDot}
           />
         ))}
     </div>
@@ -144,6 +147,7 @@ function StatusEventTimelineReportUpdate({
   report,
   duration,
   withSeparator = true,
+  withDot = true,
 }: {
   report: {
     date: Date;
@@ -152,23 +156,27 @@ function StatusEventTimelineReportUpdate({
   };
   withSeparator?: boolean;
   duration?: string;
+  withDot?: boolean;
 }) {
   return (
     <div data-variant={report.status} className="group">
       <div className="flex flex-row items-center justify-between gap-2">
         <div className="flex flex-row gap-2">
-          <div className="flex flex-col">
-            <div className="flex h-5 flex-col items-center justify-center">
-              <StatusEventTimelineDot />
+          {withDot ? (
+            <div className="flex flex-col">
+              <div className="flex h-5 flex-col items-center justify-center">
+                <StatusEventTimelineDot />
+              </div>
+              {withSeparator ? <StatusEventTimelineSeparator /> : null}
             </div>
-            {withSeparator ? <StatusEventTimelineSeparator /> : null}
-          </div>
+          ) : null}
           <div className="mb-2">
             <StatusEventTimelineTitle>
               <span>{STATUS_LABELS[report.status]}</span>{" "}
-              <span className="font-mono text-muted-foreground/70 text-xs underline decoration-dashed underline-offset-2">
+              {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
+              <span className="font-mono text-muted-foreground/70 text-xs">
                 <StatusEventDateHoverCard date={new Date(report.date)}>
-                  {formatTime(report.date)}
+                  {formatDateTime(report.date)}
                 </StatusEventDateHoverCard>
               </span>{" "}
               {duration ? (
