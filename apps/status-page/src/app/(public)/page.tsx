@@ -19,7 +19,9 @@ import {
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { monitors } from "@/data/monitors";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Page() {
   return (
@@ -74,6 +76,10 @@ function ThemeCard({
   mode: "dark" | "light";
 }) {
   const t = THEMES[theme][mode];
+  const trpc = useTRPC();
+  const { data: uptimeData, isLoading } = useQuery(
+    trpc.statusPage.getNoopUptime.queryOptions(),
+  );
   return (
     <div className="group/theme-card overflow-hidden rounded-lg border">
       <div
@@ -86,9 +92,9 @@ function ThemeCard({
         <div className="pointer-events-none scale-85 bg-background text-foreground transition-all duration-300 group-hover/theme-card:scale-90">
           <Status variant="success">
             <StatusHeader>
-              <StatusTitle>Craft</StatusTitle>
+              <StatusTitle>Acme Inc.</StatusTitle>
               <StatusDescription>
-                Stay informed about the stability
+                Get informed about our services.
               </StatusDescription>
             </StatusHeader>
             <StatusBanner status="success" />
@@ -96,10 +102,11 @@ function ThemeCard({
               {/* TODO: create mock data */}
               <StatusMonitor
                 status="success"
-                data={[]}
+                data={uptimeData?.data || []}
                 monitor={monitors[0]}
                 showUptime={true}
-                isLoading
+                uptime={uptimeData?.uptime}
+                isLoading={isLoading}
               />
             </StatusContent>
           </Status>

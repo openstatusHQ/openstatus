@@ -15,6 +15,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   fillStatusDataFor45Days,
+  fillStatusDataFor45DaysNoop,
   getEvents,
   getUptime,
   setDataByType,
@@ -314,6 +315,30 @@ export const statusPageRouter = createTRPCRouter({
         };
       });
     }),
+
+  // NOTE: used for the theme store
+  getNoopUptime: publicProcedure.query(async () => {
+    const data = fillStatusDataFor45DaysNoop();
+    const processedData = setDataByType({
+      events: [
+        {
+          type: "maintenance",
+          from: new Date(new Date().setDate(new Date().getDate() - 10)),
+          to: new Date(new Date().setDate(new Date().getDate() - 10)),
+          name: "",
+          id: 1,
+          status: "info",
+        },
+      ],
+      data,
+      cardType: "requests",
+      barType: "dominant",
+    });
+    return {
+      data: processedData,
+      uptime: "100%",
+    };
+  }),
 
   getReport: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
