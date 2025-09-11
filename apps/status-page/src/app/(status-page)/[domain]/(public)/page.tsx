@@ -45,8 +45,6 @@ export default function Page() {
 
   if (!page) return null;
 
-  console.log(page.openEvents);
-
   return (
     <div className="flex flex-col gap-6">
       <Status variant={page.status}>
@@ -55,43 +53,45 @@ export default function Page() {
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
         {page.openEvents.length > 0 ? (
-          page.openEvents.map((e) => {
-            if (e.type === "maintenance") {
-              const maintenance = page.maintenances.find(
-                (maintenance) => maintenance.id === e.id,
-              );
-              if (!maintenance) return null;
-              return (
-                <StatusBannerContainer key={e.id} status={e.status}>
-                  <StatusBannerTitle>{e.name}</StatusBannerTitle>
-                  <StatusBannerContent>
-                    <StatusEventTimelineMaintenance
-                      maintenance={maintenance}
-                      withDot={false}
-                    />
-                  </StatusBannerContent>
-                </StatusBannerContainer>
-              );
-            }
-            if (e.type === "report") {
-              const report = page.statusReports.find(
-                (report) => report.id === e.id,
-              );
-              if (!report) return null;
-              return (
-                <StatusBannerContainer key={e.id} status={e.status}>
-                  <StatusBannerTitle>{e.name}</StatusBannerTitle>
-                  <StatusBannerContent>
-                    <StatusEventTimelineReport
-                      updates={report.statusReportUpdates}
-                      withDot={false}
-                    />
-                  </StatusBannerContent>
-                </StatusBannerContainer>
-              );
-            }
-            return null;
-          })
+          <StatusContent>
+            {page.openEvents.map((e) => {
+              if (e.type === "maintenance") {
+                const maintenance = page.maintenances.find(
+                  (maintenance) => maintenance.id === e.id,
+                );
+                if (!maintenance) return null;
+                return (
+                  <StatusBannerContainer key={e.id} status={e.status}>
+                    <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                    <StatusBannerContent>
+                      <StatusEventTimelineMaintenance
+                        maintenance={maintenance}
+                        withDot={false}
+                      />
+                    </StatusBannerContent>
+                  </StatusBannerContainer>
+                );
+              }
+              if (e.type === "report") {
+                const report = page.statusReports.find(
+                  (report) => report.id === e.id,
+                );
+                if (!report) return null;
+                return (
+                  <StatusBannerContainer key={e.id} status={e.status}>
+                    <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                    <StatusBannerContent>
+                      <StatusEventTimelineReport
+                        updates={report.statusReportUpdates}
+                        withDot={false}
+                      />
+                    </StatusBannerContent>
+                  </StatusBannerContainer>
+                );
+              }
+              return null;
+            })}
+          </StatusContent>
         ) : (
           <StatusBanner status={page.status} />
         )}
