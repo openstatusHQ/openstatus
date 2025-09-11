@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDate } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { Newspaper } from "lucide-react";
@@ -58,6 +59,7 @@ export function StatusFeed({
   maintenances?: Maintenance[];
   showLinks?: boolean;
 }) {
+  const prefix = usePathnamePrefix();
   const unifiedEvents: UnifiedEvent[] = [
     ...statusReports.map((report) => ({
       id: report.id,
@@ -101,7 +103,7 @@ export function StatusFeed({
                 </span>
               </StatusEventAside>
               <Link
-                href={`./events/report/${report.id}`}
+                href={`${prefix}/events/report/${report.id}`}
                 className="rounded-lg"
               >
                 <StatusEventContent>
@@ -140,7 +142,7 @@ export function StatusFeed({
                 ) : null}
               </StatusEventAside>
               <Link
-                href={`./events/maintenance/${maintenance.id}`}
+                href={`${prefix}/events/maintenance/${maintenance.id}`}
                 className="rounded-lg"
               >
                 <StatusEventContent>
