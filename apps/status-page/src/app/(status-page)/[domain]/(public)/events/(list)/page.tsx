@@ -14,10 +14,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
 import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
+  StatusEmptyState,
+  StatusEmptyStateDescription,
+  StatusEmptyStateTitle,
+} from "@/components/status-page/status";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/formatter";
@@ -81,12 +81,12 @@ export default function Page() {
             );
           })
         ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No reports found</EmptyStateTitle>
-            <EmptyStateDescription>
+          <StatusEmptyState>
+            <StatusEmptyStateTitle>No reports found</StatusEmptyStateTitle>
+            <StatusEmptyStateDescription>
               No reports found for this status page.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
+            </StatusEmptyStateDescription>
+          </StatusEmptyState>
         )}
       </TabsContent>
       <TabsContent value="maintenances" className="flex flex-col gap-4">
@@ -129,12 +129,12 @@ export default function Page() {
             );
           })
         ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No maintenances found</EmptyStateTitle>
-            <EmptyStateDescription>
+          <StatusEmptyState>
+            <StatusEmptyStateTitle>No maintenances found</StatusEmptyStateTitle>
+            <StatusEmptyStateDescription>
               No maintenances found for this status page.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
+            </StatusEmptyStateDescription>
+          </StatusEmptyState>
         )}
       </TabsContent>
     </Tabs>

@@ -19,6 +19,10 @@ export function StatusBanner({
       status={status}
       className={cn(
         "flex items-center gap-3 px-3 py-2 sm:px-4 sm:py-3",
+        "data-[status=success]:bg-success/20",
+        "data-[status=degraded]:bg-warning/20",
+        "data-[status=error]:bg-destructive/20",
+        "data-[status=info]:bg-info/20",
         className,
       )}
     >
