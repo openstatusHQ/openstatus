@@ -96,7 +96,7 @@ export function WorkspaceSwitcher() {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2" asChild>
               <Link href="/settings/general">
-                <Plus className="size-4" />
+                <Plus />
                 <div className="font-commit-mono text-muted-foreground tracking-tight">
                   Add team member
                 </div>
