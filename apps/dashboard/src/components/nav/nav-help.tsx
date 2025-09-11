@@ -1,8 +1,6 @@
 "use client";
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import { DiscordIcon } from "@/components/icons/discord";
-import { GitHubIcon } from "@/components/icons/github";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +16,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
+import { DiscordIcon } from "@openstatus/icons";
+import { GitHubIcon } from "@openstatus/icons";
 import {
   Book,
   Braces,
