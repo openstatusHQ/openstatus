@@ -31,6 +31,11 @@ export const page = sqliteTable("page", {
     false,
   ),
 
+  legacyPage: integer("legacy_page", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  configuration: text("configuration", { mode: "json" }),
+
   /**
    * Displays the total and failed request numbers for each monitor
    */
