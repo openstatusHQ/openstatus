@@ -8,12 +8,17 @@ import {
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import {
+  StatusBanner,
+  StatusBannerContainer,
+  StatusBannerContent,
+  StatusBannerTitle,
+} from "@/components/status-page/status-banner";
 import { StatusEventTimelineReport } from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
 import { useParams } from "next/navigation";
@@ -47,42 +52,16 @@ export default function Page() {
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
-        {/* <StatusBanner /> */}
-        <div
-          className={cn(
-            "overflow-hidden rounded-lg border",
-            "group-data-[variant=success]:border-success",
-            "group-data-[variant=degraded]:border-warning",
-            "group-data-[variant=error]:border-destructive",
-            "group-data-[variant=info]:border-info",
-          )}
-        >
-          <div
-            className={cn(
-              "px-3 py-2 text-background sm:px-4 sm:py-3",
-              "group-data-[variant=success]:bg-success",
-              "group-data-[variant=degraded]:bg-warning",
-              "group-data-[variant=error]:bg-destructive",
-              "group-data-[variant=info]:bg-info",
-            )}
-          >
-            {event.title}
-          </div>
-          <Separator
-            className={cn(
-              "group-data-[variant=success]:bg-success",
-              "group-data-[variant=degraded]:bg-warning",
-              "group-data-[variant=error]:bg-destructive",
-              "group-data-[variant=info]:bg-info",
-            )}
-          />
-          <div className="px-3 py-2 sm:px-4 sm:py-3">
+        <StatusBanner />
+        <StatusBannerContainer>
+          <StatusBannerTitle>{event.title}</StatusBannerTitle>
+          <StatusBannerContent>
             <StatusEventTimelineReport
               updates={event.statusReportUpdates}
               withDot={false}
             />
-          </div>
-        </div>
+          </StatusBannerContent>
+        </StatusBannerContainer>
         {/* TODO: check how to display current events */}
         <StatusContent>
           {page.monitors.map((monitor) => {

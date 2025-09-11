@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { formatDateTime, formatTime } from "@/lib/formatter";
+import { formatDateRange, formatDateTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { UTCDate } from "@date-fns/utc";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
@@ -15,13 +15,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
-
-const STATUS_LABELS = {
-  resolved: "Resolved",
-  monitoring: "Monitoring",
-  identified: "Identified",
-  investigating: "Investigating",
-};
+import { status } from "./messages";
 
 // TODO: rename file to status-event and move the `StatusEvents` component to the page level.
 
@@ -172,7 +166,7 @@ function StatusEventTimelineReportUpdate({
           ) : null}
           <div className="mb-2">
             <StatusEventTimelineTitle>
-              <span>{STATUS_LABELS[report.status]}</span>{" "}
+              <span>{status[report.status]}</span>{" "}
               {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
               <span className="font-mono text-muted-foreground/70 text-xs">
                 <StatusEventDateHoverCard date={new Date(report.date)}>
@@ -206,6 +200,9 @@ export function StatusEventTimelineMaintenance({
   };
 }) {
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
+  const range = formatDateRange(maintenance.from, maintenance.to);
+  // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
+  const [from, to] = range.split(" - ");
   return (
     <div data-variant="maintenance" className="group">
       <div className="flex flex-row items-center justify-between gap-2">
@@ -219,17 +216,13 @@ export function StatusEventTimelineMaintenance({
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
               <span className="font-mono text-muted-foreground/70 text-xs">
-                <span className="underline decoration-dashed underline-offset-2">
-                  <StatusEventDateHoverCard date={maintenance.from}>
-                    {formatTime(maintenance.from)}
-                  </StatusEventDateHoverCard>
-                </span>
+                <StatusEventDateHoverCard date={maintenance.from}>
+                  {from}
+                </StatusEventDateHoverCard>
                 {" - "}
-                <span className="underline decoration-dashed underline-offset-2">
-                  <StatusEventDateHoverCard date={maintenance.to}>
-                    {formatTime(maintenance.to)}
-                  </StatusEventDateHoverCard>
-                </span>
+                <StatusEventDateHoverCard date={maintenance.to}>
+                  {to}
+                </StatusEventDateHoverCard>
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">

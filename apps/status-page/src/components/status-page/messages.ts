@@ -22,3 +22,10 @@ export const requests = {
   info: "Maintenance",
   empty: "No Data",
 };
+
+export const status = {
+  resolved: "Resolved",
+  monitoring: "Monitoring",
+  identified: "Identified",
+  investigating: "Investigating",
+};

@@ -13,7 +13,6 @@ import {
   TriangleAlertIcon,
   WrenchIcon,
 } from "lucide-react";
-import { messages } from "./messages";
 
 export function Status({
   children,
@@ -95,49 +94,6 @@ export function StatusContent({
   className,
 }: React.ComponentProps<"div">) {
   return <div className={cn("flex flex-col gap-3", className)}>{children}</div>;
-}
-
-export function StatusBanner({ className }: React.ComponentProps<"div">) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-lg border px-3 py-2 sm:px-4 sm:py-3",
-        "group-data-[variant=success]:border-success/20 group-data-[variant=success]:bg-success/10",
-        "group-data-[variant=degraded]:border-warning/20 group-data-[variant=degraded]:bg-warning/10",
-        "group-data-[variant=error]:border-destructive/20 group-data-[variant=error]:bg-destructive/10",
-        "group-data-[variant=info]:border-info/20 group-data-[variant=info]:bg-info/10",
-        className,
-      )}
-    >
-      <StatusIcon className="flex-shrink-0" />
-      <div className="flex flex-1 flex-wrap items-center justify-between gap-2">
-        <StatusBannerMessage className="font-semibold text-xl" />
-        <StatusTimestamp date={new Date()} className="text-xs" />
-      </div>
-    </div>
-  );
-}
-
-export function StatusBannerMessage({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div className={cn(className)} {...props}>
-      <span className="hidden group-data-[variant=success]:block">
-        {messages.long.success}
-      </span>
-      <span className="hidden group-data-[variant=degraded]:block">
-        {messages.long.degraded}
-      </span>
-      <span className="hidden group-data-[variant=error]:block">
-        {messages.long.error}
-      </span>
-      <span className="hidden group-data-[variant=info]:block">
-        {messages.long.info}
-      </span>
-    </div>
-  );
 }
 
 export function StatusIcon({
