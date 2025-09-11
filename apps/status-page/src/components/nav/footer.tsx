@@ -17,7 +17,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
 
   return (
     <footer {...props}>
-      <div className="mx-auto max-w-2xl px-3 py-2 flex items-center justify-between">
+      <div className="mx-auto flex max-w-2xl items-center justify-between px-3 py-2">
         {page.workspacePlan === "team" ? null : (
           <p className="text-muted-foreground">
             Powered by <Link href="#">OpenStatus</Link>

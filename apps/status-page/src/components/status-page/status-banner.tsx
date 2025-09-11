@@ -90,7 +90,7 @@ export function StatusBannerTitle({
   return (
     <div
       className={cn(
-        "px-3 py-2 text-background font-medium sm:px-4 sm:py-3",
+        "px-3 py-2 font-medium text-background sm:px-4 sm:py-3",
         "group-data-[status=success]/status-banner:bg-success",
         "group-data-[status=degraded]/status-banner:bg-warning",
         "group-data-[status=error]/status-banner:bg-destructive",
