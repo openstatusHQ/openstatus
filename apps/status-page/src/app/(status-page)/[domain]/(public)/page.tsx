@@ -50,7 +50,7 @@ export default function Page() {
         {/* <StatusBanner /> */}
         <div
           className={cn(
-            "rounded-lg border overflow-hidden",
+            "overflow-hidden rounded-lg border",
             "group-data-[variant=success]:border-success",
             "group-data-[variant=degraded]:border-warning",
             "group-data-[variant=error]:border-destructive",
@@ -59,7 +59,7 @@ export default function Page() {
         >
           <div
             className={cn(
-              "px-3 py-2 sm:px-4 sm:py-3 text-background",
+              "px-3 py-2 text-background sm:px-4 sm:py-3",
               "group-data-[variant=success]:bg-success",
               "group-data-[variant=degraded]:bg-warning",
               "group-data-[variant=error]:bg-destructive",
