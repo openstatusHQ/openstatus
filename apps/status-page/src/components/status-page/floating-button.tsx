@@ -240,7 +240,7 @@ export function FloatingButton({ className }: { className?: string }) {
                 <Select
                   value={cardType}
                   onValueChange={(v) => setCardType(v as CardType)}
-                  disabled={barType === "manual"}
+                  disabled={barType !== "absolute"}
                 >
                   <SelectTrigger id="card-type" className="w-full capitalize">
                     <SelectValue />
