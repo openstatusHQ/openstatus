@@ -50,7 +50,7 @@ export function SectionDescription({
   return (
     <p
       className={cn(
-        "font-commit-mono text-muted-foreground text-sm",
+        "font-commit-mono text-muted-foreground text-sm tracking-tight",
         className,
       )}
       {...props}

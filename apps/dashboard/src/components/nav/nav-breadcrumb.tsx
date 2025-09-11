@@ -53,17 +53,21 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
           <Fragment key={`${item.type}-${i}`}>
             <BreadcrumbItem>
               {item.type === "link" ? (
-                <BreadcrumbLink className="hidden md:block" asChild>
-                  <>
+                <BreadcrumbLink
+                  className="hidden flex-nowrap items-center gap-1.5 md:flex"
+                  asChild
+                >
+                  <Link
+                    href={item.href}
+                    className="font-commit-mono tracking-tight"
+                  >
                     {item.icon && <item.icon size={16} aria-hidden="true" />}
-                    <Link href={item.href} className="font-commit-mono">
-                      {item.label}
-                    </Link>
-                  </>
+                    {item.label}
+                  </Link>
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
-                <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono md:block lg:max-w-[200px] ">
+                <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono tracking-tight md:block lg:max-w-[200px] ">
                   <span className="flex items-center gap-1.5">
                     {item.icon && <item.icon size={16} aria-hidden="true" />}
 
@@ -80,7 +84,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 >
                   <SelectTrigger
                     id="select-option"
-                    className="font-commit-mono text-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
+                    className="font-commit-mono text-foreground tracking-tight [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
                     aria-label="Select option"
                   >
                     <SelectValue placeholder="Select option" />
@@ -90,7 +94,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                       <SelectItem
                         key={i}
                         value={item.value}
-                        className="font-commit-mono"
+                        className="font-commit-mono tracking-tight"
                       >
                         <item.icon size={16} aria-hidden="true" />
                         {item.label}

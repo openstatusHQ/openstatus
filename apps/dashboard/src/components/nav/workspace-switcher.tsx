@@ -56,7 +56,9 @@ export function WorkspaceSwitcher() {
                   {workspace.name || "Untitled Workspace"}
                 </div>
                 <div className="truncate text-xs">
-                  <span className="font-commit-mono">{workspace.slug}</span>{" "}
+                  <span className="font-commit-mono tracking-tight">
+                    {workspace.slug}
+                  </span>{" "}
                   <span className="text-muted-foreground">
                     {workspace.plan === "team" ? "pro" : workspace.plan}
                   </span>
@@ -94,10 +96,8 @@ export function WorkspaceSwitcher() {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2" asChild>
               <Link href="/settings/general">
-                <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                  <Plus className="size-4" />
-                </div>
-                <div className="font-medium text-muted-foreground">
+                <Plus className="size-4" />
+                <div className="font-commit-mono text-muted-foreground tracking-tight">
                   Add team member
                 </div>
               </Link>
