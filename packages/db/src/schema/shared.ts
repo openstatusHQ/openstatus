@@ -94,11 +94,27 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
           .default("success"),
       })
       .array(),
-    events: z.array(
+    lastEvents: z.array(
       z.object({
         id: z.number(),
+        name: z.string(),
         from: z.date(),
         to: z.date().nullable(),
+        status: z
+          .enum(["success", "degraded", "error", "info"])
+          .default("success"),
+        type: z.enum(["maintenance", "incident", "report"]),
+      }),
+    ),
+    openEvents: z.array(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        from: z.date(),
+        to: z.date().nullable(),
+        status: z
+          .enum(["success", "degraded", "error", "info"])
+          .default("success"),
         type: z.enum(["maintenance", "incident", "report"]),
       }),
     ),

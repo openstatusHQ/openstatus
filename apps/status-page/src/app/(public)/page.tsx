@@ -11,12 +11,12 @@ import { THEMES } from "@/components/status-page/community-themes";
 import { COMMUNITY_THEME } from "@/components/status-page/floating-button";
 import {
   Status,
-  StatusBanner,
   StatusContent,
   StatusDescription,
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
@@ -91,7 +91,7 @@ function ThemeCard({
                 Stay informed about the stability
               </StatusDescription>
             </StatusHeader>
-            <StatusBanner />
+            <StatusBanner status="success" />
             <StatusContent>
               {/* TODO: create mock data */}
               <StatusMonitor

@@ -15,7 +15,7 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   fillStatusDataFor45Days,
-  getEventsByMonitorId,
+  getEvents,
   getUptime,
   setDataByType,
 } from "./statusPage.utils";
@@ -80,7 +80,7 @@ export const statusPageRouter = createTRPCRouter({
         // NOTE: we cannot nested `where` in drizzle to filter active monitors
         .filter((m) => m.monitor.active && !m.monitor.deletedAt)
         .map((m) => {
-          const events = getEventsByMonitorId({
+          const events = getEvents({
             maintenances: _page.maintenances,
             incidents: m.monitor.incidents,
             reports: _page.statusReports,
@@ -110,15 +110,38 @@ export const statusPageRouter = createTRPCRouter({
             ? "info"
             : "success";
 
+      // Get page-wide events (not tied to specific monitors)
+      const pageEvents = getEvents({
+        maintenances: _page.maintenances,
+        incidents:
+          _page.monitorsToPages.flatMap((m) => m.monitor.incidents) ?? [],
+        reports: _page.statusReports,
+        // No monitorId provided, so we get all events for the page
+      });
+
       const threshold = new Date().getTime() - 7 * 24 * 60 * 60 * 1000;
-      const lastEvents = monitors
-        .flatMap((m) => m.events)
+      const lastEvents = pageEvents
         .filter((e) => {
           if (e.type !== "incident") return false;
           if (!e.to || e.to.getTime() >= threshold) return true;
           return false;
         })
         .sort((a, b) => a.from.getTime() - b.from.getTime());
+
+      const openEvents = pageEvents.filter((event) => {
+        console.log(event.type, event.from, event.to);
+        if (event.type === "incident" || event.type === "report") {
+          if (!event.to) return true;
+          if (event.to < new Date()) return false;
+          return false;
+        }
+        if (event.type === "maintenance") {
+          if (!event.to) return false; // NOTE: this never happens
+          if (event.from <= new Date() && event.to >= new Date()) return true;
+          return false;
+        }
+        return false;
+      });
 
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
@@ -127,8 +150,9 @@ export const statusPageRouter = createTRPCRouter({
         statusReports: _page.statusReports ?? [],
         maintenances: _page.maintenances ?? [],
         workspacePlan: _page.workspace.plan,
-        events: lastEvents,
         status,
+        lastEvents,
+        openEvents,
       });
     }),
 
@@ -260,7 +284,7 @@ export const statusPageRouter = createTRPCRouter({
 
       return monitors.map((m) => {
         const monitorId = m.monitor.id.toString();
-        const events = getEventsByMonitorId({
+        const events = getEvents({
           maintenances: _page.maintenances,
           incidents: m.monitor.incidents,
           reports: _page.statusReports,

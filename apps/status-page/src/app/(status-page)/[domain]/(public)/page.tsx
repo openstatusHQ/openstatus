@@ -14,13 +14,15 @@ import {
   StatusBannerContent,
   StatusBannerTitle,
 } from "@/components/status-page/status-banner";
-import { StatusEventTimelineReport } from "@/components/status-page/status-events";
+import {
+  StatusEventTimelineMaintenance,
+  StatusEventTimelineReport,
+} from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { subDays } from "date-fns";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -43,7 +45,7 @@ export default function Page() {
 
   if (!page) return null;
 
-  const event = page.statusReports[0];
+  console.log(page.openEvents);
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,16 +54,47 @@ export default function Page() {
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
-        <StatusBanner />
-        <StatusBannerContainer>
-          <StatusBannerTitle>{event.title}</StatusBannerTitle>
-          <StatusBannerContent>
-            <StatusEventTimelineReport
-              updates={event.statusReportUpdates}
-              withDot={false}
-            />
-          </StatusBannerContent>
-        </StatusBannerContainer>
+        {page.openEvents.length > 0 ? (
+          page.openEvents.map((e) => {
+            if (e.type === "maintenance") {
+              const maintenance = page.maintenances.find(
+                (maintenance) => maintenance.id === e.id,
+              );
+              if (!maintenance) return null;
+              return (
+                <StatusBannerContainer key={e.id} status={e.status}>
+                  <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                  <StatusBannerContent>
+                    <StatusEventTimelineMaintenance
+                      maintenance={maintenance}
+                      withDot={false}
+                    />
+                  </StatusBannerContent>
+                </StatusBannerContainer>
+              );
+            }
+            if (e.type === "report") {
+              const report = page.statusReports.find(
+                (report) => report.id === e.id,
+              );
+              if (!report) return null;
+              return (
+                <StatusBannerContainer key={e.id} status={e.status}>
+                  <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                  <StatusBannerContent>
+                    <StatusEventTimelineReport
+                      updates={report.statusReportUpdates}
+                      withDot={false}
+                    />
+                  </StatusBannerContent>
+                </StatusBannerContainer>
+              );
+            }
+            return null;
+          })
+        ) : (
+          <StatusBanner status={page.status} />
+        )}
         {/* TODO: check how to display current events */}
         <StatusContent>
           {page.monitors.map((monitor) => {
@@ -85,18 +118,9 @@ export default function Page() {
           <StatusTitle>Recent Events</StatusTitle>
           <StatusFeed
             statusReports={page.statusReports
-              .filter((report) => {
-                const isRecent = report.statusReportUpdates.some(
-                  (update) =>
-                    update.date.getTime() > subDays(new Date(), 7).getTime(),
-                );
-                const isOpen = !report.statusReportUpdates.some(
-                  (update) =>
-                    update.status === "monitoring" ||
-                    update.status === "resolved",
-                );
-                return isRecent || isOpen;
-              })
+              .filter((report) =>
+                page.lastEvents.some((event) => event.id === report.id),
+              )
               .map((report) => ({
                 ...report,
                 affected: report.monitorsToStatusReports.map(
@@ -105,11 +129,9 @@ export default function Page() {
                 updates: report.statusReportUpdates,
               }))}
             maintenances={page.maintenances
-              .filter((maintenance) => {
-                const isRecent =
-                  maintenance.from.getTime() > subDays(new Date(), 7).getTime();
-                return isRecent;
-              })
+              .filter((maintenance) =>
+                page.lastEvents.some((event) => event.id === maintenance.id),
+              )
               .map((maintenance) => ({
                 ...maintenance,
                 affected: maintenance.maintenancesToMonitors.map(

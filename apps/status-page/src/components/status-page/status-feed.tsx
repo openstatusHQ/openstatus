@@ -63,7 +63,8 @@ export function StatusFeed({
       id: report.id,
       title: report.title,
       type: "report" as const,
-      startDate: report.updates[0]?.date || new Date(),
+      // FIXME: we have a flicker here when the report is updated
+      startDate: report.updates[report.updates.length - 1]?.date || new Date(),
       data: report,
     })),
     ...maintenances.map((maintenance) => ({

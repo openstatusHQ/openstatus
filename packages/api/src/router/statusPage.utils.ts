@@ -69,9 +69,10 @@ type Event = {
   from: Date;
   to: Date | null;
   type: "maintenance" | "incident" | "report";
+  status: "success" | "degraded" | "error" | "info";
 };
 
-export function getEventsByMonitorId({
+export function getEvents({
   maintenances,
   incidents,
   reports,
@@ -86,16 +87,21 @@ export function getEventsByMonitorId({
     monitorsToStatusReports: { monitorId: number }[];
     statusReportUpdates: StatusReportUpdate[];
   })[];
-  monitorId: number;
+  monitorId?: number;
   pastDays?: number;
 }): Event[] {
   const events: Event[] = [];
   const pastThreshod = new Date();
   pastThreshod.setDate(pastThreshod.getDate() - pastDays);
 
+  // Filter maintenances - if monitorId is provided, filter by monitor, otherwise include all
   maintenances
     .filter((maintenance) =>
-      maintenance.maintenancesToMonitors.some((m) => m.monitorId === monitorId),
+      monitorId
+        ? maintenance.maintenancesToMonitors.some(
+            (m) => m.monitorId === monitorId,
+          )
+        : true,
     )
     .forEach((maintenance) => {
       if (maintenance.from < pastThreshod) return;
@@ -105,11 +111,13 @@ export function getEventsByMonitorId({
         from: maintenance.from,
         to: maintenance.to,
         type: "maintenance",
+        status: "info" as const,
       });
     });
 
+  // Filter incidents - if monitorId is provided, filter by monitor, otherwise include all
   incidents
-    .filter((incident) => incident.monitorId === monitorId)
+    .filter((incident) => (monitorId ? incident.monitorId === monitorId : true))
     .forEach((incident) => {
       if (!incident.createdAt || incident.createdAt < pastThreshod) return;
       events.push({
@@ -118,12 +126,16 @@ export function getEventsByMonitorId({
         from: incident.createdAt,
         to: incident.resolvedAt,
         type: "incident",
+        status: "error" as const,
       });
     });
 
+  // Filter reports - if monitorId is provided, filter by monitor, otherwise include all
   reports
     .filter((report) =>
-      report.monitorsToStatusReports.some((m) => m.monitorId === monitorId),
+      monitorId
+        ? report.monitorsToStatusReports.some((m) => m.monitorId === monitorId)
+        : true,
     )
     .map((report) => {
       const updates = report.statusReportUpdates.sort(
@@ -142,11 +154,15 @@ export function getEventsByMonitorId({
             ? lastUpdate?.date
             : null,
         type: "report",
+        status: "degraded" as const,
       });
     });
 
   return events;
 }
+
+// Keep the old function name for backward compatibility
+export const getEventsByMonitorId = getEvents;
 
 type UptimeData = {
   day: string;

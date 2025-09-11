@@ -1,16 +1,28 @@
 import { cn } from "@/lib/utils";
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  TriangleAlertIcon,
+  WrenchIcon,
+} from "lucide-react";
 import { messages } from "./messages";
-import { StatusIcon, StatusTimestamp } from "./status";
+import { StatusTimestamp } from "./status";
 
-export function StatusBanner({ className }: React.ComponentProps<"div">) {
+export function StatusBanner({
+  className,
+  status,
+}: React.ComponentProps<"div"> & {
+  status?: "success" | "degraded" | "error" | "info";
+}) {
   return (
     <StatusBannerContainer
+      status={status}
       className={cn(
         "flex items-center gap-3 px-3 py-2 sm:px-4 sm:py-3",
         className,
       )}
     >
-      <StatusIcon className="flex-shrink-0" />
+      <StatusBannerIcon className="flex-shrink-0" />
       <div className="flex flex-1 flex-wrap items-center justify-between gap-2">
         <StatusBannerMessage className="font-semibold text-xl" />
         <StatusTimestamp date={new Date()} className="text-xs" />
@@ -22,15 +34,20 @@ export function StatusBanner({ className }: React.ComponentProps<"div">) {
 export function StatusBannerContainer({
   className,
   children,
-}: React.ComponentProps<"div">) {
+  status,
+}: React.ComponentProps<"div"> & {
+  status?: "success" | "degraded" | "error" | "info";
+}) {
   return (
     <div
+      data-slot="status-banner"
+      data-status={status}
       className={cn(
-        "overflow-hidden rounded-lg border",
-        "group-data-[variant=success]:border-success",
-        "group-data-[variant=degraded]:border-warning",
-        "group-data-[variant=error]:border-destructive",
-        "group-data-[variant=info]:border-info",
+        "group/status-banner overflow-hidden rounded-lg border",
+        "data-[status=success]:border-success",
+        "data-[status=degraded]:border-warning",
+        "data-[status=error]:border-destructive",
+        "data-[status=info]:border-info",
         className,
       )}
     >
@@ -45,16 +62,16 @@ export function StatusBannerMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div className={cn(className)} {...props}>
-      <span className="hidden group-data-[variant=success]:block">
+      <span className="hidden group-data-[status=success]/status-banner:block">
         {messages.long.success}
       </span>
-      <span className="hidden group-data-[variant=degraded]:block">
+      <span className="hidden group-data-[status=degraded]/status-banner:block">
         {messages.long.degraded}
       </span>
-      <span className="hidden group-data-[variant=error]:block">
+      <span className="hidden group-data-[status=error]/status-banner:block">
         {messages.long.error}
       </span>
-      <span className="hidden group-data-[variant=info]:block">
+      <span className="hidden group-data-[status=info]/status-banner:block">
         {messages.long.info}
       </span>
     </div>
@@ -70,10 +87,10 @@ export function StatusBannerTitle({
     <div
       className={cn(
         "px-3 py-2 text-background sm:px-4 sm:py-3",
-        "group-data-[variant=success]:bg-success",
-        "group-data-[variant=degraded]:bg-warning",
-        "group-data-[variant=error]:bg-destructive",
-        "group-data-[variant=info]:bg-info",
+        "group-data-[status=success]/status-banner:bg-success",
+        "group-data-[status=degraded]/status-banner:bg-warning",
+        "group-data-[status=error]/status-banner:bg-destructive",
+        "group-data-[status=info]/status-banner:bg-info",
         className,
       )}
       {...props}
@@ -91,6 +108,30 @@ export function StatusBannerContent({
   return (
     <div className={cn("px-3 py-2 sm:px-4 sm:py-3", className)} {...props}>
       {children}
+    </div>
+  );
+}
+
+export function StatusBannerIcon({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      className={cn(
+        "flex size-7 items-center justify-center rounded-full bg-muted text-background [&>svg]:size-4",
+        "group-data-[status=success]/status-banner:bg-success",
+        "group-data-[status=degraded]/status-banner:bg-warning",
+        "group-data-[status=error]/status-banner:bg-destructive",
+        "group-data-[status=info]/status-banner:bg-info",
+        className,
+      )}
+      {...props}
+    >
+      <CheckIcon className="hidden group-data-[status=success]/status-banner:block" />
+      <TriangleAlertIcon className="hidden group-data-[status=degraded]/status-banner:block" />
+      <AlertCircleIcon className="hidden group-data-[status=error]/status-banner:block" />
+      <WrenchIcon className="hidden group-data-[status=info]/status-banner:block" />
     </div>
   );
 }

@@ -191,6 +191,7 @@ function StatusEventTimelineReportUpdate({
 
 export function StatusEventTimelineMaintenance({
   maintenance,
+  withDot = true,
 }: {
   maintenance: {
     title: string;
@@ -198,6 +199,7 @@ export function StatusEventTimelineMaintenance({
     from: Date;
     to: Date;
   };
+  withDot?: boolean;
 }) {
   const duration = formatDistanceStrict(maintenance.from, maintenance.to);
   const range = formatDateRange(maintenance.from, maintenance.to);
@@ -207,11 +209,13 @@ export function StatusEventTimelineMaintenance({
     <div data-variant="maintenance" className="group">
       <div className="flex flex-row items-center justify-between gap-2">
         <div className="flex flex-row gap-2">
-          <div className="flex flex-col">
-            <div className="flex h-5 flex-col items-center justify-center">
-              <StatusEventTimelineDot />
+          {withDot ? (
+            <div className="flex flex-col">
+              <div className="flex h-5 flex-col items-center justify-center">
+                <StatusEventTimelineDot />
+              </div>
             </div>
-          </div>
+          ) : null}
           <div className="mb-2">
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
