@@ -286,7 +286,7 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ slug: z.string().toLowerCase() }))
     .output(legacy_selectPublicPageSchemaWithRelation.nullish())
     .query(async (opts) => {
-      if (!opts.input.slug) return null;
+      if (!opts.input.slug) return;
 
       const result = await opts.ctx.db
         .select()
@@ -296,7 +296,7 @@ export const pageRouter = createTRPCRouter({
         )
         .get();
 
-      if (!result) return null;
+      if (!result) return;
 
       const [workspaceResult, monitorsToPagesResult] = await Promise.all([
         opts.ctx.db
@@ -351,7 +351,7 @@ export const pageRouter = createTRPCRouter({
 
       const maintenancesQuery = opts.ctx.db.query.maintenance.findMany({
         where: eq(maintenance.pageId, result.id),
-        with: { maintenancesToMonitors: true },
+        with: { maintenancesToMonitors: { with: { monitor: true } } },
         orderBy: (maintenances, { desc }) => desc(maintenances.from),
       });
 

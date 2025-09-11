@@ -70,10 +70,10 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
 
 export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
-    monitors: z.array(selectPublicMonitorSchema),
-    statusReports: z.array(selectStatusReportPageSchema),
-    incidents: z.array(selectIncidentSchema),
-    maintenances: z.array(selectMaintenancePageSchema),
+    monitors: z.array(selectPublicMonitorSchema).default([]),
+    statusReports: z.array(selectStatusReportPageSchema).default([]),
+    incidents: z.array(selectIncidentSchema).default([]),
+    maintenances: z.array(selectMaintenancePageSchema).default([]),
     workspacePlan: workspacePlanSchema
       .nullable()
       .default("free")
