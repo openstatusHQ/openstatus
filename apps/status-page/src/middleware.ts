@@ -33,7 +33,7 @@ export default async function middleware(req: NextRequest) {
   const _page = await db.select().from(page).where(eq(page.slug, prefix)).get();
 
   if (!_page) {
-    return NextResponse.redirect(new URL("https://openstatus.dev"));
+    return NextResponse.redirect(new URL("https://stpg.dev"));
   }
 
   if (_page?.passwordProtected) {

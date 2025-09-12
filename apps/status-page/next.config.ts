@@ -27,6 +27,15 @@ const nextConfig: NextConfig = {
                   : "(?<subdomain>[^.]+)\\.localhost",
             },
           ],
+          missing: [
+            {
+              type: "host",
+              value:
+                process.env.NODE_ENV === "production"
+                  ? "www\\.stpg\\.dev"
+                  : "www\\.localhost",
+            },
+          ],
           destination: "/:subdomain/:path*",
         },
       ],
