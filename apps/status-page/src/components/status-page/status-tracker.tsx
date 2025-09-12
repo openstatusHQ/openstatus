@@ -273,7 +273,9 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                           return (
                             <Link
                               key={event.id}
-                              href={`/${prefix}/events/report/${event.id}`}
+                              href={`${
+                                prefix ? `/${prefix}` : ""
+                              }/events/report/${event.id}`}
                             >
                               {content}
                             </Link>

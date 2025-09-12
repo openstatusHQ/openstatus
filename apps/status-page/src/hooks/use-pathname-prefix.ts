@@ -14,7 +14,7 @@ export function usePathnamePrefix() {
         hostnames[0] !== "www" &&
         !window.location.hostname.endsWith(".vercel.app")
       ) {
-        setPrefix(hostnames[0]);
+        setPrefix("");
       } else {
         setPrefix(pathnames[1]);
       }

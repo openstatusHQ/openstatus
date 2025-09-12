@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { cn } from "@/lib/utils";
 import { Inbox } from "lucide-react";
 import { useState } from "react";
@@ -19,17 +18,18 @@ type StatusUpdateType = "email" | "rss" | "atom";
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   types?: StatusUpdateType[];
+  slug?: string;
   onSubscribe?: (value: string) => Promise<void> | void;
 }
 
 export function StatusUpdates({
   className,
   types = ["rss", "atom"],
+  slug,
   onSubscribe,
   ...props
 }: StatusUpdatesProps) {
   const [success, setSuccess] = useState(false);
-  const prefix = usePathnamePrefix();
 
   return (
     <Popover>
@@ -85,7 +85,7 @@ export function StatusUpdates({
           <TabsContent value="rss" className="flex flex-col gap-2">
             <div className="border-b px-2 pb-2">
               <Input
-                placeholder={`https://${prefix}.openstatus.dev/feed/rss`}
+                placeholder={`https://${slug}.openstatus.dev/feed/rss`}
                 className="disabled:opacity-90"
                 disabled
               />
@@ -93,14 +93,14 @@ export function StatusUpdates({
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
-                value={`https://${prefix}.openstatus.dev/feed/rss`}
+                value={`https://${slug}.openstatus.dev/feed/rss`}
               />
             </div>
           </TabsContent>
           <TabsContent value="atom" className="flex flex-col gap-2">
             <div className="border-b px-2 pb-2">
               <Input
-                placeholder={`https://${prefix}.openstatus.dev/feed/atom`}
+                placeholder={`https://${slug}.openstatus.dev/feed/atom`}
                 className="disabled:opacity-90"
                 disabled
               />
@@ -108,7 +108,7 @@ export function StatusUpdates({
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
-                value={`https://${prefix}.openstatus.dev/feed/atom`}
+                value={`https://${slug}.openstatus.dev/feed/atom`}
               />
             </div>
           </TabsContent>
