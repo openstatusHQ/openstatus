@@ -1,0 +1,93 @@
+---
+title: TCP Monitor
+---
+
+
+A TCP Monitor is a component that allows you to monitor the status of your services.
+
+## Configuration
+
+### URI
+
+The url of the endpoint you want to monitor e.g `openstat.us:443`
+
+### Regions
+
+The regions where we are triggering the HTTP request.
+
+__Africa__
+
+- Johannesburg, South Africa 🇿🇦 (free)
+
+__Asia__
+
+- Hong Kong, Hong Kong 🇭🇰 (free)
+- Mumbai, India 🇮🇳
+- Singapore, Singapore 🇸🇬
+- Tokyo, Japan 🇯🇵
+
+__Europe__
+
+- Amsterdam, Netherlands 🇳🇱 (free)
+- Bucharest, Romania 🇷🇴
+- Frankfurt, Germany 🇩🇪
+- London, United Kingdom 🇬🇧
+- Madrid, Spain 🇪🇸
+- Paris, France 🇫🇷
+- Stockholm, Sweden 🇸🇪
+- Warsaw, Poland 🇵🇱
+
+__North America__
+
+- Ashburn, Virginia, USA 🇺🇸 (free)
+- Atlanta, Georgia, USA 🇺🇸
+- Boston, Massachusetts, USA 🇺🇸
+- Chicago, Illinois, USA 🇺🇸
+- Dallas, Texas, USA 🇺🇸
+- Denver, Colorado, USA 🇺🇸
+- Guadalajara, Mexico 🇲🇽
+- Los Angeles, California, USA 🇺🇸
+- Miami, Florida, USA 🇺🇸
+- Montreal, Canada 🇨🇦
+- Phoenix, Arizona, USA 🇺🇸
+- Queretaro, Mexico 🇲🇽
+- Seattle, Washington, USA 🇺🇸
+- San Jose, California, USA 🇺🇸
+- Toronto, Canada 🇨🇦
+
+__South America__
+
+- Bogota, Colombia 🇨🇴
+- Buenos Aires, Argentina 🇦🇷
+- Rio de Janeiro, Brazil 🇧🇷
+- Sao Paulo, Brazil 🇧🇷 (free)
+- Santiago, Chile 🇨🇱
+
+__Oceania__
+
+- Sydney, Australia 🇦🇺 (free)
+
+### Frequency
+
+The check interval, we support the following frequencies:
+- 30 seconds
+- 1 minute
+- 5 minutes
+- 10 minutes
+- 30 minutes
+- 1 hour
+
+### Response Time Thresholds
+#### Timeout
+The timeout for the HTTP request, default: `45 seconds`
+#### Degraded
+The duration for which the HTTP request is considered degraded.
+
+### Retry
+The number of retries for the HTTP request. Default: `3`
+
+### OpenTelemetry
+#### OTPL Endpoint
+The endpoint we use to export the metrics. We only support HTTP endpoint.
+#### OTLP Headers
+The headers we use to export the metrics to your otlp endpoint.

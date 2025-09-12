@@ -1,0 +1,144 @@
+---
+title: HTTP Monitor
+---
+
+An HTTP Monitor is a component that allows you to monitor the status of HTTP endpoints. It can be used to monitor the status of a website, an API, or any other HTTP endpoint.
+
+## Configuration
+
+### URL
+
+The url of the HTTP endpoint you want to monitor e.g `https://openstat.us`
+
+### Methods
+
+The HTTP method you want to use to monitor the endpoint.
+- `GET`
+- `POST`
+- `PUT`
+- `DELETE`
+- `HEAD`
+- `OPTIONS`
+- `PATCH`
+- `TRACE`
+
+### Body
+
+The body of the HTTP request you want to send to the endpoint. You use binary data if the content type is `application/octet-stream`.
+Example:
+- `{ "key": "value" }`
+- `data:image/jpeg;base64,/9j...`
+### Headers
+
+The headers you want to send with the HTTP request
+
+Example:
+- `"Content-Type": "application/json"`
+- `'Content-Type: application/octet-stream'`
+
+### Regions
+
+The regions where we are triggering the HTTP request.
+
+__Africa__
+
+- Johannesburg, South Africa 🇿🇦 (free)
+
+__Asia__
+
+- Hong Kong, Hong Kong 🇭🇰 (free)
+- Mumbai, India 🇮🇳
+- Singapore, Singapore 🇸🇬
+- Tokyo, Japan 🇯🇵
+
+__Europe__
+
+- Amsterdam, Netherlands 🇳🇱 (free)
+- Bucharest, Romania 🇷🇴
+- Frankfurt, Germany 🇩🇪
+- London, United Kingdom 🇬🇧
+- Madrid, Spain 🇪🇸
+- Paris, France 🇫🇷
+- Stockholm, Sweden 🇸🇪
+- Warsaw, Poland 🇵🇱
+
+__North America__
+
+- Ashburn, Virginia, USA 🇺🇸 (free)
+- Atlanta, Georgia, USA 🇺🇸
+- Boston, Massachusetts, USA 🇺🇸
+- Chicago, Illinois, USA 🇺🇸
+- Dallas, Texas, USA 🇺🇸
+- Denver, Colorado, USA 🇺🇸
+- Guadalajara, Mexico 🇲🇽
+- Los Angeles, California, USA 🇺🇸
+- Miami, Florida, USA 🇺🇸
+- Montreal, Canada 🇨🇦
+- Phoenix, Arizona, USA 🇺🇸
+- Queretaro, Mexico 🇲🇽
+- Seattle, Washington, USA 🇺🇸
+- San Jose, California, USA 🇺🇸
+- Toronto, Canada 🇨🇦
+
+__South America__
+
+- Bogota, Colombia 🇨🇴
+- Buenos Aires, Argentina 🇦🇷
+- Rio de Janeiro, Brazil 🇧🇷
+- Sao Paulo, Brazil 🇧🇷 (free)
+- Santiago, Chile 🇨🇱
+
+__Oceania__
+
+- Sydney, Australia 🇦🇺 (free)
+
+### Frequency
+
+The check interval, we support the following frequencies:
+- 30 seconds
+- 1 minute
+- 5 minutes
+- 10 minutes
+- 30 minutes
+- 1 hour
+
+### Response Time Thresholds
+#### Timeout
+The timeout for the HTTP request, default is `45 seconds`
+#### Degraded
+The duration for which the HTTP request is considered degraded.
+
+### Retry
+The number of retries for the HTTP request. For example: `3`
+
+### Assertions
+#### Body assertions
+Validate the body of the response. The comparisons are:
+- Contains
+- Not Contains
+- Equal
+- Not Equal
+- Empty
+
+#### Status code assertions
+Validate the status code of the response. The comparisons are:
+- Equal
+- Not Equal
+- Greater Than
+- Greater Than or Equal
+- Less Than
+- Less Than or Equal
+
+#### Headers assertions
+Validate the headers of the reponse. The comparisons are:
+- Contains
+- Not Contains
+- Equal
+- Not Equal
+- Empty
+
+### OpenTelemetry
+#### OTPL Endpoint
+The endpoint we use to export the metrics. We only support HTTP endpoint.
+#### OTLP Headers
+The headers we use to export the metrics to your otlp endpoint.
