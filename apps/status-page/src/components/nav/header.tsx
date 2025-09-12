@@ -26,18 +26,18 @@ function useNav() {
   return [
     {
       label: "Status",
-      href: `${prefix ? `/${prefix}` : ""}`,
+      href: `/${prefix}`,
       isActive: pathname === `/${prefix}`,
     },
     {
       label: "Events",
       href: `${prefix ? `/${prefix}` : ""}/events`,
-      isActive: pathname.startsWith(`/${prefix}/events`),
+      isActive: pathname.startsWith(`${prefix ? `/${prefix}` : ""}/events`),
     },
     {
       label: "Monitors",
       href: `${prefix ? `/${prefix}` : ""}/monitors`,
-      isActive: pathname.startsWith(`/${prefix}/monitors`),
+      isActive: pathname.startsWith(`${prefix ? `/${prefix}` : ""}/monitors`),
     },
   ];
 }
