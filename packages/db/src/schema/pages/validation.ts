@@ -42,7 +42,7 @@ export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().default(""),
   configuration: z
     .record(z.string(), z.string().optional())
-    .optional()
+    .nullish()
     .default({}),
 });
 
