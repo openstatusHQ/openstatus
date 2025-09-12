@@ -40,6 +40,10 @@ export const insertPageSchema = createInsertSchema(page, {
 
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().default(""),
+  configuration: z
+    .record(z.string(), z.string().optional())
+    .optional()
+    .default({}),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

@@ -86,7 +86,7 @@ export function FormAppearance({
               Forced theme will override the user&apos;s preference.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="forceTheme"
@@ -98,7 +98,7 @@ export function FormAppearance({
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select a theme" />
                       </SelectTrigger>
                     </FormControl>

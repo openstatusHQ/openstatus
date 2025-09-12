@@ -3,6 +3,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { FormAppearance } from "./form-appearance";
+import { FormConfiguration } from "./form-configuration";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
@@ -71,6 +72,12 @@ export function FormStatusPageUpdate() {
     }),
   );
 
+  const updatePageConfigurationMutation = useMutation(
+    trpc.page.updatePageConfiguration.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
   if (!statusPage || !monitors || !workspace) return null;
 
   return (
@@ -129,6 +136,19 @@ export function FormStatusPageUpdate() {
           await updatePageAppearanceMutation.mutateAsync({
             id: Number.parseInt(id),
             forceTheme: values.forceTheme,
+          });
+        }}
+      />
+      <FormConfiguration
+        defaultValues={{
+          new: !statusPage.legacyPage,
+          configuration: statusPage.configuration ?? {},
+        }}
+        onSubmit={async (values) => {
+          await updatePageConfigurationMutation.mutateAsync({
+            id: Number.parseInt(id),
+            configuration: values.configuration ?? {},
+            legacyPage: !values.new,
           });
         }}
       />
