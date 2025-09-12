@@ -94,17 +94,8 @@ export function FormVisibility({
                   <div className="space-y-0.5">
                     <FormLabel>Allow public access</FormLabel>
                     <FormDescription>
-                      Change monitor visibility. When checked, the monitor stats
-                      from the overview page will be public. You will be able to
-                      share it via a connected status page or{" "}
-                      <Link
-                        href={`https://openstatus.dev/public/monitors/${id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        https://openstatus.dev/public/monitors/{id}
-                      </Link>
-                      .
+                      Change monitor visibility. The monitor stats will be
+                      attached to the status page the monitor is connected to.
                     </FormDescription>
                   </div>
                   <FormControl>

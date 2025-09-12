@@ -82,6 +82,8 @@ export function FormConfiguration({
     if (watchConfigurationType === "manual") {
       // TODO: this is not working
       form.setValue("configuration.value", undefined);
+    } else {
+      form.setValue("configuration.value", "duration");
     }
   }, [watchConfigurationType, form]);
 
@@ -290,7 +292,7 @@ const message = {
     default: "shares only the worse status of the day",
   },
   uptime: {
-    true: "shares the uptime and status of your endpoint.",
+    true: "shares the uptime and current status of your endpoint.",
     false: "shares only the current status.",
   },
 } as const;
