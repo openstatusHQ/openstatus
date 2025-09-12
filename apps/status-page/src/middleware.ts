@@ -26,7 +26,7 @@ export default async function middleware(req: NextRequest) {
     type = "pathname";
   }
 
-  if (url.pathname === "/") {
+  if (url.pathname === "/" && type !== "hostname") {
     return response;
   }
 
