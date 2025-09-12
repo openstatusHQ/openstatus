@@ -103,7 +103,9 @@ export function StatusFeed({
                 </span>
               </StatusEventAside>
               <Link
-                href={`${prefix}/events/report/${report.id}`}
+                href={`${prefix ? `/${prefix}` : ""}/events/report/${
+                  report.id
+                }`}
                 className="rounded-lg"
               >
                 <StatusEventContent>
@@ -142,7 +144,9 @@ export function StatusFeed({
                 ) : null}
               </StatusEventAside>
               <Link
-                href={`${prefix}/events/maintenance/${maintenance.id}`}
+                href={`${prefix ? `/${prefix}` : ""}/events/maintenance/${
+                  maintenance.id
+                }`}
                 className="rounded-lg"
               >
                 <StatusEventContent>

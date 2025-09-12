@@ -26,17 +26,17 @@ function useNav() {
   return [
     {
       label: "Status",
-      href: `/${prefix}`,
+      href: `${prefix ? `/${prefix}` : ""}`,
       isActive: pathname === `/${prefix}`,
     },
     {
       label: "Events",
-      href: `/${prefix}/events`,
+      href: `${prefix ? `/${prefix}` : ""}/events`,
       isActive: pathname.startsWith(`/${prefix}/events`),
     },
     {
       label: "Monitors",
-      href: `/${prefix}/monitors`,
+      href: `${prefix ? `/${prefix}` : ""}/monitors`,
       isActive: pathname.startsWith(`/${prefix}/monitors`),
     },
   ];
@@ -88,6 +88,7 @@ export function Header(props: React.ComponentProps<"header">) {
           onSubscribe={async (email) => {
             await subscribeMutation.mutateAsync({ slug: domain, email });
           }}
+          slug={page?.slug}
         />
         <div className="flex gap-3 md:hidden">
           <NavMobile />
@@ -96,6 +97,7 @@ export function Header(props: React.ComponentProps<"header">) {
             onSubscribe={async (email) => {
               await subscribeMutation.mutateAsync({ slug: domain, email });
             }}
+            slug={page?.slug}
           />
         </div>
       </nav>
