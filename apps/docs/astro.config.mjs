@@ -63,11 +63,15 @@ export default defineConfig({
           items: [
             {
               label: "Uptime monitoring",
-              slug: "getting-started/introduction",
+              slug: "concept/uptime-monitoring",
             },
             {
               label: "Status pages",
-              slug: "getting-started/introduction",
+              slug: "concept/status-page",
+            },
+            {
+              label: "Monitoring as code",
+              slug: "concept/monitoring-as-code",
             },
           ],
         },
@@ -84,9 +88,38 @@ export default defineConfig({
             },
           ],
         },
+
+        {
+          label: "Guides",
+          items: [
+            {
+              label: "Monitor your MCP Server",
+              slug: "guides/how-to-monitor-mcp-server",
+            },
+            {
+              label: "Run check in GitHub Actions",
+              slug: "guides/how-to-run-synthetic-test-github-action",
+            },
+          ],
+        },
         {
           label: "Reference",
           items: [
+            {
+              label: "CLI Reference",
+              slug: "reference/cli-reference",
+            },
+            {
+              label: "API Reference",
+              link: "https://api.openstatus.dev/v1",
+              attrs: {
+                target: "_blank",
+              },
+            },
+            {
+              label: "Incident",
+              slug: "reference/incident",
+            },
             {
               label: "HTTP Monitor",
               slug: "reference/http-monitor",
@@ -101,35 +134,11 @@ export default defineConfig({
             },
             {
               label: "Status Page",
-              slug: "getting-started/introduction",
+              slug: "reference/status-page",
             },
             {
               label: "Status Report",
-              slug: "getting-started/introduction",
-            },
-            {
-              label: "CLI Reference",
-              slug: "reference/cli-reference",
-            },
-            {
-              label: "API Reference",
-              link: "https://api.openstatus.dev/v1",
-              attrs: {
-                target: "_blank",
-              },
-            },
-          ],
-        },
-        {
-          label: "Guides",
-          items: [
-            {
-              label: "Monitor your MCP Server",
-              slug: "guides/how-to-monitor-mcp-server",
-            },
-            {
-              label: "Run check in GitHub Actions",
-              slug: "guides/how-to-run-synthetic-test-github-action",
+              slug: "reference/status-report",
             },
           ],
         },
