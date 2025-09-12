@@ -16,12 +16,12 @@ export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
-    // this.tb = new Client({ token });
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
       this.tb = new Client({ token });
     }
+    // this.tb = new Client({ token });
   }
 
   public get homeStats() {
@@ -459,7 +459,7 @@ export class OSTinybird {
     });
   }
 
-  public get httpStatus45d() {
+  public get legacy_httpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_45d__v0",
       parameters: z.object({
@@ -479,6 +479,27 @@ export class OSTinybird {
           revalidate: PUBLIC_CACHE,
         },
       },
+    });
+  }
+
+  public get httpStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_status_45d__v1",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().default(0),
+        ok: z.number().default(0),
+        degraded: z.number().default(0),
+        error: z.number().default(0),
+        monitorId: z.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 
@@ -987,7 +1008,7 @@ export class OSTinybird {
     });
   }
 
-  public get tcpStatus45d() {
+  public get legacy_tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v0",
       parameters: z.object({
@@ -1001,6 +1022,32 @@ export class OSTinybird {
         }),
         count: z.number().default(0),
         ok: z.number().default(0),
+      }),
+      opts: {
+        next: {
+          revalidate: PUBLIC_CACHE,
+        },
+      },
+    });
+  }
+
+  public get tcpStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_45d__v1",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+        days: z.number().int().max(45).optional(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().default(0),
+        ok: z.number().default(0),
+        degraded: z.number().default(0),
+        error: z.number().default(0),
+        monitorId: z.coerce.string(),
       }),
       opts: {
         next: {
@@ -1360,6 +1407,42 @@ export class OSTinybird {
     });
   }
 
+  public get httpMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get httpMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_metrics_latency_1d_multi__v1",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        monitorId: z.string(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpMetricsLatency1d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_latency_1d__v1",
@@ -1375,6 +1458,42 @@ export class OSTinybird {
         p95Latency: z.number().int(),
         p99Latency: z.number().int(),
       }),
+    });
+  }
+
+  public get tcpMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_7d__v1",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get tcpMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_latency_1d_multi__v1",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        monitorId: z.coerce.string(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 }

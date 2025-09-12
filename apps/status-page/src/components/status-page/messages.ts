@@ -4,12 +4,14 @@ export const messages = {
     degraded: "Degraded Performance",
     error: "Downtime Performance",
     info: "Maintenance",
+    empty: "No Data",
   },
   short: {
     success: "Operational",
     degraded: "Degraded",
     error: "Downtime",
     info: "Maintenance",
+    empty: "No Data",
   },
 };
 
@@ -18,4 +20,12 @@ export const requests = {
   degraded: "Degraded",
   error: "Error",
   info: "Maintenance",
+  empty: "No Data",
+};
+
+export const status = {
+  resolved: "Resolved",
+  monitoring: "Monitoring",
+  identified: "Identified",
+  investigating: "Investigating",
 };

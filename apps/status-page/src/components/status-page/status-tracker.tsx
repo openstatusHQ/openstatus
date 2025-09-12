@@ -7,16 +7,21 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Separator } from "@/components/ui/separator";
-// TODO: make it a property of the component
-import { statusReports } from "@/data/status-reports";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDateRange } from "@/lib/formatter";
-import { formatDistanceStrict, isSameDay } from "date-fns";
+import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
+import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { type BarType, type CardType, VARIANT } from "./floating-button";
-import { messages, requests } from "./messages";
-import { type ChartData, chartConfig, getHighestPriorityStatus } from "./utils";
+import { requests } from "./messages";
+import { chartConfig } from "./utils";
+
+type UptimeData = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number]["data"];
 
 // TODO: keyboard arrow navigation
 // FIXME: on small screens, avoid pinned state
@@ -26,34 +31,15 @@ import { type ChartData, chartConfig, getHighestPriorityStatus } from "./utils";
 // TODO: support status page logo + onClick to homepage
 // TODO: widget type -> current status only | with status history
 
-const STATUS = VARIANT;
-
-export function StatusTracker({
-  cardType = "duration",
-  barType = "absolute",
-  data,
-}: {
-  cardType?: CardType;
-  barType?: BarType;
-  data: ChartData[];
-}) {
+export function StatusTracker({ data }: { data: UptimeData }) {
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isTouch = useMediaQuery("(hover: none)");
+  const prefix = usePathnamePrefix();
 
-  // Window-level Escape key listener
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && pinnedIndex !== null) {
-        setPinnedIndex(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [pinnedIndex]);
-
-  // Document-level outside click listener
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (
@@ -72,15 +58,66 @@ export function StatusTracker({
     }
   }, [pinnedIndex]);
 
-  // Handle keyboard events for accessibility (kept for fallback)
+  useEffect(() => {
+    if (focusedIndex !== null && containerRef.current) {
+      const buttons = containerRef.current.querySelectorAll('[role="button"]');
+      const targetButton = buttons[focusedIndex] as HTMLElement;
+      if (targetButton) {
+        targetButton.focus();
+      }
+    }
+  }, [focusedIndex]);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       setPinnedIndex(null);
+      setFocusedIndex(null);
+      setHoveredIndex(null);
+
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    if (focusedIndex !== null) {
+      switch (e.key) {
+        case "ArrowLeft":
+          e.preventDefault();
+          setFocusedIndex((prev) =>
+            prev !== null && prev > 0 ? prev - 1 : data.length - 1,
+          );
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          setFocusedIndex((prev) =>
+            prev !== null && prev < data.length - 1 ? prev + 1 : 0,
+          );
+          break;
+        case "Enter":
+        case " ":
+          e.preventDefault();
+          handleBarClick(focusedIndex);
+          break;
+      }
     }
   };
 
   const handleBarClick = (index: number) => {
-    // Toggle pinned state: if clicking the same bar, unpin it; otherwise, pin the new bar
+    // Clear any pending hover timeout
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
     if (pinnedIndex === index) {
       setPinnedIndex(null);
     } else {
@@ -88,110 +125,167 @@ export function StatusTracker({
     }
   };
 
+  const handleBarFocus = (index: number) => {
+    setFocusedIndex(index);
+  };
+
+  const handleBarBlur = (e: React.FocusEvent, _currentIndex: number) => {
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    const isMovingToAnotherBar =
+      relatedTarget &&
+      relatedTarget.closest('[role="toolbar"]') === containerRef.current &&
+      relatedTarget.getAttribute("role") === "button";
+
+    if (!isMovingToAnotherBar) {
+      setFocusedIndex(null);
+    }
+  };
+
+  const handleBarMouseEnter = (index: number) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setHoveredIndex(index);
+  };
+
+  const handleBarMouseLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredIndex(null);
+    }, 100);
+  };
+
+  const handleHoverCardMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+  };
+
+  const handleHoverCardMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
   return (
     <div
       ref={containerRef}
       className="flex h-[50px] w-full items-end"
       onKeyDown={handleKeyDown}
-      // tabIndex={0}
+      role="toolbar"
+      aria-label="Status tracker"
     >
       {data.map((item, index) => {
         const isPinned = pinnedIndex === index;
-
-        const reports = statusReports.filter((report) => {
-          const reportDate = new Date(report.startedAt);
-          const itemDate = new Date(item.timestamp);
-          return isSameDay(reportDate, itemDate);
-        });
+        const isFocused = focusedIndex === index;
+        const isHovered = hoveredIndex === index;
 
         return (
           <HoverCard
-            key={item.timestamp}
+            key={item.day}
             openDelay={0}
             closeDelay={0}
-            open={isPinned ? true : undefined}
+            open={isPinned || isFocused || isHovered}
           >
             <HoverCardTrigger asChild>
               <div
-                className="group relative flex h-full w-full cursor-pointer flex-col px-px transition-opacity hover:opacity-80" // sm:px-0.5
+                className={cn(
+                  "group relative flex h-full w-full cursor-pointer flex-col px-px outline-none hover:opacity-80 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                )}
                 onClick={() => handleBarClick(index)}
+                onFocus={() => handleBarFocus(index)}
+                onBlur={(e) => handleBarBlur(e, index)}
+                onMouseEnter={() => handleBarMouseEnter(index)}
+                onMouseLeave={handleBarMouseLeave}
+                tabIndex={
+                  index === 0 && focusedIndex === null ? 0 : isFocused ? 0 : -1
+                }
+                role="button"
+                aria-label={`Day ${index + 1} status`}
+                aria-pressed={isPinned}
               >
-                {(() => {
-                  switch (barType) {
-                    case "absolute":
-                      return <StatusTrackerTriggerAbsolute item={item} />;
-                    case "dominant":
-                      return <StatusTrackerTriggerDominant item={item} />;
-                    default:
-                      return null;
-                  }
-                })()}
+                {/* Render processed bar segments from backend */}
+                {item.bar.map((segment, segmentIndex) => (
+                  <div
+                    key={`${item.day}-${segment.status}-${segmentIndex}`}
+                    className="w-full transition-all"
+                    style={{
+                      height: `${segment.height}%`,
+                      backgroundColor: chartConfig[segment.status].color,
+                    }}
+                  />
+                ))}
               </div>
             </HoverCardTrigger>
-            <HoverCardContent side="top" align="center" className="w-auto p-0">
+            <HoverCardContent
+              side="top"
+              align="center"
+              // NOTE: remove animation and transition to avoid flickering
+              className="![animation-duration:0ms] ![transition-duration:0ms] w-auto min-w-40 p-0"
+              onMouseEnter={handleHoverCardMouseEnter}
+              onMouseLeave={handleHoverCardMouseLeave}
+            >
               <div>
                 <div className="p-2 text-xs">
-                  {new Date(item.timestamp).toLocaleDateString("default", {
+                  {new Date(item.day).toLocaleDateString("default", {
                     day: "numeric",
                     month: "short",
+                    year: "numeric",
                   })}
                 </div>
                 <Separator />
                 <div className="space-y-1 p-2 text-sm">
-                  {(() => {
-                    switch (cardType) {
-                      case "duration":
-                        return <StatusTrackerContentDuration item={item} />;
-                      case "dominant":
-                        return <StatusTrackerContentDominant item={item} />;
-                      case "requests":
-                        return <StatusTrackerContentRequests item={item} />;
-                      default:
-                        return null;
-                    }
-                  })()}
+                  {/* Render processed card data from backend */}
+                  {item.card.map((cardItem, cardIndex) => (
+                    <StatusTrackerContent
+                      key={`${item.day}-card-${cardIndex}`}
+                      status={cardItem.status}
+                      value={cardItem.value}
+                    />
+                  ))}
                 </div>
-                {reports.length > 0 ? (
+                {item.events.length > 0 && (
                   <>
                     <Separator />
                     <div className="p-2">
-                      {reports.map((report) => {
-                        const updates = report.updates.sort(
-                          (a, b) => a.date.getTime() - b.date.getTime(),
+                      {item.events.map((event) => {
+                        const eventStatus =
+                          event.type === "incident"
+                            ? "error"
+                            : event.type === "report"
+                              ? "degraded"
+                              : "info";
+
+                        const content = (
+                          <StatusTrackerEvent
+                            key={event.id}
+                            status={eventStatus}
+                            name={event.name}
+                            from={event.from}
+                            to={event.to}
+                          />
                         );
-                        const startedAt = new Date(updates[0].date);
-                        const endedAt = new Date(
-                          updates[updates.length - 1].date,
-                        );
-                        const duration = formatDistanceStrict(
-                          startedAt,
-                          endedAt,
-                        );
-                        return (
-                          <Link
-                            key={report.id}
-                            href="/status-page/events/report"
-                          >
-                            <div className="group relative text-sm">
-                              {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
-                              {/* REMINDER: height needs to be equal the text height */}
-                              <div className="h-4 w-full" />
-                              <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
-                                <div className="truncate">{report.name}</div>
-                              </div>
-                              <div className="mt-1 text-muted-foreground text-xs">
-                                {formatDateRange(startedAt, endedAt)}{" "}
-                                <span className="ml-1.5 font-mono text-muted-foreground/70">
-                                  {duration}
-                                </span>
-                              </div>
-                            </div>
-                          </Link>
-                        );
+
+                        // Wrap reports and maintenances with links
+                        if (
+                          event.type === "report" ||
+                          event.type === "maintenance"
+                        ) {
+                          return (
+                            <Link
+                              key={event.id}
+                              href={`/${prefix}/events/report/${event.id}`}
+                            >
+                              {content}
+                            </Link>
+                          );
+                        }
+
+                        // Incidents don't have links
+                        return content;
                       })}
                     </div>
                   </>
-                ) : null}
+                )}
                 {isPinned && !isTouch && (
                   <>
                     <Separator />
@@ -210,111 +304,78 @@ export function StatusTracker({
   );
 }
 
-function StatusTrackerTriggerAbsolute({ item }: { item: ChartData }) {
-  const total = item.success + item.degraded + item.info + item.error;
-
-  return STATUS.map((status) => {
-    const value = item[status as keyof typeof item] as number;
-    if (value === 0) return null;
-    const heightPercentage = (value / total) * 100;
-    return (
-      <div
-        key={`${item.timestamp}-${status}`}
-        className="w-full transition-all"
-        style={{
-          height: `${heightPercentage}%`,
-          backgroundColor: chartConfig[status].color,
-          // IDEA: only for status === "success", make the color less pop to emphasize the other statuses
-        }}
-      />
-    );
-  });
-}
-
-function StatusTrackerTriggerDominant({ item }: { item: ChartData }) {
-  const highestPriorityStatus = getHighestPriorityStatus(item);
-
+export function StatusTrackerSkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
   return (
-    <div
-      key={`${item.timestamp}-${highestPriorityStatus}`}
-      className="w-full transition-all"
-      style={{
-        height: "100%",
-        backgroundColor: chartConfig[highestPriorityStatus].color,
-      }}
+    <Skeleton
+      className={cn("h-[50px] w-full rounded-none bg-muted", className)}
+      {...props}
     />
   );
 }
 
-function StatusTrackerContentDuration({ item }: { item: ChartData }) {
-  return STATUS.map((status) => {
-    const value = item[status];
-    if (value === 0) return null;
-
-    // const percentage = ((value / total) * 100).toFixed(1);
-
-    const now = new Date();
-    const duration = formatDistanceStrict(
-      now,
-      new Date(now.getTime() + value * 60 * 1000),
-    );
-
-    return (
-      <div key={status} className="flex items-baseline gap-4">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-2.5 w-2.5 rounded-sm"
-            style={{
-              backgroundColor: chartConfig[status].color,
-            }}
-          />
-          <div className="text-sm">{messages.short[status]}</div>
-        </div>
-        <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
-          {duration}
-        </div>
-      </div>
-    );
-  });
-}
-
-function StatusTrackerContentDominant({ item }: { item: ChartData }) {
-  const highestPriorityStatus = getHighestPriorityStatus(item);
+function StatusTrackerContent({
+  status,
+  value,
+}: {
+  status: "success" | "degraded" | "error" | "info" | "empty";
+  value: string;
+}) {
   return (
-    <div className="flex min-w-32 items-baseline gap-4">
+    <div className="flex items-baseline gap-4">
       <div className="flex items-center gap-2">
         <div
           className="h-2.5 w-2.5 rounded-sm"
           style={{
-            backgroundColor: chartConfig[highestPriorityStatus].color,
+            backgroundColor: chartConfig[status].color,
           }}
         />
-        <div className="text-sm">{messages.short[highestPriorityStatus]}</div>
+        <div className="text-sm">{requests[status]}</div>
+      </div>
+      <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
+        {value}
       </div>
     </div>
   );
 }
 
-function StatusTrackerContentRequests({ item }: { item: ChartData }) {
-  return STATUS.map((status) => {
-    const value = item[status];
-    if (value === 0) return null;
-
-    return (
-      <div key={status} className="flex items-baseline gap-4">
+function StatusTrackerEvent({
+  name,
+  from,
+  to,
+  status,
+}: {
+  name: string;
+  from?: Date | null;
+  to?: Date | null;
+  status: "success" | "degraded" | "error" | "info" | "empty";
+}) {
+  if (!from) return null;
+  const duration = to ? formatDistanceStrict(from, to) : "ongoing";
+  return (
+    <div className="group relative text-sm">
+      {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
+      {/* REMINDER: height needs to be equal the text height */}
+      <div className="h-4 w-full" />
+      <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
         <div className="flex items-center gap-2">
           <div
-            className="h-2.5 w-2.5 rounded-sm"
+            className="h-2.5 w-2.5 shrink-0 rounded-sm"
             style={{
               backgroundColor: chartConfig[status].color,
             }}
           />
-          <div className="text-sm">{requests[status]}</div>
-        </div>
-        <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
-          {value} req
+          <div className="truncate">{name}</div>
         </div>
       </div>
-    );
-  });
+      <div className="mt-1 text-muted-foreground text-xs">
+        {formatDateRange(from, to ?? undefined)}{" "}
+        <span className="ml-1.5 font-mono text-muted-foreground/70">
+          {duration}
+        </span>
+      </div>
+    </div>
+  );
 }

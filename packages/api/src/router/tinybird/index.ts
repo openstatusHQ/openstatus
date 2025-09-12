@@ -18,11 +18,11 @@ type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
 // NEW: workspace-level counters helper
-function getWorkspace30dProcedure(type: Type) {
+export function getWorkspace30dProcedure(type: Type) {
   return type === "http" ? tb.httpWorkspace30d : tb.tcpWorkspace30d;
 }
 // Helper functions to get the right procedure based on period and type
-function getListProcedure(period: Period, type: Type) {
+export function getListProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
       return type === "http" ? tb.httpListDaily : tb.tcpListDaily;
@@ -35,7 +35,7 @@ function getListProcedure(period: Period, type: Type) {
   }
 }
 
-function getMetricsProcedure(period: Period, type: Type) {
+export function getMetricsProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
       return type === "http" ? tb.httpMetricsDaily : tb.tcpMetricsDaily;
@@ -48,7 +48,7 @@ function getMetricsProcedure(period: Period, type: Type) {
   }
 }
 
-function getMetricsByRegionProcedure(period: Period, type: Type) {
+export function getMetricsByRegionProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
       return type === "http"
@@ -69,7 +69,7 @@ function getMetricsByRegionProcedure(period: Period, type: Type) {
   }
 }
 
-function getMetricsByIntervalProcedure(period: Period, type: Type) {
+export function getMetricsByIntervalProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
       return type === "http"
@@ -91,7 +91,7 @@ function getMetricsByIntervalProcedure(period: Period, type: Type) {
 }
 
 // FIXME: tb pipes are deprecated, we need new ones
-function getMetricsRegionsProcedure(period: Period, type: Type) {
+export function getMetricsRegionsProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
       return type === "http"
@@ -112,18 +112,11 @@ function getMetricsRegionsProcedure(period: Period, type: Type) {
   }
 }
 
-function getStatusProcedure(period: "7d" | "45d", type: Type) {
-  switch (period) {
-    case "7d":
-      return type === "http" ? tb.httpStatusWeekly : tb.tcpStatusWeekly;
-    case "45d":
-      return type === "http" ? tb.httpStatus45d : tb.tcpStatus45d;
-    default:
-      return type === "http" ? tb.httpStatusWeekly : tb.tcpStatusWeekly;
-  }
+export function getStatusProcedure(_period: "45d", type: Type) {
+  return type === "http" ? tb.httpStatus45d : tb.tcpStatus45d;
 }
 
-function getGetProcedure(period: "14d", type: Type) {
+export function getGetProcedure(period: "14d", type: Type) {
   switch (period) {
     case "14d":
       return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
@@ -132,11 +125,11 @@ function getGetProcedure(period: "14d", type: Type) {
   }
 }
 
-function getGlobalMetricsProcedure(type: Type) {
+export function getGlobalMetricsProcedure(type: Type) {
   return type === "http" ? tb.httpGlobalMetricsDaily : tb.tcpGlobalMetricsDaily;
 }
 
-function getUptimeProcedure(period: "7d" | "30d", type: Type) {
+export function getUptimeProcedure(period: "7d" | "30d", type: Type) {
   switch (period) {
     case "7d":
       return type === "http" ? tb.httpUptimeWeekly : tb.tcpUptimeWeekly;
@@ -148,11 +141,24 @@ function getUptimeProcedure(period: "7d" | "30d", type: Type) {
 }
 
 // TODO: missing pipes for other periods
-function getMetricsLatencyProcedure(_period: Period, type: Type) {
-  return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+export function getMetricsLatencyProcedure(_period: Period, type: Type) {
+  switch (_period) {
+    case "1d":
+      return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+    case "7d":
+      return type === "http" ? tb.httpMetricsLatency7d : tb.tcpMetricsLatency7d;
+    default:
+      return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+  }
 }
 
-function getTimingPhasesProcedure(type: Type) {
+export function getMetricsLatencyMultiProcedure(_period: Period, type: Type) {
+  return type === "http"
+    ? tb.httpMetricsLatency1dMulti
+    : tb.tcpMetricsLatency1dMulti;
+}
+
+export function getTimingPhasesProcedure(type: Type) {
   return type === "http" ? tb.httpTimingPhases14d : null;
 }
 
@@ -420,8 +426,8 @@ export const tinybirdRouter = createTRPCRouter({
   status: protectedProcedure
     .input(
       z.object({
-        monitorId: z.string(),
-        period: z.enum(["7d", "45d"]),
+        monitorIds: z.string().array(),
+        period: z.enum(["45d"]),
         type: z.enum(types).default("http"),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
@@ -429,18 +435,18 @@ export const tinybirdRouter = createTRPCRouter({
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        inArray(monitor.id, opts.input.monitorIds.map(Number)),
         eq(monitor.workspaceId, opts.ctx.workspace.id),
       ];
 
-      const _monitor = await db.query.monitor.findFirst({
+      const _monitors = await db.query.monitor.findMany({
         where: and(...whereConditions),
       });
 
-      if (!_monitor) {
+      if (_monitors.length !== opts.input.monitorIds.length) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Monitor not found",
+          message: "Some monitors not found",
         });
       }
 
@@ -553,6 +559,22 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
+      return await procedure(opts.input);
+    }),
+
+  metricsLatencyMulti: protectedProcedure
+    .input(
+      z.object({
+        monitorIds: z.string().array(),
+        period: z.enum(["1d"]).default("1d"),
+        type: z.enum(types).default("http"),
+      }),
+    )
+    .query(async (opts) => {
+      const procedure = getMetricsLatencyMultiProcedure(
+        opts.input.period,
+        opts.input.type,
+      );
       return await procedure(opts.input);
     }),
 

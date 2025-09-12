@@ -7,7 +7,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { regionPercentile } from "@/data/region-percentile";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatMilliseconds } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -17,29 +17,25 @@ import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
-  p50: {
+  p50Latency: {
     label: "p50",
     color: "var(--chart-1)",
   },
-  p75: {
+  p75Latency: {
     label: "p75",
     color: "var(--chart-2)",
   },
-  p90: {
+  p90Latency: {
     label: "p90",
     color: "var(--chart-4)",
   },
-  p95: {
+  p95Latency: {
     label: "p95",
     color: "var(--chart-3)",
   },
-  p99: {
+  p99Latency: {
     label: "p99",
     color: "var(--chart-5)",
-  },
-  error: {
-    label: "error",
-    color: "var(--destructive)",
   },
 } satisfies ChartConfig;
 
@@ -49,7 +45,10 @@ function avg(values: number[]) {
   );
 }
 
-const chartData = regionPercentile;
+function formatAnnotation(values: number[]) {
+  if (values.length === 0) return "N/A";
+  return formatMilliseconds(avg(values));
+}
 
 export function ChartAreaPercentiles({
   className,
@@ -57,20 +56,35 @@ export function ChartAreaPercentiles({
   xAxisHide = true,
   legendVerticalAlign = "bottom",
   legendClassName,
-  withError = false,
   yAxisDomain = ["dataMin", "dataMax"],
+  data,
 }: {
   className?: string;
   singleSeries?: boolean;
   xAxisHide?: boolean;
   legendVerticalAlign?: "top" | "bottom";
   legendClassName?: string;
-  withError?: boolean;
   yAxisDomain?: AxisDomain;
+  data: {
+    timestamp: string;
+    p50Latency: number;
+    p75Latency: number;
+    p90Latency: number;
+    p95Latency: number;
+    p99Latency: number;
+  }[];
 }) {
   const [activeSeries, setActiveSeries] = useState<
     Array<keyof typeof chartConfig>
-  >(["p75"]);
+  >(["p75Latency"]);
+
+  const annotation = {
+    p50Latency: formatAnnotation(data.map((item) => item.p50Latency)),
+    p75Latency: formatAnnotation(data.map((item) => item.p75Latency)),
+    p90Latency: formatAnnotation(data.map((item) => item.p90Latency)),
+    p95Latency: formatAnnotation(data.map((item) => item.p95Latency)),
+    p99Latency: formatAnnotation(data.map((item) => item.p99Latency)),
+  };
 
   return (
     <ChartContainer
@@ -79,7 +93,7 @@ export function ChartAreaPercentiles({
     >
       <AreaChart
         accessibilityLayer
-        data={chartData}
+        data={data}
         margin={{
           left: 0,
           right: 0,
@@ -108,13 +122,7 @@ export function ChartAreaPercentiles({
                 });
               }}
               active={activeSeries}
-              annotation={{
-                p50: formatMilliseconds(avg(chartData.map((item) => item.p50))),
-                p75: formatMilliseconds(avg(chartData.map((item) => item.p75))),
-                p90: formatMilliseconds(avg(chartData.map((item) => item.p90))),
-                p95: formatMilliseconds(avg(chartData.map((item) => item.p95))),
-                p99: formatMilliseconds(avg(chartData.map((item) => item.p99))),
-              }}
+              annotation={annotation}
               className={cn("overflow-x-scroll", legendClassName)}
             />
           }
@@ -125,7 +133,7 @@ export function ChartAreaPercentiles({
           cursor={false}
           content={
             <ChartTooltipContent
-              className="w-[180px]"
+              className="w-[200px]"
               formatter={(value, name) => (
                 <ChartTooltipNumber
                   chartConfig={chartConfig}
@@ -138,90 +146,120 @@ export function ChartAreaPercentiles({
         />
         <defs>
           <linearGradient id="fillP50" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-p50)" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="var(--color-p50)" stopOpacity={0.1} />
+            <stop
+              offset="5%"
+              stopColor="var(--color-p50Latency)"
+              stopOpacity={0.8}
+            />
+            <stop
+              offset="95%"
+              stopColor="var(--color-p50Latency)"
+              stopOpacity={0.1}
+            />
           </linearGradient>
           <linearGradient id="fillP75" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-p75)" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="var(--color-p75)" stopOpacity={0.1} />
+            <stop
+              offset="5%"
+              stopColor="var(--color-p75Latency)"
+              stopOpacity={0.8}
+            />
+            <stop
+              offset="95%"
+              stopColor="var(--color-p75Latency)"
+              stopOpacity={0.1}
+            />
           </linearGradient>
           <linearGradient id="fillP90" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-p90)" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="var(--color-p90)" stopOpacity={0.1} />
+            <stop
+              offset="5%"
+              stopColor="var(--color-p90Latency)"
+              stopOpacity={0.8}
+            />
+            <stop
+              offset="95%"
+              stopColor="var(--color-p90Latency)"
+              stopOpacity={0.1}
+            />
           </linearGradient>
           <linearGradient id="fillP95" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-p95)" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="var(--color-p95)" stopOpacity={0.1} />
+            <stop
+              offset="5%"
+              stopColor="var(--color-p95Latency)"
+              stopOpacity={0.8}
+            />
+            <stop
+              offset="95%"
+              stopColor="var(--color-p95Latency)"
+              stopOpacity={0.1}
+            />
           </linearGradient>
           <linearGradient id="fillP99" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-p99)" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="var(--color-p99)" stopOpacity={0.1} />
+            <stop
+              offset="5%"
+              stopColor="var(--color-p99Latency)"
+              stopOpacity={0.8}
+            />
+            <stop
+              offset="95%"
+              stopColor="var(--color-p99Latency)"
+              stopOpacity={0.1}
+            />
           </linearGradient>
         </defs>
-        {withError ? (
-          <Area
-            dataKey="error"
-            type="monotone"
-            stroke="var(--color-error)"
-            strokeWidth={1}
-            fill="var(--color-error)"
-            fillOpacity={0.5}
-            legendType="none"
-            tooltipType="none"
-            yAxisId="error"
-            dot={false}
-            activeDot={false}
-          />
-        ) : null}
         <Area
-          hide={!activeSeries.includes("p50")}
-          dataKey="p50"
+          hide={!activeSeries.includes("p50Latency")}
+          dataKey="p50Latency"
           type="monotone"
-          stroke="var(--color-p50)"
+          stroke="var(--color-p50Latency)"
           fill="url(#fillP50)"
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         <Area
-          hide={!activeSeries.includes("p75")}
-          dataKey="p75"
+          hide={!activeSeries.includes("p75Latency")}
+          dataKey="p75Latency"
           type="monotone"
-          stroke="var(--color-p75)"
+          stroke="var(--color-p75Latency)"
           fill="url(#fillP75)"
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         {/* <Area
-          hide={!activeSeries.includes("p90")}
-          dataKey="p90"
+          hide={!activeSeries.includes("p90Latency")}
+          dataKey="p90Latency"
           type="monotone"
-          stroke="var(--color-p90)"
+          stroke="var(--color-p90Latency)"
           fill="url(#fillP90)"
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         /> */}
         <Area
-          hide={!activeSeries.includes("p95")}
-          dataKey="p95"
+          hide={!activeSeries.includes("p95Latency")}
+          dataKey="p95Latency"
           type="monotone"
-          stroke="var(--color-p95)"
+          stroke="var(--color-p95Latency)"
           fill="url(#fillP95)"
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         <Area
-          hide={!activeSeries.includes("p99")}
-          dataKey="p99"
+          hide={!activeSeries.includes("p99Latency")}
+          dataKey="p99Latency"
           type="monotone"
-          stroke="var(--color-p99)"
+          stroke="var(--color-p99Latency)"
           fill="url(#fillP99)"
           fillOpacity={0.4}
           dot={false}
           yAxisId="percentile"
+          connectNulls
         />
         <YAxis
           domain={yAxisDomain}
@@ -232,8 +270,19 @@ export function ChartAreaPercentiles({
           yAxisId="percentile"
           tickFormatter={(value) => `${value}ms`}
         />
-        <YAxis orientation="left" yAxisId="error" hide />
       </AreaChart>
     </ChartContainer>
+  );
+}
+
+export function ChartAreaPercentilesSkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
+  return (
+    <Skeleton
+      className={cn("h-[100px] w-full rounded-lg", className)}
+      {...props}
+    />
   );
 }

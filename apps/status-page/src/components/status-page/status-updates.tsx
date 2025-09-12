@@ -1,4 +1,8 @@
+"use client";
+
+import { FormSubscribeEmail } from "@/components/forms/form-subscribe-email";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -6,13 +10,27 @@ import {
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { cn } from "@/lib/utils";
-import { Input } from "../ui/input";
+import { Inbox } from "lucide-react";
+import { useState } from "react";
+
+type StatusUpdateType = "email" | "rss" | "atom";
+
+interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
+  types?: StatusUpdateType[];
+  onSubscribe?: (value: string) => Promise<void> | void;
+}
 
 export function StatusUpdates({
   className,
+  types = ["rss", "atom"],
+  onSubscribe,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: StatusUpdatesProps) {
+  const [success, setSuccess] = useState(false);
+  const prefix = usePathnamePrefix();
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -28,26 +46,46 @@ export function StatusUpdates({
       <PopoverContent align="end" className="overflow-hidden p-0">
         <Tabs defaultValue="email">
           <TabsList className="w-full rounded-none border-b">
-            <TabsTrigger value="email">Email</TabsTrigger>
-            <TabsTrigger value="rss">RSS</TabsTrigger>
-            <TabsTrigger value="atom">Atom</TabsTrigger>
+            {types.includes("email") ? (
+              <TabsTrigger value="email">Email</TabsTrigger>
+            ) : null}
+            {types.includes("rss") ? (
+              <TabsTrigger value="rss">RSS</TabsTrigger>
+            ) : null}
+            {types.includes("atom") ? (
+              <TabsTrigger value="atom">Atom</TabsTrigger>
+            ) : null}
           </TabsList>
           <TabsContent value="email" className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2 border-b px-2 pb-2">
-              <p className="text-foreground text-sm">
-                Get email notifications whenever a report has been created or
-                resolved
-              </p>
-              <Input placeholder="notify@me.com" />
-            </div>
-            <div className="px-2 pb-2">
-              <Button className="w-full">Subscribe</Button>
-            </div>
+            {success ? (
+              <SuccessMessage />
+            ) : (
+              <>
+                <div className="flex flex-col gap-2 border-b px-2 pb-2">
+                  <p className="text-foreground text-sm">
+                    Get email notifications whenever a report has been created
+                    or resolved
+                  </p>
+                  <FormSubscribeEmail
+                    id="email-form"
+                    onSubmit={async (values) => {
+                      await onSubscribe?.(values.email);
+                      setSuccess(true);
+                    }}
+                  />
+                </div>
+                <div className="px-2 pb-2">
+                  <Button className="w-full" type="submit" form="email-form">
+                    Subscribe
+                  </Button>
+                </div>{" "}
+              </>
+            )}
           </TabsContent>
           <TabsContent value="rss" className="flex flex-col gap-2">
             <div className="border-b px-2 pb-2">
               <Input
-                placeholder="https://status.openstatus.dev/feed/rss"
+                placeholder={`https://${prefix}.openstatus.dev/feed/rss`}
                 className="disabled:opacity-90"
                 disabled
               />
@@ -55,14 +93,14 @@ export function StatusUpdates({
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
-                value="https://status.openstatus.dev/feed/rss"
+                value={`https://${prefix}.openstatus.dev/feed/rss`}
               />
             </div>
           </TabsContent>
           <TabsContent value="atom" className="flex flex-col gap-2">
             <div className="border-b px-2 pb-2">
               <Input
-                placeholder="https://status.openstatus.dev/feed/atom"
+                placeholder={`https://${prefix}.openstatus.dev/feed/atom`}
                 className="disabled:opacity-90"
                 disabled
               />
@@ -70,7 +108,7 @@ export function StatusUpdates({
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
-                value="https://status.openstatus.dev/feed/atom"
+                value={`https://${prefix}.openstatus.dev/feed/atom`}
               />
             </div>
           </TabsContent>
@@ -82,15 +120,34 @@ export function StatusUpdates({
 
 function CopyButton({
   value,
-  className,
-}: {
+  onClick,
+  ...props
+}: React.ComponentProps<typeof Button> & {
   value: string;
-  className?: string;
 }) {
   const { copy, isCopied } = useCopyToClipboard();
   return (
-    <Button size="sm" className={className} onClick={() => copy(value, {})}>
+    <Button
+      size="sm"
+      onClick={(e) => {
+        copy(value, {});
+        onClick?.(e);
+      }}
+      {...props}
+    >
       {isCopied ? "Copied" : "Copy link"}
     </Button>
+  );
+}
+
+function SuccessMessage() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-1 p-3">
+      <Inbox className="size-4 shrink-0" />
+      <p className="text-center font-medium">Check your inbox!</p>
+      <p className="text-center text-muted-foreground text-sm">
+        Validate your email to receive updates and you are all set.
+      </p>
+    </div>
   );
 }

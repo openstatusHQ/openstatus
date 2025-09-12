@@ -92,4 +92,30 @@ export const emailRouter = createTRPCRouter({
         });
       }
     }),
+
+  sendPageSubscription: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const limits = opts.ctx.workspace.limits;
+
+      if (limits["status-subscribers"]) {
+        const _pageSubscriber =
+          await opts.ctx.db.query.pageSubscriber.findFirst({
+            where: eq(pageSubscriber.id, opts.input.id),
+            with: {
+              page: true,
+            },
+          });
+
+        if (!_pageSubscriber || !_pageSubscriber.token) return;
+
+        await emailClient.sendPageSubscription({
+          to: _pageSubscriber.email,
+          token: _pageSubscriber.token,
+          page: _pageSubscriber.page.title,
+          // TODO: or use custom domain
+          domain: _pageSubscriber.page.slug,
+        });
+      }
+    }),
 });
