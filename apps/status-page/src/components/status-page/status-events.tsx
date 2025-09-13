@@ -10,6 +10,7 @@ import {
   formatDistanceToNowStrict,
 } from "date-fns";
 import { Check, Copy } from "lucide-react";
+import { ProcessMessage } from "../content/process-message";
 import {
   HoverCard,
   HoverCardContent,
@@ -180,7 +181,7 @@ function StatusEventTimelineReportUpdate({
               ) : null}
             </StatusEventTimelineTitle>
             <StatusEventTimelineMessage>
-              {report.message}
+              <ProcessMessage value={report.message} />
             </StatusEventTimelineMessage>
           </div>
         </div>
@@ -235,7 +236,7 @@ export function StatusEventTimelineMaintenance({
               ) : null}
             </StatusEventTimelineTitle>
             <StatusEventTimelineMessage>
-              {maintenance.message}
+              <ProcessMessage value={maintenance.message} />
             </StatusEventTimelineMessage>
           </div>
         </div>
