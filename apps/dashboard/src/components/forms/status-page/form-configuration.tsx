@@ -39,7 +39,7 @@ import { toast } from "sonner";
 
 const schema = z.object({
   new: z.boolean(),
-  configuration: z.record(z.string(), z.string().optional()),
+  configuration: z.record(z.string(), z.string().or(z.boolean()).optional()),
   homepageUrl: z.string().optional(),
   contactUrl: z.string().optional(),
 });
@@ -155,13 +155,13 @@ export function FormConfiguration({
                 </FormCardHeader>
                 <FormField
                   control={form.control}
-                  name="configuration.type"
+                  name="configuration.bar"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bar Type</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value ?? "absolute"}
+                        defaultValue={String(field.value) ?? "absolute"}
                       >
                         <FormControl>
                           <SelectTrigger className="w-full capitalize">
@@ -186,13 +186,13 @@ export function FormConfiguration({
                 />
                 <FormField
                   control={form.control}
-                  name="configuration.value"
+                  name="configuration.card"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Card Value</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value ?? "duration"}
+                        defaultValue={String(field.value) ?? "duration"}
                         disabled={watchConfigurationType === "manual"}
                       >
                         <FormControl>
@@ -224,7 +224,7 @@ export function FormConfiguration({
                       <FormLabel>Show Uptime</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value ?? "true"}
+                        defaultValue={String(field.value) ?? "true"}
                       >
                         <FormControl>
                           <SelectTrigger className="w-full capitalize">

@@ -761,7 +761,10 @@ export const pageRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        configuration: z.record(z.string(), z.string().optional()),
+        configuration: z.record(
+          z.string(),
+          z.string().or(z.boolean()).optional(),
+        ),
         legacyPage: z.boolean(),
         homepageUrl: z.string().nullish(),
         contactUrl: z.string().nullish(),

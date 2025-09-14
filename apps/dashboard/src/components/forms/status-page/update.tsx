@@ -149,7 +149,12 @@ export function FormStatusPageUpdate() {
         onSubmit={async (values) => {
           await updatePageConfigurationMutation.mutateAsync({
             id: Number.parseInt(id),
-            configuration: values.configuration ?? {},
+            configuration: {
+              // NOTE: convert to boolean
+              uptime: values.configuration.uptime === "true",
+              card: values.configuration.card ?? "duration",
+              bar: values.configuration.bar ?? "absolute",
+            },
             legacyPage: !values.new,
             homepageUrl: values.homepageUrl ?? undefined,
             contactUrl: values.contactUrl ?? undefined,
