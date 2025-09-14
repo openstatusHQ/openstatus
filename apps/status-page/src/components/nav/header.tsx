@@ -95,7 +95,7 @@ export function Header(props: React.ComponentProps<"header">) {
           </Link>
         </div>
         <NavDesktop className="hidden md:flex" />
-        <div className="flex items-center justify-end gap-2 min-w-[150px]">
+        <div className="flex min-w-[150px] items-center justify-end gap-2">
           {page?.contactUrl ? (
             <GetInTouch
               buttonType={!hasSubscribers ? "text" : "icon"}

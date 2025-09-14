@@ -20,7 +20,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
 
   return (
     <footer {...props}>
-      <div className="mx-auto flex gap-4 max-w-2xl items-center justify-between px-3 py-2">
+      <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2">
         <div className="leading-[0.9]">
           <p
             className={cn(
