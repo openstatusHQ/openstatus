@@ -68,8 +68,6 @@ export function Header(props: React.ComponentProps<"header">) {
     }),
   );
 
-  const hasSubscribers = page?.workspacePlan !== "free";
-
   const types = (
     page?.workspacePlan === "free" ? ["rss", "atom"] : ["email", "rss", "atom"]
   ) satisfies ("email" | "rss" | "atom")[];
@@ -97,20 +95,15 @@ export function Header(props: React.ComponentProps<"header">) {
         <NavDesktop className="hidden md:flex" />
         <div className="flex min-w-[150px] items-center justify-end gap-2">
           {page?.contactUrl ? (
-            <GetInTouch
-              buttonType={!hasSubscribers ? "text" : "icon"}
-              link={page.contactUrl}
-            />
+            <GetInTouch buttonType="icon" link={page.contactUrl} />
           ) : null}
-          {hasSubscribers ? (
-            <StatusUpdates
-              types={types}
-              onSubscribe={async (email) => {
-                await subscribeMutation.mutateAsync({ slug: domain, email });
-              }}
-              slug={page?.slug}
-            />
-          ) : null}
+          <StatusUpdates
+            types={types}
+            onSubscribe={async (email) => {
+              await subscribeMutation.mutateAsync({ slug: domain, email });
+            }}
+            slug={page?.slug}
+          />
           <NavMobile className="md:hidden" />
         </div>
       </nav>
