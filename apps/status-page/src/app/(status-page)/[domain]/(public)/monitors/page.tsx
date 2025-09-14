@@ -4,7 +4,6 @@ import {
   ChartAreaPercentiles,
   ChartAreaPercentilesSkeleton,
 } from "@/components/chart/chart-area-percentiles";
-import { useStatusPage } from "@/components/status-page/floating-button";
 import {
   Status,
   StatusContent,
@@ -23,7 +22,6 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 export default function Page() {
-  const { variant } = useStatusPage();
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
   const { data: page } = useQuery(
@@ -38,7 +36,7 @@ export default function Page() {
   const publicMonitors = page.monitors.filter((monitor) => monitor.public);
 
   return (
-    <Status variant={variant}>
+    <Status>
       <StatusHeader>
         <StatusTitle>{page.title}</StatusTitle>
         <StatusDescription>{page.description}</StatusDescription>

@@ -39,7 +39,6 @@ export type BarType = (typeof BAR_TYPE)[number];
 
 export const COMMUNITY_THEME = ["default", "github", "supabase"] as const;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
-
 interface StatusPageContextType {
   variant: VariantType;
   setVariant: (variant: VariantType) => void;
@@ -149,7 +148,7 @@ export function FloatingButton({ className }: { className?: string }) {
   } = useStatusPage();
 
   return (
-    <div className={cn("fixed right-4 bottom-4 z-50 bg-background", className)}>
+    <div className={cn("fixed right-4 bottom-4 z-50", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button

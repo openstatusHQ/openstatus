@@ -1,6 +1,5 @@
 "use client";
 
-import { useStatusPage } from "@/components/status-page/floating-button";
 import {
   Status,
   StatusContent,
@@ -17,7 +16,6 @@ export default function EventLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { variant } = useStatusPage();
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
   const { data: page } = useQuery(
@@ -27,7 +25,7 @@ export default function EventLayout({
   if (!page) return null;
 
   return (
-    <Status variant={variant}>
+    <Status>
       <StatusHeader>
         <StatusTitle>{page.title}</StatusTitle>
         <StatusDescription>{page.description}</StatusDescription>

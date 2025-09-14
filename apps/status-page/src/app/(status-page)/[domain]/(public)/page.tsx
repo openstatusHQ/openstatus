@@ -37,7 +37,7 @@ export default function Page() {
     trpc.statusPage.getUptime.queryOptions({
       slug: domain,
       monitorIds: page?.monitors?.map((monitor) => monitor.id.toString()) || [],
-      // NOTE: this will be moved to db config
+      // NOTE: we could move that to the server as we query the page entry anyways
       cardType,
       barType,
     }),
