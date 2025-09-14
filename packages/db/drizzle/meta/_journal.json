@@ -330,6 +330,13 @@
       "when": 1757580216081,
       "tag": "0046_lucky_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "6",
+      "when": 1757840904190,
+      "tag": "0047_nifty_roughhouse",
+      "breakpoints": true
     }
   ]
 }
