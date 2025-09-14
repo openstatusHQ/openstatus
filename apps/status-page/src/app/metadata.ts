@@ -14,6 +14,7 @@ export const defaultMetadata: Metadata = {
     template: `%s | ${TITLE}`,
     default: TITLE,
   },
+  icons: "https://www.openstatus.dev/favicon.ico",
   description: DESCRIPTION,
   metadataBase: new URL("https://www.openstatus.dev"),
 };
