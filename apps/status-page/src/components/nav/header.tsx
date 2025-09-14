@@ -68,6 +68,8 @@ export function Header(props: React.ComponentProps<"header">) {
     }),
   );
 
+  const hasSubscribers = page?.workspacePlan !== "free";
+
   const types = (
     page?.workspacePlan === "free" ? ["rss", "atom"] : ["email", "rss", "atom"]
   ) satisfies ("email" | "rss" | "atom")[];
@@ -76,8 +78,13 @@ export function Header(props: React.ComponentProps<"header">) {
     <header {...props}>
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
         {/* NOTE: same width as the `StatusUpdates` button */}
-        <div className="w-[145px] shrink-0">
-          <Link href="/" className="rounded-full">
+        <div className="w-[150px] shrink-0">
+          <Link
+            href={page?.homepageUrl ?? "/"}
+            target={page?.homepageUrl ? "_blank" : undefined}
+            rel={page?.homepageUrl ? "noreferrer" : undefined}
+            className="rounded-full"
+          >
             {page?.icon ? (
               <img
                 src={page.icon}
@@ -88,28 +95,23 @@ export function Header(props: React.ComponentProps<"header">) {
           </Link>
         </div>
         <NavDesktop className="hidden md:flex" />
-        <div className="flex items-center gap-2">
-          <GetInTouch buttonType="icon" className="hidden md:flex" />
-          {/* TODO: hide if free plan */}
-          <StatusUpdates
-            className="hidden md:block"
-            types={types}
-            onSubscribe={async (email) => {
-              await subscribeMutation.mutateAsync({ slug: domain, email });
-            }}
-            slug={page?.slug}
-          />
-        </div>
-        <div className="flex gap-2 md:hidden">
-          <GetInTouch buttonType="icon" />
-          <StatusUpdates
-            types={types}
-            onSubscribe={async (email) => {
-              await subscribeMutation.mutateAsync({ slug: domain, email });
-            }}
-            slug={page?.slug}
-          />
-          <NavMobile />
+        <div className="flex items-center justify-end gap-2 min-w-[150px]">
+          {page?.contactUrl ? (
+            <GetInTouch
+              buttonType={!hasSubscribers ? "text" : "icon"}
+              link={page.contactUrl}
+            />
+          ) : null}
+          {hasSubscribers ? (
+            <StatusUpdates
+              types={types}
+              onSubscribe={async (email) => {
+                await subscribeMutation.mutateAsync({ slug: domain, email });
+              }}
+              slug={page?.slug}
+            />
+          ) : null}
+          <NavMobile className="md:hidden" />
         </div>
       </nav>
     </header>
@@ -149,7 +151,7 @@ function NavMobile({
         <Button
           variant="secondary"
           size="sm"
-          className={cn("size-8", className)}
+          className={cn("size-8 border", className)}
           {...props}
         >
           <Menu />
@@ -186,8 +188,12 @@ function NavMobile({
 function GetInTouch({
   buttonType,
   className,
+  link,
   ...props
-}: React.ComponentProps<typeof Button> & { buttonType: "icon" | "text" }) {
+}: React.ComponentProps<typeof Button> & {
+  buttonType: "icon" | "text";
+  link: string;
+}) {
   if (buttonType === "text") {
     return (
       <Button
@@ -198,7 +204,7 @@ function GetInTouch({
         asChild
         {...props}
       >
-        <a href="/" target="_blank" rel="noreferrer">
+        <a href={link} target="_blank" rel="noreferrer">
           Get in touch
         </a>
       </Button>
@@ -215,13 +221,13 @@ function GetInTouch({
             className={cn("size-8", className)}
             {...props}
           >
-            <a href="/" target="_blank" rel="noreferrer">
+            <a href={link} target="_blank" rel="noreferrer">
               <MessageCircleMore />
             </a>
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Get in touch with us</p>
+          <p>Get in touch</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
