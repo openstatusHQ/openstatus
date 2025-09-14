@@ -401,7 +401,7 @@ export function setDataByType({
     switch (cardType) {
       case "requests":
         if (total === 0) {
-          cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
+          cardData = [{ status: eventStatus ?? "empty", value: "" }];
         } else {
           const entries = [
             { status: "success" as const, count: dayData.ok },
@@ -421,7 +421,7 @@ export function setDataByType({
 
       case "duration":
         if (total === 0) {
-          cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
+          cardData = [{ status: eventStatus ?? "empty", value: "" }];
         } else {
           const entries = [
             { status: "error" as const, count: dayData.error },
@@ -477,8 +477,22 @@ export function setDataByType({
                 let total = 0;
                 // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
                 map.forEach((d) => (total += d));
-                const day = 24 * 60;
-                const minutes = Math.max(day - total, 0);
+
+                const now = new Date();
+                const startOfDay = new Date(date);
+                startOfDay.setUTCHours(0, 0, 0, 0);
+
+                let totalMinutesInDay: number;
+                if (isToday(date)) {
+                  const minutesElapsed = Math.floor(
+                    (now.getTime() - startOfDay.getTime()) / (1000 * 60),
+                  );
+                  totalMinutesInDay = minutesElapsed;
+                } else {
+                  totalMinutesInDay = 24 * 60;
+                }
+
+                const minutes = Math.max(totalMinutesInDay - total, 0);
                 if (minutes === 0) return null;
                 return {
                   status: entry.status,
@@ -515,7 +529,7 @@ export function setDataByType({
       default:
         // Default to requests behavior
         if (total === 0) {
-          cardData = [{ status: eventStatus ?? "empty", value: "1 day" }];
+          cardData = [{ status: eventStatus ?? "empty", value: "" }];
         } else {
           const entries = [
             { status: "error" as const, count: dayData.error },
