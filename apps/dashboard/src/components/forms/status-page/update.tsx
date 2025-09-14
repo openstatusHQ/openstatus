@@ -143,12 +143,16 @@ export function FormStatusPageUpdate() {
         defaultValues={{
           new: !statusPage.legacyPage,
           configuration: statusPage.configuration ?? {},
+          homepageUrl: statusPage.homepageUrl ?? "",
+          contactUrl: statusPage.contactUrl ?? "",
         }}
         onSubmit={async (values) => {
           await updatePageConfigurationMutation.mutateAsync({
             id: Number.parseInt(id),
             configuration: values.configuration ?? {},
             legacyPage: !values.new,
+            homepageUrl: values.homepageUrl ?? undefined,
+            contactUrl: values.contactUrl ?? undefined,
           });
         }}
       />

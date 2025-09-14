@@ -763,6 +763,8 @@ export const pageRouter = createTRPCRouter({
         id: z.number(),
         configuration: z.record(z.string(), z.string().optional()),
         legacyPage: z.boolean(),
+        homepageUrl: z.string().nullish(),
+        contactUrl: z.string().nullish(),
       }),
     )
     .mutation(async (opts) => {
@@ -776,6 +778,8 @@ export const pageRouter = createTRPCRouter({
         .set({
           configuration: opts.input.configuration,
           legacyPage: opts.input.legacyPage,
+          homepageUrl: opts.input.homepageUrl,
+          contactUrl: opts.input.contactUrl,
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))

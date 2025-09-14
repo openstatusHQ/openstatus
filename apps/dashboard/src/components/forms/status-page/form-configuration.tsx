@@ -17,11 +17,13 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -38,6 +40,8 @@ import { toast } from "sonner";
 const schema = z.object({
   new: z.boolean(),
   configuration: z.record(z.string(), z.string().optional()),
+  homepageUrl: z.string().optional(),
+  contactUrl: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -55,6 +59,8 @@ export function FormConfiguration({
     defaultValues: defaultValues ?? {
       new: false,
       configuration: {},
+      homepageUrl: "",
+      contactUrl: "",
     },
   });
   const watchNew = form.watch("new");
@@ -141,6 +147,12 @@ export function FormConfiguration({
             <>
               <FormCardSeparator />
               <FormCardContent className="grid gap-4 sm:grid-cols-3">
+                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                  <FormCardTitle>Tracker Configuration</FormCardTitle>
+                  <FormCardDescription>
+                    Configure which data should be shown in the monitor tracker.
+                  </FormCardDescription>
+                </FormCardHeader>
                 <FormField
                   control={form.control}
                   name="configuration.type"
@@ -238,20 +250,85 @@ export function FormConfiguration({
                 <Note color="info" className="col-span-full">
                   <ul className="list-inside list-disc">
                     <li>
-                      <span className="font-semibold">Bar Type</span>:{" "}
-                      {message.type[watchConfigurationType]}
+                      <span className="font-medium">
+                        Bar Type{" "}
+                        <span className="font-semibold">
+                          {watchConfigurationType}
+                        </span>
+                      </span>
+                      : {message.type[watchConfigurationType]}
                     </li>
                     <li>
-                      <span className="font-semibold">Card Value</span>:{" "}
+                      <span className="font-medium">
+                        Card Value{" "}
+                        <span className="font-semibold">
+                          {watchConfigurationValue}
+                        </span>
+                      </span>
+                      :{" "}
                       {message.value[watchConfigurationValue] ??
                         message.value.default}
                     </li>
                     <li>
-                      <span className="font-semibold">Show Uptime</span>:{" "}
-                      {message.uptime[watchConfigurationUptime]}
+                      <span className="font-medium">
+                        Show Uptime{" "}
+                        <span className="font-semibold">
+                          {watchConfigurationUptime}
+                        </span>
+                      </span>
+                      : {message.uptime[watchConfigurationUptime]}
                     </li>
                   </ul>
                 </Note>
+              </FormCardContent>
+              <FormCardSeparator />
+              <FormCardContent className="grid gap-4">
+                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                  <FormCardTitle>Links</FormCardTitle>
+                  <FormCardDescription>
+                    Configure the links for the status page.
+                  </FormCardDescription>
+                </FormCardHeader>
+                <FormField
+                  control={form.control}
+                  name="homepageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Homepage URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://acme.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription>
+                        What URL should the logo link to? Leave empty to hide.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="contactUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://acme.com/contact"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription>
+                        Enter the URL for your contact page. Leave empty to
+                        hide. Or start with{" "}
+                        <code className="rounded-md bg-muted px-1 py-0.5">
+                          mailto:
+                        </code>{" "}
+                        to open the email client.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
               </FormCardContent>
             </>
           )}
@@ -263,7 +340,7 @@ export function FormConfiguration({
                 rel="noreferrer"
                 target="_blank"
               >
-                Status Page Configuration
+                Status Page Redesign (alpha)
               </Link>
               .
             </FormCardFooterInfo>
