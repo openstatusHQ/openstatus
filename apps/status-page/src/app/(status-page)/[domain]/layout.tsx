@@ -13,7 +13,7 @@ import { z } from "zod";
 export const schema = z.object({
   card: z.enum(["duration", "requests", "manual"]).default("duration"),
   bar: z.enum(["absolute", "manual"]).default("absolute"),
-  uptime: z.boolean().default(true),
+  uptime: z.coerce.boolean().default(true),
   theme: z.enum(["default"]).default("default"),
 });
 
