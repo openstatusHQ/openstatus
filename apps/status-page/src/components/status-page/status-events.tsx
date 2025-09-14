@@ -1,21 +1,9 @@
+import { ProcessMessage } from "@/components/content/process-message";
+import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
 import { Separator } from "@/components/ui/separator";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { formatDateRange, formatDateTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
-import { UTCDate } from "@date-fns/utc";
-import { HoverCardPortal } from "@radix-ui/react-hover-card";
-import {
-  format,
-  formatDistanceStrict,
-  formatDistanceToNowStrict,
-} from "date-fns";
-import { Check, Copy } from "lucide-react";
-import { ProcessMessage } from "../content/process-message";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../ui/hover-card";
+import { formatDistanceStrict } from "date-fns";
 import { status } from "./messages";
 
 // TODO: rename file to status-event and move the `StatusEvents` component to the page level.
@@ -170,9 +158,9 @@ function StatusEventTimelineReportUpdate({
               <span>{status[report.status]}</span>{" "}
               {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
               <span className="font-mono text-muted-foreground/70 text-xs">
-                <StatusEventDateHoverCard date={new Date(report.date)}>
-                  {formatDateTime(report.date)}
-                </StatusEventDateHoverCard>
+                <TimestampHoverCard date={new Date(report.date)} asChild>
+                  <span>{formatDateTime(report.date)}</span>
+                </TimestampHoverCard>
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
@@ -221,13 +209,13 @@ export function StatusEventTimelineMaintenance({
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
               <span className="font-mono text-muted-foreground/70 text-xs">
-                <StatusEventDateHoverCard date={maintenance.from}>
-                  {from}
-                </StatusEventDateHoverCard>
+                <TimestampHoverCard date={maintenance.from} asChild>
+                  <span>{from}</span>
+                </TimestampHoverCard>
                 {" - "}
-                <StatusEventDateHoverCard date={maintenance.to}>
-                  {to}
-                </StatusEventDateHoverCard>
+                <TimestampHoverCard date={maintenance.to} asChild>
+                  <span>{to}</span>
+                </TimestampHoverCard>
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
@@ -311,70 +299,5 @@ export function StatusEventTimelineSeparator({
       )}
       {...props}
     />
-  );
-}
-
-export function StatusEventDateHoverCard({
-  date,
-  side = "right",
-  align = "start",
-  alignOffset = -4,
-  sideOffset,
-  children,
-}: React.ComponentProps<typeof HoverCardContent> & { date: Date }) {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  return (
-    <HoverCard openDelay={0} closeDelay={0}>
-      {/* NOTE: the trigger is an `a` tag per default */}
-      <HoverCardTrigger asChild>
-        <span>{children}</span>
-      </HoverCardTrigger>
-      <HoverCardPortal>
-        <HoverCardContent
-          className="z-10 w-auto p-2"
-          {...{ side, align, alignOffset, sideOffset }}
-        >
-          <dl className="flex flex-col gap-1">
-            <Row value={format(date, "LLL dd, y HH:mm:ss")} label={timezone} />
-            <Row
-              value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")}
-              label="UTC"
-            />
-            {/* <Row value={date.toISOString()} label="ISO" /> */}
-            {/* <Row value={String(date.getTime())} label="Timestamp" /> */}
-            <Row
-              value={formatDistanceToNowStrict(date, { addSuffix: true })}
-              label="Relative"
-            />
-          </dl>
-        </HoverCardContent>
-      </HoverCardPortal>
-    </HoverCard>
-  );
-}
-
-function Row({ value, label }: { value: string; label: string }) {
-  const { copy, isCopied } = useCopyToClipboard();
-
-  return (
-    <div
-      className="group flex items-center justify-between gap-4 text-sm"
-      onClick={(e) => {
-        e.stopPropagation();
-        copy(value, {});
-      }}
-    >
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="flex items-center gap-1 truncate font-mono">
-        <span className="invisible group-hover:visible">
-          {!isCopied ? (
-            <Copy className="h-3 w-3" />
-          ) : (
-            <Check className="h-3 w-3" />
-          )}
-        </span>
-        {value}
-      </dd>
-    </div>
   );
 }
