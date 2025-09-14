@@ -1,9 +1,5 @@
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
 import { Footer } from "@/components/nav/footer";
 import { Header } from "@/components/nav/header";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,49 +11,4 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <Footer className="w-full border-t" />
     </div>
   );
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ domain: string }>;
-}): Promise<Metadata> {
-  const queryClient = getQueryClient();
-  const { domain } = await params;
-  const page = await queryClient.fetchQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
-
-  if (!page) return notFound();
-
-  return {
-    ...defaultMetadata,
-    title: {
-      template: `%s | ${page.title}`,
-      default: page?.title,
-    },
-    description: page?.description,
-    icons: page?.icon,
-    alternates: {
-      canonical: page?.customDomain
-        ? `https://${page.customDomain}`
-        : `https://${page.slug}.openstatus.dev`,
-    },
-    twitter: {
-      ...twitterMetadata,
-      images: [
-        `/api/og/page?slug=${page?.slug}&passwordProtected=${page?.passwordProtected}`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-    openGraph: {
-      ...ogMetadata,
-      images: [
-        `/api/og/page?slug=${page?.slug}&passwordProtected=${page?.passwordProtected}`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-  };
 }

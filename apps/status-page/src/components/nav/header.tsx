@@ -10,11 +10,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Menu } from "lucide-react";
+import { Menu, MessageCircleMore } from "lucide-react";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
@@ -62,6 +68,8 @@ export function Header(props: React.ComponentProps<"header">) {
     }),
   );
 
+  const hasSubscribers = page?.workspacePlan !== "free";
+
   const types = (
     page?.workspacePlan === "free" ? ["rss", "atom"] : ["email", "rss", "atom"]
   ) satisfies ("email" | "rss" | "atom")[];
@@ -70,8 +78,13 @@ export function Header(props: React.ComponentProps<"header">) {
     <header {...props}>
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
         {/* NOTE: same width as the `StatusUpdates` button */}
-        <div className="w-[105px] shrink-0">
-          <Link href="/">
+        <div className="w-[150px] shrink-0">
+          <Link
+            href={page?.homepageUrl ?? "/"}
+            target={page?.homepageUrl ? "_blank" : undefined}
+            rel={page?.homepageUrl ? "noreferrer" : undefined}
+            className="rounded-full"
+          >
             {page?.icon ? (
               <img
                 src={page.icon}
@@ -82,23 +95,23 @@ export function Header(props: React.ComponentProps<"header">) {
           </Link>
         </div>
         <NavDesktop className="hidden md:flex" />
-        <StatusUpdates
-          className="hidden md:block"
-          types={types}
-          onSubscribe={async (email) => {
-            await subscribeMutation.mutateAsync({ slug: domain, email });
-          }}
-          slug={page?.slug}
-        />
-        <div className="flex gap-3 md:hidden">
-          <NavMobile />
-          <StatusUpdates
-            types={types}
-            onSubscribe={async (email) => {
-              await subscribeMutation.mutateAsync({ slug: domain, email });
-            }}
-            slug={page?.slug}
-          />
+        <div className="flex min-w-[150px] items-center justify-end gap-2">
+          {page?.contactUrl ? (
+            <GetInTouch
+              buttonType={!hasSubscribers ? "text" : "icon"}
+              link={page.contactUrl}
+            />
+          ) : null}
+          {hasSubscribers ? (
+            <StatusUpdates
+              types={types}
+              onSubscribe={async (email) => {
+                await subscribeMutation.mutateAsync({ slug: domain, email });
+              }}
+              slug={page?.slug}
+            />
+          ) : null}
+          <NavMobile className="md:hidden" />
         </div>
       </nav>
     </header>
@@ -138,7 +151,7 @@ function NavMobile({
         <Button
           variant="secondary"
           size="sm"
-          className={cn("size-8", className)}
+          className={cn("size-8 border", className)}
           {...props}
         >
           <Menu />
@@ -169,5 +182,54 @@ function NavMobile({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function GetInTouch({
+  buttonType,
+  className,
+  link,
+  ...props
+}: React.ComponentProps<typeof Button> & {
+  buttonType: "icon" | "text";
+  link: string;
+}) {
+  if (buttonType === "text") {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        type="button"
+        className={className}
+        asChild
+        {...props}
+      >
+        <a href={link} target="_blank" rel="noreferrer">
+          Get in touch
+        </a>
+      </Button>
+    );
+  }
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            type="button"
+            className={cn("size-8", className)}
+            {...props}
+          >
+            <a href={link} target="_blank" rel="noreferrer">
+              <MessageCircleMore />
+            </a>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Get in touch</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
