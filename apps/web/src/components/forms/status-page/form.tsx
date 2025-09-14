@@ -32,7 +32,7 @@ import { SectionVisibility } from "./section-visibility";
 
 interface Props {
   defaultSection?: string;
-  defaultValues?: InsertPage;
+  defaultValues?: Omit<InsertPage, "configuration">;
   allMonitors?: Monitor[];
   /**
    * gives the possibility to check all the monitors
@@ -55,7 +55,7 @@ export function StatusPageForm({
   plan,
   workspaceSlug,
 }: Props) {
-  const form = useForm<InsertPage>({
+  const form = useForm<Omit<InsertPage, "configuration">>({
     resolver: zodResolver(insertPageSchema),
     defaultValues: {
       title: defaultValues?.title || "", // FIXME: you can save a page without title, causing unexpected slug behavior
