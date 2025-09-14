@@ -1,49 +1,20 @@
 import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
 import { Footer } from "@/components/nav/footer";
 import { Header } from "@/components/nav/header";
-import {
-  FloatingButton,
-  StatusPageProvider,
-} from "@/components/status-page/floating-button";
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export default function Layout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ domain: string }>;
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <Hydrate params={params}>
-      <StatusPageProvider>
-        <div className="flex min-h-screen flex-col gap-4">
-          <Header className="w-full border-b" />
-          <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-3 py-2">
-            {children}
-          </main>
-          <Footer className="w-full border-t" />
-        </div>
-        <FloatingButton />
-      </StatusPageProvider>
-    </Hydrate>
+    <div className="flex min-h-screen flex-col gap-4">
+      <Header className="w-full border-b" />
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-3 py-2">
+        {children}
+      </main>
+      <Footer className="w-full border-t" />
+    </div>
   );
-}
-
-async function Hydrate({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ domain: string }>;
-}) {
-  const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(
-    trpc.statusPage.get.queryOptions({ slug: (await params).domain }),
-  );
-  return <HydrateClient>{children}</HydrateClient>;
 }
 
 export async function generateMetadata({
