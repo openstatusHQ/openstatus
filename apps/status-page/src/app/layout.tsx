@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { TRPCReactProvider } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import LocalFont from "next/font/local";
@@ -54,18 +52,10 @@ export default function RootLayout({
         )}
       >
         <NuqsAdapter>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TRPCReactProvider>
-              {children}
-              <TailwindIndicator />
-              <Toaster richColors expand />
-            </TRPCReactProvider>
-          </ThemeProvider>
+          <TRPCReactProvider>
+            {children}
+            <TailwindIndicator />
+          </TRPCReactProvider>
         </NuqsAdapter>
       </body>
     </html>
