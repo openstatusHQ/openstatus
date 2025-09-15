@@ -115,7 +115,7 @@ export default defineConfig({
             {
               label: "How to use React Status Widget",
               slug: "guides/how-to-use-react-widget",
-            }
+            },
           ],
         },
         {
