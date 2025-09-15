@@ -1,0 +1,58 @@
+
+---
+title: Best Practices for Status Pages
+---
+
+
+Status pages are essential tools for communicating service health and incidents to users. They build trust by providing transparency and should be a core component of any software company's communication strategy. Following a set of best practices ensures your status page is effective and helpful.
+
+## Best Practices for a Status Page
+
+###  Maintain Transparency and Honesty
+
+A status page's primary goal is to be a single source of truth. Be upfront about issues, even minor ones. Hiding problems erodes user trust and can lead to more support requests.
+
+- **Communicate Clearly:** Use simple, non-technical language. Users shouldn't need a dictionary to understand what's happening.
+
+- **Be Timely:** Update the page as soon as an incident is confirmed and provide regular updates throughout the resolution process.
+
+### Automate Where Possible
+
+Manual updates during an outage are prone to error and can be slow. Automating your status page can provide more accurate and timely information.
+
+- **Integrate Monitoring Tools:** Connect your internal monitoring and alerting systems to your status page. When a metric crosses a threshold (e.g., high error rate), the status page can automatically be updated.
+
+- **Use an API:** we provide APIs that allow you to programmatically update component statuses and post new incidents.
+
+
+### Provide Detailed Incident Communication
+
+When an incident occurs, provide a detailed and structured narrative.
+
+- **Start with the "What":** State the problem clearly and concisely.
+
+- **Follow with the "Why":** Briefly explain the root cause, if known.
+
+- **Conclude with the "How" and "When":** Explain the steps being taken to resolve the issue and provide an estimated time to resolution.
+
+**Example Incident Update:**
+
+- **Investigating:** "We're currently investigating an issue affecting user logins."
+
+- **Identified:** "We've identified the root cause as a database connection issue and are working on a fix."
+
+- **Monitoring:** "A fix has been deployed, and we're monitoring the system's performance."
+
+- **Resolved:** "The issue has been resolved, and all services are now operational."
+
+
+### Make it Easily Accessible
+
+Your status page should be easy to find.
+
+- **Prominent Link:** Place a link to your status page in your application's footer, on your website, and in your support documentation.
+
+- **Custom Domain:** Use a simple, memorable URL like status.yourcompany.com.
+
+
+Following these practices turns your status page from a passive communication tool into an active driver of customer trust and confidence.

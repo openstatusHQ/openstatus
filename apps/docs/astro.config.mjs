@@ -62,12 +62,12 @@ export default defineConfig({
           label: "Concepts",
           items: [
             {
-              label: "Uptime monitoring",
+              label: "About Uptime monitoring",
               slug: "concept/uptime-monitoring",
             },
             {
-              label: "Status pages",
-              slug: "concept/status-page",
+              label: "Best Practices for Status Pages",
+              slug: "concept/best-practices-status-page",
             },
             {
               label: "Monitoring as code",
