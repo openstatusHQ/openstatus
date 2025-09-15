@@ -1,3 +1,55 @@
 ---
 title: Get Started with openstatus CLI
 ---
+
+How to get started with openstatus CLI
+
+## Installation
+
+
+Install the OpenStatus CLI to set up your monitors straight in your code.
+
+### OS X
+```
+brew install openstatusHQ/cli/openstatus --cask
+```
+or
+
+```
+curl -sSL instl.sh/openstatushq/cli/macos | bash
+```
+
+### Linux
+```
+curl -sSL instl.sh/openstatushq/cli/linux | bash
+```
+
+### Windows
+
+```
+iwr instl.sh/openstatushq/cli/windows | iex
+```
+
+## Add API Key
+
+Create an API key in your workspace settings.
+
+```bash
+export OPENSTATUS_API_TOKEN=<your-api-token>
+```
+
+## Import Monitors
+
+Import monitors from your workspace to a YAML file.
+
+```bash
+openstatus monitors import
+```
+
+### Manage Monitors
+
+Add, remove, or update monitors from a YAML file and apply your changes.
+
+```bash
+openstatus monitors apply
+```

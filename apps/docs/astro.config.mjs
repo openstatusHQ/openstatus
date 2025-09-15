@@ -86,6 +86,10 @@ export default defineConfig({
               label: "How to create a status page",
               slug: "tutorial/how-to-create-status-page",
             },
+            {
+              label: "Get Started with OpenStatus CLI",
+              slug: "tutorial/get-started-with-openstatus-cli",
+            },
           ],
         },
 
