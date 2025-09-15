@@ -70,8 +70,8 @@ export default defineConfig({
               slug: "concept/best-practices-status-page",
             },
             {
-              label: "Monitoring as code",
-              slug: "concept/monitoring-as-code",
+              label: "Uptime Monitoring as Code",
+              slug: "concept/uptime-monitoring-as-code",
             },
           ],
         },
