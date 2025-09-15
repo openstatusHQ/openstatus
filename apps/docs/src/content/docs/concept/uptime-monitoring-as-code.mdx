@@ -1,32 +1,8 @@
 ---
 title: Uptime Monitoring as Code
 ---
-
-Uptime monitoring is a vital part of any robust system, ensuring your services are online and available to users. Historically, this has involved manually configuring monitors through a web interface, which can be tedious and prone to human error. Uptime Monitoring as Code changes this by treating your monitoring configurations like any other part of your application—as code.
-
-
-## Why Use Uptime Monitoring as Code?
-
-This approach offers significant advantages:
-
-- **Version Control:** By defining your monitors in a YAML file, you can track every change, rollback to previous versions, and see who made which modifications using tools like Git. This is crucial for auditing and troubleshooting.
-
-- **Automation and Consistency:** Your monitoring setup can be part of your automated deployment pipeline. When you deploy a new service, its monitors are created automatically, ensuring consistency across your entire infrastructure. This eliminates the risk of forgetting to set up monitoring for a new service.
-
-- **Collaboration:** A code-based approach simplifies collaboration among teams. A developer can create a new monitor definition in the YAML file and submit it for peer review, just as they would with any other code change. This promotes a shared understanding of your system's health.
-
-- **Scalability:** Manually setting up hundreds of monitors is a nightmare. With a code-based approach, you can programmatically generate configurations for a large number of services, making it easy to scale your monitoring as your infrastructure grows.
-
-- **Simplified Auditing:** Since the entire configuration is in a file, it's easy to see the current state of your monitors at a glance. You don't have to navigate through multiple screens in a web UI.
-
-
-## How It Works with openstatus
-
- We offer the use ofa simple, human-readable YAML file to define all uptime monitors. This file serves as the single source of truth for your monitoring setup. You define each monitor with its URL, expected status code, and other parameters.
-
-Here’s an example of what your `openstatus.yaml` file might look like:
-
-```yaml
+import { Code } from '@astrojs/starlight/components';
+export const code = `
 # yaml-language-server: $schema=https://www.openstatus.dev/schema.json
 uptime-monitor:
   name: "Uptime Monitor"
@@ -74,7 +50,33 @@ graphql-monitor:
       {
         "query": "query { viewer { login }}"
       }
-```
+`
+
+Uptime monitoring is a vital part of any robust system, ensuring your services are online and available to users. Historically, this has involved manually configuring monitors through a web interface, which can be tedious and prone to human error. Uptime Monitoring as Code changes this by treating your monitoring configurations like any other part of your application—as code.
+
+
+## Why Use Uptime Monitoring as Code?
+
+This approach offers significant advantages:
+
+- **Version Control:** By defining your monitors in a YAML file, you can track every change, rollback to previous versions, and see who made which modifications using tools like Git. This is crucial for auditing and troubleshooting.
+
+- **Automation and Consistency:** Your monitoring setup can be part of your automated deployment pipeline. When you deploy a new service, its monitors are created automatically, ensuring consistency across your entire infrastructure. This eliminates the risk of forgetting to set up monitoring for a new service.
+
+- **Collaboration:** A code-based approach simplifies collaboration among teams. A developer can create a new monitor definition in the YAML file and submit it for peer review, just as they would with any other code change. This promotes a shared understanding of your system's health.
+
+- **Scalability:** Manually setting up hundreds of monitors is a nightmare. With a code-based approach, you can programmatically generate configurations for a large number of services, making it easy to scale your monitoring as your infrastructure grows.
+
+- **Simplified Auditing:** Since the entire configuration is in a file, it's easy to see the current state of your monitors at a glance. You don't have to navigate through multiple screens in a web UI.
+
+
+## How It Works with openstatus
+
+ We offer the use ofa simple, human-readable YAML file to define all uptime monitors. This file serves as the single source of truth for your monitoring setup. You define each monitor with its URL, expected status code, and other parameters.
+
+Here’s an example of what your `openstatus.yaml` file might look like:
+
+<Code code={code} lang="yaml" title='openstatus.yaml' />
 
 ### Making Changes with the CLI
 
