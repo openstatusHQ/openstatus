@@ -1,0 +1,78 @@
+---
+title: How to Add an SVG Status Badge to your GitHub README
+---
+
+You want to add an SVG status badge to your GitHub README?
+
+### PNG Badge
+
+```html
+<img src='https://[slug].openstatus.dev/badge'>
+```
+
+This will return a PNG image with the status of your page. It will look like this:
+<img src='https://status.openstatus.dev/badge' />
+
+You can customize the theme by adding `?theme=dark` and the size of it by adding `?size=lg`.
+
+Supported themes:
+- `dark`
+- `light` (default)
+
+Supported sizes:
+- `sm` (default)
+- `md`
+- `lg`
+- `xl`
+
+It will display the following labels based on the current status of the status page:
+
+```
+Operational
+Degraded
+Outage
+Incident
+Maintenance
+Unknown
+```
+
+### SVG Badge (v2)
+
+```html
+<img src='https://[slug].openstatus.dev/badge/v2'>
+```
+
+This will return a PNG image with the status of your page. It will look like this:
+<img src='https://status.openstatus.dev/badge/v2' />
+
+You can customize the theme by adding `?theme=dark`, the size of it by adding `?size=lg` and the variant `?variant=outline` - use what fits best to you!
+
+Supported themes:
+- `light` (default)
+- `dark`
+
+Supported sizes:
+- `sm` (default)
+- `md`
+- `lg`
+- `xl`
+
+Supported variants:
+- `default` (default)
+- `outline`
+
+The **outline** variant simply adds a slightly rounded border to the svg `rect`. It mainly can be used for GitHub README or Markdown where styling is not supported.
+
+Compared to the PNG badge, we let you define the `border` and `border-radius` of the SVG badge and the font is mono.
+
+It will display the following labels based on the current status of the status page:
+
+```
+All Systems Operational
+Degraded Performance
+Partial Outage
+Major Outage
+Ongoing Incident
+Under Maintenance
+Unknown
+```

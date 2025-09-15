@@ -104,6 +104,18 @@ export default defineConfig({
               label: "Run check in GitHub Actions",
               slug: "guides/how-to-run-synthetic-test-github-action",
             },
+            {
+              label: "Export Metrics via OTel to Grafana",
+              slug: "guides/how-to-export-metrics-via-otel-to-grafana",
+            },
+            {
+              label: "How to Add an SVG Status Badge to your GitHub README",
+              slug: "guides/how-to-add-svg-status-badge",
+            },
+            {
+              label: "How to use React Status Widget",
+              slug: "guides/how-to-use-react-widget",
+            }
           ],
         },
         {
