@@ -116,6 +116,7 @@ export default defineConfig({
             {
               label: "API Reference",
               link: "https://api.openstatus.dev/v1",
+              // badge: { text: 'External' },
               attrs: {
                 target: "_blank",
               },
@@ -143,6 +144,14 @@ export default defineConfig({
             {
               label: "Status Report",
               slug: "reference/status-report",
+            },
+            {
+              label: "Subscriber",
+              slug: "reference/subscriber",
+            },
+            {
+              label: "Terraform Provider",
+              slug: "reference/terraform",
             },
           ],
         },
