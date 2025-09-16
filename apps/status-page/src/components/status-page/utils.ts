@@ -1,5 +1,5 @@
 import type { ChartConfig } from "@/components/ui/chart";
-import { VARIANT } from "./floating-button";
+import { VARIANT, type VariantType } from "./floating-button";
 
 export const chartData = Array.from({ length: 45 }, (_, i) => {
   const date = new Date();
@@ -66,6 +66,10 @@ export const chartConfig = {
     label: "info",
     color: "var(--info)",
   },
+  empty: {
+    label: "empty",
+    color: "var(--muted)",
+  },
 } satisfies ChartConfig;
 
 export const PRIORITY = {
@@ -76,9 +80,67 @@ export const PRIORITY = {
 } as const; // satisfies Record<XXX, number>;
 
 export function getHighestPriorityStatus(item: ChartData) {
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) return "empty";
   return (
     VARIANT.filter((status) => item[status] > 0).sort(
       (a, b) => PRIORITY[b] - PRIORITY[a],
-    )[0] || "success"
+    )[0] || "empty"
   );
+}
+
+export const PERCENTAGE_PRIORITY = {
+  info: -1,
+  error: 0,
+  degraded: 0.75,
+  success: 0.95,
+} as const;
+
+export function getPercentagePriorityStatus(item: ChartData) {
+  const total = item.success + item.degraded + item.info + item.error;
+  if (total === 0) return "empty";
+
+  const percentage = item.success / total;
+  if (percentage >= PERCENTAGE_PRIORITY.success) return "success";
+  if (percentage >= PERCENTAGE_PRIORITY.degraded) return "degraded";
+  if (percentage >= PERCENTAGE_PRIORITY.error) return "error";
+  if (percentage >= PERCENTAGE_PRIORITY.info) return "info";
+  return "info";
+}
+
+export function getHighestStatus(items: VariantType[]) {
+  if (items.some((item) => item === "error")) return "error";
+  if (items.some((item) => item === "degraded")) return "degraded";
+  if (items.some((item) => item === "info")) return "info";
+  return "success";
+}
+
+export function getTotalUptime(item: ChartData[]) {
+  const { ok, total } = item.reduce(
+    (acc, item) => ({
+      ok: acc.ok + item.success + item.degraded + item.info,
+      total: acc.total + item.success + item.degraded + item.info + item.error,
+    }),
+    {
+      ok: 0,
+      total: 0,
+    },
+  );
+
+  if (total === 0) return 100;
+  return Math.round((ok / total) * 10000) / 100;
+}
+
+export function getManualUptime(
+  items: { from: Date | null; to: Date | null }[],
+  days: number,
+) {
+  const duration = items.reduce((acc, item) => {
+    if (!item.from) return acc;
+    return acc + ((item.to || new Date()).getTime() - item.from.getTime());
+  }, 0);
+
+  const total = days * 24 * 60 * 60 * 1000;
+
+  return Math.round(((total - duration) / total) * 10000) / 100;
 }

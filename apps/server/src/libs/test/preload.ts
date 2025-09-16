@@ -13,11 +13,11 @@ mock.module("@openstatus/upstash", () => ({
 
 mock.module("@openstatus/tinybird", () => ({
   OSTinybird: class {
-    httpStatus45d() {
-      return Promise.resolve({ data: [] });
+    get legacy_httpStatus45d() {
+      return () => Promise.resolve({ data: [] });
     }
-    tcpStatus45d() {
-      return Promise.resolve({ data: [] });
+    get legacy_tcpStatus45d() {
+      return () => Promise.resolve({ data: [] });
     }
   },
 }));

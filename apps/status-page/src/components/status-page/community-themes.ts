@@ -84,7 +84,7 @@ export const githubTheme = {
 
     "--success": "oklch(54.34% 0.1634 145.98)",
     "--destructive": "oklch(47.1% 0.1909 25.95)",
-    "--warning": "oklch(40.97% 0.2064 289.57)",
+    "--warning": "oklch(81.84% 0.1328 85.87)",
     "--info": "oklch(46.96% 0.2957 264.51)",
   } as React.CSSProperties,
 };
@@ -98,7 +98,7 @@ export const THEMES = {
   },
   github: {
     name: "Github",
-    author: { name: "@openstatus", url: "https://openstatus.dev" },
+    author: { name: "@github", url: "https://github.com" },
     ...githubTheme,
   },
   supabase: {

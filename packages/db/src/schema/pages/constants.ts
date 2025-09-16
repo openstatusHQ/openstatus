@@ -10,4 +10,5 @@ export const subdomainSafeList = [
   "light",
   "workflows",
   "template",
+  "ssh",
 ];

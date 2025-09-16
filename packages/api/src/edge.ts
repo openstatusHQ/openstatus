@@ -13,6 +13,7 @@ import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
 import { pageRouter } from "./router/page";
 import { pageSubscriberRouter } from "./router/pageSubscriber";
+import { statusPageRouter } from "./router/statusPage";
 import { statusReportRouter } from "./router/statusReport";
 import { tinybirdRouter } from "./router/tinybird";
 import { userRouter } from "./router/user";
@@ -40,4 +41,5 @@ export const edgeRouter = createTRPCRouter({
   checker: checkerRouter,
   blob: blobRouter,
   feedback: feedbackRouter,
+  statusPage: statusPageRouter,
 });

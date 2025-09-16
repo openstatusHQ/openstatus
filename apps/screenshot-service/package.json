@@ -14,7 +14,7 @@
     "@upstash/qstash": "2.6.2",
     "hono": "4.5.3",
     "playwright": "1.46.0",
-    "zod": "3.24.1"
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

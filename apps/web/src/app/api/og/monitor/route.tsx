@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   // TODO: we need to pass the monitor type here
 
   const res = (monitorId &&
-    (await tb.httpStatus45d({
+    (await tb.legacy_httpStatus45d({
       monitorId,
     }))) || { data: [] };
 

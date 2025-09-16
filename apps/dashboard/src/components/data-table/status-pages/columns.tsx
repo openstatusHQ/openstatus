@@ -36,7 +36,7 @@ export const columns: ColumnDef<StatusPage>[] = [
       return (
         <img
           src={`${value}`}
-          alt={`Favicon for ${row.getValue("name")}`}
+          alt={`Favicon for ${row.getValue("title")}`}
           className="h-4 w-4 rounded border bg-muted"
         />
       );

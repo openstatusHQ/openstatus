@@ -26,15 +26,19 @@ import { THEMES } from "./community-themes";
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
 
-export const CARD_TYPE = ["duration", "requests", "dominant"] as const;
+export const CARD_TYPE = [
+  "duration",
+  "requests",
+  "dominant",
+  "manual",
+] as const;
 export type CardType = (typeof CARD_TYPE)[number];
 
-export const BAR_TYPE = ["absolute", "dominant"] as const;
+export const BAR_TYPE = ["absolute", "dominant", "manual"] as const;
 export type BarType = (typeof BAR_TYPE)[number];
 
 export const COMMUNITY_THEME = ["default", "github", "supabase"] as const;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
-
 interface StatusPageContextType {
   variant: VariantType;
   setVariant: (variant: VariantType) => void;
@@ -144,7 +148,7 @@ export function FloatingButton({ className }: { className?: string }) {
   } = useStatusPage();
 
   return (
-    <div className={cn("fixed right-4 bottom-4 z-50 bg-background", className)}>
+    <div className={cn("fixed right-4 bottom-4 z-50", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -174,6 +178,7 @@ export function FloatingButton({ className }: { className?: string }) {
                   <SelectTrigger
                     id="status-variant"
                     className="w-full capitalize"
+                    disabled
                   >
                     <SelectValue />
                   </SelectTrigger>
@@ -205,16 +210,23 @@ export function FloatingButton({ className }: { className?: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="card-type">Card Type</Label>
+                <Label htmlFor="bar-type">Bar Type</Label>
                 <Select
-                  value={cardType}
-                  onValueChange={(v) => setCardType(v as CardType)}
+                  value={barType}
+                  onValueChange={(v) => {
+                    setBarType(v as BarType);
+                    if (v !== "absolute") {
+                      setCardType(v as CardType);
+                    } else {
+                      setCardType("requests");
+                    }
+                  }}
                 >
-                  <SelectTrigger id="card-type" className="w-full capitalize">
+                  <SelectTrigger id="bar-type" className="w-full capitalize">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CARD_TYPE.map((v) => (
+                    {BAR_TYPE.map((v) => (
                       <SelectItem key={v} value={v} className="capitalize">
                         {v}
                       </SelectItem>
@@ -223,17 +235,23 @@ export function FloatingButton({ className }: { className?: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bar-type">Bar Type</Label>
+                <Label htmlFor="card-type">Card Type</Label>
                 <Select
-                  value={barType}
-                  onValueChange={(v) => setBarType(v as BarType)}
+                  value={cardType}
+                  onValueChange={(v) => setCardType(v as CardType)}
+                  disabled={barType !== "absolute"}
                 >
-                  <SelectTrigger id="bar-type" className="w-full capitalize">
+                  <SelectTrigger id="card-type" className="w-full capitalize">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {BAR_TYPE.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
+                    {CARD_TYPE.map((v) => (
+                      <SelectItem
+                        key={v}
+                        value={v}
+                        className="capitalize"
+                        disabled={["dominant", "manual"].includes(v)}
+                      >
                         {v}
                       </SelectItem>
                     ))}

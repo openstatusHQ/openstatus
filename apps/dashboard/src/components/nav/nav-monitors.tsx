@@ -162,7 +162,7 @@ export function NavMonitors() {
                   <Link
                     href={`/monitors/${item.id}/overview`}
                     onClick={() => setOpenMobile(false)}
-                    className="font-commit-mono"
+                    className="font-commit-mono tracking-tight"
                   >
                     <span>{item.name}</span>
                   </Link>

@@ -23,6 +23,7 @@ test("Get Test Page", async () => {
     statusReports: expect.any(Array),
     monitors: expect.any(Array),
     incidents: expect.any(Array),
+    maintenances: expect.any(Array),
     published: expect.any(Boolean),
     slug: expect.any(String),
     title: expect.any(String),

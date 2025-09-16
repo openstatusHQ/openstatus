@@ -7,7 +7,7 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "zod": "3.24.1"
+    "zod": "3.24.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

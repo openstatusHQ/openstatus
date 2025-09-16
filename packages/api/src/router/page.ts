@@ -15,6 +15,7 @@ import {
 import {
   incidentTable,
   insertPageSchema,
+  legacy_selectPublicPageSchemaWithRelation,
   maintenance,
   monitor,
   monitorsToPages,
@@ -23,7 +24,6 @@ import {
   selectMonitorSchema,
   selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
-  selectPublicPageSchemaWithRelation,
   statusReport,
   subdomainSafeList,
   workspace,
@@ -262,7 +262,7 @@ export const pageRouter = createTRPCRouter({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
       with: {
         monitorsToPages: { with: { monitor: true } },
-        maintenancesToPages: {
+        maintenances: {
           where: and(
             lte(maintenance.from, new Date()),
             gte(maintenance.to, new Date()),
@@ -278,14 +278,13 @@ export const pageRouter = createTRPCRouter({
         },
       },
     });
-    console.log(allPages.map((page) => page.statusReports));
     return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
   }),
 
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
-    .output(selectPublicPageSchemaWithRelation.optional())
+    .output(legacy_selectPublicPageSchemaWithRelation.nullish())
     .query(async (opts) => {
       if (!opts.input.slug) return;
 
@@ -297,9 +296,7 @@ export const pageRouter = createTRPCRouter({
         )
         .get();
 
-      if (!result) {
-        return;
-      }
+      if (!result) return;
 
       const [workspaceResult, monitorsToPagesResult] = await Promise.all([
         opts.ctx.db
@@ -354,7 +351,7 @@ export const pageRouter = createTRPCRouter({
 
       const maintenancesQuery = opts.ctx.db.query.maintenance.findMany({
         where: eq(maintenance.pageId, result.id),
-        with: { maintenancesToMonitors: true },
+        with: { maintenancesToMonitors: { with: { monitor: true } } },
         orderBy: (maintenances, { desc }) => desc(maintenances.from),
       });
 
@@ -373,7 +370,7 @@ export const pageRouter = createTRPCRouter({
         incidentsQuery,
       ]);
 
-      return selectPublicPageSchemaWithRelation.parse({
+      return legacy_selectPublicPageSchemaWithRelation.parse({
         ...result,
         // TODO: improve performance and move into SQLite query
         monitors: monitors.sort((a, b) => {
@@ -482,7 +479,7 @@ export const pageRouter = createTRPCRouter({
         where: and(...whereConditions),
         with: {
           monitorsToPages: { with: { monitor: true } },
-          maintenancesToPages: true,
+          maintenances: true,
         },
       });
 
@@ -499,7 +496,7 @@ export const pageRouter = createTRPCRouter({
             ...m.monitor,
             order: m.order,
           })),
-          maintenances: data?.maintenancesToPages,
+          maintenances: data?.maintenances,
         });
     }),
 

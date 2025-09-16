@@ -31,6 +31,15 @@ export const page = sqliteTable("page", {
     false,
   ),
 
+  // links and urls
+  homepageUrl: text("homepage_url", { length: 256 }),
+  contactUrl: text("contact_url", { length: 256 }),
+
+  legacyPage: integer("legacy_page", { mode: "boolean" })
+    .notNull()
+    .default(true),
+  configuration: text("configuration", { mode: "json" }),
+
   /**
    * Displays the total and failed request numbers for each monitor
    */
@@ -48,7 +57,7 @@ export const page = sqliteTable("page", {
 
 export const pageRelations = relations(page, ({ many, one }) => ({
   monitorsToPages: many(monitorsToPages),
-  maintenancesToPages: many(maintenance),
+  maintenances: many(maintenance),
   statusReports: many(statusReport),
   workspace: one(workspace, {
     fields: [page.workspaceId],

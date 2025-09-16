@@ -1,14 +1,15 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Monitor } from "@/data/monitors";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNowStrict } from "date-fns";
 import {
   AlertCircleIcon,
@@ -18,31 +19,39 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { useState } from "react";
-import type { BarType, CardType, VariantType } from "./floating-button";
-import { StatusTracker } from "./status-tracker";
-import type { ChartData } from "./utils";
+import type { VariantType } from "./floating-button";
+import { StatusTracker, StatusTrackerSkeleton } from "./status-tracker";
+
+// TODO: use status instead of variant
+
+type Data = NonNullable<
+  RouterOutputs["statusPage"]["getUptime"]
+>[number]["data"];
 
 export function StatusMonitor({
   className,
-  variant = "success",
-  cardType = "duration",
-  barType = "absolute",
+  status = "success",
   showUptime = true,
-  data,
+  data = [],
   monitor,
+  uptime,
+  isLoading = false,
   ...props
 }: React.ComponentProps<"div"> & {
-  variant?: VariantType;
-  cardType?: CardType;
-  barType?: BarType;
+  status?: VariantType;
   showUptime?: boolean;
-  monitor: Monitor;
-  data: ChartData[];
+  uptime?: string;
+  monitor: {
+    name: string;
+    description: string;
+  };
+  data?: Data;
+  isLoading?: boolean;
 }) {
   return (
     <div
       data-slot="status-monitor"
-      data-variant={variant}
+      data-variant={status}
       className={cn("group/monitor flex flex-col gap-1", className)}
       {...props}
     >
@@ -54,25 +63,23 @@ export function StatusMonitor({
           </StatusMonitorDescription>
         </div>
         <div className="flex flex-row items-center gap-2">
-          {showUptime ? <StatusMonitorUptime /> : null}
-          <StatusMonitorIcon />
+          {/* TODO: check if we can improve that cuz its looking ugly */}
+          {showUptime ? (
+            <>
+              {isLoading ? (
+                <StatusMonitorUptimeSkeleton />
+              ) : (
+                <StatusMonitorUptime>{uptime}</StatusMonitorUptime>
+              )}
+              <StatusMonitorIcon />
+            </>
+          ) : (
+            <StatusMonitorStatus className="text-sm" />
+          )}
         </div>
       </div>
-      <StatusTracker cardType={cardType} barType={barType} data={data} />
-      <div
-        className={cn(
-          "flex flex-row items-center justify-between text-muted-foreground text-xs",
-          className,
-        )}
-        {...props}
-      >
-        <div>
-          {formatDistanceToNowStrict(new Date(data[0].timestamp), {
-            unit: "day",
-          })}
-        </div>
-        <div>today</div>
-      </div>
+      {isLoading ? <StatusTrackerSkeleton /> : <StatusTracker data={data} />}
+      <StatusMonitorFooter data={data} isLoading={isLoading} />
     </div>
   );
 }
@@ -97,6 +104,8 @@ export function StatusMonitorDescription({
   const isTouch = useMediaQuery("(hover: none)");
   const [open, setOpen] = useState(false);
 
+  if (!children) return null;
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip open={open} onOpenChange={setOpen}>
@@ -105,6 +114,7 @@ export function StatusMonitorDescription({
             if (isTouch) setOpen((prev) => !prev);
             onClick?.(e);
           }}
+          className="rounded-full"
           {...props}
         >
           <InfoIcon className="size-4 text-muted-foreground" />
@@ -116,6 +126,7 @@ export function StatusMonitorDescription({
     </TooltipProvider>
   );
 }
+
 export function StatusMonitorIcon({
   className,
   ...props
@@ -139,8 +150,36 @@ export function StatusMonitorIcon({
     </div>
   );
 }
+
+export function StatusMonitorFooter({
+  data,
+  isLoading,
+}: {
+  data: Data;
+  isLoading?: boolean;
+}) {
+  return (
+    <div className="flex flex-row items-center justify-between text-muted-foreground text-xs">
+      <div>
+        {isLoading ? (
+          <Skeleton className="h-4 w-18" />
+        ) : data.length > 0 ? (
+          formatDistanceToNowStrict(new Date(data[0].day), {
+            unit: "day",
+            addSuffix: true,
+          })
+        ) : (
+          "-"
+        )}
+      </div>
+      <div>today</div>
+    </div>
+  );
+}
+
 export function StatusMonitorUptime({
   className,
+  children,
   ...props
 }: React.ComponentProps<"div">) {
   return (
@@ -148,9 +187,16 @@ export function StatusMonitorUptime({
       {...props}
       className={cn("font-mono text-muted-foreground text-sm", className)}
     >
-      99.90%
+      {children}
     </div>
   );
+}
+
+export function StatusMonitorUptimeSkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
+  return <Skeleton className={cn("h-4 w-16", className)} {...props} />;
 }
 
 export function StatusMonitorStatus({
@@ -158,7 +204,16 @@ export function StatusMonitorStatus({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn(className)} {...props}>
+    <div
+      className={cn(
+        "group-data-[variant=success]/monitor:text-success",
+        "group-data-[variant=degraded]/monitor:text-warning",
+        "group-data-[variant=error]/monitor:text-destructive",
+        "group-data-[variant=info]/monitor:text-info",
+        className,
+      )}
+      {...props}
+    >
       <span className="hidden group-data-[variant=success]/monitor:block">
         Operational
       </span>
