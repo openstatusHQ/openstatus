@@ -73,6 +73,10 @@ export default defineConfig({
               label: "Uptime Monitoring as Code",
               slug: "concept/uptime-monitoring-as-code",
             },
+            {
+              label: "Latency vs Response Time",
+              slug: "concept/latency-vs-response-time",
+            },
           ],
         },
         {
