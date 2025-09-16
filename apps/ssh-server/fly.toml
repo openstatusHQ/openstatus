@@ -1,0 +1,33 @@
+# fly.toml app configuration file generated for ssh-server-status on 2025-09-16T08:46:39+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'ssh-server-status'
+primary_region = 'cdg'
+
+[build]
+  dockerfile = './Dockerfile'
+
+
+
+[[services]]
+    internal_port = 2222
+    protocol = "tcp"
+    auto_stop_machines = true
+    auto_start_machines = true
+    [[services.ports]]
+      port = 22
+
+
+[env]
+    PORT = "2222"
+
+[mounts]
+    source = "ssh_key"
+    destination = "/data"
+
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = '256MB'
