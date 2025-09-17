@@ -17,6 +17,15 @@
     font-style: normal;
     font-display: swap;
   }
+  @font-face {
+    font-family: 'CommitMono';
+    src:
+        url('/fonts/CommitMono-400-Regular.otf') format('opentype'),
+        url('/fonts/CommitMono-700-Regular.otf') format('opentype');
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+  }
 }
 
 @layer base {
