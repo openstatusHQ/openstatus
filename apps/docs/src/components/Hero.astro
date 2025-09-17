@@ -11,14 +11,14 @@ import { LinkButton } from "@astrojs/starlight/components";
 >
   <div class="flex flex-col gap-6">
     <h1
-      class="font-cal text-4xl md:text-6xl bg-linear-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent"
+      class="font-bold text-4xl md:text-6xl"
       data-page-title
       set:html={title}
     />
     {
       tagline && (
-        <p
-          class="mx-auto max-w-md text-lg text-muted-foreground md:max-w-xl md:text-xl"
+        <h2
+          class="mx-auto font-normal max-w-md text-lg text-muted-foreground md:max-w-xl md:text-xl"
           set:html={tagline}
         />
       )

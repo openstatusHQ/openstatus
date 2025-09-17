@@ -15,6 +15,7 @@
     "@astrojs/sitemap": "3.5.1",
     "@astrojs/starlight": "0.35.2",
     "@astrojs/starlight-tailwind": "4.0.1",
+    "@fontsource-variable/inter": "5.2.8",
     "@openpanel/astro": "1.0.1",
     "@tailwindcss/vite": "4.1.8",
     "astro": "5.13.7",

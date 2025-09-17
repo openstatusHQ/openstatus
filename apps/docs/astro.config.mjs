@@ -29,6 +29,11 @@ export default defineConfig({
       favicon: "/favicon.ico",
       social: [
         {
+          icon: "external",
+          href: "https://openstatus.dev",
+          label: "OpenStatus Website",
+        },
+        {
           icon: "github",
           label: "GitHub",
           href: "https://github.com/openstatusHQ/openstatus",
@@ -57,6 +62,7 @@ export default defineConfig({
         // Path to your Tailwind base styles:
         "./src/global.css",
         "./src/custom.css",
+        "@fontsource-variable/inter",
       ],
       sidebar: [
         {

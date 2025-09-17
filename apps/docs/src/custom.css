@@ -8,3 +8,11 @@
     padding: 0.2em;
     border-radius: 0.25rem;
   }
+
+  :is(h1, h2, h3, h4, h5, h6) {
+    font-family: "CommitMono",  sans-serif;
+  }
+
+  sl-sidebar-state-persist summary {
+      font-family: "CommitMono",  sans-serif;
+  }

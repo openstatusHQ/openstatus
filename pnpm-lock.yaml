@@ -327,6 +327,9 @@ importers:
       '@astrojs/starlight-tailwind':
         specifier: 4.0.1
         version: 4.0.1(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))(tailwindcss@4.1.8)
+      '@fontsource-variable/inter':
+        specifier: 5.2.8
+        version: 5.2.8
       '@openpanel/astro':
         specifier: 1.0.1
         version: 1.0.1(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))
@@ -3068,6 +3071,9 @@ packages:
 
   '@floating-ui/utils@0.2.8':
     resolution: {integrity: sha512-kym7SodPp8/wloecOpcmSnWJsK7M0E5Wg8UcFA+uO4B9s5d0ywXOEro/8HM9x0rW+TljRzul/14UYz3TleT3ig==}
+
+  '@fontsource-variable/inter@5.2.8':
+    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
 
   '@google-cloud/tasks@4.0.1':
     resolution: {integrity: sha512-cluHSN52WgaNoDPVguxCeXZq4rTBHqJntXFB9aI9zG8n8MJukf6V0H7yoAXpKXQxyeXv4LRy108kAgLPgXP3yA==}
@@ -13552,6 +13558,8 @@ snapshots:
   '@floating-ui/utils@0.2.10': {}
 
   '@floating-ui/utils@0.2.8': {}
+
+  '@fontsource-variable/inter@5.2.8': {}
 
   '@google-cloud/tasks@4.0.1(encoding@0.1.13)':
     dependencies:
