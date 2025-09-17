@@ -29,9 +29,9 @@ export default defineConfig({
       favicon: "/favicon.ico",
       social: [
         {
-          icon: 'external',
-          href: 'https://openstatus.dev',
-          label: 'OpenStatus Website'
+          icon: "external",
+          href: "https://openstatus.dev",
+          label: "OpenStatus Website",
         },
         {
           icon: "github",
