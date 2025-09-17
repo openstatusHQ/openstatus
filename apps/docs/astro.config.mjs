@@ -4,7 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, envField } from "astro/config";
 import starlightImageZoom from "starlight-image-zoom";
 import starlightLlmsTxt from "starlight-llms-txt";
-import starlightSidebarTopics from "starlight-sidebar-topics";
 
 import Icons from "unplugin-icons/vite";
 
@@ -58,217 +57,122 @@ export default defineConfig({
         "./src/global.css",
         "./src/custom.css",
       ],
+      sidebar: [
+        {
+          label: "Concepts",
+          items: [
+            {
+              label: "About Uptime monitoring",
+              slug: "concept/uptime-monitoring",
+            },
+            {
+              label: "Best Practices for Status Pages",
+              slug: "concept/best-practices-status-page",
+            },
+            {
+              label: "Uptime Monitoring as Code",
+              slug: "concept/uptime-monitoring-as-code",
+            },
+            {
+              label: "Latency vs Response Time",
+              slug: "concept/latency-vs-response-time",
+            },
+          ],
+        },
+        {
+          label: "Tutorials",
+          items: [
+            {
+              label: "How to create a monitor",
+              slug: "tutorial/how-to-create-monitor",
+            },
+            {
+              label: "How to create a status page",
+              slug: "tutorial/how-to-create-status-page",
+            },
+            {
+              label: "Get Started with OpenStatus CLI",
+              slug: "tutorial/get-started-with-openstatus-cli",
+            },
+          ],
+        },
+
+        {
+          label: "Guides",
+          items: [
+            {
+              label: "Monitor your MCP Server",
+              slug: "guides/how-to-monitor-mcp-server",
+            },
+            {
+              label: "Run check in GitHub Actions",
+              slug: "guides/how-to-run-synthetic-test-github-action",
+            },
+            {
+              label: "Export Metrics to your OTLP Endpoint",
+              slug: "guides/how-to-export-metrics-to-otlp-endpoint",
+            },
+            {
+              label: "How to Add an SVG Status Badge to your GitHub README",
+              slug: "guides/how-to-add-svg-status-badge",
+            },
+            {
+              label: "How to use React Status Widget",
+              slug: "guides/how-to-use-react-widget",
+            },
+          ],
+        },
+        {
+          label: "Reference",
+          items: [
+            {
+              label: "CLI Reference",
+              slug: "reference/cli-reference",
+            },
+            {
+              label: "API Reference",
+              link: "https://api.openstatus.dev/v1",
+              // badge: { text: 'External' },
+              attrs: {
+                target: "_blank",
+              },
+            },
+            {
+              label: "Incident",
+              slug: "reference/incident",
+            },
+            {
+              label: "HTTP Monitor",
+              slug: "reference/http-monitor",
+            },
+            {
+              label: "TCP Monitor",
+              slug: "reference/tcp-monitor",
+            },
+            {
+              label: "Notification",
+              slug: "reference/notification",
+            },
+            {
+              label: "Status Page",
+              slug: "reference/status-page",
+            },
+            {
+              label: "Status Report",
+              slug: "reference/status-report",
+            },
+            {
+              label: "Subscriber",
+              slug: "reference/subscriber",
+            },
+            {
+              label: "Terraform Provider",
+              slug: "reference/terraform",
+            },
+          ],
+        },
+      ],
       plugins: [
-        starlightSidebarTopics([
-          {
-            label: "Documentation",
-            link: "/",
-            id: "docs",
-            icon: "open-book",
-            items: [
-              {
-                label: "Getting Started",
-                items: [
-                  {
-                    label: "Introduction",
-                    slug: "getting-started/introduction",
-                  },
-                ],
-              },
-              {
-                label: "Monitoring",
-                items: [
-                  { label: "Overview", slug: "monitoring/overview" },
-                  {
-                    label: "Create a monitor",
-                    slug: "monitoring/create-monitor",
-                  },
-                  {
-                    label: "Monitoring as Code",
-                    slug: "monitoring/monitoring-as-code",
-                  },
-                  {
-                    label: "View your results data",
-                    slug: "monitoring/monitor-data-collected",
-                  },
-                  {
-                    label: "Group your checks",
-                    slug: "monitoring/group-monitor-tag",
-                  },
-                  {
-                    label: "Clone a check",
-                    slug: "monitoring/clone-monitor",
-                  },
-                  {
-                    label: "OpenTelemetry",
-                    slug: "monitoring/opentelemetry",
-                  },
-                  {
-                    label: "Check Types",
-                    collapsed: true,
-                    items: [
-                      {
-                        label: "HTTP",
-                        slug: "monitoring/type/http",
-                      },
-                      {
-                        label: "TCP",
-                        slug: "monitoring/type/tcp",
-                      },
-                    ],
-                  },
-                  {
-                    label: "Customizations",
-                    collapsed: true,
-                    items: [
-                      {
-                        label: "Assertions",
-                        slug: "monitoring/customization/assertions",
-                      },
-                      {
-                        label: "Frequency",
-                        slug: "monitoring/customization/frequency",
-                      },
-                      {
-                        label: "Notifications",
-                        slug: "monitoring/customization/notification",
-                      },
-                      {
-                        label: "Locations",
-                        slug: "monitoring/customization/locations",
-                      },
-                      {
-                        label: "Timing",
-                        slug: "monitoring/customization/timing",
-                      },
-                      {
-                        label: "Follow Redirects",
-                        slug: "monitoring/customization/follow-redirects",
-                      },
-                    ],
-                  },
-                ],
-                collapsed: false,
-              },
-              {
-                label: "Status Page",
-                collapsed: true,
-
-                items: [
-                  { label: "Overview", slug: "status-page/overview" },
-                  {
-                    label: "Create your status page",
-                    slug: "status-page/create-status-page",
-                  },
-
-                  {
-                    label: "Work with Status Page",
-                    autogenerate: { directory: "status-page/work" },
-                    collapsed: false,
-                  },
-                  {
-                    label: "Advanced",
-                    autogenerate: { directory: "status-page/advanced" },
-                    collapsed: true,
-                  },
-                ],
-              },
-              {
-                label: "Incidents",
-                collapsed: true,
-                items: [
-                  { label: "Overview", slug: "incident/overview" },
-                  {
-                    label: "Work with incident",
-                    slug: "incident/work-with-incident",
-                  },
-
-                  {
-                    label: "Incident Detail",
-                    slug: "incident/incident-detail",
-                  },
-                ],
-              },
-              {
-                label: "Alerting",
-                collapsed: true,
-                items: [
-                  { label: "Overview", slug: "alerting/overview" },
-                  {
-                    label: "Notification Channels",
-                    autogenerate: {
-                      directory: "alerting/providers",
-                      collapsed: true,
-                    },
-                  },
-                ],
-              },
-              {
-                label: "Developer Tools",
-                collapsed: true,
-                autogenerate: { directory: "tools" },
-              },
-              {
-                label: "Support",
-                collapsed: true,
-                items: [
-                  {
-                    label: "Help",
-                    slug: "help/support",
-                    collapsed: true,
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            label: "CLI",
-            icon: "seti:powershell",
-            link: "/cli/getting-started",
-            items: [
-              {
-                label: "CLI",
-                items: [
-                  {
-                    label: "Getting Started",
-                    slug: "cli/getting-started",
-                  },
-                  {
-                    label: "Commands",
-                    autogenerate: { directory: "cli/commands" },
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            label: "API Reference",
-            icon: "puzzle",
-            link: "https://api.openstatus.dev/v1",
-          },
-          {
-            label: "Guides",
-            icon: "rocket",
-            link: "/guides/introduction",
-            items: [
-              {
-                label: "Guides",
-                autogenerate: { directory: "guides" },
-              },
-            ],
-          },
-          {
-            label: "Contributing",
-            icon: "heart",
-            link: "/contributing/getting-started",
-            items: [
-              {
-                label: "Contributing",
-                autogenerate: { directory: "contributing" },
-              },
-            ],
-          },
-        ]),
         starlightLlmsTxt({
           projectName: "OpenStatus Documentation",
           description:

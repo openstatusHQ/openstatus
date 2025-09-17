@@ -1,19 +1,19 @@
 ---
-title: Creating Your First Monitor
+title: Create Your First Monitor
 description: "How to create your first monitor with OpenStatus"
 ---
 
 import { Image } from 'astro:assets';
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
-import monitorOverview from '../../../assets/monitor/create-monitor/monitor-overview.png';
-import createMonitor from '../../../assets/monitor/create-monitor/create-monitor-1.png';
-import createMonitor2 from '../../../assets/monitor/create-monitor/create-monitor-2.png';
+import monitorOverview from '../../../assets/tutorial/create-monitor/monitor-overview.png';
+import createMonitor from '../../../assets/tutorial/create-monitor/create-monitor-1.png';
+import createMonitor2 from '../../../assets/tutorial/create-monitor/create-monitor-2.png';
 
 import { ShowcaseYouTube } from 'starlight-showcases'
 
 
 
-This guide will walk you through the process of creating your first monitor, your automated watchdog for your services. A monitor periodically checks your endpoints to ensure they are available, performant, and returning the correct data. Think of it as a `curl` command that runs 24/7, providing continuous insights into the health of your application.
+This tutorial will walk you through the process of creating your first monitor, your automated watchdog for your services. A monitor periodically checks your endpoints to ensure they are available, performant, and returning the correct data. Think of it as a `curl` command that runs 24/7, providing continuous insights into the health of your application.
 
 
 ## Get Started in 1 Minute
@@ -87,30 +87,6 @@ You can add any number of custom HTTP headers to your request. This is particula
     Heads Up: We've got your User-Agent covered!
     OpenStatus automatically includes the `"User-Agent": "OpenStatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
 
-
-
-## Fine-Tuning Your Monitor ⚙️
-
-Once you've configured the basics, you can further refine your monitor's behavior with these advanced options:
-
-<CardGrid>
-    <LinkCard
-        title="Assertions"
-        href="/monitoring/customization/assertions"
-    />
-    <LinkCard
-        title="Frequency"
-        href="/monitoring/customization/frequency"
-    />
-    <LinkCard
-        title="Locations"
-        href="/monitoring/customization/locations"
-    />
-    <LinkCard
-        title="Timing"
-        href="/monitoring/customization/timing"
-    />
-</CardGrid>
 
 
 

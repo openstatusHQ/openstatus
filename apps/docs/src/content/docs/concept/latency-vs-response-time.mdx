@@ -1,0 +1,71 @@
+---
+title: Latency vs Response Time for a request
+---
+
+Latency and response time are two different metrics used in uptime monitoring. Latency measures the time it takes for a request to travel from the probes to the server and back. Response time is the time it takes for the server to process the request and send back a response, plus the latency.
+
+## What is Latency?
+
+```
+openstatus                  Network                 Server (Website)
+  |                           |                          |
+  |------- Request ---------->|                          |
+  | (Timestamp A: Send)       |                          |
+  |                           |------- Process --------->|
+  |                           | (Server processing time) |
+  |                           |<------- Response --------|
+  |                           | (Timestamp B: Receive)   |
+  |                           |                          |
+Latency = Timestamp B - Timestamp A
+```
+
+Latency is the time it takes for data to travel from its source to its destination. Think of it as the round-trip time (RTT) for a network packet. This delay is influenced by several factors:
+
+- **Distance:** The physical distance between the client and the server. Data traveling across continents will have higher latency than data traveling within the same city.
+
+- **Network Congestion:** When too much data is on the network, it can slow down transmission, similar to a traffic jam on a highway.
+
+To measure latency, you can monitor endpoints like `/ping` or `/healthcheck` with minimum server processing time.
+
+## What Is Response Time?
+
+```
+    openstatus                 Network                Server
+        |                         |                     |
+(Start) |------- Request -------->|                     |
+(T1)    |                         |                     |
+        |                         |--- Processing ----->|
+        |                         |   (Server's work)   |
+        |                         |<-- Response Data ---|
+        |                         |                     |
+(End)   |<--- (Received) ---------|                     |
+(T2)    |                         |                     |
+
+ Response Time = T2 - T1
+```
+
+
+Response time is the total time from the moment a user's request is sent until the moment the first byte of the server's response is received. It includes both the network latency and the server's processing time.
+
+Response time = Network Latency + Server Processing Time
+
+The server processing time is the duration the server spends on tasks like:
+
+- Executing database queries.
+- Running application logic.
+- Generating the HTML or JSON response.
+
+A high response time often indicates a problem with the server-side application itself. For example, slow database queries or inefficient can dramatically increase the response time, even if the network latency is low.
+
+
+##  Why the Distinction Matters for Uptime Monitoring
+
+Understanding the difference between these two metrics is crucial for diagnosing performance issues.
+
+- If your monitoring shows a **high response time but low latency**, the problem is likely with your server's performance. You should investigate your application's code, database queries, and server resources.
+
+- If both your **latency and response time** are high, the issue is likely network-related. This could be due to a poor connection between the monitoring location and your server, or a broader network issue.
+
+- **Response time is the ultimate measure of user experience** because it reflects the full journey of a request. Users don't just care how fast a packet can get to the server; they care how long it takes to see the results.
+
+By monitoring both metrics, you can quickly pinpoint whether a performance slowdown is caused by your application or by the network.
