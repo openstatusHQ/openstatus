@@ -6,13 +6,44 @@ Latency and response time are two different metrics used in uptime monitoring. L
 
 ## What is Latency?
 
+```
+openstatus                  Network                 Server (Website)
+  |                           |                          |
+  |------- Request ---------->|                          |
+  | (Timestamp A: Send)       |                          |
+  |                           |------- Process --------->|
+  |                           | (Server processing time) |
+  |                           |<------- Response --------|
+  |                           | (Timestamp B: Receive)   |
+  |                           |                          |
+Latency = Timestamp B - Timestamp A
+```
+
 Latency is the time it takes for data to travel from its source to its destination. Think of it as the round-trip time (RTT) for a network packet. This delay is influenced by several factors:
 
 - **Distance:** The physical distance between the client and the server. Data traveling across continents will have higher latency than data traveling within the same city.
 
 - **Network Congestion:** When too much data is on the network, it can slow down transmission, similar to a traffic jam on a highway.
 
+To measure latency, you can monitor endpoints like `/ping` or `/healthcheck` with minimum server processing time.
+
 ## What Is Response Time?
+
+```
+    openstatus                 Network                Server
+        |                         |                     |
+(Start) |------- Request -------->|                     |
+(T1)    |                         |                     |
+        |                         |--- Processing ----->|
+        |                         |   (Server's work)   |
+        |                         |<-- Response Data ---|
+        |                         |                     |
+(End)   |<--- (Received) ---------|                     |
+(T2)    |                         |                     |
+
+ Response Time = T2 - T1
+```
+
 
 Response time is the total time from the moment a user's request is sent until the moment the first byte of the server's response is received. It includes both the network latency and the server's processing time.
 

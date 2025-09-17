@@ -1,8 +1,43 @@
 ---
 title: About Uptime Monitoring
 ---
-
 The concept of **uptime monitoring** refers to the practice of continuously checking the availability of a website, server, or application. It's a proactive measure that alerts you to problems as they happen, helping to minimize downtime and its potential negative impacts.
+
+
+```
++----------------+
+| Service to be  |
+| Monitored      |
++----------------+
+      ▲
+      |
+      |   (Network Latency)
+      |
++-----+-------+   +-----+-------+   +-----+-------+
+| Monitoring  |   | Monitoring  |   | Monitoring  |
+| Node (USA)  |   | Node (EU)   |   | Node (Asia) |
++-----+-------+   +-----+-------+   +-----+-------+
+      |               |                 |
+      |---------------|-----------------|
+      ▼               ▼                 ▼
++------------------------------------------------+
+|       Global Uptime Monitoring Service         |
+|                                                |
+| - Sends automated requests (e.g., pings or     |
+|   HTTP checks) from all nodes at set intervals |
+| - Records response time and success/failure    |
+| - Compares results from different nodes        |
+| - If a failure or a slow response is detected, |
+|   it triggers an alert.                        |
++------------------------------------------------+
+      |
+      | (Alerts: Email, SMS, Slack, etc.) 🔔
+      |
++-----+-----+
+| Your Team |
++-----------+
+```
+
 
 ## Key Concepts
 

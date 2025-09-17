@@ -112,8 +112,8 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	start := time.Now()
 
 	response, err := client.Do(req)
-	timing.TransferDone = time.Now().UTC().UnixMilli()
 	latency := time.Since(start).Milliseconds()
+
 	if err != nil {
 
 		var urlErr *url.Error
@@ -134,6 +134,9 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
+
+	timing.TransferDone = time.Now().UTC().UnixMilli()
+
 	if err != nil {
 		return Response{
 			Latency:   latency,
