@@ -57,6 +57,7 @@ export default defineConfig({
         // Path to your Tailwind base styles:
         "./src/global.css",
         "./src/custom.css",
+        "@fontsource-variable/inter"
       ],
       sidebar: [
         {
