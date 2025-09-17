@@ -109,8 +109,8 @@ export default defineConfig({
               slug: "guides/how-to-run-synthetic-test-github-action",
             },
             {
-              label: "Export Metrics via OTel to Grafana",
-              slug: "guides/how-to-export-metrics-via-otel-to-grafana",
+              label: "Export Metrics to your OTLP Endpoint",
+              slug: "guides/how-to-export-metrics-to-otlp-endpoint",
             },
             {
               label: "How to Add an SVG Status Badge to your GitHub README",

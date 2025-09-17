@@ -1,0 +1,63 @@
+---
+title: How to Export Metrics to your OTLP endpoint
+---
+import { Image } from 'astro:assets';
+
+import grafana  from '../../../assets/guides/how-to-export-metrics-via-otel/grafana.png';
+import newrelic  from '../../../assets/guides/how-to-export-metrics-via-otel/newrelic.jpg';
+import signoz  from '../../../assets/guides/how-to-export-metrics-via-otel/signoz.jpg';
+import honeycomb    from '../../../assets/guides/how-to-export-metrics-via-otel/honeycomb.jpg';
+
+
+At openstatus, we believe you should be able to export your metrics to your OTLP endpoint without having to change your existing monitoring platform.
+
+
+
+## Export your metrics to your OTLP endpoint
+
+In your monitoring platform find the configuration section for metrics export.
+
+Right now we only support HTTP OTLP endpoint.
+
+In your `openstatus.yaml` file, add the following configuration:
+
+```yaml
+openTelemetry:
+  endpoint: http://your-otel-endpoint:4318/v1/metrics
+  headers:
+    Authorization: Bearer your-token
+```
+
+After every check we will send you the metrics to your monitoring stack.
+
+
+### Grafana
+
+  <Image
+    src={grafana}
+    alt="openstatus metrics in grafana"
+  />
+
+### honeycomb
+
+  <Image
+    src={honeycomb}
+    alt="openstatus metrics in honeycomb"
+  />
+
+
+### New Relic
+
+  <Image
+    src={newrelic}
+    alt="openstatus metrics in new-relic"
+  />
+
+
+
+### signoz
+
+  <Image
+    src={signoz}
+    alt="openstatus metrics in signoz"
+  />
