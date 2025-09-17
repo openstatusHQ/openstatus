@@ -342,6 +342,9 @@ importers:
       starlight-image-zoom:
         specifier: 0.13.0
         version: 0.13.0(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))
+      starlight-links-validator:
+        specifier: 0.17.2
+        version: 0.17.2(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))
       starlight-llms-txt:
         specifier: 0.5.1
         version: 0.5.1(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))
@@ -1112,7 +1115,7 @@ importers:
         version: link:../../packages/tsconfig
       '@types/bun':
         specifier: latest
-        version: 1.2.21(@types/react@19.1.10)
+        version: 1.2.22(@types/react@19.1.10)
       typescript:
         specifier: 5.7.2
         version: 5.7.2
@@ -1241,10 +1244,10 @@ importers:
         version: 0.7.1(typescript@5.7.2)(zod@3.24.2)
       drizzle-orm:
         specifier: 0.44.4
-        version: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.21(@types/react@19.1.10))
+        version: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.1.10))
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.21(@types/react@19.1.10)))(zod@3.24.2)
+        version: 0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.1.10)))(zod@3.24.2)
       zod:
         specifier: 3.24.2
         version: 3.24.2
@@ -6220,8 +6223,8 @@ packages:
   '@types/braces@3.0.5':
     resolution: {integrity: sha512-SQFof9H+LXeWNz8wDe7oN5zu7ket0qwMu5vZubW4GCJ8Kkeh6nBWUz87+KTz/G3Kqsrp0j/W253XJb3KMEeg3w==}
 
-  '@types/bun@1.2.21':
-    resolution: {integrity: sha512-NiDnvEqmbfQ6dmZ3EeUO577s4P5bf4HCTXtI6trMc6f6RzirY5IrF3aIookuSpyslFzrnvv2lmEWv5HyC1X79A==}
+  '@types/bun@1.2.22':
+    resolution: {integrity: sha512-5A/KrKos2ZcN0c6ljRSOa1fYIyCKhZfIVYeuyb4snnvomnpFqC0tTsEkdqNxbAgExV384OETQ//WAjl3XbYqQA==}
 
   '@types/caseless@0.12.4':
     resolution: {integrity: sha512-2in/lrHRNmDvHPgyormtEralhPcN3An1gLjJzj2Bw145VBxkQ75JEXW6CTdMAwShiHQcYsl2d10IjQSdJSJz4g==}
@@ -6366,6 +6369,9 @@ packages:
 
   '@types/pg@8.6.1':
     resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
+
+  '@types/picomatch@3.0.2':
+    resolution: {integrity: sha512-n0i8TD3UDB7paoMMxA3Y65vUncFJXjcUf7lQY7YyKGl6031FNjfsLs6pdLFCy2GNFxItPJG8GvvpbZc2skH7WA==}
 
   '@types/prop-types@15.7.12':
     resolution: {integrity: sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==}
@@ -6874,8 +6880,8 @@ packages:
   bun-types@1.0.8:
     resolution: {integrity: sha512-2dNB+dBwAcFW7RSd4y5vKycRjouKVklSwPk4EjBKWvcMYUBOqZGGNzV7+b2tfKBG3BeRXnozbnegVKR1azuATg==}
 
-  bun-types@1.2.21:
-    resolution: {integrity: sha512-sa2Tj77Ijc/NTLS0/Odjq/qngmEPZfbfnOERi0KRUYhT9R8M4VBioWVmMWE5GrYbKMc+5lVybXygLdibHaqVqw==}
+  bun-types@1.2.22:
+    resolution: {integrity: sha512-hwaAu8tct/Zn6Zft4U9BsZcXkYomzpHJX28ofvx7k0Zz2HNz54n1n+tDgxoWFGB4PcFvJXJQloPhaV2eP3Q6EA==}
     peerDependencies:
       '@types/react': ^19
 
@@ -8384,6 +8390,10 @@ packages:
 
   iron-webcrypto@1.2.1:
     resolution: {integrity: sha512-feOM6FaSr6rEABp/eDfVseKyTMDt+KGpeB35SkVn9Tyn0CqvVsY3EwI0v5i8nMHyJnzCIQf7nsy3p41TPkJZhg==}
+
+  is-absolute-url@4.0.1:
+    resolution: {integrity: sha512-/51/TKE88Lmm7Gc4/8btclNXWS+g50wXhYJq8HWIBAGUBnoAdRu1aXeh364t/O7wXDAcTJDP8PNuNKWUDWie+A==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   is-alphabetical@2.0.1:
     resolution: {integrity: sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ==}
@@ -10696,6 +10706,12 @@ packages:
   starlight-image-zoom@0.13.0:
     resolution: {integrity: sha512-7K/7gshnKooYd4ePy5vtyv1jFoFVNUb8IoXWDcnY69+nxvmLATNrmOzD2M4TJ/aKynPSBSM6j9ia4s/PPy/JGA==}
     engines: {node: '>=18'}
+    peerDependencies:
+      '@astrojs/starlight': '>=0.32.0'
+
+  starlight-links-validator@0.17.2:
+    resolution: {integrity: sha512-d2SRWu04HPiUzrzntuv/uzuXnIu4reJwzX1c+7uvcnqOCuzgpv+tmlUC+dp3VYpmfxQy8RX+xcWtfcEkx905VA==}
+    engines: {node: '>=18.17.1'}
     peerDependencies:
       '@astrojs/starlight': '>=0.32.0'
 
@@ -15874,10 +15890,10 @@ snapshots:
       '@rollup/pluginutils': 5.1.4(rollup@3.29.5)
       commondir: 1.0.1
       estree-walker: 2.0.2
-      fdir: 6.4.6(picomatch@4.0.2)
+      fdir: 6.4.6(picomatch@4.0.3)
       is-reference: 1.2.1
       magic-string: 0.30.17
-      picomatch: 4.0.2
+      picomatch: 4.0.3
     optionalDependencies:
       rollup: 3.29.5
 
@@ -15885,7 +15901,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
-      picomatch: 4.0.2
+      picomatch: 4.0.3
     optionalDependencies:
       rollup: 3.29.5
 
@@ -16974,9 +16990,9 @@ snapshots:
 
   '@types/braces@3.0.5': {}
 
-  '@types/bun@1.2.21(@types/react@19.1.10)':
+  '@types/bun@1.2.22(@types/react@19.1.10)':
     dependencies:
-      bun-types: 1.2.21(@types/react@19.1.10)
+      bun-types: 1.2.22(@types/react@19.1.10)
     transitivePeerDependencies:
       - '@types/react'
 
@@ -17135,6 +17151,8 @@ snapshots:
       '@types/node': 24.0.8
       pg-protocol: 1.10.3
       pg-types: 2.2.0
+
+  '@types/picomatch@3.0.2': {}
 
   '@types/prop-types@15.7.12': {}
 
@@ -17840,7 +17858,7 @@ snapshots:
 
   bun-types@1.0.8: {}
 
-  bun-types@1.2.21(@types/react@19.1.10):
+  bun-types@1.2.22(@types/react@19.1.10):
     dependencies:
       '@types/node': 24.0.8
       '@types/react': 19.1.10
@@ -18398,7 +18416,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.21(@types/react@19.1.10)):
+  drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.1.10)):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250303.0
       '@libsql/client': 0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5)
@@ -18406,11 +18424,11 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.10
       better-sqlite3: 11.7.0
-      bun-types: 1.2.21(@types/react@19.1.10)
+      bun-types: 1.2.22(@types/react@19.1.10)
 
-  drizzle-zod@0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.21(@types/react@19.1.10)))(zod@3.24.2):
+  drizzle-zod@0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.1.10)))(zod@3.24.2):
     dependencies:
-      drizzle-orm: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.21(@types/react@19.1.10))
+      drizzle-orm: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.1.10))
       zod: 3.24.2
 
   dset@3.1.4: {}
@@ -18834,9 +18852,9 @@ snapshots:
     dependencies:
       format: 0.2.2
 
-  fdir@6.4.2(picomatch@4.0.2):
+  fdir@6.4.2(picomatch@4.0.3):
     optionalDependencies:
-      picomatch: 4.0.2
+      picomatch: 4.0.3
 
   fdir@6.4.6(picomatch@4.0.2):
     optionalDependencies:
@@ -19610,6 +19628,8 @@ snapshots:
   ipaddr.js@1.9.1: {}
 
   iron-webcrypto@1.2.1: {}
+
+  is-absolute-url@4.0.1: {}
 
   is-alphabetical@2.0.1: {}
 
@@ -22629,6 +22649,22 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  starlight-links-validator@0.17.2(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))):
+    dependencies:
+      '@astrojs/starlight': 0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))
+      '@types/picomatch': 3.0.2
+      github-slugger: 2.0.0
+      hast-util-from-html: 2.0.3
+      hast-util-has-property: 3.0.0
+      is-absolute-url: 4.0.1
+      kleur: 4.1.5
+      mdast-util-mdx-jsx: 3.2.0
+      mdast-util-to-string: 4.0.0
+      picomatch: 4.0.3
+      unist-util-visit: 5.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   starlight-llms-txt@0.5.1(@astrojs/starlight@0.35.2(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)))(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1)):
     dependencies:
       '@astrojs/mdx': 4.3.0(astro@5.13.7(@types/node@24.0.8)(encoding@0.1.13)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.45.1)(terser@5.43.1)(typescript@5.7.2)(yaml@2.6.1))
@@ -22913,8 +22949,8 @@ snapshots:
 
   tinyglobby@0.2.10:
     dependencies:
-      fdir: 6.4.2(picomatch@4.0.2)
-      picomatch: 4.0.2
+      fdir: 6.4.2(picomatch@4.0.3)
+      picomatch: 4.0.3
 
   tinyglobby@0.2.14:
     dependencies:
