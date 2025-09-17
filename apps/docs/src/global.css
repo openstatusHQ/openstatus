@@ -6,6 +6,7 @@
 
 @theme {
   --font-cal: "calsans", "sans-serif";
+  --font-sans: 'CommitMono', 'sans-serif';
 }
 
 @layer base {
