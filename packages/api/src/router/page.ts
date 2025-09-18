@@ -34,6 +34,12 @@ import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
+if (process.env.NODE_ENV === "test") {
+  require("../test/preload");
+}
+
+const redis = Redis.fromEnv();
+
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
   const data = await fetch(
@@ -775,8 +781,6 @@ export const pageRouter = createTRPCRouter({
         eq(page.workspaceId, opts.ctx.workspace.id),
         eq(page.id, opts.input.id),
       ];
-
-      const redis = Redis.fromEnv();
 
       const _page = await opts.ctx.db.query.page.findFirst({
         where: and(...whereConditions),
