@@ -1,3 +1,4 @@
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
@@ -48,10 +49,10 @@ export function StatusBannerContainer({
       data-status={status}
       className={cn(
         "group/status-banner overflow-hidden rounded-lg border",
-        "data-[status=success]:border-success",
-        "data-[status=degraded]:border-warning",
-        "data-[status=error]:border-destructive",
-        "data-[status=info]:border-info",
+        "data-[status=success]:border-success data-[status=success]:bg-success/5 dark:data-[status=success]:bg-success/10",
+        "data-[status=degraded]:border-warning data-[status=degraded]:bg-warning/5 dark:data-[status=degraded]:bg-warning/10",
+        "data-[status=error]:border-destructive data-[status=error]:bg-destructive/5 dark:data-[status=error]:bg-destructive/10",
+        "data-[status=info]:border-info data-[status=info]:bg-info/5 dark:data-[status=info]:bg-info/10",
         className,
       )}
     >
@@ -90,7 +91,7 @@ export function StatusBannerTitle({
   return (
     <div
       className={cn(
-        "px-3 py-2 font-medium text-background sm:px-4 sm:py-3",
+        "px-3 py-2 font-medium text-background",
         "group-data-[status=success]/status-banner:bg-success",
         "group-data-[status=degraded]/status-banner:bg-warning",
         "group-data-[status=error]/status-banner:bg-destructive",
@@ -137,5 +138,98 @@ export function StatusBannerIcon({
       <AlertCircleIcon className="hidden group-data-[status=error]/status-banner:block" />
       <WrenchIcon className="hidden group-data-[status=info]/status-banner:block" />
     </div>
+  );
+}
+
+// Tabs Components
+
+export function StatusBannerTabs({
+  className,
+  children,
+  status,
+  ...props
+}: React.ComponentProps<typeof Tabs> & {
+  status?: "success" | "degraded" | "error" | "info";
+}) {
+  return (
+    <Tabs
+      data-slot="status-banner-tabs"
+      data-status={status}
+      className={cn(
+        "gap-0",
+        "data-[status=success]:bg-success/20",
+        "data-[status=degraded]:bg-warning/20",
+        "data-[status=error]:bg-destructive/20",
+        "data-[status=info]:bg-info/20",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </Tabs>
+  );
+}
+
+export function StatusBannerTabsList({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof TabsList>) {
+  return (
+    <div className={cn("rounded-t-lg", "w-full max-w-full overflow-x-auto")}>
+      <TabsList
+        className={cn(
+          "p-0 rounded-t-lg rounded-none",
+          "border-none w-max min-w-full",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </TabsList>
+    </div>
+  );
+}
+
+export function StatusBannerTabsTrigger({
+  className,
+  children,
+  status,
+  ...props
+}: React.ComponentProps<typeof TabsTrigger> & {
+  status?: "success" | "degraded" | "error" | "info";
+}) {
+  return (
+    <TabsTrigger
+      data-slot="status-banner-tabs-trigger"
+      data-status={status}
+      className={cn(
+        "font-mono",
+        "rounded-none border-none focus-visible:ring-inset",
+        "text-foreground h-full dark:text-foreground data-[state=active]:text-background dark:data-[state=active]:text-background",
+        "data-[status=success]:bg-success/50 dark:data-[status=success]:bg-success/50 data-[state=active]:data-[status=success]:bg-success dark:data-[state=active]:data-[status=success]:bg-success",
+        "data-[status=degraded]:bg-warning/50 dark:data-[status=degraded]:bg-warning/50 data-[state=active]:data-[status=degraded]:bg-warning dark:data-[state=active]:data-[status=degraded]:bg-warning",
+        "data-[status=error]:bg-destructive/50 dark:data-[status=error]:bg-destructive/50 data-[state=active]:data-[status=error]:bg-destructive dark:data-[state=active]:data-[status=error]:bg-destructive",
+        "data-[status=info]:bg-info/50 dark:data-[status=info]:bg-info/50 data-[state=active]:data-[status=info]:bg-info dark:data-[state=active]:data-[status=info]:bg-info",
+        "data-[state=active]:shadow-none",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </TabsTrigger>
+  );
+}
+
+// NOTE: tabing into content is not being highlighted
+export function StatusBannerTabsContent({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof TabsContent>) {
+  return (
+    <TabsContent className={cn("-mx-3", className)} {...props}>
+      {children}
+    </TabsContent>
   );
 }

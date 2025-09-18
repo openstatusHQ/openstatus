@@ -90,7 +90,10 @@ export function StatusMonitorTitle({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("font-medium", className)} {...props}>
+    <div
+      className={cn("font-medium font-mono text-foreground", className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -159,7 +162,7 @@ export function StatusMonitorFooter({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-row items-center justify-between text-muted-foreground text-xs">
+    <div className="flex flex-row items-center justify-between text-muted-foreground text-xs font-mono">
       <div>
         {isLoading ? (
           <Skeleton className="h-4 w-18" />
@@ -206,6 +209,7 @@ export function StatusMonitorStatus({
   return (
     <div
       className={cn(
+        "font-mono",
         "group-data-[variant=success]/monitor:text-success",
         "group-data-[variant=degraded]/monitor:text-warning",
         "group-data-[variant=error]/monitor:text-destructive",
