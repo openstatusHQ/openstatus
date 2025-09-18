@@ -64,11 +64,15 @@ export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
   const subdomain = getValidSubdomain(host);
 
+  console.log({ subdomain });
+
   // Subdomain handling: set mode cookie (legacy/new) and let next.config rewrites proxy
   if (subdomain) {
     const modeCookie = req.cookies.get("sp_mode")?.value; // "legacy" | "new"
     const cached = modeCookie === "legacy" || modeCookie === "new";
     let mode: "legacy" | "new" | undefined = cached ? modeCookie : undefined;
+
+    console.log({ mode, cached });
 
     if (!mode) {
       try {
@@ -80,6 +84,8 @@ export default auth(async (req) => {
         mode = "legacy";
       }
     }
+
+    console.log({ mode });
 
     if (mode === "legacy") {
       url.pathname = `/status-page/${subdomain}${url.pathname}`;
@@ -104,15 +110,15 @@ export default auth(async (req) => {
   }
 
   const isPublicAppPath = publicAppPaths.some((path) =>
-    pathname.startsWith(path),
+    pathname.startsWith(path)
   );
 
   if (!req.auth && pathname.startsWith("/app/invite")) {
     return NextResponse.redirect(
       new URL(
         `/app/login?redirectTo=${encodeURIComponent(req.nextUrl.href)}`,
-        req.url,
-      ),
+        req.url
+      )
     );
   }
 
@@ -120,8 +126,8 @@ export default auth(async (req) => {
     return NextResponse.redirect(
       new URL(
         `/app/login?redirectTo=${encodeURIComponent(req.nextUrl.href)}`,
-        req.url,
-      ),
+        req.url
+      )
     );
   }
 
@@ -140,7 +146,7 @@ export default auth(async (req) => {
 
       if (hasWorkspaceSlug) {
         const hasAccessToWorkspace = allowedWorkspaces.find(
-          ({ workspace }) => workspace.slug === workspaceSlug,
+          ({ workspace }) => workspace.slug === workspaceSlug
         );
         if (hasAccessToWorkspace) {
           const workspaceCookie = req.cookies.get("workspace-slug")?.value;
@@ -158,7 +164,7 @@ export default auth(async (req) => {
           const firstWorkspace = allowedWorkspaces[0].workspace;
           const { slug } = firstWorkspace;
           return NextResponse.redirect(
-            new URL(`/app/${slug}/monitors`, req.url),
+            new URL(`/app/${slug}/monitors`, req.url)
           );
         }
       }

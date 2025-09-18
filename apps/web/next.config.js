@@ -85,7 +85,10 @@ const nextConfig = {
           source: "/_next/:path*",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
-            { type: "host", value: "(?<slug>[^.]+)\\.(stpg\\.dev|localhost)" },
+            {
+              type: "host",
+              value: "(?<slug>[^.]+)\\.(openstatus\\.dev|localhost)",
+            },
           ],
           destination: `http://${NEW_HOST}/_next/:path*`,
         },
@@ -94,7 +97,10 @@ const nextConfig = {
           source: "/:path((?!_next/).*)",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
-            { type: "host", value: "(?<slug>[^.]+)\\.(stpg\\.dev|localhost)" },
+            {
+              type: "host",
+              value: "(?<slug>[^.]+)\\.(openstatus\\.dev|localhost)",
+            },
           ],
           // NOTE: we don't need the slug `/:slug/:path*` here because it will already be applied in the rewrites in the status-page app as subdomain
           destination: `http://${NEW_HOST}/:path*`,
