@@ -52,9 +52,7 @@
     h2 {
         letter-spacing: var(--tracking-tighter);
     }
-    h3 {
-        letter-spacing: var(--tracking-tight);
-    }
+
 
     :root[data-theme='light'] {
       --background: 0 0% 100%;
