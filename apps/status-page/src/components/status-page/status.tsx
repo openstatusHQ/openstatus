@@ -182,7 +182,7 @@ export function StatusEmptyStateDescription({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("text-muted-foreground text-sm font-mono", className)}
+      className={cn("font-mono text-muted-foreground text-sm", className)}
       {...props}
     >
       {children}

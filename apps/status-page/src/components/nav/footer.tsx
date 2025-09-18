@@ -21,7 +21,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
     <footer {...props}>
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2">
         <div className="leading-[0.9]">
-          <p className="text-muted-foreground text-sm font-mono">
+          <p className="font-mono text-muted-foreground text-sm">
             powered by <Link href="#">openstatus</Link>
           </p>
           <TimestampHoverCard date={new Date(dataUpdatedAt)} side="top">

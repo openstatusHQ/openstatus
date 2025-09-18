@@ -162,7 +162,7 @@ export function StatusMonitorFooter({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-row items-center justify-between text-muted-foreground text-xs font-mono">
+    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs">
       <div>
         {isLoading ? (
           <Skeleton className="h-4 w-18" />

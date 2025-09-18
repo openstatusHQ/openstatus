@@ -71,7 +71,7 @@ export default function Page() {
                     <StatusEventTitle className="inline-flex gap-1">
                       {report.title}
                       {isReportResolvedOnly ? (
-                        <CircleCheck className="size-4 text-success shrink-0 mt-1 ml-1.5" />
+                        <CircleCheck className="mt-1 ml-1.5 size-4 shrink-0 text-success" />
                       ) : null}
                     </StatusEventTitle>
                     {report.monitorsToStatusReports.length > 0 ? (

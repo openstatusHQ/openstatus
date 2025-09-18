@@ -179,7 +179,7 @@ export function StatusBannerTabsList({
     <div className={cn("rounded-t-lg", "w-full overflow-x-auto")}>
       <TabsList
         className={cn(
-          "p-0 rounded-t-lg rounded-none",
+          "rounded-none rounded-t-lg p-0",
           "border-none",
           className,
         )}
@@ -206,11 +206,11 @@ export function StatusBannerTabsTrigger({
       className={cn(
         "font-mono",
         "rounded-none border-none focus-visible:ring-inset",
-        "text-foreground h-full dark:text-foreground data-[state=active]:text-background dark:data-[state=active]:text-background",
-        "data-[status=success]:bg-success/50 dark:data-[status=success]:bg-success/50 data-[state=active]:data-[status=success]:bg-success dark:data-[state=active]:data-[status=success]:bg-success",
-        "data-[status=degraded]:bg-warning/50 dark:data-[status=degraded]:bg-warning/50 data-[state=active]:data-[status=degraded]:bg-warning dark:data-[state=active]:data-[status=degraded]:bg-warning",
-        "data-[status=error]:bg-destructive/50 dark:data-[status=error]:bg-destructive/50 data-[state=active]:data-[status=error]:bg-destructive dark:data-[state=active]:data-[status=error]:bg-destructive",
-        "data-[status=info]:bg-info/50 dark:data-[status=info]:bg-info/50 data-[state=active]:data-[status=info]:bg-info dark:data-[state=active]:data-[status=info]:bg-info",
+        "h-full text-foreground data-[state=active]:text-background dark:text-foreground dark:data-[state=active]:text-background",
+        "data-[state=active]:data-[status=success]:bg-success data-[status=success]:bg-success/50 dark:data-[state=active]:data-[status=success]:bg-success dark:data-[status=success]:bg-success/50",
+        "data-[state=active]:data-[status=degraded]:bg-warning data-[status=degraded]:bg-warning/50 dark:data-[state=active]:data-[status=degraded]:bg-warning dark:data-[status=degraded]:bg-warning/50",
+        "data-[state=active]:data-[status=error]:bg-destructive data-[status=error]:bg-destructive/50 dark:data-[state=active]:data-[status=error]:bg-destructive dark:data-[status=error]:bg-destructive/50",
+        "data-[state=active]:data-[status=info]:bg-info data-[status=info]:bg-info/50 dark:data-[state=active]:data-[status=info]:bg-info dark:data-[status=info]:bg-info/50",
         "data-[state=active]:shadow-none",
         className,
       )}
