@@ -72,6 +72,9 @@ export function formatDateRange(from?: Date, to?: Date) {
   const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
 
   if (sameDay) {
+    if (from.getTime() === to.getTime()) {
+      return formatDateTime(from);
+    }
     if (from && to) {
       return `${formatDateTime(from)} - ${formatTime(to)}`;
     }

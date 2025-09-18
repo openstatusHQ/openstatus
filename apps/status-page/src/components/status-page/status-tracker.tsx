@@ -375,7 +375,7 @@ function StatusTrackerEvent({
       <div className="mt-1 text-muted-foreground text-xs">
         {formatDateRange(from, to ?? undefined)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {duration}
+          {duration === "0 seconds" ? null : duration}
         </span>
       </div>
     </div>

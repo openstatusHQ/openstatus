@@ -69,8 +69,10 @@ export function Header(props: React.ComponentProps<"header">) {
   );
 
   const types = (
-    page?.workspacePlan === "free" ? ["rss", "atom"] : ["email", "rss", "atom"]
-  ) satisfies ("email" | "rss" | "atom")[];
+    page?.workspacePlan === "free"
+      ? ["rss", "atom", "ssh"]
+      : ["email", "rss", "atom", "ssh"]
+  ) satisfies ("email" | "rss" | "atom" | "ssh")[];
 
   return (
     <header {...props}>
@@ -78,7 +80,7 @@ export function Header(props: React.ComponentProps<"header">) {
         {/* NOTE: same width as the `StatusUpdates` button */}
         <div className="w-[150px] shrink-0">
           <Link
-            href={page?.homepageUrl ?? "/"}
+            href={page?.homepageUrl || "/"}
             target={page?.homepageUrl ? "_blank" : undefined}
             rel={page?.homepageUrl ? "noreferrer" : undefined}
             className="rounded-full"
@@ -212,6 +214,7 @@ function GetInTouch({
             size="icon"
             type="button"
             className={cn("size-8", className)}
+            asChild
             {...props}
           >
             <a href={link} target="_blank" rel="noreferrer">

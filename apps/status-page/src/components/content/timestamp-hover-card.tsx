@@ -4,6 +4,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { UTCDate } from "@date-fns/utc";
 import {
   type HoverCardContentProps,
@@ -21,6 +22,7 @@ export function TimestampHoverCard({
   alignOffset = -4,
   sideOffset,
   children,
+  onClick,
   ...props
 }: React.ComponentProps<typeof HoverCardTrigger> & {
   date: Date;
@@ -30,6 +32,7 @@ export function TimestampHoverCard({
   sideOffset?: HoverCardContentProps["sideOffset"];
 }) {
   const [open, setOpen] = useState(false);
+  const isTouch = useMediaQuery("(hover: none)");
   const [_, setRerender] = useState(0);
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -51,7 +54,16 @@ export function TimestampHoverCard({
   return (
     <HoverCard openDelay={0} closeDelay={0} open={open} onOpenChange={setOpen}>
       {/* NOTE: the trigger is an `a` tag per default */}
-      <HoverCardTrigger {...props}>{children}</HoverCardTrigger>
+      <HoverCardTrigger
+        onClick={(e) => {
+          // NOTE: support touch devices
+          if (isTouch) setOpen((prev) => !prev);
+          onClick?.(e);
+        }}
+        {...props}
+      >
+        {children}
+      </HoverCardTrigger>
       <HoverCardPortal>
         <HoverCardContent
           className="z-10 w-auto p-2"
