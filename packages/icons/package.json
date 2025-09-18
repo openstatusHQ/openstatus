@@ -1,0 +1,20 @@
+{
+  "name": "@openstatus/icons",
+  "version": "0.0.0",
+  "main": "./src/index.tsx",
+  "types": "./src/index.tsx",
+  "license": "MIT",
+  "scripts": {
+    "lint": "biome lint \"**/*.ts*\""
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "typescript": "5.7.2"
+  },
+  "dependencies": {
+    "react": "19.1.1"
+  }
+}
