@@ -176,11 +176,11 @@ export function StatusBannerTabsList({
   ...props
 }: React.ComponentProps<typeof TabsList>) {
   return (
-    <div className={cn("rounded-t-lg", "w-full max-w-full overflow-x-auto")}>
+    <div className={cn("rounded-t-lg", "w-full overflow-x-auto")}>
       <TabsList
         className={cn(
           "p-0 rounded-t-lg rounded-none",
-          "border-none w-max min-w-full",
+          "border-none",
           className,
         )}
         {...props}
