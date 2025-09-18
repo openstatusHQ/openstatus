@@ -65,8 +65,11 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    const NEW_HOST =
+      process.env.NODE_ENV === "development" ? "localhost:3001" : "stpg.dev";
     return {
       beforeFiles: [
+        // Proxy app subdomain to /app
         {
           source: "/:path*",
           has: [
@@ -76,6 +79,25 @@ const nextConfig = {
             },
           ],
           destination: "/app/:path*",
+        },
+        // New design: proxy Next.js assets from external host when cookie indicates "new"
+        {
+          source: "/_next/:path*",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            { type: "host", value: "(?<slug>[^.]+)\\.(stpg\\.dev|localhost)" },
+          ],
+          destination: `http://${NEW_HOST}/_next/:path*`,
+        },
+        // New design: proxy app routes to external host with slug prefix
+        {
+          source: "/:path((?!_next/).*)",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            { type: "host", value: "(?<slug>[^.]+)\\.(stpg\\.dev|localhost)" },
+          ],
+          // NOTE: we don't need the slug `/:slug/:path*` here because it will already be applied in the rewrites in the status-page app as subdomain
+          destination: `http://${NEW_HOST}/:path*`,
         },
       ],
     };

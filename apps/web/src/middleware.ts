@@ -6,7 +6,10 @@ import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
 
 import { auth } from "@/lib/auth";
 import { eq } from "@openstatus/db";
+import { Redis } from "@openstatus/upstash";
 import { env } from "./env";
+
+const MAX_AGE = 60 * 10; // 10 minutes
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
@@ -58,15 +61,47 @@ export default auth(async (req) => {
   }
 
   const host = req.headers.get("host");
+  const pathname = req.nextUrl.pathname;
   const subdomain = getValidSubdomain(host);
 
-  // Rewriting to status page!
+  // Subdomain handling: set mode cookie (legacy/new) and let next.config rewrites proxy
   if (subdomain) {
-    url.pathname = `/status-page/${subdomain}${url.pathname}`;
-    return NextResponse.rewrite(url);
-  }
+    const modeCookie = req.cookies.get("sp_mode")?.value; // "legacy" | "new"
+    const cached = modeCookie === "legacy" || modeCookie === "new";
+    let mode: "legacy" | "new" | undefined = cached ? modeCookie : undefined;
 
-  const pathname = req.nextUrl.pathname;
+    if (!mode) {
+      try {
+        const redis = Redis.fromEnv();
+        const cache = await redis.get(`page:${subdomain}`);
+        // Determine legacy flag from cache
+        mode = cache ? "new" : "legacy";
+      } catch {
+        mode = "legacy";
+      }
+    }
+
+    if (mode === "legacy") {
+      url.pathname = `/status-page/${subdomain}${url.pathname}`;
+      return NextResponse.rewrite(url);
+    }
+
+    const res = NextResponse.next();
+    // Mark that this request is being proxied so downstream can adapt
+    res.headers.set("x-proxy", "1");
+    // Short-lived cookie so toggles apply relatively quickly
+    res.cookies.set("sp_mode", "new", { path: "/", maxAge: MAX_AGE });
+
+    // If we just set the cookie, trigger one redirect so next.config.js
+    // rewrites that depend on sp_mode can apply on the next request.
+    if (!cached) {
+      const redirect = NextResponse.redirect(url);
+      redirect.cookies.set("sp_mode", "new", { path: "/", maxAge: MAX_AGE });
+      return redirect;
+    }
+
+    return res;
+  }
 
   const isPublicAppPath = publicAppPaths.some((path) =>
     pathname.startsWith(path),

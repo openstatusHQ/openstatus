@@ -30,8 +30,15 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
+import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+if (process.env.NODE_ENV === "test") {
+  require("../test/preload");
+}
+
+const redis = Redis.fromEnv();
 
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
@@ -775,6 +782,17 @@ export const pageRouter = createTRPCRouter({
         eq(page.id, opts.input.id),
       ];
 
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_page) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
       await opts.ctx.db
         .update(page)
         .set({
@@ -786,6 +804,18 @@ export const pageRouter = createTRPCRouter({
         })
         .where(and(...whereConditions))
         .run();
+
+      if (opts.input.legacyPage) {
+        await redis.del(`page:${_page.slug}`);
+        if (_page.customDomain) {
+          await redis.del(`page:${_page.customDomain}`);
+        }
+      } else {
+        await redis.set(`page:${_page.slug}`, 1);
+        if (_page.customDomain) {
+          await redis.set(`page:${_page.customDomain}`, 1);
+        }
+      }
     }),
 
   updateMonitors: protectedProcedure

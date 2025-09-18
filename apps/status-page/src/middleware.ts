@@ -8,11 +8,13 @@ export default async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
   const response = NextResponse.next();
   const cookies = req.cookies;
+  const headers = req.headers;
+  const host = headers.get("x-forwarded-host");
 
   let prefix = "";
   let type: "hostname" | "pathname";
 
-  const hostnames = url.host.split(".");
+  const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
   const pathnames = url.pathname.split("/");
   if (
     hostnames.length > 2 &&
@@ -33,7 +35,9 @@ export default async function middleware(req: NextRequest) {
   const _page = await db.select().from(page).where(eq(page.slug, prefix)).get();
 
   if (!_page) {
-    return NextResponse.redirect(new URL("https://stpg.dev"));
+    // return NextResponse.redirect(new URL("https://stpg.dev"));
+    // TODO: work on 404 page
+    return response;
   }
 
   if (_page?.passwordProtected) {
@@ -57,6 +61,11 @@ export default async function middleware(req: NextRequest) {
         ),
       );
     }
+  }
+
+  const proxy = req.headers.get("x-proxy");
+  if (proxy) {
+    return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
   }
 
   return response;

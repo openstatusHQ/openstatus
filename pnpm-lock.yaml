@@ -1168,6 +1168,9 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../tinybird
+      '@openstatus/upstash':
+        specifier: workspace:*
+        version: link:../upstash
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../utils

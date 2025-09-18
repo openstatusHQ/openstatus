@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
             },
           ],
           missing: [
+            // Skip this rewrite when the request came via proxy from web app
+            {
+              type: "header",
+              key: "x-proxy",
+              value: "1",
+            },
             {
               type: "host",
               value:
