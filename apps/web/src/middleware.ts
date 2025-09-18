@@ -208,4 +208,5 @@ export const config = {
     // "**/node_modules/.pnpm/**/function-bind/**",
     // "../../packages/analytics/src/index.ts",
   ],
+  runtime: "nodejs",
 };
