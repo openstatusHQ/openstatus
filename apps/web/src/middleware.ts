@@ -78,9 +78,11 @@ export default auth(async (req) => {
       try {
         const redis = Redis.fromEnv();
         const cache = await redis.get(`page:${subdomain}`);
+        console.log({ cache });
         // Determine legacy flag from cache
         mode = cache ? "new" : "legacy";
       } catch {
+        console.log("error getting cache");
         mode = "legacy";
       }
     }
@@ -110,15 +112,15 @@ export default auth(async (req) => {
   }
 
   const isPublicAppPath = publicAppPaths.some((path) =>
-    pathname.startsWith(path)
+    pathname.startsWith(path),
   );
 
   if (!req.auth && pathname.startsWith("/app/invite")) {
     return NextResponse.redirect(
       new URL(
         `/app/login?redirectTo=${encodeURIComponent(req.nextUrl.href)}`,
-        req.url
-      )
+        req.url,
+      ),
     );
   }
 
@@ -126,8 +128,8 @@ export default auth(async (req) => {
     return NextResponse.redirect(
       new URL(
         `/app/login?redirectTo=${encodeURIComponent(req.nextUrl.href)}`,
-        req.url
-      )
+        req.url,
+      ),
     );
   }
 
@@ -146,7 +148,7 @@ export default auth(async (req) => {
 
       if (hasWorkspaceSlug) {
         const hasAccessToWorkspace = allowedWorkspaces.find(
-          ({ workspace }) => workspace.slug === workspaceSlug
+          ({ workspace }) => workspace.slug === workspaceSlug,
         );
         if (hasAccessToWorkspace) {
           const workspaceCookie = req.cookies.get("workspace-slug")?.value;
@@ -164,7 +166,7 @@ export default auth(async (req) => {
           const firstWorkspace = allowedWorkspaces[0].workspace;
           const { slug } = firstWorkspace;
           return NextResponse.redirect(
-            new URL(`/app/${slug}/monitors`, req.url)
+            new URL(`/app/${slug}/monitors`, req.url),
           );
         }
       }

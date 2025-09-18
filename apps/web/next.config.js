@@ -65,8 +65,9 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    const NEW_HOST =
+    const HOST =
       process.env.NODE_ENV === "development" ? "localhost:3001" : "stpg.dev";
+    const PROTOCOL = process.env.NODE_ENV === "development" ? "http" : "https";
     return {
       beforeFiles: [
         // Proxy app subdomain to /app
@@ -90,7 +91,7 @@ const nextConfig = {
               value: "(?<slug>[^.]+)\\.(openstatus\\.dev|localhost)",
             },
           ],
-          destination: `http://${NEW_HOST}/_next/:path*`,
+          destination: `${PROTOCOL}://${HOST}/_next/:path*`,
         },
         // New design: proxy app routes to external host with slug prefix
         {
@@ -103,7 +104,7 @@ const nextConfig = {
             },
           ],
           // NOTE: might be different on prod and localhost (without :slug)
-          destination: `http://${NEW_HOST}/:slug/:path*`,
+          destination: `${PROTOCOL}://${HOST}/:slug/:path*`,
         },
       ],
     };
@@ -137,5 +138,5 @@ module.exports = withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  }
+  },
 );
