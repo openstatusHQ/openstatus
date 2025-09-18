@@ -139,30 +139,33 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      <FormConfiguration
-        defaultValues={{
-          new: !statusPage.legacyPage,
-          configuration: statusPage.configuration ?? {},
-          homepageUrl: statusPage.homepageUrl ?? "",
-          contactUrl: statusPage.contactUrl ?? "",
-        }}
-        onSubmit={async (values) => {
-          await updatePageConfigurationMutation.mutateAsync({
-            id: Number.parseInt(id),
-            configuration: values.new
-              ? {
-                  // NOTE: convert to boolean
-                  uptime: values.configuration.uptime === "true",
-                  value: values.configuration.value ?? "duration",
-                  type: values.configuration.type ?? "absolute",
-                }
-              : undefined,
-            legacyPage: !values.new,
-            homepageUrl: values.homepageUrl ?? undefined,
-            contactUrl: values.contactUrl ?? undefined,
-          });
-        }}
-      />
+      {/* TODO: feature flagged - remove once we have the new version in production */}
+      {process.env.NEXT_PUBLIC_STATUS_PAGE_V2 === "true" ? (
+        <FormConfiguration
+          defaultValues={{
+            new: !statusPage.legacyPage,
+            configuration: statusPage.configuration ?? {},
+            homepageUrl: statusPage.homepageUrl ?? "",
+            contactUrl: statusPage.contactUrl ?? "",
+          }}
+          onSubmit={async (values) => {
+            await updatePageConfigurationMutation.mutateAsync({
+              id: Number.parseInt(id),
+              configuration: values.new
+                ? {
+                    // NOTE: convert to boolean
+                    uptime: values.configuration.uptime === "true",
+                    value: values.configuration.value ?? "duration",
+                    type: values.configuration.type ?? "absolute",
+                  }
+                : undefined,
+              legacyPage: !values.new,
+              homepageUrl: values.homepageUrl ?? undefined,
+              contactUrl: values.contactUrl ?? undefined,
+            });
+          }}
+        />
+      ) : null}
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}
         defaultValues={{
