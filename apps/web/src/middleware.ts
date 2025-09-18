@@ -81,8 +81,8 @@ export default auth(async (req) => {
         console.log({ cache });
         // Determine legacy flag from cache
         mode = cache ? "new" : "legacy";
-      } catch {
-        console.log("error getting cache");
+      } catch (e) {
+        console.error("error getting cache", e);
         mode = "legacy";
       }
     }
