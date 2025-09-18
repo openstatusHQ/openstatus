@@ -102,8 +102,8 @@ const nextConfig = {
               value: "(?<slug>[^.]+)\\.(openstatus\\.dev|localhost)",
             },
           ],
-          // NOTE: we don't need the slug `/:slug/:path*` here because it will already be applied in the rewrites in the status-page app as subdomain
-          destination: `http://${NEW_HOST}/:path*`,
+          // NOTE: might be different on prod and localhost (without :slug)
+          destination: `http://${NEW_HOST}/:slug/:path*`,
         },
       ],
     };
@@ -137,5 +137,5 @@ module.exports = withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  },
+  }
 );
