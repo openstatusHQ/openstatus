@@ -75,23 +75,17 @@ export function FormConfiguration({
     | "false";
 
   useEffect(() => {
-    if (watchNew) {
-      form.setValue("configuration.type", "absolute");
-      form.setValue("configuration.value", "duration");
-      form.setValue("configuration.uptime", "true");
-    } else {
-      form.setValue("configuration", {});
-    }
-  }, [watchNew, form]);
-
-  useEffect(() => {
     if (watchConfigurationType === "manual") {
       // TODO: this is not working
       form.setValue("configuration.value", undefined);
     } else {
       form.setValue("configuration.value", "duration");
+      form.setValue("configuration.type", "absolute");
+      if (!watchConfigurationUptime) {
+        form.setValue("configuration.uptime", "true");
+      }
     }
-  }, [watchConfigurationType, form]);
+  }, [watchConfigurationType, watchConfigurationUptime, form]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -155,7 +149,7 @@ export function FormConfiguration({
                 </FormCardHeader>
                 <FormField
                   control={form.control}
-                  name="configuration.bar"
+                  name="configuration.type"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bar Type</FormLabel>
@@ -186,7 +180,7 @@ export function FormConfiguration({
                 />
                 <FormField
                   control={form.control}
-                  name="configuration.card"
+                  name="configuration.value"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Card Value</FormLabel>
@@ -368,7 +362,7 @@ const message = {
     default: "shares only the worse status of the day",
   },
   uptime: {
-    true: "shares the uptime and current status of your endpoint.",
+    true: "shares the uptime percentage and current status of your endpoint.",
     false: "shares only the current status.",
   },
 } as const;
