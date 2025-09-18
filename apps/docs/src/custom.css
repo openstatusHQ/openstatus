@@ -1,5 +1,7 @@
+@layer my-reset, starlight;
+
 .card {
-  border-radius: 0.5rem;
+  border-radius: 0rem;
 }
 
 .card .icon {
@@ -16,3 +18,23 @@
   sl-sidebar-state-persist summary {
       font-family: "CommitMono",  sans-serif;
   }
+
+.sl-link-card {
+    border-radius: 0;
+}
+
+a {
+    border-radius: 0;
+}
+
+button{
+    border-radius: 0;
+}
+
+.card .title {
+    font-family: "CommitMono",  sans-serif;
+}
+
+.sl-link-card .title {
+    font-family: "CommitMono",  sans-serif;
+}
