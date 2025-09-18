@@ -319,12 +319,11 @@ export function FormConfiguration({
                       </FormControl>
                       <FormMessage />
                       <FormDescription>
-                        Enter the URL for your contact page. Leave empty to
-                        hide. Or start with{" "}
+                        Enter the URL for your contact page. Or start with{" "}
                         <code className="rounded-md bg-muted px-1 py-0.5">
                           mailto:
                         </code>{" "}
-                        to open the email client.
+                        to open the email client. Leave empty to hide.
                       </FormDescription>
                     </FormItem>
                   )}

@@ -250,7 +250,7 @@ export function FormGeneral({
                   <FormMessage />
                   <FormDescription>
                     Select an icon for your status page. Ideally sized
-                    512x512px.
+                    512x512px. Will be used as favicon.
                   </FormDescription>
                 </FormItem>
               )}
