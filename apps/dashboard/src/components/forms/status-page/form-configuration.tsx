@@ -115,7 +115,7 @@ export function FormConfiguration({
       <form onSubmit={form.handleSubmit(submitAction)}>
         <FormCard>
           <FormCardHeader>
-            <FormCardTitle>Status Page Redesign (alpha)</FormCardTitle>
+            <FormCardTitle>Status Page Redesign (beta)</FormCardTitle>
             <FormCardDescription>
               Use the latest version of the status page and customize it.
             </FormCardDescription>
@@ -333,7 +333,7 @@ export function FormConfiguration({
                 rel="noreferrer"
                 target="_blank"
               >
-                Status Page Redesign (alpha)
+                Status Page Redesign (beta)
               </Link>
               .
             </FormCardFooterInfo>
