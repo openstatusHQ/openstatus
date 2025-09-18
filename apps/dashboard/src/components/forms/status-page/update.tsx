@@ -3,6 +3,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { FormAppearance } from "./form-appearance";
+import { FormConfiguration } from "./form-configuration";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
@@ -71,6 +72,12 @@ export function FormStatusPageUpdate() {
     }),
   );
 
+  const updatePageConfigurationMutation = useMutation(
+    trpc.page.updatePageConfiguration.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
   if (!statusPage || !monitors || !workspace) return null;
 
   return (
@@ -132,6 +139,33 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
+      {/* TODO: feature flagged - remove once we have the new version in production */}
+      {process.env.NEXT_PUBLIC_STATUS_PAGE_V2 === "true" ? (
+        <FormConfiguration
+          defaultValues={{
+            new: !statusPage.legacyPage,
+            configuration: statusPage.configuration ?? {},
+            homepageUrl: statusPage.homepageUrl ?? "",
+            contactUrl: statusPage.contactUrl ?? "",
+          }}
+          onSubmit={async (values) => {
+            await updatePageConfigurationMutation.mutateAsync({
+              id: Number.parseInt(id),
+              configuration: values.new
+                ? {
+                    // NOTE: convert to boolean
+                    uptime: values.configuration.uptime === "true",
+                    value: values.configuration.value ?? "duration",
+                    type: values.configuration.type ?? "absolute",
+                  }
+                : undefined,
+              legacyPage: !values.new,
+              homepageUrl: values.homepageUrl ?? undefined,
+              contactUrl: values.contactUrl ?? undefined,
+            });
+          }}
+        />
+      ) : null}
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}
         defaultValues={{

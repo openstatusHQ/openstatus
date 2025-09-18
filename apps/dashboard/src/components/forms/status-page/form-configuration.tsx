@@ -1,0 +1,368 @@
+import { useEffect, useTransition } from "react";
+import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+
+const schema = z.object({
+  new: z.boolean(),
+  configuration: z.record(z.string(), z.string().or(z.boolean()).optional()),
+  homepageUrl: z.string().optional(),
+  contactUrl: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
+
+export function FormConfiguration({
+  defaultValues,
+  onSubmit,
+}: {
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: defaultValues ?? {
+      new: false,
+      configuration: {},
+      homepageUrl: "",
+      contactUrl: "",
+    },
+  });
+  const watchNew = form.watch("new");
+  const watchConfigurationType = form.watch("configuration.type") as
+    | "manual"
+    | "absolute";
+  const watchConfigurationValue = form.watch("configuration.value") as
+    | "duration"
+    | "requests";
+  const watchConfigurationUptime = form.watch("configuration.uptime") as
+    | "true"
+    | "false";
+
+  useEffect(() => {
+    if (watchConfigurationType === "manual") {
+      // TODO: this is not working
+      form.setValue("configuration.value", undefined);
+    } else {
+      form.setValue("configuration.value", "duration");
+      form.setValue("configuration.type", "absolute");
+      if (!watchConfigurationUptime) {
+        form.setValue("configuration.uptime", "true");
+      }
+    }
+  }, [watchConfigurationType, watchConfigurationUptime, form]);
+
+  function submitAction(values: FormValues) {
+    if (isPending) return;
+
+    startTransition(async () => {
+      try {
+        const promise = onSubmit(values);
+        toast.promise(promise, {
+          loading: "Saving...",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
+        });
+        await promise;
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(submitAction)}>
+        <FormCard>
+          <FormCardHeader>
+            <FormCardTitle>Status Page Redesign (beta)</FormCardTitle>
+            <FormCardDescription>
+              Use the latest version of the status page and customize it.
+            </FormCardDescription>
+          </FormCardHeader>
+          <FormCardContent>
+            <FormField
+              control={form.control}
+              name="new"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center">
+                  <FormLabel>Enable New Version</FormLabel>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </FormCardContent>
+          {watchNew && (
+            <>
+              <FormCardSeparator />
+              <FormCardContent className="grid gap-4 sm:grid-cols-3">
+                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                  <FormCardTitle>Tracker Configuration</FormCardTitle>
+                  <FormCardDescription>
+                    Configure which data should be shown in the monitor tracker.
+                  </FormCardDescription>
+                </FormCardHeader>
+                <FormField
+                  control={form.control}
+                  name="configuration.type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bar Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={String(field.value) ?? "absolute"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full capitalize">
+                            <SelectValue placeholder="Select a type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {["absolute", "manual"].map((type) => (
+                            <SelectItem
+                              key={type}
+                              value={type}
+                              className="capitalize"
+                            >
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="configuration.value"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Card Value</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={String(field.value) ?? "duration"}
+                        disabled={watchConfigurationType === "manual"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full capitalize">
+                            <SelectValue placeholder="Select a type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {["duration", "requests"].map((type) => (
+                            <SelectItem
+                              key={type}
+                              value={type}
+                              className="capitalize"
+                            >
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="configuration.uptime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Show Uptime</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={String(field.value) ?? "true"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full capitalize">
+                            <SelectValue placeholder="Select a type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {["true", "false"].map((type) => (
+                            <SelectItem
+                              key={type}
+                              value={type}
+                              className="capitalize"
+                            >
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Note color="info" className="col-span-full">
+                  <ul className="list-inside list-disc">
+                    <li>
+                      <span className="font-medium">
+                        Bar Type{" "}
+                        <span className="font-semibold">
+                          {watchConfigurationType}
+                        </span>
+                      </span>
+                      : {message.type[watchConfigurationType]}
+                    </li>
+                    <li>
+                      <span className="font-medium">
+                        Card Value{" "}
+                        <span className="font-semibold">
+                          {watchConfigurationValue}
+                        </span>
+                      </span>
+                      :{" "}
+                      {message.value[watchConfigurationValue] ??
+                        message.value.default}
+                    </li>
+                    <li>
+                      <span className="font-medium">
+                        Show Uptime{" "}
+                        <span className="font-semibold">
+                          {watchConfigurationUptime}
+                        </span>
+                      </span>
+                      : {message.uptime[watchConfigurationUptime]}
+                    </li>
+                  </ul>
+                </Note>
+              </FormCardContent>
+              <FormCardSeparator />
+              <FormCardContent className="grid gap-4">
+                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                  <FormCardTitle>Links</FormCardTitle>
+                  <FormCardDescription>
+                    Configure the links for the status page.
+                  </FormCardDescription>
+                </FormCardHeader>
+                <FormField
+                  control={form.control}
+                  name="homepageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Homepage URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://acme.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription>
+                        What URL should the logo link to? Leave empty to hide.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="contactUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://acme.com/contact"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription>
+                        Enter the URL for your contact page. Or start with{" "}
+                        <code className="rounded-md bg-muted px-1 py-0.5">
+                          mailto:
+                        </code>{" "}
+                        to open the email client. Leave empty to hide.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </FormCardContent>
+            </>
+          )}
+          <FormCardFooter>
+            <FormCardFooterInfo>
+              Learn more about{" "}
+              <Link
+                href="https://docs.openstatus.dev/"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Status Page Redesign (beta)
+              </Link>
+              .
+            </FormCardFooterInfo>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Submitting..." : "Submit"}
+            </Button>
+          </FormCardFooter>
+        </FormCard>
+      </form>
+    </Form>
+  );
+}
+
+// TODO:
+const message = {
+  type: {
+    manual:
+      "only shares the duration of reports and maintenaces you are setting up - nothing else.",
+    absolute:
+      "shares the status of your endpoint for the duration of the different statuses.",
+  },
+  value: {
+    duration: "shares the duration of the different statuses.",
+    requests:
+      "shares the number of requests received (success, degraded, error).",
+    default: "shares only the worse status of the day",
+  },
+  uptime: {
+    true: "shares the uptime percentage and current status of your endpoint.",
+    false: "shares only the current status.",
+  },
+} as const;

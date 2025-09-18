@@ -67,7 +67,8 @@ export const pageRouter = createTRPCRouter({
     .meta({ track: Events.CreatePage, trackProps: ["slug"] })
     .input(insertPageSchema)
     .mutation(async (opts) => {
-      const { monitors, workspaceId, id, ...pageProps } = opts.input;
+      const { monitors, workspaceId, id, configuration, ...pageProps } =
+        opts.input;
 
       const monitorIds = monitors?.map((item) => item.monitorId) || [];
 
@@ -101,7 +102,11 @@ export const pageRouter = createTRPCRouter({
 
       const newPage = await opts.ctx.db
         .insert(page)
-        .values({ workspaceId: opts.ctx.workspace.id, ...pageProps })
+        .values({
+          workspaceId: opts.ctx.workspace.id,
+          configuration: JSON.stringify(configuration),
+          ...pageProps,
+        })
         .returning()
         .get();
 
@@ -747,6 +752,38 @@ export const pageRouter = createTRPCRouter({
       await opts.ctx.db
         .update(page)
         .set({ forceTheme: opts.input.forceTheme, updatedAt: new Date() })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updatePageConfiguration: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        configuration: z
+          .record(z.string(), z.string().or(z.boolean()).optional())
+          .nullish(),
+        legacyPage: z.boolean(),
+        homepageUrl: z.string().nullish(),
+        contactUrl: z.string().nullish(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          configuration: opts.input.configuration,
+          legacyPage: opts.input.legacyPage,
+          homepageUrl: opts.input.homepageUrl,
+          contactUrl: opts.input.contactUrl,
+          updatedAt: new Date(),
+        })
         .where(and(...whereConditions))
         .run();
     }),
