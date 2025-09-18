@@ -25,7 +25,7 @@ export default defineConfig({
   integrations: [
     sitemap(),
     starlight({
-      title: "OpenStatus Documentation",
+      title: "OpenStatus Docs",
       favicon: "/favicon.ico",
       social: [
         {
@@ -181,7 +181,7 @@ export default defineConfig({
       ],
       plugins: [
         starlightLlmsTxt({
-          projectName: "OpenStatus Documentation",
+          projectName: "OpenStatus Docs",
           description:
             "OpenStatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.",
         }),
