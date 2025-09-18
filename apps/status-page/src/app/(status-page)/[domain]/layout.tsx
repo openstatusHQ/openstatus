@@ -19,7 +19,7 @@ export const schema = z.object({
 
 const DISPLAY_FLOATING_BUTTON =
   process.env.NODE_ENV === "development" ||
-  process.env.ENABLE_FLOATING_BUTTON === "true";
+  process.env.NEXT_PUBLIC_ENABLE_FLOATING_BUTTON === "true";
 
 export default async function Layout({
   children,
