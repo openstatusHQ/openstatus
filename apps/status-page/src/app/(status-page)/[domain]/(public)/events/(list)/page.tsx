@@ -21,6 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/formatter";
+import { CircleCheck } from "lucide-react";
 import Link from "next/link";
 
 // TODO: include ?filter=maintenance/reports
@@ -45,7 +46,16 @@ export default function Page() {
       <TabsContent value="reports" className="flex flex-col gap-4">
         {statusReports.length > 0 ? (
           statusReports.map((report) => {
-            const startedAt = report.statusReportUpdates[0].date;
+            const updates = report.statusReportUpdates.sort(
+              (a, b) => b.date.getTime() - a.date.getTime(),
+            );
+            const firstUpdate = updates[updates.length - 1];
+            const lastUpdate = updates[0];
+            // NOTE: updates are sorted descending by date
+            const startedAt = firstUpdate.date;
+            // HACKY: LEGACY: only resolved via report and not via report update
+            const isReportResolvedOnly =
+              report.status === "resolved" && lastUpdate.status !== "resolved";
             return (
               <StatusEvent key={report.id}>
                 <StatusEventAside>
@@ -58,7 +68,12 @@ export default function Page() {
                   className="rounded-lg"
                 >
                   <StatusEventContent>
-                    <StatusEventTitle>{report.title}</StatusEventTitle>
+                    <StatusEventTitle className="inline-flex gap-1">
+                      {report.title}
+                      {isReportResolvedOnly ? (
+                        <CircleCheck className="size-4 text-success shrink-0 mt-1 ml-1.5" />
+                      ) : null}
+                    </StatusEventTitle>
                     {report.monitorsToStatusReports.length > 0 ? (
                       <StatusEventAffected className="flex flex-wrap gap-1">
                         {report.monitorsToStatusReports.map((affected) => (

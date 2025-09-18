@@ -23,6 +23,7 @@ import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -61,15 +62,21 @@ export default function Page() {
                 );
                 if (!maintenance) return null;
                 return (
-                  <StatusBannerContainer key={e.id} status={e.status}>
-                    <StatusBannerTitle>{e.name}</StatusBannerTitle>
-                    <StatusBannerContent>
-                      <StatusEventTimelineMaintenance
-                        maintenance={maintenance}
-                        withDot={false}
-                      />
-                    </StatusBannerContent>
-                  </StatusBannerContainer>
+                  <Link
+                    href={`./events/maintenance/${e.id}`}
+                    key={e.id}
+                    className="rounded-lg"
+                  >
+                    <StatusBannerContainer status={e.status}>
+                      <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                      <StatusBannerContent>
+                        <StatusEventTimelineMaintenance
+                          maintenance={maintenance}
+                          withDot={false}
+                        />
+                      </StatusBannerContent>
+                    </StatusBannerContainer>
+                  </Link>
                 );
               }
               if (e.type === "report") {
@@ -78,15 +85,21 @@ export default function Page() {
                 );
                 if (!report) return null;
                 return (
-                  <StatusBannerContainer key={e.id} status={e.status}>
-                    <StatusBannerTitle>{e.name}</StatusBannerTitle>
-                    <StatusBannerContent>
-                      <StatusEventTimelineReport
-                        updates={report.statusReportUpdates}
-                        withDot={false}
-                      />
-                    </StatusBannerContent>
-                  </StatusBannerContainer>
+                  <Link
+                    href={`./events/report/${e.id}`}
+                    key={e.id}
+                    className="rounded-lg"
+                  >
+                    <StatusBannerContainer status={e.status}>
+                      <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                      <StatusBannerContent>
+                        <StatusEventTimelineReport
+                          updates={report.statusReportUpdates}
+                          withDot={false}
+                        />
+                      </StatusBannerContent>
+                    </StatusBannerContainer>
+                  </Link>
                 );
               }
               return null;

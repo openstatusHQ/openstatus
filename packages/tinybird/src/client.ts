@@ -1049,11 +1049,7 @@ export class OSTinybird {
         error: z.number().default(0),
         monitorId: z.coerce.string(),
       }),
-      opts: {
-        next: {
-          revalidate: PUBLIC_CACHE,
-        },
-      },
+      opts: { next: { revalidate: REVALIDATE } },
     });
   }
 

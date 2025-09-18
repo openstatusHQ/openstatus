@@ -156,6 +156,21 @@ export function getEvents({
       const firstUpdate = updates[0];
       const lastUpdate = updates[updates.length - 1];
       if (!firstUpdate?.date || firstUpdate.date < pastThreshod) return;
+
+      // HACKY: LEGACY: we shouldn't have report.status anymore and instead use the update status for that.
+      // Ideally, we could replace the status with "downtime", "degraded", "operational" to indicate the gravity of the issue
+      if (report.status === "resolved") {
+        events.push({
+          id: report.id,
+          name: report.title,
+          from: firstUpdate?.date,
+          to: lastUpdate?.date,
+          type: "report",
+          status: "success" as const,
+        });
+        return;
+      }
+
       events.push({
         id: report.id,
         name: report.title,

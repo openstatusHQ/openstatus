@@ -116,7 +116,11 @@ export function StatusEventTimelineReport({
             key={index}
             report={update}
             duration={
-              index === 0 && update.status === "resolved" ? duration : undefined
+              index === 0 &&
+              update.status === "resolved" &&
+              duration !== "0 seconds"
+                ? duration
+                : undefined
             }
             withSeparator={index !== updates.length - 1}
             withDot={withDot}

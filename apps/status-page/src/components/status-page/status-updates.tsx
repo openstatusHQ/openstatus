@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { Inbox } from "lucide-react";
 import { useState } from "react";
 
-type StatusUpdateType = "email" | "rss" | "atom";
+type StatusUpdateType = "email" | "rss" | "atom" | "ssh";
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   types?: StatusUpdateType[];
@@ -55,6 +55,9 @@ export function StatusUpdates({
             {types.includes("atom") ? (
               <TabsTrigger value="atom">Atom</TabsTrigger>
             ) : null}
+            {types.includes("ssh") ? (
+              <TabsTrigger value="ssh">SSH</TabsTrigger>
+            ) : null}
           </TabsList>
           <TabsContent value="email" className="flex flex-col gap-2">
             {success ? (
@@ -86,8 +89,7 @@ export function StatusUpdates({
             <div className="border-b px-2 pb-2">
               <Input
                 placeholder={`https://${slug}.openstatus.dev/feed/rss`}
-                className="disabled:opacity-90"
-                disabled
+                readOnly
               />
             </div>
             <div className="px-2 pb-2">
@@ -101,14 +103,24 @@ export function StatusUpdates({
             <div className="border-b px-2 pb-2">
               <Input
                 placeholder={`https://${slug}.openstatus.dev/feed/atom`}
-                className="disabled:opacity-90"
-                disabled
+                readOnly
               />
             </div>
             <div className="px-2 pb-2">
               <CopyButton
                 className="w-full"
                 value={`https://${slug}.openstatus.dev/feed/atom`}
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="ssh" className="flex flex-col gap-2">
+            <div className="border-b px-2 pb-2">
+              <Input placeholder={`ssh ${slug}@ssh.openstatus.dev`} readOnly />
+            </div>
+            <div className="px-2 pb-2">
+              <CopyButton
+                className="w-full"
+                value={`ssh ${slug}@ssh.openstatus.dev`}
               />
             </div>
           </TabsContent>
@@ -135,7 +147,7 @@ function CopyButton({
       }}
       {...props}
     >
-      {isCopied ? "Copied" : "Copy link"}
+      {isCopied ? "Copied" : "Copy"}
     </Button>
   );
 }
