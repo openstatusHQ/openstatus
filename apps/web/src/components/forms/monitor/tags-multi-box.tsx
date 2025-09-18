@@ -152,7 +152,8 @@ export function TagsMultiBox({
         <PopoverContent className="w-full p-0">
           <Command className="w-(--radix-popover-trigger-width)" loop>
             <CommandInput
-              ref={inputRef}
+              // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+              ref={inputRef as any}
               placeholder="Search tag..."
               value={inputValue}
               onValueChange={setInputValue}
