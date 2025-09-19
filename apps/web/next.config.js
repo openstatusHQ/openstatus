@@ -65,46 +65,19 @@ const nextConfig = {
     ];
   },
   async rewrites() {
-    const HOST =
-      process.env.NODE_ENV === "development" ? "localhost:3001" : "stpg.dev";
-    const PROTOCOL = process.env.NODE_ENV === "development" ? "http" : "https";
     return {
       beforeFiles: [
-        // Proxy app subdomain to /app
+        // New design: proxy app routes to external host with slug prefix
         {
           source: "/:path*",
           has: [
-            {
-              type: "host",
-              value: "app.openstatus.dev",
-            },
-          ],
-          destination: "/app/:path*",
-        },
-        // New design: proxy Next.js assets from external host when cookie indicates "new"
-        {
-          source: "/_next/:path*",
-          has: [
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
               value: "(?<slug>[^.]+)\\.(openstatus\\.dev|localhost)",
             },
           ],
-          destination: `${PROTOCOL}://${HOST}/_next/:path*`,
-        },
-        // New design: proxy app routes to external host with slug prefix
-        {
-          source: "/:path((?!_next/).*)",
-          has: [
-            { type: "cookie", key: "sp_mode", value: "new" },
-            {
-              type: "host",
-              value: "(?<slug>[^.]+)\\.(openstatus\\.dev|localhost)",
-            },
-          ],
-          // NOTE: might be different on prod and localhost (without :slug)
-          destination: `${PROTOCOL}://${HOST}/:slug/:path*`,
+          destination: "https://:slug.stpg.dev/:path*",
         },
       ],
     };

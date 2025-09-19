@@ -28,17 +28,18 @@ import {
   type MonitorFlyRegion,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { Note } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { useTRPC } from "@/lib/trpc/client";
 import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Info } from "lucide-react";
+import { CircleX, Info } from "lucide-react";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
@@ -60,6 +61,7 @@ export function FormSchedulingRegions({
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
+  const [openDialog, setOpenDialog] = useState(false);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -157,6 +159,15 @@ export function FormSchedulingRegions({
                 </FormItem>
               )}
             />
+            {!periodicity.includes(watchPeriodicity) ? (
+              <Note color="error">
+                <CircleX />
+                The periodicity you are selecting is not allowed for your plan.
+                <NoteButton type="button" onClick={() => setOpenDialog(true)}>
+                  Upgrade your plan
+                </NoteButton>
+              </Note>
+            ) : null}
           </FormCardContent>
           <FormCardSeparator />
           <FormCardContent className="grid gap-4">
@@ -343,6 +354,7 @@ export function FormSchedulingRegions({
           </FormCardFooter>
         </FormCard>
       </form>
+      <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
     </Form>
   );
 }
