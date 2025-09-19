@@ -7,8 +7,6 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { THEMES } from "@/components/status-page/community-themes";
-import { COMMUNITY_THEME } from "@/components/status-page/floating-button";
 import {
   Status,
   StatusContent,
@@ -19,6 +17,7 @@ import {
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { monitors } from "@/data/monitors";
+import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -34,32 +33,30 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-4">
-          {COMMUNITY_THEME.filter((theme) => theme !== "default").map(
-            (theme) => {
-              const t = THEMES[theme];
-              return (
-                <div key={theme} className="flex flex-col gap-2">
-                  <ThemeHeader>
-                    <ThemeTitle>{t.name}</ThemeTitle>
-                    <ThemeAuthor>
-                      by{" "}
-                      <a
-                        href={t.author.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t.author.name}
-                      </a>
-                    </ThemeAuthor>
-                  </ThemeHeader>
-                  <ThemeGroup>
-                    <ThemeCard theme={theme} mode="light" />
-                    <ThemeCard theme={theme} mode="dark" />
-                  </ThemeGroup>
-                </div>
-              );
-            },
-          )}
+          {THEME_KEYS.map((theme) => {
+            const t = THEMES[theme];
+            return (
+              <div key={theme} className="flex flex-col gap-2">
+                <ThemeHeader>
+                  <ThemeTitle>{t.name}</ThemeTitle>
+                  <ThemeAuthor>
+                    by{" "}
+                    <a
+                      href={t.author.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t.author.name}
+                    </a>
+                  </ThemeAuthor>
+                </ThemeHeader>
+                <ThemeGroup>
+                  <ThemeCard theme={theme} mode="light" />
+                  <ThemeCard theme={theme} mode="dark" />
+                </ThemeGroup>
+              </div>
+            );
+          })}
         </div>
       </Section>
     </SectionGroup>
@@ -81,11 +78,14 @@ function ThemeCard({
     trpc.statusPage.getNoopUptime.queryOptions(),
   );
   return (
-    <div className="group/theme-card overflow-hidden rounded-lg border">
+    <div
+      className={cn(
+        "group/theme-card overflow-hidden rounded-lg border",
+        mode === "dark" ? "dark" : "",
+      )}
+    >
       <div
-        style={{
-          ...t,
-        }}
+        style={t as React.CSSProperties}
         className="h-full w-full bg-background"
       >
         {/* NOTE: we use pointer-events-none to prevent the hover card or tooltip from being interactive - the Portal container is document body and we loose the styles */}

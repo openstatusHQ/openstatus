@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { cn } from "@/lib/utils";
 import { Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { THEMES } from "./community-themes";
 
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
@@ -37,7 +37,7 @@ export type CardType = (typeof CARD_TYPE)[number];
 export const BAR_TYPE = ["absolute", "dominant", "manual"] as const;
 export type BarType = (typeof BAR_TYPE)[number];
 
-export const COMMUNITY_THEME = ["default", "github", "supabase"] as const;
+export const COMMUNITY_THEME = THEME_KEYS;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
 
 export const RADIUS = ["square", "rounded"] as const;
