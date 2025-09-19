@@ -39,9 +39,10 @@ export type BarType = (typeof BAR_TYPE)[number];
 
 export const COMMUNITY_THEME = ["default", "github", "supabase"] as const;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
+
+export const RADIUS = ["square", "rounded"] as const;
+export type Radius = (typeof RADIUS)[number];
 interface StatusPageContextType {
-  variant: VariantType;
-  setVariant: (variant: VariantType) => void;
   cardType: CardType;
   setCardType: (cardType: CardType) => void;
   barType: BarType;
@@ -50,6 +51,8 @@ interface StatusPageContextType {
   setShowUptime: (showUptime: boolean) => void;
   communityTheme: CommunityTheme;
   setCommunityTheme: (communityTheme: CommunityTheme) => void;
+  radius: Radius;
+  setRadius: (radius: Radius) => void;
 }
 
 const StatusPageContext = createContext<StatusPageContextType | null>(null);
@@ -64,23 +67,23 @@ export function useStatusPage() {
 
 export function StatusPageProvider({
   children,
-  defaultVariant = "success",
   defaultCardType = "duration",
   defaultBarType = "absolute",
   defaultShowUptime = true,
   defaultCommunityTheme = "default",
+  defaultRadius = "square",
 }: {
   children: React.ReactNode;
-  defaultVariant?: VariantType;
   defaultCardType?: CardType;
   defaultBarType?: BarType;
   defaultShowUptime?: boolean;
   defaultCommunityTheme?: CommunityTheme;
+  defaultRadius?: Radius;
 }) {
-  const [variant, setVariant] = useState<VariantType>(defaultVariant);
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
+  const [radius, setRadius] = useState<Radius>(defaultRadius);
   const { resolvedTheme } = useTheme();
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
     defaultCommunityTheme,
@@ -105,11 +108,20 @@ export function StatusPageProvider({
     }
   }, [resolvedTheme, communityTheme]);
 
+  useEffect(() => {
+    const computedRadius = getComputedStyle(
+      document.documentElement,
+    ).getPropertyValue("--radius");
+    if (radius === "square" && computedRadius !== "0rem") {
+      document.documentElement.style.setProperty("--radius", "0rem");
+    } else if (radius === "rounded" && computedRadius !== "0.625rem") {
+      document.documentElement.style.setProperty("--radius", "0.625rem");
+    }
+  }, [radius]);
+
   return (
     <StatusPageContext.Provider
       value={{
-        variant,
-        setVariant,
         cardType,
         setCardType,
         barType,
@@ -118,6 +130,8 @@ export function StatusPageProvider({
         setShowUptime,
         communityTheme,
         setCommunityTheme,
+        radius,
+        setRadius,
       }}
     >
       <div
@@ -135,8 +149,6 @@ export function StatusPageProvider({
 
 export function FloatingButton({ className }: { className?: string }) {
   const {
-    variant,
-    setVariant,
     cardType,
     setCardType,
     barType,
@@ -145,6 +157,8 @@ export function FloatingButton({ className }: { className?: string }) {
     setShowUptime,
     communityTheme,
     setCommunityTheme,
+    radius,
+    setRadius,
   } = useStatusPage();
 
   return (
@@ -169,28 +183,6 @@ export function FloatingButton({ className }: { className?: string }) {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status-variant">Status Variant</Label>
-                <Select
-                  value={variant}
-                  onValueChange={(v) => setVariant(v as VariantType)}
-                >
-                  <SelectTrigger
-                    id="status-variant"
-                    className="w-full capitalize"
-                    disabled
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VARIANT.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="show-uptime">Show Uptime</Label>
                 <Select
@@ -276,6 +268,24 @@ export function FloatingButton({ className }: { className?: string }) {
                   </SelectTrigger>
                   <SelectContent>
                     {COMMUNITY_THEME.map((v) => (
+                      <SelectItem key={v} value={v} className="capitalize">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="radius">Radius</Label>
+                <Select
+                  value={radius}
+                  onValueChange={(v) => setRadius(v as Radius)}
+                >
+                  <SelectTrigger id="radius" className="w-full capitalize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RADIUS.map((v) => (
                       <SelectItem key={v} value={v} className="capitalize">
                         {v}
                       </SelectItem>
