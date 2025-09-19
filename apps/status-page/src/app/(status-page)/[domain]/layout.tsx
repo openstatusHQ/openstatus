@@ -52,7 +52,14 @@ export default async function Layout({
         >
           {children}
           {DISPLAY_FLOATING_BUTTON ? <FloatingButton /> : null}
-          <Toaster richColors expand />
+          <Toaster
+            toastOptions={{
+              classNames: {},
+              style: { borderRadius: "var(--radius-lg)" },
+            }}
+            richColors
+            expand
+          />
         </StatusPageProvider>
       </ThemeProvider>
     </HydrateClient>
