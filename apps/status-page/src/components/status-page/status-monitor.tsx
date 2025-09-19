@@ -56,7 +56,7 @@ export function StatusMonitor({
       {...props}
     >
       <div className="flex flex-row items-center justify-between gap-4">
-        <div className="flex flex-row min-w-0 items-center gap-2">
+        <div className="flex min-w-0 flex-row items-center gap-2">
           <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
           <StatusMonitorDescription>
             {monitor.description}
