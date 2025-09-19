@@ -82,7 +82,7 @@ export function StatusFeed({
     return (
       <StatusEmptyState>
         <Newspaper className="size-4 text-muted-foreground" />
-        <StatusEmptyStateTitle>No recent reports</StatusEmptyStateTitle>
+        <StatusEmptyStateTitle>No recent notifications</StatusEmptyStateTitle>
         <StatusEmptyStateDescription>
           There have been no reports within the last 7 days.
         </StatusEmptyStateDescription>

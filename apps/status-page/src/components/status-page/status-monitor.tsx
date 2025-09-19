@@ -92,7 +92,7 @@ export function StatusMonitorTitle({
   return (
     <div
       className={cn(
-        "font-medium font-mono text-foreground leading-[0.9]",
+        "font-medium font-mono text-foreground leading-none",
         className,
       )}
       {...props}
