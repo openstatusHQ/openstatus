@@ -82,6 +82,15 @@ export function StatusTracker({ data }: { data: UptimeData }) {
       setFocusedIndex(null);
       setHoveredIndex(null);
 
+      if (focusedIndex !== null) {
+        const buttons =
+          containerRef.current?.querySelectorAll('[role="button"]');
+        const button = buttons?.[focusedIndex] as HTMLElement;
+        if (button) {
+          button.blur();
+        }
+      }
+
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
@@ -103,7 +112,40 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             prev !== null && prev < data.length - 1 ? prev + 1 : 0,
           );
           break;
+        case "ArrowUp":
+          e.preventDefault();
+          const prevMonitor = containerRef.current?.closest(
+            '[data-slot="status-monitor"]',
+          )?.previousElementSibling;
+          if (prevMonitor) {
+            const prevTracker = prevMonitor.querySelector('[role="toolbar"]');
+            if (prevTracker) {
+              const buttons = prevTracker.querySelectorAll('[role="button"]');
+              const button = buttons?.[focusedIndex] as HTMLElement;
+              if (button) {
+                button.focus();
+              }
+            }
+          }
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          const nextMonitor = containerRef.current?.closest(
+            '[data-slot="status-monitor"]',
+          )?.nextElementSibling;
+          if (nextMonitor) {
+            const nextTracker = nextMonitor.querySelector('[role="toolbar"]');
+            if (nextTracker) {
+              const buttons = nextTracker.querySelectorAll('[role="button"]');
+              const button = buttons?.[focusedIndex] as HTMLElement;
+              if (button) {
+                button.focus();
+              }
+            }
+          }
+          break;
         case "Enter":
+        case "Escape":
         case " ":
           e.preventDefault();
           handleBarClick(focusedIndex);
