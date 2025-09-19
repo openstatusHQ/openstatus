@@ -128,8 +128,8 @@ export default function Page() {
         ) : (
           <StatusBanner status={page.status} />
         )}
-        {/* TODO: check how to display current events */}
-        <StatusContent>
+        {/* NOTE: check what gap feels right */}
+        <StatusContent className="gap-5">
           {page.monitors.map((monitor) => {
             const { data, uptime } =
               uptimeData?.find((m) => m.id === monitor.id) ?? {};

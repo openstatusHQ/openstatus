@@ -74,7 +74,7 @@ export function StatusMonitor({
               <StatusMonitorIcon />
             </>
           ) : (
-            <StatusMonitorStatus className="text-sm" />
+            <StatusMonitorStatus />
           )}
         </div>
       </div>
@@ -165,10 +165,10 @@ export function StatusMonitorFooter({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs">
+    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none">
       <div>
         {isLoading ? (
-          <Skeleton className="h-4 w-18" />
+          <Skeleton className="h-3 w-18" />
         ) : data.length > 0 ? (
           formatDistanceToNowStrict(new Date(data[0].day), {
             unit: "day",
@@ -215,7 +215,7 @@ export function StatusMonitorStatus({
   return (
     <div
       className={cn(
-        "font-mono",
+        "font-mono text-sm leading-none",
         "group-data-[variant=success]/monitor:text-success",
         "group-data-[variant=degraded]/monitor:text-warning",
         "group-data-[variant=error]/monitor:text-destructive",
