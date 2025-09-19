@@ -91,7 +91,10 @@ export function StatusMonitorTitle({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-medium font-mono text-foreground", className)}
+      className={cn(
+        "font-medium font-mono text-foreground leading-[0.9]",
+        className,
+      )}
       {...props}
     >
       {children}
@@ -137,7 +140,7 @@ export function StatusMonitorIcon({
   return (
     <div
       className={cn(
-        "flex size-4 items-center justify-center rounded-full bg-muted text-background [&>svg]:size-2.5",
+        "flex size-[12.5px] items-center justify-center rounded-full bg-muted text-background [&>svg]:size-[9px]",
         "group-data-[variant=success]/monitor:bg-success",
         "group-data-[variant=degraded]/monitor:bg-warning",
         "group-data-[variant=error]/monitor:bg-destructive",
@@ -188,7 +191,7 @@ export function StatusMonitorUptime({
   return (
     <div
       {...props}
-      className={cn("font-mono text-muted-foreground text-sm", className)}
+      className={cn("font-mono text-foreground text-xs", className)}
     >
       {children}
     </div>
