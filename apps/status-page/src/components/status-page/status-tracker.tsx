@@ -189,7 +189,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             <HoverCardTrigger asChild>
               <div
                 className={cn(
-                  "group relative flex h-full w-full cursor-pointer flex-col px-px outline-none first:pl-0 last:pr-0 hover:opacity-80 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                  "group relative flex h-full w-full cursor-pointer flex-col mx-px outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
                 )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}
@@ -197,7 +197,11 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                 onMouseEnter={() => handleBarMouseEnter(index)}
                 onMouseLeave={handleBarMouseLeave}
                 tabIndex={
-                  index === 0 && focusedIndex === null ? 0 : isFocused ? 0 : -1
+                  index === data.length - 1 && focusedIndex === null
+                    ? 0
+                    : isFocused
+                      ? 0
+                      : -1
                 }
                 role="button"
                 aria-label={`Day ${index + 1} status`}
