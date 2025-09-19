@@ -124,6 +124,7 @@ export function StatusEventTimelineReport({
             }
             withSeparator={index !== updates.length - 1}
             withDot={withDot}
+            isLast={index === updates.length - 1}
           />
         ))}
     </div>
@@ -135,6 +136,7 @@ function StatusEventTimelineReportUpdate({
   duration,
   withSeparator = true,
   withDot = true,
+  isLast = false,
 }: {
   report: {
     date: Date;
@@ -144,6 +146,7 @@ function StatusEventTimelineReportUpdate({
   withSeparator?: boolean;
   duration?: string;
   withDot?: boolean;
+  isLast?: boolean;
 }) {
   return (
     <div data-variant={report.status} className="group">
@@ -157,7 +160,7 @@ function StatusEventTimelineReportUpdate({
               {withSeparator ? <StatusEventTimelineSeparator /> : null}
             </div>
           ) : null}
-          <div className="mb-2">
+          <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
               {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
@@ -209,7 +212,8 @@ export function StatusEventTimelineMaintenance({
               </div>
             </div>
           ) : null}
-          <div className="mb-2">
+          {/* NOTE: is always last, no need for className="mb-2" */}
+          <div>
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
               <span className="font-mono text-muted-foreground/70 text-xs">
@@ -259,7 +263,10 @@ export function StatusEventTimelineMessage({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <div
+      className={cn("font-mono text-muted-foreground text-sm", className)}
+      {...props}
+    >
       {children}
     </div>
   );
