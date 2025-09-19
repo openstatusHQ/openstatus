@@ -192,7 +192,7 @@ export function StatusMonitorUptime({
     <div
       {...props}
       className={cn(
-        "font-mono text-foreground text-sm leading-none",
+        "font-mono text-foreground/80 text-sm leading-none",
         className,
       )}
     >
