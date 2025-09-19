@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/formatter";
-import { Check } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 import Link from "next/link";
 
 // TODO: include ?filter=maintenance/reports
@@ -71,11 +71,7 @@ export default function Page() {
                     <StatusEventTitle className="inline-flex gap-1">
                       {report.title}
                       {isReportResolvedOnly ? (
-                        <div className="mt-1 ml-1.5">
-                          <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
-                            <Check className="size-3 shrink-0" />
-                          </div>
-                        </div>
+                        <CircleCheck className="size-4 text-success shrink-0 mt-1 ml-1.5" />
                       ) : null}
                     </StatusEventTitle>
                     {report.monitorsToStatusReports.length > 0 ? (

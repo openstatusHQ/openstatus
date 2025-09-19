@@ -12,10 +12,7 @@ import {
   StatusBanner,
   StatusBannerContainer,
   StatusBannerContent,
-  StatusBannerTabs,
-  StatusBannerTabsContent,
-  StatusBannerTabsList,
-  StatusBannerTabsTrigger,
+  StatusBannerTitle,
 } from "@/components/status-page/status-banner";
 import {
   StatusEventTimelineMaintenance,
@@ -25,8 +22,8 @@ import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -58,72 +55,55 @@ export default function Page() {
         </StatusHeader>
         {page.openEvents.length > 0 ? (
           <StatusContent>
-            <StatusBannerTabs
-              defaultValue={`${page.openEvents[0].type}-${page.openEvents[0].id}`}
-            >
-              <StatusBannerTabsList>
-                {page.openEvents.map((e, i) => {
-                  return (
-                    <StatusBannerTabsTrigger
-                      value={`${e.type}-${e.id}`}
-                      status={e.status}
-                      key={e.id}
-                      className={cn(
-                        i === 0 && "rounded-tl-lg",
-                        i === page.openEvents.length - 1 && "rounded-tr-lg",
-                      )}
-                    >
-                      {e.name}
-                    </StatusBannerTabsTrigger>
-                  );
-                })}
-              </StatusBannerTabsList>
-              {page.openEvents.map((e) => {
-                if (e.type === "report") {
-                  const report = page.statusReports.find(
-                    (report) => report.id === e.id,
-                  );
-                  if (!report) return null;
-                  return (
-                    <StatusBannerTabsContent
-                      value={`${e.type}-${e.id}`}
-                      key={e.id}
-                    >
-                      <StatusBannerContainer status={e.status}>
-                        <StatusBannerContent>
-                          <StatusEventTimelineReport
-                            updates={report.statusReportUpdates}
-                            withDot={false}
-                          />
-                        </StatusBannerContent>
-                      </StatusBannerContainer>
-                    </StatusBannerTabsContent>
-                  );
-                }
-                if (e.type === "maintenance") {
-                  const maintenance = page.maintenances.find(
-                    (maintenance) => maintenance.id === e.id,
-                  );
-                  if (!maintenance) return null;
-                  return (
-                    <StatusBannerTabsContent
-                      value={`${e.type}-${e.id}`}
-                      key={e.id}
-                    >
-                      <StatusBannerContainer status={e.status}>
-                        <StatusBannerContent>
-                          <StatusEventTimelineMaintenance
-                            maintenance={maintenance}
-                            withDot={false}
-                          />
-                        </StatusBannerContent>
-                      </StatusBannerContainer>
-                    </StatusBannerTabsContent>
-                  );
-                }
-                return null;
-              })}
-            </StatusBannerTabs>
+            {page.openEvents.map((e) => {
+              if (e.type === "maintenance") {
+                const maintenance = page.maintenances.find(
+                  (maintenance) => maintenance.id === e.id,
+                );
+                if (!maintenance) return null;
+                return (
+                  <Link
+                    href={`./events/maintenance/${e.id}`}
+                    key={e.id}
+                    className="rounded-lg"
+                  >
+                    <StatusBannerContainer status={e.status}>
+                      <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                      <StatusBannerContent>
+                        <StatusEventTimelineMaintenance
+                          maintenance={maintenance}
+                          withDot={false}
+                        />
+                      </StatusBannerContent>
+                    </StatusBannerContainer>
+                  </Link>
+                );
+              }
+              if (e.type === "report") {
+                const report = page.statusReports.find(
+                  (report) => report.id === e.id,
+                );
+                if (!report) return null;
+                return (
+                  <Link
+                    href={`./events/report/${e.id}`}
+                    key={e.id}
+                    className="rounded-lg"
+                  >
+                    <StatusBannerContainer status={e.status}>
+                      <StatusBannerTitle>{e.name}</StatusBannerTitle>
+                      <StatusBannerContent>
+                        <StatusEventTimelineReport
+                          updates={report.statusReportUpdates}
+                          withDot={false}
+                        />
+                      </StatusBannerContent>
+                    </StatusBannerContainer>
+                  </Link>
+                );
+              }
+              return null;
+            })}
           </StatusContent>
         ) : (
           <StatusBanner status={page.status} />
