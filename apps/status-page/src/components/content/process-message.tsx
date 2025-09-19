@@ -21,7 +21,7 @@ export function ProcessMessage({ value }: { value: string }) {
             <a
               target="_blank"
               rel="noreferrer"
-              className="underline outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] rounded-sm"
+              className="rounded-sm underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               {...props}
             />
           );

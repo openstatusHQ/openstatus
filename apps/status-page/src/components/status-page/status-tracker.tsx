@@ -189,7 +189,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             <HoverCardTrigger asChild>
               <div
                 className={cn(
-                  "group relative flex h-full w-full cursor-pointer flex-col mx-px outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                  "group relative mx-px flex h-full w-full cursor-pointer flex-col outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
                 )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}

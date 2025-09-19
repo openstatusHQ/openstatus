@@ -78,7 +78,7 @@ export function Header(props: React.ComponentProps<"header">) {
     <header {...props}>
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
         {/* NOTE: same width as the `StatusUpdates` button */}
-        <div className="w-[150px] flex shrink-0">
+        <div className="flex w-[150px] shrink-0">
           <div className="flex items-center justify-center">
             <Link
               href={page?.homepageUrl || "/"}
