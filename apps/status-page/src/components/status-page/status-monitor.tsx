@@ -56,7 +56,7 @@ export function StatusMonitor({
       {...props}
     >
       <div className="flex flex-row items-center justify-between gap-4">
-        <div className="flex flex-row items-center gap-2">
+        <div className="flex flex-row min-w-0 items-center gap-2">
           <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
           <StatusMonitorDescription>
             {monitor.description}
@@ -92,7 +92,7 @@ export function StatusMonitorTitle({
   return (
     <div
       className={cn(
-        "font-medium font-mono text-foreground leading-none",
+        "flex-1 truncate font-medium font-mono text-foreground leading-none",
         className,
       )}
       {...props}
@@ -191,7 +191,7 @@ export function StatusMonitorUptime({
   return (
     <div
       {...props}
-      className={cn("font-mono text-foreground text-xs", className)}
+      className={cn("font-mono text-foreground text-sm leading-non", className)}
     >
       {children}
     </div>
