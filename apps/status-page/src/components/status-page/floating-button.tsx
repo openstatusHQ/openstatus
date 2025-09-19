@@ -154,7 +154,7 @@ export function FloatingButton({ className }: { className?: string }) {
           <Button
             size="icon"
             variant="outline"
-            className="size-12 rounded-full dark:bg-background"
+            className="size-12 rounded-full"
           >
             <Settings className="size-5" />
             <span className="sr-only">Open status page settings</span>

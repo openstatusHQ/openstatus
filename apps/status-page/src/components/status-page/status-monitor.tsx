@@ -56,7 +56,7 @@ export function StatusMonitor({
       {...props}
     >
       <div className="flex flex-row items-center justify-between gap-4">
-        <div className="flex flex-row min-w-0 items-center gap-2">
+        <div className="flex flex-row items-center gap-2">
           <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
           <StatusMonitorDescription>
             {monitor.description}
@@ -90,13 +90,7 @@ export function StatusMonitorTitle({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div
-      className={cn(
-        "flex-1 truncate font-medium font-mono text-foreground leading-none",
-        className,
-      )}
-      {...props}
-    >
+    <div className={cn("font-medium", className)} {...props}>
       {children}
     </div>
   );
@@ -140,7 +134,7 @@ export function StatusMonitorIcon({
   return (
     <div
       className={cn(
-        "flex size-[12.5px] items-center justify-center rounded-full bg-muted text-background [&>svg]:size-[9px]",
+        "flex size-4 items-center justify-center rounded-full bg-muted text-background [&>svg]:size-2.5",
         "group-data-[variant=success]/monitor:bg-success",
         "group-data-[variant=degraded]/monitor:bg-warning",
         "group-data-[variant=error]/monitor:bg-destructive",
@@ -165,7 +159,7 @@ export function StatusMonitorFooter({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs">
+    <div className="flex flex-row items-center justify-between text-muted-foreground text-xs">
       <div>
         {isLoading ? (
           <Skeleton className="h-4 w-18" />
@@ -191,7 +185,7 @@ export function StatusMonitorUptime({
   return (
     <div
       {...props}
-      className={cn("font-mono text-foreground text-sm leading-non", className)}
+      className={cn("font-mono text-muted-foreground text-sm", className)}
     >
       {children}
     </div>
@@ -212,7 +206,6 @@ export function StatusMonitorStatus({
   return (
     <div
       className={cn(
-        "font-mono",
         "group-data-[variant=success]/monitor:text-success",
         "group-data-[variant=degraded]/monitor:text-warning",
         "group-data-[variant=error]/monitor:text-destructive",
