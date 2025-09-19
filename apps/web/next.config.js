@@ -45,7 +45,6 @@ const nextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
-  trailingSlash: true,
   async redirects() {
     return [
       {
@@ -68,17 +67,6 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
-        // Proxy app subdomain to /app
-        {
-          source: "/:path*",
-          has: [
-            {
-              type: "host",
-              value: "app.openstatus.dev",
-            },
-          ],
-          destination: "/app/:path*",
-        },
         // New design: proxy app routes to external host with slug prefix
         {
           source: "/:path*",
@@ -123,5 +111,5 @@ module.exports = withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  },
+  }
 );
