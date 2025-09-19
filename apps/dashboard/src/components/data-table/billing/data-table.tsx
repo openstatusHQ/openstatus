@@ -92,6 +92,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                   </p>
                   <Button
                     size="sm"
+                    type="button"
                     variant={id === "starter" ? "default" : "outline"}
                     onClick={() => {
                       startTransition(async () => {
