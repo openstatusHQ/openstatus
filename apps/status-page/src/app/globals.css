@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 /* safelist */
 @source inline("has-data-[slot=slider-range]:bg-red-500");

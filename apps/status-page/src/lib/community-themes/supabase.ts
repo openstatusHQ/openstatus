@@ -2,7 +2,7 @@ import type { Theme } from "./types";
 
 export const supabase: Theme = {
   name: "Supabase",
-  author: { name: "@supabase", url: "https://supabase.com" },
+  author: { name: "@___", url: "#" },
   light: {
     "--background": "oklch(99.11% 0 0)",
     "--foreground": "oklch(20.46% 0 0)",

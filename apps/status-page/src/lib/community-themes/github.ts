@@ -2,7 +2,7 @@ import type { Theme } from "./types";
 
 export const github: Theme = {
   name: "Github",
-  author: { name: "@github", url: "https://github.com" },
+  author: { name: "@openstatus", url: "https://openstatus.dev" },
   light: {
     "--background": "oklch(100% 0 0)",
     "--foreground": "oklch(24.29% 0.0045 247.86)",

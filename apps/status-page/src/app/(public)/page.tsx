@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import {
   Section,
   SectionDescription,
@@ -29,7 +30,8 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Status Page Themes</SectionTitle>
           <SectionDescription>
-            View all the current themes you can use. Or contribute your own one.
+            View all the current themes you can use.{" "}
+            <Link href="#contribute-theme">Contribute your own?</Link>
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-4">
@@ -57,6 +59,50 @@ export default function Page() {
               </div>
             );
           })}
+        </div>
+      </Section>
+      <Section>
+        <SectionHeader id="contribute-theme">
+          <SectionTitle>Contribute Theme</SectionTitle>
+          <SectionDescription>
+            Contribute your own theme to the community.
+          </SectionDescription>
+        </SectionHeader>
+        <div className="prose dark:prose-invert prose-sm max-w-none">
+          <p>
+            You can contribute your own theme by creating a new file in the{" "}
+            <code>src/lib/community-themes</code> directory. Make sure your
+            object is satisfiying the <code>Theme</code> interface.
+          </p>
+          <p>
+            Go to the{" "}
+            <Link href="https://github.com/openstatus-dev/status-page/blob/main/src/lib/community-themes">
+              GitHub directory
+            </Link>{" "}
+            to see the existing themes and create a new one by forking and
+            creating a pull request.
+            <br /> To speed things up, ping us on GitHub (
+            <Link href="https://github.com/thibaultleouay">
+              @thibaultleouay
+            </Link>{" "}
+            and <Link href="https://github.com/mxkaske">@mxkaske</Link>) so we
+            can review it.
+          </p>
+          <hr />
+          <p>
+            Why don't we allow custom css styles to be overridden and only
+            support themes?
+          </p>
+          <ul>
+            <li>Keep it simple for the user</li>
+            <li>Don't end up with a xmas tree</li>
+            <li>Keep the theme consistent</li>
+            <li>Avoid conflicts with other styles</li>
+            <li>
+              Keep the theme maintainable (but this will also mean, a change
+              will affect all users)
+            </li>
+          </ul>
         </div>
       </Section>
     </SectionGroup>
@@ -129,7 +175,9 @@ function ThemeHeader({ children, className }: React.ComponentProps<"div">) {
 }
 
 function ThemeTitle({ children, className }: React.ComponentProps<"div">) {
-  return <div className={cn("font-bold text-base", className)}>{children}</div>;
+  return (
+    <div className={cn("font-semibold text-base", className)}>{children}</div>
+  );
 }
 
 function ThemeAuthor({ children, className }: React.ComponentProps<"div">) {
