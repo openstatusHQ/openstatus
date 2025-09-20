@@ -69,7 +69,7 @@ export default function Page() {
                 className="rounded-lg"
               >
                 <div className="group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-border/50 hover:bg-muted/50">
-                  <div className="flex flex-row items-center gap-2">
+                  <div className="flex flex-row items-center justify-start gap-2">
                     <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
                     <StatusMonitorDescription>
                       {monitor.description}

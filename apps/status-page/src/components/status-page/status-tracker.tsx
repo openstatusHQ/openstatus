@@ -82,6 +82,15 @@ export function StatusTracker({ data }: { data: UptimeData }) {
       setFocusedIndex(null);
       setHoveredIndex(null);
 
+      if (focusedIndex !== null) {
+        const buttons =
+          containerRef.current?.querySelectorAll('[role="button"]');
+        const button = buttons?.[focusedIndex] as HTMLElement;
+        if (button) {
+          button.blur();
+        }
+      }
+
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
         hoverTimeoutRef.current = null;
@@ -103,7 +112,40 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             prev !== null && prev < data.length - 1 ? prev + 1 : 0,
           );
           break;
+        case "ArrowUp":
+          e.preventDefault();
+          const prevMonitor = containerRef.current?.closest(
+            '[data-slot="status-monitor"]',
+          )?.previousElementSibling;
+          if (prevMonitor) {
+            const prevTracker = prevMonitor.querySelector('[role="toolbar"]');
+            if (prevTracker) {
+              const buttons = prevTracker.querySelectorAll('[role="button"]');
+              const button = buttons?.[focusedIndex] as HTMLElement;
+              if (button) {
+                button.focus();
+              }
+            }
+          }
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          const nextMonitor = containerRef.current?.closest(
+            '[data-slot="status-monitor"]',
+          )?.nextElementSibling;
+          if (nextMonitor) {
+            const nextTracker = nextMonitor.querySelector('[role="toolbar"]');
+            if (nextTracker) {
+              const buttons = nextTracker.querySelectorAll('[role="button"]');
+              const button = buttons?.[focusedIndex] as HTMLElement;
+              if (button) {
+                button.focus();
+              }
+            }
+          }
+          break;
         case "Enter":
+        case "Escape":
         case " ":
           e.preventDefault();
           handleBarClick(focusedIndex);
@@ -189,7 +231,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             <HoverCardTrigger asChild>
               <div
                 className={cn(
-                  "group relative flex h-full w-full cursor-pointer flex-col px-px outline-none hover:opacity-80 focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                  "group relative mx-px flex h-full w-full cursor-pointer flex-col outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
                 )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}
@@ -197,7 +239,11 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                 onMouseEnter={() => handleBarMouseEnter(index)}
                 onMouseLeave={handleBarMouseLeave}
                 tabIndex={
-                  index === 0 && focusedIndex === null ? 0 : isFocused ? 0 : -1
+                  index === data.length - 1 && focusedIndex === null
+                    ? 0
+                    : isFocused
+                      ? 0
+                      : -1
                 }
                 role="button"
                 aria-label={`Day ${index + 1} status`}

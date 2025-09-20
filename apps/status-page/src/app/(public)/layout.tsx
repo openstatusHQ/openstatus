@@ -1,3 +1,4 @@
+import { Link } from "@/components/common/link";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -9,11 +10,16 @@ export default async function Layout({
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="light"
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <main>{children}</main>
+      <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
+        <p>
+          powered by <Link href="https://openstatus.dev">openstatus</Link>
+        </p>
+      </footer>
       <Toaster richColors expand />
     </ThemeProvider>
   );

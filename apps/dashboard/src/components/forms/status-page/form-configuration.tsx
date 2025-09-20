@@ -329,7 +329,7 @@ export function FormConfiguration({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/"
+                href="https://docs.openstatus.dev/tutorial/how-to-configure-status-page"
                 rel="noreferrer"
                 target="_blank"
               >

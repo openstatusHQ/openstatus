@@ -123,14 +123,13 @@ export const statusPageRouter = createTRPCRouter({
       const threshold = new Date().getTime() - 7 * 24 * 60 * 60 * 1000;
       const lastEvents = pageEvents
         .filter((e) => {
-          if (e.type !== "incident") return false;
-          if (!e.to || e.to.getTime() >= threshold) return true;
+          if (e.type === "incident") return false;
+          if (!e.from || e.from.getTime() >= threshold) return true;
           return false;
         })
         .sort((a, b) => a.from.getTime() - b.from.getTime());
 
       const openEvents = pageEvents.filter((event) => {
-        console.log(event.type, event.from, event.to);
         if (event.type === "incident" || event.type === "report") {
           if (!event.to) return true;
           if (event.to < new Date()) return false;

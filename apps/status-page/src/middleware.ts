@@ -44,10 +44,11 @@ export default async function middleware(req: NextRequest) {
     const protectedCookie = cookies.get(createProtectedCookieKey(prefix));
     const password = protectedCookie ? protectedCookie.value : undefined;
     if (password !== _page.password && !url.pathname.endsWith("/protected")) {
+      const { pathname, origin } = req.nextUrl;
       const url = new URL(
-        `${req.nextUrl.origin}${
+        `${origin}${
           type === "pathname" ? `/${prefix}` : ""
-        }/protected?redirect=${encodeURIComponent(req.url)}`,
+        }/protected?redirect=${encodeURIComponent(pathname)}`,
       );
       return NextResponse.redirect(url);
     }

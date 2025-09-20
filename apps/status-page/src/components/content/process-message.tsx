@@ -1,4 +1,4 @@
-import type { AnchorHTMLAttributes } from "react";
+import type { AnchorHTMLAttributes, HTMLAttributes } from "react";
 import { Fragment, createElement } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import rehypeReact from "rehype-react";
@@ -16,12 +16,25 @@ export function ProcessMessage({ value }: { value: string }) {
       jsx,
       jsxs,
       components: {
+        ul: (props: HTMLAttributes<HTMLUListElement>) => {
+          return (
+            <ul
+              className="list-inside list-disc marker:text-muted-foreground/50"
+              {...props}
+            />
+          );
+        },
+        ol: (_props: HTMLAttributes<HTMLOListElement>) => {
+          return (
+            <ol className="list-inside list-decimal marker:text-muted-foreground/50" />
+          );
+        },
         a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => {
           return (
             <a
               target="_blank"
               rel="noreferrer"
-              className="underline"
+              className="rounded-sm underline outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               {...props}
             />
           );
