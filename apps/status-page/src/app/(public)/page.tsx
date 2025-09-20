@@ -71,8 +71,9 @@ export default function Page() {
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <p>
             You can contribute your own theme by creating a new file in the{" "}
-            <code>src/lib/community-themes</code> directory. Make sure your
-            object is satisfiying the <code>Theme</code> interface.
+            <code>src/lib/community-themes</code> directory. You&apos;ll only
+            need to override css variables. Make sure your object is satisfiying
+            the <code>Theme</code> interface.
           </p>
           <p>
             Go to the{" "}
@@ -81,12 +82,6 @@ export default function Page() {
             </Link>{" "}
             to see the existing themes and create a new one by forking and
             creating a pull request.
-            <br /> To speed things up, ping us on GitHub (
-            <Link href="https://github.com/thibaultleouay">
-              @thibaultleouay
-            </Link>{" "}
-            and <Link href="https://github.com/mxkaske">@mxkaske</Link>) so we
-            can review it.
           </p>
           <hr />
           <p>

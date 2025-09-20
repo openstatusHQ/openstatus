@@ -1,7 +1,8 @@
 import type { Theme } from "./types";
 
-export const github: Theme = {
-  name: "Github",
+export const GITHUB_CONTRAST = {
+  id: "github-contrast",
+  name: "Github (High Contrast)",
   author: { name: "@openstatus", url: "https://openstatus.dev" },
   light: {
     "--background": "oklch(100% 0 0)",
@@ -43,4 +44,4 @@ export const github: Theme = {
     "--warning": "oklch(81.84% 0.1328 85.87)",
     "--info": "oklch(46.96% 0.2957 264.51)",
   },
-};
+} as const satisfies Theme;

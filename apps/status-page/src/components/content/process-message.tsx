@@ -24,7 +24,7 @@ export function ProcessMessage({ value }: { value: string }) {
             />
           );
         },
-        ol: (props: HTMLAttributes<HTMLOListElement>) => {
+        ol: (_props: HTMLAttributes<HTMLOListElement>) => {
           return (
             <ol className="list-inside list-decimal marker:text-muted-foreground/50" />
           );

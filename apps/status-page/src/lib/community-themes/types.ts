@@ -63,16 +63,10 @@ export interface ThemeDefinition {
 }
 
 export interface ThemeInfo {
+  id: string;
   name: string;
   author: { name: string; url: string };
 }
 
 export type Theme = ThemeInfo & ThemeDefinition;
 export type ThemeMap = Record<string, Theme>;
-
-export const defaultTheme: Theme = {
-  name: "Default",
-  author: { name: "@openstatus", url: "https://openstatus.dev" },
-  light: {},
-  dark: {},
-};

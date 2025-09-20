@@ -1,6 +1,5 @@
 import { Link } from "@/components/common/link";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 
 export default async function Layout({
@@ -11,7 +10,7 @@ export default async function Layout({
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="light"
       enableSystem
       disableTransitionOnChange
     >
@@ -20,7 +19,6 @@ export default async function Layout({
         <p>
           powered by <Link href="https://openstatus.dev">openstatus</Link>
         </p>
-        <ThemeToggle />
       </footer>
       <Toaster richColors expand />
     </ThemeProvider>

@@ -1,6 +1,7 @@
 import type { Theme } from "./types";
 
-export const supabase: Theme = {
+export const SUPABASE = {
+  id: "supabase",
   name: "Supabase",
   author: { name: "@___", url: "#" },
   light: {
@@ -43,4 +44,4 @@ export const supabase: Theme = {
     "--warning": "oklch(70.84% 0.1523 71.24)",
     "--info": "oklch(61.26% 0.218 283.85)",
   },
-};
+} as const satisfies Theme;
