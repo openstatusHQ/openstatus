@@ -137,7 +137,9 @@ export function StatusPageProvider({
       <div
         style={
           communityTheme
-            ? THEMES[communityTheme][resolvedTheme as "dark" | "light"]
+            ? (THEMES[communityTheme][
+                resolvedTheme as "dark" | "light"
+              ] as React.CSSProperties)
             : undefined
         }
       >
