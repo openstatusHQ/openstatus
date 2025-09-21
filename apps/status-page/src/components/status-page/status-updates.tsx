@@ -8,13 +8,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
-import { Inbox } from "lucide-react";
+import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
-type StatusUpdateType = "email" | "rss" | "atom" | "ssh";
+type StatusUpdateType = "email" | "rss" | "ssh";
+
+// TODO: use domain instead of openstatus subdomain if available
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   types?: StatusUpdateType[];
@@ -24,7 +27,7 @@ interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
 
 export function StatusUpdates({
   className,
-  types = ["rss", "atom"],
+  types = ["rss", "ssh"],
   slug,
   onSubscribe,
   ...props
@@ -43,7 +46,7 @@ export function StatusUpdates({
           Get updates
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="overflow-hidden p-0">
+      <PopoverContent align="end" className="overflow-hidden p-0 w-80">
         <Tabs defaultValue="email">
           <TabsList className="w-full rounded-none border-b">
             {types.includes("email") ? (
@@ -51,9 +54,6 @@ export function StatusUpdates({
             ) : null}
             {types.includes("rss") ? (
               <TabsTrigger value="rss">RSS</TabsTrigger>
-            ) : null}
-            {types.includes("atom") ? (
-              <TabsTrigger value="atom">Atom</TabsTrigger>
             ) : null}
             {types.includes("ssh") ? (
               <TabsTrigger value="ssh">SSH</TabsTrigger>
@@ -65,7 +65,7 @@ export function StatusUpdates({
             ) : (
               <>
                 <div className="flex flex-col gap-2 border-b px-2 pb-2">
-                  <p className="text-foreground text-sm">
+                  <p className="text-sm">
                     Get email notifications whenever a report has been created
                     or resolved
                   </p>
@@ -86,40 +86,30 @@ export function StatusUpdates({
             )}
           </TabsContent>
           <TabsContent value="rss" className="flex flex-col gap-2">
-            <div className="border-b px-2 pb-2">
-              <Input
-                placeholder={`https://${slug}.openstatus.dev/feed/rss`}
-                readOnly
-              />
-            </div>
-            <div className="px-2 pb-2">
-              <CopyButton
+            <div className="px-2 flex flex-col gap-2">
+              <p className="text-sm">Get the RSS feed</p>
+              <CopyInputButton
                 className="w-full"
+                id="rss"
                 value={`https://${slug}.openstatus.dev/feed/rss`}
               />
             </div>
-          </TabsContent>
-          <TabsContent value="atom" className="flex flex-col gap-2">
-            <div className="border-b px-2 pb-2">
-              <Input
-                placeholder={`https://${slug}.openstatus.dev/feed/atom`}
-                readOnly
-              />
-            </div>
-            <div className="px-2 pb-2">
-              <CopyButton
+            <Separator />
+            <div className="px-2 flex flex-col gap-2 pb-2">
+              <p className="text-sm">Get the Atom feed</p>
+              <CopyInputButton
                 className="w-full"
+                id="atom"
                 value={`https://${slug}.openstatus.dev/feed/atom`}
               />
             </div>
           </TabsContent>
           <TabsContent value="ssh" className="flex flex-col gap-2">
-            <div className="border-b px-2 pb-2">
-              <Input placeholder={`ssh ${slug}@ssh.openstatus.dev`} readOnly />
-            </div>
-            <div className="px-2 pb-2">
-              <CopyButton
+            <div className="px-2 flex flex-col gap-2 pb-2">
+              <p className="text-sm">Get status via SSH</p>
+              <CopyInputButton
                 className="w-full"
+                id="ssh"
                 value={`ssh ${slug}@ssh.openstatus.dev`}
               />
             </div>
@@ -127,6 +117,44 @@ export function StatusUpdates({
         </Tabs>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function CopyInputButton({
+  value,
+  onClick,
+  ...props
+}: React.ComponentProps<typeof Input> & {
+  value: string;
+}) {
+  const { copy, isCopied } = useCopyToClipboard();
+  return (
+    <div className="relative w-full">
+      <Input
+        placeholder={value}
+        readOnly
+        onClick={(e) => {
+          copy(value, {
+            successMessage: "Link copied to clipboard",
+          });
+          onClick?.(e);
+        }}
+        {...props}
+      />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() =>
+          copy(value, {
+            successMessage: "Link copied to clipboard",
+          })
+        }
+        className="size-6 absolute right-2 top-1/2 -translate-y-1/2"
+      >
+        {isCopied ? <Check /> : <Copy />}
+        <span className="sr-only">Copy Link</span>
+      </Button>
+    </div>
   );
 }
 
