@@ -3,6 +3,7 @@ import {
   FloatingButton,
   StatusPageProvider,
 } from "@/components/status-page/floating-button";
+import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
@@ -16,10 +17,6 @@ export const schema = z.object({
   uptime: z.coerce.boolean().default(true),
   theme: z.enum(["default"]).default("default"),
 });
-
-const DISPLAY_FLOATING_BUTTON =
-  process.env.NODE_ENV === "development" ||
-  process.env.NEXT_PUBLIC_ENABLE_FLOATING_BUTTON === "true";
 
 export default async function Layout({
   children,
@@ -51,7 +48,8 @@ export default async function Layout({
           defaultCommunityTheme={validation.data?.theme}
         >
           {children}
-          {DISPLAY_FLOATING_BUTTON ? <FloatingButton /> : null}
+          <FloatingButton />
+          <FloatingTheme />
           <Toaster
             toastOptions={{
               classNames: {},

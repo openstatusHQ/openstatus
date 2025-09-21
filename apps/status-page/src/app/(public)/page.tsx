@@ -17,6 +17,7 @@ import {
 } from "@/components/status-page/status";
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { Button } from "@/components/ui/button";
 import { monitors } from "@/data/monitors";
 import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { useTRPC } from "@/lib/trpc/client";
@@ -83,6 +84,15 @@ export default function Page() {
             to see the existing themes and create a new one by forking and
             creating a pull request.
           </p>
+          <Button
+            onClick={() => {
+              // NOTE: we use it to display the 'floating-theme' component
+              sessionStorage.setItem("community-theme", "true");
+              window.location.href = "/status";
+            }}
+          >
+            Test it
+          </Button>
           <hr />
           <p>
             Why don't we allow custom css styles to be overridden and only

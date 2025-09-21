@@ -91,6 +91,8 @@ Before submitting:
 3. Check accessibility with browser dev tools
 4. Ensure all status indicators (operational, degraded, etc.) are clearly distinguishable
 
+To test a theme, you can use the `sessionStorage.setItem("community-theme", "true");` on your stpg.dev or vercel preview link. It will open a floating button on the right left corner where you can choose between the themes and dark/light mode.
+
 ## Questions?
 
 Need help creating a theme? Open an issue or reach out to the openstatus community!

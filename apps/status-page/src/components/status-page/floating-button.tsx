@@ -149,6 +149,10 @@ export function StatusPageProvider({
   );
 }
 
+const DISPLAY_FLOATING_BUTTON =
+  process.env.NODE_ENV === "development" ||
+  process.env.NEXT_PUBLIC_ENABLE_FLOATING_BUTTON === "true";
+
 export function FloatingButton({ className }: { className?: string }) {
   const {
     cardType,
@@ -162,6 +166,8 @@ export function FloatingButton({ className }: { className?: string }) {
     radius,
     setRadius,
   } = useStatusPage();
+
+  if (!DISPLAY_FLOATING_BUTTON) return null;
 
   return (
     <div className={cn("fixed right-4 bottom-4 z-50", className)}>
