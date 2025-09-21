@@ -92,7 +92,7 @@ export function StatusMonitorTitle({
   return (
     <div
       className={cn(
-        "truncate font-medium font-mono text-foreground leading-none",
+        "truncate font-medium font-mono text-foreground text-base leading-5",
         className,
       )}
       {...props}
