@@ -148,7 +148,6 @@ export default function Page() {
         </StatusContent>
         <Separator />
         <StatusContent>
-          <StatusTitle>Recent Events</StatusTitle>
           <StatusFeed
             statusReports={page.statusReports
               .filter((report) =>

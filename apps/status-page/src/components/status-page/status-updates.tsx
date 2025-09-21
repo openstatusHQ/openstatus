@@ -46,7 +46,7 @@ export function StatusUpdates({
           Get updates
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="overflow-hidden p-0 w-80">
+      <PopoverContent align="end" className="w-80 overflow-hidden p-0">
         <Tabs defaultValue="email">
           <TabsList className="w-full rounded-none border-b">
             {types.includes("email") ? (
@@ -86,7 +86,7 @@ export function StatusUpdates({
             )}
           </TabsContent>
           <TabsContent value="rss" className="flex flex-col gap-2">
-            <div className="px-2 flex flex-col gap-2">
+            <div className="flex flex-col gap-2 px-2">
               <p className="text-sm">Get the RSS feed</p>
               <CopyInputButton
                 className="w-full"
@@ -95,7 +95,7 @@ export function StatusUpdates({
               />
             </div>
             <Separator />
-            <div className="px-2 flex flex-col gap-2 pb-2">
+            <div className="flex flex-col gap-2 px-2 pb-2">
               <p className="text-sm">Get the Atom feed</p>
               <CopyInputButton
                 className="w-full"
@@ -105,7 +105,7 @@ export function StatusUpdates({
             </div>
           </TabsContent>
           <TabsContent value="ssh" className="flex flex-col gap-2">
-            <div className="px-2 flex flex-col gap-2 pb-2">
+            <div className="flex flex-col gap-2 px-2 pb-2">
               <p className="text-sm">Get status via SSH</p>
               <CopyInputButton
                 className="w-full"
@@ -149,7 +149,7 @@ function CopyInputButton({
             successMessage: "Link copied to clipboard",
           })
         }
-        className="size-6 absolute right-2 top-1/2 -translate-y-1/2"
+        className="-translate-y-1/2 absolute top-1/2 right-2 size-6"
       >
         {isCopied ? <Check /> : <Copy />}
         <span className="sr-only">Copy Link</span>

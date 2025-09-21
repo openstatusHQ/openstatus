@@ -8,12 +8,16 @@ import {
   Status,
   StatusContent,
   StatusDescription,
-  StatusEmptyState,
-  StatusEmptyStateDescription,
-  StatusEmptyStateTitle,
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import {
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankDescription,
+  StatusBlankMonitor,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
 import { StatusMonitorTitle } from "@/components/status-page/status-monitor";
 import { StatusMonitorDescription } from "@/components/status-page/status-monitor";
 import { useTRPC } from "@/lib/trpc/client";
@@ -90,12 +94,19 @@ export default function Page() {
             );
           })
         ) : (
-          <StatusEmptyState>
-            <StatusEmptyStateTitle>No public monitors</StatusEmptyStateTitle>
-            <StatusEmptyStateDescription>
-              No public monitors have been added to this page.
-            </StatusEmptyStateDescription>
-          </StatusEmptyState>
+          <StatusBlankContainer>
+            <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+              <StatusBlankMonitor className="-top-16 absolute scale-60 opacity-50" />
+              <StatusBlankMonitor className="-top-8 absolute scale-80 opacity-80" />
+              <StatusBlankMonitor />
+            </div>
+            <StatusBlankContent>
+              <StatusBlankTitle>No public monitors</StatusBlankTitle>
+              <StatusBlankDescription>
+                No public monitors have been added to this page.
+              </StatusBlankDescription>
+            </StatusBlankContent>
+          </StatusBlankContainer>
         )}
       </StatusContent>
     </Status>
