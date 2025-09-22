@@ -152,7 +152,7 @@ export function FormWebhook({
                 <FormDescription>
                   Send notifications to a custom webhook URL.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/alerting/providers/webhook/"
+                    href="https://docs.openstatus.dev/reference/notification/#webhook"
                     rel="noreferrer"
                     target="_blank"
                   >

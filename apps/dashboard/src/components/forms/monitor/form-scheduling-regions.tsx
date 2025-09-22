@@ -332,7 +332,7 @@ export function FormSchedulingRegions({
               </span>{" "}
               regions. Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/monitoring/customization/locations/"
+                href="https://docs.openstatus.dev/reference/http-monitor/#regions"
                 rel="noreferrer"
                 target="_blank"
               >
@@ -340,7 +340,7 @@ export function FormSchedulingRegions({
               </Link>{" "}
               and{" "}
               <Link
-                href="https://docs.openstatus.dev/monitoring/customization/frequency/"
+                href="https://docs.openstatus.dev/reference/http-monitor/#frequency"
                 rel="noreferrer"
                 target="_blank"
               >
