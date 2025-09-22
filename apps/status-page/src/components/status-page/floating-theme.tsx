@@ -28,6 +28,7 @@ export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
 export function FloatingTheme({ className }: { className?: string }) {
   const { communityTheme, setCommunityTheme } = useStatusPage();
   const [display, setDisplay] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const enabled = sessionStorage.getItem("community-theme") === "true";
@@ -39,6 +40,7 @@ export function FloatingTheme({ className }: { className?: string }) {
       enabled
     ) {
       setDisplay(true);
+      setOpen(true);
     }
   }, []);
 
@@ -46,11 +48,10 @@ export function FloatingTheme({ className }: { className?: string }) {
 
   return (
     <div className={cn("fixed right-4 bottom-4 z-50", className)}>
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             size="icon"
-            variant="outline"
             className="size-12 rounded-full dark:bg-background"
           >
             <Palette className="size-5" />

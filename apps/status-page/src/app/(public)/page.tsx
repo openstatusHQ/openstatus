@@ -78,7 +78,7 @@ export default function Page() {
           </p>
           <p>
             Go to the{" "}
-            <Link href="https://github.com/openstatus-dev/status-page/blob/main/src/lib/community-themes">
+            <Link href="https://github.com/openstatusHQ/openstatus/tree/main/apps/status-page/src/lib/community-themes">
               GitHub directory
             </Link>{" "}
             to see the existing themes and create a new one by forking and
@@ -93,6 +93,11 @@ export default function Page() {
           >
             Test it
           </Button>
+          <p>
+            Or use the{" "}
+            <code>sessionStorage.setItem("community-theme", "true");</code> on
+            your own status page.
+          </p>
           <hr />
           <p>
             Why don't we allow custom css styles to be overridden and only
