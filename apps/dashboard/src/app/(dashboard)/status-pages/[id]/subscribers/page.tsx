@@ -86,7 +86,7 @@ export default function Page() {
               <BillingOverlayDescription>
                 Keep your users in the loop with status page updates.{" "}
                 <Link
-                  href="https://docs.openstatus.dev/status-page/work/subscribers/"
+                  href="https://docs.openstatus.dev/reference/subscriber/"
                   rel="noreferrer"
                   target="_blank"
                 >

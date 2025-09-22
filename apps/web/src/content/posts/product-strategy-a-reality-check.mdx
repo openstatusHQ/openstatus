@@ -10,7 +10,7 @@ image: /assets/posts/product-strategy-a-reality-check/emily-omier.png
 tag: company
 ---
 
-We worked closely with [Emily Omier](https://emilyomier.com/) to understand our place in the open-source ecosystem and to challenge ourselves. Over the course of a month, every week, Emily hit us with tough questions and then questioned our answers again. All async - so everyone could work on it when they had the capacity.  
+We worked closely with [Emily Omier](https://emilyomier.com/) to understand our place in the open-source ecosystem and to challenge ourselves. Over the course of a month, every week, Emily hit us with tough questions and then questioned our answers again. All async - so everyone could work on it when they had the capacity.
 
 Spoiler alert: it’s been hard - really hard.
 
@@ -32,27 +32,27 @@ Let's break some topics down.
 
 ## Unique value in the ecosystem
 
-We didn’t feel particularly unique. And that’s one of the hardest things we’re struggling with. If you know what makes you special, you can lean into it.  
+We didn’t feel particularly unique. And that’s one of the hardest things we’re struggling with. If you know what makes you special, you can lean into it.
 Without naming any competitors - most of them offer status pages and monitoring. So why would anyone choose an open-source, bootstrapped company?
 
 Here’s why:
 
 We build in the open, share what we learn, and our work inspires others. At the start of our journey, we were lucky to make it onto the oss-friends list. We speak the same language as developers (and never like corporate brands). That’s just not who we are. We focus on crafting beautiful DX, UX, and UI - and that gets people talking.
 
-Technically, we offer parallel scheduling and multi-region monitoring by default.  
+Technically, we offer parallel scheduling and multi-region monitoring by default.
 But most of our users primarily care about one thing: uptime. Parallel pings are resource-heavy, and if we want to offer more monitors at a lower cost, we should consider round-robin scheduling to reduce resource consumption and pass those savings to users.
 
 Lots of competitors use a pay-as-you-go approach. We try to keep reasonable limits within a fixed pricing. Know in advance what you'll pay!
 
-With the new dashboard and CLI (soon more), we’re moving toward an opinionated but clean DX/UX (inspired by the [Linear method](https://linear.app/method)) and focusing entirely on monitoring + status pages. We’re also updating our pricing very soon (if we haven't already) to better reflect what our users need.  
+With the new dashboard and CLI (soon more), we’re moving toward an opinionated but clean DX/UX (inspired by the [Linear method](https://linear.app/method)) and focusing entirely on monitoring + status pages. We’re also updating our pricing very soon (if we haven't already) to better reflect what our users need.
 
 {/* ~~REMINDER: add post once published~~ */}
 
 With tools like `shadcn` emerging and the increasing influence of AI-powered tools, we want to embrace this wave and provide even more value to the ecosystem.
 
-We're a small, bootstrapped, and transparent team, we can move fast in terms of changes but it also implies moving slower due to pivots. So we have to be aware of our values and stay true to ourselves. 
+We're a small, bootstrapped, and transparent team, we can move fast in terms of changes but it also implies moving slower due to pivots. So we have to be aware of our values and stay true to ourselves.
 
-And if you have an issue, you’ll hear from the Thibault or me directly. 
+And if you have an issue, you’ll hear from the Thibault or me directly.
 
 > Get in touch: via [cal.com](https://openstatus.dev/cal), [Discord](https://openstatus.dev/discord), or simply by [email](ping@openstatus.dev) - choose your channel.
 
@@ -64,7 +64,7 @@ But we’re not great at maintaining our self-hosted product. We’ve published 
 
 Over time, we’ve tried to reduce friction - like migrating from Clerk to NextAuth - but we’re not fully there yet. Thankfully, [Tinybird published a Docker version](https://www.tinybird.co/blog-posts/tinybird-local-docker-container), which removed one of our biggest blockers. And our usage of Google Queue can easily be replaced.
 
-Our resources are limited. Until there's a clear and urgent need to invest in self-hosting, we have to stay focused. That’s also why we’re not building an on-call system or branching out into features that would broaden our audience too much. Doing so would mess up our purpose: monitoring and status pages. Instead, we provide solid integrations with tools like [OpsGenie](https://docs.openstatus.dev/alerting/providers/opsgenie/) and [PagerDuty](https://docs.openstatus.dev/alerting/providers/pagerduty/).
+Our resources are limited. Until there's a clear and urgent need to invest in self-hosting, we have to stay focused. That’s also why we’re not building an on-call system or branching out into features that would broaden our audience too much. Doing so would mess up our purpose: monitoring and status pages. Instead, we provide solid integrations with tools like [OpsGenie](https://docs.openstatus.dev/reference/notification/#opsgenie) and [PagerDuty](https://docs.openstatus.dev/reference/notification/#pagerduty).
 
 Also: running OpenStatus yourself, with all features enabled, is often **more expensive** than paying for a hosted plan.
 
@@ -78,7 +78,7 @@ We can’t (and won’t) say: “With OpenStatus, users recover X times faster.�
 
 But we now provide a simple way for uptime monitoring as code: you don't need language stuff - just a simple yaml file. Run it in your CI/CD pipes and add additional health checks after deployments via our [GitHub integration](https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action/).
 
-> We know that our marketing page doesn’t clearly explain the problems we solve. 
+> We know that our marketing page doesn’t clearly explain the problems we solve.
 > It lists features (not even very well), but it should focus on the _problems_ we address - and how OpenStatus helps solve them. It will take time to rework our pages and fill it with words.
 
 ## Our opinions in the ecosystem
@@ -96,7 +96,7 @@ But we now provide a simple way for uptime monitoring as code: you don't need la
 We were lucky to work closely with Emily - and lucky that she challenged us. If you are in the OSS space, we can only recommend reaching out.
 Even now, I can already picture her questioning our decisions as we move forward. She gave us timeless input, tough questions, and a method we’ll come back to whenever we find ourselves stuck.
 
-Everything takes time and we have reduced the number of new features shipped over the last months - on purpose. Changes are coming - and we’re excited to start this next chapter with you.  
+Everything takes time and we have reduced the number of new features shipped over the last months - on purpose. Changes are coming - and we’re excited to start this next chapter with you.
 
 As always, we’re incredibly grateful for every feedback and support we are getting.
 
