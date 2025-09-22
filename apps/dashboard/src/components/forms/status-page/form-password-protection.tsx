@@ -132,7 +132,7 @@ export function FormPasswordProtection({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/status-page/advanced/password/"
+                href="https://docs.openstatus.dev/reference/status-page/#password"
                 rel="noreferrer"
                 target="_blank"
               >

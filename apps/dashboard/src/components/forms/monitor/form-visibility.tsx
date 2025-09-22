@@ -113,7 +113,7 @@ export function FormVisibility({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/status-page/advanced/monitors/"
+                href="https://docs.openstatus.dev/reference/http-monitor/#public"
                 rel="noreferrer"
                 target="_blank"
               >

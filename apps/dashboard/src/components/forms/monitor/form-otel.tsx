@@ -180,7 +180,7 @@ export function FormOtel({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://docs.openstatus.dev/monitoring/opentelemetry/"
+                href="https://docs.openstatus.dev/reference/http-monitor/#opentelemetry"
                 rel="noreferrer"
                 target="_blank"
               >
