@@ -29,7 +29,7 @@ export function CLICard() {
           <div className="text-center">
             <Button className="rounded-full" asChild>
               <Link
-                href="https://docs.openstatus.dev/cli/getting-started/"
+                href="https://docs.openstatus.dev/tutorial/get-started-with-openstatus-cli/"
                 target="_blank"
                 rel="noreferrer"
               >

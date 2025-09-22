@@ -378,7 +378,7 @@ export function FeatureAPIMonitoring(
       action={
         <Button variant="outline" className="w-max rounded-full" asChild>
           <a
-            href="https://docs.openstatus.dev/cli/getting-started"
+            href="https://docs.openstatus.dev/tutorial/get-started-with-openstatus-cli/"
             rel="noreferrer"
             target="_blank"
           >
@@ -530,7 +530,7 @@ export function FeatureCLI(
       action={
         <Button variant="outline" className="w-max rounded-full" asChild>
           <a
-            href="https://docs.openstatus.dev/cli/getting-started"
+            href="https://docs.openstatus.dev/tutorial/get-started-with-openstatus-cli/"
             rel="noreferrer"
             target="_blank"
           >
@@ -570,7 +570,7 @@ export function FeatureOpenTelemetry(
       action={
         <Button variant="outline" className="w-max rounded-full" asChild>
           <a
-            href="https://docs.openstatus.dev/monitoring/opentelemetry"
+            href="https://docs.openstatus.dev/guides/how-to-export-metrics-to-otlp-endpoint/"
             rel="noreferrer"
             target="_blank"
           >
