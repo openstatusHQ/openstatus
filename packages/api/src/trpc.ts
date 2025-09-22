@@ -179,17 +179,24 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   //   });
   // }
 
-  const activeWorkspace = usersToWorkspaces?.find(({ workspace }) => {
-    // If there is a workspace slug in the cookie, use it to find the workspace
-    if (workspaceSlug) return workspace.slug === workspaceSlug;
-    return true;
-  })?.workspace;
+  // NOTE: if no workspace slug fit (cookie manipulation), use the first workspace
+  const activeWorkspace =
+    usersToWorkspaces?.find(({ workspace }) => {
+      // If there is a workspace slug in the cookie, use it to find the workspace
+      if (workspaceSlug) return workspace.slug === workspaceSlug;
+      return true;
+    })?.workspace ?? usersToWorkspaces?.[0]?.workspace;
 
   if (!activeWorkspace) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Workspace Not Found",
     });
+  }
+
+  if (activeWorkspace.slug !== workspaceSlug) {
+    // properly set the workspace slug cookie
+    ctx.req?.cookies.set("workspace-slug", activeWorkspace.slug);
   }
 
   if (!userProps) {
