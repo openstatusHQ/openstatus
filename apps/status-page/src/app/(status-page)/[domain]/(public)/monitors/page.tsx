@@ -8,12 +8,16 @@ import {
   Status,
   StatusContent,
   StatusDescription,
-  StatusEmptyState,
-  StatusEmptyStateDescription,
-  StatusEmptyStateTitle,
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import {
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankDescription,
+  StatusBlankMonitor,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
 import { StatusMonitorTitle } from "@/components/status-page/status-monitor";
 import { StatusMonitorDescription } from "@/components/status-page/status-monitor";
 import { useTRPC } from "@/lib/trpc/client";
@@ -69,7 +73,7 @@ export default function Page() {
                 className="rounded-lg"
               >
                 <div className="group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-border/50 hover:bg-muted/50">
-                  <div className="flex flex-row items-center gap-2">
+                  <div className="flex flex-row items-center justify-start gap-2">
                     <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
                     <StatusMonitorDescription>
                       {monitor.description}
@@ -90,12 +94,19 @@ export default function Page() {
             );
           })
         ) : (
-          <StatusEmptyState>
-            <StatusEmptyStateTitle>No public monitors</StatusEmptyStateTitle>
-            <StatusEmptyStateDescription>
-              No public monitors have been added to this page.
-            </StatusEmptyStateDescription>
-          </StatusEmptyState>
+          <StatusBlankContainer>
+            <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+              <StatusBlankMonitor className="-top-16 absolute scale-60 opacity-50" />
+              <StatusBlankMonitor className="-top-8 absolute scale-80 opacity-80" />
+              <StatusBlankMonitor />
+            </div>
+            <StatusBlankContent>
+              <StatusBlankTitle>No public monitors</StatusBlankTitle>
+              <StatusBlankDescription>
+                No public monitors have been added to this page.
+              </StatusBlankDescription>
+            </StatusBlankContent>
+          </StatusBlankContainer>
         )}
       </StatusContent>
     </Status>

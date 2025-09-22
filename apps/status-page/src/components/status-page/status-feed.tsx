@@ -4,13 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDate } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
-import { Newspaper } from "lucide-react";
 import Link from "next/link";
 import {
-  StatusEmptyState,
-  StatusEmptyStateDescription,
-  StatusEmptyStateTitle,
-} from "./status";
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankDescription,
+  StatusBlankReport,
+  StatusBlankTitle,
+} from "./status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -80,13 +81,19 @@ export function StatusFeed({
 
   if (unifiedEvents.length === 0) {
     return (
-      <StatusEmptyState>
-        <Newspaper className="size-4 text-muted-foreground" />
-        <StatusEmptyStateTitle>No recent reports</StatusEmptyStateTitle>
-        <StatusEmptyStateDescription>
-          There have been no reports within the last 7 days.
-        </StatusEmptyStateDescription>
-      </StatusEmptyState>
+      <StatusBlankContainer>
+        <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+          <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
+          <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+          <StatusBlankReport />
+        </div>
+        <StatusBlankContent>
+          <StatusBlankTitle>No recent notifications</StatusBlankTitle>
+          <StatusBlankDescription>
+            There have been no reports within the last 7 days.
+          </StatusBlankDescription>
+        </StatusBlankContent>
+      </StatusBlankContainer>
     );
   }
 

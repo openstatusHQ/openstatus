@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { cn } from "@/lib/utils";
 import { Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { THEMES } from "./community-themes";
 
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
@@ -37,11 +37,12 @@ export type CardType = (typeof CARD_TYPE)[number];
 export const BAR_TYPE = ["absolute", "dominant", "manual"] as const;
 export type BarType = (typeof BAR_TYPE)[number];
 
-export const COMMUNITY_THEME = ["default", "github", "supabase"] as const;
+export const COMMUNITY_THEME = THEME_KEYS;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
+
+export const RADIUS = ["square", "rounded"] as const;
+export type Radius = (typeof RADIUS)[number];
 interface StatusPageContextType {
-  variant: VariantType;
-  setVariant: (variant: VariantType) => void;
   cardType: CardType;
   setCardType: (cardType: CardType) => void;
   barType: BarType;
@@ -50,6 +51,8 @@ interface StatusPageContextType {
   setShowUptime: (showUptime: boolean) => void;
   communityTheme: CommunityTheme;
   setCommunityTheme: (communityTheme: CommunityTheme) => void;
+  radius: Radius;
+  setRadius: (radius: Radius) => void;
 }
 
 const StatusPageContext = createContext<StatusPageContextType | null>(null);
@@ -64,23 +67,23 @@ export function useStatusPage() {
 
 export function StatusPageProvider({
   children,
-  defaultVariant = "success",
   defaultCardType = "duration",
   defaultBarType = "absolute",
   defaultShowUptime = true,
   defaultCommunityTheme = "default",
+  defaultRadius = "square",
 }: {
   children: React.ReactNode;
-  defaultVariant?: VariantType;
   defaultCardType?: CardType;
   defaultBarType?: BarType;
   defaultShowUptime?: boolean;
   defaultCommunityTheme?: CommunityTheme;
+  defaultRadius?: Radius;
 }) {
-  const [variant, setVariant] = useState<VariantType>(defaultVariant);
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
+  const [radius, setRadius] = useState<Radius>(defaultRadius);
   const { resolvedTheme } = useTheme();
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
     defaultCommunityTheme,
@@ -105,11 +108,20 @@ export function StatusPageProvider({
     }
   }, [resolvedTheme, communityTheme]);
 
+  useEffect(() => {
+    const computedRadius = getComputedStyle(
+      document.documentElement,
+    ).getPropertyValue("--radius");
+    if (radius === "square" && computedRadius !== "0rem") {
+      document.documentElement.style.setProperty("--radius", "0rem");
+    } else if (radius === "rounded" && computedRadius !== "0.625rem") {
+      document.documentElement.style.setProperty("--radius", "0.625rem");
+    }
+  }, [radius]);
+
   return (
     <StatusPageContext.Provider
       value={{
-        variant,
-        setVariant,
         cardType,
         setCardType,
         barType,
@@ -118,12 +130,16 @@ export function StatusPageProvider({
         setShowUptime,
         communityTheme,
         setCommunityTheme,
+        radius,
+        setRadius,
       }}
     >
       <div
         style={
           communityTheme
-            ? THEMES[communityTheme][resolvedTheme as "dark" | "light"]
+            ? (THEMES[communityTheme][
+                resolvedTheme as "dark" | "light"
+              ] as React.CSSProperties)
             : undefined
         }
       >
@@ -133,10 +149,12 @@ export function StatusPageProvider({
   );
 }
 
+const DISPLAY_FLOATING_BUTTON =
+  process.env.NODE_ENV === "development" ||
+  process.env.NEXT_PUBLIC_ENABLE_FLOATING_BUTTON === "true";
+
 export function FloatingButton({ className }: { className?: string }) {
   const {
-    variant,
-    setVariant,
     cardType,
     setCardType,
     barType,
@@ -145,7 +163,11 @@ export function FloatingButton({ className }: { className?: string }) {
     setShowUptime,
     communityTheme,
     setCommunityTheme,
+    radius,
+    setRadius,
   } = useStatusPage();
+
+  if (!DISPLAY_FLOATING_BUTTON) return null;
 
   return (
     <div className={cn("fixed right-4 bottom-4 z-50", className)}>
@@ -154,7 +176,7 @@ export function FloatingButton({ className }: { className?: string }) {
           <Button
             size="icon"
             variant="outline"
-            className="size-12 rounded-full"
+            className="size-12 rounded-full dark:bg-background"
           >
             <Settings className="size-5" />
             <span className="sr-only">Open status page settings</span>
@@ -169,28 +191,6 @@ export function FloatingButton({ className }: { className?: string }) {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status-variant">Status Variant</Label>
-                <Select
-                  value={variant}
-                  onValueChange={(v) => setVariant(v as VariantType)}
-                >
-                  <SelectTrigger
-                    id="status-variant"
-                    className="w-full capitalize"
-                    disabled
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VARIANT.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="show-uptime">Show Uptime</Label>
                 <Select
@@ -276,6 +276,24 @@ export function FloatingButton({ className }: { className?: string }) {
                   </SelectTrigger>
                   <SelectContent>
                     {COMMUNITY_THEME.map((v) => (
+                      <SelectItem key={v} value={v} className="capitalize">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="radius">Radius</Label>
+                <Select
+                  value={radius}
+                  onValueChange={(v) => setRadius(v as Radius)}
+                >
+                  <SelectTrigger id="radius" className="w-full capitalize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RADIUS.map((v) => (
                       <SelectItem key={v} value={v} className="capitalize">
                         {v}
                       </SelectItem>

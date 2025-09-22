@@ -1,6 +1,13 @@
 "use client";
 
 import {
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankDescription,
+  StatusBlankReport,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
+import {
   StatusEvent,
   StatusEventAffected,
   StatusEventAside,
@@ -9,20 +16,14 @@ import {
   StatusEventTimelineReport,
   StatusEventTitle,
 } from "@/components/status-page/status-events";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-
-import {
-  StatusEmptyState,
-  StatusEmptyStateDescription,
-  StatusEmptyStateTitle,
-} from "@/components/status-page/status";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/formatter";
-import { CircleCheck } from "lucide-react";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { Check } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 // TODO: include ?filter=maintenance/reports
 
@@ -71,7 +72,11 @@ export default function Page() {
                     <StatusEventTitle className="inline-flex gap-1">
                       {report.title}
                       {isReportResolvedOnly ? (
-                        <CircleCheck className="size-4 text-success shrink-0 mt-1 ml-1.5" />
+                        <div className="mt-1 ml-1.5">
+                          <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
+                            <Check className="size-3 shrink-0" />
+                          </div>
+                        </div>
                       ) : null}
                     </StatusEventTitle>
                     {report.monitorsToStatusReports.length > 0 ? (
@@ -96,12 +101,19 @@ export default function Page() {
             );
           })
         ) : (
-          <StatusEmptyState>
-            <StatusEmptyStateTitle>No reports found</StatusEmptyStateTitle>
-            <StatusEmptyStateDescription>
-              No reports found for this status page.
-            </StatusEmptyStateDescription>
-          </StatusEmptyState>
+          <StatusBlankContainer>
+            <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+              <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
+              <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+              <StatusBlankReport />
+            </div>
+            <StatusBlankContent>
+              <StatusBlankTitle>No reports found</StatusBlankTitle>
+              <StatusBlankDescription>
+                No reports found for this status page.
+              </StatusBlankDescription>
+            </StatusBlankContent>
+          </StatusBlankContainer>
         )}
       </TabsContent>
       <TabsContent value="maintenances" className="flex flex-col gap-4">
@@ -144,12 +156,19 @@ export default function Page() {
             );
           })
         ) : (
-          <StatusEmptyState>
-            <StatusEmptyStateTitle>No maintenances found</StatusEmptyStateTitle>
-            <StatusEmptyStateDescription>
-              No maintenances found for this status page.
-            </StatusEmptyStateDescription>
-          </StatusEmptyState>
+          <StatusBlankContainer>
+            <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+              <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
+              <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+              <StatusBlankReport />
+            </div>
+            <StatusBlankContent>
+              <StatusBlankTitle>No maintenances found</StatusBlankTitle>
+              <StatusBlankDescription>
+                No maintenances found for this status page.
+              </StatusBlankDescription>
+            </StatusBlankContent>
+          </StatusBlankContainer>
         )}
       </TabsContent>
     </Tabs>

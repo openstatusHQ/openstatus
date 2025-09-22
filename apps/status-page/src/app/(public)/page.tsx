@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import {
   Section,
   SectionDescription,
@@ -7,8 +8,6 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { THEMES } from "@/components/status-page/community-themes";
-import { COMMUNITY_THEME } from "@/components/status-page/floating-button";
 import {
   Status,
   StatusContent,
@@ -18,7 +17,9 @@ import {
 } from "@/components/status-page/status";
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { Button } from "@/components/ui/button";
 import { monitors } from "@/data/monitors";
+import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -30,36 +31,83 @@ export default function Page() {
         <SectionHeader>
           <SectionTitle>Status Page Themes</SectionTitle>
           <SectionDescription>
-            View all the current themes you can use. Or contribute your own one.
+            View all the current themes you can use.{" "}
+            <Link href="#contribute-theme">Contribute your own?</Link>
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-4">
-          {COMMUNITY_THEME.filter((theme) => theme !== "default").map(
-            (theme) => {
-              const t = THEMES[theme];
-              return (
-                <div key={theme} className="flex flex-col gap-2">
-                  <ThemeHeader>
-                    <ThemeTitle>{t.name}</ThemeTitle>
-                    <ThemeAuthor>
-                      by{" "}
-                      <a
-                        href={t.author.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {t.author.name}
-                      </a>
-                    </ThemeAuthor>
-                  </ThemeHeader>
-                  <ThemeGroup>
-                    <ThemeCard theme={theme} mode="light" />
-                    <ThemeCard theme={theme} mode="dark" />
-                  </ThemeGroup>
-                </div>
-              );
-            },
-          )}
+          {THEME_KEYS.map((theme) => {
+            const t = THEMES[theme];
+            return (
+              <div key={theme} className="flex flex-col gap-2">
+                <ThemeHeader>
+                  <ThemeTitle>{t.name}</ThemeTitle>
+                  <ThemeAuthor>
+                    by{" "}
+                    <a
+                      href={t.author.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t.author.name}
+                    </a>
+                  </ThemeAuthor>
+                </ThemeHeader>
+                <ThemeGroup>
+                  <ThemeCard theme={theme} mode="light" />
+                  <ThemeCard theme={theme} mode="dark" />
+                </ThemeGroup>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+      <Section>
+        <SectionHeader id="contribute-theme">
+          <SectionTitle>Contribute Theme</SectionTitle>
+          <SectionDescription>
+            Contribute your own theme to the community.
+          </SectionDescription>
+        </SectionHeader>
+        <div className="prose dark:prose-invert prose-sm max-w-none">
+          <p>
+            You can contribute your own theme by creating a new file in the{" "}
+            <code>src/lib/community-themes</code> directory. You&apos;ll only
+            need to override css variables. Make sure your object is satisfiying
+            the <code>Theme</code> interface.
+          </p>
+          <p>
+            Go to the{" "}
+            <Link href="https://github.com/openstatus-dev/status-page/blob/main/src/lib/community-themes">
+              GitHub directory
+            </Link>{" "}
+            to see the existing themes and create a new one by forking and
+            creating a pull request.
+          </p>
+          <Button
+            onClick={() => {
+              // NOTE: we use it to display the 'floating-theme' component
+              sessionStorage.setItem("community-theme", "true");
+              window.location.href = "/status";
+            }}
+          >
+            Test it
+          </Button>
+          <hr />
+          <p>
+            Why don't we allow custom css styles to be overridden and only
+            support themes?
+          </p>
+          <ul>
+            <li>Keep it simple for the user</li>
+            <li>Don't end up with a xmas tree</li>
+            <li>Keep the theme consistent</li>
+            <li>Avoid conflicts with other styles</li>
+            <li>
+              Keep the theme maintainable (but this will also mean, a change
+              will affect all users)
+            </li>
+          </ul>
         </div>
       </Section>
     </SectionGroup>
@@ -81,11 +129,14 @@ function ThemeCard({
     trpc.statusPage.getNoopUptime.queryOptions(),
   );
   return (
-    <div className="group/theme-card overflow-hidden rounded-lg border">
+    <div
+      className={cn(
+        "group/theme-card overflow-hidden rounded-lg border",
+        mode === "dark" ? "dark" : "",
+      )}
+    >
       <div
-        style={{
-          ...t,
-        }}
+        style={t as React.CSSProperties}
         className="h-full w-full bg-background"
       >
         {/* NOTE: we use pointer-events-none to prevent the hover card or tooltip from being interactive - the Portal container is document body and we loose the styles */}
@@ -129,7 +180,9 @@ function ThemeHeader({ children, className }: React.ComponentProps<"div">) {
 }
 
 function ThemeTitle({ children, className }: React.ComponentProps<"div">) {
-  return <div className={cn("font-bold text-base", className)}>{children}</div>;
+  return (
+    <div className={cn("font-semibold text-base", className)}>{children}</div>
+  );
 }
 
 function ThemeAuthor({ children, className }: React.ComponentProps<"div">) {

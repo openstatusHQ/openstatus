@@ -140,7 +140,8 @@ export function FormStatusPageUpdate() {
         }}
       />
       {/* TODO: feature flagged - remove once we have the new version in production */}
-      {process.env.NEXT_PUBLIC_STATUS_PAGE_V2 === "true" ? (
+      {process.env.NEXT_PUBLIC_STATUS_PAGE_V2 === "true" ||
+      process.env.NODE_ENV === "development" ? (
         <FormConfiguration
           defaultValues={{
             new: !statusPage.legacyPage,

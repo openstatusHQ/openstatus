@@ -80,7 +80,7 @@ export function ChartLegendBadge({
                 <itemConfig.icon />
               ) : (
                 <div
-                  className="h-2 w-2 shrink-0 rounded-[2px]"
+                  className="h-2 w-2 shrink-0 rounded-(--radius-xs)"
                   style={{
                     backgroundColor: item.color,
                   }}

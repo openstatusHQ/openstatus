@@ -69,30 +69,30 @@ export function Header(props: React.ComponentProps<"header">) {
   );
 
   const types = (
-    page?.workspacePlan === "free"
-      ? ["rss", "atom", "ssh"]
-      : ["email", "rss", "atom", "ssh"]
-  ) satisfies ("email" | "rss" | "atom" | "ssh")[];
+    page?.workspacePlan === "free" ? ["rss", "ssh"] : ["email", "rss", "ssh"]
+  ) satisfies ("email" | "rss" | "ssh")[];
 
   return (
     <header {...props}>
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">
         {/* NOTE: same width as the `StatusUpdates` button */}
-        <div className="w-[150px] shrink-0">
-          <Link
-            href={page?.homepageUrl || "/"}
-            target={page?.homepageUrl ? "_blank" : undefined}
-            rel={page?.homepageUrl ? "noreferrer" : undefined}
-            className="rounded-full"
-          >
-            {page?.icon ? (
-              <img
-                src={page.icon}
-                alt={`${page.title} status page`}
-                className="size-8 rounded-full border"
-              />
-            ) : null}
-          </Link>
+        <div className="flex w-[150px] shrink-0">
+          <div className="flex items-center justify-center">
+            <Link
+              href={page?.homepageUrl || "/"}
+              target={page?.homepageUrl ? "_blank" : undefined}
+              rel={page?.homepageUrl ? "noreferrer" : undefined}
+              className="rounded-full"
+            >
+              {page?.icon ? (
+                <img
+                  src={page.icon}
+                  alt={`${page.title} status page`}
+                  className="size-8 rounded-full border"
+                />
+              ) : null}
+            </Link>
+          </div>
         </div>
         <NavDesktop className="hidden md:flex" />
         <div className="flex min-w-[150px] items-center justify-end gap-2">
