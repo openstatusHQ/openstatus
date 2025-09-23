@@ -50,10 +50,7 @@ export function FloatingTheme({ className }: { className?: string }) {
     <div className={cn("fixed right-4 bottom-4 z-50", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            size="icon"
-            className="size-12 rounded-full dark:bg-background"
-          >
+          <Button size="icon" className="size-12 rounded-full">
             <Palette className="size-5" />
             <span className="sr-only">Open theme settings</span>
           </Button>
