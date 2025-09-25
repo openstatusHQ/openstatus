@@ -4,6 +4,7 @@ import {
   EmptyStateContainer,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { ProcessMessage } from "@/components/content/process-message";
 import {
   FormCardContent,
   FormCardSeparator,
@@ -313,9 +314,9 @@ export function FormMaintenance({
             <TabsContent value="tab-2">
               <div className="grid gap-2">
                 <Label>Preview</Label>
-                <p className="rounded-md border px-3 py-2 text-foreground text-sm">
-                  {watchMessage}
-                </p>
+                <div className="rounded-md border px-3 py-2 text-foreground text-sm">
+                  <ProcessMessage value={watchMessage} />
+                </div>
               </div>
             </TabsContent>
           </Tabs>
