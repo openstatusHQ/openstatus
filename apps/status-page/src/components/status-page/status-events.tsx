@@ -103,31 +103,42 @@ export function StatusEventTimelineReport({
   }[];
   withDot?: boolean;
 }) {
-  const startedAt = new Date(updates[0].date);
-  const endedAt = new Date(updates[updates.length - 1].date);
-  const duration = formatDistanceStrict(startedAt, endedAt);
-  // TODO: in 50 minutes when resolved OR 15 minutes earlier on other status
   return (
     <div className={cn("text-muted-foreground text-sm", className)} {...props}>
       {/* NOTE: make sure they are sorted by date */}
       {updates
         .sort((a, b) => b.date.getTime() - a.date.getTime())
-        .map((update, index) => (
-          <StatusEventTimelineReportUpdate
-            key={index}
-            report={update}
-            duration={
-              index === 0 &&
-              update.status === "resolved" &&
-              duration !== "0 seconds"
-                ? duration
-                : undefined
+        .map((update, index) => {
+          const updateDate = new Date(update.date);
+          let durationText: string | undefined;
+
+          if (index === 0) {
+            const startedAt = new Date(updates[updates.length - 1].date);
+            const duration = formatDistanceStrict(startedAt, updateDate);
+
+            if (duration !== "0 seconds" && update.status === "resolved") {
+              durationText = `(in ${duration})`;
             }
-            withSeparator={index !== updates.length - 1}
-            withDot={withDot}
-            isLast={index === updates.length - 1}
-          />
-        ))}
+          } else {
+            const lastUpdateDate = new Date(updates[index - 1].date);
+            const timeFromLast = formatDistanceStrict(
+              updateDate,
+              lastUpdateDate,
+            );
+            durationText = `(${timeFromLast} earlier)`;
+          }
+
+          return (
+            <StatusEventTimelineReportUpdate
+              key={index}
+              report={update}
+              duration={durationText}
+              withSeparator={index !== updates.length - 1}
+              withDot={withDot}
+              isLast={index === updates.length - 1}
+            />
+          );
+        })}
     </div>
   );
 }
@@ -172,7 +183,7 @@ function StatusEventTimelineReportUpdate({
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
-                  (in {duration})
+                  {duration}
                 </span>
               ) : null}
             </StatusEventTimelineTitle>
@@ -265,7 +276,7 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-mono text-foreground/90 text-sm py-1.5", className)}
+      className={cn("py-1.5 font-mono text-foreground/90 text-sm", className)}
       {...props}
     >
       {children}
