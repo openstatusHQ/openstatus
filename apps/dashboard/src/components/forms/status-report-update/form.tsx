@@ -176,7 +176,17 @@ export function FormStatusReportUpdate({
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(selectedDate) => {
+                        if (!selectedDate) return;
+                        const newDate = new Date(selectedDate);
+                        newDate.setHours(
+                          field.value.getHours(),
+                          field.value.getMinutes(),
+                          field.value.getSeconds(),
+                          field.value.getMilliseconds(),
+                        );
+                        field.onChange(newDate);
+                      }}
                       disabled={(date) =>
                         date > new Date() || date < new Date("1900-01-01")
                       }
@@ -192,17 +202,26 @@ export function FormStatusReportUpdate({
                             id="time"
                             type="time"
                             step="1"
-                            defaultValue={format(field.value, "HH:mm")}
+                            defaultValue={new Date().toTimeString().slice(0, 8)}
                             className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                             onChange={(e) => {
                               try {
-                                const date = field.value
-                                  ?.toISOString()
-                                  .split("T")[0];
+                                const timeValue = e.target.value;
+                                if (!timeValue || !field.value) return;
 
-                                field.onChange(
-                                  new Date(`${date}T${e.target.value}`),
+                                const [hours, minutes, seconds] = timeValue
+                                  .split(":")
+                                  .map(Number);
+
+                                const newDate = new Date(field.value);
+                                newDate.setHours(
+                                  hours,
+                                  minutes,
+                                  seconds || 0,
+                                  0,
                                 );
+
+                                field.onChange(newDate);
                               } catch (error) {
                                 console.error(error);
                               }

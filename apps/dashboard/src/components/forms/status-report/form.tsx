@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import { ProcessMessage } from "@/components/content/process-message";
 import {
   FormCardContent,
@@ -209,7 +213,17 @@ export function FormStatusReport({
                         <Calendar
                           mode="single"
                           selected={field.value}
-                          onSelect={field.onChange}
+                          onSelect={(selectedDate) => {
+                            if (!selectedDate) return;
+                            const newDate = new Date(selectedDate);
+                            newDate.setHours(
+                              field.value.getHours(),
+                              field.value.getMinutes(),
+                              field.value.getSeconds(),
+                              field.value.getMilliseconds(),
+                            );
+                            field.onChange(newDate);
+                          }}
                           disabled={(date) =>
                             date > new Date() || date < new Date("1900-01-01")
                           }
@@ -225,17 +239,28 @@ export function FormStatusReport({
                                 id="time"
                                 type="time"
                                 step="1"
-                                defaultValue="12:00:00"
+                                defaultValue={new Date()
+                                  .toTimeString()
+                                  .slice(0, 8)}
                                 className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                                 onChange={(e) => {
                                   try {
-                                    const date = field.value
-                                      ?.toISOString()
-                                      .split("T")[0];
+                                    const timeValue = e.target.value;
+                                    if (!timeValue || !field.value) return;
 
-                                    field.onChange(
-                                      new Date(`${date}T${e.target.value}`),
+                                    const [hours, minutes, seconds] = timeValue
+                                      .split(":")
+                                      .map(Number);
+
+                                    const newDate = new Date(field.value);
+                                    newDate.setHours(
+                                      hours,
+                                      minutes,
+                                      seconds || 0,
+                                      0,
                                     );
+
+                                    field.onChange(newDate);
                                   } catch (error) {
                                     console.error(error);
                                   }
@@ -303,39 +328,45 @@ export function FormStatusReport({
                 <FormDescription>
                   Select the monitors you want to notify.
                 </FormDescription>
-                <div className="grid gap-3">
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        id="all"
-                        checked={field.value?.length === monitors.length}
-                        onCheckedChange={(checked) => {
-                          field.onChange(
-                            checked ? monitors.map((m) => m.id) : [],
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <Label htmlFor="all">Select all</Label>
-                  </div>
-                  {monitors.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2">
+                {monitors.length ? (
+                  <div className="grid gap-3">
+                    <div className="flex items-center gap-2">
                       <FormControl>
                         <Checkbox
-                          id={String(item.id)}
-                          checked={field.value?.includes(item.id)}
+                          id="all"
+                          checked={field.value?.length === monitors.length}
                           onCheckedChange={(checked) => {
-                            const newValue = checked
-                              ? [...(field.value || []), item.id]
-                              : field.value?.filter((id) => id !== item.id);
-                            field.onChange(newValue);
+                            field.onChange(
+                              checked ? monitors.map((m) => m.id) : [],
+                            );
                           }}
                         />
                       </FormControl>
-                      <Label htmlFor={String(item.id)}>{item.name}</Label>
+                      <Label htmlFor="all">Select all</Label>
                     </div>
-                  ))}
-                </div>
+                    {monitors.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        <FormControl>
+                          <Checkbox
+                            id={String(item.id)}
+                            checked={field.value?.includes(item.id)}
+                            onCheckedChange={(checked) => {
+                              const newValue = checked
+                                ? [...(field.value || []), item.id]
+                                : field.value?.filter((id) => id !== item.id);
+                              field.onChange(newValue);
+                            }}
+                          />
+                        </FormControl>
+                        <Label htmlFor={String(item.id)}>{item.name}</Label>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyStateContainer>
+                    <EmptyStateTitle>No monitors found</EmptyStateTitle>
+                  </EmptyStateContainer>
+                )}
                 <FormMessage />
               </FormItem>
             )}
