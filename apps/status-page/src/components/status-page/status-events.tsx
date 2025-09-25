@@ -106,9 +106,10 @@ export function StatusEventTimelineReport({
   const startedAt = new Date(updates[0].date);
   const endedAt = new Date(updates[updates.length - 1].date);
   const duration = formatDistanceStrict(startedAt, endedAt);
+  // TODO: in 50 minutes when resolved OR 15 minutes earlier on other status
   return (
     <div className={cn("text-muted-foreground text-sm", className)} {...props}>
-      {/* TODO: make sure they are sorted by date */}
+      {/* NOTE: make sure they are sorted by date */}
       {updates
         .sort((a, b) => b.date.getTime() - a.date.getTime())
         .map((update, index) => (
@@ -151,7 +152,7 @@ function StatusEventTimelineReportUpdate({
   return (
     <div data-variant={report.status} className="group">
       <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-4">
           {withDot ? (
             <div className="flex flex-col">
               <div className="flex h-5 flex-col items-center justify-center">
@@ -164,7 +165,7 @@ function StatusEventTimelineReportUpdate({
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
               {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
-              <span className="font-mono text-muted-foreground/70 text-xs">
+              <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
                   <span>{formatDateTime(report.date)}</span>
                 </TimestampHoverCard>
@@ -204,7 +205,7 @@ export function StatusEventTimelineMaintenance({
   return (
     <div data-variant="maintenance" className="group">
       <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-4">
           {withDot ? (
             <div className="flex flex-col">
               <div className="flex h-5 flex-col items-center justify-center">
@@ -216,7 +217,7 @@ export function StatusEventTimelineMaintenance({
           <div>
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
-              <span className="font-mono text-muted-foreground/70 text-xs">
+              <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={maintenance.from} asChild>
                   <span>{from}</span>
                 </TimestampHoverCard>
@@ -264,7 +265,7 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-mono text-muted-foreground text-sm", className)}
+      className={cn("font-mono text-foreground/90 text-sm py-1.5", className)}
       {...props}
     >
       {children}
