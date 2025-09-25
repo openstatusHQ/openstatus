@@ -8,7 +8,6 @@ import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
-import { useParams } from "next/navigation";
 import { useRef } from "react";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
@@ -17,7 +16,11 @@ interface DataTableRowActionsProps {
   row: Row<StatusReport>;
 }
 
+// NOTE: avoid using useParams to get status page :id
+// because we are using the table in the /overview page
+
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+  if (!row.original.pageId) return null;
   const buttonCreateRef = useRef<HTMLButtonElement>(null);
   const buttonUpdateRef = useRef<HTMLButtonElement>(null);
   const actions = getActions({
@@ -26,7 +29,10 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     "view-report": () => {
       if (typeof window !== "undefined") {
         window.open(
-          `https://${row.original.page.customDomain || `${row.original.page.slug}.openstatus.dev`}/events/report/${row.original.id}`,
+          `https://${
+            row.original.page.customDomain ||
+            `${row.original.page.slug}.openstatus.dev`
+          }/events/report/${row.original.id}`,
           "_blank",
         );
       }
@@ -34,8 +40,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { id } = useParams<{ id: string }>();
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: page } = useQuery(
+    trpc.page.get.queryOptions({ id: row.original.pageId }),
+  );
   const sendStatusReportUpdateMutation = useMutation(
     trpc.emailRouter.sendStatusReport.mutationOptions(),
   );
@@ -44,7 +51,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
-            pageId: Number.parseInt(id),
+            pageId: row.original.pageId ?? undefined,
           }),
         });
         queryClient.invalidateQueries({
@@ -63,7 +70,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         //
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
-            pageId: Number.parseInt(id),
+            pageId: row.original.pageId ?? undefined,
           }),
         });
         queryClient.invalidateQueries({
@@ -77,7 +84,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
-            pageId: Number.parseInt(id),
+            pageId: row.original.pageId ?? undefined,
           }),
         });
         queryClient.invalidateQueries({
@@ -86,8 +93,6 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       },
     }),
   );
-
-  if (!monitors) return null;
 
   return (
     <>
@@ -103,7 +108,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
       <FormSheetStatusReport
-        monitors={monitors}
+        monitors={page?.monitors ?? []}
         defaultValues={{
           title: row.original.title,
           status: row.original.status,

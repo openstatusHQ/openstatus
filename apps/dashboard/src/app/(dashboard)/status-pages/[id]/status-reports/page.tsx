@@ -78,7 +78,7 @@ export default function Page() {
                   </>
                 ) : undefined
               }
-              monitors={monitors}
+              monitors={page.monitors}
               onSubmit={async (values) => {
                 // NOTE: for type safety, we need to check if the values have a date property
                 // because of the union type
