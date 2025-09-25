@@ -68,8 +68,8 @@ const nextConfig = {
     return {
       beforeFiles: [
         {
-          source: "/status-page/themes",
-          destination: "https://www.stpg.dev",
+          source: "/status-page/themes/:path*",
+          destination: "https://www.stpg.dev/:path*",
         },
         // New design: proxy app routes to external host with slug prefix
         {
