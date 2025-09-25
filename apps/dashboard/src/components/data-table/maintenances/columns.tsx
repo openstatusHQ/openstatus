@@ -1,5 +1,6 @@
 "use client";
 
+import { ProcessMessage } from "@/components/content/process-message";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
@@ -25,7 +26,7 @@ export const columns: ColumnDef<Maintenance>[] = [
       const value = String(row.getValue("message"));
       return (
         <div className="max-w-[200px] truncate text-muted-foreground">
-          {value}
+          <ProcessMessage value={value} />
         </div>
       );
     },

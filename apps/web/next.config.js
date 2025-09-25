@@ -67,6 +67,20 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        {
+          source: "/status-page/themes/:path*",
+          destination: "https://www.stpg.dev/:path*",
+        },
+        {
+          source: "/:path*",
+          has: [
+            {
+              type: "host",
+              value: "themes.openstatus.dev",
+            },
+          ],
+          destination: "https://www.stpg.dev/:path*",
+        },
         // New design: proxy app routes to external host with slug prefix
         {
           source: "/:path*",
