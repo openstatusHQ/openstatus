@@ -165,7 +165,18 @@ export function FormMaintenance({
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(selectedDate) => {
+                        if (!selectedDate) return;
+
+                        const newDate = new Date(selectedDate);
+                        newDate.setHours(
+                          field.value.getHours(),
+                          field.value.getMinutes(),
+                          field.value.getSeconds(),
+                          field.value.getMilliseconds(),
+                        );
+                        field.onChange(newDate);
+                      }}
                       initialFocus
                     />
                     <div className="border-t p-3">
@@ -178,17 +189,30 @@ export function FormMaintenance({
                             id="time"
                             type="time"
                             step="1"
-                            defaultValue={format(field.value, "HH:mm")}
+                            value={
+                              field.value
+                                ? field.value.toTimeString().slice(0, 8)
+                                : new Date().toTimeString().slice(0, 8)
+                            }
                             className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                             onChange={(e) => {
                               try {
-                                const date = field.value
-                                  ?.toISOString()
-                                  .split("T")[0];
+                                const timeValue = e.target.value;
+                                if (!timeValue || !field.value) return;
 
-                                field.onChange(
-                                  new Date(`${date}T${e.target.value}`),
+                                const [hours, minutes, seconds] = timeValue
+                                  .split(":")
+                                  .map(Number);
+
+                                const newDate = new Date(field.value);
+                                newDate.setHours(
+                                  hours,
+                                  minutes,
+                                  seconds || 0,
+                                  0,
                                 );
+
+                                field.onChange(newDate);
                               } catch (error) {
                                 console.error(error);
                               }
@@ -245,7 +269,18 @@ export function FormMaintenance({
                     <Calendar
                       mode="single"
                       selected={field.value}
-                      onSelect={field.onChange}
+                      onSelect={(selectedDate) => {
+                        if (!selectedDate) return;
+
+                        const newDate = new Date(selectedDate);
+                        newDate.setHours(
+                          field.value.getHours(),
+                          field.value.getMinutes(),
+                          field.value.getSeconds(),
+                          field.value.getMilliseconds(),
+                        );
+                        field.onChange(newDate);
+                      }}
                       initialFocus
                     />
                     <div className="border-t p-3">
@@ -258,17 +293,30 @@ export function FormMaintenance({
                             id="time"
                             type="time"
                             step="1"
-                            defaultValue={format(field.value, "HH:mm")}
+                            value={
+                              field.value
+                                ? field.value.toTimeString().slice(0, 8)
+                                : new Date().toTimeString().slice(0, 8)
+                            }
                             className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                             onChange={(e) => {
                               try {
-                                const date = field.value
-                                  ?.toISOString()
-                                  .split("T")[0];
+                                const timeValue = e.target.value;
+                                if (!timeValue || !field.value) return;
 
-                                field.onChange(
-                                  new Date(`${date}T${e.target.value}`),
+                                const [hours, minutes, seconds] = timeValue
+                                  .split(":")
+                                  .map(Number);
+
+                                const newDate = new Date(field.value);
+                                newDate.setHours(
+                                  hours,
+                                  minutes,
+                                  seconds || 0,
+                                  0,
                                 );
+
+                                field.onChange(newDate);
                               } catch (error) {
                                 console.error(error);
                               }
