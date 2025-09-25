@@ -11,4 +11,5 @@ export const subdomainSafeList = [
   "workflows",
   "template",
   "ssh",
+  "themes",
 ];
