@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 
-export const TITLE = "OpenStatus";
+export const TITLE = "openstatus";
 export const DESCRIPTION =
-  "OpenStatus is an open-source platform to monitor your services and keep your users informed.";
+  "Use community themes for your status page or contribute your own.";
 
-const OG_TITLE = "OpenStatus";
-const OG_DESCRIPTION = "Monitor your services and keep your users informed.";
-const FOOTER = "app.openstatus.dev";
-const IMAGE = "assets/og/dashboard-v2.png";
+const OG_TITLE = "Theme Store";
+const OG_DESCRIPTION =
+  "Use community themes for your status page or contribute your own.";
+const FOOTER = "themes.openstatus.dev";
+const IMAGE = "assets/og/status-page.png";
 
 export const defaultMetadata: Metadata = {
   title: {
