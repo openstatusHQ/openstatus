@@ -105,6 +105,7 @@ export function FormStatusPageUpdate() {
           monitors: statusPage.monitors.map((monitor) => ({
             id: monitor.id,
             order: monitor.order,
+            active: monitor.active ?? null,
           })),
         }}
         onSubmit={async (values) => {
