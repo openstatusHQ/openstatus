@@ -4,9 +4,9 @@ export const TITLE = "Theme explorer by openstatus";
 export const DESCRIPTION =
   "Easily customize your status page using our built-in themes. Explore our themes and contribute new ones to the community.";
 
-const OG_TITLE = "Theme explorer by openstatus";
+const OG_TITLE = "Theme explorer";
 const OG_DESCRIPTION =
-  "Easily customize your status page with our built-in themes.";
+  "Explore our themes for your status page and contribute new ones to the community.";
 const FOOTER = "themes.openstatus.dev";
 const IMAGE = "assets/og/dashboard-v2.png";
 
