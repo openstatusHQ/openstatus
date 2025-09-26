@@ -9,6 +9,7 @@ const OG_DESCRIPTION = "Easily customize your status page with our built-in them
 const FOOTER = "themes.openstatus.dev";
 const IMAGE = "assets/og/dashboard-v2.png";
 
+
 export const defaultMetadata: Metadata = {
   title: {
     template: `%s | ${TITLE}`,

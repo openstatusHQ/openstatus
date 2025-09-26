@@ -36,6 +36,7 @@ export function FloatingTheme({ className }: { className?: string }) {
     if (
       (host.includes("localhost") ||
         host.includes("stpg.dev") ||
+        host.includes("openstatus.dev") ||
         host.includes("vercel.app")) &&
       enabled
     ) {

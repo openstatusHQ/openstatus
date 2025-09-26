@@ -134,7 +134,7 @@ export function getEvents({
       if (!incident.createdAt || incident.createdAt < pastThreshod) return;
       events.push({
         id: incident.id,
-        name: incident.title,
+        name: incident.title || "Downtime",
         from: incident.createdAt,
         to: incident.resolvedAt,
         type: "incident",
@@ -212,6 +212,10 @@ const STATUS_PRIORITY = {
   success: 0,
   empty: -1,
 } as const;
+
+// Constants for time calculations
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const MILLISECONDS_PER_MINUTE = 1000 * 60;
 
 // Helper to get highest priority status from data
 function getHighestPriorityStatus(
@@ -298,8 +302,8 @@ function getTotalEventsDurationMs(events: Event[], date: Date): number {
     return acc + Math.max(0, duration);
   }, 0);
 
-  // Cap at 24 hours (86400000 milliseconds) per day
-  return Math.min(total, 24 * 60 * 60 * 1000);
+  // Cap at 24 hours per day
+  return Math.min(total, MILLISECONDS_PER_DAY);
 }
 
 export function setDataByType({
@@ -313,6 +317,194 @@ export function setDataByType({
   cardType: "requests" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
 }): UptimeData[] {
+  // Helper functions moved inside to share inputs and avoid parameter passing
+  function createEventSegments(
+    incidents: Event[],
+    reports: Event[],
+    maintenances: Event[],
+    date: Date,
+  ): Array<{ status: "info" | "degraded" | "error"; count: number }> {
+    const eventTypes = [
+      { status: "info" as const, events: maintenances },
+      { status: "degraded" as const, events: reports },
+      { status: "error" as const, events: incidents },
+    ];
+
+    return eventTypes
+      .filter(({ events }) => events.length > 0)
+      .map(({ status, events }) => ({
+        status,
+        count: getTotalEventsDurationMs(events, date),
+      }));
+  }
+
+  function createErrorOnlyBarData(
+    errorSegmentCount: number,
+  ): UptimeData["bar"] {
+    return [
+      {
+        status: "success" as const,
+        height:
+          ((MILLISECONDS_PER_DAY - errorSegmentCount) / MILLISECONDS_PER_DAY) *
+          100,
+      },
+      {
+        status: "error" as const,
+        height: (errorSegmentCount / MILLISECONDS_PER_DAY) * 100,
+      },
+    ];
+  }
+
+  function createProportionalBarData(
+    segments: Array<{ status: "info" | "degraded" | "error"; count: number }>,
+  ): UptimeData["bar"] {
+    const totalDuration = segments.reduce(
+      (sum, segment) => sum + segment.count,
+      0,
+    );
+
+    return segments.map((segment) => ({
+      status: segment.status,
+      height: (segment.count / totalDuration) * 100,
+    }));
+  }
+
+  function createStatusSegments(
+    dayData: StatusData,
+  ): Array<{ status: "success" | "degraded" | "error"; count: number }> {
+    return [
+      { status: "success" as const, count: dayData.ok },
+      { status: "degraded" as const, count: dayData.degraded },
+      { status: "error" as const, count: dayData.error },
+    ];
+  }
+
+  function segmentsToBarData(
+    segments: Array<{
+      status: "success" | "degraded" | "error";
+      count: number;
+    }>,
+    total: number,
+  ): UptimeData["bar"] {
+    return segments
+      .filter((segment) => segment.count > 0)
+      .map((segment) => ({
+        status: segment.status,
+        height: (segment.count / total) * 100,
+      }));
+  }
+
+  function createEmptyBarData(): UptimeData["bar"] {
+    return [
+      {
+        status: "empty",
+        height: 100,
+      },
+    ];
+  }
+
+  function createEmptyCardData(
+    eventStatus?: "error" | "degraded" | "info" | "success" | "empty",
+  ): UptimeData["card"] {
+    return [{ status: eventStatus ?? "empty", value: "" }];
+  }
+
+  function createRequestEntries(dayData: StatusData): Array<{
+    status: "success" | "degraded" | "error" | "info";
+    count: number;
+  }> {
+    return [
+      { status: "success" as const, count: dayData.ok },
+      { status: "degraded" as const, count: dayData.degraded },
+      { status: "error" as const, count: dayData.error },
+      { status: "info" as const, count: 0 },
+    ];
+  }
+
+  function createDurationEntries(dayData: StatusData): Array<{
+    status: "success" | "degraded" | "error" | "info";
+    count: number;
+  }> {
+    return [
+      { status: "error" as const, count: dayData.error },
+      { status: "degraded" as const, count: dayData.degraded },
+      { status: "success" as const, count: dayData.ok },
+      { status: "info" as const, count: 0 },
+    ];
+  }
+
+  function entriesToRequestCardData(
+    entries: Array<{
+      status: "success" | "degraded" | "error" | "info";
+      count: number;
+    }>,
+  ): UptimeData["card"] {
+    return entries
+      .filter((entry) => entry.count > 0)
+      .map((entry) => ({
+        status: entry.status,
+        value: `${formatNumber(entry.count)} reqs`,
+      }));
+  }
+
+  // Helper to calculate duration in minutes for a specific event type
+  function calculateEventDurationMinutes(events: Event[], date: Date): number {
+    const totalDuration = getTotalEventsDurationMs(events, date);
+    return Math.round(totalDuration / MILLISECONDS_PER_MINUTE);
+  }
+
+  // Helper to calculate total minutes in a day (handles today vs past days)
+  function getTotalMinutesInDay(date: Date): number {
+    const now = new Date();
+    const startOfDay = new Date(date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    if (isToday(date)) {
+      const minutesElapsed = Math.floor(
+        (now.getTime() - startOfDay.getTime()) / MILLISECONDS_PER_MINUTE,
+      );
+      return minutesElapsed;
+    }
+    return 24 * 60;
+  }
+
+  // Helper to create duration card data for a specific status
+  function createDurationCardEntry(
+    status: "error" | "degraded" | "info" | "success",
+    events: Event[],
+    date: Date,
+    durationMap: Map<string, number>,
+  ): {
+    status: "error" | "degraded" | "info" | "success";
+    value: string;
+  } | null {
+    if (status === "success") {
+      // Calculate success duration as remaining time
+      let totalEventMinutes = 0;
+      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
+      durationMap.forEach((minutes) => (totalEventMinutes += minutes));
+
+      const totalMinutesInDay = getTotalMinutesInDay(date);
+      const successMinutes = Math.max(totalMinutesInDay - totalEventMinutes, 0);
+
+      if (successMinutes === 0) return null;
+      return {
+        status,
+        value: formatDuration(successMinutes),
+      };
+    }
+
+    // For error, degraded, info - calculate from events
+    const minutes = calculateEventDurationMinutes(events, date);
+    durationMap.set(status, minutes);
+
+    if (minutes === 0) return null;
+    return {
+      status,
+      value: formatDuration(minutes),
+    };
+  }
+
   return data.map((dayData) => {
     const date = new Date(dayData.day);
 
@@ -346,35 +538,31 @@ export function setDataByType({
     switch (barType) {
       case "absolute":
         if (eventStatus) {
-          // If there's an event override, show single status
-          barData = [
-            {
-              status: eventStatus,
-              height: 100,
-            },
-          ];
-        } else if (total === 0) {
-          // Empty day
-          barData = [
-            {
-              status: "empty",
-              height: 100,
-            },
-          ];
-        } else {
-          // Multiple segments for absolute view
-          const segments = [
-            { status: "success" as const, count: dayData.ok },
-            { status: "degraded" as const, count: dayData.degraded },
-            { status: "error" as const, count: dayData.error },
-          ]
-            .filter((segment) => segment.count > 0)
-            .map((segment) => ({
-              status: segment.status,
-              height: (segment.count / total) * 100,
-            }));
+          // Create segments based on event durations for the day
+          const eventSegments = createEventSegments(
+            incidents,
+            reports,
+            maintenances,
+            date,
+          );
 
-          barData = segments;
+          // Special case: if only errors exist, show uptime vs downtime
+          if (
+            eventSegments.length === 1 &&
+            eventSegments[0].status === "error"
+          ) {
+            barData = createErrorOnlyBarData(eventSegments[0].count);
+          } else {
+            // Multiple segments: show proportional distribution
+            barData = createProportionalBarData(eventSegments);
+          }
+        } else if (total === 0) {
+          // Empty day - no data available
+          barData = createEmptyBarData();
+        } else {
+          // Multiple segments for absolute view - show proportional distribution of status data
+          const statusSegments = createStatusSegments(dayData);
+          barData = segmentsToBarData(statusSegments, total);
         }
         break;
       case "dominant":
@@ -416,104 +604,37 @@ export function setDataByType({
     switch (cardType) {
       case "requests":
         if (total === 0) {
-          cardData = [{ status: eventStatus ?? "empty", value: "" }];
+          cardData = createEmptyCardData(eventStatus);
         } else {
-          const entries = [
-            { status: "success" as const, count: dayData.ok },
-            { status: "degraded" as const, count: dayData.degraded },
-            { status: "error" as const, count: dayData.error },
-            { status: "info" as const, count: 0 },
-          ];
-
-          cardData = entries
-            .filter((entry) => entry.count > 0)
-            .map((entry) => ({
-              status: entry.status,
-              value: `${formatNumber(entry.count)} reqs`,
-            }));
+          const requestEntries = createRequestEntries(dayData);
+          cardData = entriesToRequestCardData(requestEntries);
         }
         break;
 
       case "duration":
         if (total === 0) {
-          cardData = [{ status: eventStatus ?? "empty", value: "" }];
+          cardData = createEmptyCardData(eventStatus);
         } else {
-          const entries = [
-            { status: "error" as const, count: dayData.error },
-            { status: "degraded" as const, count: dayData.degraded },
-            { status: "success" as const, count: dayData.ok },
-            { status: "info" as const, count: 0 },
-          ];
-
-          const map = new Map<
-            "error" | "degraded" | "success" | "info",
-            number
-          >();
+          const entries = createDurationEntries(dayData);
+          const durationMap = new Map<string, number>();
 
           cardData = entries
             .map((entry) => {
-              if (entry.status === "error") {
-                const totalDuration = getTotalEventsDurationMs(incidents, date);
-                const minutes = Math.round(totalDuration / (1000 * 60));
-                map.set("error", minutes);
-                if (minutes === 0) return null;
-                return {
-                  status: entry.status,
-                  value: formatDuration(minutes),
-                };
-              }
+              // Map each entry status to its corresponding events
+              const eventMap = {
+                error: incidents,
+                degraded: reports,
+                info: maintenances,
+                success: [], // Success is calculated differently
+              };
 
-              if (entry.status === "degraded") {
-                const totalDuration = getTotalEventsDurationMs(reports, date);
-                const minutes = Math.round(totalDuration / (1000 * 60));
-                map.set("degraded", minutes);
-                if (minutes === 0) return null;
-                return {
-                  status: entry.status,
-                  value: formatDuration(minutes),
-                };
-              }
-
-              if (entry.status === "info") {
-                const totalDuration = getTotalEventsDurationMs(
-                  maintenances,
-                  date,
-                );
-                const minutes = Math.round(totalDuration / (1000 * 60));
-                map.set("info", minutes);
-                if (minutes === 0) return null;
-                return {
-                  status: entry.status,
-                  value: formatDuration(minutes),
-                };
-              }
-
-              if (entry.status === "success") {
-                let total = 0;
-                // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-                map.forEach((d) => (total += d));
-
-                const now = new Date();
-                const startOfDay = new Date(date);
-                startOfDay.setUTCHours(0, 0, 0, 0);
-
-                let totalMinutesInDay: number;
-                if (isToday(date)) {
-                  const minutesElapsed = Math.floor(
-                    (now.getTime() - startOfDay.getTime()) / (1000 * 60),
-                  );
-                  totalMinutesInDay = minutesElapsed;
-                } else {
-                  totalMinutesInDay = 24 * 60;
-                }
-
-                const minutes = Math.max(totalMinutesInDay - total, 0);
-                if (minutes === 0) return null;
-                return {
-                  status: entry.status,
-                  value: formatDuration(minutes),
-                };
-              }
+              const events = eventMap[entry.status as keyof typeof eventMap];
+              return createDurationCardEntry(
+                entry.status,
+                events,
+                date,
+                durationMap,
+              );
             })
             .filter((item): item is NonNullable<typeof item> => item !== null);
         }
@@ -544,27 +665,21 @@ export function setDataByType({
       default:
         // Default to requests behavior
         if (total === 0) {
-          cardData = [{ status: eventStatus ?? "empty", value: "" }];
+          cardData = createEmptyCardData(eventStatus);
         } else {
-          const entries = [
-            { status: "error" as const, count: dayData.error },
-            { status: "degraded" as const, count: dayData.degraded },
-            { status: "success" as const, count: dayData.ok },
-          ];
-
-          cardData = entries
-            .filter((entry) => entry.count > 0)
-            .map((entry) => ({
-              status: entry.status,
-              value: `${formatNumber(entry.count)} reqs`,
-            }));
+          const defaultEntries = createRequestEntries(dayData);
+          cardData = entriesToRequestCardData(defaultEntries);
         }
         break;
     }
 
     return {
       day: dayData.day,
-      events: [...reports, ...maintenances],
+      events: [
+        ...reports,
+        ...maintenances,
+        ...(barType === "absolute" ? incidents : []),
+      ],
       bar: barData,
       card: cardData,
     };
@@ -589,7 +704,7 @@ export function getUptime({
         return acc + ((item.to || new Date()).getTime() - item.from.getTime());
       }, 0);
 
-    const total = data.length * 24 * 60 * 60 * 1000;
+    const total = data.length * MILLISECONDS_PER_DAY;
 
     return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
   }

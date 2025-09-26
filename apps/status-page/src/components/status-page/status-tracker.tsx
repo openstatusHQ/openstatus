@@ -303,7 +303,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
 
                         const content = (
                           <StatusTrackerEvent
-                            key={event.id}
+                            key={`${event.id}-${event.type}`}
                             status={eventStatus}
                             name={event.name}
                             from={event.from}
