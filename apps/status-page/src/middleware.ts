@@ -84,8 +84,24 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
   }
 
+  // NOTE - WORKING ON CUSTOM DOMAIN!!!
+
+  // WTF is this
   if (_page.customDomain === prefix && pathnames[1] === pathnames[2]) {
-    // WTF is this
+    const newPathname = `/${pathnames.slice(2).join("/")}`;
+    return NextResponse.rewrite(new URL(newPathname, req.url));
+  }
+
+  // WTF is this
+  if (
+    _page.customDomain === prefix &&
+    (pathnames[2] === "assets" ||
+      pathnames[2] === "api" ||
+      pathnames[2] === "_next" ||
+      pathnames[2] === "favicon.ico" ||
+      pathnames[2] === "robots.txt" ||
+      pathnames[2] === "sitemap.xml")
+  ) {
     const newPathname = `/${pathnames.slice(2).join("/")}`;
     return NextResponse.rewrite(new URL(newPathname, req.url));
   }
