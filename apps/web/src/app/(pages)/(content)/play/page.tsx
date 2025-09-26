@@ -6,6 +6,7 @@ import {
   Package,
   Palette,
   PanelTop,
+  ShieldCheck,
   Table,
   Terminal,
 } from "lucide-react";
@@ -66,6 +67,13 @@ const playgrounds: CardProps[] = [
     title: "cURL Builder",
     description: "Easily generate curl commands to test your API endpoints.",
     icon: Terminal,
+  },
+  {
+    href: "/play/uptime-sla",
+    title: "Uptime SLA Calculator",
+    description:
+      "Calculate uptime SLA percentages, allowed downtime, and service availability metrics.",
+    icon: ShieldCheck,
   },
   {
     href: "https://light.openstatus.dev",
