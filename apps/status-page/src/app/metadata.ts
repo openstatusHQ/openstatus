@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const TITLE = "Theme explorer by openstatus";
+export const TITLE = "openstatus";
 export const DESCRIPTION =
   "Easily customize your status page using our built-in themes. Explore our themes and contribute new ones to the community.";
 
