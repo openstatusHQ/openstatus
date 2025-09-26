@@ -31,6 +31,8 @@ export default async function middleware(req: NextRequest) {
     type = "pathname";
   }
 
+  console.log({ pathname: url.pathname, type });
+
   if (url.pathname === "/" && type !== "hostname") {
     return response;
   }
@@ -42,6 +44,8 @@ export default async function middleware(req: NextRequest) {
       sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
     )
     .get();
+
+  console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
 
   if (!_page) {
     // return NextResponse.redirect(new URL("https://stpg.dev"));
@@ -74,6 +78,8 @@ export default async function middleware(req: NextRequest) {
   }
 
   const proxy = req.headers.get("x-proxy");
+  console.log({ proxy });
+
   if (proxy) {
     return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
   }
