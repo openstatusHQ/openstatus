@@ -107,7 +107,7 @@ const nextConfig = {
           destination: "https://www.stpg.dev/:path*",
         },
         {
-          source: "/status-page/:path*",
+          source: "/:path*",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
             {
