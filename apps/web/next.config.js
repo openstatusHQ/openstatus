@@ -100,7 +100,7 @@ const nextConfig = {
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
-              value: "^(?!.*.openstatus.dev$)(?!openstatus.dev$)(?<domain>.+)$",
+              value: "(?<domain>.+)",
             },
           ],
           destination: "https://stpg.dev/:domain/:path*",
@@ -137,5 +137,5 @@ module.exports = withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  },
+  }
 );
