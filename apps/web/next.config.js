@@ -93,6 +93,31 @@ const nextConfig = {
           ],
           destination: "https://:slug.stpg.dev/:path*",
         },
+        // Custom domains: pass through static assets and API routes without domain prefix
+        {
+          source: "/_next/:path*",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value:
+                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/_next/:path*",
+        },
+        {
+          source: "/api/:path*",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value:
+                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/api/:path*",
+        },
         // Handle custom domains (e.g., status.mxkaske.dev)
         {
           source: "/:path*",
@@ -138,5 +163,5 @@ module.exports = withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  },
+  }
 );
