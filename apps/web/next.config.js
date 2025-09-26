@@ -93,6 +93,18 @@ const nextConfig = {
           ],
           destination: "https://:slug.stpg.dev/:path*",
         },
+        // Handle custom domains (e.g., status.mxkaske.dev)
+        {
+          source: "/:path*",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "(?<domain>.+)",
+            },
+          ],
+          destination: "https://stpg.dev/:domain/:path*",
+        },
       ],
     };
   },
