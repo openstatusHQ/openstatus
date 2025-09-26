@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
-export const TITLE = "OpenStatus";
+export const TITLE = "openstatus";
 export const DESCRIPTION =
-  "OpenStatus is an open-source platform to monitor your services and keep your users informed.";
+  "Open-source platform to monitor your services and keep your users informed.";
 
-const OG_TITLE = "OpenStatus";
+const OG_TITLE = "openstatus";
 const OG_DESCRIPTION = "Monitor your services and keep your users informed.";
 const FOOTER = "app.openstatus.dev";
 const IMAGE = "assets/og/dashboard-v2.png";
