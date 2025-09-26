@@ -5,10 +5,10 @@ export const DESCRIPTION =
   "Easily customize your status page using our built-in themes. Explore our themes and contribute new ones to the community.";
 
 const OG_TITLE = "Theme explorer by openstatus";
-const OG_DESCRIPTION = "Easily customize your status page with our built-in themes.";
+const OG_DESCRIPTION =
+  "Easily customize your status page with our built-in themes.";
 const FOOTER = "themes.openstatus.dev";
 const IMAGE = "assets/og/dashboard-v2.png";
-
 
 export const defaultMetadata: Metadata = {
   title: {
