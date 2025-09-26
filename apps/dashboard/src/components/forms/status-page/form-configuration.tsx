@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { THEMES } from "@openstatus/theme-store";
 import { isTRPCClientError } from "@trpc/client";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -319,6 +320,56 @@ export function FormConfiguration({
                         </code>{" "}
                         to open the email client. Leave empty to hide.
                       </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </FormCardContent>
+              <FormCardSeparator />
+              <FormCardContent className="grid gap-4 sm:grid-cols-3">
+                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                  <FormCardTitle>Theme Explorer</FormCardTitle>
+                  <FormCardDescription>
+                    Configure the theme for the status page - or contribute your
+                    own. Learn more about it at{" "}
+                    <Link
+                      href="https://themes.openstatus.dev"
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      themes.openstatus.dev
+                    </Link>
+                    .
+                  </FormCardDescription>
+                </FormCardHeader>
+                <FormField
+                  control={form.control}
+                  name="configuration.theme"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Theme</FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={String(field.value) ?? "default"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full capitalize">
+                              <SelectValue placeholder="Select a theme" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.values(THEMES).map((theme) => (
+                              <SelectItem
+                                key={theme.id}
+                                value={theme.id}
+                                className="capitalize"
+                              >
+                                {theme.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
                     </FormItem>
                   )}
                 />

@@ -36,13 +36,6 @@ import {
 import { PopoverContent } from "@/components/ui/popover";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Sortable,
   SortableContent,
   SortableItem,
@@ -63,16 +56,15 @@ type Monitor = {
   id: number;
   name: string;
   url: string;
+  active: boolean;
 };
-
-const DISABLED_TYPES = ["none"];
 
 const schema = z.object({
   monitors: z.array(
     z.object({
       id: z.number(),
       order: z.number(),
-      type: z.enum(["all", "hide", "none"]),
+      active: z.boolean(),
     }),
   ),
 });
@@ -130,7 +122,7 @@ export function FormMonitors({
         newMonitors.map((m, index) => ({
           id: m.id,
           order: index,
-          type: "none" as const,
+          active: m.active,
         })),
       );
     },
@@ -239,7 +231,7 @@ export function FormMonitors({
                                       {
                                         id: monitor.id,
                                         order: watchMonitors.length,
-                                        type: "none",
+                                        active: monitor.active,
                                       },
                                     ]);
                                   }
@@ -309,18 +301,6 @@ export function FormMonitors({
   );
 }
 
-const types = {
-  all: {
-    label: "Show all uptime",
-  },
-  hide: {
-    label: "Hide values",
-  },
-  none: {
-    label: "Only status reports",
-  },
-};
-
 interface MonitorRowProps
   extends Omit<React.ComponentPropsWithoutRef<typeof SortableItem>, "value"> {
   monitor: Monitor;
@@ -344,26 +324,8 @@ function MonitorRow({ monitor, ...props }: MonitorRowProps) {
         <div className="self-center truncate text-muted-foreground text-sm">
           {monitor.url}
         </div>
-        <div>
-          <Select>
-            <SelectTrigger className="h-7 w-full shadow-none" disabled>
-              <SelectValue placeholder="Select type (coming soon)" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(types).map(([key, value]) => (
-                <SelectItem
-                  key={key}
-                  value={key}
-                  disabled={DISABLED_TYPES.includes(key)}
-                >
-                  {value.label}{" "}
-                  {DISABLED_TYPES.includes(key) && (
-                    <span className="text-foreground text-xs">(Upgrade)</span>
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="truncate text-muted-foreground text-sm">
+          {monitor.active ? "Active" : "Inactive"}
         </div>
       </div>
     </SortableItem>

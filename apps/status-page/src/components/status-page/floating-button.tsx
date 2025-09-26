@@ -16,8 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { cn } from "@/lib/utils";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import type React from "react";

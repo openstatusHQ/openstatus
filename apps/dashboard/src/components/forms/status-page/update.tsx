@@ -105,8 +105,6 @@ export function FormStatusPageUpdate() {
           monitors: statusPage.monitors.map((monitor) => ({
             id: monitor.id,
             order: monitor.order,
-            // type: monitor.type,
-            type: "none" as const,
           })),
         }}
         onSubmit={async (values) => {
@@ -139,34 +137,31 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      {/* TODO: feature flagged - remove once we have the new version in production */}
-      {process.env.NEXT_PUBLIC_STATUS_PAGE_V2 === "true" ||
-      process.env.NODE_ENV === "development" ? (
-        <FormConfiguration
-          defaultValues={{
-            new: !statusPage.legacyPage,
-            configuration: statusPage.configuration ?? {},
-            homepageUrl: statusPage.homepageUrl ?? "",
-            contactUrl: statusPage.contactUrl ?? "",
-          }}
-          onSubmit={async (values) => {
-            await updatePageConfigurationMutation.mutateAsync({
-              id: Number.parseInt(id),
-              configuration: values.new
-                ? {
-                    // NOTE: convert to boolean
-                    uptime: values.configuration.uptime === "true",
-                    value: values.configuration.value ?? "duration",
-                    type: values.configuration.type ?? "absolute",
-                  }
-                : undefined,
-              legacyPage: !values.new,
-              homepageUrl: values.homepageUrl ?? undefined,
-              contactUrl: values.contactUrl ?? undefined,
-            });
-          }}
-        />
-      ) : null}
+      <FormConfiguration
+        defaultValues={{
+          new: !statusPage.legacyPage,
+          configuration: statusPage.configuration ?? {},
+          homepageUrl: statusPage.homepageUrl ?? "",
+          contactUrl: statusPage.contactUrl ?? "",
+        }}
+        onSubmit={async (values) => {
+          await updatePageConfigurationMutation.mutateAsync({
+            id: Number.parseInt(id),
+            configuration: values.new
+              ? {
+                  // NOTE: convert to boolean
+                  uptime: values.configuration.uptime === "true",
+                  value: values.configuration.value ?? "duration",
+                  type: values.configuration.type ?? "absolute",
+                  theme: values.configuration.theme ?? "default",
+                }
+              : undefined,
+            legacyPage: !values.new,
+            homepageUrl: values.homepageUrl ?? undefined,
+            contactUrl: values.contactUrl ?? undefined,
+          });
+        }}
+      />
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}
         defaultValues={{
