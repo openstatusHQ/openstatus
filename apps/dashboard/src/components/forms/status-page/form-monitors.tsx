@@ -56,7 +56,7 @@ type Monitor = {
   id: number;
   name: string;
   url: string;
-  active: boolean;
+  active: boolean | null;
 };
 
 const schema = z.object({
@@ -64,7 +64,7 @@ const schema = z.object({
     z.object({
       id: z.number(),
       order: z.number(),
-      active: z.boolean(),
+      active: z.boolean().nullable(),
     }),
   ),
 });
