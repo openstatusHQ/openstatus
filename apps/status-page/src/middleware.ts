@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { db, eq } from "@openstatus/db";
+import { db, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { createProtectedCookieKey } from "./lib/protected";
 
@@ -35,7 +35,13 @@ export default async function middleware(req: NextRequest) {
     return response;
   }
 
-  const _page = await db.select().from(page).where(eq(page.slug, prefix)).get();
+  const _page = await db
+    .select()
+    .from(page)
+    .where(
+      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
+    )
+    .get();
 
   if (!_page) {
     // return NextResponse.redirect(new URL("https://stpg.dev"));
