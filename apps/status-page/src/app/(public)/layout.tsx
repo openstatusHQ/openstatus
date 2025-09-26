@@ -1,6 +1,11 @@
 import { Link } from "@/components/common/link";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Theme Explorer",
+};
 
 export default async function Layout({
   children,
