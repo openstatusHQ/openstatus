@@ -100,7 +100,7 @@ const nextConfig = {
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
-              value: "(?<domain>.+)",
+              value: "^(?!.*.openstatus.dev$)(?!openstatus.dev$)(?<domain>.+)$",
             },
           ],
           destination: "https://stpg.dev/:domain/:path*",
