@@ -15,8 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { cn } from "@/lib/utils";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Palette } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";

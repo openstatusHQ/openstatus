@@ -113,6 +113,9 @@ importers:
       '@openstatus/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@openstatus/theme-store':
+        specifier: workspace:*
+        version: link:../../packages/theme-store
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -573,6 +576,9 @@ importers:
       '@openstatus/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@openstatus/theme-store':
+        specifier: workspace:*
+        version: link:../../packages/theme-store
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -1615,6 +1621,15 @@ importers:
       tsup:
         specifier: 7.2.0
         version: 7.2.0(postcss@8.5.6)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.7.2))(typescript@5.7.2)
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+
+  packages/theme-store:
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: 5.7.2
         version: 5.7.2

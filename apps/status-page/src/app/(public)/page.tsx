@@ -19,9 +19,9 @@ import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Button } from "@/components/ui/button";
 import { monitors } from "@/data/monitors";
-import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Page() {
@@ -72,13 +72,13 @@ export default function Page() {
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <p>
             You can contribute your own theme by creating a new file in the{" "}
-            <code>src/lib/community-themes</code> directory. You&apos;ll only
-            need to override css variables. Make sure your object is satisfiying
-            the <code>Theme</code> interface.
+            <code>@openstatus.theme-store</code> package. You&apos;ll only need
+            to override css variables. Make sure your object is satisfiying the{" "}
+            <code>Theme</code> interface.
           </p>
           <p>
             Go to the{" "}
-            <Link href="https://github.com/openstatusHQ/openstatus/tree/main/apps/status-page/src/lib/community-themes">
+            <Link href="https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store">
               GitHub directory
             </Link>{" "}
             to see the existing themes and create a new one by forking and
