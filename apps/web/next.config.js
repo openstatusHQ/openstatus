@@ -95,25 +95,13 @@ const nextConfig = {
         },
         // Handle custom domains (e.g., status.mxkaske.dev)
         {
-          source: "/status-page/:path*",
-          has: [
-            { type: "cookie", key: "sp_mode", value: "new" },
-            {
-              type: "host",
-              value:
-                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)$",
-            },
-          ],
-          destination: "https://www.stpg.dev/:path*",
-        },
-        {
           source: "/:path*",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
               value:
-                "^(?<domain>.+)$",
+                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
             },
           ],
           destination: "https://www.stpg.dev/:domain/:path*",
