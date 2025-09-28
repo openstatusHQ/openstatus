@@ -107,9 +107,9 @@ const nextConfig = {
           ],
           destination: "https://www.stpg.dev/:domain/:path*",
         },
+        // Handle API routes for custom domains
         {
-          source:
-            "/:path((api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+          source: "/api/:path*",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
             {
@@ -118,7 +118,20 @@ const nextConfig = {
                 "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
             },
           ],
-          destination: "https://www.stpg.dev/:path*",
+          destination: "https://www.stpg.dev/api/:path*",
+        },
+        // Handle static assets for custom domains
+        {
+          source: "/_next/:path*",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value:
+                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/_next/:path*",
         },
       ],
     };
@@ -152,5 +165,5 @@ module.exports = withSentryConfig(
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
-  },
+  }
 );
