@@ -71,7 +71,6 @@ export default auth(async (req) => {
     const modeCookie = req.cookies.get("sp_mode")?.value; // "legacy" | "new"
     const cached = modeCookie === "legacy" || modeCookie === "new";
     let mode: "legacy" | "new" | undefined = cached ? modeCookie : undefined;
-    let slug: string | undefined = undefined;
 
     console.log({ mode, cached });
 
@@ -83,11 +82,9 @@ export default auth(async (req) => {
         console.log({ cache });
         // Determine legacy flag from cache
         mode = cache ? "new" : "legacy";
-        slug = cache ? String(cache) : undefined;
       } catch (e) {
         console.error("error getting cache", e);
         mode = "legacy";
-        slug = undefined;
       }
     }
 
@@ -103,9 +100,6 @@ export default auth(async (req) => {
     res.headers.set("x-proxy", "1");
     // Short-lived cookie so toggles apply relatively quickly
     res.cookies.set("sp_mode", "new", { path: "/", maxAge: MAX_AGE });
-    if (slug) {
-      res.cookies.set("sp_slug", slug, { path: "/", maxAge: MAX_AGE });
-    }
     // If we just set the cookie, trigger one redirect so next.config.js
     // rewrites that depend on sp_mode can apply on the next request.
     if (!cached) {
