@@ -17,7 +17,7 @@ export default async function middleware(req: NextRequest) {
   const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
   const pathnames = url.pathname.split("/");
 
-  console.log({ hostnames, pathnames });
+  console.log({ hostnames, pathnames, host, urlHost: url.host });
 
   if (
     hostnames.length > 2 &&
