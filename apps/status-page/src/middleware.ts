@@ -89,8 +89,8 @@ export default async function middleware(req: NextRequest) {
   // WTF is this
   if (_page.customDomain === prefix && pathnames[1] === pathnames[2]) {
     const newPathname = `/${pathnames.slice(2).join("/")}`;
-    console.log('newPath', newPathname)
-    console.log(pathnames)
+    console.log("newPath", newPathname);
+    console.log(pathnames);
     return NextResponse.rewrite(new URL(`${pathnames[1]}`, req.url));
   }
 
