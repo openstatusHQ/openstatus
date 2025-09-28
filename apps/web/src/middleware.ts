@@ -9,7 +9,7 @@ import { eq } from "@openstatus/db";
 import { Redis } from "@openstatus/upstash";
 import { env } from "./env";
 
-const MAX_AGE = 60 * 10; // 10 minutes
+const MAX_AGE = 30; // 30 seconds
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
@@ -71,19 +71,23 @@ export default auth(async (req) => {
     const modeCookie = req.cookies.get("sp_mode")?.value; // "legacy" | "new"
     const cached = modeCookie === "legacy" || modeCookie === "new";
     let mode: "legacy" | "new" | undefined = cached ? modeCookie : undefined;
+    let slug: string | undefined = undefined;
 
     console.log({ mode, cached });
 
     if (!mode) {
       try {
         const redis = Redis.fromEnv();
+        // NOTE: we are storing the slug in the cache if it's the new status page
         const cache = await redis.get(`page:${subdomain}`);
         console.log({ cache });
         // Determine legacy flag from cache
         mode = cache ? "new" : "legacy";
+        slug = cache ? String(cache) : undefined;
       } catch (e) {
         console.error("error getting cache", e);
         mode = "legacy";
+        slug = undefined;
       }
     }
 
@@ -99,7 +103,9 @@ export default auth(async (req) => {
     res.headers.set("x-proxy", "1");
     // Short-lived cookie so toggles apply relatively quickly
     res.cookies.set("sp_mode", "new", { path: "/", maxAge: MAX_AGE });
-
+    if (slug) {
+      res.cookies.set("sp_slug", slug, { path: "/", maxAge: MAX_AGE });
+    }
     // If we just set the cookie, trigger one redirect so next.config.js
     // rewrites that depend on sp_mode can apply on the next request.
     if (!cached) {
