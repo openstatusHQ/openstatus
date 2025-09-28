@@ -10,11 +10,11 @@ image: /assets/posts/rss-app-slack-feed/rss-app-slack-feed.png
 tag: education
 ---
 
-Using RSS (Really Simple Syndication) to stay up to date is definitely underrated. Every site should have a feed - whether it’s for blog posts, changelogs, or status page updates like incidents, reports, and maintenances. RSS makes it simple to follow the latest news without scraping websites or doom-scrolling through social media.
+Using RSS (**Really Simple Syndication**) to stay up to date is definitely underrated. Every site should have a feed - whether it’s for blog posts, changelogs, or status page updates like incidents, reports, and maintenances. RSS makes it simple to follow the latest news without scraping websites or doom-scrolling through social media.
 
 We’ve supported RSS for a long time, but only recently did I realize how powerful it really is.
 
-Most of our team communication happens in Slack, so we set up an `#rss` channel to subscribe to different feeds. Slack has a native RSS app that fetches updates every few minutes. It’s not real-time, since it polls periodically, so if you need instant notifications, it’s not the best fit. But for most cases, a short delay is perfectly fine. And even paid RSS apps typically work on the same periodic fetching model.
+Most of our team communication happens in Slack, so we've set up an `#rss` channel to subscribe to different feeds. Slack has a native RSS app that fetches updates every few minutes. It’s not real-time, since it polls periodically, so if you need instant notifications, it’s not the best fit. But for most cases, a short delay is perfectly fine. And even paid RSS apps typically work on the same periodic fetching model.
 
 <Image
   alt="Slack Admin Settings"
@@ -22,6 +22,8 @@ Most of our team communication happens in Slack, so we set up an `#rss` channel 
   width={650}
   height={575}
 />
+
+To configure your channel, follow the official instructions [here](https://slack.com/help/articles/218688467-Add-RSS-feeds-to-Slack) or go straight to the [RSS app](https://openstatus.slack.com/services/B09H29513HC).
 
 
 While we don’t yet have a Slack integration for status page updates, you can already find RSS feeds across all status pages (on every plan), as well as on our blog and changelog.
