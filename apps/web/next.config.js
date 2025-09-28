@@ -98,13 +98,14 @@ const nextConfig = {
           source: "/:path*",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
+            { type: "cookie", key: "sp_slug", value: "<slug>" },
             {
               type: "host",
               value:
                 "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
             },
           ],
-          destination: "https://www.stpg.dev/:domain/:path*",
+          destination: "https://:slug.stpg.dev/:path*",
         },
       ],
     };
