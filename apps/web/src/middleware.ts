@@ -104,6 +104,7 @@ export default auth(async (req) => {
     // rewrites that depend on sp_mode can apply on the next request.
     if (!cached) {
       const redirect = NextResponse.redirect(url);
+      redirect.headers.set("x-proxy", "1");
       redirect.cookies.set("sp_mode", "new", { path: "/", maxAge: MAX_AGE });
       return redirect;
     }
