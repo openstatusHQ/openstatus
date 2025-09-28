@@ -23,8 +23,8 @@ const nextConfig: NextConfig = {
               type: "host",
               value:
                 process.env.NODE_ENV === "production"
-                  ? "(?<subdomain>[^.]+)\\.stpg\\.dev"
-                  : "(?<subdomain>[^.]+)\\.localhost",
+                  ? "(?<subdomain>[^.]+).stpg.dev"
+                  : "(?<subdomain>[^.]+).localhost",
             },
           ],
           missing: [
@@ -38,8 +38,8 @@ const nextConfig: NextConfig = {
               type: "host",
               value:
                 process.env.NODE_ENV === "production"
-                  ? "www\\.stpg\\.dev"
-                  : "www\\.localhost",
+                  ? "www.stpg.dev"
+                  : "localhost",
             },
           ],
           destination: "/:subdomain/:path*",
