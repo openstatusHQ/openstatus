@@ -6,8 +6,6 @@ import { cn } from "@/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { status } from "./messages";
 
-// TODO: rename file to status-event and move the `StatusEvents` component to the page level.
-
 export function StatusEvent({
   className,
   children,
@@ -268,7 +266,6 @@ export function StatusEventTimelineTitle({
   );
 }
 
-// TODO: should support markdown
 export function StatusEventTimelineMessage({
   className,
   children,
@@ -276,7 +273,10 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("py-1.5 font-mono text-foreground/90 text-sm", className)}
+      className={cn(
+        "py-1.5 font-mono text-foreground/90 text-sm/relaxed",
+        className,
+      )}
       {...props}
     >
       {children}
