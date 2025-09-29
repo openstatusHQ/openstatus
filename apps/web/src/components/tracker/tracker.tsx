@@ -154,7 +154,6 @@ export const Bar = ({
   const isLightIncident = incidentLength > 0 && incidentLength < 600_000; // 10 minutes in ms
 
   const rootClassName = tracker({
-    report: statusReports.length > 0,
     variant: blacklist ? "blacklist" : variant,
     incident: isLightIncident ? "light" : undefined,
   });
