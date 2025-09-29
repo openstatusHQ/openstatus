@@ -271,6 +271,45 @@ function isDateWithinEvent(date: Date, event: Event): boolean {
   );
 }
 
+// Helper to calculate total minutes in a day (handles today vs past days)
+function getTotalMinutesInDay(date: Date): number {
+  const now = new Date();
+  const startOfDay = new Date(date);
+  startOfDay.setUTCHours(0, 0, 0, 0);
+
+  if (isToday(date)) {
+    const minutesElapsed = Math.floor(
+      (now.getTime() - startOfDay.getTime()) / MILLISECONDS_PER_MINUTE,
+    );
+    return minutesElapsed;
+  }
+  return 24 * 60;
+}
+
+// Helper to calculate duration in minutes for a specific event type
+function calculateEventDurationMinutes(events: Event[], date: Date): number {
+  const totalDuration = getTotalEventsDurationMs(events, date);
+  return Math.round(totalDuration / MILLISECONDS_PER_MINUTE);
+}
+
+// Helper to calculate maintenance duration in minutes for a specific day
+function getMaintenanceDurationMinutes(
+  maintenances: Event[],
+  date: Date,
+): number {
+  return calculateEventDurationMinutes(maintenances, date);
+}
+
+// Helper to get adjusted total minutes accounting for maintenance
+function getAdjustedTotalMinutesInDay(
+  date: Date,
+  maintenances: Event[],
+): number {
+  const totalMinutes = getTotalMinutesInDay(date);
+  const maintenanceMinutes = getMaintenanceDurationMinutes(maintenances, date);
+  return Math.max(0, totalMinutes - maintenanceMinutes);
+}
+
 function getTotalEventsDurationMs(events: Event[], date: Date): number {
   if (events.length === 0) return 0;
 
@@ -453,27 +492,13 @@ export function setDataByType({
     return Math.round(totalDuration / MILLISECONDS_PER_MINUTE);
   }
 
-  // Helper to calculate total minutes in a day (handles today vs past days)
-  function getTotalMinutesInDay(date: Date): number {
-    const now = new Date();
-    const startOfDay = new Date(date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-
-    if (isToday(date)) {
-      const minutesElapsed = Math.floor(
-        (now.getTime() - startOfDay.getTime()) / MILLISECONDS_PER_MINUTE,
-      );
-      return minutesElapsed;
-    }
-    return 24 * 60;
-  }
-
   // Helper to create duration card data for a specific status
   function createDurationCardEntry(
     status: "error" | "degraded" | "info" | "success",
     events: Event[],
     date: Date,
     durationMap: Map<string, number>,
+    maintenances: Event[] = [],
   ): {
     status: "error" | "degraded" | "info" | "success";
     value: string;
@@ -484,7 +509,11 @@ export function setDataByType({
       // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       durationMap.forEach((minutes) => (totalEventMinutes += minutes));
 
-      const totalMinutesInDay = getTotalMinutesInDay(date);
+      // Use adjusted total minutes accounting for maintenance
+      const totalMinutesInDay = getAdjustedTotalMinutesInDay(
+        date,
+        maintenances,
+      );
       const successMinutes = Math.max(totalMinutesInDay - totalEventMinutes, 0);
 
       if (successMinutes === 0) return null;
@@ -634,6 +663,7 @@ export function setDataByType({
                 events,
                 date,
                 durationMap,
+                maintenances,
               );
             })
             .filter((item): item is NonNullable<typeof item> => item !== null);
