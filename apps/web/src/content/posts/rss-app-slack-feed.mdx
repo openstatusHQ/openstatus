@@ -1,6 +1,6 @@
 ---
 title: RSS feed in your Slack channel
-description: A quick way to stay up-to-date with all your upstream providers.
+description: Learn how to subscribe to RSS feeds in Slack and stay up-to-date with blog posts, changelogs, and status page updates.
 author:
   name: Maximilian Kaske
   url: https://x.com/mxkaske
@@ -10,20 +10,40 @@ image: /assets/posts/rss-app-slack-feed/rss-app-slack-feed.png
 tag: education
 ---
 
-Using RSS (**Really Simple Syndication**) to stay up to date is definitely underrated. Every site should have a feed - whether it’s for blog posts, changelogs, or status page updates like incidents, reports, and maintenances. RSS makes it simple to follow the latest news without scraping websites or doom-scrolling through social media.
+Using RSS (**Really Simple Syndication**) to stay up to date is definitely underrated. Every site should provide an RSS feed - whether it’s for blog posts, changelogs, or status page updates like incidents, reports, and maintenances. RSS makes it simple to follow the latest news without scraping websites or doom-scrolling through social media.
 
-We’ve supported RSS for a long time, but only recently did I realize how powerful it really is.
+We’ve supported RSS feeds for a long time, but only recently did I realize how powerful they really are for team communication.
 
-Most of our team communication happens in Slack, so we've set up an `#rss` channel to subscribe to different feeds. Slack has a native [RSS app](https://openstatus.slack.com/services/B09H29513HC) that fetches updates every few minutes. It’s not real-time, since it polls periodically, so if you need instant notifications, it’s not the best fit. But for most cases, a short delay is perfectly fine. And even paid RSS apps typically work on the same periodic fetching model.
+Most of our collaboration happens in Slack, so we've set up an `#rss` channel to subscribe to different feeds. Slack offers a native [RSS app](https://openstatus.slack.com/services/B09H29513HC) that lets you add RSS feeds directly into Slack channels. The app fetches updates every few minutes. It’s not truly real-time (since it polls periodically), so if you need instant notifications it’s not the best fit. But for most use cases, a short delay is perfectly fine - and even most paid Slack RSS integrations rely on the same periodic fetching model.
+
+---
+
+### How to add RSS feeds to Slack
+
+It’s stupid simple to set up the Slack RSS app.  
+
+Just enter the feed URL and the channel where you want the updates to appear. Done.  
 
 <Image
-  alt="Slack Admin Settings"
+  alt="Slack RSS app settings - Subscribe to feed"
+  src="/assets/posts/rss-app-slack-feed/rss-app-slack-feed-subscribe.png"
+  width={650}
+  height={575}
+/>
+
+Once set up, you can manage and view all your subscriptions in one list.  
+
+<Image
+  alt="Slack RSS app settings - List of subscribed feeds"
   src="/assets/posts/rss-app-slack-feed/slack-feed-settings.png"
   width={650}
   height={575}
 />
 
-To configure your channel, follow the [official instructions](https://slack.com/help/articles/218688467-Add-RSS-feeds-to-Slack).
+Read more in the [official Slack instructions for adding RSS feeds](https://slack.com/help/articles/218688467-Add-RSS-feeds-to-Slack).
 
+---
 
-While we don’t yet have a Slack integration for status page updates, you can already find RSS feeds across all status pages (on every plan), as well as on our blog and changelog.
+### Status page RSS feed support  
+
+While we don’t yet provide a direct Slack integration for OpenStatus updates, you can already subscribe to our **status page RSS feeds** (available on every plan), as well as feeds from our **blog** and **changelog**. This way, you can keep all important updates - whether outages, incidents, or maintenance - flowing into your Slack workspace automatically.
