@@ -302,7 +302,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     location: "Madrid, Spain",
     flag: "🇪🇸",
     continent: "Europe",
-    deprecated:true,
+    deprecated: true,
   },
   mia: {
     code: "mia",
@@ -359,7 +359,6 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
-
   },
   sea: {
     code: "sea",
@@ -367,7 +366,6 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
-
   },
   sin: {
     code: "sin",
@@ -403,7 +401,6 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇨🇦",
     continent: "North America",
     deprecated: false,
-
   },
 } as const;
 
