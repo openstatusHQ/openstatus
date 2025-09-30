@@ -151,7 +151,9 @@ export default function Page() {
           <StatusFeed
             statusReports={page.statusReports
               .filter((report) =>
-                page.lastEvents.some((event) => event.id === report.id),
+                page.lastEvents.some(
+                  (event) => event.id === report.id && event.type === "report",
+                ),
               )
               .map((report) => ({
                 ...report,
@@ -162,7 +164,10 @@ export default function Page() {
               }))}
             maintenances={page.maintenances
               .filter((maintenance) =>
-                page.lastEvents.some((event) => event.id === maintenance.id),
+                page.lastEvents.some(
+                  (event) =>
+                    event.id === maintenance.id && event.type === "maintenance",
+                ),
               )
               .map((maintenance) => ({
                 ...maintenance,

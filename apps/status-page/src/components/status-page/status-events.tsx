@@ -1,9 +1,16 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDateRange, formatDateTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { formatDistanceStrict } from "date-fns";
+import { Check } from "lucide-react";
 import { status } from "./messages";
 
 export function StatusEvent({
@@ -50,6 +57,29 @@ export function StatusEventTitle({
   return (
     <div className={cn("font-medium", className)} {...props}>
       {children}
+    </div>
+  );
+}
+
+export function StatusEventTitleCheck({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("mt-1 ml-1.5", className)} {...props}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
+              <Check className="size-3 shrink-0" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Report resolved</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
@@ -186,7 +216,11 @@ function StatusEventTimelineReportUpdate({
               ) : null}
             </StatusEventTimelineTitle>
             <StatusEventTimelineMessage>
-              <ProcessMessage value={report.message} />
+              {report.message.trim() === "" ? (
+                <span className="text-muted-foreground/70">-</span>
+              ) : (
+                <ProcessMessage value={report.message} />
+              )}
             </StatusEventTimelineMessage>
           </div>
         </div>
@@ -242,7 +276,11 @@ export function StatusEventTimelineMaintenance({
               ) : null}
             </StatusEventTimelineTitle>
             <StatusEventTimelineMessage>
-              <ProcessMessage value={maintenance.message} />
+              {maintenance.message.trim() === "" ? (
+                <span className="text-muted-foreground/70">-</span>
+              ) : (
+                <ProcessMessage value={maintenance.message} />
+              )}
             </StatusEventTimelineMessage>
           </div>
         </div>
