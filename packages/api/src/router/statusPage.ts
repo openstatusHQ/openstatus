@@ -125,6 +125,7 @@ export const statusPageRouter = createTRPCRouter({
         .filter((e) => {
           if (e.type === "incident") return false;
           if (!e.from || e.from.getTime() >= threshold) return true;
+          if (e.type === "report" && e.status !== "success") return true;
           return false;
         })
         .sort((a, b) => a.from.getTime() - b.from.getTime());

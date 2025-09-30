@@ -1,4 +1,6 @@
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function StatusBlankContainer({
   children,
@@ -8,7 +10,7 @@ export function StatusBlankContainer({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 rounded-lg border bg-muted/30 px-3 py-2 text-center sm:px-8 sm:py-6",
+        "flex flex-col items-center justify-center gap-2.5 rounded-lg border bg-muted/30 px-3 py-2 text-center sm:px-8 sm:py-6",
         className,
       )}
       {...props}
@@ -45,13 +47,32 @@ export function StatusBlankDescription({
   );
 }
 
+export function StatusBlankLink({
+  children,
+  className,
+  href,
+  ...props
+}: React.ComponentProps<typeof Button> & { href: string }) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className={cn("text-foreground", className)}
+      asChild
+      {...props}
+    >
+      <Link href={href}>{children}</Link>
+    </Button>
+  );
+}
+
 export function StatusBlankContent({
   children,
   className,
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("", className)} {...props}>
+    <div className={cn("space-y-1", className)} {...props}>
       {children}
     </div>
   );

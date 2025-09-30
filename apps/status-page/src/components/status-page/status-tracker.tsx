@@ -401,7 +401,7 @@ function StatusTrackerEvent({
   status: "success" | "degraded" | "error" | "info" | "empty";
 }) {
   if (!from) return null;
-  const duration = to ? formatDistanceStrict(from, to) : "ongoing";
+
   return (
     <div className="group relative text-sm">
       {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
@@ -421,9 +421,23 @@ function StatusTrackerEvent({
       <div className="mt-1 text-muted-foreground text-xs">
         {formatDateRange(from, to ?? undefined)}{" "}
         <span className="ml-1.5 font-mono text-muted-foreground/70">
-          {duration === "0 seconds" ? null : duration}
+          {formatDuration({ from, to, name, status })}
         </span>
       </div>
     </div>
   );
 }
+
+const formatDuration = ({
+  from,
+  to,
+  name,
+}: React.ComponentProps<typeof StatusTrackerEvent>) => {
+  if (!from) return null;
+  if (!to) return "ongoing";
+  const duration = formatDistanceStrict(from, to);
+  const isMultipleIncidents = name.includes("Downtime (");
+  if (isMultipleIncidents) return `across ${duration}`;
+  if (duration === "0 seconds") return null;
+  return duration;
+};

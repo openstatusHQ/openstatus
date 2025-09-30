@@ -9,6 +9,7 @@ import {
   StatusBlankContainer,
   StatusBlankContent,
   StatusBlankDescription,
+  StatusBlankLink,
   StatusBlankReport,
   StatusBlankTitle,
 } from "./status-blank";
@@ -92,6 +93,9 @@ export function StatusFeed({
           <StatusBlankDescription>
             There have been no reports within the last 7 days.
           </StatusBlankDescription>
+          <StatusBlankLink href={`${prefix ? `/${prefix}` : ""}/events`}>
+            View all reports
+          </StatusBlankLink>
         </StatusBlankContent>
       </StatusBlankContainer>
     );
@@ -186,6 +190,12 @@ export function StatusFeed({
         }
         return null;
       })}
+      <StatusBlankLink
+        className="mx-auto"
+        href={`${prefix ? `/${prefix}` : ""}/events`}
+      >
+        View all events
+      </StatusBlankLink>
     </div>
   );
 }
