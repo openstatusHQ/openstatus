@@ -850,13 +850,15 @@ export const pageRouter = createTRPCRouter({
           .delete(monitorsToPages)
           .where(eq(monitorsToPages.pageId, opts.input.id));
 
-        await tx.insert(monitorsToPages).values(
-          opts.input.monitors.map((m) => ({
-            pageId: opts.input.id,
-            monitorId: m.id,
-            order: m.order,
-          })),
-        );
+        if (opts.input.monitors.length > 0) {
+          await tx.insert(monitorsToPages).values(
+            opts.input.monitors.map((m) => ({
+              pageId: opts.input.id,
+              monitorId: m.id,
+              order: m.order,
+            })),
+          );
+        }
       });
     }),
 });
