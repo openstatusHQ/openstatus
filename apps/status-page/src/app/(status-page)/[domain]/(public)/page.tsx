@@ -129,23 +129,25 @@ export default function Page() {
           <StatusBanner status={page.status} />
         )}
         {/* NOTE: check what gap feels right */}
-        <StatusContent className="gap-5">
-          {page.monitors.map((monitor) => {
-            const { data, uptime } =
-              uptimeData?.find((m) => m.id === monitor.id) ?? {};
-            return (
-              <StatusMonitor
-                key={monitor.id}
-                status={monitor.status}
-                data={data}
-                monitor={monitor}
-                uptime={uptime}
-                showUptime={showUptime}
-                isLoading={isLoading}
-              />
-            );
-          })}
-        </StatusContent>
+        {page.monitors.length > 0 ? (
+          <StatusContent className="gap-5">
+            {page.monitors.map((monitor) => {
+              const { data, uptime } =
+                uptimeData?.find((m) => m.id === monitor.id) ?? {};
+              return (
+                <StatusMonitor
+                  key={monitor.id}
+                  status={monitor.status}
+                  data={data}
+                  monitor={monitor}
+                  uptime={uptime}
+                  showUptime={showUptime}
+                  isLoading={isLoading}
+                />
+              );
+            })}
+          </StatusContent>
+        ) : null}
         <Separator />
         <StatusContent>
           <StatusFeed
