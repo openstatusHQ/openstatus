@@ -105,7 +105,7 @@ const nextConfig = {
                 "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
             },
           ],
-          destination: "https://www.stpg.dev/:domain/:path*",
+          destination: "https://www.stpg.dev/:path*",
         },
         // Handle API routes for custom domains
         {
