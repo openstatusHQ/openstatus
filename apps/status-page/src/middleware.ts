@@ -84,7 +84,7 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
   }
 
-  if(_page?.customDomain && host !== "www.stpg.dev" ){
+  if(_page.customDomain && host !== `${_page.slug}.stpg.dev` ){
     if(pathnames.length > 2){
       const pathname = pathnames.slice(2).join("/");
       return NextResponse.rewrite(new URL(`/${_page.slug}/${pathname}`, req.url));
