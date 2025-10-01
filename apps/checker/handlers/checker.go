@@ -64,6 +64,15 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			return
 		}
 	}
+	if h.CloudProvider == "koyeb" {
+		region := c.GetHeader("")
+		if region != "" && region != h.Region {
+			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+
+			return
+		}
+	}
 
 	var req request.HttpCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

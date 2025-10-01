@@ -31,12 +31,24 @@ func main() {
 	}()
 
 	// environment variables.
-	flyRegion := env("FLY_REGION", env("REGION", "local"))
+	var region string
 	cronSecret := env("CRON_SECRET", "")
 	tinyBirdToken := env("TINYBIRD_TOKEN", "")
 	logLevel := env("LOG_LEVEL", "warn")
 	cloudProvider := env("CLOUD_PROVIDER", "fly")
 
+	switch cloudProvider {
+	case "fly":
+	region = env("FLY_REGION", env("REGION", "local"))
+
+	case "koyeb":
+	region = env("KOYEB_REGION", env("REGION", "local"))
+
+	case "railway":
+
+	default:
+		log.Fatal().Msgf("unsupported cloud provider: %s", cloudProvider)
+	}
 	logger.Configure(logLevel)
 
 	// packages.
@@ -51,7 +63,7 @@ func main() {
 	h := &handlers.Handler{
 		Secret:        cronSecret,
 		CloudProvider: cloudProvider,
-		Region:        flyRegion,
+		Region:        region,
 		TbClient:      tinybirdClient,
 	}
 
@@ -63,7 +75,7 @@ func main() {
 	router.POST("/tcp/:region", h.TCPHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
+		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": region})
 	})
 
 	httpServer := &http.Server{
