@@ -84,6 +84,10 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
   }
 
+  if(_page?.customDomain){
+    return NextResponse.rewrite(new URL(`/${_page.slug}`, req.url));
+  }
+
   return response;
 }
 
