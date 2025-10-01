@@ -109,7 +109,7 @@ const nextConfig = {
         },
         {
           source:
-            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|events|monitors).*)",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
             {
@@ -119,6 +119,19 @@ const nextConfig = {
             },
           ],
           destination: "https://www.stpg.dev/:domain*",
+        },
+        {
+          source:
+            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value:
+                "^(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:domain/:path*",
         },
         // Handle API routes for custom domains
         {
