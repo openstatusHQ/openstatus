@@ -418,6 +418,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
       code: MonitorFlyRegion;
       location: string;
       flag: string;
+      deprecated: boolean;
       continent:
         | "Europe"
         | "North America"
