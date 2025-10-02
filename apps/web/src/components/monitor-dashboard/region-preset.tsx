@@ -17,11 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/src/components/popover";
-import {
-  type Continent,
-  type RegionInfo,
-  regionDict,
-} from "@openstatus/utils";
+import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
 import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
