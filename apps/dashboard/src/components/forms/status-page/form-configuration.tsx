@@ -44,7 +44,7 @@ import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { isTRPCClientError } from "@trpc/client";
-import { ArrowUpRight, Globe, Info } from "lucide-react";
+import { ArrowUpRight, Info } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -155,7 +155,7 @@ export function FormConfiguration({
                 Use the latest version of the status page and customize it.
               </FormCardDescription>
             </FormCardHeader>
-            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+            <FormCardContent className="grid gap-4 md:grid-cols-3">
               <FormField
                 control={form.control}
                 name="new"
@@ -176,8 +176,8 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <div className="flex items-center sm:justify-end">
-                <Button variant="secondary" size="sm" asChild>
+              <div className="flex items-center md:col-span-2 md:justify-end">
+                <Button size="sm" asChild>
                   <Link
                     href={configLink}
                     rel="noreferrer"
@@ -189,21 +189,6 @@ export function FormConfiguration({
                   </Link>
                 </Button>
               </div>
-              <Note color="info" className="col-span-full">
-                <Globe />
-                <p className="text-sm">
-                  With that version, we provide a new shorter domain{" "}
-                  <code className="font-commit-mono">
-                    https://[slug].stpg.dev
-                  </code>
-                  . Once globally enabled, it will act as redirector for the old
-                  domain{" "}
-                  <code className="font-commit-mono">
-                    https://[slug].openstatus.dev
-                  </code>
-                  .
-                </p>
-              </Note>
             </FormCardContent>
             {watchNew && (
               <>

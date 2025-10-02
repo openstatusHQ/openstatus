@@ -232,7 +232,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const monitors = _page.monitorsToPages.filter(
-        (m) => m.monitor.active && !m.monitor.deletedAt,
+        (m) => !m.monitor.deletedAt,
       );
 
       if (monitors.length !== opts.input.monitorIds.length) return null;
