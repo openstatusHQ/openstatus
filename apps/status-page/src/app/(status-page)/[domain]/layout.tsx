@@ -48,7 +48,12 @@ export default async function Layout({
           defaultCommunityTheme={validation.data?.theme}
         >
           {children}
-          <FloatingButton />
+          <FloatingButton
+            pageId={page?.id}
+            // NOTE: token to avoid showing the floating button to random users
+            // timestamp is our token - it is hard to guess
+            token={page?.createdAt?.getTime().toString()}
+          />
           <FloatingTheme />
           <Toaster
             toastOptions={{

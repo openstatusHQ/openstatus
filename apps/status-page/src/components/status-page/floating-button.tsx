@@ -16,25 +16,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { THEMES, THEME_KEYS } from "@/lib/community-themes";
 import { cn } from "@/lib/utils";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Settings } from "lucide-react";
 import { useTheme } from "next-themes";
+import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+
+export const IS_DEV = process.env.NODE_ENV === "development";
 
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];
 
-export const CARD_TYPE = [
-  "duration",
-  "requests",
-  "dominant",
-  "manual",
-] as const;
+export const CARD_TYPE = ["duration", "requests", "manual"] as const;
 export type CardType = (typeof CARD_TYPE)[number];
 
-export const BAR_TYPE = ["absolute", "dominant", "manual"] as const;
+export const BAR_TYPE = ["absolute", "manual"] as const;
 export type BarType = (typeof BAR_TYPE)[number];
 
 export const COMMUNITY_THEME = THEME_KEYS;
@@ -149,7 +147,15 @@ export function StatusPageProvider({
   );
 }
 
-export function FloatingButton({ className }: { className?: string }) {
+export function FloatingButton({
+  className,
+  pageId,
+  token,
+}: {
+  className?: string;
+  pageId?: number;
+  token?: string;
+}) {
   const {
     cardType,
     setCardType,
@@ -163,10 +169,16 @@ export function FloatingButton({ className }: { className?: string }) {
     setRadius,
   } = useStatusPage();
   const [display, setDisplay] = useState(false);
+  const [configToken, setConfigToken] = useQueryState(
+    "configuration-token",
+    parseAsString,
+  );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const enabled =
-      sessionStorage.getItem("status-page-configuration") === "true";
+      localStorage.getItem("configuration-token") === token ||
+      configToken === token;
     const host = window.location.host;
     if (
       (host.includes("localhost") ||
@@ -176,10 +188,13 @@ export function FloatingButton({ className }: { className?: string }) {
       enabled
     ) {
       setDisplay(true);
-    } else if (process.env.NODE_ENV === "development") {
+      localStorage.setItem("configuration-token", token);
+    } else if (IS_DEV) {
       setDisplay(true);
     }
-  }, []);
+
+    if (configToken) setConfigToken(null);
+  }, [open, token]);
 
   if (!display) return null;
 
@@ -189,8 +204,8 @@ export function FloatingButton({ className }: { className?: string }) {
         <PopoverTrigger asChild>
           <Button
             size="icon"
-            variant="outline"
-            className="size-12 rounded-full dark:bg-background"
+            variant="secondary"
+            className="size-12 rounded-full border"
           >
             <Settings className="size-5" />
             <span className="sr-only">Open status page settings</span>
@@ -205,24 +220,6 @@ export function FloatingButton({ className }: { className?: string }) {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="show-uptime">Show Uptime</Label>
-                <Select
-                  value={showUptime ? "true" : "false"}
-                  onValueChange={(v) => setShowUptime(v === "true")}
-                >
-                  <SelectTrigger id="show-uptime" className="w-full capitalize">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["true", "false"].map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="bar-type">Bar Type</Label>
                 <Select
@@ -273,9 +270,49 @@ export function FloatingButton({ className }: { className?: string }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="theme">Theme</Label>
-                <ThemeToggle id="theme" className="w-full" />
+                <Label htmlFor="show-uptime">Show Uptime</Label>
+                <Select
+                  value={showUptime ? "true" : "false"}
+                  onValueChange={(v) => setShowUptime(v === "true")}
+                >
+                  <SelectTrigger id="show-uptime" className="w-full capitalize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["true", "false"].map((v) => (
+                      <SelectItem key={v} value={v} className="capitalize">
+                        {v}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+              {IS_DEV ? (
+                <div className="space-y-2">
+                  <Label htmlFor="radius">Radius</Label>
+                  <Select
+                    value={radius}
+                    onValueChange={(v) => setRadius(v as Radius)}
+                  >
+                    <SelectTrigger id="radius" className="w-full capitalize">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RADIUS.map((v) => (
+                        <SelectItem key={v} value={v} className="capitalize">
+                          {v}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+              {IS_DEV ? (
+                <div className="space-y-2">
+                  <Label htmlFor="theme">Theme</Label>
+                  <ThemeToggle id="theme" className="w-full" />
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="community-theme">Community Theme</Label>
                 <Select
@@ -297,35 +334,21 @@ export function FloatingButton({ className }: { className?: string }) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="radius">Radius</Label>
-                <Select
-                  value={radius}
-                  onValueChange={(v) => setRadius(v as Radius)}
-                >
-                  <SelectTrigger id="radius" className="w-full capitalize">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RADIUS.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </div>
           <Separator />
           <div className="p-4">
             <Button className="w-full" size="sm" asChild>
               <a
-                href="https://github.com/openstatusHQ/openstatus-template"
+                href={
+                  pageId
+                    ? `https://app.openstatus.dev/status-pages/${pageId}/edit?type=${barType}&value=${cardType}&uptime=${showUptime}&theme=${communityTheme}`
+                    : "https://app.openstatus.dev/status-pages"
+                }
                 target="_blank"
                 rel="noreferrer"
               >
-                GitHub Repo
+                Dashboard
               </a>
             </Button>
           </div>

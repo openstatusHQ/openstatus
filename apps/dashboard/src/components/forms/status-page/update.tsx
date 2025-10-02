@@ -1,6 +1,9 @@
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormAppearance } from "./form-appearance";
 import { FormConfiguration } from "./form-configuration";
@@ -80,8 +83,19 @@ export function FormStatusPageUpdate() {
 
   if (!statusPage || !monitors || !workspace) return null;
 
+  const configLink = `https://${
+    statusPage.slug
+  }.stpg.dev?configuration-token=${statusPage.createdAt?.getTime().toString()}`;
+
   return (
     <FormCardGroup>
+      <Note color="info">
+        <Info />
+        <p className="text-sm">
+          We've released a new version of the status page.{" "}
+          <Link href="#redesign">Go to the section</Link> below to enable it.
+        </p>
+      </Note>
       <FormGeneral
         defaultValues={{
           title: statusPage.title,
@@ -105,8 +119,7 @@ export function FormStatusPageUpdate() {
           monitors: statusPage.monitors.map((monitor) => ({
             id: monitor.id,
             order: monitor.order,
-            // type: monitor.type,
-            type: "none" as const,
+            active: monitor.active ?? null,
           })),
         }}
         onSubmit={async (values) => {
@@ -139,34 +152,34 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      {/* TODO: feature flagged - remove once we have the new version in production */}
-      {process.env.NEXT_PUBLIC_STATUS_PAGE_V2 === "true" ||
-      process.env.NODE_ENV === "development" ? (
-        <FormConfiguration
-          defaultValues={{
-            new: !statusPage.legacyPage,
-            configuration: statusPage.configuration ?? {},
-            homepageUrl: statusPage.homepageUrl ?? "",
-            contactUrl: statusPage.contactUrl ?? "",
-          }}
-          onSubmit={async (values) => {
-            await updatePageConfigurationMutation.mutateAsync({
-              id: Number.parseInt(id),
-              configuration: values.new
-                ? {
-                    // NOTE: convert to boolean
-                    uptime: values.configuration.uptime === "true",
-                    value: values.configuration.value ?? "duration",
-                    type: values.configuration.type ?? "absolute",
-                  }
-                : undefined,
-              legacyPage: !values.new,
-              homepageUrl: values.homepageUrl ?? undefined,
-              contactUrl: values.contactUrl ?? undefined,
-            });
-          }}
-        />
-      ) : null}
+      <FormConfiguration
+        defaultValues={{
+          new: !statusPage.legacyPage,
+          configuration: statusPage.configuration ?? {},
+          homepageUrl: statusPage.homepageUrl ?? "",
+          contactUrl: statusPage.contactUrl ?? "",
+        }}
+        onSubmit={async (values) => {
+          await updatePageConfigurationMutation.mutateAsync({
+            id: Number.parseInt(id),
+            configuration: values.new
+              ? {
+                  uptime:
+                    typeof values.configuration.uptime === "boolean"
+                      ? values.configuration.uptime
+                      : values.configuration.uptime === "true",
+                  value: values.configuration.value ?? "duration",
+                  type: values.configuration.type ?? "absolute",
+                  theme: values.configuration.theme ?? "default",
+                }
+              : undefined,
+            legacyPage: !values.new,
+            homepageUrl: values.homepageUrl ?? undefined,
+            contactUrl: values.contactUrl ?? undefined,
+          });
+        }}
+        configLink={configLink}
+      />
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}
         defaultValues={{
