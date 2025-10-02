@@ -6,6 +6,7 @@ description: "How to configure a status page (beta)"
 import { Image } from 'astro:assets';
 import { Aside } from '@astrojs/starlight/components';
 import ConfigureStatusPage1 from '../../../assets/tutorial/configure-status-page/configure-status-page-1.png';
+import StatusPageFloating from '../../../assets/tutorial/configure-status-page/status-page-floating.png';
 import StatusPageBeta1 from '../../../assets/tutorial/configure-status-page/status-page-beta-1.png';
 import StatusPageBeta2 from '../../../assets/tutorial/configure-status-page/status-page-beta-2.png';
 import StatusPageBeta3 from '../../../assets/tutorial/configure-status-page/status-page-beta-3.png';
@@ -24,6 +25,7 @@ Example: https://status.stpg.dev
 Go to the **Status Page Redesign (beta)** section in your status page settings. Toggle the `Enable New Version` to support it. Once enabled, you'll see two subsections:
 
 1. **Tracker Configuration**
+2. **Theme Explorer**
 2. **Links**
 
 <Image
@@ -31,7 +33,19 @@ Go to the **Status Page Redesign (beta)** section in your status page settings. 
     alt="Create your status page"
 />
 
-<Aside>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. If you decide to deactivate the new version, it might take up to 10min. for the user to see the old page.</Aside>
+### View and configure status page
+
+Before choosing to enable the new page, we provide you with a way to check the configuration first. Click on the **View and configure status page** and you'll get forwarded to your status page and a bottom right floating button will appear. Once you're done, click on the **Dashboard** and you'll be forwarded to your page where you get asked to save the config before continuing.
+
+<Image
+    src={StatusPageFloating}
+    alt="Status page floating configuration popover"
+/>
+
+
+---
+
+<Aside>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. **If you decide to deactivate the new version, it might take up to 10 minutes for the user to see the old page.**</Aside>
 
 ### 1. Tracker Configuration
 
@@ -66,7 +80,17 @@ Example of **manual bar** with **simple card** and **hiding uptime**
     alt="manual bar type and hiding uptime"
 />
 
-### 2. Links
+### 2. Theme Explorer
+
+You can choose between different themes. We start with the following three:
+
+- `default` (openstatus)
+- `supabase`
+- `github-high-contrast`
+
+Visit [themes.openstatus.dev](https://themes.openstatus.dev) to see the list of supported themes. If you want, you can contribute your own to the list.
+
+### 3. Links
 
 Let's have a closer look to your status page header navigation:
 
