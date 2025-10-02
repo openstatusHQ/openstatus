@@ -90,7 +90,13 @@ export function ChartLineRegions({
     {} as Record<string, string>,
   );
 
-  // TODO: tooltip
+  const tooltip = regions.reduce(
+    (acc, region) => {
+      acc[region.code] = region.location;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
   return (
     <ChartContainer
@@ -171,6 +177,7 @@ export function ChartLineRegions({
               }}
               active={activeSeries}
               annotation={annotation}
+              tooltip={tooltip}
               maxActive={6}
               className="justify-start overflow-x-scroll ps-1 pt-1 font-mono"
             />
