@@ -51,7 +51,6 @@ func main() {
 	}
 	logger.Configure(logLevel)
 
-	// packages.
 	httpClient := &http.Client{
 		Timeout: 45 * time.Second,
 	}
