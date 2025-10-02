@@ -36,6 +36,7 @@ export default function Page() {
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
+
   // NOTE: we can prefetch that to avoid loading state
   const { data: uptimeData, isLoading } = useQuery(
     trpc.statusPage.getUptime.queryOptions({
