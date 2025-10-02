@@ -194,7 +194,7 @@ export function FloatingButton({
     }
 
     if (configToken) setConfigToken(null);
-  }, [open, token]);
+  }, [token]);
 
   if (!display) return null;
 
@@ -348,7 +348,7 @@ export function FloatingButton({
                 target="_blank"
                 rel="noreferrer"
               >
-                Dashboard
+                Save Configuration
               </a>
             </Button>
           </div>
