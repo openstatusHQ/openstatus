@@ -83,6 +83,10 @@ export function FormStatusPageUpdate() {
 
   if (!statusPage || !monitors || !workspace) return null;
 
+  const configLink = `https://${
+    statusPage.slug
+  }.stpg.dev?configuration-token=${statusPage.createdAt?.getTime().toString()}`;
+
   return (
     <FormCardGroup>
       <Note color="info">
@@ -174,7 +178,7 @@ export function FormStatusPageUpdate() {
             contactUrl: values.contactUrl ?? undefined,
           });
         }}
-        slug={statusPage.slug}
+        configLink={configLink}
       />
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}

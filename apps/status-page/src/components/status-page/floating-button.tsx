@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Settings } from "lucide-react";
 import { useTheme } from "next-themes";
-import { parseAsBoolean, useQueryState } from "nuqs";
+import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -150,9 +150,11 @@ export function StatusPageProvider({
 export function FloatingButton({
   className,
   pageId,
+  token,
 }: {
   className?: string;
   pageId?: number;
+  token?: string;
 }) {
   const {
     cardType,
@@ -167,31 +169,32 @@ export function FloatingButton({
     setRadius,
   } = useStatusPage();
   const [display, setDisplay] = useState(false);
-  const [open, setOpen] = useQueryState(
-    "status-page-configuration",
-    parseAsBoolean,
+  const [configToken, setConfigToken] = useQueryState(
+    "configuration-token",
+    parseAsString,
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const enabled =
-      localStorage.getItem("status-page-configuration") === "true";
+      localStorage.getItem("configuration-token") === token ||
+      configToken === token;
     const host = window.location.host;
     if (
       (host.includes("localhost") ||
         host.includes("stpg.dev") ||
         host.includes("openstatus.dev") ||
         host.includes("vercel.app")) &&
-      (enabled || open)
+      enabled
     ) {
       setDisplay(true);
-      localStorage.setItem("status-page-configuration", "true");
+      localStorage.setItem("configuration-token", token);
     } else if (IS_DEV) {
       setDisplay(true);
     }
 
-    if (open) setOpen(null);
-  }, [open]);
+    if (configToken) setConfigToken(null);
+  }, [open, token]);
 
   if (!display) return null;
 
@@ -201,8 +204,8 @@ export function FloatingButton({
         <PopoverTrigger asChild>
           <Button
             size="icon"
-            variant="outline"
-            className="size-12 rounded-full dark:bg-background"
+            variant="secondary"
+            className="size-12 rounded-full border"
           >
             <Settings className="size-5" />
             <span className="sr-only">Open status page settings</span>

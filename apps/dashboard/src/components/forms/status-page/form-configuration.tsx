@@ -82,11 +82,11 @@ type FormValues = z.infer<typeof schema>;
 export function FormConfiguration({
   defaultValues,
   onSubmit,
-  slug,
+  configLink,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  slug: string;
+  configLink: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
@@ -179,7 +179,7 @@ export function FormConfiguration({
               <div className="flex items-center sm:justify-end">
                 <Button variant="secondary" size="sm" asChild>
                   <Link
-                    href={`https://${slug}.stpg.dev?status-page-configuration=true`}
+                    href={configLink}
                     rel="noreferrer"
                     target="_blank"
                     className="inline-flex items-center gap-1"
