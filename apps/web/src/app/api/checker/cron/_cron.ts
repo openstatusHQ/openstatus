@@ -184,9 +184,9 @@ const createCronTask = async ({
       trigger: "cron",
       otelConfig: row.otelEndpoint
         ? {
-          endpoint: row.otelEndpoint,
-          headers: transformHeaders(row.otelHeaders),
-        }
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
         : undefined,
       retry: row.retry || 3,
       followRedirects: row.followRedirects || true,
@@ -206,9 +206,9 @@ const createCronTask = async ({
       retry: row.retry || 3,
       otelConfig: row.otelEndpoint
         ? {
-          endpoint: row.otelEndpoint,
-          headers: transformHeaders(row.otelHeaders),
-        }
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
         : undefined,
     };
   }
@@ -217,12 +217,12 @@ const createCronTask = async ({
     throw new Error("Invalid jobType");
   }
   const regionInfo = regionDict[region];
-let regionHeader = {}
-  if (regionInfo.provider === "fly"){
-    regionHeader = { "fly-prefer-region": region }
+  let regionHeader = {};
+  if (regionInfo.provider === "fly") {
+    regionHeader = { "fly-prefer-region": region };
   }
-  if (regionInfo.provider === "koyeb"){
-    regionHeader = { "X-KOYEB-REGION-OVERRIDE": region.replace('koyeb_', '') }
+  if (regionInfo.provider === "koyeb") {
+    regionHeader = { "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", "") };
   }
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
