@@ -42,10 +42,10 @@ func main() {
 		region = env("FLY_REGION", env("REGION", "local"))
 
 	case "koyeb":
-		region = env("KOYEB_REGION", env("REGION", "local"))
+		region = fmt.Sprintf("koyeb_%s", env("KOYEB_REGION", env("REGION", "local")))
 
 	case "railway":
-		region = env("RAILWAY_REPLICA_REGION", env("REGION", "local"))
+		region = fmt.Sprintf("railway_%s", env("RAILWAY_REPLICA_REGION", env("REGION", "local")))
 	default:
 		log.Fatal().Msgf("unsupported cloud provider: %s", cloudProvider)
 	}

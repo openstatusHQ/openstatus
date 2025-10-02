@@ -25,7 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  type MonitorFlyRegion,
+  type MonitorRegion,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
 import { useState, useTransition } from "react";
@@ -240,7 +240,7 @@ export function FormSchedulingRegions({
                                             !r
                                               .map(({ code }) => code)
                                               .includes(
-                                                region as MonitorFlyRegion,
+                                                region as MonitorRegion,
                                               ),
                                         ),
                                       );

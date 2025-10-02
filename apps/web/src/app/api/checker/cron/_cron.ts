@@ -20,6 +20,8 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
+import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -92,7 +94,7 @@ export const cron = async ({
   }
 
   for (const row of monitors.data) {
-    const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
+    // const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
     const result = await db
       .select()
@@ -107,7 +109,7 @@ export const cron = async ({
       continue;
     }
 
-    for (const region of selectedRegions) {
+    for (const region of row.regions) {
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
       const response = createCronTask({
@@ -158,7 +160,7 @@ const createCronTask = async ({
   client: CloudTasksClient;
   parent: string;
   status: MonitorStatus;
-  region: string;
+  region: MonitorRegion;
 }) => {
   let payload:
     | z.infer<typeof httpPayloadSchema>
@@ -223,7 +225,7 @@ const createCronTask = async ({
         Authorization: `Basic ${env.CRON_SECRET}`,
       },
       httpMethod: "POST",
-      url: generateUrl({ row }),
+      url: generateUrl({ row, region }),
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
@@ -235,13 +237,18 @@ const createCronTask = async ({
   return client.createTask(request);
 };
 
-function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
-  switch (row.jobType) {
-    case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
-    case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+function generateUrl({ row, region }: { row: z.infer<typeof selectMonitorSchema>; region: MonitorRegion }) {
+  const regionInfo = regionDict[region];
+
+  switch  (regionInfo.provider){
+    case "fly":
+      return `https://openstatus-checker.fly.dev/checker/${row.jobType}?monitor_id=${row.id}`;
+    case "koyeb":
+      return `openstatus-checker.koyeb.app/checker/${row.jobType}?monitor_id=${row.id}`;
+
     default:
-      throw new Error("Invalid jobType");
+    throw new Error("Invalid jobType");
+
   }
+
 }

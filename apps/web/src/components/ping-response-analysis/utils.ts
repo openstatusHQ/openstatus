@@ -5,8 +5,8 @@ import {
   flyRegions,
   monitorFlyRegionSchema,
 } from "@openstatus/db/src/schema/constants";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
-import { continentDict, flyRegionsDict } from "@openstatus/utils";
+import type { MonitorFlyRegion, MonitorRegion } from "@openstatus/db/src/schema/constants";
+import { continentDict, regionDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
@@ -16,16 +16,16 @@ export function timestampFormatter(timestamp: number) {
   return new Date(timestamp).toUTCString(); // GMT format
 }
 
-export function continentFormatter(region: MonitorFlyRegion) {
-  const continent = flyRegionsDict[region].continent;
+export function continentFormatter(region: MonitorRegion) {
+  const continent = regionDict[region].continent;
   return continentDict[continent].code;
 }
 
 export function regionFormatter(
-  region: MonitorFlyRegion,
+  region: MonitorRegion,
   type: "short" | "long" = "short",
 ) {
-  const { code, flag, location } = flyRegionsDict[region];
+  const { code, flag, location } = regionDict[region];
   if (type === "short") return `${code} ${flag}`;
   return `${location} ${flag}`;
 }

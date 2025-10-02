@@ -38,6 +38,15 @@ export const flyRegions = [
   "yyz",
 ] as const;
 
+export const koyebRegions = [
+  "koyeb_fra",
+  "koyeb_was",
+  "koyeb_sin",
+  "koyeb_tyo",
+  "koyeb_par",
+  "koyeb_sfo",
+] as const;
+
 export const freeFlyRegions = [
   "iad",
   "ams",
@@ -57,10 +66,10 @@ export const monitorPeriodicity = [
   "other",
 ] as const;
 
-export const monitorRegions = [...flyRegions] as const;
+export const monitorRegions = [...flyRegions, ...koyebRegions] as const;
 export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 export type MonitorFlyRegion = z.infer<typeof monitorFlyRegionSchema>;
-export type Region = z.infer<typeof monitorFlyRegionSchema>;
+export type MonitorRegion = z.infer<typeof monitorRegionSchema>;

@@ -4,18 +4,21 @@ export const regions = [
     location: "Amsterdam, Netherlands",
     flag: "🇳🇱",
     continent: "Europe",
+    provider: "Fly",
   },
   {
     code: "arn",
     location: "Stockholm, Sweden",
     flag: "🇸🇪",
     continent: "Europe",
+    provider: "Fly",
   },
   {
     code: "atl",
     location: "Atlanta, Georgia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
   },
   {
     code: "bog",
