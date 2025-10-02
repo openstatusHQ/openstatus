@@ -1,5 +1,5 @@
 import { z } from "zod";
-import {  monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
+import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 
 // REMINDER: this is not a database table but just a schema for the limits of the plan
 // default values are set to the free plan limits

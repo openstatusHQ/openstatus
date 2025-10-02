@@ -15,13 +15,13 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
+import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
 import { regionDict } from "@openstatus/utils";
-import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -237,18 +237,19 @@ const createCronTask = async ({
   return client.createTask(request);
 };
 
-function generateUrl({ row, region }: { row: z.infer<typeof selectMonitorSchema>; region: MonitorRegion }) {
+function generateUrl({
+  row,
+  region,
+}: { row: z.infer<typeof selectMonitorSchema>; region: MonitorRegion }) {
   const regionInfo = regionDict[region];
 
-  switch  (regionInfo.provider){
+  switch (regionInfo.provider) {
     case "fly":
       return `https://openstatus-checker.fly.dev/checker/${row.jobType}?monitor_id=${row.id}`;
     case "koyeb":
       return `openstatus-checker.koyeb.app/checker/${row.jobType}?monitor_id=${row.id}`;
 
     default:
-    throw new Error("Invalid jobType");
-
+      throw new Error("Invalid jobType");
   }
-
 }

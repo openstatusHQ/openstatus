@@ -5,7 +5,10 @@ import {
   flyRegions,
   monitorFlyRegionSchema,
 } from "@openstatus/db/src/schema/constants";
-import type { MonitorFlyRegion, MonitorRegion } from "@openstatus/db/src/schema/constants";
+import type {
+  MonitorFlyRegion,
+  MonitorRegion,
+} from "@openstatus/db/src/schema/constants";
 import { continentDict, regionDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {
