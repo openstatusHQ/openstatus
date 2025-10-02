@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@openstatus/ui/src/components/button";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import { Icons } from "@/components/icons";
 import { codesDict } from "@/data/code-dictionary";
@@ -44,11 +44,11 @@ export function DataTableToolbar<TData>({
           <DataTableFacetedFilter
             column={table.getColumn("region")}
             title="Region"
-            options={Object.keys(flyRegionsDict).map((key) => {
-              const typedKey = key as keyof typeof flyRegionsDict;
+            options={Object.keys(regionDict).map((key) => {
+              const typedKey = key as keyof typeof regionDict;
               return {
-                label: flyRegionsDict[typedKey].location,
-                value: flyRegionsDict[typedKey].code,
+                label: regionDict[typedKey].location,
+                value: regionDict[typedKey].code,
               };
             })}
           />

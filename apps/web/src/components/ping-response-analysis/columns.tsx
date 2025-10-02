@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 
@@ -31,7 +31,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     filterFn: (row, _id, filterValue) => {
       const region = regionFormatter(row.original.region, "long").toLowerCase();
       const continent =
-        flyRegionsDict[row.original.region].continent.toLocaleLowerCase();
+        regionDict[row.original.region].continent.toLocaleLowerCase();
       return `${region} ${continent}`.includes(filterValue.toLowerCase());
     },
   },

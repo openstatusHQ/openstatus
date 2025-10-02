@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type * as z from "zod";
 
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import type { Trigger } from "@/lib/monitor/utils";
 import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
@@ -95,7 +95,7 @@ export const columns: ColumnDef<Check>[] = [
         <div>
           <span className="font-mono">{String(row.getValue("region"))} </span>
           <span className="text-muted-foreground text-xs">
-            {flyRegionsDict[row.original.region]?.location}
+            {regionDict[row.original.region]?.location}
           </span>
         </div>
       );

@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui/src/components/table";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
 import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
@@ -49,7 +49,7 @@ export function RegionTable({
         {regions
           .filter((region) => regions.includes(region))
           .map((region) => {
-            const { code, flag, location } = flyRegionsDict[region];
+            const { code, flag, location } = regionDict[region];
             const metrics = metricsByRegion.find((m) => m.region === region);
             return (
               <TableRow key={region}>

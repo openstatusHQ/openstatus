@@ -4,7 +4,7 @@ import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
 import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 
@@ -20,7 +20,7 @@ export const columns: ColumnDef<RegionWithMetrics>[] = [
     header: "Region",
     cell: ({ row }) => {
       const region = row.getValue("region") as Region;
-      const { code, flag, location } = flyRegionsDict[region];
+      const { code, flag, location } = regionDict[region];
       return (
         <div>
           <p className="text-muted-foreground text-xs">{location}</p>

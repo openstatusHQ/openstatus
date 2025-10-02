@@ -20,7 +20,7 @@ import {
 import {
   type Continent,
   type RegionInfo,
-  flyRegionsDict,
+  regionDict,
 } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
@@ -53,7 +53,7 @@ export function RegionsPreset({
   const regionsByContinent = regions
     .reduce(
       (prev, curr) => {
-        const region = flyRegionsDict[curr];
+        const region = regionDict[curr];
 
         const item = prev.find((r) => r.continent === region.continent);
 
