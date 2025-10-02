@@ -86,11 +86,10 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		trigger = req.Trigger
 	}
 
-
 	var response checker.TCPResponse
 
 	var retry int
-	if req.Retry == 0  {
+	if req.Retry == 0 {
 		retry = int(req.Retry)
 	} else {
 		retry = 3
@@ -123,14 +122,13 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			break
 		}
 
-
 		id, err := uuid.NewV7()
 		if err != nil {
 			return fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		data := TCPData{
-			ID: id.String(),
+			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			Timestamp:     res.TCPStart,
 			Error:         0,
@@ -206,7 +204,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			return
 		}
 		data := TCPData{
-			ID: id.String(),
+			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
 			ErrorMessage:  err.Error(),
