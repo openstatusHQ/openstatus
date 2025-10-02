@@ -1,12 +1,9 @@
-import { describe, test, expect, beforeEach } from "bun:test";
-import { flyRegions, monitorRegions, type monitorRegionSchema } from "../src/schema/constants";
+import { beforeEach, describe, expect, test } from "bun:test";
 import type { z } from "zod";
+import type { monitorRegionSchema } from "../src/schema/constants";
 import { updateRegion } from "./region-migration";
 
 // Import the types we need
-
-
-
 
 describe("updateRegion", () => {
   let regions: z.infer<typeof monitorRegionSchema>[];
@@ -209,8 +206,8 @@ describe("updateRegion", () => {
           "sin",
           "syd",
           "yyz",
-        ])
+        ]);
       });
     });
-  })
+  });
 });

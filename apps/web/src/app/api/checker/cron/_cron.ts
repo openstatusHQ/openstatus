@@ -16,7 +16,7 @@ import {
 
 import { env } from "@/env";
 import {
-    flyRegionsDict,
+  flyRegionsDict,
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -112,13 +112,13 @@ export const cron = async ({
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
 
-      const flyRegion =  flyRegionsDict[region as keyof typeof flyRegionsDict];
+      const flyRegion = flyRegionsDict[region as keyof typeof flyRegionsDict];
 
       if (!flyRegion) {
         console.error(`Invalid region ${region}`);
         continue;
       }
-      if(flyRegion.deprecated) {
+      if (flyRegion.deprecated) {
         // We should not use deprecated regions anymore
         console.error(`Deprecated region ${region}`);
         continue;
