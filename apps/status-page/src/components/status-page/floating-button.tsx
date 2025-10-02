@@ -348,7 +348,7 @@ export function FloatingButton({
                 target="_blank"
                 rel="noreferrer"
               >
-                Dashboard
+                Save Configuration
               </a>
             </Button>
           </div>
