@@ -194,7 +194,7 @@ export function FloatingButton({
     }
 
     if (configToken) setConfigToken(null);
-  }, [open, token]);
+  }, [token]);
 
   if (!display) return null;
 
