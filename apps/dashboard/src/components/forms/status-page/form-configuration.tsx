@@ -160,7 +160,7 @@ export function FormConfiguration({
                 control={form.control}
                 name="new"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between sm:col-span-">
+                  <FormItem className="flex flex-row items-center justify-between">
                     <div className="space-y-0.5">
                       <FormLabel>Enable New Version</FormLabel>
                       <FormDescription>
@@ -189,7 +189,7 @@ export function FormConfiguration({
                   </Link>
                 </Button>
               </div>
-              <Note className="col-span-full">
+              <Note color="info" className="col-span-full">
                 <Globe />
                 <p className="text-sm">
                   With that version, we provide a new shorter domain{" "}
@@ -310,7 +310,7 @@ export function FormConfiguration({
                       </FormItem>
                     )}
                   />
-                  <Note color="info" className="col-span-full">
+                  <Note className="col-span-full">
                     <ul className="list-inside list-disc">
                       <li>
                         <span className="font-medium">
