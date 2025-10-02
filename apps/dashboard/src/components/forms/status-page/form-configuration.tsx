@@ -59,20 +59,18 @@ const schema = z.object({
 const configurationSchema = z
   .object({
     type: z.enum(["manual", "absolute"]),
-    value: z.enum(["duration", "requests"]).nullish(),
+    value: z.enum(["duration", "requests", "manual"]).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
   })
   .refine(
     (data) => {
-      // If type is "manual", value must be null or undefined
-      if (data.type === "manual") {
-        return data.value === null || data.value === undefined;
-      }
+      // If type is "manual", value must be "manual"
+      if (data.type === "manual") return data.value === "manual";
       return true;
     },
     {
-      message: "Value must be null when type is manual",
+      message: "Value must be manual when type is manual",
       path: ["value"],
     },
   );
@@ -111,7 +109,7 @@ export function FormConfiguration({
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
-      form.setValue("configuration.value", undefined);
+      form.setValue("configuration.value", "manual");
     } else {
       form.setValue("configuration.value", "duration");
       form.setValue("configuration.type", "absolute");
@@ -484,7 +482,7 @@ const message = {
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
-  value: parseAsStringLiteral(["duration", "requests"]),
+  value: parseAsStringLiteral(["duration", "requests", "manual"]),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
 };

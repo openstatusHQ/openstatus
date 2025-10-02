@@ -12,8 +12,8 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 export const schema = z.object({
-  card: z.enum(["duration", "requests", "manual"]).default("duration"),
-  bar: z.enum(["absolute", "manual"]).default("absolute"),
+  value: z.enum(["duration", "requests", "manual"]).default("duration"),
+  type: z.enum(["absolute", "manual"]).default("absolute"),
   uptime: z.coerce.boolean().default(true),
   theme: z.enum(["default"]).default("default"),
 });
@@ -42,8 +42,8 @@ export default async function Layout({
         disableTransitionOnChange
       >
         <StatusPageProvider
-          defaultBarType={validation.data?.bar}
-          defaultCardType={validation.data?.card}
+          defaultBarType={validation.data?.type}
+          defaultCardType={validation.data?.value}
           defaultShowUptime={validation.data?.uptime}
           defaultCommunityTheme={validation.data?.theme}
         >
