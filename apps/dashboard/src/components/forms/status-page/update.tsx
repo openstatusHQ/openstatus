@@ -1,6 +1,9 @@
+import { Link } from "@/components/common/link";
+import { Note } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormAppearance } from "./form-appearance";
 import { FormConfiguration } from "./form-configuration";
@@ -82,6 +85,13 @@ export function FormStatusPageUpdate() {
 
   return (
     <FormCardGroup>
+      <Note color="info">
+        <Info />
+        <p className="text-sm">
+          We've released a new version of the status page.{" "}
+          <Link href="#redesign">Go to the section</Link> below to enable it.
+        </p>
+      </Note>
       <FormGeneral
         defaultValues={{
           title: statusPage.title,
