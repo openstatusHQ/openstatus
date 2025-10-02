@@ -101,8 +101,7 @@ const nextConfig = {
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
-              value:
-                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)$",
+              value: "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)$",
             },
           ],
           destination: "https://www.stpg.dev/:path*",
@@ -114,8 +113,7 @@ const nextConfig = {
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
-              value:
-                "^(?<domain>.+)$",
+              value: "^(?<domain>.+)$",
             },
           ],
           destination: "https://www.stpg.dev/:domain*",
@@ -127,8 +125,7 @@ const nextConfig = {
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
-              value:
-                "^(?<domain>.+)$",
+              value: "^(?<domain>.+)$",
             },
           ],
           destination: "https://www.stpg.dev/:domain/:path*",
