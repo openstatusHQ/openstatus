@@ -1,4 +1,4 @@
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { z } from "zod";
 
 import { Link } from "@/components/common/link";
@@ -14,6 +14,15 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -33,8 +42,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { THEMES } from "@openstatus/theme-store";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { isTRPCClientError } from "@trpc/client";
+import { ArrowUpRight, Info } from "lucide-react";
+import { parseAsStringLiteral, useQueryStates } from "nuqs";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -45,14 +56,37 @@ const schema = z.object({
   contactUrl: z.string().optional(),
 });
 
+const configurationSchema = z
+  .object({
+    type: z.enum(["manual", "absolute"]),
+    value: z.enum(["duration", "requests"]).nullish(),
+    uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
+    theme: z.enum(THEME_KEYS as [string, ...string[]]),
+  })
+  .refine(
+    (data) => {
+      // If type is "manual", value must be null or undefined
+      if (data.type === "manual") {
+        return data.value === null || data.value === undefined;
+      }
+      return true;
+    },
+    {
+      message: "Value must be null when type is manual",
+      path: ["value"],
+    },
+  );
+
 type FormValues = z.infer<typeof schema>;
 
 export function FormConfiguration({
   defaultValues,
   onSubmit,
+  slug,
 }: {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
+  slug: string;
 }) {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormValues>({
@@ -77,7 +111,6 @@ export function FormConfiguration({
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
-      // TODO: this is not working
       form.setValue("configuration.value", undefined);
     } else {
       form.setValue("configuration.value", "duration");
@@ -112,289 +145,327 @@ export function FormConfiguration({
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
-          <FormCardHeader>
-            <FormCardTitle>Status Page Redesign (beta)</FormCardTitle>
-            <FormCardDescription>
-              Use the latest version of the status page and customize it.
-            </FormCardDescription>
-          </FormCardHeader>
-          <FormCardContent>
-            <FormField
-              control={form.control}
-              name="new"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center">
-                  <FormLabel>Enable New Version</FormLabel>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </FormCardContent>
-          {watchNew && (
-            <>
-              <FormCardSeparator />
-              <FormCardContent className="grid gap-4 sm:grid-cols-3">
-                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
-                  <FormCardTitle>Tracker Configuration</FormCardTitle>
-                  <FormCardDescription>
-                    Configure which data should be shown in the monitor tracker.
-                  </FormCardDescription>
-                </FormCardHeader>
-                <FormField
-                  control={form.control}
-                  name="configuration.type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bar Type</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={String(field.value) ?? "absolute"}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full capitalize">
-                            <SelectValue placeholder="Select a type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {["absolute", "manual"].map((type) => (
-                            <SelectItem
-                              key={type}
-                              value={type}
-                              className="capitalize"
-                            >
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="configuration.value"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Card Value</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={String(field.value) ?? "duration"}
-                        disabled={watchConfigurationType === "manual"}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full capitalize">
-                            <SelectValue placeholder="Select a type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {["duration", "requests"].map((type) => (
-                            <SelectItem
-                              key={type}
-                              value={type}
-                              className="capitalize"
-                            >
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="configuration.uptime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Show Uptime</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={String(field.value) ?? "true"}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full capitalize">
-                            <SelectValue placeholder="Select a type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {["true", "false"].map((type) => (
-                            <SelectItem
-                              key={type}
-                              value={type}
-                              className="capitalize"
-                            >
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Note color="info" className="col-span-full">
-                  <ul className="list-inside list-disc">
-                    <li>
-                      <span className="font-medium">
-                        Bar Type{" "}
-                        <span className="font-semibold">
-                          {watchConfigurationType}
-                        </span>
-                      </span>
-                      : {message.type[watchConfigurationType]}
-                    </li>
-                    <li>
-                      <span className="font-medium">
-                        Card Value{" "}
-                        <span className="font-semibold">
-                          {watchConfigurationValue}
-                        </span>
-                      </span>
-                      :{" "}
-                      {message.value[watchConfigurationValue] ??
-                        message.value.default}
-                    </li>
-                    <li>
-                      <span className="font-medium">
-                        Show Uptime{" "}
-                        <span className="font-semibold">
-                          {watchConfigurationUptime}
-                        </span>
-                      </span>
-                      : {message.uptime[watchConfigurationUptime]}
-                    </li>
-                  </ul>
-                </Note>
-              </FormCardContent>
-              <FormCardSeparator />
-              <FormCardContent className="grid gap-4">
-                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
-                  <FormCardTitle>Links</FormCardTitle>
-                  <FormCardDescription>
-                    Configure the links for the status page.
-                  </FormCardDescription>
-                </FormCardHeader>
-                <FormField
-                  control={form.control}
-                  name="homepageUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Homepage URL</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://acme.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(submitAction)}>
+          <FormCard>
+            <FormCardHeader>
+              <FormCardTitle>Status Page Redesign (beta)</FormCardTitle>
+              <FormCardDescription>
+                Use the latest version of the status page and customize it.
+              </FormCardDescription>
+            </FormCardHeader>
+            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="new"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between sm:col-span-">
+                    <div className="space-y-0.5">
+                      <FormLabel>Enable New Version</FormLabel>
                       <FormDescription>
-                        What URL should the logo link to? Leave empty to hide.
+                        Configure your status page on the{" "}
+                        <Link
+                          href={`https://${slug}.stpg.dev?status-page-configuration=true`}
+                          rel="noreferrer"
+                          target="_blank"
+                          className="inline-flex items-center gap-1"
+                        >
+                          status page
+                        </Link>{" "}
+                        itself.
                       </FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="contactUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://acme.com/contact"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                      <FormDescription>
-                        Enter the URL for your contact page. Or start with{" "}
-                        <code className="rounded-md bg-muted px-1 py-0.5">
-                          mailto:
-                        </code>{" "}
-                        to open the email client. Leave empty to hide.
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </FormCardContent>
-              <FormCardSeparator />
-              <FormCardContent className="grid gap-4 sm:grid-cols-3">
-                <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
-                  <FormCardTitle>Theme Explorer</FormCardTitle>
-                  <FormCardDescription>
-                    Configure the theme for the status page - or contribute your
-                    own. Learn more about it at{" "}
-                    <Link
-                      href="https://themes.openstatus.dev"
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      themes.openstatus.dev
-                    </Link>
-                    .
-                  </FormCardDescription>
-                </FormCardHeader>
-                <FormField
-                  control={form.control}
-                  name="configuration.theme"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Theme</FormLabel>
-                      <FormControl>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <div className="flex items-center sm:justify-end">
+                <Button variant="secondary" size="sm" asChild>
+                  <Link
+                    href={`https://${slug}.stpg.dev?status-page-configuration=true`}
+                    rel="noreferrer"
+                    target="_blank"
+                    className="inline-flex items-center gap-1"
+                  >
+                    View and configure status page{" "}
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </FormCardContent>
+            {watchNew && (
+              <>
+                <FormCardSeparator />
+                <FormCardContent className="grid gap-4 sm:grid-cols-3">
+                  <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                    <FormCardTitle>Tracker Configuration</FormCardTitle>
+                    <FormCardDescription>
+                      Configure which data should be shown in the monitor
+                      tracker.
+                    </FormCardDescription>
+                  </FormCardHeader>
+                  <FormField
+                    control={form.control}
+                    name="configuration.type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Bar Type</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={String(field.value) ?? "default"}
+                          defaultValue={String(field.value) ?? "absolute"}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full capitalize">
-                              <SelectValue placeholder="Select a theme" />
+                              <SelectValue placeholder="Select a type" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.values(THEMES).map((theme) => (
+                            {["absolute", "manual"].map((type) => (
                               <SelectItem
-                                key={theme.id}
-                                value={theme.id}
+                                key={type}
+                                value={type}
                                 className="capitalize"
                               >
-                                {theme.name}
+                                {type}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </FormCardContent>
-            </>
-          )}
-          <FormCardFooter>
-            <FormCardFooterInfo>
-              Learn more about{" "}
-              <Link
-                href="https://docs.openstatus.dev/tutorial/how-to-configure-status-page"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Status Page Redesign (beta)
-              </Link>
-              .
-            </FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Submitting..." : "Submit"}
-            </Button>
-          </FormCardFooter>
-        </FormCard>
-      </form>
-    </Form>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="configuration.value"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Card Value</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={String(field.value) ?? "duration"}
+                          disabled={watchConfigurationType === "manual"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full capitalize">
+                              <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {["duration", "requests"].map((type) => (
+                              <SelectItem
+                                key={type}
+                                value={type}
+                                className="capitalize"
+                              >
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="configuration.uptime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Show Uptime</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={String(field.value) ?? "true"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full capitalize">
+                              <SelectValue placeholder="Select a type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {["true", "false"].map((type) => (
+                              <SelectItem
+                                key={type}
+                                value={type}
+                                className="capitalize"
+                              >
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Note color="info" className="col-span-full">
+                    <ul className="list-inside list-disc">
+                      <li>
+                        <span className="font-medium">
+                          Bar Type{" "}
+                          <span className="font-semibold">
+                            {watchConfigurationType}
+                          </span>
+                        </span>
+                        : {message.type[watchConfigurationType]}
+                      </li>
+                      <li>
+                        <span className="font-medium">
+                          Card Value{" "}
+                          <span className="font-semibold">
+                            {watchConfigurationValue}
+                          </span>
+                        </span>
+                        :{" "}
+                        {message.value[watchConfigurationValue] ??
+                          message.value.default}
+                      </li>
+                      <li>
+                        <span className="font-medium">
+                          Show Uptime{" "}
+                          <span className="font-semibold">
+                            {watchConfigurationUptime}
+                          </span>
+                        </span>
+                        : {message.uptime[watchConfigurationUptime]}
+                      </li>
+                    </ul>
+                  </Note>
+                </FormCardContent>
+                <FormCardSeparator />
+                <FormCardContent className="grid gap-4 sm:grid-cols-3">
+                  <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                    <FormCardTitle>Theme Explorer</FormCardTitle>
+                    <FormCardDescription>
+                      Configure the theme for the status page - or contribute
+                      your own. Learn more about it at{" "}
+                      <Link
+                        href="https://themes.openstatus.dev"
+                        rel="noreferrer"
+                        target="_blank"
+                      >
+                        themes.openstatus.dev
+                      </Link>
+                      .
+                    </FormCardDescription>
+                  </FormCardHeader>
+                  <FormField
+                    control={form.control}
+                    name="configuration.theme"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Theme</FormLabel>
+                        <FormControl>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={String(field.value) ?? "default"}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="w-full capitalize">
+                                <SelectValue placeholder="Select a theme" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.values(THEMES).map((theme) => (
+                                <SelectItem
+                                  key={theme.id}
+                                  value={theme.id}
+                                  className="capitalize"
+                                >
+                                  {theme.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </FormCardContent>
+                <FormCardSeparator />
+                <FormCardContent className="grid gap-4">
+                  <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                    <FormCardTitle>Links</FormCardTitle>
+                    <FormCardDescription>
+                      Configure the links for the status page.
+                    </FormCardDescription>
+                  </FormCardHeader>
+                  <FormField
+                    control={form.control}
+                    name="homepageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Homepage URL</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://acme.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        <FormDescription>
+                          What URL should the logo link to? Leave empty to hide.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="contactUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://acme.com/contact"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                        <FormDescription>
+                          Enter the URL for your contact page. Or start with{" "}
+                          <code className="rounded-md bg-muted px-1 py-0.5">
+                            mailto:
+                          </code>{" "}
+                          to open the email client. Leave empty to hide.
+                        </FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </FormCardContent>
+              </>
+            )}
+            <FormCardFooter>
+              <FormCardFooterInfo>
+                Learn more about{" "}
+                <Link
+                  href="https://docs.openstatus.dev/tutorial/how-to-configure-status-page"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Status Page Redesign (beta)
+                </Link>
+                .
+              </FormCardFooterInfo>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Submitting..." : "Submit"}
+              </Button>
+            </FormCardFooter>
+          </FormCard>
+        </form>
+      </Form>
+      <FormConfigurationDialog
+        defaultValues={defaultValues}
+        onSubmit={async (e) => {
+          await onSubmit(e);
+          // NOTE: make sure to sync the form with the new values
+          form.reset(e);
+        }}
+      />
+    </>
   );
 }
 
@@ -417,3 +488,113 @@ const message = {
     false: "shares only the current status.",
   },
 } as const;
+
+// ?type=manual&value=manual&uptime=true&theme=default
+
+const searchParams = {
+  type: parseAsStringLiteral(["manual", "absolute"]),
+  value: parseAsStringLiteral(["duration", "requests"]),
+  uptime: parseAsStringLiteral(["true", "false"]),
+  theme: parseAsStringLiteral(Object.keys(THEMES)),
+};
+
+function FormConfigurationDialog({
+  defaultValues,
+  onSubmit,
+}: {
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [{ type, value, uptime, theme }, setSearchParams] =
+    useQueryStates(searchParams);
+
+  useEffect(() => {
+    if (type) setOpen(true);
+  }, [type]);
+
+  function submitAction(values: FormValues) {
+    if (isPending) return;
+
+    const data = configurationSchema.safeParse(values.configuration);
+    if (!data.success) {
+      toast.error(data.error.message);
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const promise = onSubmit(values);
+        toast.promise(promise, {
+          loading: "Saving...",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
+        });
+        await promise;
+        setSearchParams({
+          type: null,
+          value: null,
+          uptime: null,
+          theme: null,
+        });
+        setOpen(false);
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Status Page Redesign (beta)</DialogTitle>
+          <DialogDescription>
+            Do you want to update the status page based on the configured
+            settings?
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          <pre className="rounded-md border bg-muted/50 px-3 py-2 font-commit-mono text-sm">
+            {JSON.stringify({ type, value, uptime, theme }, null, 2)}
+          </pre>
+          {!defaultValues || !defaultValues.new ? (
+            <Note color="info" className="text-sm">
+              <Info />
+              <p>You will activate the new version of the status page.</p>
+            </Note>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button
+            type="button"
+            onClick={() =>
+              submitAction({
+                ...defaultValues,
+                new: true,
+                configuration: {
+                  type: type ?? undefined,
+                  value: value ?? undefined,
+                  uptime: uptime ?? undefined,
+                  theme: theme ?? undefined,
+                },
+              })
+            }
+            disabled={isPending}
+          >
+            {isPending ? "Saving..." : "Save"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

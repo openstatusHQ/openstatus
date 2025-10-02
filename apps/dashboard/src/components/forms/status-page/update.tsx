@@ -150,8 +150,10 @@ export function FormStatusPageUpdate() {
             id: Number.parseInt(id),
             configuration: values.new
               ? {
-                  // NOTE: convert to boolean
-                  uptime: values.configuration.uptime === "true",
+                  uptime:
+                    typeof values.configuration.uptime === "boolean"
+                      ? values.configuration.uptime
+                      : values.configuration.uptime === "true",
                   value: values.configuration.value ?? "duration",
                   type: values.configuration.type ?? "absolute",
                   theme: values.configuration.theme ?? "default",
@@ -162,6 +164,7 @@ export function FormStatusPageUpdate() {
             contactUrl: values.contactUrl ?? undefined,
           });
         }}
+        slug={statusPage.slug}
       />
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}

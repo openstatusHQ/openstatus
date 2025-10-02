@@ -48,7 +48,7 @@ export default async function Layout({
           defaultCommunityTheme={validation.data?.theme}
         >
           {children}
-          <FloatingButton />
+          <FloatingButton pageId={page?.id} />
           <FloatingTheme />
           <Toaster
             toastOptions={{
