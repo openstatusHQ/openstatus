@@ -404,7 +404,8 @@ export function setDataByType({
 
     return segments.map((segment) => ({
       status: segment.status,
-      height: (segment.count / totalDuration) * 100,
+      // NOTE: if totalDuration is 0 (single event without duration), we want to show 100% for the segment
+      height: totalDuration > 0 ? (segment.count / totalDuration) * 100 : 100,
     }));
   }
 
