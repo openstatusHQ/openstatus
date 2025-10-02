@@ -1,8 +1,8 @@
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";
 import type { ResponseGraph } from "@/lib/tb";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
 
 /**
  *
@@ -24,7 +24,7 @@ export function groupDataByTimestamp(
     (acc, curr) => {
       const { timestamp, region } = curr;
       const latency = curr[`${quantile}Latency`];
-      const { flag, code, location } = flyRegionsDict[region];
+      const { flag, code, location } = regionDict[region];
       const fullNameRegion = `${code}`;
       regions[fullNameRegion] = { flag, code, location }; // to get the region keys
       if (timestamp === currentTimestamp) {
@@ -46,12 +46,12 @@ export function groupDataByTimestamp(
       }
       return acc;
     },
-    [] as (Partial<Record<Region, number>> & { timestamp: string })[],
+    [] as (Partial<Record<MonitorRegion, number>> & { timestamp: string })[],
   );
 
   // regions are sorted by the flag utf-8 code
   return {
-    regions: Object.keys(regions).sort() as Region[],
+    regions: Object.keys(regions).sort() as MonitorRegion[],
     data: _data.reverse(),
   };
 }
@@ -72,7 +72,7 @@ export function dataFormatter(number: number) {
   return `${Intl.NumberFormat("us").format(number).toString()}ms`;
 }
 
-export function regionFormatter(region: Region) {
-  const { code, flag } = flyRegionsDict[region];
+export function regionFormatter(region: MonitorRegion) {
+  const { code, flag } = regionDict[region];
   return `${flag} ${code}`;
 }
