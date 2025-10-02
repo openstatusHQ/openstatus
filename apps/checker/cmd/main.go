@@ -75,7 +75,7 @@ func main() {
 	router.POST("/tcp/:region", h.TCPHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": region})
+		c.JSON(http.StatusOK, gin.H{"message": "pong", "region": region, "provider": cloudProvider})
 	})
 
 	httpServer := &http.Server{
