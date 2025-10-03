@@ -304,7 +304,11 @@ export function FormSchedulingRegions({
                                               className="w-full truncate font-mono font-normal text-sm"
                                             >
                                               <span className="text-nowrap">
-                                                {region.code} {region.flag}
+                                                {region.code.replace(
+                                                  /(koyeb_|railway_|fly_)/g,
+                                                  "",
+                                                )}{" "}
+                                                {region.flag}
                                               </span>
                                               <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
                                                 {region.location}
@@ -314,15 +318,15 @@ export function FormSchedulingRegions({
                                                   <TooltipTrigger type="button">
                                                     {(() => {
                                                       switch (region.provider) {
-                                                        case "Fly":
+                                                        case "fly":
                                                           return (
                                                             <Fly className="size-4" />
                                                           );
-                                                        case "Railway":
+                                                        case "railway":
                                                           return (
                                                             <Railway className="size-4" />
                                                           );
-                                                        case "Koyeb":
+                                                        case "koyeb":
                                                           return (
                                                             <Koyeb className="size-4" />
                                                           );

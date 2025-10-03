@@ -142,7 +142,7 @@ export type RegionInfo = {
   location: string;
   flag: string;
   continent: Continent;
-  provider: "fly" | "koyeb";
+  provider: "fly" | "koyeb" | "railway";
 };
 
 // TODO: we could think of doing the inverse and use "EU" as key
@@ -464,7 +464,7 @@ export const groupByContinent = Object.entries(regionDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  }
+  },
 );
 
 export const vercelRegions = [
@@ -540,9 +540,12 @@ export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0
-    ? headers.reduce((acc, curr) => {
-        acc[curr.key] = curr.value;
-        return acc;
-      }, {} as Record<string, string>)
+    ? headers.reduce(
+        (acc, curr) => {
+          acc[curr.key] = curr.value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      )
     : {};
 }
