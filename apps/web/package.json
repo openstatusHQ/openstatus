@@ -24,6 +24,7 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
     "@openstatus/header-analysis": "workspace:*",
+    "@openstatus/icons": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-ntfy": "workspace:*",

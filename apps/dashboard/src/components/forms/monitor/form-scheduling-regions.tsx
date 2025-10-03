@@ -337,7 +337,7 @@ export function FormSchedulingRegions({
                                                       }
                                                     })()}
                                                   </TooltipTrigger>
-                                                  <TooltipContent>
+                                                  <TooltipContent className="capitalize">
                                                     {region.provider}
                                                   </TooltipContent>
                                                 </Tooltip>

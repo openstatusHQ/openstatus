@@ -16,7 +16,11 @@ async function* makeIterator({
   url,
   method,
   id,
-}: { url: string; method: Method; id: string }) {
+}: {
+  url: string;
+  method: Method;
+  id: string;
+}) {
   // Create an array to store all the promises
   const promises = monitorRegions.map(async (region, index) => {
     try {

@@ -3,7 +3,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
+import { Fly, Koyeb, Railway } from "@openstatus/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 import { regionDict } from "@openstatus/utils";
+import { Globe } from "lucide-react";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 
@@ -22,9 +30,31 @@ export const columns: ColumnDef<RegionChecker>[] = [
     accessorFn: (row) => row.region,
     header: "Region",
     cell: ({ row }) => {
+      const region = regionDict[row.original.region];
       return (
         <div className="text-muted-foreground">
-          {regionFormatter(row.original.region, "long")}
+          {regionFormatter(row.original.region, "long")}{" "}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger type="button">
+                {(() => {
+                  switch (region.provider) {
+                    case "fly":
+                      return <Fly className="size-4" />;
+                    case "railway":
+                      return <Railway className="size-4" />;
+                    case "koyeb":
+                      return <Koyeb className="size-4" />;
+                    default:
+                      return <Globe className="size-4" />;
+                  }
+                })()}
+              </TooltipTrigger>
+              <TooltipContent className="capitalize">
+                {region.provider}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     },
