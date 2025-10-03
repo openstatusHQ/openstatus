@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { flyRegions, monitorRegions } from "@openstatus/db/src/schema/constants";
+import {
+  flyRegions,
+  monitorRegions,
+} from "@openstatus/db/src/schema/constants";
 import { OSTinybird } from "@openstatus/tinybird";
 
 import { type SQL, and, db, eq, inArray } from "@openstatus/db";

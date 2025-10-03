@@ -20,7 +20,10 @@ import {
 import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { type Region, monitorRegions } from "@openstatus/db/src/schema/constants";
+import {
+  type Region,
+  monitorRegions,
+} from "@openstatus/db/src/schema/constants";
 
 interface SelectRegionProps extends Omit<ButtonProps, "onChange"> {
   allowedRegions: Region[];

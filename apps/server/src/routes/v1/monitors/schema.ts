@@ -3,8 +3,8 @@ import { z } from "@hono/zod-openapi";
 import { numberCompare, stringCompare } from "@openstatus/assertions";
 import { monitorJobTypes, monitorMethods } from "@openstatus/db/src/schema";
 import {
-  monitorRegions,
   monitorPeriodicitySchema,
+  monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { ZodError } from "zod";
 

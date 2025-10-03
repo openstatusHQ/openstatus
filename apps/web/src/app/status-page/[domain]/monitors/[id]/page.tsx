@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
-import {  type Region, monitorRegions } from "@openstatus/db/src/schema/constants";
+import {
+  type Region,
+  monitorRegions,
+} from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Header } from "@/components/dashboard/header";

@@ -6,9 +6,7 @@ import {
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 
-import type {
-  Region,
-} from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
