@@ -31,8 +31,10 @@ export default function Page() {
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        triggerCheckMutation.mutate({ id: data.id });
-        router.push(`/monitors/${data.id}/edit`);
+        if (data.active) {
+          triggerCheckMutation.mutate({ id: data.id });
+          router.push(`/monitors/${data.id}/edit`);
+        }
       },
     }),
   );
