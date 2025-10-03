@@ -10,6 +10,8 @@
     "lint:fix": "pnpm biome lint --write --unsafe .",
     "lint:turbo": "turbo run lint",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
+    "dev:status-page": "turbo run dev --filter='./apps/status-page' --filter='./packages/db'",
+    "dev:dashboard": "turbo run dev --filter='./apps/dashboard' --filter='./packages/db'",
     "dx": "turbo run dx",
     "tsc": "tsc",
     "test": "turbo run test"
