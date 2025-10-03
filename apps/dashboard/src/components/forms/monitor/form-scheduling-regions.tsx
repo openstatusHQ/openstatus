@@ -35,6 +35,12 @@ import { z } from "zod";
 
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
 import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -266,6 +272,7 @@ export function FormSchedulingRegions({
                                           : !allowedRegions.includes(
                                               region.code,
                                             ) || isMaxed;
+                                        const deprecated = region.deprecated;
                                         return (
                                           <FormItem
                                             key={region.code}
@@ -276,10 +283,6 @@ export function FormSchedulingRegions({
                                               checked={checked || false}
                                               disabled={disabled}
                                               onCheckedChange={(checked) => {
-                                                console.log(
-                                                  checked,
-                                                  field.value,
-                                                );
                                                 if (checked) {
                                                   field.onChange([
                                                     ...field.value,
@@ -294,17 +297,64 @@ export function FormSchedulingRegions({
                                                 }
                                               }}
                                             />
-                                            <FormLabel
-                                              htmlFor={region.code}
-                                              className="w-full truncate font-mono font-normal text-sm"
-                                            >
-                                              <span className="text-nowrap">
-                                                {region.code} {region.flag}
-                                              </span>
-                                              <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
-                                                {region.location}
-                                              </span>
-                                            </FormLabel>
+                                            {deprecated ? (
+                                              <TooltipProvider>
+                                                <Tooltip>
+                                                  <TooltipTrigger
+                                                    disabled={!deprecated}
+                                                    asChild
+                                                  >
+                                                    <FormLabel
+                                                      htmlFor={region.code}
+                                                      className={cn(
+                                                        "w-full gap-0 truncate font-mono font-normal text-sm",
+                                                        deprecated &&
+                                                          "line-through decoration-foreground/70",
+                                                      )}
+                                                    >
+                                                      <span
+                                                        className={cn(
+                                                          "text-nowrap",
+                                                        )}
+                                                      >
+                                                        {region.code}{" "}
+                                                        {region.flag}
+                                                        {"\u00A0"}
+                                                      </span>
+                                                      <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                                        {region.location}
+                                                      </span>
+                                                    </FormLabel>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p>
+                                                      This region is deprecated
+                                                      and will be removed in the
+                                                      future.
+                                                    </p>
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
+                                            ) : (
+                                              <FormLabel
+                                                htmlFor={region.code}
+                                                className={cn(
+                                                  "w-full gap-0 truncate font-mono font-normal text-sm",
+                                                  deprecated &&
+                                                    "line-through decoration-foreground/70",
+                                                )}
+                                              >
+                                                <span
+                                                  className={cn("text-nowrap")}
+                                                >
+                                                  {region.code} {region.flag}
+                                                  {"\u00A0"}
+                                                </span>
+                                                <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                                  {region.location}
+                                                </span>
+                                              </FormLabel>
+                                            )}
                                           </FormItem>
                                         );
                                       }}
@@ -321,6 +371,12 @@ export function FormSchedulingRegions({
                 </FormItem>
               )}
             />
+            <Note color="info">
+              <Info />
+              All striked out regions are deprecated and will be removed in the
+              future. We are routing traffic to close regions. We will be adding
+              more regions in the future.
+            </Note>
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>

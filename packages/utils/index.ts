@@ -142,6 +142,7 @@ export type RegionInfo = {
   location: string;
   flag: string;
   continent: Continent;
+  deprecated: boolean;
 };
 
 // TODO: we could think of doing the inverse and use "EU" as key
@@ -160,12 +161,14 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     location: "Amsterdam, Netherlands",
     flag: "🇳🇱",
     continent: "Europe",
+    deprecated: false,
   },
   arn: {
     code: "arn",
     location: "Stockholm, Sweden",
     flag: "🇸🇪",
     continent: "Europe",
+    deprecated: false,
   },
 
   atl: {
@@ -173,198 +176,231 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     location: "Atlanta, Georgia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   bog: {
     code: "bog",
     location: "Bogotá, Colombia",
     flag: "🇨🇴",
     continent: "South America",
+    deprecated: true,
   },
   bom: {
     code: "bom",
     location: "Mumbai, India",
     flag: "🇮🇳",
     continent: "Asia",
+    deprecated: false,
   },
   bos: {
     code: "bos",
     location: "Boston, Massachusetts, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   cdg: {
     code: "cdg",
     location: "Paris, France",
     flag: "🇫🇷",
     continent: "Europe",
+    deprecated: false,
   },
   den: {
     code: "den",
     location: "Denver, Colorado, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   dfw: {
     code: "dfw",
     location: "Dallas, Texas, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
   },
   ewr: {
     code: "ewr",
     location: "Secaucus, New Jersey, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
   },
   eze: {
     code: "eze",
     location: "Ezeiza, Argentina",
     flag: "🇦🇷",
     continent: "South America",
+    deprecated: true,
   },
   fra: {
     code: "fra",
     location: "Frankfurt, Germany",
     flag: "🇩🇪",
     continent: "Europe",
+    deprecated: false,
   },
   gdl: {
     code: "gdl",
     location: "Guadalajara, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    deprecated: true,
   },
   gig: {
     code: "gig",
     location: "Rio de Janeiro, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    deprecated: true,
   },
   gru: {
     code: "gru",
     location: "Sao Paulo, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    deprecated: false,
   },
   hkg: {
     code: "hkg",
     location: "Hong Kong, Hong Kong",
     flag: "🇭🇰",
     continent: "Asia",
+    deprecated: true,
   },
   iad: {
     code: "iad",
     location: "Ashburn, Virginia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
   },
   jnb: {
     code: "jnb",
     location: "Johannesburg, South Africa",
     flag: "🇿🇦",
     continent: "Africa",
+    deprecated: false,
   },
   lax: {
     code: "lax",
     location: "Los Angeles, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
   },
   lhr: {
     code: "lhr",
     location: "London, United Kingdom",
     flag: "🇬🇧",
     continent: "Europe",
+    deprecated: false,
   },
   mad: {
     code: "mad",
     location: "Madrid, Spain",
     flag: "🇪🇸",
     continent: "Europe",
+    deprecated: true,
   },
   mia: {
     code: "mia",
     location: "Miami, Florida, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   nrt: {
     code: "nrt",
     location: "Tokyo, Japan",
     flag: "🇯🇵",
     continent: "Asia",
+    deprecated: false,
   },
   ord: {
     code: "ord",
     location: "Chicago, Illinois, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
   },
   otp: {
     code: "otp",
     location: "Bucharest, Romania",
     flag: "🇷🇴",
     continent: "Europe",
+    deprecated: true,
   },
   phx: {
     code: "phx",
     location: "Phoenix, Arizona, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   qro: {
     code: "qro",
     location: "Querétaro, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    deprecated: true,
   },
   scl: {
     code: "scl",
     location: "Santiago, Chile",
     flag: "🇨🇱",
     continent: "South America",
+    deprecated: true,
   },
   sjc: {
     code: "sjc",
     location: "San Jose, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   sea: {
     code: "sea",
     location: "Seattle, Washington, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
   },
   sin: {
     code: "sin",
     location: "Singapore, Singapore",
     flag: "🇸🇬",
     continent: "Asia",
+    deprecated: false,
   },
   syd: {
     code: "syd",
     location: "Sydney, Australia",
     flag: "🇦🇺",
     continent: "Oceania",
+    deprecated: false,
   },
   waw: {
     code: "waw",
     location: "Warsaw, Poland",
     flag: "🇵🇱",
     continent: "Europe",
+    deprecated: true,
   },
   yul: {
     code: "yul",
     location: "Montreal, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    deprecated: true,
   },
   yyz: {
     code: "yyz",
     location: "Toronto, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    deprecated: false,
   },
 } as const;
 
@@ -382,6 +418,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
       code: MonitorFlyRegion;
       location: string;
       flag: string;
+      deprecated: boolean;
       continent:
         | "Europe"
         | "North America"
