@@ -20,12 +20,12 @@ import {
 import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
+import { type MonitorRegion, monitorRegions } from "@openstatus/db/src/schema/constants";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 interface RegionsPresetProps extends ButtonProps {
-  regions: Region[];
-  selectedRegions: Region[];
+  regions: MonitorRegion[];
+  selectedRegions: MonitorRegion[];
 }
 
 export function RegionsPreset({
@@ -37,7 +37,7 @@ export function RegionsPreset({
   // TODO: check with the RSC pages
   const [selected, setSelected] = useQueryState(
     "regions",
-    parseAsArrayOf(parseAsStringLiteral(flyRegions))
+    parseAsArrayOf(parseAsStringLiteral(monitorRegions))
       .withDefault(selectedRegions.filter((r) => regions?.includes(r)))
       .withOptions({
         shallow: false, // required for SSR to call the RSC
@@ -117,7 +117,7 @@ export function RegionsPreset({
                         keywords={[code, location, continent]}
                         onSelect={(checked) => {
                           setSelected((prev) =>
-                            !prev.includes(checked as Region)
+                            !prev.includes(checked as MonitorRegion)
                               ? [...prev, code]
                               : prev.filter((r) => r !== code),
                           );

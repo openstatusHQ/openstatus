@@ -45,7 +45,7 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -322,7 +322,7 @@ function TableResult({
             <p className="w-[95px]">
               Region{" "}
               <span className="font-normal text-xs tabular-nums">
-                ({result.length}/{flyRegions.length})
+                ({result.length}/{monitorRegions.length})
               </span>
             </p>
             {loading ? (
@@ -333,7 +333,7 @@ function TableResult({
             {id &&
             !loading &&
             result.length > 0 &&
-            result.length !== flyRegions.length ? (
+            result.length !== monitorRegions.length ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>

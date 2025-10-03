@@ -1,5 +1,5 @@
 import { intervals, quantiles } from "@/lib/monitor/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
@@ -19,8 +19,8 @@ export const searchParamsParsers = {
   quantile: parseAsStringLiteral(quantiles).withDefault(DEFAULT_QUANTILE),
   interval: parseAsStringLiteral(intervals).withDefault(DEFAULT_INTERVAL),
   period: parseAsStringLiteral(periods).withDefault(DEFAULT_PERIOD),
-  regions: parseAsArrayOf(parseAsStringLiteral(flyRegions)).withDefault([
-    ...flyRegions,
+  regions: parseAsArrayOf(parseAsStringLiteral(monitorRegions)).withDefault([
+    ...monitorRegions,
   ]),
 };
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

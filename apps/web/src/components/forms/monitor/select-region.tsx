@@ -20,12 +20,12 @@ import {
 import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
+import { type MonitorRegion, monitorRegions } from "@openstatus/db/src/schema/constants";
 
 interface SelectRegionProps extends Omit<ButtonProps, "onChange"> {
-  allowedRegions: Region[];
-  value?: Region[];
-  onChange?: (value: Region[]) => void;
+  allowedRegions: MonitorRegion[];
+  value?: MonitorRegion[];
+  onChange?: (value: MonitorRegion[]) => void;
 }
 
 export function SelectRegion({
@@ -35,7 +35,7 @@ export function SelectRegion({
   className,
   ...props
 }: SelectRegionProps) {
-  const regionsByContinent = flyRegions.reduce(
+  const regionsByContinent = monitorRegions.reduce(
     (prev, curr) => {
       const region = regionDict[curr];
 
@@ -97,7 +97,7 @@ export function SelectRegion({
                         keywords={[code, location, continent]}
                         disabled={!allowedRegions.includes(code)}
                         onSelect={(checked) => {
-                          const newValue = !value.includes(checked as Region)
+                          const newValue = !value.includes(checked as MonitorRegion)
                             ? [...value, code]
                             : value.filter((r) => r !== code);
                           onChange?.(newValue);

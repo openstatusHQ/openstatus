@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import {
@@ -28,7 +28,7 @@ export default async function CheckPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { regions } = searchParamsCache.parse(searchParams);
-  const selectedRegions = regions || [...flyRegions];
+  const selectedRegions = regions || [...monitorRegions];
 
   const data = await getCheckerDataById(params.id);
 

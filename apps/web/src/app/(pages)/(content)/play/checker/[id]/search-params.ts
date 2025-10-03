@@ -1,4 +1,4 @@
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
@@ -6,7 +6,7 @@ import {
 } from "nuqs/server";
 
 export const searchParamsParsers = {
-  regions: parseAsArrayOf(parseAsStringLiteral(flyRegions)),
+  regions: parseAsArrayOf(parseAsStringLiteral(monitorRegions)),
 };
 
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

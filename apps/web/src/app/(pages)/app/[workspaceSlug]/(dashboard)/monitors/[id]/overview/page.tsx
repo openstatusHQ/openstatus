@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
+import { type MonitorRegion, monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
@@ -68,7 +68,7 @@ export default async function Page(props: {
     period !== DEFAULT_PERIOD ||
     quantile !== DEFAULT_QUANTILE ||
     interval !== DEFAULT_INTERVAL ||
-    flyRegions.length !== regions.length;
+    monitorRegions.length !== regions.length;
 
   // GET VALUES FOR BLOG POST
   // console.log(
@@ -92,7 +92,7 @@ export default async function Page(props: {
         period={period}
         quantile={quantile}
         interval={interval}
-        regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
+        regions={regions.length ? (regions as MonitorRegion[]) : monitor.regions} // FIXME: not properly reseted after filtered
         monitor={monitor}
         isQuantileDisabled={isQuantileDisabled}
         metricsByRegion={metricsByRegion.data}

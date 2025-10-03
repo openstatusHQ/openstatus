@@ -3,10 +3,9 @@ import { z } from "zod";
 
 import {
   flyRegions,
-  monitorFlyRegionSchema,
+  monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 import type {
-  MonitorFlyRegion,
   MonitorRegion,
 } from "@openstatus/db/src/schema/constants";
 import { continentDict, regionDict } from "@openstatus/utils";
@@ -117,7 +116,7 @@ export const cachedCheckerSchema = z.object({
   url: z.string(),
   timestamp: z.number(),
   method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
-  checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
+  checks: checkerSchema.extend({ region: monitorRegionSchema }).array(),
 });
 
 const errorRequest = z.object({
@@ -126,13 +125,13 @@ const errorRequest = z.object({
 });
 
 export const regionCheckerSchema = checkerSchema.extend({
-  region: monitorFlyRegionSchema,
+  region: monitorRegionSchema,
   state: z.literal("success").default("success"),
 });
 
 export const regionCheckerSchemaResponse = regionCheckerSchema.or(
   errorRequest.extend({
-    region: monitorFlyRegionSchema,
+    region: monitorRegionSchema,
   }),
 );
 export type Timing = z.infer<typeof timingSchema>;
@@ -155,7 +154,7 @@ export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 export type ErrorRequest = z.infer<typeof errorRequest>;
 export async function checkRegion(
   url: string,
-  region: MonitorFlyRegion,
+  region: MonitorRegion,
   opts?: {
     method?: Method;
     headers?: { value: string; key: string }[];

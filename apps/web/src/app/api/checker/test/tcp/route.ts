@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import {
   type MonitorRegion,
-  monitorFlyRegionSchema,
+  monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 
 import { TCPResponse, tcpPayload } from "./schema";
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const _valid = tcpPayload
       .pick({ url: true })
-      .merge(z.object({ region: monitorFlyRegionSchema.default("ams") }))
+      .merge(z.object({ region: monitorRegionSchema.default("ams") }))
       .safeParse(json);
 
     if (!_valid.success) {

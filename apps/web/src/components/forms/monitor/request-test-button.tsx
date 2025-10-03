@@ -8,7 +8,7 @@ import { deserialize } from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   type MonitorRegion,
-  flyRegions,
+  monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import {
   Button,
@@ -48,7 +48,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
   const [check, setCheck] = React.useState<
     { data: RegionChecker; error?: string } | undefined
   >();
-  const [value, setValue] = React.useState<MonitorRegion>(flyRegions[0]);
+  const [value, setValue] = React.useState<MonitorRegion>(monitorRegions[0]);
   const [isPending, startTransition] = React.useTransition();
 
   const onClick = () => {

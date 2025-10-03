@@ -8,8 +8,8 @@ import { MaintenanceContainer } from "@/components/status-page/maintenance";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
-import type { Region } from "@openstatus/db/src/schema/constants";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Button, InputWithAddons } from "@openstatus/ui";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 import { allUnrelateds } from "content-collections";
@@ -286,8 +286,8 @@ export function FeatureRegions(
         <Suspense fallback={<Skeleton />}>
           <div className="m-auto">
             <RegionsPreset
-              regions={flyRegions as unknown as Region[]}
-              selectedRegions={flyRegions as unknown as Region[]}
+              regions={monitorRegions as unknown as MonitorRegion[]}
+              selectedRegions={monitorRegions as unknown as MonitorRegion[]}
             />
           </div>
         </Suspense>

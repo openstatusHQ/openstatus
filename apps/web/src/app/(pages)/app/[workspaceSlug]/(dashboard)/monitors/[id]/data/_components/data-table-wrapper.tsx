@@ -18,7 +18,7 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import type { Trigger } from "@/lib/monitor/utils";
 import { api } from "@/trpc/rq-client";
-import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
+import type { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { z } from "zod";
 
 // FIXME: use proper type
@@ -26,7 +26,7 @@ export type Monitor = {
   type: "http" | "tcp";
   monitorId: string;
   latency: number;
-  region: z.infer<typeof monitorFlyRegionSchema>;
+  region: z.infer<typeof monitorRegionSchema>;
   statusCode?: number | null;
   timestamp: number;
   workspaceId: string;
