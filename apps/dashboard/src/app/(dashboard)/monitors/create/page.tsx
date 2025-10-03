@@ -33,8 +33,8 @@ export default function Page() {
         });
         if (data.active) {
           triggerCheckMutation.mutate({ id: data.id });
-          router.push(`/monitors/${data.id}/edit`);
         }
+        router.push(`/monitors/${data.id}/edit`);
       },
     }),
   );

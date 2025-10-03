@@ -27,9 +27,11 @@ export default function ReportPage() {
 
   if (!report) return null;
 
-  const firstUpdate = report.statusReportUpdates[0];
-  const lastUpdate =
-    report.statusReportUpdates[report.statusReportUpdates.length - 1];
+  const updates = report.statusReportUpdates.sort(
+    (a, b) => b.date.getTime() - a.date.getTime(),
+  );
+  const firstUpdate = updates[updates.length - 1];
+  const lastUpdate = updates[0];
 
   // HACKY: LEGACY: only resolved via report and not via report update
   const isReportResolvedOnly =
