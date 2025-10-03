@@ -35,6 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/play",
     "/play/checker",
     "/play/curl",
+    "/play/uptime-sla",
     "/pricing",
     "/oss-friends",
   ].map((route) => ({
