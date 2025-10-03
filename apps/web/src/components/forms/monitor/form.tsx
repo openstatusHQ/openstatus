@@ -28,7 +28,7 @@ import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
-import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
@@ -175,7 +175,7 @@ export function MonitorForm({
     }
   };
 
-  const pingEndpoint = async (region?: MonitorRegion) => {
+  const pingEndpoint = async (region?: Region) => {
     try {
       const {
         url,

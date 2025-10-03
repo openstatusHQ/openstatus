@@ -7,7 +7,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { deserialize } from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
-  type MonitorRegion,
+  type Region,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import {
@@ -40,7 +40,7 @@ interface Props {
   form: UseFormReturn<InsertMonitor>;
   limits: Limits;
   pingEndpoint(
-    region?: MonitorRegion,
+    region?: Region,
   ): Promise<{ data?: RegionChecker; error?: string }>;
 }
 
@@ -48,7 +48,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
   const [check, setCheck] = React.useState<
     { data: RegionChecker; error?: string } | undefined
   >();
-  const [value, setValue] = React.useState<MonitorRegion>(monitorRegions[0]);
+  const [value, setValue] = React.useState<Region>(monitorRegions[0]);
   const [isPending, startTransition] = React.useTransition();
 
   const onClick = () => {
@@ -88,7 +88,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
       <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <Select
           value={value}
-          onValueChange={(value: MonitorRegion) => setValue(value)}
+          onValueChange={(value: Region) => setValue(value)}
         >
           <SelectTrigger
             className="flex-1 rounded-r-none border-accent focus:ring-0"

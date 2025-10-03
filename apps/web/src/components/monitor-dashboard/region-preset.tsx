@@ -20,12 +20,12 @@ import {
 import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { type MonitorRegion, monitorRegions } from "@openstatus/db/src/schema/constants";
+import { type Region, monitorRegions } from "@openstatus/db/src/schema/constants";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 interface RegionsPresetProps extends ButtonProps {
-  regions: MonitorRegion[];
-  selectedRegions: MonitorRegion[];
+  regions: Region[];
+  selectedRegions: Region[];
 }
 
 export function RegionsPreset({
@@ -117,7 +117,7 @@ export function RegionsPreset({
                         keywords={[code, location, continent]}
                         onSelect={(checked) => {
                           setSelected((prev) =>
-                            !prev.includes(checked as MonitorRegion)
+                            !prev.includes(checked as Region)
                               ? [...prev, code]
                               : prev.filter((r) => r !== code),
                           );

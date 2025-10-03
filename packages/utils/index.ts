@@ -3,7 +3,7 @@
  * https://vercel.com/docs/concepts/edge-network/regions#region-list
  */
 
-import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
@@ -138,7 +138,7 @@ export type Continent =
   | "Oceania";
 
 export type RegionInfo = {
-  code: MonitorRegion;
+  code: Region;
   location: string;
   flag: string;
   continent: Continent;
@@ -155,7 +155,7 @@ export const continentDict: Record<Continent, { code: string }> = {
   Oceania: { code: "OC" },
 };
 
-export const regionDict: Record<MonitorRegion, RegionInfo> = {
+export const regionDict: Record<Region, RegionInfo> = {
   ams: {
     code: "ams",
     location: "Amsterdam, Netherlands",
@@ -457,7 +457,7 @@ export const groupByContinent = Object.entries(regionDict).reduce<
     | "Africa"
     | "Oceania",
     {
-      code: MonitorRegion;
+      code: Region;
       location: string;
       flag: string;
       continent:

@@ -72,4 +72,4 @@ export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 export type MonitorFlyRegion = z.infer<typeof monitorFlyRegionSchema>;
-export type MonitorRegion = z.infer<typeof monitorRegionSchema>;
+export type Region = z.infer<typeof monitorRegionSchema>;

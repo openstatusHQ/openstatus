@@ -1,4 +1,4 @@
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
@@ -9,7 +9,7 @@ export const env = createEnv({
     TINY_BIRD_API_KEY: z.string().min(1),
     UPSTASH_REDIS_REST_URL: z.string().min(1),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
-    FLY_REGION: z.enum(flyRegions),
+    FLY_REGION: z.enum(monitorRegions),
     CRON_SECRET: z.string(),
     SCREENSHOT_SERVICE_URL: z.string(),
     QSTASH_TOKEN: z.string(),

@@ -2,7 +2,7 @@ import { regionDict } from "@openstatus/utils";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";
 import type { ResponseGraph } from "@/lib/tb";
-import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 /**
  *
@@ -46,12 +46,12 @@ export function groupDataByTimestamp(
       }
       return acc;
     },
-    [] as (Partial<Record<MonitorRegion, number>> & { timestamp: string })[],
+    [] as (Partial<Record<Region, number>> & { timestamp: string })[],
   );
 
   // regions are sorted by the flag utf-8 code
   return {
-    regions: Object.keys(regions).sort() as MonitorRegion[],
+    regions: Object.keys(regions).sort() as Region[],
     data: _data.reverse(),
   };
 }
@@ -72,7 +72,7 @@ export function dataFormatter(number: number) {
   return `${Intl.NumberFormat("us").format(number).toString()}ms`;
 }
 
-export function regionFormatter(region: MonitorRegion) {
+export function regionFormatter(region: Region) {
   const { code, flag } = regionDict[region];
   return `${flag} ${code}`;
 }

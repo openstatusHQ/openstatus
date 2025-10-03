@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { type MonitorRegion, monitorRegions } from "@openstatus/db/src/schema/constants";
+import { type Region, monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
@@ -109,7 +109,7 @@ export default async function Page(props: {
           period={period}
           quantile={quantile}
           interval={interval}
-          regions={regions.length ? (regions as MonitorRegion[]) : monitor.regions} // FIXME: not properly reseted after filtered
+          regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
           monitor={{ ...monitor, url: hideURL ? "" : monitor.url }}
           isQuantileDisabled={isQuantileDisabled}
           metricsByRegion={metricsByRegion.data}

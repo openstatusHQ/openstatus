@@ -6,7 +6,7 @@ import {
   monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 import type {
-  MonitorRegion,
+  Region,
 } from "@openstatus/db/src/schema/constants";
 import { continentDict, regionDict } from "@openstatus/utils";
 
@@ -18,13 +18,13 @@ export function timestampFormatter(timestamp: number) {
   return new Date(timestamp).toUTCString(); // GMT format
 }
 
-export function continentFormatter(region: MonitorRegion) {
+export function continentFormatter(region: Region) {
   const continent = regionDict[region].continent;
   return continentDict[continent].code;
 }
 
 export function regionFormatter(
-  region: MonitorRegion,
+  region: Region,
   type: "short" | "long" = "short",
 ) {
   const { code, flag, location } = regionDict[region];
@@ -154,7 +154,7 @@ export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 export type ErrorRequest = z.infer<typeof errorRequest>;
 export async function checkRegion(
   url: string,
-  region: MonitorRegion,
+  region: Region,
   opts?: {
     method?: Method;
     headers?: { value: string; key: string }[];

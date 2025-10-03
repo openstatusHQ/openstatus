@@ -13,7 +13,7 @@ import {
 
 export const searchParamsParsers = {
   period: parseAsStringLiteral(PERIODS).withDefault("1d"),
-  regions: parseAsArrayOf(parseAsStringLiteral(flyRegions)).withDefault(
+  regions: parseAsArrayOf(parseAsStringLiteral(monitorRegions)).withDefault(
     // FIXME: readonly
     monitorRegions as unknown as (typeof monitorRegions)[number][],
   ),

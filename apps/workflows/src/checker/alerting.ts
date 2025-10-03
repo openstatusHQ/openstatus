@@ -7,7 +7,6 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type {
-  MonitorFlyRegion,
   Region,
 } from "@openstatus/db/src/schema/constants";
 import { checkerAudit } from "../utils/audit-log";
@@ -192,7 +191,7 @@ export const upsertMonitorStatus = async ({
 }: {
   monitorId: string;
   status: MonitorStatus;
-  region: MonitorFlyRegion;
+  region: Region;
 }) => {
   const newData = await db
     .insert(schema.monitorStatusTable)

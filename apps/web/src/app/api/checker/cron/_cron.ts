@@ -15,7 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
-import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
@@ -160,7 +160,7 @@ const createCronTask = async ({
   client: CloudTasksClient;
   parent: string;
   status: MonitorStatus;
-  region: MonitorRegion;
+  region: Region;
 }) => {
   let payload:
     | z.infer<typeof httpPayloadSchema>
@@ -247,7 +247,7 @@ const createCronTask = async ({
 function generateUrl({
   row,
   region,
-}: { row: z.infer<typeof selectMonitorSchema>; region: MonitorRegion }) {
+}: { row: z.infer<typeof selectMonitorSchema>; region: Region }) {
   const regionInfo = regionDict[region];
 
   switch (regionInfo.provider) {

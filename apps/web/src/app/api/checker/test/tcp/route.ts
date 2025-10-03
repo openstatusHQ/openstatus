@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  type MonitorRegion,
+  type Region,
   monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
-async function checkTCP(url: string, region: MonitorRegion) {
+async function checkTCP(url: string, region: Region) {
   //
   const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
     headers: {
