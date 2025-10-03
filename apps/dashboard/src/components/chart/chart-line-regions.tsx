@@ -52,6 +52,12 @@ const chartConfig = {
   waw: { label: regionDict.waw.location, color: regionColors.waw },
   yul: { label: regionDict.yul.location, color: regionColors.yul },
   yyz: { label: regionDict.yyz.location, color: regionColors.yyz },
+  koyeb_fra: { label: regionDict.ams.location, color: regionColors.koyeb_fra },
+  koyeb_par: { label: regionDict.arn.location, color: regionColors.koyeb_par },
+  koyeb_sfo: { label: regionDict.atl.location, color: regionColors.koyeb_sfo },
+  koyeb_sin: { label: regionDict.bog.location, color: regionColors.koyeb_sin },
+  koyeb_tyo: { label: regionDict.bom.location, color: regionColors.koyeb_tyo },
+  koyeb_was: { label: regionDict.bos.location, color: regionColors.koyeb_was },
 } satisfies ChartConfig;
 
 export type TrendPoint = {
@@ -70,8 +76,6 @@ export function ChartLineRegions({
 }) {
   const isMobile = useIsMobile();
   const trendData = data ?? [];
-
-  console.log({ data, regions });
 
   const chartData = trendData.map((d) => ({
     ...d,

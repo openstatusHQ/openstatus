@@ -1,5 +1,6 @@
 "use client";
 
+import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -24,10 +25,9 @@ import {
 import { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { Fly, Koyeb, Railway } from "@openstatus/icons";
 import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Globe, Lock } from "lucide-react";
+import { Check, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 export const parseRegions = (regions: (typeof REGIONS)[number][]) =>
@@ -124,18 +124,10 @@ export function CommandRegion({
                         }}
                       >
                         <span>{region.flag}</span>
-                        {(() => {
-                          switch (region.provider) {
-                            case "fly":
-                              return <Fly className="size-3" />;
-                            case "koyeb":
-                              return <Koyeb className="size-3" />;
-                            case "railway":
-                              return <Railway className="size-3" />;
-                            default:
-                              return <Globe className="size-3" />;
-                          }
-                        })()}
+                        <IconCloudProvider
+                          provider={region.provider}
+                          className="size-3"
+                        />
                         <span className="font-mono">
                           {region.code.replace(/(koyeb_|railway_|fly_)/g, "")}
                         </span>

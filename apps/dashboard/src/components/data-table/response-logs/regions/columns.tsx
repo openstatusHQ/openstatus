@@ -32,10 +32,14 @@ export const columns: ColumnDef<RegionMetric>[] = [
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger className="h-[50px]">
-                {region.flag} {region.code}
+              <TooltipTrigger className="flex h-[50px] items-center gap-1">
+                {region.flag}{" "}
+                {region.code.replace(/(koyeb_|railway_|fly_)/g, "")}
               </TooltipTrigger>
-              <TooltipContent side="left">{region.location}</TooltipContent>
+              <TooltipContent side="left">
+                {region.location} -{" "}
+                <span className="capitalize">{region.provider}</span>
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         );
