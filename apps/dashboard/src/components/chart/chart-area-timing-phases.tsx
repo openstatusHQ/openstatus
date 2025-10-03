@@ -89,7 +89,6 @@ export function ChartAreaTimingPhases({
     ? mapTimingPhases(timingPhases, percentile)
     : [];
 
-  console.log(refinedTimingPhases);
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">
       <AreaChart accessibilityLayer data={refinedTimingPhases}>

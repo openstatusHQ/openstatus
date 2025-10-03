@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -55,11 +56,19 @@ export function Client() {
     enabled: !!monitor,
   } as const;
 
-  const { data: regionTimeline } = useQuery(regionTimelineQuery);
+  const { data: regionTimeline, isLoading } = useQuery(regionTimelineQuery);
 
   const regionMetrics: RegionMetric[] = React.useMemo(() => {
-    return mapRegionMetrics(regionTimeline, monitor?.regions ?? [], percentile);
-  }, [regionTimeline, monitor, percentile]);
+    return mapRegionMetrics(
+      regionTimeline,
+      // NOTE: while loading, we show the selected regions with empty data,
+      // once the data is loaded, we show all the regions that we get from TB
+      isLoading
+        ? monitor?.regions ?? []
+        : (flyRegions as unknown as (typeof flyRegions)[number][]),
+      percentile,
+    );
+  }, [regionTimeline, monitor, percentile, isLoading]);
 
   if (!monitor) return null;
 
@@ -105,9 +114,7 @@ export function Client() {
           monitorId={id}
           type={monitor.jobType as "http" | "tcp"}
           period={period}
-          regions={monitor.regions.filter((region) =>
-            selectedRegions.includes(region),
-          )}
+          regions={selectedRegions}
         />
       </Section>
       <Section>
@@ -185,9 +192,7 @@ export function Client() {
           <TabsContent value="chart">
             <ChartLineRegions
               className="mt-3"
-              regions={monitor.regions.filter((region) =>
-                selectedRegions.includes(region),
-              )}
+              regions={selectedRegions}
               data={regionMetrics.reduce(
                 (acc, region) => {
                   region.trend.forEach((t) => {
