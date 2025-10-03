@@ -17,26 +17,13 @@ import { StatusCodeBadge } from "../monitor/status-code-badge";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {
-    id: "key",
-    accessorFn: (row) => row.region,
-    header: "Key",
-    cell: ({ row }) => {
-      return (
-        <div className="font-mono">
-          {row.original.region.replace(/(koyeb_|railway_|fly_)/g, "")}
-        </div>
-      );
-    },
-    enableHiding: false,
-  },
-  {
     accessorKey: "region",
     accessorFn: (row) => row.region,
     header: "Region",
     cell: ({ row }) => {
       const region = regionDict[row.original.region];
       return (
-        <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="flex items-center gap-1.5">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger type="button">
@@ -58,7 +45,14 @@ export const columns: ColumnDef<RegionChecker>[] = [
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {regionFormatter(row.original.region, "long")}
+          <div>
+            <span className="font-mono">
+              {row.original.region.replace(/(koyeb_|railway_|fly_)/g, "")}
+            </span>{" "}
+            <span className="text-muted-foreground">
+              {regionFormatter(row.original.region, "long")}
+            </span>
+          </div>
         </div>
       );
     },
