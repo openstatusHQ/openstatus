@@ -239,9 +239,7 @@ export function FormSchedulingRegions({
                                           (region) =>
                                             !r
                                               .map(({ code }) => code)
-                                              .includes(
-                                                region as Region,
-                                              ),
+                                              .includes(region as Region),
                                         ),
                                       );
                                     }
