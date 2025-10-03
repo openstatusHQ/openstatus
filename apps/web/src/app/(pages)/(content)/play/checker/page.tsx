@@ -14,25 +14,28 @@ import { Testimonial } from "./_components/testimonial";
 import { mockCheckAllRegions } from "./api/mock";
 import { searchParamsCache } from "./search-params";
 
-const title = "Global Speed Checker";
-const description =
+const TITLE = "Global Speed Checker";
+const DESCRIPTION =
   "API speed test and website speed checker: global speed test from different locations. Free speed test.";
+
+const OG_DESCRIPTION =
+  "Test the performance of your api, website from different locations. Get speed insights for free.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
-  title,
-  description,
+  title: TITLE,
+  description: DESCRIPTION,
   twitter: {
     ...twitterMetadata,
-    title,
-    description,
-    images: [`/api/og?title=${title}&description=${description}`],
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`/api/og?title=${TITLE}&description=${OG_DESCRIPTION}`],
   },
   openGraph: {
     ...ogMetadata,
-    title,
-    description,
-    images: [`/api/og?title=${title}&description=${description}`],
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`/api/og?title=${TITLE}&description=${OG_DESCRIPTION}`],
   },
 };
 
