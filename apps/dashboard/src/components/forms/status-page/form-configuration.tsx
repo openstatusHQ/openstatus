@@ -146,7 +146,7 @@ export function FormConfiguration({
     <>
       <Form {...form}>
         <form id="redesign" onSubmit={form.handleSubmit(submitAction)}>
-          <FormCard>
+          <FormCard variant="info">
             <FormCardHeader>
               <FormCardTitle>Status Page Redesign (beta)</FormCardTitle>
               <FormCardDescription>
@@ -427,7 +427,7 @@ export function FormConfiguration({
                 </FormCardContent>
               </>
             )}
-            <FormCardFooter>
+            <FormCardFooter variant="info">
               <FormCardFooterInfo>
                 Learn more about{" "}
                 <Link
