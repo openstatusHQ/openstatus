@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
+import {
+  type Region,
+  monitorRegions,
+} from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
@@ -68,7 +71,7 @@ export default async function Page(props: {
     period !== DEFAULT_PERIOD ||
     quantile !== DEFAULT_QUANTILE ||
     interval !== DEFAULT_INTERVAL ||
-    flyRegions.length !== regions.length;
+    monitorRegions.length !== regions.length;
 
   // GET VALUES FOR BLOG POST
   // console.log(

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  type MonitorFlyRegion,
-  monitorFlyRegionSchema,
+  type Region,
+  monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 
 import { TCPResponse, tcpPayload } from "./schema";
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const _valid = tcpPayload
       .pick({ url: true })
-      .merge(z.object({ region: monitorFlyRegionSchema.default("ams") }))
+      .merge(z.object({ region: monitorRegionSchema.default("ams") }))
       .safeParse(json);
 
     if (!_valid.success) {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
-async function checkTCP(url: string, region: MonitorFlyRegion) {
+async function checkTCP(url: string, region: Region) {
   //
   const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
     headers: {

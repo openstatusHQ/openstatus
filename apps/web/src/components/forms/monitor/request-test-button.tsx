@@ -7,8 +7,8 @@ import type { UseFormReturn } from "react-hook-form";
 import { deserialize } from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
-  type MonitorFlyRegion,
-  flyRegions,
+  type Region,
+  monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import {
   Button,
@@ -26,7 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { RegionInfo } from "@/components/ping-response-analysis/region-info";
@@ -40,7 +40,7 @@ interface Props {
   form: UseFormReturn<InsertMonitor>;
   limits: Limits;
   pingEndpoint(
-    region?: MonitorFlyRegion,
+    region?: Region,
   ): Promise<{ data?: RegionChecker; error?: string }>;
 }
 
@@ -48,7 +48,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
   const [check, setCheck] = React.useState<
     { data: RegionChecker; error?: string } | undefined
   >();
-  const [value, setValue] = React.useState<MonitorFlyRegion>(flyRegions[0]);
+  const [value, setValue] = React.useState<Region>(monitorRegions[0]);
   const [isPending, startTransition] = React.useTransition();
 
   const onClick = () => {
@@ -77,7 +77,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
     });
   };
 
-  const { flag } = flyRegionsDict[value as keyof typeof flyRegionsDict];
+  const { flag } = regionDict[value as keyof typeof regionDict];
 
   const { statusAssertions, headerAssertions } = form.getValues();
 
@@ -88,7 +88,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
       <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <Select
           value={value}
-          onValueChange={(value: MonitorFlyRegion) => setValue(value)}
+          onValueChange={(value: Region) => setValue(value)}
         >
           <SelectTrigger
             className="flex-1 rounded-r-none border-accent focus:ring-0"
@@ -98,7 +98,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
           </SelectTrigger>
           <SelectContent>
             {regions.map((region) => {
-              const { flag } = flyRegionsDict[region];
+              const { flag } = regionDict[region];
               return (
                 <SelectItem key={region} value={region}>
                   {flag} <span className="ml-1 font-mono">{region}</span>

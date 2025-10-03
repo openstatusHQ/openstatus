@@ -3,7 +3,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
-import { flyRegionsDict } from "@openstatus/utils";
+import { Fly, Koyeb, Railway } from "@openstatus/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
+import { regionDict } from "@openstatus/utils";
+import { Globe } from "lucide-react";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 
@@ -13,7 +21,11 @@ export const columns: ColumnDef<RegionChecker>[] = [
     accessorFn: (row) => row.region,
     header: "Key",
     cell: ({ row }) => {
-      return <div className="font-mono">{row.original.region}</div>;
+      return (
+        <div className="font-mono">
+          {row.original.region.replace(/(koyeb_|railway_|fly_)/g, "")}
+        </div>
+      );
     },
     enableHiding: false,
   },
@@ -22,8 +34,30 @@ export const columns: ColumnDef<RegionChecker>[] = [
     accessorFn: (row) => row.region,
     header: "Region",
     cell: ({ row }) => {
+      const region = regionDict[row.original.region];
       return (
-        <div className="text-muted-foreground">
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger type="button">
+                {(() => {
+                  switch (region.provider) {
+                    case "fly":
+                      return <Fly className="size-4" />;
+                    case "railway":
+                      return <Railway className="size-4" />;
+                    case "koyeb":
+                      return <Koyeb className="size-4" />;
+                    default:
+                      return <Globe className="size-4" />;
+                  }
+                })()}
+              </TooltipTrigger>
+              <TooltipContent className="capitalize">
+                {region.provider}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           {regionFormatter(row.original.region, "long")}
         </div>
       );
@@ -31,7 +65,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     filterFn: (row, _id, filterValue) => {
       const region = regionFormatter(row.original.region, "long").toLowerCase();
       const continent =
-        flyRegionsDict[row.original.region].continent.toLocaleLowerCase();
+        regionDict[row.original.region].continent.toLocaleLowerCase();
       return `${region} ${continent}`.includes(filterValue.toLowerCase());
     },
   },

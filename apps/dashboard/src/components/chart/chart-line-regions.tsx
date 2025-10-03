@@ -13,45 +13,51 @@ import {
 import { regionColors } from "@/data/regions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
-  ams: { label: flyRegionsDict.ams.location, color: regionColors.ams },
-  arn: { label: flyRegionsDict.arn.location, color: regionColors.arn },
-  atl: { label: flyRegionsDict.atl.location, color: regionColors.atl },
-  bog: { label: flyRegionsDict.bog.location, color: regionColors.bog },
-  bom: { label: flyRegionsDict.bom.location, color: regionColors.bom },
-  bos: { label: flyRegionsDict.bos.location, color: regionColors.bos },
-  cdg: { label: flyRegionsDict.cdg.location, color: regionColors.cdg },
-  den: { label: flyRegionsDict.den.location, color: regionColors.den },
-  dfw: { label: flyRegionsDict.dfw.location, color: regionColors.dfw },
-  ewr: { label: flyRegionsDict.ewr.location, color: regionColors.ewr },
-  eze: { label: flyRegionsDict.eze.location, color: regionColors.eze },
-  fra: { label: flyRegionsDict.fra.location, color: regionColors.fra },
-  gdl: { label: flyRegionsDict.gdl.location, color: regionColors.gdl },
-  gig: { label: flyRegionsDict.gig.location, color: regionColors.gig },
-  gru: { label: flyRegionsDict.gru.location, color: regionColors.gru },
-  hkg: { label: flyRegionsDict.hkg.location, color: regionColors.hkg },
-  iad: { label: flyRegionsDict.iad.location, color: regionColors.iad },
-  jnb: { label: flyRegionsDict.jnb.location, color: regionColors.jnb },
-  lax: { label: flyRegionsDict.lax.location, color: regionColors.lax },
-  lhr: { label: flyRegionsDict.lhr.location, color: regionColors.lhr },
-  mad: { label: flyRegionsDict.mad.location, color: regionColors.mad },
-  mia: { label: flyRegionsDict.mia.location, color: regionColors.mia },
-  nrt: { label: flyRegionsDict.nrt.location, color: regionColors.nrt },
-  ord: { label: flyRegionsDict.ord.location, color: regionColors.ord },
-  otp: { label: flyRegionsDict.otp.location, color: regionColors.otp },
-  phx: { label: flyRegionsDict.phx.location, color: regionColors.phx },
-  qro: { label: flyRegionsDict.qro.location, color: regionColors.qro },
-  scl: { label: flyRegionsDict.scl.location, color: regionColors.scl },
-  sjc: { label: flyRegionsDict.sjc.location, color: regionColors.sjc },
-  sea: { label: flyRegionsDict.sea.location, color: regionColors.sea },
-  sin: { label: flyRegionsDict.sin.location, color: regionColors.sin },
-  syd: { label: flyRegionsDict.syd.location, color: regionColors.syd },
-  waw: { label: flyRegionsDict.waw.location, color: regionColors.waw },
-  yul: { label: flyRegionsDict.yul.location, color: regionColors.yul },
-  yyz: { label: flyRegionsDict.yyz.location, color: regionColors.yyz },
+  ams: { label: regionDict.ams.location, color: regionColors.ams },
+  arn: { label: regionDict.arn.location, color: regionColors.arn },
+  atl: { label: regionDict.atl.location, color: regionColors.atl },
+  bog: { label: regionDict.bog.location, color: regionColors.bog },
+  bom: { label: regionDict.bom.location, color: regionColors.bom },
+  bos: { label: regionDict.bos.location, color: regionColors.bos },
+  cdg: { label: regionDict.cdg.location, color: regionColors.cdg },
+  den: { label: regionDict.den.location, color: regionColors.den },
+  dfw: { label: regionDict.dfw.location, color: regionColors.dfw },
+  ewr: { label: regionDict.ewr.location, color: regionColors.ewr },
+  eze: { label: regionDict.eze.location, color: regionColors.eze },
+  fra: { label: regionDict.fra.location, color: regionColors.fra },
+  gdl: { label: regionDict.gdl.location, color: regionColors.gdl },
+  gig: { label: regionDict.gig.location, color: regionColors.gig },
+  gru: { label: regionDict.gru.location, color: regionColors.gru },
+  hkg: { label: regionDict.hkg.location, color: regionColors.hkg },
+  iad: { label: regionDict.iad.location, color: regionColors.iad },
+  jnb: { label: regionDict.jnb.location, color: regionColors.jnb },
+  lax: { label: regionDict.lax.location, color: regionColors.lax },
+  lhr: { label: regionDict.lhr.location, color: regionColors.lhr },
+  mad: { label: regionDict.mad.location, color: regionColors.mad },
+  mia: { label: regionDict.mia.location, color: regionColors.mia },
+  nrt: { label: regionDict.nrt.location, color: regionColors.nrt },
+  ord: { label: regionDict.ord.location, color: regionColors.ord },
+  otp: { label: regionDict.otp.location, color: regionColors.otp },
+  phx: { label: regionDict.phx.location, color: regionColors.phx },
+  qro: { label: regionDict.qro.location, color: regionColors.qro },
+  scl: { label: regionDict.scl.location, color: regionColors.scl },
+  sjc: { label: regionDict.sjc.location, color: regionColors.sjc },
+  sea: { label: regionDict.sea.location, color: regionColors.sea },
+  sin: { label: regionDict.sin.location, color: regionColors.sin },
+  syd: { label: regionDict.syd.location, color: regionColors.syd },
+  waw: { label: regionDict.waw.location, color: regionColors.waw },
+  yul: { label: regionDict.yul.location, color: regionColors.yul },
+  yyz: { label: regionDict.yyz.location, color: regionColors.yyz },
+  koyeb_fra: { label: regionDict.ams.location, color: regionColors.koyeb_fra },
+  koyeb_par: { label: regionDict.arn.location, color: regionColors.koyeb_par },
+  koyeb_sfo: { label: regionDict.atl.location, color: regionColors.koyeb_sfo },
+  koyeb_sin: { label: regionDict.bog.location, color: regionColors.koyeb_sin },
+  koyeb_tyo: { label: regionDict.bom.location, color: regionColors.koyeb_tyo },
+  koyeb_was: { label: regionDict.bos.location, color: regionColors.koyeb_was },
 } satisfies ChartConfig;
 
 export type TrendPoint = {
@@ -70,8 +76,6 @@ export function ChartLineRegions({
 }) {
   const isMobile = useIsMobile();
   const trendData = data ?? [];
-
-  console.log({ data, regions });
 
   const chartData = trendData.map((d) => ({
     ...d,

@@ -1,5 +1,5 @@
 import type { RouterOutputs } from "@openstatus/api";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay } from "date-fns";
 
 type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
@@ -23,7 +23,7 @@ export const exampleLogs: ResponseLog[] = Array.from({ length: 10 }).map(
       transfer: 50,
     },
     assertions: [],
-    region: flyRegions[i],
+    region: monitorRegions[i],
     error: false,
     timestamp: today.getTime() + i * 1000 * 60,
     headers: {

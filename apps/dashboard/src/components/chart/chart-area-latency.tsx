@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/chart";
 import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { flyRegions } from "@openstatus/db/src/schema/constants";
+import type { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
@@ -46,7 +46,7 @@ export function ChartAreaLatency({
   percentile: (typeof PERCENTILES)[number];
   period: "1d" | "7d" | "14d";
   type: "http" | "tcp";
-  regions: (typeof flyRegions)[number][];
+  regions: (typeof monitorRegions)[number][];
 }) {
   const trpc = useTRPC();
 

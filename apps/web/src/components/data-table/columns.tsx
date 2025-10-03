@@ -4,10 +4,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type * as z from "zod";
 
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import type { Trigger } from "@/lib/monitor/utils";
-import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
+import type { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import { TriggerIconWithTooltip } from "../monitor/trigger-icon-with-tooltip";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
@@ -16,7 +16,7 @@ export type Check = {
   type: "http" | "tcp";
   monitorId: string;
   latency: number;
-  region: z.infer<typeof monitorFlyRegionSchema>;
+  region: z.infer<typeof monitorRegionSchema>;
   statusCode?: number | null;
   timestamp: number;
   workspaceId: string;
@@ -95,7 +95,7 @@ export const columns: ColumnDef<Check>[] = [
         <div>
           <span className="font-mono">{String(row.getValue("region"))} </span>
           <span className="text-muted-foreground text-xs">
-            {flyRegionsDict[row.original.region]?.location}
+            {regionDict[row.original.region]?.location}
           </span>
         </div>
       );

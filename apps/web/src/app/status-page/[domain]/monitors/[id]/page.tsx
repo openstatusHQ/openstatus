@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
+import {
+  type Region,
+  monitorRegions,
+} from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Header } from "@/components/dashboard/header";
@@ -99,7 +102,7 @@ export default async function Page(props: {
     period !== DEFAULT_PERIOD ||
     quantile !== DEFAULT_QUANTILE ||
     interval !== DEFAULT_INTERVAL ||
-    flyRegions.length !== regions.length;
+    monitorRegions.length !== regions.length;
 
   return (
     <div className="relative flex w-full flex-col gap-6">

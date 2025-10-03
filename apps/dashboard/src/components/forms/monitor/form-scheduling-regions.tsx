@@ -25,7 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  type MonitorFlyRegion,
+  type Region,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
 import { useState, useTransition } from "react";
@@ -33,8 +33,15 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
 import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -239,9 +246,7 @@ export function FormSchedulingRegions({
                                           (region) =>
                                             !r
                                               .map(({ code }) => code)
-                                              .includes(
-                                                region as MonitorFlyRegion,
-                                              ),
+                                              .includes(region as Region),
                                         ),
                                       );
                                     }
@@ -299,11 +304,28 @@ export function FormSchedulingRegions({
                                               className="w-full truncate font-mono font-normal text-sm"
                                             >
                                               <span className="text-nowrap">
-                                                {region.code} {region.flag}
+                                                {region.code.replace(
+                                                  /(koyeb_|railway_|fly_)/g,
+                                                  "",
+                                                )}{" "}
+                                                {region.flag}
                                               </span>
                                               <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
                                                 {region.location}
                                               </span>
+                                              <TooltipProvider>
+                                                <Tooltip>
+                                                  <TooltipTrigger type="button">
+                                                    <IconCloudProvider
+                                                      provider={region.provider}
+                                                      className="size-3"
+                                                    />
+                                                  </TooltipTrigger>
+                                                  <TooltipContent className="capitalize">
+                                                    {region.provider}
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
                                             </FormLabel>
                                           </FormItem>
                                         );

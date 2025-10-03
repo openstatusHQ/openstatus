@@ -45,8 +45,17 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { Fly, Koyeb, Railway } from "@openstatus/icons";
+import { regionDict } from "@openstatus/utils";
+import {
+  ArrowRight,
+  ChevronRight,
+  Gauge,
+  Globe,
+  Info,
+  Loader,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
@@ -173,7 +182,10 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 if (_result) {
                   if (_result[0].state === "success") {
                     toast.loading(
-                      `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
+                      `Checking ${regionFormatter(
+                        _result[0].region,
+                        "long",
+                      )} (${latencyFormatter(_result[0].latency)})`,
                       {
                         id: toastId,
                       },
@@ -322,7 +334,7 @@ function TableResult({
             <p className="w-[95px]">
               Region{" "}
               <span className="font-normal text-xs tabular-nums">
-                ({result.length}/{flyRegions.length})
+                ({result.length}/{monitorRegions.length})
               </span>
             </p>
             {loading ? (
@@ -333,7 +345,7 @@ function TableResult({
             {id &&
             !loading &&
             result.length > 0 &&
-            result.length !== flyRegions.length ? (
+            result.length !== monitorRegions.length ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -363,17 +375,41 @@ function TableResult({
         {result.length > 0 ? (
           result
             .filter((item) => item.state === "success")
-            .map((item) => (
-              <TableRow key={item.region}>
-                <TableCell className="flex items-center gap-2 font-medium">
-                  {regionFormatter(item.region, "long")}
-                  <StatusDot value={item.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  {latencyFormatter(item.latency)}
-                </TableCell>
-              </TableRow>
-            ))
+            .map((item) => {
+              const region = regionFormatter(item.region, "long");
+              const latency = latencyFormatter(item.latency);
+              const r = regionDict[item.region];
+              return (
+                <TableRow key={item.region}>
+                  <TableCell className="flex items-center gap-2 font-medium">
+                    <TooltipProvider>
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger type="button">
+                          {(() => {
+                            switch (r.provider) {
+                              case "fly":
+                                return <Fly className="size-4" />;
+                              case "railway":
+                                return <Railway className="size-4" />;
+                              case "koyeb":
+                                return <Koyeb className="size-4" />;
+                              default:
+                                return <Globe className="size-4" />;
+                            }
+                          })()}
+                        </TooltipTrigger>
+                        <TooltipContent className="capitalize">
+                          {r.provider}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    {region}
+                    <StatusDot value={item.status} />
+                  </TableCell>
+                  <TableCell className="text-right">{latency}</TableCell>
+                </TableRow>
+              );
+            })
         ) : (
           <TableRow>
             <TableCell
