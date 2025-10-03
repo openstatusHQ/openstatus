@@ -35,11 +35,18 @@ import { z } from "zod";
 
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
+import { Fly, Koyeb, Railway } from "@openstatus/icons";
 import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { CircleX, Info } from "lucide-react";
+import { CircleX, Globe, Info } from "lucide-react";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
@@ -302,6 +309,35 @@ export function FormSchedulingRegions({
                                               <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
                                                 {region.location}
                                               </span>
+                                              <TooltipProvider>
+                                                <Tooltip>
+                                                  <TooltipTrigger type="button">
+                                                    {(() => {
+                                                      switch (region.provider) {
+                                                        case "Fly":
+                                                          return (
+                                                            <Fly className="size-4" />
+                                                          );
+                                                        case "Railway":
+                                                          return (
+                                                            <Railway className="size-4" />
+                                                          );
+                                                        case "Koyeb":
+                                                          return (
+                                                            <Koyeb className="size-4" />
+                                                          );
+                                                        default:
+                                                          return (
+                                                            <Globe className="size-4" />
+                                                          );
+                                                      }
+                                                    })()}
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    {region.provider}
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
                                             </FormLabel>
                                           </FormItem>
                                         );

@@ -449,26 +449,7 @@ export const regionDict: Record<Region, RegionInfo> = {
 // const r = t.flatMap((u) => u[1].continent);
 
 export const groupByContinent = Object.entries(regionDict).reduce<
-  Record<
-    | "Europe"
-    | "North America"
-    | "South America"
-    | "Asia"
-    | "Africa"
-    | "Oceania",
-    {
-      code: Region;
-      location: string;
-      flag: string;
-      continent:
-        | "Europe"
-        | "North America"
-        | "South America"
-        | "Asia"
-        | "Africa"
-        | "Oceania";
-    }[]
-  >
+  Record<Continent, RegionInfo[]>
 >(
   (acc, [_key, value]) => {
     Object.assign(acc, {
@@ -483,7 +464,7 @@ export const groupByContinent = Object.entries(regionDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  },
+  }
 );
 
 export const vercelRegions = [
@@ -559,12 +540,9 @@ export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0
-    ? headers.reduce(
-        (acc, curr) => {
-          acc[curr.key] = curr.value;
-          return acc;
-        },
-        {} as Record<string, string>,
-      )
+    ? headers.reduce((acc, curr) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      }, {} as Record<string, string>)
     : {};
 }
