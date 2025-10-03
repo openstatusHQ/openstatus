@@ -15,7 +15,7 @@ import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import { Braces, TableProperties } from "lucide-react";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
@@ -37,7 +37,7 @@ export function DataTableBasicsHTTP({
     trigger?: "cron" | "api" | "test" | null;
   };
 }) {
-  const regionConfig = flyRegionsDict[data.region];
+  const regionConfig = regionDict[data.region];
   return (
     <Table className="table-fixed">
       <colgroup>
@@ -294,7 +294,7 @@ export function DataTableBasicsTCP({
     trigger?: "cron" | "api" | "test" | null;
   };
 }) {
-  const regionConfig = flyRegionsDict[data.region];
+  const regionConfig = regionDict[data.region];
   return (
     <Table className="table-fixed">
       <colgroup>

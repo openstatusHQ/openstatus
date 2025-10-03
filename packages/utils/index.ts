@@ -3,7 +3,7 @@
  * https://vercel.com/docs/concepts/edge-network/regions#region-list
  */
 
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
@@ -138,10 +138,11 @@ export type Continent =
   | "Oceania";
 
 export type RegionInfo = {
-  code: MonitorFlyRegion;
+  code: Region;
   location: string;
   flag: string;
   continent: Continent;
+  provider: "fly" | "koyeb" | "railway";
 };
 
 // TODO: we could think of doing the inverse and use "EU" as key
@@ -154,18 +155,20 @@ export const continentDict: Record<Continent, { code: string }> = {
   Oceania: { code: "OC" },
 };
 
-export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
+export const regionDict: Record<Region, RegionInfo> = {
   ams: {
     code: "ams",
     location: "Amsterdam, Netherlands",
     flag: "🇳🇱",
     continent: "Europe",
+    provider: "fly",
   },
   arn: {
     code: "arn",
     location: "Stockholm, Sweden",
     flag: "🇸🇪",
     continent: "Europe",
+    provider: "fly",
   },
 
   atl: {
@@ -173,224 +176,280 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     location: "Atlanta, Georgia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   bog: {
     code: "bog",
     location: "Bogotá, Colombia",
     flag: "🇨🇴",
     continent: "South America",
+    provider: "fly",
   },
   bom: {
     code: "bom",
     location: "Mumbai, India",
     flag: "🇮🇳",
     continent: "Asia",
+    provider: "fly",
   },
   bos: {
     code: "bos",
     location: "Boston, Massachusetts, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   cdg: {
     code: "cdg",
     location: "Paris, France",
     flag: "🇫🇷",
     continent: "Europe",
+    provider: "fly",
   },
   den: {
     code: "den",
     location: "Denver, Colorado, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   dfw: {
     code: "dfw",
     location: "Dallas, Texas, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   ewr: {
     code: "ewr",
     location: "Secaucus, New Jersey, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   eze: {
     code: "eze",
     location: "Ezeiza, Argentina",
     flag: "🇦🇷",
     continent: "South America",
+    provider: "fly",
   },
   fra: {
     code: "fra",
     location: "Frankfurt, Germany",
     flag: "🇩🇪",
     continent: "Europe",
+    provider: "fly",
   },
   gdl: {
     code: "gdl",
     location: "Guadalajara, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    provider: "fly",
   },
   gig: {
     code: "gig",
     location: "Rio de Janeiro, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    provider: "fly",
   },
   gru: {
     code: "gru",
     location: "Sao Paulo, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    provider: "fly",
   },
   hkg: {
     code: "hkg",
     location: "Hong Kong, Hong Kong",
     flag: "🇭🇰",
     continent: "Asia",
+    provider: "fly",
   },
   iad: {
     code: "iad",
     location: "Ashburn, Virginia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   jnb: {
     code: "jnb",
     location: "Johannesburg, South Africa",
     flag: "🇿🇦",
     continent: "Africa",
+    provider: "fly",
   },
   lax: {
     code: "lax",
     location: "Los Angeles, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   lhr: {
     code: "lhr",
     location: "London, United Kingdom",
     flag: "🇬🇧",
     continent: "Europe",
+    provider: "fly",
   },
   mad: {
     code: "mad",
     location: "Madrid, Spain",
     flag: "🇪🇸",
     continent: "Europe",
+    provider: "fly",
   },
   mia: {
     code: "mia",
     location: "Miami, Florida, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   nrt: {
     code: "nrt",
     location: "Tokyo, Japan",
     flag: "🇯🇵",
     continent: "Asia",
+    provider: "fly",
   },
   ord: {
     code: "ord",
     location: "Chicago, Illinois, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   otp: {
     code: "otp",
     location: "Bucharest, Romania",
     flag: "🇷🇴",
     continent: "Europe",
+    provider: "fly",
   },
   phx: {
     code: "phx",
     location: "Phoenix, Arizona, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   qro: {
     code: "qro",
     location: "Querétaro, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    provider: "fly",
   },
   scl: {
     code: "scl",
     location: "Santiago, Chile",
     flag: "🇨🇱",
     continent: "South America",
+    provider: "fly",
   },
   sjc: {
     code: "sjc",
     location: "San Jose, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   sea: {
     code: "sea",
     location: "Seattle, Washington, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "fly",
   },
   sin: {
     code: "sin",
     location: "Singapore, Singapore",
     flag: "🇸🇬",
     continent: "Asia",
+    provider: "fly",
   },
   syd: {
     code: "syd",
     location: "Sydney, Australia",
     flag: "🇦🇺",
     continent: "Oceania",
+    provider: "fly",
   },
   waw: {
     code: "waw",
     location: "Warsaw, Poland",
     flag: "🇵🇱",
     continent: "Europe",
+    provider: "fly",
   },
   yul: {
     code: "yul",
     location: "Montreal, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    provider: "fly",
   },
   yyz: {
     code: "yyz",
     location: "Toronto, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    provider: "fly",
+  },
+  koyeb_fra: {
+    code: "koyeb_fra",
+    location: "Frankfurt, Germany",
+    flag: "🇩🇪",
+    continent: "Europe",
+    provider: "koyeb",
+  },
+  koyeb_par: {
+    code: "koyeb_par",
+    location: "Paris, France",
+    flag: "🇫🇷",
+    continent: "Europe",
+    provider: "koyeb",
+  },
+  koyeb_sfo: {
+    code: "koyeb_sfo",
+    location: "San Francisco, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "koyeb",
+  },
+  koyeb_sin: {
+    code: "koyeb_sin",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+    provider: "koyeb",
+  },
+  koyeb_tyo: {
+    code: "koyeb_tyo",
+    location: "Tokyo, Japan",
+    flag: "🇯🇵",
+    continent: "Asia",
+    provider: "koyeb",
+  },
+  koyeb_was: {
+    code: "koyeb_was",
+    location: "Washington, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "koyeb",
   },
 } as const;
 
 // const r = t.flatMap((u) => u[1].continent);
 
-export const groupByContinent = Object.entries(flyRegionsDict).reduce<
-  Record<
-    | "Europe"
-    | "North America"
-    | "South America"
-    | "Asia"
-    | "Africa"
-    | "Oceania",
-    {
-      code: MonitorFlyRegion;
-      location: string;
-      flag: string;
-      continent:
-        | "Europe"
-        | "North America"
-        | "South America"
-        | "Asia"
-        | "Africa"
-        | "Oceania";
-    }[]
-  >
+export const groupByContinent = Object.entries(regionDict).reduce<
+  Record<Continent, RegionInfo[]>
 >(
   (acc, [_key, value]) => {
     Object.assign(acc, {

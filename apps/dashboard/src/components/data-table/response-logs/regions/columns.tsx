@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { RegionMetric } from "@/data/region-metrics";
 import { getActions } from "@/data/region-metrics.client";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 // import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -28,14 +28,18 @@ export const columns: ColumnDef<RegionMetric>[] = [
     cell: ({ row }) => {
       const value = row.getValue("region");
       if (typeof value === "string") {
-        const region = flyRegionsDict[value as keyof typeof flyRegionsDict];
+        const region = regionDict[value as keyof typeof regionDict];
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger className="h-[50px]">
-                {region.flag} {region.code}
+              <TooltipTrigger className="flex h-[50px] items-center gap-1">
+                {region.flag}{" "}
+                {region.code.replace(/(koyeb_|railway_|fly_)/g, "")}
               </TooltipTrigger>
-              <TooltipContent side="left">{region.location}</TooltipContent>
+              <TooltipContent side="left">
+                {region.location} -{" "}
+                <span className="capitalize">{region.provider}</span>
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         );

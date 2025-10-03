@@ -1,4 +1,4 @@
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";
 import type { ResponseGraph } from "@/lib/tb";
@@ -24,7 +24,7 @@ export function groupDataByTimestamp(
     (acc, curr) => {
       const { timestamp, region } = curr;
       const latency = curr[`${quantile}Latency`];
-      const { flag, code, location } = flyRegionsDict[region];
+      const { flag, code, location } = regionDict[region];
       const fullNameRegion = `${code}`;
       regions[fullNameRegion] = { flag, code, location }; // to get the region keys
       if (timestamp === currentTimestamp) {
@@ -73,6 +73,6 @@ export function dataFormatter(number: number) {
 }
 
 export function regionFormatter(region: Region) {
-  const { code, flag } = flyRegionsDict[region];
+  const { code, flag } = regionDict[region];
   return `${flag} ${code}`;
 }

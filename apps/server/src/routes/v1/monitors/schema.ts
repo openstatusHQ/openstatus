@@ -3,8 +3,8 @@ import { z } from "@hono/zod-openapi";
 import { numberCompare, stringCompare } from "@openstatus/assertions";
 import { monitorJobTypes, monitorMethods } from "@openstatus/db/src/schema";
 import {
-  flyRegions,
   monitorPeriodicitySchema,
+  monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { ZodError } from "zod";
 
@@ -110,7 +110,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.enum(flyRegions)),
+        z.array(z.enum(monitorRegions)),
       )
       .default([])
       .openapi({
@@ -252,7 +252,7 @@ export const HTTPTriggerResult = z.object({
   jobType: z.literal("http"),
   status: z.number(),
   latency: z.number(),
-  region: z.enum(flyRegions),
+  region: z.enum(monitorRegions),
   timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),
@@ -267,7 +267,7 @@ const tcptimingSchema = z.object({
 export const TCPTriggerResult = z.object({
   jobType: z.literal("tcp"),
   latency: z.number(),
-  region: z.enum(flyRegions),
+  region: z.enum(monitorRegions),
   timestamp: z.number(),
   timing: tcptimingSchema,
   // check if it should be z.coerce.boolean()?
@@ -286,7 +286,7 @@ export const ResultRun = z.object({
   monitorId: z.string().default(""),
   url: z.string().optional(),
   error: z.coerce.boolean().default(false),
-  region: z.enum(flyRegions),
+  region: z.enum(monitorRegions),
   timestamp: z.number().int().optional(),
   message: z.string().nullable().optional(),
   timing: z
@@ -343,7 +343,7 @@ const baseRequest = z.object({
     description: "Whether the monitor is public",
     default: false,
   }),
-  regions: z.array(z.enum(flyRegions)).openapi({
+  regions: z.array(z.enum(monitorRegions)).openapi({
     description: "Regions to run the request in",
   }),
   openTelemetry: z

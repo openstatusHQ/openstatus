@@ -1,4 +1,4 @@
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
   createSearchParamsCache,
   parseAsInteger,
@@ -9,7 +9,7 @@ import {
 export const searchParamsParsers = {
   monitorId: parseAsString.withDefault(""),
   url: parseAsString.withDefault(""),
-  region: parseAsStringLiteral(flyRegions).withDefault("ams"),
+  region: parseAsStringLiteral(monitorRegions).withDefault("ams"),
   cronTimestamp: parseAsInteger.withDefault(0),
 };
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);
