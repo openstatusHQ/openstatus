@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import {
-  flyRegions,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { OSTinybird } from "@openstatus/tinybird";
@@ -358,7 +357,7 @@ export const tinybirdRouter = createTRPCRouter({
         monitorId: z.string(),
         period: z.enum(periods),
         type: z.enum(types).default("http"),
-        region: z.enum(flyRegions).optional(),
+        region: z.enum(monitorRegions).optional(),
         cronTimestamp: z.number().int().optional(),
       }),
     )
@@ -394,7 +393,7 @@ export const tinybirdRouter = createTRPCRouter({
         type: z.enum(types).default("http"),
         // Additional filters
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         cronTimestamp: z.number().int().optional(),
       }),
     )

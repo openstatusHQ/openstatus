@@ -13,7 +13,7 @@ import {
 import { type PERIODS, mapUptime } from "@/data/metrics.client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTRPC } from "@/lib/trpc/client";
-import type { MonitorRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay, startOfDay, subDays } from "date-fns";
 
@@ -53,7 +53,7 @@ export function ChartBarUptime({
   monitorId: string;
   period: (typeof PERIODS)[number];
   type: "http" | "tcp";
-  regions: MonitorRegion[];
+  regions: Region[];
 }) {
   const isMobile = useIsMobile();
   const trpc = useTRPC();
