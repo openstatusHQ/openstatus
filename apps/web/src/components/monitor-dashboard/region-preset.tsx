@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
+import { Check, ChevronsUpDown, Globe, Globe2 } from "lucide-react";
 
 import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {
@@ -24,6 +24,7 @@ import {
   type Region,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
+import { Fly, Koyeb, Railway } from "@openstatus/icons";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 interface RegionsPresetProps extends ButtonProps {
@@ -87,7 +88,7 @@ export function RegionsPreset({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="p-0" align="start">
+      <PopoverContent className="w-80 p-0" align="start">
         <Command
         // FIXME: keywords not taken - it would be great to search for "Europe"
         // filter={(value, search, keywords) => {
@@ -136,9 +137,23 @@ export function RegionsPreset({
                         >
                           <Check className={cn("h-4 w-4")} />
                         </div>
-                        <div className="flex w-full justify-between">
+                        <div className="flex w-full items-center gap-1">
                           <span>
-                            {code}{" "}
+                            {(() => {
+                              switch (region.provider) {
+                                case "fly":
+                                  return <Fly className="size-4" />;
+                                case "railway":
+                                  return <Railway className="size-4" />;
+                                case "koyeb":
+                                  return <Koyeb className="size-4" />;
+                                default:
+                                  return <Globe className="size-4" />;
+                              }
+                            })()}
+                          </span>
+                          <span>
+                            {code.replace(/(koyeb_|railway_|fly_)/g, "")}{" "}
                             <span className="truncate text-muted-foreground">
                               {location}
                             </span>

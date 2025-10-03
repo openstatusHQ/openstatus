@@ -44,7 +44,7 @@ export default async function PlayPage(props: {
 
   const data = id
     ? process.env.NODE_ENV === "development"
-      ? mockCheckAllRegions()
+      ? await mockCheckAllRegions()
       : await getCheckerDataById(id)
     : null;
 

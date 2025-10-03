@@ -36,13 +36,10 @@ export const columns: ColumnDef<RegionChecker>[] = [
     cell: ({ row }) => {
       const region = regionDict[row.original.region];
       return (
-        <div className="group flex items-center gap-1 text-muted-foreground">
+        <div className="flex items-center gap-1 text-muted-foreground">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
-              <TooltipTrigger
-                type="button"
-                className="opacity-70 group-hover:opacity-100"
-              >
+              <TooltipTrigger type="button">
                 {(() => {
                   switch (region.provider) {
                     case "fly":

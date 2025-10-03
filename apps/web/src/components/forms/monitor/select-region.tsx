@@ -118,7 +118,7 @@ export function SelectRegion({
                         </div>
                         <div className="flex w-full justify-between">
                           <span>
-                            {code}{" "}
+                            {code.replace(/(koyeb_|railway_|fly_)/g, "")}{" "}
                             <span className="truncate text-muted-foreground">
                               {location}
                             </span>
