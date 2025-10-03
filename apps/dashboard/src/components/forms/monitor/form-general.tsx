@@ -719,7 +719,7 @@ export function FormGeneral({
               >
                 Assertions
               </Link>
-              .
+              . We test your endpoint before saving the monitor.
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending || disabled}>
               {isPending ? "Submitting..." : "Submit"}
