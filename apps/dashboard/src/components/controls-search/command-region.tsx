@@ -123,7 +123,7 @@ export function CommandRegion({
                           );
                         }}
                       >
-                        <span className="mr-1">{region.flag}</span>
+                        <span>{region.flag}</span>
                         {(() => {
                           switch (region.provider) {
                             case "fly":
@@ -139,7 +139,7 @@ export function CommandRegion({
                         <span className="font-mono">
                           {region.code.replace(/(koyeb_|railway_|fly_)/g, "")}
                         </span>
-                        <span className="ml-1 truncate text-muted-foreground text-xs">
+                        <span className="truncate text-muted-foreground text-xs">
                           {region.location}
                         </span>
                         <Check
