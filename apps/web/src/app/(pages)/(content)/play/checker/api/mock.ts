@@ -13,7 +13,7 @@ export async function mockCheckRegion(region: Region) {
 
   await wait(response.latency);
 
-  return response as RegionChecker;
+  return response as unknown as RegionChecker;
 }
 
 export const data = {
