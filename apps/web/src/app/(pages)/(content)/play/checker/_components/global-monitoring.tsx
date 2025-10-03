@@ -18,7 +18,7 @@ const features: {
 }[] = [
   {
     icon: "gauge",
-    catchline: "Speed Test",
+    catchline: "API & Website Speed Test",
     description:
       "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB, Transfer) of the response.",
   },

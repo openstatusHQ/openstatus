@@ -16,7 +16,7 @@ import { searchParamsCache } from "./search-params";
 
 const title = "Global Speed Checker";
 const description =
-  "Test the performance of your api, website from multiple regions. Get speed insights for free.";
+  "API speed test, website speed test, global latency from different locations. Get speed insights for free.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
