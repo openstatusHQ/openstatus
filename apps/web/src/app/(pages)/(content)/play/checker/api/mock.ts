@@ -1,4 +1,7 @@
-import type { RegionChecker } from "@/components/ping-response-analysis/utils";
+import {
+  type RegionChecker,
+  cachedCheckerSchema,
+} from "@/components/ping-response-analysis/utils";
 import { wait } from "@/lib/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 
@@ -14,6 +17,14 @@ export async function mockCheckRegion(region: Region) {
   await wait(response.latency);
 
   return response as unknown as RegionChecker;
+}
+
+export async function mockCheckAllRegions() {
+  const res = cachedCheckerSchema.safeParse(data);
+  if (!res.success) {
+    throw new Error(res.error.message);
+  }
+  return res.data;
 }
 
 export const data = {

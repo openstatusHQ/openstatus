@@ -21,7 +21,11 @@ export const columns: ColumnDef<RegionChecker>[] = [
     accessorFn: (row) => row.region,
     header: "Key",
     cell: ({ row }) => {
-      return <div className="font-mono">{row.original.region}</div>;
+      return (
+        <div className="font-mono">
+          {row.original.region.replace(/(koyeb_|railway_|fly_)/g, "")}
+        </div>
+      );
     },
     enableHiding: false,
   },
@@ -32,11 +36,13 @@ export const columns: ColumnDef<RegionChecker>[] = [
     cell: ({ row }) => {
       const region = regionDict[row.original.region];
       return (
-        <div className="text-muted-foreground">
-          {regionFormatter(row.original.region, "long")}{" "}
+        <div className="group flex items-center gap-1 text-muted-foreground">
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger type="button">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger
+                type="button"
+                className="opacity-70 group-hover:opacity-100"
+              >
                 {(() => {
                   switch (region.provider) {
                     case "fly":
@@ -55,6 +61,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          {regionFormatter(row.original.region, "long")}
         </div>
       );
     },

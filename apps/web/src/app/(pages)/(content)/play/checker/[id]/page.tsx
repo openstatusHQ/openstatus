@@ -17,6 +17,7 @@ import {
   getCheckerDataById,
   timestampFormatter,
 } from "@/components/ping-response-analysis/utils";
+import { mockCheckAllRegions } from "../api/mock";
 import { searchParamsCache } from "./search-params";
 
 interface Props {
@@ -30,7 +31,10 @@ export default async function CheckPage(props: Props) {
   const { regions } = searchParamsCache.parse(searchParams);
   const selectedRegions = regions || [...monitorRegions];
 
-  const data = await getCheckerDataById(params.id);
+  const data =
+    process.env.NODE_ENV === "development"
+      ? await mockCheckAllRegions()
+      : await getCheckerDataById(params.id);
 
   if (!data) redirect("/play/checker");
 
