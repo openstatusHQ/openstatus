@@ -25,84 +25,112 @@ export const regions = [
     location: "Bogotá, Colombia",
     flag: "🇨🇴",
     continent: "South America",
+    provider: "Fly",
+
   },
   {
     code: "bom",
     location: "Mumbai, India",
     flag: "🇮🇳",
     continent: "Asia",
+    provider: "Fly",
+
   },
   {
     code: "bos",
     location: "Boston, Massachusetts, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "cdg",
     location: "Paris, France",
     flag: "🇫🇷",
     continent: "Europe",
+    provider: "Fly",
+
   },
   {
     code: "den",
     location: "Denver, Colorado, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "dfw",
     location: "Dallas, Texas, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "ewr",
     location: "Secaucus, New Jersey, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "eze",
     location: "Ezeiza, Argentina",
     flag: "🇦🇷",
     continent: "South America",
+    provider: "Fly",
+
   },
   {
     code: "fra",
     location: "Frankfurt, Germany",
     flag: "🇩🇪",
     continent: "Europe",
+    provider: "Fly",
+
   },
   {
     code: "gdl",
     location: "Guadalajara, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "gig",
     location: "Rio de Janeiro, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    provider: "Fly",
+
   },
   {
     code: "gru",
     location: "Sao Paulo, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    provider: "Fly",
+
   },
   {
     code: "hkg",
     location: "Hong Kong, Hong Kong",
     flag: "🇭🇰",
     continent: "Asia",
+    provider: "Fly",
+
   },
   {
     code: "iad",
     location: "Ashburn, Virginia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "jnb",
@@ -115,12 +143,16 @@ export const regions = [
     location: "Los Angeles, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "lhr",
     location: "London, United Kingdom",
     flag: "🇬🇧",
     continent: "Europe",
+    provider: "Fly",
+
   },
   {
     code: "mad",
@@ -133,12 +165,16 @@ export const regions = [
     location: "Miami, Florida, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "nrt",
     location: "Tokyo, Japan",
     flag: "🇯🇵",
     continent: "Asia",
+    provider: "Fly",
+
   },
   {
     code: "ord",
@@ -151,66 +187,130 @@ export const regions = [
     location: "Bucharest, Romania",
     flag: "🇷🇴",
     continent: "Europe",
+    provider: "Fly",
+
   },
   {
     code: "phx",
     location: "Phoenix, Arizona, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "qro",
     location: "Querétaro, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "scl",
     location: "Santiago, Chile",
     flag: "🇨🇱",
     continent: "South America",
+    provider: "Fly",
+
   },
   {
     code: "sjc",
     location: "San Jose, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "sea",
     location: "Seattle, Washington, USA",
     flag: "🇺🇸",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "sin",
     location: "Singapore, Singapore",
     flag: "🇸🇬",
     continent: "Asia",
+    provider: "Fly",
+
   },
   {
     code: "syd",
     location: "Sydney, Australia",
     flag: "🇦🇺",
     continent: "Oceania",
+    provider: "Fly",
+
   },
   {
     code: "waw",
     location: "Warsaw, Poland",
     flag: "🇵🇱",
     continent: "Europe",
+    provider: "Fly",
+
   },
   {
     code: "yul",
     location: "Montreal, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    provider: "Fly",
+
   },
   {
     code: "yyz",
     location: "Toronto, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    provider: "Fly",
+
+  },
+  {
+    code: "koyeb_fra",
+    location: "Frankfurt, Germany",
+    flag: "🇩🇪",
+    continent: "Europe",
+    provider: "koyeb",
+  },
+  {
+    code: "koyeb_par",
+    location: "Paris, France",
+    flag: "🇫🇷",
+    continent: "Europe",
+    provider: "koyeb",
+  },
+  {
+    code: "koyeb_sfo",
+    location: "San Francisco, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "koyeb",
+  },
+  {
+    code: "koyeb_sin",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+    provider: "koyeb",
+  },
+  {
+    code: "koyeb_tyo",
+    location: "Tokyo, Japan",
+    flag: "🇯🇵",
+    continent: "Asia",
+    provider: "koyeb",
+  },
+  {
+    code: "koyeb_was",
+    location: "Washington, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "koyeb",
   },
 ] as const;
 
@@ -264,4 +364,11 @@ export const regionColors = {
   waw: "hsl(0 0% 45.1%)",
   yul: "hsl(25 5.3% 44.7%)",
   yyz: "hsl(0 84.2% 60.2%)",
+
+  koyeb_fra: "hsl(25 5.3% 44.7%)",
+  koyeb_par: "hsl(25 5.3% 44.7%)",
+  koyeb_sin: "hsl(25 5.3% 44.7%)",
+  koyeb_sfo: "hsl(0 0% 45.1%)",
+  koyeb_tyo: "hsl(0 0% 45.1%)",
+  koyeb_was: "hsl(0 0% 45.1%)",
 } satisfies Record<Region, string>;
