@@ -22,7 +22,7 @@ async function* makeIterator({
     try {
       // Perform the fetch operation
       const check =
-        process.env.NODE_ENV !== "production"
+        process.env.NODE_ENV === "production"
           ? await checkRegion(url, region, { method })
           : await mockCheckRegion(region);
 

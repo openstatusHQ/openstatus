@@ -265,7 +265,6 @@ export async function storeBaseCheckerData({
   const expire = 60 * 60 * 24 * 7; // 7days
   await redis.expire(`check:base:${id}`, expire);
 
-  return id;
 }
 
 export async function storeCheckerData({
