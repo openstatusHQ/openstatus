@@ -26,7 +26,7 @@ const features: {
     icon: "globe",
     catchline: "Global Speed Test",
     description:
-      "Monitor performance in different regions to ensure quick load times for users across 35 regions around the world.",
+      "Monitor latency performance in different regions to ensure quick load times for users across 35 regions around the world.",
   },
   {
     icon: "link",
