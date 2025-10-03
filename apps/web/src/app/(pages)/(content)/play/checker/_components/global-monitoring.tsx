@@ -18,15 +18,15 @@ const features: {
 }[] = [
   {
     icon: "gauge",
-    catchline: "Speed Test",
+    catchline: "API & Website Speed Test",
     description:
       "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB, Transfer) of the response.",
   },
   {
     icon: "globe",
-    catchline: "Global Latency",
+    catchline: "Global Speed Test",
     description:
-      "Monitor performance in different regions to ensure quick load times for users across 35 regions around the world.",
+      "Monitor latency performance in different regions to ensure quick load times for users across 35 regions worldwide.",
   },
   {
     icon: "link",

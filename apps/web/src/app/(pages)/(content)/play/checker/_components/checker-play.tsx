@@ -22,7 +22,7 @@ export default async function CheckerPlay({
         <CardDescription className="max-w-md">
           Is your{" "}
           <span className="text-foreground">endpoint globally fast</span>? Test
-          your website and API performance across all continents.
+          your website and API speed from different locations.
         </CardDescription>
       </CardHeader>
 
