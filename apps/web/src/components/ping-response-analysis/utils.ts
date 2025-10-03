@@ -160,11 +160,31 @@ export async function checkRegion(
   },
 ): Promise<RegionCheckerResponse> {
   //
-  const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
+  //
+  const regionInfo = regionDict[region];
+
+  let endpoint = "";
+  let regionHeader = {};
+  switch (regionInfo.provider) {
+    case "fly":
+      endpoint = `https://checker.openstatus.dev/ping/${region}`;
+      regionHeader = { "fly-prefer-region": region };
+      break;
+    case "koyeb":
+      endpoint = `https://openstatus-checker.koyeb.app/ping/${region}`;
+      regionHeader = {
+        "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", ""),
+      };
+      break;
+    default:
+      break;
+  }
+
+  const res = await fetch(endpoint, {
     headers: {
       Authorization: `Basic ${process.env.CRON_SECRET}`,
       "Content-Type": "application/json",
-      "fly-prefer-region": region,
+      ...regionHeader,
     },
     method: "POST",
     body: JSON.stringify({

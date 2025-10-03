@@ -26,7 +26,6 @@ export const regions = [
     flag: "🇨🇴",
     continent: "South America",
     provider: "Fly",
-
   },
   {
     code: "bom",
@@ -34,7 +33,6 @@ export const regions = [
     flag: "🇮🇳",
     continent: "Asia",
     provider: "Fly",
-
   },
   {
     code: "bos",
@@ -42,7 +40,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "cdg",
@@ -50,7 +47,6 @@ export const regions = [
     flag: "🇫🇷",
     continent: "Europe",
     provider: "Fly",
-
   },
   {
     code: "den",
@@ -58,7 +54,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "dfw",
@@ -66,7 +61,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "ewr",
@@ -74,7 +68,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "eze",
@@ -82,7 +75,6 @@ export const regions = [
     flag: "🇦🇷",
     continent: "South America",
     provider: "Fly",
-
   },
   {
     code: "fra",
@@ -90,7 +82,6 @@ export const regions = [
     flag: "🇩🇪",
     continent: "Europe",
     provider: "Fly",
-
   },
   {
     code: "gdl",
@@ -98,7 +89,6 @@ export const regions = [
     flag: "🇲🇽",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "gig",
@@ -106,7 +96,6 @@ export const regions = [
     flag: "🇧🇷",
     continent: "South America",
     provider: "Fly",
-
   },
   {
     code: "gru",
@@ -114,7 +103,6 @@ export const regions = [
     flag: "🇧🇷",
     continent: "South America",
     provider: "Fly",
-
   },
   {
     code: "hkg",
@@ -122,7 +110,6 @@ export const regions = [
     flag: "🇭🇰",
     continent: "Asia",
     provider: "Fly",
-
   },
   {
     code: "iad",
@@ -130,7 +117,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "jnb",
@@ -144,7 +130,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "lhr",
@@ -152,7 +137,6 @@ export const regions = [
     flag: "🇬🇧",
     continent: "Europe",
     provider: "Fly",
-
   },
   {
     code: "mad",
@@ -166,7 +150,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "nrt",
@@ -174,7 +157,6 @@ export const regions = [
     flag: "🇯🇵",
     continent: "Asia",
     provider: "Fly",
-
   },
   {
     code: "ord",
@@ -188,7 +170,6 @@ export const regions = [
     flag: "🇷🇴",
     continent: "Europe",
     provider: "Fly",
-
   },
   {
     code: "phx",
@@ -196,7 +177,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "qro",
@@ -204,7 +184,6 @@ export const regions = [
     flag: "🇲🇽",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "scl",
@@ -212,7 +191,6 @@ export const regions = [
     flag: "🇨🇱",
     continent: "South America",
     provider: "Fly",
-
   },
   {
     code: "sjc",
@@ -220,7 +198,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "sea",
@@ -228,7 +205,6 @@ export const regions = [
     flag: "🇺🇸",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "sin",
@@ -236,7 +212,6 @@ export const regions = [
     flag: "🇸🇬",
     continent: "Asia",
     provider: "Fly",
-
   },
   {
     code: "syd",
@@ -244,7 +219,6 @@ export const regions = [
     flag: "🇦🇺",
     continent: "Oceania",
     provider: "Fly",
-
   },
   {
     code: "waw",
@@ -252,7 +226,6 @@ export const regions = [
     flag: "🇵🇱",
     continent: "Europe",
     provider: "Fly",
-
   },
   {
     code: "yul",
@@ -260,7 +233,6 @@ export const regions = [
     flag: "🇨🇦",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "yyz",
@@ -268,7 +240,6 @@ export const regions = [
     flag: "🇨🇦",
     continent: "North America",
     provider: "Fly",
-
   },
   {
     code: "koyeb_fra",
