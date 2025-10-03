@@ -2,6 +2,7 @@ import {
   type Method,
   checkRegion,
   storeBaseCheckerData,
+  storeCheckerData,
 } from "@/components/ping-response-analysis/utils";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
@@ -35,7 +36,7 @@ async function* makeIterator({
       }
 
       if (check.state === "success") {
-        // storeCheckerData({ check, id });
+        storeCheckerData({ check, id });
       }
 
       return encoder.encode(
