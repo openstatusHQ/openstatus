@@ -2,7 +2,6 @@ import {
   type Method,
   checkRegion,
   storeBaseCheckerData,
-  storeCheckerData,
 } from "@/components/ping-response-analysis/utils";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
@@ -26,7 +25,6 @@ async function* makeIterator({
         process.env.NODE_ENV !== "production"
           ? await checkRegion(url, region, { method })
           : await mockCheckRegion(region);
-
 
       if ("body" in check) {
         check.body = undefined; // Drop the body to avoid storing it in Redis Cache
