@@ -3,10 +3,10 @@ import { NEXT_PUBLIC_OPENPANEL_CLIENT_ID } from "astro:env/client";
 import Default from "@astrojs/starlight/components/Head.astro";
 import { OpenPanelComponent } from "@openpanel/astro";
 
-const title = Astro.locals.starlightRoute.title;
+const title = Astro.locals.starlightRoute.entry.data.title;
 const { siteTitle } = Astro.locals.starlightRoute;
 
-const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${title}`;
+const url = `https://openstatus.dev/api/og?title=${encodeURIComponent(siteTitle)}&description=${encodeURIComponent(title)}`;
 ---
 <Default><slot /></Default>
 
