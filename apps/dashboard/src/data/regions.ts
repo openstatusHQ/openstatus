@@ -283,6 +283,13 @@ export const regions = [
     continent: "North America",
     provider: "koyeb",
   },
+  {
+    code: "railway_sfo",
+    location: "San Francisco, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "railway",
+  },
 ] as const;
 
 export type Region = (typeof regions)[number]["code"];

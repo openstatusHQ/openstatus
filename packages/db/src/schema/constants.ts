@@ -47,6 +47,14 @@ export const koyebRegions = [
   "koyeb_sfo",
 ] as const;
 
+export const railwayRegions = [
+  "railway_europe-west4",
+  "railway_us-east4",
+  "railway_asia-southeast1",
+  "railway_us-west2"
+
+]
+
 export const freeFlyRegions = [
   "iad",
   "ams",
@@ -66,7 +74,7 @@ export const monitorPeriodicity = [
   "other",
 ] as const;
 
-export const monitorRegions = [...flyRegions, ...koyebRegions] as const;
+export const monitorRegions = [...flyRegions, ...koyebRegions, ...railwayRegions] as const;
 export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorFlyRegionSchema = z.enum(flyRegions);
