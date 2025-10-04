@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -65,7 +65,7 @@ export function Client() {
       // once the data is loaded, we show all the regions that we get from TB
       isLoading
         ? monitor?.regions ?? []
-        : (flyRegions as unknown as (typeof flyRegions)[number][]),
+        : (monitorRegions as unknown as (typeof monitorRegions)[number][]),
       percentile,
     );
   }, [regionTimeline, monitor, percentile, isLoading]);
