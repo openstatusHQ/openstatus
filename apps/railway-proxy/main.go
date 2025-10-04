@@ -26,6 +26,7 @@ func proxy(c *gin.Context) {
 		case "eu-west4":
 		targetUrl = "http://openstatus-checker-eu-west.railway.internal:8080"
 		default:
+		targetUrl ="http://openstatus-checker-eu-west.railway.internal:8080"
 		fmt.Println("No region")
 	}
 	remote, err := url.Parse(targetUrl)
