@@ -107,7 +107,7 @@ export const allPlans: Record<
       "synthetic-checks": 300,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
-      "max-regions": 35,
+      "max-regions": 41,
       "data-retention": "12 months",
       "status-pages": 5,
       maintenance: true,

@@ -8,7 +8,7 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Tinybird } from "@openstatus/tinybird";
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
@@ -22,7 +22,7 @@ const payloadSchema = z.object({
   monitorId: z.string(),
   message: z.string().optional(),
   statusCode: z.number().optional(),
-  region: z.enum(flyRegions),
+  region: z.enum(monitorRegions),
   cronTimestamp: z.number(),
   status: monitorStatusSchema,
   latency: z.number().optional(),
