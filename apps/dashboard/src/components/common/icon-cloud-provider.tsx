@@ -32,7 +32,10 @@ export function IconCloudProviderTooltip(
   return (
     <TooltipProvider>
       <Tooltip delayDuration={0}>
-        <TooltipTrigger type="button">
+        <TooltipTrigger
+          type="button"
+          className="rounded-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:ring-offset-2"
+        >
           <IconCloudProvider {...props} />
         </TooltipTrigger>
         <TooltipContent className="capitalize">{props.provider}</TooltipContent>
