@@ -352,14 +352,13 @@ export const regionDict: Record<Region, RegionInfo> = {
 
 export function formatRegionCode(region: RegionInfo | Region) {
   const r = typeof region === "string" ? regionDict[region] : region;
+  const suffix = r.code.replace(/(koyeb_|railway_|fly_)/g, "");
 
   if (r.provider === "railway") {
-    return r.code
-      .replace(/(koyeb_|railway_|fly_)/g, "")
-      .replace(/-[a-z0-9]+$/g, "");
+    return suffix.replace(/(-eqdc4a|-eqsg3a|-drams3a)/g, "");
   }
 
-  return r.code.replace(/(koyeb_|railway_|fly_)/g, "");
+  return suffix;
 }
 
 export const groupByContinent = Object.entries(regionDict).reduce<
