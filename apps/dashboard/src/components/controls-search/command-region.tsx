@@ -25,7 +25,7 @@ import {
 import { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { groupByContinent } from "@openstatus/utils";
+import { formatRegionCode, groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
@@ -129,7 +129,7 @@ export function CommandRegion({
                           className="size-3"
                         />
                         <span className="font-mono">
-                          {region.code.replace(/(koyeb_|railway_|fly_)/g, "")}
+                          {formatRegionCode(region.code)}
                         </span>
                         <span className="truncate text-muted-foreground text-xs">
                           {region.location}

@@ -17,7 +17,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/src/components/popover";
-import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
+import {
+  type Continent,
+  type RegionInfo,
+  formatRegionCode,
+  regionDict,
+} from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
 import {
@@ -118,7 +123,7 @@ export function SelectRegion({
                         </div>
                         <div className="flex w-full justify-between">
                           <span>
-                            {code.replace(/(koyeb_|railway_|fly_)/g, "")}{" "}
+                            {formatRegionCode(code)}{" "}
                             <span className="truncate text-muted-foreground">
                               {location}
                             </span>

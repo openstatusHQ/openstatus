@@ -1,133 +1,9 @@
-/**
- * AWS data center informations from 18 regions, supported by vercel.
- * https://vercel.com/docs/concepts/edge-network/regions#region-list
- */
-
 import type { Region } from "@openstatus/db/src/schema/constants";
 
 import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
 
 import { z } from "zod";
-// export const vercelRegionsDict = {
-//   /**
-//    * A random location will be chosen
-//    */
-//   auto: {
-//     code: "auto",
-//     name: "random",
-//     location: "Random",
-//     flag: "🌍",
-//   },
-//   arn1: {
-//     code: "arn1",
-//     name: "eu-north-1",
-//     location: "Stockholm, Sweden",
-//     flag: "🇸🇪",
-//   },
-//   bom1: {
-//     code: "bom1",
-//     name: "ap-south-1",
-//     location: "Mumbai, India",
-//     flag: "🇮🇳",
-//   },
-//   cdg1: {
-//     code: "cdg1",
-//     name: "eu-west-3",
-//     location: "Paris, France",
-//     flag: "🇫🇷",
-//   },
-//   cle1: {
-//     code: "cle1",
-//     name: "us-east-2",
-//     location: "Cleveland, USA",
-//     flag: "🇺🇸",
-//   },
-//   cpt1: {
-//     code: "cpt1",
-//     name: "af-south-1",
-//     location: "Cape Town, South Africa",
-//     flag: "🇿🇦",
-//   },
-//   dub1: {
-//     code: "dub1",
-//     name: "eu-west-1",
-//     location: "Dublin, Ireland",
-//     flag: "🇮🇪",
-//   },
-//   fra1: {
-//     code: "fra1",
-//     name: "eu-central-1",
-//     location: "Frankfurt, Germany",
-//     flag: "🇩🇪",
-//   },
-//   gru1: {
-//     code: "gru1",
-//     name: "sa-east-1",
-//     location: "São Paulo, Brazil",
-//     flag: "🇧🇷",
-//   },
-//   hkg1: {
-//     code: "hkg1",
-//     name: "ap-east-1",
-//     location: "Hong Kong",
-//     flag: "🇭🇰",
-//   },
-//   hnd1: {
-//     code: "hnd1",
-//     name: "ap-northeast-1",
-//     location: "Tokyo, Japan",
-//     flag: "🇯🇵",
-//   },
-//   iad1: {
-//     code: "iad1",
-//     name: "us-east-1",
-//     location: "Washington, D.C., USA",
-//     flag: "🇺🇸",
-//   },
-//   icn1: {
-//     code: "icn1",
-//     name: "ap-northeast-2",
-//     location: "Seoul, South Korea",
-//     flag: "🇰🇷",
-//   },
-//   kix1: {
-//     code: "kix1",
-//     name: "ap-northeast-3",
-//     location: "Osaka, Japan",
-//     flag: "🇯🇵",
-//   },
-//   lhr1: {
-//     code: "lhr1",
-//     name: "eu-west-2",
-//     location: "London, United Kingdom",
-//     flag: "🇬🇧",
-//   },
-//   pdx1: {
-//     code: "pdx1",
-//     name: "us-west-2",
-//     location: "Portland, USA",
-//     flag: "🇺🇸",
-//   },
-//   sfo1: {
-//     code: "sfo1",
-//     name: "us-west-1",
-//     location: "San Francisco, USA",
-//     flag: "🇺🇸",
-//   },
-//   sin1: {
-//     code: "sin1",
-//     name: "ap-southeast-1",
-//     location: "Singapore",
-//     flag: "🇸🇬",
-//   },
-//   syd1: {
-//     code: "syd1",
-//     name: "ap-southeast-2",
-//     location: "Sydney, Australia",
-//     flag: "🇦🇺",
-//   },
-// } as const;
 
 export type Continent =
   | "Europe"
@@ -474,7 +350,16 @@ export const regionDict: Record<Region, RegionInfo> = {
   },
 } as const;
 
-// const r = t.flatMap((u) => u[1].continent);
+export function formatRegionCode(region: RegionInfo | Region) {
+  const r = typeof region === "string" ? regionDict[region] : region;
+  const suffix = r.code.replace(/(koyeb_|railway_|fly_)/g, "");
+
+  if (r.provider === "railway") {
+    return suffix.replace(/(-eqdc4a|-eqsg3a|-drams3a)/g, "");
+  }
+
+  return suffix;
+}
 
 export const groupByContinent = Object.entries(regionDict).reduce<
   Record<Continent, RegionInfo[]>

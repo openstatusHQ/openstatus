@@ -14,7 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/src/components/chart";
-import { regionDict } from "@openstatus/utils";
+import { formatRegionCode, regionDict } from "@openstatus/utils";
 
 const chartConfig = {
   dns: {
@@ -79,7 +79,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
                     transform="rotate(-35)"
                     className="font-mono"
                   >
-                    {payload.value.replace(/(koyeb_|railway_|fly_)/g, "")}
+                    {formatRegionCode(payload.value)}
                   </text>
                 </g>
               );
