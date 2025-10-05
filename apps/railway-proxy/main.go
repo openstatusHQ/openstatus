@@ -26,7 +26,7 @@ func proxy(c *gin.Context) {
 		targetUrl = "http://openstatus-checker-eu-west.railway.internal:8080"
 	case "us-east4-eqdc4a":
 		targetUrl = "http://openstatus-checker-us-east.railway.internal:8080"
-	case "us-west":
+	case "us-west2":
 		targetUrl = "http://openstatus-checker-us-west.railway.internal:8080"
 	case "asia-southeast1-eqsg3a":
 		targetUrl = "http://checker-southeast-asia.railway.internal:8080"
