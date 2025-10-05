@@ -99,7 +99,7 @@ export const columns: ColumnDef<ResponseLog>[] = [
         <div>
           {regionConfig.location}{" "}
           <span className="text-muted-foreground/70 text-xs">
-            {regionConfig.provider}
+            ({regionConfig.provider})
           </span>
         </div>
       );

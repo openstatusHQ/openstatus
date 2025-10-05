@@ -37,8 +37,7 @@ export const columns: ColumnDef<RegionMetric>[] = [
                 {region.code.replace(/(koyeb_|railway_|fly_)/g, "")}
               </TooltipTrigger>
               <TooltipContent side="left">
-                {region.location} -{" "}
-                <span className="capitalize">{region.provider}</span>
+                {region.location} ({region.provider})
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

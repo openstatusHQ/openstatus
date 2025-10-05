@@ -13,52 +13,23 @@ import {
 import { regionColors } from "@/data/regions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/utils";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
-const chartConfig = {
-  ams: { label: regionDict.ams.location, color: regionColors.ams },
-  arn: { label: regionDict.arn.location, color: regionColors.arn },
-  atl: { label: regionDict.atl.location, color: regionColors.atl },
-  bog: { label: regionDict.bog.location, color: regionColors.bog },
-  bom: { label: regionDict.bom.location, color: regionColors.bom },
-  bos: { label: regionDict.bos.location, color: regionColors.bos },
-  cdg: { label: regionDict.cdg.location, color: regionColors.cdg },
-  den: { label: regionDict.den.location, color: regionColors.den },
-  dfw: { label: regionDict.dfw.location, color: regionColors.dfw },
-  ewr: { label: regionDict.ewr.location, color: regionColors.ewr },
-  eze: { label: regionDict.eze.location, color: regionColors.eze },
-  fra: { label: regionDict.fra.location, color: regionColors.fra },
-  gdl: { label: regionDict.gdl.location, color: regionColors.gdl },
-  gig: { label: regionDict.gig.location, color: regionColors.gig },
-  gru: { label: regionDict.gru.location, color: regionColors.gru },
-  hkg: { label: regionDict.hkg.location, color: regionColors.hkg },
-  iad: { label: regionDict.iad.location, color: regionColors.iad },
-  jnb: { label: regionDict.jnb.location, color: regionColors.jnb },
-  lax: { label: regionDict.lax.location, color: regionColors.lax },
-  lhr: { label: regionDict.lhr.location, color: regionColors.lhr },
-  mad: { label: regionDict.mad.location, color: regionColors.mad },
-  mia: { label: regionDict.mia.location, color: regionColors.mia },
-  nrt: { label: regionDict.nrt.location, color: regionColors.nrt },
-  ord: { label: regionDict.ord.location, color: regionColors.ord },
-  otp: { label: regionDict.otp.location, color: regionColors.otp },
-  phx: { label: regionDict.phx.location, color: regionColors.phx },
-  qro: { label: regionDict.qro.location, color: regionColors.qro },
-  scl: { label: regionDict.scl.location, color: regionColors.scl },
-  sjc: { label: regionDict.sjc.location, color: regionColors.sjc },
-  sea: { label: regionDict.sea.location, color: regionColors.sea },
-  sin: { label: regionDict.sin.location, color: regionColors.sin },
-  syd: { label: regionDict.syd.location, color: regionColors.syd },
-  waw: { label: regionDict.waw.location, color: regionColors.waw },
-  yul: { label: regionDict.yul.location, color: regionColors.yul },
-  yyz: { label: regionDict.yyz.location, color: regionColors.yyz },
-  koyeb_fra: { label: regionDict.ams.location, color: regionColors.koyeb_fra },
-  koyeb_par: { label: regionDict.arn.location, color: regionColors.koyeb_par },
-  koyeb_sfo: { label: regionDict.atl.location, color: regionColors.koyeb_sfo },
-  koyeb_sin: { label: regionDict.bog.location, color: regionColors.koyeb_sin },
-  koyeb_tyo: { label: regionDict.bom.location, color: regionColors.koyeb_tyo },
-  koyeb_was: { label: regionDict.bos.location, color: regionColors.koyeb_was },
-} satisfies ChartConfig;
+const chartConfig = monitorRegions.reduce((config, region) => {
+  const regionInfo = regionDict[region as keyof typeof regionDict];
+  const color = regionColors[region as keyof typeof regionColors];
+
+  if (regionInfo && color) {
+    config[region] = {
+      label: `${regionInfo.location} (${regionInfo.provider})`,
+      color,
+    };
+  }
+
+  return config;
+}, {} as ChartConfig) satisfies ChartConfig;
 
 export type TrendPoint = {
   timestamp: number; // unix millis
