@@ -95,7 +95,14 @@ export const columns: ColumnDef<ResponseLog>[] = [
       }
 
       const regionConfig = regionDict[value as keyof typeof regionDict];
-      return regionConfig.location;
+      return (
+        <div>
+          {regionConfig.location}{" "}
+          <span className="text-muted-foreground/70 text-xs">
+            ({regionConfig.provider})
+          </span>
+        </div>
+      );
     },
     enableSorting: false,
     enableHiding: false,
