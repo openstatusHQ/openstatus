@@ -8,7 +8,6 @@ import * as z from "zod";
 
 import {
   Button,
-  Checkbox,
   Form,
   FormControl,
   FormDescription,
@@ -34,6 +33,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { IconCloudProviderTooltip } from "@/components/icon-cloud-provider";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import {
@@ -46,16 +46,8 @@ import {
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { Fly, Koyeb, Railway } from "@openstatus/icons";
 import { regionDict } from "@openstatus/utils";
-import {
-  ArrowRight,
-  ChevronRight,
-  Gauge,
-  Globe,
-  Info,
-  Loader,
-} from "lucide-react";
+import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
@@ -150,8 +142,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                           setSearchParams({ id: item });
                           toast.success("Data is available!", {
                             id: toastId,
-                            duration: 3000,
-                            description: "Click the button below to more.",
+                            description: "Learn about the response details.",
                             action: {
                               label: "Details",
                               onClick: () =>
@@ -199,8 +190,11 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
             toast.error("Something went wrong", {
               description: "Please try again",
               id: toastId,
-              duration: 2000,
             });
+          } finally {
+            if (toastId) {
+              setTimeout(() => toast.dismiss(toastId), 3000);
+            }
           }
         }
 
@@ -273,28 +267,11 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 )}
               </Button>
             </div>
-          </div>
-          <div>
-            <FormField
-              control={form.control}
-              name="redirect"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Redirect to extended details</FormLabel>
-                    <FormDescription className="max-w-md">
-                      Get response header, timing phases and more.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
+            <div className="-mt-1 col-span-full">
+              <FormDescription className="text-xs">
+                Access the response header, timing phases and latency.
+              </FormDescription>
+            </div>
           </div>
         </form>
       </Form>
@@ -382,31 +359,13 @@ function TableResult({
               return (
                 <TableRow key={item.region}>
                   <TableCell className="flex items-center gap-2 font-medium">
-                    <TooltipProvider>
-                      <Tooltip delayDuration={0}>
-                        <TooltipTrigger type="button">
-                          {(() => {
-                            switch (r.provider) {
-                              case "fly":
-                                return <Fly className="size-4" />;
-                              case "railway":
-                                return <Railway className="size-4" />;
-                              case "koyeb":
-                                return <Koyeb className="size-4" />;
-                              default:
-                                return <Globe className="size-4" />;
-                            }
-                          })()}
-                        </TooltipTrigger>
-                        <TooltipContent className="capitalize">
-                          {r.provider}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <IconCloudProviderTooltip provider={r.provider} />
                     {region}
                     <StatusDot value={item.status} />
                   </TableCell>
-                  <TableCell className="text-right">{latency}</TableCell>
+                  <TableCell className="text-right font-mono">
+                    {latency}
+                  </TableCell>
                 </TableRow>
               );
             })
@@ -444,16 +403,18 @@ function DotLegend() {
 function StatusDot({ value }: { value: number }) {
   switch (String(value).charAt(0)) {
     case "1":
-      return <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500" />;
     case "2":
-      return <div className="h-1.5 w-1.5 rounded-full bg-green-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />;
     case "3":
-      return <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />;
     case "4":
-      return <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />;
+      return (
+        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-500" />
+      );
     case "5":
-      return <div className="h-1.5 w-1.5 rounded-full bg-red-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />;
     default:
-      return <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500" />;
   }
 }

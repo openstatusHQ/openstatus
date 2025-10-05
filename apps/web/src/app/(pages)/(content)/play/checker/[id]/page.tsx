@@ -78,7 +78,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params;
   const title = "Global Speed Checker";
   const description =
-    "Get speed insights for your api, website from multiple regions.";
+    "API speed test and website speed checker: global latency speed test from different locations.";
   return {
     ...defaultMetadata,
     title,

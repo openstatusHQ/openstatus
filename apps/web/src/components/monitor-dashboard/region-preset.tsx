@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown, Globe, Globe2 } from "lucide-react";
+import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
 
 import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {
@@ -19,12 +19,12 @@ import {
 } from "@openstatus/ui/src/components/popover";
 import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
 
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import { cn } from "@/lib/utils";
 import {
   type Region,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
-import { Fly, Koyeb, Railway } from "@openstatus/icons";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 interface RegionsPresetProps extends ButtonProps {
@@ -139,18 +139,7 @@ export function RegionsPreset({
                         </div>
                         <div className="flex w-full items-center gap-1">
                           <span>
-                            {(() => {
-                              switch (region.provider) {
-                                case "fly":
-                                  return <Fly className="size-4" />;
-                                case "railway":
-                                  return <Railway className="size-4" />;
-                                case "koyeb":
-                                  return <Koyeb className="size-4" />;
-                                default:
-                                  return <Globe className="size-4" />;
-                              }
-                            })()}
+                            <IconCloudProvider provider={region.provider} />
                           </span>
                           <span>
                             {code.replace(/(koyeb_|railway_|fly_)/g, "")}{" "}

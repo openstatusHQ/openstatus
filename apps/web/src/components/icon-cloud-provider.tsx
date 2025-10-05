@@ -1,11 +1,11 @@
+import { cn } from "@/lib/utils";
+import { Fly, Koyeb, Railway } from "@openstatus/icons";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { Fly, Koyeb, Railway } from "@openstatus/icons";
+} from "@openstatus/ui";
 import { Globe } from "lucide-react";
 
 export function IconCloudProvider({
