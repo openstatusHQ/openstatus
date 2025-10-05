@@ -52,7 +52,7 @@ export const railwayRegions = [
   "railway_us-east4-eqdc4a",
   "railway_asia-southeast1-eqsg3a",
   "railway_us-west2",
-];
+] as const;
 
 export const freeFlyRegions = [
   "iad",
@@ -78,6 +78,7 @@ export const monitorRegions = [
   ...koyebRegions,
   ...railwayRegions,
 ] as const;
+
 export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorFlyRegionSchema = z.enum(flyRegions);

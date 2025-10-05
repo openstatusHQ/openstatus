@@ -177,9 +177,9 @@ export async function checkRegion(
       };
       break;
     case "railway":
-      endpoint = `https://railway-proxy-production-9cb1.up.railway.app/ping/${region}`
-      regionHeader ={'railway-region': region.replace("railway_", "")}
-      break
+      endpoint = `https://railway-proxy-production-9cb1.up.railway.app/ping/${region}`;
+      regionHeader = { "railway-region": region.replace("railway_", "") };
+      break;
     default:
       break;
   }
