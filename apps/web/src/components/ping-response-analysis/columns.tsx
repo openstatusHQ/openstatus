@@ -4,17 +4,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { IconCloudProvider } from "@/components/icon-cloud-provider";
+import { IconCloudProviderTooltip } from "@/components/icon-cloud-provider";
 import { cn } from "@/lib/utils";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardPortal,
   HoverCardTrigger,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from "@openstatus/ui";
 import { regionDict } from "@openstatus/utils";
 
@@ -27,16 +23,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
       const region = regionDict[row.original.region];
       return (
         <div className="flex items-center gap-1.5">
-          <TooltipProvider>
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger type="button">
-                <IconCloudProvider provider={region.provider} />
-              </TooltipTrigger>
-              <TooltipContent className="capitalize">
-                {region.provider}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <IconCloudProviderTooltip provider={region.provider} />
           <div>
             <span className="font-mono">
               {row.original.region.replace(/(koyeb_|railway_|fly_)/g, "")}

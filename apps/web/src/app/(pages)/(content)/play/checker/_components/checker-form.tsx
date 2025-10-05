@@ -33,7 +33,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { IconCloudProvider } from "@/components/icon-cloud-provider";
+import { IconCloudProviderTooltip } from "@/components/icon-cloud-provider";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import {
@@ -359,16 +359,7 @@ function TableResult({
               return (
                 <TableRow key={item.region}>
                   <TableCell className="flex items-center gap-2 font-medium">
-                    <TooltipProvider>
-                      <Tooltip delayDuration={0}>
-                        <TooltipTrigger type="button">
-                          <IconCloudProvider provider={r.provider} />
-                        </TooltipTrigger>
-                        <TooltipContent className="capitalize">
-                          {r.provider}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <IconCloudProviderTooltip provider={r.provider} />
                     {region}
                     <StatusDot value={item.status} />
                   </TableCell>

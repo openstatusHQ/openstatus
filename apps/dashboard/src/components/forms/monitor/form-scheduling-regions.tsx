@@ -33,15 +33,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
+import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
 import { groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -313,19 +307,10 @@ export function FormSchedulingRegions({
                                               <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
                                                 {region.location}
                                               </span>
-                                              <TooltipProvider>
-                                                <Tooltip>
-                                                  <TooltipTrigger type="button">
-                                                    <IconCloudProvider
-                                                      provider={region.provider}
-                                                      className="size-3"
-                                                    />
-                                                  </TooltipTrigger>
-                                                  <TooltipContent className="capitalize">
-                                                    {region.provider}
-                                                  </TooltipContent>
-                                                </Tooltip>
-                                              </TooltipProvider>
+                                              <IconCloudProviderTooltip
+                                                provider={region.provider}
+                                                className="size-3"
+                                              />
                                             </FormLabel>
                                           </FormItem>
                                         );
