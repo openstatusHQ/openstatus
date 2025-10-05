@@ -37,7 +37,7 @@ import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provide
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { useTRPC } from "@/lib/trpc/client";
-import { groupByContinent } from "@openstatus/utils";
+import { formatRegionCode, groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { CircleX, Info } from "lucide-react";
@@ -298,10 +298,7 @@ export function FormSchedulingRegions({
                                               className="w-full truncate font-mono font-normal text-sm"
                                             >
                                               <span className="text-nowrap">
-                                                {region.code.replace(
-                                                  /(koyeb_|railway_|fly_)/g,
-                                                  "",
-                                                )}{" "}
+                                                {formatRegionCode(region.code)}{" "}
                                                 {region.flag}
                                               </span>
                                               <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
