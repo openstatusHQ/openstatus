@@ -46,6 +46,7 @@ export function MultiRegionTabs({
           columns={columns}
           getRowCanExpand={() => true}
           renderSubComponent={renderSubComponent}
+          defaultColumnVisibility={{ transfer: false }}
         />
       </TabsContent>
     </Tabs>

@@ -12,7 +12,7 @@ import {
   HoverCardPortal,
   HoverCardTrigger,
 } from "@openstatus/ui";
-import { regionDict } from "@openstatus/utils";
+import { formatRegionCode, regionDict } from "@openstatus/utils";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {
@@ -21,13 +21,12 @@ export const columns: ColumnDef<RegionChecker>[] = [
     header: "Region",
     cell: ({ row }) => {
       const region = regionDict[row.original.region];
+      const code = formatRegionCode(row.original.region);
       return (
         <div className="flex items-center gap-1.5">
           <IconCloudProviderTooltip provider={region.provider} />
-          <div>
-            <span className="font-mono">
-              {row.original.region.replace(/(koyeb_|railway_|fly_)/g, "")}
-            </span>{" "}
+          <div className="truncate">
+            <span className="font-mono">{code}</span>{" "}
             <span className="text-muted-foreground">
               {regionFormatter(row.original.region, "long")}
             </span>

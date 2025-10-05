@@ -17,7 +17,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/src/components/popover";
-import { type Continent, type RegionInfo, regionDict } from "@openstatus/utils";
+import {
+  type Continent,
+  type RegionInfo,
+  formatRegionCode,
+  regionDict,
+} from "@openstatus/utils";
 
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import { cn } from "@/lib/utils";
@@ -142,7 +147,7 @@ export function RegionsPreset({
                             <IconCloudProvider provider={region.provider} />
                           </span>
                           <span>
-                            {code.replace(/(koyeb_|railway_|fly_)/g, "")}{" "}
+                            {formatRegionCode(code)}{" "}
                             <span className="truncate text-muted-foreground">
                               {location}
                             </span>
