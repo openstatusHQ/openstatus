@@ -444,6 +444,34 @@ export const regionDict: Record<Region, RegionInfo> = {
     continent: "North America",
     provider: "koyeb",
   },
+  "railway_us-west2":{
+    code: "railway_us-west2",
+    location: "California, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "railway",
+  },
+  "railway_us-east4-eqdc4a":{
+    code: "railway_us-east4-eqdc4a",
+    location: "Virginia, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "railway",
+  },
+  "railway_europe-west4-drams3a":{
+    code: "railway_europe-west4-drams3a",
+    location: "Amsterdam, Netherlands",
+    flag: "🇳🇱",
+    continent: "Europe",
+    provider: "railway",
+  },
+  "railway_asia-southeast1-eqsg3a":{
+    code: "railway_asia-southeast1-eqsg3a",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+    provider: "railway",
+  }
 } as const;
 
 // const r = t.flatMap((u) => u[1].continent);

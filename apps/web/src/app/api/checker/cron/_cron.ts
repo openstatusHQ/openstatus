@@ -184,9 +184,9 @@ const createCronTask = async ({
       trigger: "cron",
       otelConfig: row.otelEndpoint
         ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
+          endpoint: row.otelEndpoint,
+          headers: transformHeaders(row.otelHeaders),
+        }
         : undefined,
       retry: row.retry || 3,
       followRedirects: row.followRedirects || true,
@@ -206,9 +206,9 @@ const createCronTask = async ({
       retry: row.retry || 3,
       otelConfig: row.otelEndpoint
         ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
+          endpoint: row.otelEndpoint,
+          headers: transformHeaders(row.otelHeaders),
+        }
         : undefined,
     };
   }
@@ -223,6 +223,9 @@ const createCronTask = async ({
   }
   if (regionInfo.provider === "koyeb") {
     regionHeader = { "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", "") };
+  }
+  if (regionInfo.provider === 'railway'){
+    regionHeader = {'railway-region': region.replace("railway_", "")}
   }
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
@@ -255,6 +258,8 @@ function generateUrl({
       return `https://openstatus-checker.fly.dev/checker/${row.jobType}?monitor_id=${row.id}`;
     case "koyeb":
       return `https://openstatus-checker.koyeb.app/checker/${row.jobType}?monitor_id=${row.id}`;
+    case "railway":
+    return `https://railway-proxy-production-9cb1.up.railway.app/checker/${row.jobType}?monitor_id=${row.id}`
 
     default:
       throw new Error("Invalid jobType");

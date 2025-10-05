@@ -176,6 +176,10 @@ export async function checkRegion(
         "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", ""),
       };
       break;
+    case "railway":
+      endpoint = `https://railway-proxy-production-9cb1.up.railway.app/ping/${region}`
+      regionHeader ={'railway-region': region.replace("railway_", "")}
+      break
     default:
       break;
   }

@@ -48,9 +48,9 @@ export const koyebRegions = [
 ] as const;
 
 export const railwayRegions = [
-  "railway_europe-west4",
-  "railway_us-east4",
-  "railway_asia-southeast1",
+  "railway_europe-west4-drams3a",
+  "railway_us-east4-eqdc4a",
+  "railway_asia-southeast1-eqsg3a",
   "railway_us-west2",
 ];
 

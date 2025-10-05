@@ -284,12 +284,33 @@ export const regions = [
     provider: "koyeb",
   },
   {
-    code: "railway_sfo",
-    location: "San Francisco, USA",
+    code: "railway_us-west2",
+    location: "California, USA",
     flag: "🇺🇸",
     continent: "North America",
     provider: "railway",
   },
+  {
+    code: "railway_us-east4-eqdc4a",
+    location: "Virginia, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    provider: "railway",
+  },
+  {
+    code: "railway_europe-west4-drams3a",
+    location: "Amsterdam, Netherlands",
+    flag: "🇳🇱",
+    continent: "Europe",
+    provider: "railway",
+  },
+  {
+    code: "railway_asia-southeast1-eqsg3a",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+    provider: "railway",
+  }
 ] as const;
 
 export type Region = (typeof regions)[number]["code"];
@@ -349,4 +370,9 @@ export const regionColors = {
   koyeb_sfo: "hsl(0 0% 45.1%)",
   koyeb_tyo: "hsl(0 0% 45.1%)",
   koyeb_was: "hsl(0 0% 45.1%)",
+
+  "railway_asia-southeast1-eqsg3a":"hsl(0 0% 45.1%)",
+  "railway_europe-west4-drams3a":"hsl(0 0% 45.1%)",
+  "railway_us-east4-eqdc4a":"hsl(0 0% 45.1%)",
+  "railway_us-west2":"hsl(0 0% 45.1%)"
 } satisfies Record<Region, string>;
