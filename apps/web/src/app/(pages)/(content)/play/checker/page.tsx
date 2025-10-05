@@ -10,6 +10,7 @@ import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { redirect } from "next/navigation";
 import CheckerPlay from "./_components/checker-play";
 import { GlobalMonitoring } from "./_components/global-monitoring";
+import { Informations } from "./_components/informations";
 import { Testimonial } from "./_components/testimonial";
 import { mockCheckAllRegions } from "./api/mock";
 import { searchParamsCache } from "./search-params";
@@ -58,6 +59,7 @@ export default async function PlayPage(props: {
       <CheckerPlay data={data} />
       <Testimonial />
       <GlobalMonitoring />
+      <Informations />
       <BottomCTA className="mx-auto max-w-2xl lg:max-w-4xl" />
     </div>
   );

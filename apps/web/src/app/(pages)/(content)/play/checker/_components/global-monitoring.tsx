@@ -10,6 +10,9 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import { regionDict } from "@openstatus/utils";
+
+const TOTAL_REGIONS = Object.keys(regionDict).length;
 
 const features: {
   icon: ValidIcon;
@@ -25,8 +28,7 @@ const features: {
   {
     icon: "globe",
     catchline: "Global Speed Test",
-    description:
-      "Monitor latency performance in different regions to ensure quick load times for users across 35 regions worldwide.",
+    description: `Monitor latency performance in different regions to ensure quick load times for users across ${TOTAL_REGIONS} regions worldwide.`,
   },
   {
     icon: "link",
