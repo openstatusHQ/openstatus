@@ -10,16 +10,17 @@ import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { redirect } from "next/navigation";
 import CheckerPlay from "./_components/checker-play";
 import { GlobalMonitoring } from "./_components/global-monitoring";
+import { Informations } from "./_components/informations";
 import { Testimonial } from "./_components/testimonial";
 import { mockCheckAllRegions } from "./api/mock";
 import { searchParamsCache } from "./search-params";
 
 const TITLE = "Global Speed Checker";
 const DESCRIPTION =
-  "API speed test and website speed checker: global speed test from different locations. Free speed test.";
+  "API speed test and website speed checker: global latency speed test from different locations.";
 
 const OG_DESCRIPTION =
-  "Test the performance of your api, website from different locations. Get speed insights for free.";
+  "Test the performance of your api and website from different locations.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -58,6 +59,7 @@ export default async function PlayPage(props: {
       <CheckerPlay data={data} />
       <Testimonial />
       <GlobalMonitoring />
+      <Informations />
       <BottomCTA className="mx-auto max-w-2xl lg:max-w-4xl" />
     </div>
   );

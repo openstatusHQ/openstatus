@@ -37,6 +37,7 @@ interface DataTableProps<TData, TValue> {
   renderSubComponent(props: { row: Row<TData> }): React.ReactElement<unknown>;
   getRowCanExpand(row: Row<TData>): boolean;
   autoResetExpanded?: boolean;
+  defaultColumnVisibility?: VisibilityState;
 }
 
 export function MultiRegionTable<TData, TValue>({
@@ -45,12 +46,15 @@ export function MultiRegionTable<TData, TValue>({
   renderSubComponent,
   getRowCanExpand,
   autoResetExpanded,
+  defaultColumnVisibility,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "latency", desc: false },
   ]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    defaultColumnVisibility ?? {},
+  );
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
@@ -78,12 +82,12 @@ export function MultiRegionTable<TData, TValue>({
     <div className="grid gap-4">
       <div className="flex items-end justify-between gap-2">
         <Input
-          placeholder="Filter regions, continents, flags..."
+          placeholder="Filter region, continent, flag, cloud provider..."
           value={(table.getColumn("region")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("region")?.setFilterValue(event.target.value)
           }
-          className="h-8 max-w-[325px] truncate"
+          className="h-8 max-w-[350px] truncate"
         />
         <div className="flex items-center justify-end gap-2">
           <DataTableCollapseButton table={table} />
@@ -91,7 +95,7 @@ export function MultiRegionTable<TData, TValue>({
         </div>
       </div>
       <Table>
-        <TableCaption>Multi Regions</TableCaption>
+        <TableCaption>Multi Cloud Regions</TableCaption>
         <TableHeader className="bg-muted/50">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
