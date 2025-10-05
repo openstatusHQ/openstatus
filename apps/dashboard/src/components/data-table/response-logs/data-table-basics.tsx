@@ -388,6 +388,20 @@ export function DataTableBasicsTCP({
             </span>
           </TableCell>
         </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Cloud Provider
+          </TableHead>
+          <TableCell className="inline-flex max-w-full overflow-x-auto whitespace-normal font-mono">
+            <IconCloudProvider
+              provider={regionConfig?.provider}
+              className="mt-0.5"
+            />
+            <span className="ml-1 text-muted-foreground">
+              {regionConfig?.provider}
+            </span>
+          </TableCell>
+        </TableRow>
         {data.trigger ? (
           <TableRow className="[&>:not(:last-child)]:border-r">
             <TableHead className="bg-muted/50 font-normal text-muted-foreground">
