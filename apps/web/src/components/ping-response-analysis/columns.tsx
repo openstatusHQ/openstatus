@@ -25,7 +25,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
       return (
         <div className="flex items-center gap-1.5">
           <IconCloudProviderTooltip provider={region.provider} />
-          <div>
+          <div className="truncate">
             <span className="font-mono">{code}</span>{" "}
             <span className="text-muted-foreground">
               {regionFormatter(row.original.region, "long")}
