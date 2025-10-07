@@ -65,6 +65,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		}
 	}
 
+
 	var req request.HttpCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
