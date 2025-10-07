@@ -1,12 +1,14 @@
 package server
 
 import (
+	// "database/sql"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
@@ -15,7 +17,7 @@ import (
 type Server struct {
 	port int
 
-	db database.Service
+	db *sqlx.DB
 }
 
 func NewServer() *http.Server {

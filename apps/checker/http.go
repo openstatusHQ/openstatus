@@ -52,7 +52,6 @@ func decodeBase64Body(body string) ([]byte, error) {
 	return nil, fmt.Errorf("invalid base64 data url format")
 }
 
-
 // FIXME: This should only return the TCP Timing Data;
 func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (Response, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()

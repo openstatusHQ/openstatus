@@ -1,70 +1,62 @@
 package database
 
 import (
+	// "database/sql"
 	"database/sql"
 	"fmt"
-	"log"
+
+	// "log"
 	"os"
-	"path/filepath"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/tursodatabase/go-libsql"
+	 // "github.com/tursodatabase/go-libsql"
+	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
-// Service represents a service that interacts with a database.
-type Service interface {
 
-	// Close terminates the database connection.
-	// It returns an error if the connection cannot be closed.
-	Close() error
-}
-
-type service struct {
-	db *sqlx.DB
-}
+var DB *sqlx.DB
 
 var (
 	dbUrl      = os.Getenv("DB_URL")
 	authToken  = os.Getenv("DB_AUTH_TOKEN")
-	dbInstance *service
+	dbInstance *sqlx.DB
 )
 
-func New() Service {
+func New() *sqlx.DB {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
 	}
-	dbName := "local.db"
-	dir, err := os.MkdirTemp("", "libsql-*")
+
+	url := fmt.Sprintf("%s?auth_token=%s", dbUrl, authToken)
+	fmt.Println(url)
+	c, err := sql.Open("libsql", url)
 	if err != nil {
-		fmt.Println("Error creating temporary directory:", err)
+		fmt.Fprintf(os.Stderr, "failed to open db %s: %s", url, err)
 		os.Exit(1)
 	}
-	defer os.RemoveAll(dir)
+	// dir, err := os.MkdirTemp("", "libsql-*")
+ //    if err != nil {
+ //        fmt.Println("Error creating temporary directory:", err)
+ //        os.Exit(1)
+ //    }
+ //    defer os.RemoveAll(dir)
 
-	dbPath := filepath.Join(dir, dbName)
+ //    dbPath := filepath.Join(dir, dbName)
+ //    fmt.Println(dbPath)
+ //    connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, url,
+ //        libsql.WithAuthToken(authToken),
+ //    )
+ //    if err != nil {
+ //        fmt.Println("Error creating connector:", err)
+ //        os.Exit(1)
+ //    }
+ //    defer connector.Close()
 
-	connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, dbUrl,
-		libsql.WithAuthToken(authToken),
-	)
+ //    c := sql.OpenDB(connector)
 
-	if err != nil {
-		fmt.Println("Error creating connector:", err)
-		os.Exit(1)
-	}
-	defer connector.Close()
-	c := sql.OpenDB(connector)
-	// sql.OpenDB()
 	db := sqlx.NewDb(c, "sqlite3")
 
-	dbInstance = &service{
-		db: db,
-	}
-	return dbInstance
-}
-
-func (s *service) Close() error {
-	log.Printf("Disconnected from database: %s", dbUrl)
-	return s.db.Close()
+	return db
 }
