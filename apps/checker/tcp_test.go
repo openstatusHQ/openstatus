@@ -22,7 +22,7 @@ func TestPingTcp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := checker.PingTcp(tt.args.timeout, tt.args.url)
+			got, err := checker.PingTCP(tt.args.timeout, tt.args.url)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PingTcp() error = %v, wantErr %v", err, tt.wantErr)
 				return

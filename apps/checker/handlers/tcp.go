@@ -96,7 +96,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	op := func() error {
-		res, err := checker.PingTcp(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(int(req.Timeout), req.URI)
 
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)
@@ -282,7 +282,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	op := func() error {
 		called++
 		timestamp := time.Now().UTC().UnixMilli()
-		res, err := checker.PingTcp(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(int(req.Timeout), req.URI)
 
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)

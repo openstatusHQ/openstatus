@@ -43,30 +43,43 @@ type Response struct {
 	Timing    Timing            `json:"timing"`
 }
 
+// decodeBase64Body decodes a data URL base64 body if needed
+func decodeBase64Body(body string) ([]byte, error) {
+	data := strings.Split(body, ",")
+	if len(data) == 2 {
+		return base64.StdEncoding.DecodeString(data[1])
+	}
+	return nil, fmt.Errorf("invalid base64 data url format")
+}
+
+
 // FIXME: This should only return the TCP Timing Data;
 func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (Response, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 
-	b := []byte(inputData.Body)
+	var bodyBytes []byte
 	if inputData.Method == http.MethodPost {
+		contentType := ""
 		for _, header := range inputData.Headers {
-			if header.Key == "Content-Type" && header.Value == "application/octet-stream" {
-				//  split the body by comma and convert it to bytes it's data url base64
-				data := strings.Split(inputData.Body, ",")
-				if len(data) == 2 {
-					decoded, err := base64.StdEncoding.DecodeString(data[1])
-					if err != nil {
-						return Response{}, fmt.Errorf("error while decoding base64: %w", err)
-					}
-
-					b = decoded
-
-				}
+			if header.Key == "Content-Type" {
+				contentType = header.Value
+				break
 			}
 		}
+		if contentType == "application/octet-stream" {
+			decoded, err := decodeBase64Body(inputData.Body)
+			if err != nil {
+				return Response{}, fmt.Errorf("error while decoding base64: %w", err)
+			}
+			bodyBytes = decoded
+		} else {
+			bodyBytes = []byte(inputData.Body)
+		}
+	} else {
+		bodyBytes = []byte(inputData.Body)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader(b))
+	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader(bodyBytes))
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
 		return Response{}, fmt.Errorf("unable to create req: %w", err)
@@ -79,14 +92,9 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	}
 
 	// Maybe we should remove the default post to application JSON
-	if inputData.Method == http.MethodPost {
-		head := req.Header
-		_, ok := head["Content-Type"]
-
-		if !ok {
-			// by default we set the content type to application/json if it's a POST request
-			req.Header.Set("Content-Type", "application/json")
-		}
+	// Default POST Content-Type
+	if inputData.Method == http.MethodPost && req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	timing := Timing{}
@@ -128,7 +136,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 
 		logger.Error().Err(err).Msg("error while pinging")
 
-		return Response{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
+		return Response{}, err
 	}
 
 	defer response.Body.Close()
@@ -143,7 +151,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 			Timing:    timing,
 			Timestamp: start.UTC().UnixMilli(),
 			Error:     fmt.Sprintf("Cannot read response body: %s", err.Error()),
-		}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
+		}, err
 	}
 
 	headers := make(map[string]string)
