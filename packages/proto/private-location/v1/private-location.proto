@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+
+service PrivateLocationService {}
+
+
+message Monitors {
+    repeated Monitors monitors = 1;
+}
+
+message Monitor {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string status = 4;
+}
