@@ -2,7 +2,6 @@ package server
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -63,15 +62,7 @@ func (s *Server) GetMonitors(c *gin.Context) {
 		return
 	}
 	var monitors []Monitor
-	subQuery := fmt.Sprintf(
-		"SELECT a.monitor_id FROM private_location_to_monitor AS a, private_location AS b WHERE a.private_location_id = b.id AND b.key='%s'",
-		token,
-	)
-	query := fmt.Sprintf(
-		"SELECT * FROM monitor WHERE id IN (%s) AND deleted_at IS NULL",
-		subQuery,
-	)
-	err := s.db.Select(&monitors, query)
+	err := s.db.Select(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.key = ? AND monitor.deleted_at IS NULL", token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
