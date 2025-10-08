@@ -144,6 +144,7 @@ export const stripeRouter = createTRPCRouter({
         customer: stripeId,
         customer_update: {
           name: "auto",
+          address: "auto",
         },
         line_items: [
           {
