@@ -142,7 +142,9 @@ export const stripeRouter = createTRPCRouter({
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer: stripeId,
-
+        customer_update: {
+          name: "auto",
+        },
         line_items: [
           {
             price: priceId,
