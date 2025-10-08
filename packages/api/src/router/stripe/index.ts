@@ -149,6 +149,9 @@ export const stripeRouter = createTRPCRouter({
             quantity: 1,
           },
         ],
+        tax_id_collection: {
+          enabled: true,
+        },
         mode: "subscription",
         success_url:
           opts.input.successUrl ||
