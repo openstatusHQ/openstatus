@@ -137,12 +137,14 @@ export const emailRouter = createTRPCRouter({
         });
       }
 
+      const link = _pageSubscriber.page.customDomain
+        ? `https://${_pageSubscriber.page.customDomain}/verify/${_pageSubscriber.token}`
+        : `https://${_pageSubscriber.page.slug}.openstatus.dev/verify/${_pageSubscriber.token}`;
+
       await emailClient.sendPageSubscription({
         to: _pageSubscriber.email,
-        token: _pageSubscriber.token,
         page: _pageSubscriber.page.title,
-        // TODO: or use custom domain
-        domain: _pageSubscriber.page.slug,
+        link,
       });
     }),
 });

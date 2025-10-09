@@ -14,9 +14,8 @@ import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
 export const PageSubscriptionSchema = z.object({
-  token: z.string(),
   page: z.string(),
-  domain: z.string(),
+  link: z.string(),
   img: z
     .object({
       src: z.string(),
@@ -28,12 +27,7 @@ export const PageSubscriptionSchema = z.object({
 
 export type PageSubscriptionProps = z.infer<typeof PageSubscriptionSchema>;
 
-const PageSubscriptionEmail = ({
-  token,
-  page,
-  domain,
-  img,
-}: PageSubscriptionProps) => {
+const PageSubscriptionEmail = ({ page, link, img }: PageSubscriptionProps) => {
   return (
     <Html>
       <Head />
@@ -53,10 +47,7 @@ const PageSubscriptionEmail = ({
             this email.
           </Text>
           <Text>
-            <Link
-              style={styles.link}
-              href={`https://${domain}.openstatus.dev/verify/${token}`}
-            >
+            <Link style={styles.link} href={link}>
               Confirm subscription
             </Link>
           </Text>
@@ -67,9 +58,8 @@ const PageSubscriptionEmail = ({
 };
 
 PageSubscriptionEmail.PreviewProps = {
-  token: "token",
+  link: "https://slug.openstatus.dev/verify/token",
   page: "OpenStatus",
-  domain: "slug",
 } satisfies PageSubscriptionProps;
 
 export default PageSubscriptionEmail;
