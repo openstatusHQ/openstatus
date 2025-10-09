@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { env } from "@/env";
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import { and, eq, sql } from "@openstatus/db";
+import { and, eq, isNotNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
@@ -57,6 +57,7 @@ export async function handleSubscribe(formData: FormData) {
       and(
         eq(pageSubscriber.email, validatedFields.data.email),
         eq(pageSubscriber.pageId, pageData.id),
+        isNotNull(pageSubscriber.acceptedAt),
       ),
     )
     .get();

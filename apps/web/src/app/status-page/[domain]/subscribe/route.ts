@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq } from "@openstatus/db";
+import { and, eq, isNotNull } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
@@ -31,6 +31,7 @@ export async function POST(
       and(
         eq(pageSubscriber.email, data.email),
         eq(pageSubscriber.pageId, pageData?.id),
+        isNotNull(pageSubscriber.acceptedAt),
       ),
     )
     .get();

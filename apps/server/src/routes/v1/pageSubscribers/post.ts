@@ -3,7 +3,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
+import { and, eq, isNotNull } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
@@ -75,6 +75,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
         and(
           eq(pageSubscriber.email, input.email),
           eq(pageSubscriber.pageId, Number(id)),
+          isNotNull(pageSubscriber.acceptedAt),
         ),
       )
       .get();
