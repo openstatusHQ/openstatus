@@ -52,7 +52,7 @@ export function StatusMonitorTabsTriggerValue({
   return (
     <div
       className={cn(
-        "flex flex-row flex-wrap items-center gap-1 text-left text-muted-foreground text-xs",
+        "flex min-h-5 flex-row flex-wrap items-center gap-1 text-left text-muted-foreground text-xs",
         className,
       )}
       {...props}
@@ -64,7 +64,7 @@ export function StatusMonitorTabsTriggerValueSkeleton({
   className,
   ...props
 }: React.ComponentProps<typeof Skeleton>) {
-  return <Skeleton className={cn("h-4 w-24", className)} {...props} />;
+  return <Skeleton className={cn("h-5 w-24", className)} {...props} />;
 }
 
 export function StatusMonitorTabsContent({
