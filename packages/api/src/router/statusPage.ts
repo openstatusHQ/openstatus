@@ -12,6 +12,7 @@ import {
   statusReport,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
@@ -521,6 +522,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   subscribe: publicProcedure
+    .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
     .input(
       z.object({ slug: z.string().toLowerCase(), email: z.string().email() }),
     )
@@ -588,6 +590,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   verifyEmail: publicProcedure
+    .meta({ track: Events.VerifySubscribePage, trackProps: ["slug"] })
     .input(z.object({ slug: z.string().toLowerCase(), token: z.string() }))
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
