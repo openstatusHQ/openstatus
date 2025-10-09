@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
 import {
   maintenance,
   monitorsToPages,
@@ -8,9 +8,11 @@ import {
   pageSubscriber,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
+  selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
@@ -520,6 +522,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   subscribe: publicProcedure
+    .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
     .input(
       z.object({ slug: z.string().toLowerCase(), email: z.string().email() }),
     )
@@ -533,15 +536,35 @@ export const statusPageRouter = createTRPCRouter({
         },
       });
 
-      if (!_page) return null;
+      if (!_page) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
 
-      if (_page.workspace.plan === "free") return null;
+      const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
+
+      if (!workspace.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace data is invalid",
+        });
+      }
+
+      if (!workspace.data.limits["status-subscribers"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to use status subscribers",
+        });
+      }
 
       const _alreadySubscribed =
         await opts.ctx.db.query.pageSubscriber.findFirst({
           where: and(
             eq(pageSubscriber.pageId, _page.id),
             eq(pageSubscriber.email, opts.input.email),
+            isNotNull(pageSubscriber.acceptedAt),
           ),
         });
 
@@ -567,6 +590,7 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   verifyEmail: publicProcedure
+    .meta({ track: Events.VerifySubscribePage, trackProps: ["slug"] })
     .input(z.object({ slug: z.string().toLowerCase(), token: z.string() }))
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;

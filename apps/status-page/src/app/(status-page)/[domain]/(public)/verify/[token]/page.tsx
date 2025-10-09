@@ -1,24 +1,20 @@
 "use client";
 
-import { ButtonBack } from "@/components/button/button-back";
 import {
-  Status,
-  StatusHeader,
-  StatusTitle,
-} from "@/components/status-page/status";
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankLink,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function VerifyPage() {
   const trpc = useTRPC();
   const { token, domain } = useParams<{ token: string; domain: string }>();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
-
   const verifyEmailMutation = useMutation(
     trpc.statusPage.verifyEmail.mutationOptions({}),
   );
@@ -28,39 +24,30 @@ export default function VerifyPage() {
     verifyEmailMutation.mutate({ slug: domain, token });
   }, [domain, token]);
 
-  if (!page) return null;
+  const title = verifyEmailMutation.isSuccess
+    ? `All set to receive updates to ${verifyEmailMutation.data?.email}!`
+    : verifyEmailMutation.isError
+      ? verifyEmailMutation.error?.message || "Something went wrong"
+      : "Hang tight - we're confirming your subscription";
 
   return (
-    <Status className="my-auto text-center">
-      <StatusHeader className="space-y-2 font-mono">
-        {verifyEmailMutation.isSuccess ? (
-          <StatusTitle>
-            All set to receive updates from to {verifyEmailMutation.data?.email}
-          </StatusTitle>
-        ) : verifyEmailMutation.isError ? (
-          <StatusTitle
-            className={cn(
-              verifyEmailMutation.error?.data?.code === "NOT_FOUND"
-                ? "text-destructive"
-                : "",
-            )}
-          >
-            {verifyEmailMutation.error?.message}
-          </StatusTitle>
-        ) : (
-          <StatusTitle>
-            Hang tight - we're confirming your subscription
-          </StatusTitle>
-        )}
-        <ButtonBack
+    <StatusBlankContainer>
+      <StatusBlankContent>
+        <StatusBlankTitle
+          className={cn({
+            "text-destructive": verifyEmailMutation.isError,
+            "text-success": verifyEmailMutation.isSuccess,
+          })}
+        >
+          {title}
+        </StatusBlankTitle>
+        <StatusBlankLink
           href="../"
-          className={cn(
-            verifyEmailMutation.isSuccess || verifyEmailMutation.isError
-              ? "visible"
-              : "invisible",
-          )}
-        />
-      </StatusHeader>
-    </Status>
+          disabled={verifyEmailMutation.isPending || !verifyEmailMutation.data}
+        >
+          Go back
+        </StatusBlankLink>
+      </StatusBlankContent>
+    </StatusBlankContainer>
   );
 }

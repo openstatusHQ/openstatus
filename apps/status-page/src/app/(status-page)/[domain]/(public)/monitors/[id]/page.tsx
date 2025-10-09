@@ -47,9 +47,12 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
+import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
+  const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const trpc = useTRPC();
   const { id, domain } = useParams<{ id: string; domain: string }>();
   const { data: page } = useQuery(
@@ -209,7 +212,12 @@ export default function Page() {
           <ButtonBack href="./" />
           <ButtonCopyLink />
         </div>
-        <StatusMonitorTabs defaultValue="global">
+        <StatusMonitorTabs
+          defaultValue={tab}
+          onValueChange={(value) =>
+            setSearchParams({ tab: value as "global" | "region" | "uptime" })
+          }
+        >
           <StatusMonitorTabsList className="grid grid-cols-3">
             <StatusMonitorTabsTrigger value="global">
               <StatusMonitorTabsTriggerLabel>
@@ -303,6 +311,7 @@ export default function Page() {
                 <ChartLineRegions
                   className="h-[250px]"
                   data={regionLatencyData}
+                  defaultRegions={tempMonitor?.regions}
                 />
               )}
             </StatusChartContent>

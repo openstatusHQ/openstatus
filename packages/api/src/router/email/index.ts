@@ -4,11 +4,17 @@ import { and, eq, isNotNull } from "@openstatus/db";
 import {
   invitation,
   pageSubscriber,
+  selectWorkspaceSchema,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
+import { TRPCError } from "@trpc/server";
 import { env } from "../../env";
-import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "../../trpc";
 
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
@@ -93,29 +99,52 @@ export const emailRouter = createTRPCRouter({
       }
     }),
 
-  sendPageSubscription: protectedProcedure
+  sendPageSubscription: publicProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const limits = opts.ctx.workspace.limits;
-
-      if (limits["status-subscribers"]) {
-        const _pageSubscriber =
-          await opts.ctx.db.query.pageSubscriber.findFirst({
-            where: eq(pageSubscriber.id, opts.input.id),
+      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.id, opts.input.id),
+        with: {
+          page: {
             with: {
-              page: true,
+              workspace: true,
             },
-          });
+          },
+        },
+      });
 
-        if (!_pageSubscriber || !_pageSubscriber.token) return;
-
-        await emailClient.sendPageSubscription({
-          to: _pageSubscriber.email,
-          token: _pageSubscriber.token,
-          page: _pageSubscriber.page.title,
-          // TODO: or use custom domain
-          domain: _pageSubscriber.page.slug,
+      if (!_pageSubscriber || !_pageSubscriber.token) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page subscriber not found",
         });
       }
+
+      const workspace = selectWorkspaceSchema.safeParse(
+        _pageSubscriber.page.workspace,
+      );
+
+      if (!workspace.success) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Workspace not found",
+        });
+      }
+      if (!workspace.data.limits["status-subscribers"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to use status subscribers",
+        });
+      }
+
+      const link = _pageSubscriber.page.customDomain
+        ? `https://${_pageSubscriber.page.customDomain}/verify/${_pageSubscriber.token}`
+        : `https://${_pageSubscriber.page.slug}.openstatus.dev/verify/${_pageSubscriber.token}`;
+
+      await emailClient.sendPageSubscription({
+        to: _pageSubscriber.email,
+        page: _pageSubscriber.page.title,
+        link,
+      });
     }),
 });
