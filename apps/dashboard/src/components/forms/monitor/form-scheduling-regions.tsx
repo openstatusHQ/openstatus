@@ -280,7 +280,10 @@ export function FormSchedulingRegions({
                                             <Checkbox
                                               id={region.code}
                                               checked={checked || false}
-                                              disabled={disabled}
+                                              disabled={
+                                                disabled ||
+                                                (deprecated && !checked)
+                                              }
                                               onCheckedChange={(checked) => {
                                                 if (checked) {
                                                   field.onChange([
