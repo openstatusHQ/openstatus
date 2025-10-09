@@ -51,9 +51,7 @@ export async function POST(
     })
     .execute();
 
-  const link = pageData.customDomain
-    ? `https://${pageData.customDomain}/verify/${token}`
-    : `https://${pageData.slug}.openstatus.dev/verify/${token}`;
+  const link = `https://${pageData.slug}.openstatus.dev/verify/${token}`;
 
   await sendEmail({
     react: SubscribeEmail({
