@@ -79,9 +79,10 @@ export async function handleSubscribe(formData: FormData) {
     })
     .execute();
 
+  const link = `https://${pageData.slug}.openstatus.dev/verify/${token}`;
+
   await emailClient.sendPageSubscription({
-    domain: pageData.slug,
-    token,
+    link,
     page: pageData.title,
     to: validatedFields.data.email,
   });
