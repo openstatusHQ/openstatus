@@ -35,7 +35,8 @@ export default function VerifyPage() {
       <StatusHeader className="space-y-2 font-mono">
         {verifyEmailMutation.isSuccess ? (
           <StatusTitle>
-            All set to receive updates from to {verifyEmailMutation.data?.email}
+            All set to receive updates from {page.title} to{" "}
+            {verifyEmailMutation.data?.email}
           </StatusTitle>
         ) : verifyEmailMutation.isError ? (
           <StatusTitle

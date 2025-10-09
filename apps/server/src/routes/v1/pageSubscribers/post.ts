@@ -100,10 +100,13 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .returning()
       .get();
 
+    const link = _page.customDomain
+      ? `https://${_page.customDomain}/verify/${token}`
+      : `https://${_page.slug}.openstatus.dev/verify/${token}`;
+
     await sendEmail({
       react: SubscribeEmail({
-        domain: _page.slug,
-        token,
+        link,
         page: _page.title,
       }),
       from: "OpenStatus <notification@notifications.openstatus.dev>",

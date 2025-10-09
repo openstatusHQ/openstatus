@@ -12,7 +12,6 @@ export async function POST(
   props: { params: Promise<{ domain: string }> },
 ) {
   const params = await props.params;
-  //
   const data = await req.json();
   const result = z.object({ email: z.string().email() }).parse(data);
 
@@ -52,10 +51,13 @@ export async function POST(
     })
     .execute();
 
+  const link = pageData.customDomain
+    ? `https://${pageData.customDomain}/verify/${token}`
+    : `https://${pageData.slug}.openstatus.dev/verify/${token}`;
+
   await sendEmail({
     react: SubscribeEmail({
-      domain: params.domain,
-      token,
+      link,
       page: pageData.title,
     }),
     from: "OpenStatus <notification@notifications.openstatus.dev>",
