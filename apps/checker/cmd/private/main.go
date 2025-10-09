@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/openstatus"
+	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 )
 
 const (
@@ -59,6 +62,23 @@ func getEnv(key, fallback string) string {
 // updateMonitors fetches the latest monitors and starts/stops jobs as needed
 func updateMonitors(apiKey string, monitors map[string]openstatus.RawMonitor, monitorChannels map[string]chan bool) {
 	configMonitors := openstatus.GetMonitors(apiKey)
+	client := v1.NewPrivateLocationServiceClient(
+		http.DefaultClient,
+		"http://localhost:8080",
+		connect.WithHTTPGet(),
+	)
+
+	ctx, callInfo := connect.NewClientContext(context.Background())
+	callInfo.RequestHeader().Set("openstatus-token", "key")
+	res, err := client.Monitors(ctx, &connect.Request[v1.MonitorsRequest]{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	mi := res.Msg.Monitors
+	for _, c:= range mi {
+
+		fmt.Println(c)
+	}
 	currentIDs := make(map[string]struct{})
 	for _, m := range configMonitors {
 		idStr := strconv.Itoa(m.ID)

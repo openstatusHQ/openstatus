@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+
 )
 
 type RawMonitor struct {
@@ -27,6 +29,8 @@ type RawMonitor struct {
 func GetMonitors(key string) []RawMonitor {
 
 	httpClient := http.DefaultClient
+
+
 
 	url := "http://localhost:8080/monitors"
 

@@ -63,18 +63,25 @@ message HeaderAssertion {
     string key = 3;
 }
 
+message Headers {
+    string key = 1;
+    string value = 2;
+}
 message HTTPMonitor {
     string id = 1;
-    string method = 2;
-    string body = 3;
-    int64 timeout = 4;
-    optional int64 degraded_at = 5;
-    int64 retry = 6;
-    bool follow_redirects = 7;
+    string url = 2;
+    string method = 3;
+    string body = 4;
+    int64 timeout = 5;
+    optional int64 degraded_at = 6;
+    int64 retry = 7;
+    bool follow_redirects = 8;
 
-    repeated StatusCodeAssertion status_code_assertions = 8;
-    repeated BodyAssertion body_assertions = 9;
-    repeated HeaderAssertion header_assertions = 10;
+    repeated Headers headers = 9;
+
+    repeated StatusCodeAssertion status_code_assertions = 10;
+    repeated BodyAssertion body_assertions = 11;
+    repeated HeaderAssertion header_assertions = 12;
 
 }
 

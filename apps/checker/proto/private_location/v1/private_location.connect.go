@@ -2,13 +2,12 @@
 //
 // Source: private_location/v1/private_location.proto
 
-package private_locationv1connect
+package v1
 
 import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -41,7 +40,7 @@ const (
 // PrivateLocationServiceClient is a client for the private_location.v1.PrivateLocationService
 // service.
 type PrivateLocationServiceClient interface {
-	Monitors(context.Context, *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error)
+	Monitors(context.Context, *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error)
 }
 
 // NewPrivateLocationServiceClient constructs a client for the
@@ -53,9 +52,9 @@ type PrivateLocationServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewPrivateLocationServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) PrivateLocationServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
-	privateLocationServiceMethods := v1.File_private_location_v1_private_location_proto.Services().ByName("PrivateLocationService").Methods()
+	privateLocationServiceMethods := File_private_location_v1_private_location_proto.Services().ByName("PrivateLocationService").Methods()
 	return &privateLocationServiceClient{
-		monitors: connect.NewClient[v1.MonitorsRequest, v1.MonitorsResponse](
+		monitors: connect.NewClient[MonitorsRequest, MonitorsResponse](
 			httpClient,
 			baseURL+PrivateLocationServiceMonitorsProcedure,
 			connect.WithSchema(privateLocationServiceMethods.ByName("Monitors")),
@@ -66,18 +65,18 @@ func NewPrivateLocationServiceClient(httpClient connect.HTTPClient, baseURL stri
 
 // privateLocationServiceClient implements PrivateLocationServiceClient.
 type privateLocationServiceClient struct {
-	monitors *connect.Client[v1.MonitorsRequest, v1.MonitorsResponse]
+	monitors *connect.Client[MonitorsRequest, MonitorsResponse]
 }
 
 // Monitors calls private_location.v1.PrivateLocationService.Monitors.
-func (c *privateLocationServiceClient) Monitors(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
+func (c *privateLocationServiceClient) Monitors(ctx context.Context, req *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error) {
 	return c.monitors.CallUnary(ctx, req)
 }
 
 // PrivateLocationServiceHandler is an implementation of the
 // private_location.v1.PrivateLocationService service.
 type PrivateLocationServiceHandler interface {
-	Monitors(context.Context, *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error)
+	Monitors(context.Context, *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error)
 }
 
 // NewPrivateLocationServiceHandler builds an HTTP handler from the service implementation. It
@@ -86,7 +85,7 @@ type PrivateLocationServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewPrivateLocationServiceHandler(svc PrivateLocationServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
-	privateLocationServiceMethods := v1.File_private_location_v1_private_location_proto.Services().ByName("PrivateLocationService").Methods()
+	privateLocationServiceMethods := File_private_location_v1_private_location_proto.Services().ByName("PrivateLocationService").Methods()
 	privateLocationServiceMonitorsHandler := connect.NewUnaryHandler(
 		PrivateLocationServiceMonitorsProcedure,
 		svc.Monitors,
@@ -106,6 +105,6 @@ func NewPrivateLocationServiceHandler(svc PrivateLocationServiceHandler, opts ..
 // UnimplementedPrivateLocationServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedPrivateLocationServiceHandler struct{}
 
-func (UnimplementedPrivateLocationServiceHandler) Monitors(context.Context, *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
+func (UnimplementedPrivateLocationServiceHandler) Monitors(context.Context, *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.Monitors is not implemented"))
 }

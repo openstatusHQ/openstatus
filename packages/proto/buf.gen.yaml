@@ -1,16 +1,33 @@
 # buf.gen.yaml defines a local generation template.
 # For details, see https://buf.build/docs/configuration/v2/buf-gen-yaml
 version: v2
-managed:
-  enabled: true
-  override:
-    - file_option: go_package_prefix
-      value: github.com/openstatushq/openstatus/apps/private-location/proto
-
+# managed:
+#   enabled: true
+#   override:
+#     - file_option: go_package_prefix
+#       value: github.com/openstatushq/openstatus/apps/private-location/proto
+#
+#  This is not beautiful but while in dev let's generate it twice
 plugins:
   - local: protoc-gen-go
     out: ../../apps/private-location/proto
-    opt: paths=source_relative
+    opt:
+      - Mprivate_location/v1/private_location.proto=github.com/openstatushq/openstatus/apps/private-location/proto/private_locationv1/v1
+      - paths=source_relative
   - local: protoc-gen-connect-go
     out: ../../apps/private-location/proto
-    opt: paths=source_relative
+    opt:
+      - paths=source_relative
+      - package_suffix
+      - Mprivate_location/v1/private_location.proto=github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1
+  - local: protoc-gen-go
+    out: ../../apps/checker/proto
+    opt:
+      - Mprivate_location/v1/private_location.proto=github.com/openstatushq/openstatus/apps/checker/proto/private_locationv1/v1
+      - paths=source_relative
+  - local: protoc-gen-connect-go
+    out: ../../apps/checker/proto
+    opt:
+      - paths=source_relative
+      - package_suffix
+      - Mprivate_location/v1/private_location.proto=github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1
