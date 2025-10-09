@@ -6,12 +6,12 @@ export async function GET(
   props: { params: Promise<{ domain: string; token: string }> },
 ) {
   const params = await props.params;
-  const pageId = await db
+  const _page = await db
     .select()
     .from(page)
     .where(eq(page.slug, params.domain))
     .get();
-  if (!pageId) {
+  if (!_page) {
     return new Response("Not found", { status: 401 });
   }
 
@@ -21,7 +21,7 @@ export async function GET(
     .where(
       and(
         eq(pageSubscriber.token, params.token),
-        eq(pageSubscriber.pageId, pageId?.id),
+        eq(pageSubscriber.pageId, _page?.id),
       ),
     )
     .get();
@@ -35,6 +35,10 @@ export async function GET(
     .set({ acceptedAt: new Date() })
     .where(eq(pageSubscriber.id, subscriber.id))
     .execute();
+
+  if (_page.customDomain) {
+    return Response.redirect(`https://${_page.customDomain}`);
+  }
 
   return Response.redirect(`https://${params.domain}.openstatus.dev`);
 }
