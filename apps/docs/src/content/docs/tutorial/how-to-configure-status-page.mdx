@@ -1,0 +1,123 @@
+---
+title: How to configure a status page? (beta)
+description: "How to configure a status page (beta)"
+---
+
+import { Image } from 'astro:assets';
+import { Aside } from '@astrojs/starlight/components';
+import { ShowcaseYouTube } from 'starlight-showcases'
+
+import ConfigureStatusPage1 from '../../../assets/tutorial/configure-status-page/configure-status-page-1.png';
+import StatusPageFloating from '../../../assets/tutorial/configure-status-page/status-page-floating.png';
+import StatusPageBeta1 from '../../../assets/tutorial/configure-status-page/status-page-beta-1.png';
+import StatusPageBeta2 from '../../../assets/tutorial/configure-status-page/status-page-beta-2.png';
+import StatusPageBeta3 from '../../../assets/tutorial/configure-status-page/status-page-beta-3.png';
+import StatusPageBeta4 from '../../../assets/tutorial/configure-status-page/status-page-beta-4.png';
+
+We are releasing a new version of our status pages.
+
+<Aside>This is an **opt-in toggle**. We will keep the current status page until next year to allow you migrate or provide any feedback.</Aside>
+
+You can always have a look how your status page will look like via `https://[slug].stpg.dev`.
+
+Example: https://status.stpg.dev
+
+## Get started
+
+Go to the **Status Page Redesign (beta)** section in your status page settings. Toggle the `Enable New Version` to support it. Once enabled, you'll see two subsections:
+
+1. **Tracker Configuration**
+2. **Theme Explorer**
+2. **Links**
+
+<Image
+    src={ConfigureStatusPage1}
+    alt="Create your status page"
+/>
+
+### View and configure status page
+
+Before choosing to enable the new page, we provide you with a way to check the configuration first. Click on the **View and configure status page** and you'll get forwarded to your status page and a bottom right floating button will appear. Once you're done, click on the **Dashboard** and you'll be forwarded to your page where you get asked to save the config before continuing.
+
+<Image
+    src={StatusPageFloating}
+    alt="Status page floating configuration popover"
+/>
+
+
+---
+
+<Aside>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. **If you decide to deactivate the new version, it might take up to 10 minutes for the user to see the old page.**</Aside>
+
+### 1. Tracker Configuration
+
+We have three new status tracker configurations to provide you with a maximum choice of displaying the collected data.
+
+**Bar Type**: How every 'day' is displayed in for a status tracker. Either **absolute** or **manual**.
+
+**Card Type**: The card type is only configurable if the bar type is **absolute**. You'll then be able to choose between **duration**, which will show the duration of "success", "error", "degraded" or "maintenance" reports or **requests** where we will share the number of request status itself. If **manual** bar type is chosen, we will only show the most significant status of the day.
+
+**Show Uptime**: The uptime is calculated by ither the **duration** of the different reports _or_ the **request** values depending on what you've chosen for the **absolute** value (incl. incidents). If you've chosen **manual**, it only gets calculated by the duration of your status reports.
+
+A few examples to understand it:
+
+Example of **absolute bar** with **duration card** and **showing uptime**
+
+<Image
+    src={StatusPageBeta3}
+    alt="absolute bar type with duration card and showing uptime"
+/>
+
+Example of **absolute bar** with **request card** and **hiding uptime**
+
+<Image
+    src={StatusPageBeta4}
+    alt="absolute bar type with request card and hiding uptime"
+/>
+
+Example of **manual bar** with **simple card** and **hiding uptime**
+
+<Image
+    src={StatusPageBeta2}
+    alt="manual bar type and hiding uptime"
+/>
+
+### 2. Theme Explorer
+
+You can choose between different themes. We start with the following three:
+
+- `default` (openstatus)
+- `supabase`
+- `github-high-contrast`
+
+Visit [themes.openstatus.dev](https://themes.openstatus.dev) to see the list of supported themes. If you want, you can contribute your own to the list.
+
+### 3. Links
+
+Let's have a closer look to your status page header navigation:
+
+<Image
+    src={StatusPageBeta1}
+    alt="Header navigation of your status page"
+/>
+
+**Homepage URL**: Your logo will support linking to your own website.
+
+**Contact URL**: If filled out, you will see a `Message` icon that users can click to forward them to a contact page. This can also be an email client by starting the input with `mailto:` (e.g. `mailto:support@openstatus.dev`).
+
+
+---
+
+We are adding some additional features. Feel free to let us know what's missing!
+
+## Video Tutorial
+
+<ShowcaseYouTube
+  entries={[
+    {
+      href: 'https://www.youtube.com/watch?v=igMbSrej6RQ',
+      title: 'View, configure and enable the new status page',
+    },
+
+  ]}
+/>

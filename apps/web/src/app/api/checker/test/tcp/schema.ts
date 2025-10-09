@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
+import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 
 export const tcpPayload = z.object({
   workspaceId: z.string(),
@@ -22,7 +22,7 @@ export const TCPResponse = z.object({
     tcpDone: z.number(),
   }),
   error: z.string().optional(),
-  region: monitorFlyRegionSchema,
+  region: monitorRegionSchema,
   latency: z.number().optional(),
 });
 

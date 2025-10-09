@@ -134,7 +134,7 @@ export function getEvents({
       if (!incident.createdAt || incident.createdAt < pastThreshod) return;
       events.push({
         id: incident.id,
-        name: incident.title || "Downtime",
+        name: "Downtime",
         from: incident.createdAt,
         to: incident.resolvedAt,
         type: "incident",
@@ -404,7 +404,8 @@ export function setDataByType({
 
     return segments.map((segment) => ({
       status: segment.status,
-      height: (segment.count / totalDuration) * 100,
+      // NOTE: if totalDuration is 0 (single event without duration), we want to show 100% for the segment
+      height: totalDuration > 0 ? (segment.count / totalDuration) * 100 : 100,
     }));
   }
 
@@ -703,12 +704,33 @@ export function setDataByType({
         break;
     }
 
+    // Bundle incidents that occur on the same day if there are more than 4
+    const bundledIncidents =
+      incidents.length > 4
+        ? [
+            {
+              id: -1, // Use -1 to indicate bundled incidents
+              name: `Downtime (${incidents.length} incidents)`,
+              from: new Date(
+                Math.min(...incidents.map((i) => i.from.getTime())),
+              ),
+              to: new Date(
+                Math.max(
+                  ...incidents.map((i) => (i.to || new Date()).getTime()),
+                ),
+              ),
+              type: "incident" as const,
+              status: "error" as const,
+            },
+          ]
+        : incidents;
+
     return {
       day: dayData.day,
       events: [
         ...reports,
         ...maintenances,
-        ...(barType === "absolute" ? incidents : []),
+        ...(barType === "absolute" ? bundledIncidents : []),
       ],
       bar: barData,
       card: cardData,

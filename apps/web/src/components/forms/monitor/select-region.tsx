@@ -20,11 +20,15 @@ import {
 import {
   type Continent,
   type RegionInfo,
-  flyRegionsDict,
+  formatRegionCode,
+  regionDict,
 } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
+import {
+  type Region,
+  monitorRegions,
+} from "@openstatus/db/src/schema/constants";
 
 interface SelectRegionProps extends Omit<ButtonProps, "onChange"> {
   allowedRegions: Region[];
@@ -39,9 +43,9 @@ export function SelectRegion({
   className,
   ...props
 }: SelectRegionProps) {
-  const regionsByContinent = flyRegions.reduce(
+  const regionsByContinent = monitorRegions.reduce(
     (prev, curr) => {
-      const region = flyRegionsDict[curr];
+      const region = regionDict[curr];
 
       const item = prev.find((r) => r.continent === region.continent);
 
@@ -119,7 +123,7 @@ export function SelectRegion({
                         </div>
                         <div className="flex w-full justify-between">
                           <span>
-                            {code}{" "}
+                            {formatRegionCode(code)}{" "}
                             <span className="truncate text-muted-foreground">
                               {location}
                             </span>

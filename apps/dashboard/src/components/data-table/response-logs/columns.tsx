@@ -17,7 +17,7 @@ import {
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";
@@ -94,8 +94,15 @@ export const columns: ColumnDef<ResponseLog>[] = [
         return <div className="text-muted-foreground">-</div>;
       }
 
-      const regionConfig = flyRegionsDict[value as keyof typeof flyRegionsDict];
-      return regionConfig.location;
+      const regionConfig = regionDict[value as keyof typeof regionDict];
+      return (
+        <div>
+          {regionConfig.location}{" "}
+          <span className="text-muted-foreground/70 text-xs">
+            ({regionConfig.provider})
+          </span>
+        </div>
+      );
     },
     enableSorting: false,
     enableHiding: false,

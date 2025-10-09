@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { monitorFlyRegionSchema, monitorPeriodicitySchema } from "../constants";
+import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 
 // REMINDER: this is not a database table but just a schema for the limits of the plan
 // default values are set to the free plan limits
@@ -17,7 +17,7 @@ export const limitsSchema = z.object({
   "data-retention": z
     .enum(["14 days", "3 months", "12 months", "24 months"])
     .default("14 days"),
-  regions: monitorFlyRegionSchema
+  regions: monitorRegionSchema
     .array()
     .default(["ams", "gru", "iad", "jnb", "sin", "syd"]),
   "private-locations": z.boolean().default(false),

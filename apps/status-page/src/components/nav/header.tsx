@@ -20,10 +20,12 @@ import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { Menu, MessageCircleMore } from "lucide-react";
 import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 function useNav() {
   const pathname = usePathname();
@@ -62,8 +64,20 @@ export function Header(props: React.ComponentProps<"header">) {
   const subscribeMutation = useMutation(
     trpc.statusPage.subscribe.mutationOptions({
       onSuccess: (id) => {
+        console.log("subscribeMutation onSuccess", id);
         if (!id) return;
-        sendPageSubscriptionMutation.mutate({ id });
+        sendPageSubscriptionMutation.mutate(
+          { id },
+          {
+            onError: (error) => {
+              if (isTRPCClientError(error)) {
+                toast.error(error.message);
+              } else {
+                toast.error("Failed to subscribe");
+              }
+            },
+          },
+        );
       },
     }),
   );

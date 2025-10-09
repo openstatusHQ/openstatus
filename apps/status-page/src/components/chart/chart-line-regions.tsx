@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { regions } from "@/data/regions";
 import { formatMilliseconds } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
+import type { MonitorRegion } from "@openstatus/db/src/schema";
 import { useState } from "react";
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
@@ -67,17 +68,35 @@ function getChartConfig(
     ) satisfies ChartConfig;
 }
 
+function getChartConfigDefault(regions: MonitorRegion[]) {
+  return regions.reduce(
+    (acc, region, index) => {
+      acc[region] = {
+        label: region,
+        color: `var(--rainbow-${((index + 5) % 17) + 1})`,
+      };
+      return acc;
+    },
+    {} as Record<string, { label: string; color: string }>,
+  ) satisfies ChartConfig;
+}
+
 export function ChartLineRegions({
   className,
   data,
+  defaultRegions,
 }: {
   className?: string;
   data: {
     timestamp: string;
     [key: string]: string | number | null;
   }[];
+  defaultRegions?: MonitorRegion[];
 }) {
-  const chartConfig = getChartConfig(data);
+  const chartConfig =
+    data.length > 0
+      ? getChartConfig(data)
+      : getChartConfigDefault(defaultRegions ?? []);
   const [activeSeries, setActiveSeries] = useState<
     Array<keyof typeof chartConfig>
   >(Object.keys(chartConfig).slice(0, 2));
@@ -90,7 +109,13 @@ export function ChartLineRegions({
     {} as Record<string, string>,
   );
 
-  // TODO: tooltip
+  const tooltip = regions.reduce(
+    (acc, region) => {
+      acc[region.code] = region.location;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
   return (
     <ChartContainer
@@ -171,6 +196,7 @@ export function ChartLineRegions({
               }}
               active={activeSeries}
               annotation={annotation}
+              tooltip={tooltip}
               maxActive={6}
               className="justify-start overflow-x-scroll ps-1 pt-1 font-mono"
             />

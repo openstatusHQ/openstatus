@@ -19,6 +19,7 @@ const formCardVariants = cva(
       variant: {
         default: "",
         destructive: "border-destructive",
+        info: "border-info",
       },
       defaultVariants: {
         variant: "default",
@@ -103,6 +104,7 @@ const formCardFooterVariants = cva(
       variant: {
         default: "",
         destructive: "border-destructive bg-destructive/5",
+        info: "border-info bg-info/5",
       },
       defaultVariants: {
         variant: "default",

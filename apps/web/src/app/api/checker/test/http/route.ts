@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
+import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 
 import { checkRegion } from "@/components/ping-response-analysis/utils";
 import { httpPayloadSchema } from "@openstatus/utils";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const _valid = httpPayloadSchema
       .pick({ url: true, method: true, headers: true, body: true })
-      .merge(z.object({ region: monitorFlyRegionSchema.default("ams") }))
+      .merge(z.object({ region: monitorRegionSchema.default("ams") }))
       .safeParse(json);
 
     if (!_valid.success) {

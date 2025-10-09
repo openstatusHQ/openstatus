@@ -6,7 +6,7 @@ import {
 
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { EmailClient } from "@openstatus/emails/src/client";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import { env } from "../env";
 
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
@@ -40,7 +40,7 @@ export const sendAlert = async ({
     url: monitor.url,
     status: statusCode?.toString(),
     latency: latency ? `${latency}ms` : "N/A",
-    region: region ? flyRegionsDict[region].location : "N/A",
+    region: region ? regionDict[region].location : "N/A",
     timestamp: new Date(cronTimestamp).toISOString(),
     message,
   });

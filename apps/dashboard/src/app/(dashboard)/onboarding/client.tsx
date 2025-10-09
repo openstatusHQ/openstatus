@@ -99,7 +99,9 @@ export function Client() {
     trpc.monitor.new.mutationOptions({
       onSuccess: (data) => {
         setSearchParams({ step: "2" });
-        triggerCheckMutation.mutate({ id: data.id });
+        if (data.active) {
+          triggerCheckMutation.mutate({ id: data.id });
+        }
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),

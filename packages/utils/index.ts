@@ -1,133 +1,9 @@
-/**
- * AWS data center informations from 18 regions, supported by vercel.
- * https://vercel.com/docs/concepts/edge-network/regions#region-list
- */
-
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
 
 import { z } from "zod";
-// export const vercelRegionsDict = {
-//   /**
-//    * A random location will be chosen
-//    */
-//   auto: {
-//     code: "auto",
-//     name: "random",
-//     location: "Random",
-//     flag: "🌍",
-//   },
-//   arn1: {
-//     code: "arn1",
-//     name: "eu-north-1",
-//     location: "Stockholm, Sweden",
-//     flag: "🇸🇪",
-//   },
-//   bom1: {
-//     code: "bom1",
-//     name: "ap-south-1",
-//     location: "Mumbai, India",
-//     flag: "🇮🇳",
-//   },
-//   cdg1: {
-//     code: "cdg1",
-//     name: "eu-west-3",
-//     location: "Paris, France",
-//     flag: "🇫🇷",
-//   },
-//   cle1: {
-//     code: "cle1",
-//     name: "us-east-2",
-//     location: "Cleveland, USA",
-//     flag: "🇺🇸",
-//   },
-//   cpt1: {
-//     code: "cpt1",
-//     name: "af-south-1",
-//     location: "Cape Town, South Africa",
-//     flag: "🇿🇦",
-//   },
-//   dub1: {
-//     code: "dub1",
-//     name: "eu-west-1",
-//     location: "Dublin, Ireland",
-//     flag: "🇮🇪",
-//   },
-//   fra1: {
-//     code: "fra1",
-//     name: "eu-central-1",
-//     location: "Frankfurt, Germany",
-//     flag: "🇩🇪",
-//   },
-//   gru1: {
-//     code: "gru1",
-//     name: "sa-east-1",
-//     location: "São Paulo, Brazil",
-//     flag: "🇧🇷",
-//   },
-//   hkg1: {
-//     code: "hkg1",
-//     name: "ap-east-1",
-//     location: "Hong Kong",
-//     flag: "🇭🇰",
-//   },
-//   hnd1: {
-//     code: "hnd1",
-//     name: "ap-northeast-1",
-//     location: "Tokyo, Japan",
-//     flag: "🇯🇵",
-//   },
-//   iad1: {
-//     code: "iad1",
-//     name: "us-east-1",
-//     location: "Washington, D.C., USA",
-//     flag: "🇺🇸",
-//   },
-//   icn1: {
-//     code: "icn1",
-//     name: "ap-northeast-2",
-//     location: "Seoul, South Korea",
-//     flag: "🇰🇷",
-//   },
-//   kix1: {
-//     code: "kix1",
-//     name: "ap-northeast-3",
-//     location: "Osaka, Japan",
-//     flag: "🇯🇵",
-//   },
-//   lhr1: {
-//     code: "lhr1",
-//     name: "eu-west-2",
-//     location: "London, United Kingdom",
-//     flag: "🇬🇧",
-//   },
-//   pdx1: {
-//     code: "pdx1",
-//     name: "us-west-2",
-//     location: "Portland, USA",
-//     flag: "🇺🇸",
-//   },
-//   sfo1: {
-//     code: "sfo1",
-//     name: "us-west-1",
-//     location: "San Francisco, USA",
-//     flag: "🇺🇸",
-//   },
-//   sin1: {
-//     code: "sin1",
-//     name: "ap-southeast-1",
-//     location: "Singapore",
-//     flag: "🇸🇬",
-//   },
-//   syd1: {
-//     code: "syd1",
-//     name: "ap-southeast-2",
-//     location: "Sydney, Australia",
-//     flag: "🇦🇺",
-//   },
-// } as const;
 
 export type Continent =
   | "Europe"
@@ -138,11 +14,12 @@ export type Continent =
   | "Oceania";
 
 export type RegionInfo = {
-  code: MonitorFlyRegion;
+  code: Region;
   location: string;
   flag: string;
   continent: Continent;
   deprecated: boolean;
+  provider: "fly" | "koyeb" | "railway";
 };
 
 // TODO: we could think of doing the inverse and use "EU" as key
@@ -155,13 +32,14 @@ export const continentDict: Record<Continent, { code: string }> = {
   Oceania: { code: "OC" },
 };
 
-export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
+export const regionDict: Record<Region, RegionInfo> = {
   ams: {
     code: "ams",
     location: "Amsterdam, Netherlands",
     flag: "🇳🇱",
     continent: "Europe",
     deprecated: false,
+    provider: "fly",
   },
   arn: {
     code: "arn",
@@ -169,6 +47,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇸🇪",
     continent: "Europe",
     deprecated: false,
+    provider: "fly",
   },
 
   atl: {
@@ -177,6 +56,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   bog: {
     code: "bog",
@@ -184,6 +64,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇨🇴",
     continent: "South America",
     deprecated: true,
+    provider: "fly",
   },
   bom: {
     code: "bom",
@@ -191,6 +72,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇮🇳",
     continent: "Asia",
     deprecated: false,
+    provider: "fly",
   },
   bos: {
     code: "bos",
@@ -198,6 +80,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   cdg: {
     code: "cdg",
@@ -205,6 +88,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇫🇷",
     continent: "Europe",
     deprecated: false,
+    provider: "fly",
   },
   den: {
     code: "den",
@@ -212,6 +96,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   dfw: {
     code: "dfw",
@@ -219,6 +104,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: false,
+    provider: "fly",
   },
   ewr: {
     code: "ewr",
@@ -226,6 +112,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: false,
+    provider: "fly",
   },
   eze: {
     code: "eze",
@@ -233,6 +120,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇦🇷",
     continent: "South America",
     deprecated: true,
+    provider: "fly",
   },
   fra: {
     code: "fra",
@@ -240,6 +128,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇩🇪",
     continent: "Europe",
     deprecated: false,
+    provider: "fly",
   },
   gdl: {
     code: "gdl",
@@ -247,6 +136,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇲🇽",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   gig: {
     code: "gig",
@@ -254,6 +144,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇧🇷",
     continent: "South America",
     deprecated: true,
+    provider: "fly",
   },
   gru: {
     code: "gru",
@@ -261,6 +152,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇧🇷",
     continent: "South America",
     deprecated: false,
+    provider: "fly",
   },
   hkg: {
     code: "hkg",
@@ -268,6 +160,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇭🇰",
     continent: "Asia",
     deprecated: true,
+    provider: "fly",
   },
   iad: {
     code: "iad",
@@ -275,6 +168,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: false,
+    provider: "fly",
   },
   jnb: {
     code: "jnb",
@@ -282,6 +176,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇿🇦",
     continent: "Africa",
     deprecated: false,
+    provider: "fly",
   },
   lax: {
     code: "lax",
@@ -289,6 +184,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: false,
+    provider: "fly",
   },
   lhr: {
     code: "lhr",
@@ -296,6 +192,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇬🇧",
     continent: "Europe",
     deprecated: false,
+    provider: "fly",
   },
   mad: {
     code: "mad",
@@ -303,6 +200,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇪🇸",
     continent: "Europe",
     deprecated: true,
+    provider: "fly",
   },
   mia: {
     code: "mia",
@@ -310,6 +208,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   nrt: {
     code: "nrt",
@@ -317,6 +216,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇯🇵",
     continent: "Asia",
     deprecated: false,
+    provider: "fly",
   },
   ord: {
     code: "ord",
@@ -324,6 +224,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: false,
+    provider: "fly",
   },
   otp: {
     code: "otp",
@@ -331,6 +232,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇷🇴",
     continent: "Europe",
     deprecated: true,
+    provider: "fly",
   },
   phx: {
     code: "phx",
@@ -338,6 +240,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   qro: {
     code: "qro",
@@ -345,6 +248,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇲🇽",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   scl: {
     code: "scl",
@@ -352,6 +256,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇨🇱",
     continent: "South America",
     deprecated: true,
+    provider: "fly",
   },
   sjc: {
     code: "sjc",
@@ -359,6 +264,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   sea: {
     code: "sea",
@@ -366,6 +272,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇺🇸",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   sin: {
     code: "sin",
@@ -373,6 +280,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇸🇬",
     continent: "Asia",
     deprecated: false,
+    provider: "fly",
   },
   syd: {
     code: "syd",
@@ -380,6 +288,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇦🇺",
     continent: "Oceania",
     deprecated: false,
+    provider: "fly",
   },
   waw: {
     code: "waw",
@@ -387,6 +296,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇵🇱",
     continent: "Europe",
     deprecated: true,
+    provider: "fly",
   },
   yul: {
     code: "yul",
@@ -394,6 +304,7 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇨🇦",
     continent: "North America",
     deprecated: true,
+    provider: "fly",
   },
   yyz: {
     code: "yyz",
@@ -401,33 +312,103 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇨🇦",
     continent: "North America",
     deprecated: false,
+    provider: "fly",
+  },
+  koyeb_fra: {
+    code: "koyeb_fra",
+    location: "Frankfurt, Germany",
+    flag: "🇩🇪",
+    continent: "Europe",
+    deprecated: false,
+    provider: "koyeb",
+  },
+  koyeb_par: {
+    code: "koyeb_par",
+    location: "Paris, France",
+    flag: "🇫🇷",
+    continent: "Europe",
+    deprecated: false,
+    provider: "koyeb",
+  },
+  koyeb_sfo: {
+    code: "koyeb_sfo",
+    location: "San Francisco, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    deprecated: false,
+    provider: "koyeb",
+  },
+  koyeb_sin: {
+    code: "koyeb_sin",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+    deprecated: false,
+    provider: "koyeb",
+  },
+  koyeb_tyo: {
+    code: "koyeb_tyo",
+    location: "Tokyo, Japan",
+    flag: "🇯🇵",
+    continent: "Asia",
+    deprecated: false,
+    provider: "koyeb",
+  },
+  koyeb_was: {
+    code: "koyeb_was",
+    location: "Washington, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    deprecated: false,
+    provider: "koyeb",
+  },
+  "railway_us-west2": {
+    code: "railway_us-west2",
+    location: "California, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    deprecated: false,
+    provider: "railway",
+  },
+  "railway_us-east4-eqdc4a": {
+    code: "railway_us-east4-eqdc4a",
+    location: "Virginia, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+    deprecated: false,
+    provider: "railway",
+  },
+  "railway_europe-west4-drams3a": {
+    code: "railway_europe-west4-drams3a",
+    location: "Amsterdam, Netherlands",
+    flag: "🇳🇱",
+    continent: "Europe",
+    deprecated: false,
+    provider: "railway",
+  },
+  "railway_asia-southeast1-eqsg3a": {
+    code: "railway_asia-southeast1-eqsg3a",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+    deprecated: false,
+    provider: "railway",
   },
 } as const;
 
-// const r = t.flatMap((u) => u[1].continent);
+export function formatRegionCode(region: RegionInfo | Region) {
+  const r = typeof region === "string" ? regionDict[region] : region;
+  const suffix = r.code.replace(/(koyeb_|railway_|fly_)/g, "");
 
-export const groupByContinent = Object.entries(flyRegionsDict).reduce<
-  Record<
-    | "Europe"
-    | "North America"
-    | "South America"
-    | "Asia"
-    | "Africa"
-    | "Oceania",
-    {
-      code: MonitorFlyRegion;
-      location: string;
-      flag: string;
-      deprecated: boolean;
-      continent:
-        | "Europe"
-        | "North America"
-        | "South America"
-        | "Asia"
-        | "Africa"
-        | "Oceania";
-    }[]
-  >
+  if (r.provider === "railway") {
+    return suffix.replace(/(-eqdc4a|-eqsg3a|-drams3a)/g, "");
+  }
+
+  return suffix;
+}
+
+export const groupByContinent = Object.entries(regionDict).reduce<
+  Record<Continent, RegionInfo[]>
 >(
   (acc, [_key, value]) => {
     Object.assign(acc, {
@@ -442,7 +423,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  },
+  }
 );
 
 export const vercelRegions = [
@@ -518,12 +499,9 @@ export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0
-    ? headers.reduce(
-        (acc, curr) => {
-          acc[curr.key] = curr.value;
-          return acc;
-        },
-        {} as Record<string, string>,
-      )
+    ? headers.reduce((acc, curr) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      }, {} as Record<string, string>)
     : {};
 }

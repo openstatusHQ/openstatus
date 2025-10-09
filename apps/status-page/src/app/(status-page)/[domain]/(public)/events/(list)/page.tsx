@@ -15,19 +15,20 @@ import {
   StatusEventTimelineMaintenance,
   StatusEventTimelineReport,
   StatusEventTitle,
+  StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Check } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-
-// TODO: include ?filter=maintenance/reports
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
+  const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
   const { data: page } = useQuery(
@@ -39,7 +40,13 @@ export default function Page() {
   const { statusReports, maintenances } = page;
 
   return (
-    <Tabs defaultValue="reports" className="gap-4">
+    <Tabs
+      defaultValue={tab}
+      onValueChange={(value) =>
+        setSearchParams({ tab: value as "reports" | "maintenances" })
+      }
+      className="gap-4"
+    >
       <TabsList>
         <TabsTrigger value="reports">Reports</TabsTrigger>
         <TabsTrigger value="maintenances">Maintenances</TabsTrigger>
@@ -71,13 +78,7 @@ export default function Page() {
                   <StatusEventContent>
                     <StatusEventTitle className="inline-flex gap-1">
                       {report.title}
-                      {isReportResolvedOnly ? (
-                        <div className="mt-1 ml-1.5">
-                          <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
-                            <Check className="size-3 shrink-0" />
-                          </div>
-                        </div>
-                      ) : null}
+                      {isReportResolvedOnly ? <StatusEventTitleCheck /> : null}
                     </StatusEventTitle>
                     {report.monitorsToStatusReports.length > 0 ? (
                       <StatusEventAffected className="flex flex-wrap gap-1">

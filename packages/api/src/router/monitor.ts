@@ -37,9 +37,9 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import {
-  flyRegions,
   freeFlyRegions,
   monitorPeriodicity,
+  monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { testHttp, testTcp } from "./checker";
@@ -1412,7 +1412,7 @@ export const monitorRouter = createTRPCRouter({
       }
 
       const selectableRegions =
-        ctx.workspace.plan === "free" ? freeFlyRegions : flyRegions;
+        ctx.workspace.plan === "free" ? freeFlyRegions : monitorRegions;
       const randomRegions = ctx.workspace.plan === "free" ? 4 : 6;
 
       const regions = [...selectableRegions]

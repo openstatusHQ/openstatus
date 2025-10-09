@@ -36,6 +36,7 @@ export default function Page() {
   const { data: page } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
+
   // NOTE: we can prefetch that to avoid loading state
   const { data: uptimeData, isLoading } = useQuery(
     trpc.statusPage.getUptime.queryOptions({
@@ -129,29 +130,33 @@ export default function Page() {
           <StatusBanner status={page.status} />
         )}
         {/* NOTE: check what gap feels right */}
-        <StatusContent className="gap-5">
-          {page.monitors.map((monitor) => {
-            const { data, uptime } =
-              uptimeData?.find((m) => m.id === monitor.id) ?? {};
-            return (
-              <StatusMonitor
-                key={monitor.id}
-                status={monitor.status}
-                data={data}
-                monitor={monitor}
-                uptime={uptime}
-                showUptime={showUptime}
-                isLoading={isLoading}
-              />
-            );
-          })}
-        </StatusContent>
+        {page.monitors.length > 0 ? (
+          <StatusContent className="gap-5">
+            {page.monitors.map((monitor) => {
+              const { data, uptime } =
+                uptimeData?.find((m) => m.id === monitor.id) ?? {};
+              return (
+                <StatusMonitor
+                  key={monitor.id}
+                  status={monitor.status}
+                  data={data}
+                  monitor={monitor}
+                  uptime={uptime}
+                  showUptime={showUptime}
+                  isLoading={isLoading}
+                />
+              );
+            })}
+          </StatusContent>
+        ) : null}
         <Separator />
         <StatusContent>
           <StatusFeed
             statusReports={page.statusReports
               .filter((report) =>
-                page.lastEvents.some((event) => event.id === report.id),
+                page.lastEvents.some(
+                  (event) => event.id === report.id && event.type === "report",
+                ),
               )
               .map((report) => ({
                 ...report,
@@ -162,7 +167,10 @@ export default function Page() {
               }))}
             maintenances={page.maintenances
               .filter((maintenance) =>
-                page.lastEvents.some((event) => event.id === maintenance.id),
+                page.lastEvents.some(
+                  (event) =>
+                    event.id === maintenance.id && event.type === "maintenance",
+                ),
               )
               .map((maintenance) => ({
                 ...maintenance,

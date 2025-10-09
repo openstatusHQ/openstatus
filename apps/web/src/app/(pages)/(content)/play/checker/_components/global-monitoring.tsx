@@ -10,6 +10,9 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import { regionDict } from "@openstatus/utils";
+
+const TOTAL_REGIONS = Object.keys(regionDict).length;
 
 const features: {
   icon: ValidIcon;
@@ -18,15 +21,14 @@ const features: {
 }[] = [
   {
     icon: "gauge",
-    catchline: "Speed Test",
+    catchline: "API & Website Speed Test",
     description:
       "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB, Transfer) of the response.",
   },
   {
     icon: "globe",
-    catchline: "Global Latency",
-    description:
-      "Monitor performance in different regions to ensure quick load times for users across 35 regions around the world.",
+    catchline: "Global Speed Test",
+    description: `Monitor latency performance in different regions to ensure quick load times for users across ${TOTAL_REGIONS} regions worldwide.`,
   },
   {
     icon: "link",

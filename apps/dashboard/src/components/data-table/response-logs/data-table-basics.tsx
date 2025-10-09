@@ -1,5 +1,6 @@
 "use client";
 
+import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { BlockWrapper } from "@/components/content/block-wrapper";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
@@ -15,7 +16,7 @@ import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { flyRegionsDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 import { Braces, TableProperties } from "lucide-react";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
@@ -37,7 +38,7 @@ export function DataTableBasicsHTTP({
     trigger?: "cron" | "api" | "test" | null;
   };
 }) {
-  const regionConfig = flyRegionsDict[data.region];
+  const regionConfig = regionDict[data.region];
   return (
     <Table className="table-fixed">
       <colgroup>
@@ -130,9 +131,23 @@ export function DataTableBasicsHTTP({
             Region
           </TableHead>
           <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
-            {regionConfig?.flag} {regionConfig?.code}{" "}
-            <span className="text-muted-foreground">
-              {regionConfig?.location}
+            {regionConfig?.code}{" "}
+            <span className="text-muted-foreground text-xs">
+              {regionConfig?.location} {regionConfig?.flag}
+            </span>
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Cloud Provider
+          </TableHead>
+          <TableCell className="inline-flex max-w-full overflow-x-auto whitespace-normal font-mono">
+            <IconCloudProvider
+              provider={regionConfig?.provider}
+              className="mt-0.5"
+            />
+            <span className="ml-1 text-muted-foreground">
+              {regionConfig?.provider}
             </span>
           </TableCell>
         </TableRow>
@@ -294,7 +309,7 @@ export function DataTableBasicsTCP({
     trigger?: "cron" | "api" | "test" | null;
   };
 }) {
-  const regionConfig = flyRegionsDict[data.region];
+  const regionConfig = regionDict[data.region];
   return (
     <Table className="table-fixed">
       <colgroup>
@@ -370,6 +385,20 @@ export function DataTableBasicsTCP({
             {regionConfig?.flag} {regionConfig?.code}{" "}
             <span className="text-muted-foreground">
               {regionConfig?.location}
+            </span>
+          </TableCell>
+        </TableRow>
+        <TableRow className="[&>:not(:last-child)]:border-r">
+          <TableHead className="bg-muted/50 font-normal text-muted-foreground">
+            Cloud Provider
+          </TableHead>
+          <TableCell className="inline-flex max-w-full overflow-x-auto whitespace-normal font-mono">
+            <IconCloudProvider
+              provider={regionConfig?.provider}
+              className="mt-0.5"
+            />
+            <span className="ml-1 text-muted-foreground">
+              {regionConfig?.provider}
             </span>
           </TableCell>
         </TableRow>

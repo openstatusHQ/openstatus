@@ -1,6 +1,6 @@
 import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
-import { flyRegions } from "../../db/src/schema/constants";
+import { monitorRegions } from "../../db/src/schema/constants";
 import {
   headersSchema,
   timingPhasesSchema,
@@ -51,7 +51,7 @@ export class OSTinybird {
         statusCode: z.number().int().nullable(),
         monitorId: z.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -76,7 +76,7 @@ export class OSTinybird {
         statusCode: z.number().int().nullable(),
         monitorId: z.string(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -98,7 +98,7 @@ export class OSTinybird {
         statusCode: z.number().int().nullable(),
         monitorId: z.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -123,7 +123,7 @@ export class OSTinybird {
         statusCode: z.number().int().nullable(),
         monitorId: z.string(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -145,7 +145,7 @@ export class OSTinybird {
         statusCode: z.number().int().nullable(),
         monitorId: z.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -170,7 +170,7 @@ export class OSTinybird {
         statusCode: z.number().int().nullable(),
         monitorId: z.string(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -184,7 +184,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_1d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -207,7 +207,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_1d__v1",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -230,7 +230,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_7d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -253,7 +253,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_7d__v1",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -276,7 +276,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__http_metrics_14d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -299,7 +299,7 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_14d__v1",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -326,7 +326,7 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -346,7 +346,7 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -366,7 +366,7 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -383,10 +383,10 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_by_region_1d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         count: z.number().int(),
         ok: z.number().int(),
         p50Latency: z.number().nullable().default(0),
@@ -404,10 +404,10 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_by_region_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         count: z.number().int(),
         ok: z.number().int(),
         p50Latency: z.number().nullable().default(0),
@@ -425,10 +425,10 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_by_region_14d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         count: z.number().int(),
         ok: z.number().int(),
         p50Latency: z.number().nullable().default(0),
@@ -518,7 +518,7 @@ export class OSTinybird {
         monitorId: z.string(),
         url: z.string().url(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         message: z.string().nullable(),
         headers: headersSchema,
@@ -540,7 +540,7 @@ export class OSTinybird {
       pipe: "endpoint__http_get_30d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        region: z.enum(flyRegions).optional(),
+        region: z.enum(monitorRegions).optional(),
         cronTimestamp: z.number().int().optional(),
       }),
       data: z.object({
@@ -550,7 +550,7 @@ export class OSTinybird {
         monitorId: z.string(),
         url: z.string().url(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         message: z.string().nullable(),
         headers: headersSchema,
@@ -583,7 +583,7 @@ export class OSTinybird {
           .number()
           .default(0)
           .transform((val) => val !== 0),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int().optional(),
         message: z.string().nullable().optional(),
         timing: timingSchema,
@@ -605,7 +605,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -629,7 +629,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -649,7 +649,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -673,7 +673,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -693,7 +693,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -717,7 +717,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -730,7 +730,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_1d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -753,7 +753,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_1d__v1",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -777,7 +777,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_7d__v0",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -799,7 +799,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_7d__v1",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -822,7 +822,7 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_14d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
@@ -845,7 +845,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_14d__v1",
       parameters: z.object({
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         monitorId: z.string(),
       }),
       data: z.object({
@@ -868,12 +868,12 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_by_interval_1d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -889,12 +889,12 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_by_interval_7d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -910,12 +910,12 @@ export class OSTinybird {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_metrics_by_interval_14d__v0",
       parameters: z.object({
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
         interval: z.number().int().optional(),
         monitorId: z.string(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -932,10 +932,10 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_by_region_1d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         count: z.number().int(),
         ok: z.number().int(),
         p50Latency: z.number().nullable().default(0),
@@ -953,10 +953,10 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_by_region_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         count: z.number().int(),
         ok: z.number().int(),
         p50Latency: z.number().nullable().default(0),
@@ -974,10 +974,10 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_by_region_14d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         count: z.number().int(),
         ok: z.number().int(),
         p50Latency: z.number().nullable().default(0),
@@ -1099,7 +1099,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.coerce.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -1116,7 +1116,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_get_30d__v0",
       parameters: z.object({
         monitorId: z.string(),
-        region: z.enum(flyRegions).optional(),
+        region: z.enum(monitorRegions).optional(),
         cronTimestamp: z.number().int().optional(),
       }),
       data: z.object({
@@ -1124,7 +1124,7 @@ export class OSTinybird {
         latency: z.number().int(),
         monitorId: z.string(),
         error: z.coerce.boolean(),
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         cronTimestamp: z.number().int(),
         trigger: z.enum(triggers).nullable().default("cron"),
         timestamp: z.number(),
@@ -1149,7 +1149,7 @@ export class OSTinybird {
         regions: z.string().array().optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -1170,7 +1170,7 @@ export class OSTinybird {
         regions: z.string().array().optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -1191,7 +1191,7 @@ export class OSTinybird {
         regions: z.string().array().optional(),
       }),
       data: z.object({
-        region: z.enum(flyRegions),
+        region: z.enum(monitorRegions),
         timestamp: z.number().int(),
         p50Latency: z.number().nullable().default(0),
         p75Latency: z.number().nullable().default(0),
@@ -1210,7 +1210,7 @@ export class OSTinybird {
         monitorId: z.string(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
-        regions: z.enum(flyRegions).array().optional(),
+        regions: z.enum(monitorRegions).array().optional(),
         interval: z.number().int().optional(),
       }),
       data: z.object({
@@ -1229,7 +1229,7 @@ export class OSTinybird {
         monitorId: z.string(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
-        regions: z.enum(flyRegions).array().optional(),
+        regions: z.enum(monitorRegions).array().optional(),
         interval: z.number().int().optional(),
       }),
       data: z.object({
@@ -1248,7 +1248,7 @@ export class OSTinybird {
         monitorId: z.string(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
-        regions: z.enum(flyRegions).array().optional(),
+        regions: z.enum(monitorRegions).array().optional(),
         interval: z.number().int().optional(),
       }),
       data: z.object({
@@ -1267,7 +1267,7 @@ export class OSTinybird {
         monitorId: z.string(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
-        regions: z.enum(flyRegions).array().optional(),
+        regions: z.enum(monitorRegions).array().optional(),
         interval: z.number().int().optional(),
       }),
       data: z.object({
@@ -1353,7 +1353,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         interval: z.number().int().optional(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1444,7 +1444,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
-        regions: z.array(z.enum(flyRegions)).optional(),
+        regions: z.array(z.enum(monitorRegions)).optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),

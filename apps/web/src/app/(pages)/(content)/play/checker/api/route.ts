@@ -6,7 +6,7 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { mockCheckRegion } from "./mock";
 
 export const runtime = "edge";
@@ -17,9 +17,13 @@ async function* makeIterator({
   url,
   method,
   id,
-}: { url: string; method: Method; id: string }) {
+}: {
+  url: string;
+  method: Method;
+  id: string;
+}) {
   // Create an array to store all the promises
-  const promises = flyRegions.map(async (region, index) => {
+  const promises = monitorRegions.map(async (region, index) => {
     try {
       // Perform the fetch operation
       const check =

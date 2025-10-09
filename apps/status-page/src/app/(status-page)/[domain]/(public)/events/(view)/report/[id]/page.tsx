@@ -11,6 +11,7 @@ import {
   StatusEventContent,
   StatusEventTimelineReport,
   StatusEventTitle,
+  StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
 import { Badge } from "@/components/ui/badge";
 import { useTRPC } from "@/lib/trpc/client";
@@ -26,7 +27,15 @@ export default function ReportPage() {
 
   if (!report) return null;
 
-  const startedAt = report.statusReportUpdates[0].date;
+  const updates = report.statusReportUpdates.sort(
+    (a, b) => b.date.getTime() - a.date.getTime(),
+  );
+  const firstUpdate = updates[updates.length - 1];
+  const lastUpdate = updates[0];
+
+  // HACKY: LEGACY: only resolved via report and not via report update
+  const isReportResolvedOnly =
+    report.status === "resolved" && lastUpdate.status !== "resolved";
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,11 +46,14 @@ export default function ReportPage() {
       <StatusEvent>
         <StatusEventAside>
           <span className="font-medium text-foreground/80">
-            {formatDate(startedAt, { month: "short" })}
+            {formatDate(firstUpdate.date, { month: "short" })}
           </span>
         </StatusEventAside>
         <StatusEventContent hoverable={false}>
-          <StatusEventTitle>{report.title}</StatusEventTitle>
+          <StatusEventTitle className="inline-flex gap-1">
+            {report.title}
+            {isReportResolvedOnly ? <StatusEventTitleCheck /> : null}
+          </StatusEventTitle>
           {report.monitorsToStatusReports.length > 0 ? (
             <StatusEventAffected className="flex flex-wrap gap-1">
               {report.monitorsToStatusReports.map((affected) => (

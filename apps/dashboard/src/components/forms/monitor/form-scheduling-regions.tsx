@@ -25,7 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  type MonitorFlyRegion,
+  type Region,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
 import { useState, useTransition } from "react";
@@ -33,6 +33,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
@@ -42,7 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
-import { groupByContinent } from "@openstatus/utils";
+import { formatRegionCode, groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { CircleX, Info } from "lucide-react";
@@ -140,7 +141,7 @@ export function FormSchedulingRegions({
                         }}
                         className={cn(
                           !periodicity.includes(watchPeriodicity) &&
-                            "[&_[data-slot=slider-range]]:bg-destructive",
+                            "[&_[data-slot=slider-range]]:bg-destructive"
                         )}
                       />
                       <span
@@ -222,7 +223,7 @@ export function FormSchedulingRegions({
                                   size="sm"
                                   type="button"
                                   className={cn(
-                                    isAllSelected && "text-muted-foreground",
+                                    isAllSelected && "text-muted-foreground"
                                   )}
                                   disabled={disabled}
                                   onClick={() => {
@@ -230,7 +231,7 @@ export function FormSchedulingRegions({
                                       // Add all regions from this continent
                                       const newRegions = [...watchRegions];
                                       r.filter((r) =>
-                                        allowedRegions.includes(r.code),
+                                        allowedRegions.includes(r.code)
                                       ).forEach((region) => {
                                         if (!newRegions.includes(region.code)) {
                                           newRegions.push(region.code);
@@ -245,10 +246,8 @@ export function FormSchedulingRegions({
                                           (region) =>
                                             !r
                                               .map(({ code }) => code)
-                                              .includes(
-                                                region as MonitorFlyRegion,
-                                              ),
-                                        ),
+                                              .includes(region as Region)
+                                        )
                                       );
                                     }
                                   }}
@@ -265,12 +264,12 @@ export function FormSchedulingRegions({
                                       name="regions"
                                       render={({ field }) => {
                                         const checked = field.value?.includes(
-                                          region.code,
+                                          region.code
                                         );
                                         const disabled = checked
                                           ? false
                                           : !allowedRegions.includes(
-                                              region.code,
+                                              region.code
                                             ) || isMaxed;
                                         const deprecated = region.deprecated;
                                         return (
@@ -291,8 +290,8 @@ export function FormSchedulingRegions({
                                                 } else {
                                                   field.onChange(
                                                     field.value?.filter(
-                                                      (r) => r !== region.code,
-                                                    ),
+                                                      (r) => r !== region.code
+                                                    )
                                                   );
                                                 }
                                               }}
@@ -307,23 +306,24 @@ export function FormSchedulingRegions({
                                                     <FormLabel
                                                       htmlFor={region.code}
                                                       className={cn(
-                                                        "w-full gap-0 truncate font-mono font-normal text-sm",
-                                                        deprecated &&
-                                                          "line-through decoration-foreground/70",
+                                                        "w-full truncate font-mono font-normal text-sm"
                                                       )}
                                                     >
-                                                      <span
-                                                        className={cn(
-                                                          "text-nowrap",
-                                                        )}
-                                                      >
-                                                        {region.code}{" "}
+                                                      <span className="text-nowrap text-destructive">
+                                                        {formatRegionCode(
+                                                          region.code
+                                                        )}{" "}
                                                         {region.flag}
-                                                        {"\u00A0"}
                                                       </span>
-                                                      <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                                      <span className="truncate font-normal text-xs leading-[inherit] line-through decoration-foreground/70">
                                                         {region.location}
                                                       </span>
+                                                      <IconCloudProviderTooltip
+                                                        provider={
+                                                          region.provider
+                                                        }
+                                                        className="size-3"
+                                                      />
                                                     </FormLabel>
                                                   </TooltipTrigger>
                                                   <TooltipContent>
@@ -338,21 +338,21 @@ export function FormSchedulingRegions({
                                             ) : (
                                               <FormLabel
                                                 htmlFor={region.code}
-                                                className={cn(
-                                                  "w-full gap-0 truncate font-mono font-normal text-sm",
-                                                  deprecated &&
-                                                    "line-through decoration-foreground/70",
-                                                )}
+                                                className="w-full truncate font-mono font-normal text-sm"
                                               >
-                                                <span
-                                                  className={cn("text-nowrap")}
-                                                >
-                                                  {region.code} {region.flag}
-                                                  {"\u00A0"}
+                                                <span className="text-nowrap">
+                                                  {formatRegionCode(
+                                                    region.code
+                                                  )}{" "}
+                                                  {region.flag}
                                                 </span>
                                                 <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
                                                   {region.location}
                                                 </span>
+                                                <IconCloudProviderTooltip
+                                                  provider={region.provider}
+                                                  className="size-3"
+                                                />
                                               </FormLabel>
                                             )}
                                           </FormItem>
@@ -364,7 +364,7 @@ export function FormSchedulingRegions({
                               </div>
                             </div>
                           );
-                        },
+                        }
                       )}
                     </div>
                   </FormControl>
@@ -373,9 +373,18 @@ export function FormSchedulingRegions({
             />
             <Note color="info">
               <Info />
-              All striked out regions are deprecated and will be removed in the
-              future. We are routing traffic to close regions. We will be adding
-              more regions in the future.
+              <div>
+                Unfortunately,{" "}
+                <span className="font-medium text-destructive">
+                  red regions are deprecated
+                </span>{" "}
+                and will be removed in the future. We are routing traffic to the
+                nearest regions. To compensate for the loss, we have added{" "}
+                <span className="font-medium">
+                  new regions from Koyeb and Railway
+                </span>
+                .
+              </div>
             </Note>
           </FormCardContent>
           <FormCardFooter>

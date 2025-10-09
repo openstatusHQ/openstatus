@@ -3,10 +3,10 @@ import { z } from "zod";
 
 import {
   flyRegions,
-  monitorFlyRegionSchema,
+  monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
-import { continentDict, flyRegionsDict } from "@openstatus/utils";
+import type { Region } from "@openstatus/db/src/schema/constants";
+import { continentDict, regionDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
@@ -16,16 +16,16 @@ export function timestampFormatter(timestamp: number) {
   return new Date(timestamp).toUTCString(); // GMT format
 }
 
-export function continentFormatter(region: MonitorFlyRegion) {
-  const continent = flyRegionsDict[region].continent;
+export function continentFormatter(region: Region) {
+  const continent = regionDict[region].continent;
   return continentDict[continent].code;
 }
 
 export function regionFormatter(
-  region: MonitorFlyRegion,
+  region: Region,
   type: "short" | "long" = "short",
 ) {
-  const { code, flag, location } = flyRegionsDict[region];
+  const { code, flag, location } = regionDict[region];
   if (type === "short") return `${code} ${flag}`;
   return `${location} ${flag}`;
 }
@@ -114,7 +114,7 @@ export const cachedCheckerSchema = z.object({
   url: z.string(),
   timestamp: z.number(),
   method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
-  checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
+  checks: checkerSchema.extend({ region: monitorRegionSchema }).array(),
 });
 
 const errorRequest = z.object({
@@ -123,13 +123,13 @@ const errorRequest = z.object({
 });
 
 export const regionCheckerSchema = checkerSchema.extend({
-  region: monitorFlyRegionSchema,
+  region: monitorRegionSchema,
   state: z.literal("success").default("success"),
 });
 
 export const regionCheckerSchemaResponse = regionCheckerSchema.or(
   errorRequest.extend({
-    region: monitorFlyRegionSchema,
+    region: monitorRegionSchema,
   }),
 );
 export type Timing = z.infer<typeof timingSchema>;
@@ -152,7 +152,7 @@ export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 export type ErrorRequest = z.infer<typeof errorRequest>;
 export async function checkRegion(
   url: string,
-  region: MonitorFlyRegion,
+  region: Region,
   opts?: {
     method?: Method;
     headers?: { value: string; key: string }[];
@@ -160,11 +160,35 @@ export async function checkRegion(
   },
 ): Promise<RegionCheckerResponse> {
   //
-  const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
+  //
+  const regionInfo = regionDict[region];
+
+  let endpoint = "";
+  let regionHeader = {};
+  switch (regionInfo.provider) {
+    case "fly":
+      endpoint = `https://checker.openstatus.dev/ping/${region}`;
+      regionHeader = { "fly-prefer-region": region };
+      break;
+    case "koyeb":
+      endpoint = `https://openstatus-checker.koyeb.app/ping/${region}`;
+      regionHeader = {
+        "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", ""),
+      };
+      break;
+    case "railway":
+      endpoint = `https://railway-proxy-production-9cb1.up.railway.app/ping/${region}`;
+      regionHeader = { "railway-region": region.replace("railway_", "") };
+      break;
+    default:
+      break;
+  }
+
+  const res = await fetch(endpoint, {
     headers: {
       Authorization: `Basic ${process.env.CRON_SECRET}`,
       "Content-Type": "application/json",
-      "fly-prefer-region": region,
+      ...regionHeader,
     },
     method: "POST",
     body: JSON.stringify({
@@ -244,8 +268,6 @@ export async function storeBaseCheckerData({
   await redis.hset(`check:base:${id}`, parsed.data);
   const expire = 60 * 60 * 24 * 7; // 7days
   await redis.expire(`check:base:${id}`, expire);
-
-  return id;
 }
 
 export async function storeCheckerData({

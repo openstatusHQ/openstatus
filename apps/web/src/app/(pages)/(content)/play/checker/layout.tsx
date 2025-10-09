@@ -21,7 +21,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Checker</BreadcrumbPage>
+            <BreadcrumbPage>
+              <Link href="/play/checker">Checker</Link>
+            </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

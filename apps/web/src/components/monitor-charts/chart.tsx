@@ -144,4 +144,23 @@ const chartConfig: Record<Region, { label: string; color: string }> = {
   waw: { label: "WAW", color: "hsl(0 0% 45.1%)" },
   yul: { label: "YUL", color: "hsl(25 5.3% 44.7%)" },
   yyz: { label: "YYZ", color: "hsl(0 84.2% 60.2%)" },
+  koyeb_fra: { label: "FRA (koyeb)", color: "hsl(0 0% 45.1%)" },
+  koyeb_par: { label: "PAR (koyeb)", color: "hsl(0 0% 45.1%)" },
+  koyeb_sfo: { label: "SFO (koyeb)", color: "hsl(0 0% 45.1%)" },
+  koyeb_sin: { label: "SIN (koyeb)", color: "hsl(0 0% 45.1%)" },
+  koyeb_tyo: { label: "TYO (koyeb)", color: "hsl(0 0% 45.1%)" },
+  koyeb_was: { label: "WAS (koyeb)", color: "hsl(0 0% 45.1%)" },
+  "railway_asia-southeast1-eqsg3a": {
+    label: "asia-southeast1-eqsg3a (railway)",
+    color: "hsl(0 0% 45.1%)",
+  },
+  "railway_europe-west4-drams3a": {
+    label: "europe-west4-drams3a (railway)",
+    color: "hsl(0 0% 45.1%)",
+  },
+  "railway_us-west2": { label: "us-west2 (railway)", color: "hsl(0 0% 45.1%)" },
+  "railway_us-east4-eqdc4a": {
+    label: "us-east4-eqdc4a (railway)",
+    color: "hsl(0 0% 45.1%)",
+  },
 };

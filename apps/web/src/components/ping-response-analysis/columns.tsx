@@ -3,43 +3,71 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 
-import { flyRegionsDict } from "@openstatus/utils";
-import { DataTableColumnHeader } from "../data-table/data-table-column-header";
-import { StatusCodeBadge } from "../monitor/status-code-badge";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { IconCloudProviderTooltip } from "@/components/icon-cloud-provider";
+import { cn } from "@/lib/utils";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardPortal,
+  HoverCardTrigger,
+} from "@openstatus/ui";
+import { formatRegionCode, regionDict } from "@openstatus/utils";
 
 export const columns: ColumnDef<RegionChecker>[] = [
-  {
-    id: "key",
-    accessorFn: (row) => row.region,
-    header: "Key",
-    cell: ({ row }) => {
-      return <div className="font-mono">{row.original.region}</div>;
-    },
-    enableHiding: false,
-  },
   {
     accessorKey: "region",
     accessorFn: (row) => row.region,
     header: "Region",
     cell: ({ row }) => {
+      const region = regionDict[row.original.region];
+      const code = formatRegionCode(row.original.region);
       return (
-        <div className="text-muted-foreground">
-          {regionFormatter(row.original.region, "long")}
+        <div className="flex items-center gap-1.5">
+          <IconCloudProviderTooltip provider={region.provider} />
+          <div className="truncate">
+            <span className="font-mono">{code}</span>{" "}
+            <span className="text-muted-foreground">
+              {regionFormatter(row.original.region, "long")}
+            </span>
+          </div>
         </div>
       );
     },
     filterFn: (row, _id, filterValue) => {
       const region = regionFormatter(row.original.region, "long").toLowerCase();
       const continent =
-        flyRegionsDict[row.original.region].continent.toLocaleLowerCase();
-      return `${region} ${continent}`.includes(filterValue.toLowerCase());
+        regionDict[row.original.region].continent.toLocaleLowerCase();
+      const provider =
+        regionDict[row.original.region].provider.toLocaleLowerCase();
+      return `${region} ${continent} ${provider}`.includes(
+        filterValue.toLowerCase(),
+      );
     },
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      return <StatusCodeBadge statusCode={row.original.status} />;
+      const statusCode = row.original.status;
+      const yellow = String(statusCode).startsWith("1");
+      const green = String(statusCode).startsWith("2");
+      const blue = String(statusCode).startsWith("3");
+      const rose =
+        String(statusCode).startsWith("4") ||
+        String(statusCode).startsWith("5");
+      return (
+        <div
+          className={cn("font-mono", {
+            "text-green-500": green,
+            "text-blue-500": blue,
+            "text-rose-500": rose,
+            "text-yellow-500": yellow,
+          })}
+        >
+          {statusCode}
+        </div>
+      );
     },
   },
   {
@@ -56,7 +84,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     accessorFn: (row) => `${row.timing.dnsDone - row.timing.dnsStart}`,
     cell: ({ row, column }) => {
       return (
-        <div className="text-right font-mono">
+        <div className="text-right font-mono text-muted-foreground">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -79,7 +107,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     },
     cell: ({ row, column }) => {
       return (
-        <div className="text-right font-mono">
+        <div className="text-right font-mono text-muted-foreground">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -103,7 +131,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     },
     cell: ({ row, column }) => {
       return (
-        <div className="text-right font-mono">
+        <div className="text-right font-mono text-muted-foreground">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -127,7 +155,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     },
     cell: ({ row, column }) => {
       return (
-        <div className="text-right font-mono">
+        <div className="text-right font-mono text-muted-foreground">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -151,7 +179,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     },
     cell: ({ row, column }) => {
       return (
-        <div className="text-right font-mono">
+        <div className="text-right font-mono text-muted-foreground">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -182,4 +210,107 @@ export const columns: ColumnDef<RegionChecker>[] = [
       headerClassName: "text-right",
     },
   },
+  // {
+  //   accessorKey: "timing",
+  //   header: "Timing",
+  //   cell: ({ row }) => {
+  //     return <HoverCardTiming timing={row.original.timing} />;
+  //   },
+  //   meta: {
+  //     headerClassName: "text-right",
+  //   },
+  // },
 ];
+
+function HoverCardTiming({
+  timing: rawTiming,
+}: {
+  timing: NonNullable<Extract<RegionChecker, { type: "http" }>["timing"]>;
+}) {
+  const timing = getTiming(rawTiming);
+  const total = getTotal(timing);
+  return (
+    <HoverCard openDelay={50} closeDelay={50}>
+      <HoverCardTrigger
+        className="opacity-70 hover:opacity-100 data-[state=open]:opacity-100"
+        asChild
+      >
+        <div className="flex">
+          {Object.entries(timing).map(([key, value], index) => (
+            <div
+              key={key}
+              className={cn("h-4")}
+              style={{
+                width: `${(value / total) * 100}%`,
+                backgroundColor: `hsl(var(--chart-${index + 1}))`,
+              }}
+            />
+          ))}
+        </div>
+      </HoverCardTrigger>
+      {/* REMINDER: allows us to port the content to the document.body, which is helpful when using opacity-50 on the row element */}
+      <HoverCardPortal>
+        <HoverCardContent side="bottom" align="end" className="z-10 w-auto p-2">
+          <HoverCardTimingContent timing={rawTiming} />
+        </HoverCardContent>
+      </HoverCardPortal>
+    </HoverCard>
+  );
+}
+
+function HoverCardTimingContent({
+  timing: rawTiming,
+}: {
+  timing: NonNullable<Extract<RegionChecker, { type: "http" }>["timing"]>;
+}) {
+  const timing = getTiming(rawTiming);
+  const total = getTotal(timing);
+  return (
+    <div className="flex flex-col gap-1">
+      {Object.entries(timing).map(([key, value], index) => {
+        return (
+          <div key={key} className="grid grid-cols-2 gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div
+                className={cn("h-2 w-2 rounded-full")}
+                style={{ backgroundColor: `hsl(var(--chart-${index + 1}))` }}
+              />
+              <div className="font-mono text-accent-foreground uppercase">
+                {key}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="font-mono text-muted-foreground">
+                {`${new Intl.NumberFormat("en-US", {
+                  maximumFractionDigits: 2,
+                }).format((value / total) * 100)}%`}
+              </div>
+              <div className="font-mono">
+                {new Intl.NumberFormat("en-US", {
+                  maximumFractionDigits: 3,
+                }).format(value)}
+                <span className="text-muted-foreground">ms</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function getTotal(timing: ReturnType<typeof getTiming>) {
+  return Object.values(timing).reduce((acc, curr) => acc + curr, 0);
+}
+
+function getTiming(
+  timing: NonNullable<Extract<RegionChecker, { type: "http" }>["timing"]>,
+) {
+  return {
+    dns: timing.dnsDone - timing.dnsStart,
+    connect: timing.connectDone - timing.connectStart,
+    tls: timing.tlsHandshakeDone - timing.tlsHandshakeStart,
+    ttfb: timing.firstByteDone - timing.firstByteStart,
+    transfer: timing.transferDone - timing.transferStart,
+  };
+}

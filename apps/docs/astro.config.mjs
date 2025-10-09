@@ -25,7 +25,7 @@ export default defineConfig({
   integrations: [
     sitemap(),
     starlight({
-      title: "OpenStatus Docs",
+      title: "openstatus docs",
       favicon: "/favicon.ico",
       social: [
         {
@@ -91,6 +91,10 @@ export default defineConfig({
             {
               label: "How to create a status page",
               slug: "tutorial/how-to-create-status-page",
+            },
+            {
+              label: "How to configure a status page (beta)",
+              slug: "tutorial/how-to-configure-status-page",
             },
             {
               label: "Get Started with OpenStatus CLI",
@@ -176,9 +180,9 @@ export default defineConfig({
       ],
       plugins: [
         starlightLlmsTxt({
-          projectName: "OpenStatus Docs",
+          projectName: "openstatus docs",
           description:
-            "OpenStatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.",
+            "openstatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.",
         }),
         starlightImageZoom(),
         starlightLinksValidator({

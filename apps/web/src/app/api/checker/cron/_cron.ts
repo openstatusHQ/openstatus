@@ -15,12 +15,14 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   flyRegionsDict,
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import { regionDict } from "@openstatus/utils";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -93,7 +95,7 @@ export const cron = async ({
   }
 
   for (const row of monitors.data) {
-    const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
+    // const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
     const result = await db
       .select()
@@ -108,7 +110,7 @@ export const cron = async ({
       continue;
     }
 
-    for (const region of selectedRegions) {
+    for (const region of row.regions) {
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
 
@@ -171,7 +173,7 @@ const createCronTask = async ({
   client: CloudTasksClient;
   parent: string;
   status: MonitorStatus;
-  region: string;
+  region: Region;
 }) => {
   let payload:
     | z.infer<typeof httpPayloadSchema>
@@ -227,16 +229,26 @@ const createCronTask = async ({
   if (!payload) {
     throw new Error("Invalid jobType");
   }
-
+  const regionInfo = regionDict[region];
+  let regionHeader = {};
+  if (regionInfo.provider === "fly") {
+    regionHeader = { "fly-prefer-region": region };
+  }
+  if (regionInfo.provider === "koyeb") {
+    regionHeader = { "X-KOYEB-REGION-OVERRIDE": region.replace("koyeb_", "") };
+  }
+  if (regionInfo.provider === "railway") {
+    regionHeader = { "railway-region": region.replace("railway_", "") };
+  }
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
       headers: {
         "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-        "fly-prefer-region": region, // Specify the region you want the request to be sent to
+        ...regionHeader,
         Authorization: `Basic ${env.CRON_SECRET}`,
       },
       httpMethod: "POST",
-      url: generateUrl({ row }),
+      url: generateUrl({ row, region }),
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
@@ -248,12 +260,20 @@ const createCronTask = async ({
   return client.createTask(request);
 };
 
-function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
-  switch (row.jobType) {
-    case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
-    case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+function generateUrl({
+  row,
+  region,
+}: { row: z.infer<typeof selectMonitorSchema>; region: Region }) {
+  const regionInfo = regionDict[region];
+
+  switch (regionInfo.provider) {
+    case "fly":
+      return `https://openstatus-checker.fly.dev/checker/${row.jobType}?monitor_id=${row.id}`;
+    case "koyeb":
+      return `https://openstatus-checker.koyeb.app/checker/${row.jobType}?monitor_id=${row.id}`;
+    case "railway":
+      return `https://railway-proxy-production-9cb1.up.railway.app/checker/${row.jobType}?monitor_id=${row.id}`;
+
     default:
       throw new Error("Invalid jobType");
   }

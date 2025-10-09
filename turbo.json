@@ -32,6 +32,12 @@
       "cache": false,
       "dependsOn": ["@openstatus/react#build"]
     },
+    "@openstatus/status-page#dev": {
+      "cache": false
+    },
+    "@openstatus/dashboard#dev": {
+      "cache": false
+    },
     "test": {
       "cache": false
     },

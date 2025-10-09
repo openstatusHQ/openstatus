@@ -31,7 +31,7 @@ export default async function middleware(req: NextRequest) {
     type = "pathname";
   }
 
-  console.log({ pathname: url.pathname, type });
+  console.log({ pathname: url.pathname, type, prefix });
 
   if (url.pathname === "/" && type !== "hostname") {
     return response;
@@ -54,10 +54,25 @@ export default async function middleware(req: NextRequest) {
   }
 
   if (_page?.passwordProtected) {
-    const protectedCookie = cookies.get(createProtectedCookieKey(prefix));
+    const protectedCookie = cookies.get(createProtectedCookieKey(_page.slug));
     const password = protectedCookie ? protectedCookie.value : undefined;
+    console.log({ protectedCookie, password });
+
     if (password !== _page.password && !url.pathname.endsWith("/protected")) {
       const { pathname, origin } = req.nextUrl;
+
+      // custom domain redirect
+      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+        const redirect = pathname.replace(`/${_page.customDomain}`, "");
+        const url = new URL(
+          `https://${
+            _page.customDomain
+          }/protected?redirect=${encodeURIComponent(redirect)}`,
+        );
+        console.log("redirect to /protected", url.toString());
+        return NextResponse.redirect(url);
+      }
+
       const url = new URL(
         `${origin}${
           type === "pathname" ? `/${prefix}` : ""
@@ -67,6 +82,14 @@ export default async function middleware(req: NextRequest) {
     }
     if (password === _page.password && url.pathname.endsWith("/protected")) {
       const redirect = url.searchParams.get("redirect");
+
+      // custom domain redirect
+      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+        const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
+        console.log("redirect to /", url.toString());
+        return NextResponse.redirect(url);
+      }
+
       return NextResponse.redirect(
         new URL(
           `${req.nextUrl.origin}${
@@ -82,6 +105,16 @@ export default async function middleware(req: NextRequest) {
 
   if (proxy) {
     return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
+  }
+
+  if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+    if (pathnames.length > 2) {
+      const pathname = pathnames.slice(2).join("/");
+      return NextResponse.rewrite(
+        new URL(`/${_page.slug}/${pathname}`, req.url),
+      );
+    }
+    return NextResponse.rewrite(new URL(`/${_page.slug}`, req.url));
   }
 
   return response;

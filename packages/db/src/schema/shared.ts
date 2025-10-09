@@ -129,7 +129,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
   })
   .omit({
     // workspaceId: true,
-    id: true,
+    // id: true,
     password: true,
   });
 

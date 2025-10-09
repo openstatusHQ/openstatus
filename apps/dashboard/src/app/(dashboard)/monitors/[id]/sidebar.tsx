@@ -95,7 +95,8 @@ export function Sidebar() {
               label: "Name",
               value: (
                 <TableCellLink
-                  href={`/notifications/${notification.id}`}
+                  // TODO: add the ?id= to the href and open the sheet
+                  href={"/notifications"}
                   value={notification.name}
                 />
               ),

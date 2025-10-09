@@ -5,6 +5,7 @@ import { getTimingPhases, regionFormatter } from "./utils";
 
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
   type ChartConfig,
   ChartContainer,
@@ -13,6 +14,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/src/components/chart";
+import { formatRegionCode, regionDict } from "@openstatus/utils";
 
 const chartConfig = {
   dns: {
@@ -77,16 +79,49 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
                     transform="rotate(-35)"
                     className="font-mono"
                   >
-                    {payload.value}
+                    {formatRegionCode(payload.value)}
                   </text>
                 </g>
               );
             }}
           />
           <ChartTooltip
+            defaultIndex={5}
             content={
               <ChartTooltipContent
-                labelFormatter={(label) => regionFormatter(label, "long")}
+                labelFormatter={(label) => {
+                  return (
+                    <div className="flex items-center gap-2">
+                      <IconCloudProvider
+                        provider={
+                          regionDict[label as keyof typeof regionDict].provider
+                        }
+                        className="size-2.5!"
+                      />
+                      {regionFormatter(label, "long")}
+                    </div>
+                  );
+                }}
+                formatter={(value, name) => (
+                  <>
+                    <div
+                      className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-(--color-bg)"
+                      style={
+                        {
+                          "--color-bg": `var(--color-${name})`,
+                        } as React.CSSProperties
+                      }
+                    />
+                    {chartConfig[name as keyof typeof chartConfig]?.label ||
+                      name}
+                    <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
+                      {value}
+                      <span className="font-normal text-muted-foreground">
+                        ms
+                      </span>
+                    </div>
+                  </>
+                )}
               />
             }
           />

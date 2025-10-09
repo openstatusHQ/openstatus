@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
 import {
   maintenance,
   monitorsToPages,
@@ -8,6 +8,7 @@ import {
   pageSubscriber,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
+  selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
 
@@ -79,7 +80,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitors = _page.monitorsToPages
         // NOTE: we cannot nested `where` in drizzle to filter active monitors
-        .filter((m) => m.monitor.active && !m.monitor.deletedAt)
+        .filter((m) => !m.monitor.deletedAt)
         .map((m) => {
           const events = getEvents({
             maintenances: _page.maintenances,
@@ -125,6 +126,7 @@ export const statusPageRouter = createTRPCRouter({
         .filter((e) => {
           if (e.type === "incident") return false;
           if (!e.from || e.from.getTime() >= threshold) return true;
+          if (e.type === "report" && e.status !== "success") return true;
           return false;
         })
         .sort((a, b) => a.from.getTime() - b.from.getTime());
@@ -231,7 +233,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const monitors = _page.monitorsToPages.filter(
-        (m) => m.monitor.active && !m.monitor.deletedAt,
+        (m) => !m.monitor.deletedAt,
       );
 
       if (monitors.length !== opts.input.monitorIds.length) return null;
@@ -532,15 +534,35 @@ export const statusPageRouter = createTRPCRouter({
         },
       });
 
-      if (!_page) return null;
+      if (!_page) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
 
-      if (_page.workspace.plan === "free") return null;
+      const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
+
+      if (!workspace.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace data is invalid",
+        });
+      }
+
+      if (!workspace.data.limits["status-subscribers"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to use status subscribers",
+        });
+      }
 
       const _alreadySubscribed =
         await opts.ctx.db.query.pageSubscriber.findFirst({
           where: and(
             eq(pageSubscriber.pageId, _page.id),
             eq(pageSubscriber.email, opts.input.email),
+            isNotNull(pageSubscriber.acceptedAt),
           ),
         });
 

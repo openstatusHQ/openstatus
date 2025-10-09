@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 import type * as RechartsPrimitive from "recharts";
 import type { Payload } from "recharts/types/component/DefaultLegendContent";
 
@@ -33,12 +34,33 @@ export function ChartLegendBadge({
     tooltip?: Record<string, string | undefined>;
   }) {
   const { config } = useChart();
+  const [focusedIndex, setFocusedIndex] = React.useState(0);
+  const buttonRefs = React.useRef<(HTMLButtonElement | null)[]>([]);
 
   if (!payload?.length) {
     return null;
   }
 
+  const filteredPayload = payload.filter((item) => item.type !== "none");
   const hasMaxActive = active && maxActive ? active.length >= maxActive : false;
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      const direction = event.key === "ArrowLeft" ? -1 : 1;
+      let nextIndex = 0;
+      nextIndex =
+        (focusedIndex + direction + filteredPayload.length) %
+        filteredPayload.length;
+      setFocusedIndex(nextIndex);
+      while (buttonRefs.current[nextIndex]?.disabled === true) {
+        nextIndex =
+          (nextIndex + direction + filteredPayload.length) %
+          filteredPayload.length;
+      }
+      buttonRefs.current[nextIndex]?.focus();
+    }
+  };
 
   return (
     <div
@@ -47,64 +69,71 @@ export function ChartLegendBadge({
         verticalAlign === "top" ? "pb-3" : "pt-3",
         className,
       )}
+      onKeyDown={handleKeyDown}
+      role="group"
+      aria-label="Chart legend"
     >
-      {payload
-        // NOTE: recharts supports "none" type for legend items
-        .filter((item) => item.type !== "none")
-        .map((item) => {
-          const key = `${nameKey || item.dataKey || "value"}`;
-          const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const suffix = annotation?.[item.dataKey as string];
-          const tooltipLabel = tooltip?.[item.dataKey as string];
-          const isActive = active?.includes(item.dataKey);
+      {filteredPayload.map((item, index) => {
+        const key = `${nameKey || item.dataKey || "value"}`;
+        const itemConfig = getPayloadConfigFromPayload(config, item, key);
+        const suffix = annotation?.[item.dataKey as string];
+        const tooltipLabel = tooltip?.[item.dataKey as string];
+        const isActive = active ? active?.includes(item.dataKey) : true;
+        const isFocused = index === focusedIndex;
 
-          const badge = (
-            <button
-              key={item.value}
-              type="button"
-              className={cn(
-                badgeVariants({ variant: "outline" }),
-                "outline-none",
-                "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground",
-                !isActive && "opacity-60",
-                !isActive && hasMaxActive && "cursor-not-allowed opacity-40",
-              )}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleActive?.(item);
-              }}
-              disabled={!isActive && hasMaxActive}
-            >
-              {itemConfig?.icon && !hideIcon ? (
-                <itemConfig.icon />
-              ) : (
-                <div
-                  className="h-2 w-2 shrink-0 rounded-(--radius-xs)"
-                  style={{
-                    backgroundColor: item.color,
-                  }}
-                />
-              )}
-              {itemConfig?.label}
-              {suffix !== undefined ? (
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  {suffix}
-                </span>
-              ) : null}
-            </button>
+        const badge = (
+          <button
+            key={item.value}
+            type="button"
+            ref={(el) => {
+              buttonRefs.current[index] = el;
+            }}
+            className={cn(
+              badgeVariants({ variant: "outline" }),
+              "outline-none",
+              "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground",
+              !isActive && "opacity-60",
+              !isActive && hasMaxActive && "cursor-not-allowed opacity-40",
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              setFocusedIndex(index);
+              handleActive?.(item);
+            }}
+            onFocus={() => setFocusedIndex(index)}
+            disabled={!isActive && hasMaxActive}
+            tabIndex={isFocused ? 0 : -1}
+          >
+            {itemConfig?.icon && !hideIcon ? (
+              <itemConfig.icon />
+            ) : (
+              <div
+                className="h-2 w-2 shrink-0 rounded-[2px]"
+                style={{
+                  backgroundColor: item.color,
+                }}
+              />
+            )}
+            {itemConfig?.label}
+            {suffix !== undefined ? (
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {suffix}
+              </span>
+            ) : null}
+          </button>
+        );
+
+        if (tooltipLabel) {
+          return (
+            <ChartLegendTooltip key={item.value} tooltip={tooltipLabel}>
+              {badge}
+            </ChartLegendTooltip>
           );
+        }
 
-          if (tooltipLabel) {
-            return (
-              <ChartLegendTooltip key={item.value} tooltip={tooltipLabel}>
-                {badge}
-              </ChartLegendTooltip>
-            );
-          }
-
-          return badge;
-        })}
+        return badge;
+      })}
     </div>
   );
 }

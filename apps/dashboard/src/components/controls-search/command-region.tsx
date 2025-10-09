@@ -1,5 +1,6 @@
 "use client";
 
+import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -24,7 +25,7 @@ import {
 import { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { groupByContinent } from "@openstatus/utils";
+import { formatRegionCode, groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
@@ -59,7 +60,7 @@ export function CommandRegion({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="relative w-[200px] overflow-hidden p-0"
+        className="relative w-[250px] overflow-hidden p-0"
       >
         <Command>
           <CommandInput placeholder="Search region..." disabled={limited} />
@@ -122,9 +123,15 @@ export function CommandRegion({
                           );
                         }}
                       >
-                        <span className="mr-1">{region.flag}</span>
-                        {region.code}
-                        <span className="ml-1 truncate text-muted-foreground text-xs">
+                        <span>{region.flag}</span>
+                        <IconCloudProvider
+                          provider={region.provider}
+                          className="size-3"
+                        />
+                        <span className="font-mono">
+                          {formatRegionCode(region.code)}
+                        </span>
+                        <span className="truncate text-muted-foreground text-xs">
                           {region.location}
                         </span>
                         <Check

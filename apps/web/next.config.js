@@ -101,8 +101,31 @@ const nextConfig = {
             { type: "cookie", key: "sp_mode", value: "new" },
             {
               type: "host",
-              value:
-                "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)(?<domain>.+)$",
+              value: "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:path*",
+        },
+        {
+          source:
+            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|events|monitors|protected).*)",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "^(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:domain*",
+        },
+        {
+          source:
+            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "^(?<domain>.+)$",
             },
           ],
           destination: "https://www.stpg.dev/:domain/:path*",

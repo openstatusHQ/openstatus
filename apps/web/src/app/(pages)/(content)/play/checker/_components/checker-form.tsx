@@ -8,7 +8,6 @@ import * as z from "zod";
 
 import {
   Button,
-  Checkbox,
   Form,
   FormControl,
   FormDescription,
@@ -34,6 +33,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { IconCloudProviderTooltip } from "@/components/icon-cloud-provider";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import {
@@ -45,7 +45,8 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/utils";
 import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -141,8 +142,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                           setSearchParams({ id: item });
                           toast.success("Data is available!", {
                             id: toastId,
-                            duration: 3000,
-                            description: "Click the button below to more.",
+                            description: "Learn about the response details.",
                             action: {
                               label: "Details",
                               onClick: () =>
@@ -173,7 +173,10 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 if (_result) {
                   if (_result[0].state === "success") {
                     toast.loading(
-                      `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
+                      `Checking ${regionFormatter(
+                        _result[0].region,
+                        "long",
+                      )} (${latencyFormatter(_result[0].latency)})`,
                       {
                         id: toastId,
                       },
@@ -187,8 +190,11 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
             toast.error("Something went wrong", {
               description: "Please try again",
               id: toastId,
-              duration: 2000,
             });
+          } finally {
+            if (toastId) {
+              setTimeout(() => toast.dismiss(toastId), 3000);
+            }
           }
         }
 
@@ -261,28 +267,11 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 )}
               </Button>
             </div>
-          </div>
-          <div>
-            <FormField
-              control={form.control}
-              name="redirect"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Redirect to extended details</FormLabel>
-                    <FormDescription className="max-w-md">
-                      Get response header, timing phases and more.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
+            <div className="-mt-1 col-span-full">
+              <FormDescription className="text-xs">
+                Access the response header, timing phases and latency.
+              </FormDescription>
+            </div>
           </div>
         </form>
       </Form>
@@ -322,7 +311,7 @@ function TableResult({
             <p className="w-[95px]">
               Region{" "}
               <span className="font-normal text-xs tabular-nums">
-                ({result.length}/{flyRegions.length})
+                ({result.length}/{monitorRegions.length})
               </span>
             </p>
             {loading ? (
@@ -333,7 +322,7 @@ function TableResult({
             {id &&
             !loading &&
             result.length > 0 &&
-            result.length !== flyRegions.length ? (
+            result.length !== monitorRegions.length ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
@@ -363,17 +352,23 @@ function TableResult({
         {result.length > 0 ? (
           result
             .filter((item) => item.state === "success")
-            .map((item) => (
-              <TableRow key={item.region}>
-                <TableCell className="flex items-center gap-2 font-medium">
-                  {regionFormatter(item.region, "long")}
-                  <StatusDot value={item.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  {latencyFormatter(item.latency)}
-                </TableCell>
-              </TableRow>
-            ))
+            .map((item) => {
+              const region = regionFormatter(item.region, "long");
+              const latency = latencyFormatter(item.latency);
+              const r = regionDict[item.region];
+              return (
+                <TableRow key={item.region}>
+                  <TableCell className="flex items-center gap-2 font-medium">
+                    <IconCloudProviderTooltip provider={r.provider} />
+                    {region}
+                    <StatusDot value={item.status} />
+                  </TableCell>
+                  <TableCell className="text-right font-mono">
+                    {latency}
+                  </TableCell>
+                </TableRow>
+              );
+            })
         ) : (
           <TableRow>
             <TableCell
@@ -408,16 +403,18 @@ function DotLegend() {
 function StatusDot({ value }: { value: number }) {
   switch (String(value).charAt(0)) {
     case "1":
-      return <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500" />;
     case "2":
-      return <div className="h-1.5 w-1.5 rounded-full bg-green-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />;
     case "3":
-      return <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />;
     case "4":
-      return <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />;
+      return (
+        <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-500" />
+      );
     case "5":
-      return <div className="h-1.5 w-1.5 rounded-full bg-red-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-red-500" />;
     default:
-      return <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />;
+      return <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500" />;
   }
 }

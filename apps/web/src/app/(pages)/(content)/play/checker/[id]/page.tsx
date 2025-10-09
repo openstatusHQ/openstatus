@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import {
@@ -17,6 +17,7 @@ import {
   getCheckerDataById,
   timestampFormatter,
 } from "@/components/ping-response-analysis/utils";
+import { mockCheckAllRegions } from "../api/mock";
 import { searchParamsCache } from "./search-params";
 
 interface Props {
@@ -28,9 +29,12 @@ export default async function CheckPage(props: Props) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const { regions } = searchParamsCache.parse(searchParams);
-  const selectedRegions = regions || [...flyRegions];
+  const selectedRegions = regions || [...monitorRegions];
 
-  const data = await getCheckerDataById(params.id);
+  const data =
+    process.env.NODE_ENV === "development"
+      ? await mockCheckAllRegions()
+      : await getCheckerDataById(params.id);
 
   if (!data) redirect("/play/checker");
 
@@ -74,7 +78,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params;
   const title = "Global Speed Checker";
   const description =
-    "Get speed insights for your api, website from multiple regions.";
+    "API speed test and website speed checker: global latency speed test from different locations.";
   return {
     ...defaultMetadata,
     title,
