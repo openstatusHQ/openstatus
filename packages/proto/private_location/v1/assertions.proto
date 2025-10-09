@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+
+enum NumberComparator {
+    NUMBER_COMPARATOR_UNSPECIFIED = 0;
+    NUMBER_COMPARATOR_EQUAL = 1;
+    NUMBER_COMPARATOR_NOT_EQUAL = 2;
+    NUMBER_COMPARATOR_GREATER_THAN = 3;
+    NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL = 4;
+    NUMBER_COMPARATOR_LESS_THAN = 5;
+    NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL = 6;
+}
+
+enum StringComparator {
+    STRING_COMPARATOR_UNSPECIFIED = 0;
+    STRING_COMPARATOR_CONTAINS = 1;
+    STRING_COMPARATOR_NOT_CONTAINS = 2;
+    STRING_COMPARATOR_EQUAL = 3;
+    STRING_COMPARATOR_NOT_EQUAL = 4;
+    STRING_COMPARATOR_EMPTY = 5;
+    STRING_COMPARATOR_NOT_EMPTY = 6;
+    STRING_COMPARATOR_GREATER_THAN = 7;
+    STRING_COMPARATOR_GREATER_THAN_OR_EQUAL = 8;
+    STRING_COMPARATOR_LESS_THAN = 9;
+    STRING_COMPARATOR_LESS_THAN_OR_EQUAL = 10;
+}
+
+message StatusCodeAssertion {
+    int64 target = 1;
+    NumberComparator comparator = 2;
+}
+
+message BodyAssertion {
+    string target = 1;
+    StringComparator comparator = 2;
+}
+
+message HeaderAssertion {
+    string target = 1;
+    StringComparator comparator = 2;
+    string key = 3;
+}

@@ -13,6 +13,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
+
 )
 
 type statusCode int
@@ -31,7 +32,6 @@ type PingData struct {
 	Headers       string `json:"headers,omitempty"`
 	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
-	Trigger       string `json:"trigger,omitempty"`
 	RequestStatus string `json:"requestStatus,omitempty"`
 	Latency       int64  `json:"latency"`
 	CronTimestamp int64  `json:"cronTimestamp"`
@@ -41,8 +41,9 @@ type PingData struct {
 }
 
 
-func HTTPJob(rawMonitor RawMonitor) error {
-	var req request.HttpCheckerRequest
+func HTTPJob(req request.HttpCheckerRequest) error {
+
+
 	ctx := context.Background()
 	// if err := c.ShouldBindJSON(&req); err != nil {
 	// 	log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
@@ -80,10 +81,6 @@ func HTTPJob(rawMonitor RawMonitor) error {
 		assertionAsString = ""
 	}
 
-	trigger := "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
-	}
 
 	var called int
 
@@ -142,7 +139,6 @@ func HTTPJob(rawMonitor RawMonitor) error {
 			Timing:        string(timingAsString),
 			Headers:       string(headersAsString),
 			Body:          string(res.Body),
-			Trigger:       trigger,
 			RequestStatus: requestStatus,
 		}
 
@@ -238,7 +234,7 @@ func HTTPJob(rawMonitor RawMonitor) error {
 			data.RequestStatus = "success"
 		}
 
-
+		fmt.Println(data)
 		return nil
 	}
 
@@ -260,7 +256,6 @@ func HTTPJob(rawMonitor RawMonitor) error {
 			Error:         1,
 			Assertions:    assertionAsString,
 			Body:          "",
-			Trigger:       trigger,
 			RequestStatus: "error",
 		}
 		fmt.Print(d)
@@ -270,6 +265,6 @@ func HTTPJob(rawMonitor RawMonitor) error {
 
 
 
-
+	fmt.Print()
 	return nil
 }

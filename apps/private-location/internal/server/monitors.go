@@ -2,12 +2,13 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 
 	"connectrpc.com/connect"
-	v1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
+	private_locationv1 "github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1"
 )
 
 // import (
@@ -17,7 +18,7 @@ import (
 // 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 // )
 
-func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
+func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Request[private_locationv1.MonitorsRequest]) (*connect.Response[private_locationv1.MonitorsResponse], error) {
 	token := req.Header().Get("openstatus-token")
 	if token == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing token"))
@@ -30,20 +31,25 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	var v []*v1.HTTPMonitor
+	var v []*private_locationv1.HTTPMonitor
 	for _, monitor := range monitors {
 		fmt.Println(monitor)
-		v = append(v, &v1.HTTPMonitor{
+
+
+		var headers []*private_locationv1.Headers
+		json.Unmarshal([]byte(monitor.Headers), &headers)
+		v = append(v, &private_locationv1.HTTPMonitor{
 			Url:  monitor.URL,
 			Id:   strconv.Itoa(monitor.ID),
 			Method: monitor.Method,
 			Body: monitor.Body,
 			Timeout: (monitor.Timeout),
 			DegradedAt: &monitor.DegradedAfter.Int64,
-
+			FollowRedirects: monitor.FollowRedirects,
+			Headers: headers,
 		})
 	}
-	return connect.NewResponse(&v1.MonitorsResponse{
+	return connect.NewResponse(&private_locationv1.MonitorsResponse{
 		Monitors: v,
 	}), nil
 }

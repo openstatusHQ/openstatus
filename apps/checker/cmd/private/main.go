@@ -7,13 +7,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/openstatus"
-	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
+	"github.com/openstatushq/openstatus/apps/checker/request"
+	v1 "github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1"
+	"github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1/private_locationv1connect"
 )
 
 const (
@@ -34,7 +35,7 @@ func main() {
 	}()
 
 	monitorChannels := make(map[string]chan bool)
-	monitors := make(map[string]openstatus.RawMonitor)
+	monitors := make(map[string]*v1.HTTPMonitor)
 	apiKey := getEnv("OPENSTATUS_KEY", "key")
 
 	configTicker := time.NewTicker(configRefreshInterval)
@@ -60,34 +61,28 @@ func getEnv(key, fallback string) string {
 }
 
 // updateMonitors fetches the latest monitors and starts/stops jobs as needed
-func updateMonitors(apiKey string, monitors map[string]openstatus.RawMonitor, monitorChannels map[string]chan bool) {
-	configMonitors := openstatus.GetMonitors(apiKey)
-	client := v1.NewPrivateLocationServiceClient(
+func updateMonitors(apiKey string, monitors map[string]*v1.HTTPMonitor, monitorChannels map[string]chan bool) {
+	client := private_locationv1connect.NewPrivateLocationServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
 		connect.WithHTTPGet(),
 	)
 
 	ctx, callInfo := connect.NewClientContext(context.Background())
-	callInfo.RequestHeader().Set("openstatus-token", "key")
+	callInfo.RequestHeader().Set("openstatus-token", apiKey)
 	res, err := client.Monitors(ctx, &connect.Request[v1.MonitorsRequest]{})
 	if err != nil {
 		log.Fatal(err)
 	}
-	mi := res.Msg.Monitors
-	for _, c:= range mi {
 
-		fmt.Println(c)
-	}
 	currentIDs := make(map[string]struct{})
-	for _, m := range configMonitors {
-		idStr := strconv.Itoa(m.ID)
-		currentIDs[idStr] = struct{}{}
-		if _, exists := monitors[idStr]; !exists {
+	for _, m := range res.Msg.Monitors {
+		currentIDs[m.Id] = struct{}{}
+		if _, exists := monitors[m.Id]; !exists {
 			doneChan := make(chan bool)
-			monitorChannels[idStr] = doneChan
-			monitors[idStr] = m
-			go scheduleJob(m, doneChan)
+			monitorChannels[m.Id] = doneChan
+			monitors[m.Id] = m
+			go scheduleJob(*m, doneChan)
 		}
 	}
 
@@ -101,39 +96,38 @@ func updateMonitors(apiKey string, monitors map[string]openstatus.RawMonitor, mo
 	}
 }
 
-func scheduleJob(req openstatus.RawMonitor, done chan bool) {
+func scheduleJob(monitor v1.HTTPMonitor, done chan bool) {
 	ticker := time.NewTicker(checkInterval)
 	defer ticker.Stop()
 
-	if req.JobType == "http" {
-		// Run the job and schedule it
-		go openstatus.HTTPJob(req)
+	var degradedAfter int64
+	if monitor.DegradedAt != nil {
+		degradedAfter = *monitor.DegradedAt
 	}
-	if req.JobType == "tcp" {
-		// Run the job and schedule it
-		fmt.Println("TCP job")
+
+
+	req := request.HttpCheckerRequest{
+		URL:            monitor.Url,
+		MonitorID:      monitor.Id,
+		Method:         monitor.Method,
+		Body:           monitor.Body,
+		Retry:          monitor.Retry,
+		Timeout:        monitor.Timeout,
+		DegradedAfter:  degradedAfter,
+		FollowRedirects: monitor.FollowRedirects,
 	}
 
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Println("start job", req.URL)
-
-			var err error
-			if req.JobType == "http" {
-				// Run the job and schedule it
-				err = openstatus.HTTPJob(req)
+			fmt.Printf("Starting job for monitor %s (%s)\n", req.MonitorID, req.URL)
+			if err := openstatus.HTTPJob(req); err != nil {
+				log.Printf("Monitor check failed for %s (%s): %v", req.MonitorID, req.URL, err)
+			} else {
+				log.Printf("Monitor check succeeded for %s (%s)", req.MonitorID, req.URL)
 			}
-			if req.JobType == "tcp" {
-				// Run the job and schedule it
-				fmt.Println("TCP job")
-			}
-			if err != nil {
-
-				log.Printf("Monitor check failed: %v", err)
-			}
-
 		case <-done:
+			log.Printf("Shutting down job for monitor %s (%s)", req.MonitorID, req.URL)
 			return
 		}
 	}
