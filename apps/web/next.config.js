@@ -108,7 +108,7 @@ const nextConfig = {
         },
         {
           source:
-            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|events|monitors).*)",
+            "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|events|monitors|protected).*)",
           has: [
             { type: "cookie", key: "sp_mode", value: "new" },
             {

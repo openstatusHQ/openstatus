@@ -31,7 +31,7 @@ export default async function middleware(req: NextRequest) {
     type = "pathname";
   }
 
-  console.log({ pathname: url.pathname, type });
+  console.log({ pathname: url.pathname, type, prefix });
 
   if (url.pathname === "/" && type !== "hostname") {
     return response;
@@ -56,14 +56,19 @@ export default async function middleware(req: NextRequest) {
   if (_page?.passwordProtected) {
     const protectedCookie = cookies.get(createProtectedCookieKey(prefix));
     const password = protectedCookie ? protectedCookie.value : undefined;
+    console.log({ protectedCookie, password });
+
     if (password !== _page.password && !url.pathname.endsWith("/protected")) {
       const { pathname, origin } = req.nextUrl;
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
         const newURL = new URL(`https://${_page.customDomain}`);
-        newURL.pathname = `/protected?redirect=${encodeURIComponent(pathname)}`;
-        console.log(newURL.toString());
+        const newPathname = pathname.replace(`/${_page.customDomain}`, "");
+        newURL.pathname = `/protected?redirect=${encodeURIComponent(
+          newPathname,
+        )}`;
+        console.log("redirect to /protected", newURL.toString());
         return NextResponse.redirect(newURL);
       }
 
@@ -80,8 +85,8 @@ export default async function middleware(req: NextRequest) {
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
         const newURL = new URL(`https://${_page.customDomain}`);
-        newURL.pathname = redirect ?? type === "pathname" ? `/${prefix}` : "/";
-        console.log(newURL.toString());
+        newURL.pathname = redirect ?? "/";
+        console.log("redirect to /", newURL.toString());
         return NextResponse.redirect(newURL);
       }
 
