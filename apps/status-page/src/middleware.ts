@@ -63,13 +63,14 @@ export default async function middleware(req: NextRequest) {
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
-        const newURL = new URL(`https://${_page.customDomain}`);
-        const newPathname = pathname.replace(`/${_page.customDomain}`, "");
-        newURL.pathname = `/protected?redirect=${encodeURIComponent(
-          newPathname,
-        )}`;
-        console.log("redirect to /protected", newURL.toString());
-        return NextResponse.redirect(newURL);
+        const redirect = pathname.replace(`/${_page.customDomain}`, "");
+        const url = new URL(
+          `https://${
+            _page.customDomain
+          }/protected?redirect=${encodeURIComponent(redirect)}`,
+        );
+        console.log("redirect to /protected", url.toString());
+        return NextResponse.redirect(url);
       }
 
       const url = new URL(
@@ -84,10 +85,9 @@ export default async function middleware(req: NextRequest) {
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
-        const newURL = new URL(`https://${_page.customDomain}`);
-        newURL.pathname = redirect ?? "/";
-        console.log("redirect to /", newURL.toString());
-        return NextResponse.redirect(newURL);
+        const url = new URL(`https://${_page.customDomain}${redirect ?? "/"}`);
+        console.log("redirect to /", url.toString());
+        return NextResponse.redirect(url);
       }
 
       return NextResponse.redirect(
