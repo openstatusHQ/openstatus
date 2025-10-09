@@ -58,6 +58,15 @@ export default async function middleware(req: NextRequest) {
     const password = protectedCookie ? protectedCookie.value : undefined;
     if (password !== _page.password && !url.pathname.endsWith("/protected")) {
       const { pathname, origin } = req.nextUrl;
+
+      // custom domain redirect
+      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+        const newURL = new URL(_page.customDomain);
+        newURL.pathname = `/protected?redirect=${encodeURIComponent(pathname)}`;
+        console.log(newURL.toString());
+        return NextResponse.redirect(newURL);
+      }
+
       const url = new URL(
         `${origin}${
           type === "pathname" ? `/${prefix}` : ""
@@ -67,6 +76,15 @@ export default async function middleware(req: NextRequest) {
     }
     if (password === _page.password && url.pathname.endsWith("/protected")) {
       const redirect = url.searchParams.get("redirect");
+
+      // custom domain redirect
+      if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
+        const newURL = new URL(_page.customDomain);
+        newURL.pathname = redirect ?? type === "pathname" ? `/${prefix}` : "/";
+        console.log(newURL.toString());
+        return NextResponse.redirect(newURL);
+      }
+
       return NextResponse.redirect(
         new URL(
           `${req.nextUrl.origin}${
