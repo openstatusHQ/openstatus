@@ -100,9 +100,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .returning()
       .get();
 
-    const link = _page.customDomain
-      ? `https://${_page.customDomain}/verify/${token}`
-      : `https://${_page.slug}.openstatus.dev/verify/${token}`;
+    const link = `https://${_page.slug}.openstatus.dev/verify/${token}`;
 
     await sendEmail({
       react: SubscribeEmail({
