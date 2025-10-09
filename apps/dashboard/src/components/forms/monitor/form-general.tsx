@@ -508,8 +508,10 @@ export function FormGeneral({
                                   value={field.value}
                                   onValueChange={field.onChange}
                                 >
-                                  <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select compare" />
+                                  <SelectTrigger className="w-full min-w-16">
+                                    <span className="truncate">
+                                      <SelectValue placeholder="Select compare" />
+                                    </span>
                                   </SelectTrigger>
                                   <SelectContent>
                                     {assertion.type === "status"
