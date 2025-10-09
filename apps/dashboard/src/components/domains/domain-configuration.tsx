@@ -30,7 +30,7 @@ export const InlineSnippet = ({
 
 // FIXME: add loading state!
 export default function DomainConfiguration({ domain }: { domain: string }) {
-  const { status, domainJson } = useDomainStatus(domain);
+  const { status, domainJson, isLoading } = useDomainStatus(domain);
 
   if (!status || !domainJson) return null;
 
@@ -55,7 +55,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
   return (
     <div>
       <div className="mb-4 flex items-center space-x-2">
-        <DomainStatusIcon status={status} />
+        <DomainStatusIcon status={status} loading={isLoading} />
         <p className="font-semibold">{status}</p>
       </div>
       {txtVerification ? (
@@ -107,57 +107,50 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                 CNAME Record{subdomain && " (recommended)"}
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="A">
-              <div className="my-3 text-left">
-                <p className="my-5 text-sm">
-                  To configure your apex domain (
-                  <InlineSnippet>{domainJson.apexName}</InlineSnippet>
-                  ), set the following A record on your DNS provider to
-                  continue:
-                </p>
-                <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
-                  <div>
-                    <p className="font-bold text-sm">Type</p>
-                    <p className="mt-2 font-mono text-sm">A</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Name</p>
-                    <p className="mt-2 font-mono text-sm">@</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Value</p>
-                    <p className="mt-2 font-mono text-sm">76.76.21.21</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">TTL</p>
-                    <p className="mt-2 font-mono text-sm">86400</p>
-                  </div>
+            <TabsContent value="A" className="space-y-2">
+              <p className="text-sm">
+                To configure your apex domain (
+                <InlineSnippet>{domainJson.apexName}</InlineSnippet>
+                ), set the following A record on your DNS provider to continue:
+              </p>
+              <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+                <div>
+                  <p className="font-bold text-sm">Type</p>
+                  <p className="mt-2 font-mono text-sm">A</p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Name</p>
+                  <p className="mt-2 font-mono text-sm">@</p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Value</p>
+                  <p className="mt-2 font-mono text-sm">76.76.21.21</p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm">TTL</p>
+                  <p className="mt-2 font-mono text-sm">86400</p>
                 </div>
               </div>
-              <div>
-                <p className="font-bold text-sm">Value</p>
-                <p className="mt-2 font-mono text-sm">cname.vercel-dns.com</p>
-                <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
-                  <div>
-                    <p className="font-bold text-sm">Type</p>
-                    <p className="mt-2 font-mono text-sm">CNAME</p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Name</p>
-                    <p className="mt-2 font-mono text-sm">
-                      {subdomain ?? "www"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">Value</p>
-                    <p className="mt-2 font-mono text-sm">
-                      {"cname.vercel-dns.com"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-bold text-sm">TTL</p>
-                    <p className="mt-2 font-mono text-sm">86400</p>
-                  </div>
+            </TabsContent>
+            <TabsContent value="CNAME">
+              <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+                <div>
+                  <p className="font-bold text-sm">Type</p>
+                  <p className="mt-2 font-mono text-sm">CNAME</p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Name</p>
+                  <p className="mt-2 font-mono text-sm">{subdomain ?? "www"}</p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm">Value</p>
+                  <p className="mt-2 font-mono text-sm">
+                    {"cname.vercel-dns.com"}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-bold text-sm">TTL</p>
+                  <p className="mt-2 font-mono text-sm">86400</p>
                 </div>
               </div>
             </TabsContent>

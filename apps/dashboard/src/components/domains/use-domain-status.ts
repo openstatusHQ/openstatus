@@ -6,13 +6,24 @@ import { useEffect } from "react";
 
 export function useDomainStatus(domain: string) {
   const trpc = useTRPC();
-  const { data: domainJson, refetch: refetchDomain } = useQuery(
-    trpc.domain.getDomainResponse.queryOptions({ domain }),
-  );
-  const { data: configJson, refetch: refetchConfig } = useQuery(
-    trpc.domain.getConfigResponse.queryOptions({ domain }),
-  );
-  const { data: verificationJson, refetch: refetchVerification } = useQuery(
+  const {
+    data: domainJson,
+    refetch: refetchDomain,
+    isLoading: isLoadingDomain,
+    isRefetching: isRefetchingDomain,
+  } = useQuery(trpc.domain.getDomainResponse.queryOptions({ domain }));
+  const {
+    data: configJson,
+    refetch: refetchConfig,
+    isLoading: isLoadingConfig,
+    isRefetching: isRefetchingConfig,
+  } = useQuery(trpc.domain.getConfigResponse.queryOptions({ domain }));
+  const {
+    data: verificationJson,
+    refetch: refetchVerification,
+    isLoading: isLoadingVerification,
+    isRefetching: isRefetchingVerification,
+  } = useQuery(
     trpc.domain.verifyDomain.queryOptions(
       { domain },
       { enabled: !domainJson?.verified },
@@ -52,8 +63,16 @@ export function useDomainStatus(domain: string) {
   } else {
     status = "Valid Configuration";
   }
+
   return {
     status,
     domainJson,
+    isLoading:
+      isLoadingDomain ||
+      isLoadingConfig ||
+      isLoadingVerification ||
+      isRefetchingDomain ||
+      isRefetchingConfig ||
+      isRefetchingVerification,
   };
 }

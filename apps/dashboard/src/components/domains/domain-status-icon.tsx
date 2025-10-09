@@ -12,7 +12,10 @@ export default function DomainStatusIcon({
   loading?: boolean;
 }) {
   return loading ? (
-    <LoaderCircle className="text-background" stroke="currentColor" />
+    <LoaderCircle
+      className="animate-spin text-muted-foreground"
+      stroke="currentColor"
+    />
   ) : status === "Valid Configuration" ? (
     <CheckCircle2
       fill="#22c55e"
