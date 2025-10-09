@@ -64,6 +64,10 @@ export const Events = {
     name: "user_subscribed",
     channel: "page",
   },
+  VerifySubscribePage: {
+    name: "user_subscribe_verified",
+    channel: "page",
+  },
   CreateReport: {
     name: "report_created",
     channel: "report",
