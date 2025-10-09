@@ -24,10 +24,11 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-
-// TODO: include ?filter=maintenance/reports
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
+  const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
   const { data: page } = useQuery(
@@ -39,7 +40,13 @@ export default function Page() {
   const { statusReports, maintenances } = page;
 
   return (
-    <Tabs defaultValue="reports" className="gap-4">
+    <Tabs
+      defaultValue={tab}
+      onValueChange={(value) =>
+        setSearchParams({ tab: value as "reports" | "maintenances" })
+      }
+      className="gap-4"
+    >
       <TabsList>
         <TabsTrigger value="reports">Reports</TabsTrigger>
         <TabsTrigger value="maintenances">Maintenances</TabsTrigger>
