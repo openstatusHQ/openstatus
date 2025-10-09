@@ -54,7 +54,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   if (_page?.passwordProtected) {
-    const protectedCookie = cookies.get(createProtectedCookieKey(prefix));
+    const protectedCookie = cookies.get(createProtectedCookieKey(_page.slug));
     const password = protectedCookie ? protectedCookie.value : undefined;
     console.log({ protectedCookie, password });
 
