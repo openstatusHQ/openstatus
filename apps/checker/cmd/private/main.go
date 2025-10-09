@@ -12,14 +12,17 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/openstatus"
-	"github.com/openstatushq/openstatus/apps/checker/request"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 )
 
 const (
 	configRefreshInterval = 1 * time.Minute
-	checkInterval         = 30 * time.Second
 )
+
+type MonitorManager struct {
+	httpMonitors    map[string]*v1.HTTPMonitor
+	monitorChannels map[string]chan bool
+}
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -33,21 +36,23 @@ func main() {
 		cancel()
 	}()
 
-	monitorChannels := make(map[string]chan bool)
-	monitors := make(map[string]*v1.HTTPMonitor)
+	monitorManager := MonitorManager{
+		httpMonitors:    make(map[string]*v1.HTTPMonitor),
+		monitorChannels: make(map[string]chan bool),
+	}
+
 	apiKey := getEnv("OPENSTATUS_KEY", "key")
 
 	configTicker := time.NewTicker(configRefreshInterval)
 	defer configTicker.Stop()
-	updateMonitors(apiKey, monitors, monitorChannels)
-	fmt.Println("Private region launched")
+	monitorManager.updateMonitors(apiKey)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-configTicker.C:
 			fmt.Println("fetching monitors")
-			updateMonitors(apiKey, monitors, monitorChannels)
+			monitorManager.updateMonitors(apiKey)
 		}
 	}
 }
@@ -60,7 +65,7 @@ func getEnv(key, fallback string) string {
 }
 
 // updateMonitors fetches the latest monitors and starts/stops jobs as needed
-func updateMonitors(apiKey string, monitors map[string]*v1.HTTPMonitor, monitorChannels map[string]chan bool) {
+func (mm *MonitorManager) updateMonitors(apiKey string) {
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
@@ -75,58 +80,72 @@ func updateMonitors(apiKey string, monitors map[string]*v1.HTTPMonitor, monitorC
 	}
 
 	currentIDs := make(map[string]struct{})
-	for _, m := range res.Msg.Monitors {
+
+	for _, m := range res.Msg.HttpMonitors {
 		currentIDs[m.Id] = struct{}{}
-		if _, exists := monitors[m.Id]; !exists {
+		if _, exists := mm.httpMonitors[m.Id]; !exists {
 			doneChan := make(chan bool)
-			monitorChannels[m.Id] = doneChan
-			monitors[m.Id] = m
+			mm.monitorChannels[m.Id] = doneChan
+			mm.httpMonitors[m.Id] = m
 			go scheduleJob(*m, doneChan)
+			log.Printf("Started monitoring job for %s (%s)", m.Id, m.Url)
 		}
 	}
 
 	// Stop jobs for monitors that no longer exist
-	for id := range monitors {
+	for id, monitor := range mm.httpMonitors {
 		if _, stillExists := currentIDs[id]; !stillExists {
-			monitorChannels[id] <- true
-			delete(monitors, id)
-			delete(monitorChannels, id)
+			if ch, ok := mm.monitorChannels[id]; ok {
+				ch <- true
+				close(ch)
+			}
+			log.Printf("Stopped monitoring job for %s (%s)", id, monitor.Url)
+			delete(mm.httpMonitors, id)
+			delete(mm.monitorChannels, id)
 		}
 	}
 }
 
+func intervalToSecond(interval string)int {
+	switch interval {
+		case "30s":
+			return 30
+		case "1m":
+			return 60
+		case "5m":
+			return 300
+		case "10m":
+			return 600
+		case "30m":
+			return 1800
+		case "1h":
+			return 3600
+
+		default:
+			return 0
+	}
+}
 func scheduleJob(monitor v1.HTTPMonitor, done chan bool) {
-	ticker := time.NewTicker(checkInterval)
+
+	interval := intervalToSecond(monitor.Periodicity)
+
+	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	defer ticker.Stop()
 
-	var degradedAfter int64
-	if monitor.DegradedAt != nil {
-		degradedAfter = *monitor.DegradedAt
-	}
-
-
-	req := request.HttpCheckerRequest{
-		URL:            monitor.Url,
-		MonitorID:      monitor.Id,
-		Method:         monitor.Method,
-		Body:           monitor.Body,
-		Retry:          monitor.Retry,
-		Timeout:        monitor.Timeout,
-		DegradedAfter:  degradedAfter,
-		FollowRedirects: monitor.FollowRedirects,
-	}
 
 	for {
 		select {
 		case <-ticker.C:
-			fmt.Printf("Starting job for monitor %s (%s)\n", req.MonitorID, req.URL)
-			if err := openstatus.HTTPJob(req); err != nil {
-				log.Printf("Monitor check failed for %s (%s): %v", req.MonitorID, req.URL, err)
+			fmt.Printf("Starting job for monitor %s (%s)\n", monitor.Id, monitor.Url)
+			data, err := openstatus.HTTPJob(monitor)
+			if err != nil {
+				log.Printf("Monitor check failed for %s (%s): %v",monitor.Id, monitor.Url, err)
 			} else {
-				log.Printf("Monitor check succeeded for %s (%s)", req.MonitorID, req.URL)
+				fmt.Print(data)
+				log.Printf("Monitor check succeeded for %s (%s)", monitor.Id, monitor.Url)
 			}
 		case <-done:
-			log.Printf("Shutting down job for monitor %s (%s)", req.MonitorID, req.URL)
+			log.Printf("Shutting down job for monitor %s (%s)",monitor.Id, monitor.Url)
 			return
 		}
 	}

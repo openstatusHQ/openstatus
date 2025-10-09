@@ -35,21 +35,25 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	for _, monitor := range monitors {
 		fmt.Println(monitor)
 
+		if monitor.JobType == "http" {
+			var headers []*private_locationv1.Headers
+			json.Unmarshal([]byte(monitor.Headers), &headers)
 
-		var headers []*private_locationv1.Headers
-		json.Unmarshal([]byte(monitor.Headers), &headers)
-		v = append(v, &private_locationv1.HTTPMonitor{
-			Url:  monitor.URL,
-			Id:   strconv.Itoa(monitor.ID),
-			Method: monitor.Method,
-			Body: monitor.Body,
-			Timeout: (monitor.Timeout),
-			DegradedAt: &monitor.DegradedAfter.Int64,
-			FollowRedirects: monitor.FollowRedirects,
-			Headers: headers,
-		})
+
+			v = append(v, &private_locationv1.HTTPMonitor{
+				Url:             monitor.URL,
+				Periodicity:     monitor.Periodicity,
+				Id:              strconv.Itoa(monitor.ID),
+				Method:          monitor.Method,
+				Body:            monitor.Body,
+				Timeout:         (monitor.Timeout),
+				DegradedAt:      &monitor.DegradedAfter.Int64,
+				FollowRedirects: monitor.FollowRedirects,
+				Headers:         headers,
+			})
+		}
 	}
 	return connect.NewResponse(&private_locationv1.MonitorsResponse{
-		Monitors: v,
+		HttpMonitors: v,
 	}), nil
 }

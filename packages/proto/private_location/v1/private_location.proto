@@ -2,51 +2,28 @@ syntax = "proto3";
 
 package private_location.v1;
 
-import "private_location/v1/assertions.proto";
+import "private_location/v1/http_monitor.proto";
+import "private_location/v1/tcp_monitor.proto";
 
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
 
 service PrivateLocationService {
     rpc Monitors(MonitorsRequest) returns (MonitorsResponse) {}
+    // TODO
+    // rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
+    // rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
 }
 
 message MonitorsRequest {}
 
 message MonitorsResponse {
-    repeated HTTPMonitor monitors = 1;
+    repeated HTTPMonitor http_monitors = 1;
+    repeated TCPMonitor tcp_monitors = 2;
 }
 
 
 
-message Monitor {
-    repeated HTTPMonitor http_monitor = 1;
-}
-
-
-
-
-
-message Headers {
-    string key = 1;
-    string value = 2;
-}
-
-message HTTPMonitor {
-    string id = 1;
-    string url = 2;
-    string method = 3;
-    string body = 4;
-    int64 timeout = 5;
-    optional int64 degraded_at = 6;
-    int64 retry = 7;
-    bool follow_redirects = 8;
-
-    repeated Headers headers = 9;
-
-    repeated StatusCodeAssertion status_code_assertions = 10;
-    repeated BodyAssertion body_assertions = 11;
-    repeated HeaderAssertion header_assertions = 12;
-
-}
 
 enum JobType {
     JOB_TYPE_UNSPECIFIED = 0;

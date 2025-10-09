@@ -1,8 +1,10 @@
+
 syntax = "proto3";
 
 package private_location.v1;
 
-// import "private_location/v1/assertions.proto";
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
+
 
 enum NumberComparator {
     NUMBER_COMPARATOR_UNSPECIFIED = 0;

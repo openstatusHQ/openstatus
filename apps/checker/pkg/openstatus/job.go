@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
+	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 	"github.com/openstatushq/openstatus/apps/checker/request"
-	"github.com/rs/zerolog/log"
-
 )
 
 type statusCode int
@@ -40,29 +39,24 @@ type PingData struct {
 	Error         uint8  `json:"error"`
 }
 
-
-func HTTPJob(req request.HttpCheckerRequest) error {
-
-
+func HTTPJob(monitor v1.HTTPMonitor) (*checker.Response, error) {
 	ctx := context.Background()
-	// if err := c.ShouldBindJSON(&req); err != nil {
-	// 	log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 
-	// 	return
-	// }
-	//  We need a new client for each request to avoid connection reuse.
-	requestClient := &http.Client{
-		Timeout: time.Duration(req.Timeout) * time.Millisecond,
+	retry := monitor.Retry
+	if retry == 0 {
+		retry = 3
 	}
 
-	// Configure redirect policy based on FollowRedirects setting
-	if !req.FollowRedirects {
+	requestClient := &http.Client{
+		Timeout: time.Duration(monitor.Timeout) * time.Millisecond,
+	}
+	defer requestClient.CloseIdleConnections()
+
+	if !monitor.FollowRedirects {
 		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
 	} else {
-		// Explicitly limit the number of redirects to 10 (Go's default)
 		requestClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return http.ErrUseLastResponse
@@ -70,60 +64,103 @@ func HTTPJob(req request.HttpCheckerRequest) error {
 			return nil
 		}
 	}
-	defer requestClient.CloseIdleConnections()
 
-	// Might be a more efficient way to do it
-	var i interface{} = req.RawAssertions
-	jsonBytes, _ := json.Marshal(i)
-	assertionAsString := string(jsonBytes)
-
-	if assertionAsString == "null" {
-		assertionAsString = ""
+	var degradedAfter int64
+	if monitor.DegradedAt != nil {
+		degradedAfter = *monitor.DegradedAt
 	}
 
+	headers := make([]struct {
+		Key   string `json:"key"`
+		Value string `json:"value"`
+	}, 0)
+	if monitor.Headers != nil {
+		for _, header := range monitor.Headers {
+			headers = append(headers, struct {
+				Key   string `json:"key"`
+				Value string `json:"value"`
+			}{
+				Key:   header.Key,
+				Value: header.Value,
+			})
+		}
+	}
+
+	req := request.HttpCheckerRequest{
+		URL:             monitor.Url,
+		MonitorID:       monitor.Id,
+		Method:          monitor.Method,
+		Body:            monitor.Body,
+		Retry:           monitor.Retry,
+		Timeout:         monitor.Timeout,
+		DegradedAfter:   degradedAfter,
+		FollowRedirects: monitor.FollowRedirects,
+		Headers:         headers,
+	}
 
 	var called int
-
 	var result checker.Response
 
-	var retry int
-	if req.Retry == 0 {
-		retry = int(req.Retry)
-	} else {
-		retry = 3
-	}
-
-	op := func() error {
+	op := func() (*checker.Response, error) {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
-
 		if err != nil {
-			return fmt.Errorf("unable to ping: %w", err)
+			return nil, fmt.Errorf("unable to ping: %w", err)
 		}
 
-		// In TB we need to store them as string
-		timingAsString, err := json.Marshal(res.Timing)
+		timingBytes, err := json.Marshal(res.Timing)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+			return nil, fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
 		}
-
-		headersAsString, err := json.Marshal(res.Headers)
+		headersBytes, err := json.Marshal(res.Headers)
 		if err != nil {
-			return fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
+			return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 		}
-
 		id, err := uuid.NewV7()
 		if err != nil {
-			return fmt.Errorf("error while generating uuid %w", err)
+			return nil, fmt.Errorf("error while generating uuid: %w", err)
 		}
 
-		var requestStatus = ""
-		switch req.Status {
-		case "active":
-			requestStatus = "success"
-		case "error":
+		status := statusCode(res.Status)
+		isSuccessful := status.IsSuccessful()
+		if len(monitor.HeaderAssertions) > 0 {
+			headersAsString, err := json.Marshal(res.Headers)
+			if err != nil {
+				 return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
+			}
+			for _, assertion := range monitor.HeaderAssertions {
+				assert := assertions.HeaderTarget{
+					Comparator: request.StringComparator(assertion.Comparator.String()),
+					Target: assertion.Target,
+					Key:  assertion.Key,
+				}
+				assert.HeaderEvaluate(string(headersAsString))
+			}
+		}
+
+		if len(monitor.StatusCodeAssertions) > 0 {
+			for _, assertion := range monitor.StatusCodeAssertions {
+				assert := assertions.StatusTarget{
+					Comparator: request.NumberComparator(assertion.Comparator.String()),
+					Target: assertion.Target,
+				}
+				isSuccessful = isSuccessful && assert.StatusEvaluate(int64(res.Status))
+			}
+		}
+		if len(monitor.BodyAssertions) > 0 {
+			for _, assertion := range monitor.BodyAssertions {
+				assert := assertions.StringTargetType{
+					Comparator: request.StringComparator(assertion.Comparator.String()),
+					Target: assertion.Target,
+				}
+				isSuccessful = isSuccessful && assert.StringEvaluate(res.Body)
+			}
+		}
+
+		requestStatus := "success"
+		if !isSuccessful {
 			requestStatus = "error"
-		case "degraded":
+		} else if req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
 			requestStatus = "degraded"
 		}
 
@@ -131,140 +168,40 @@ func HTTPJob(req request.HttpCheckerRequest) error {
 			ID:            id.String(),
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
-
 			Timestamp:     res.Timestamp,
 			CronTimestamp: req.CronTimestamp,
 			URL:           req.URL,
 			Method:        req.Method,
-			Timing:        string(timingAsString),
-			Headers:       string(headersAsString),
-			Body:          string(res.Body),
+			Timing:        string(timingBytes),
+			Headers:       string(headersBytes),
+			Body:          "",
 			RequestStatus: requestStatus,
+			// Assertions:    assertionAsString,
+			Error:         0,
 		}
 
-		statusCode := statusCode(res.Status)
-
-		var isSuccessfull bool = true
-		if len(req.RawAssertions) > 0 {
-			for _, a := range req.RawAssertions {
-				var assert request.Assertion
-				err = json.Unmarshal(a, &assert)
-				if err != nil {
-					// handle error
-					return fmt.Errorf("unable to unmarshal assertion: %w", err)
-				}
-
-				switch assert.AssertionType {
-				case request.AssertionHeader:
-					var target assertions.HeaderTarget
-					if err := json.Unmarshal(a, &target); err != nil {
-						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
-					}
-
-					isSuccessfull = isSuccessfull && target.HeaderEvaluate(data.Headers)
-				case request.AssertionTextBody:
-					var target assertions.StringTargetType
-					if err := json.Unmarshal(a, &target); err != nil {
-						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
-					}
-
-					isSuccessfull = isSuccessfull && target.StringEvaluate(data.Body)
-				case request.AssertionStatus:
-					var target assertions.StatusTarget
-					if err := json.Unmarshal(a, &target); err != nil {
-						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
-					}
-
-					isSuccessfull = isSuccessfull && target.StatusEvaluate(int64(res.Status))
-				case request.AssertionJsonBody:
-					fmt.Println("assertion type", assert.AssertionType)
-				default:
-					fmt.Println("! Not Handled assertion type", assert.AssertionType)
-				}
-			}
-		} else {
-			isSuccessfull = statusCode.IsSuccessful()
-		}
-
-		// let's retry at least once if the status code is not successful.
-		if !isSuccessfull && called < retry {
-			return fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
-		}
-
-		result = res
-		// result.Region =
-		result.JobType = "http"
-
-		// it's in error if not successful
-		if isSuccessfull {
-			data.Error = 0
+		if isSuccessful {
 			if req.DegradedAfter != 0 && res.Latency > req.DegradedAfter {
 				data.Body = res.Body
-
-			} else {
-				data.Body = ""
-
 			}
-			// Small trick to avoid sending the body at the moment to TB
 		} else {
 			data.Error = 1
 			result.Error = "Error"
+			if called < int(retry) {
+				return nil, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
+			}
 		}
 
-		data.Assertions = assertionAsString
-
-		if !isSuccessfull && req.Status != "error" {
-			// Q: Why here we do not check if the status was previously active?
-
-			data.RequestStatus = "error"
-		}
-		// it's degraded
-		if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter && req.Status != "degraded" {
-
-			data.RequestStatus = "degraded"
-		}
-		// it's active
-		if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
-
-			data.RequestStatus = "success"
-		}
-		// it's active
-		if isSuccessfull && res.Latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
-
-			data.RequestStatus = "success"
-		}
+		result = res
+		result.JobType = "http"
 
 		fmt.Println(data)
-		return nil
+		return &result, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
-		id, e := uuid.NewV7()
-		if e != nil {
-			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return err
-		}
-
-		d := PingData{
-			ID:            id.String(),
-			URL:           req.URL,
-			Method:        req.Method,
-			Message:       err.Error(),
-			CronTimestamp: req.CronTimestamp,
-			Timestamp:     req.CronTimestamp,
-
-			Error:         1,
-			Assertions:    assertionAsString,
-			Body:          "",
-			RequestStatus: "error",
-		}
-		fmt.Print(d)
+	resp, err := backoff.Retry(context.TODO(), op, backoff.WithMaxTries(uint(retry)), backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	if err != nil {
+		return nil, err
 	}
-
-
-
-
-
-	fmt.Print()
-	return nil
+	return resp, nil
 }

@@ -108,7 +108,8 @@ func (*MonitorsRequest) Descriptor() ([]byte, []int) {
 
 type MonitorsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Monitors      []*HTTPMonitor         `protobuf:"bytes,1,rep,name=monitors,proto3" json:"monitors,omitempty"`
+	HttpMonitors  []*HTTPMonitor         `protobuf:"bytes,1,rep,name=http_monitors,json=httpMonitors,proto3" json:"http_monitors,omitempty"`
+	TcpMonitors   []*TCPMonitor          `protobuf:"bytes,2,rep,name=tcp_monitors,json=tcpMonitors,proto3" json:"tcp_monitors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -143,237 +144,16 @@ func (*MonitorsResponse) Descriptor() ([]byte, []int) {
 	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *MonitorsResponse) GetMonitors() []*HTTPMonitor {
+func (x *MonitorsResponse) GetHttpMonitors() []*HTTPMonitor {
 	if x != nil {
-		return x.Monitors
+		return x.HttpMonitors
 	}
 	return nil
 }
 
-type Monitor struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	HttpMonitor   []*HTTPMonitor         `protobuf:"bytes,1,rep,name=http_monitor,json=httpMonitor,proto3" json:"http_monitor,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Monitor) Reset() {
-	*x = Monitor{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Monitor) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Monitor) ProtoMessage() {}
-
-func (x *Monitor) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[2]
+func (x *MonitorsResponse) GetTcpMonitors() []*TCPMonitor {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Monitor.ProtoReflect.Descriptor instead.
-func (*Monitor) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *Monitor) GetHttpMonitor() []*HTTPMonitor {
-	if x != nil {
-		return x.HttpMonitor
-	}
-	return nil
-}
-
-type Headers struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *Headers) Reset() {
-	*x = Headers{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *Headers) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Headers) ProtoMessage() {}
-
-func (x *Headers) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Headers.ProtoReflect.Descriptor instead.
-func (*Headers) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *Headers) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *Headers) GetValue() string {
-	if x != nil {
-		return x.Value
-	}
-	return ""
-}
-
-type HTTPMonitor struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	Id                   string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Url                  string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	Method               string                 `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
-	Body                 string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
-	Timeout              int64                  `protobuf:"varint,5,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	DegradedAt           *int64                 `protobuf:"varint,6,opt,name=degraded_at,json=degradedAt,proto3,oneof" json:"degraded_at,omitempty"`
-	Retry                int64                  `protobuf:"varint,7,opt,name=retry,proto3" json:"retry,omitempty"`
-	FollowRedirects      bool                   `protobuf:"varint,8,opt,name=follow_redirects,json=followRedirects,proto3" json:"follow_redirects,omitempty"`
-	Headers              []*Headers             `protobuf:"bytes,9,rep,name=headers,proto3" json:"headers,omitempty"`
-	StatusCodeAssertions []*StatusCodeAssertion `protobuf:"bytes,10,rep,name=status_code_assertions,json=statusCodeAssertions,proto3" json:"status_code_assertions,omitempty"`
-	BodyAssertions       []*BodyAssertion       `protobuf:"bytes,11,rep,name=body_assertions,json=bodyAssertions,proto3" json:"body_assertions,omitempty"`
-	HeaderAssertions     []*HeaderAssertion     `protobuf:"bytes,12,rep,name=header_assertions,json=headerAssertions,proto3" json:"header_assertions,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
-}
-
-func (x *HTTPMonitor) Reset() {
-	*x = HTTPMonitor{}
-	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *HTTPMonitor) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*HTTPMonitor) ProtoMessage() {}
-
-func (x *HTTPMonitor) ProtoReflect() protoreflect.Message {
-	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use HTTPMonitor.ProtoReflect.Descriptor instead.
-func (*HTTPMonitor) Descriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *HTTPMonitor) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *HTTPMonitor) GetUrl() string {
-	if x != nil {
-		return x.Url
-	}
-	return ""
-}
-
-func (x *HTTPMonitor) GetMethod() string {
-	if x != nil {
-		return x.Method
-	}
-	return ""
-}
-
-func (x *HTTPMonitor) GetBody() string {
-	if x != nil {
-		return x.Body
-	}
-	return ""
-}
-
-func (x *HTTPMonitor) GetTimeout() int64 {
-	if x != nil {
-		return x.Timeout
-	}
-	return 0
-}
-
-func (x *HTTPMonitor) GetDegradedAt() int64 {
-	if x != nil && x.DegradedAt != nil {
-		return *x.DegradedAt
-	}
-	return 0
-}
-
-func (x *HTTPMonitor) GetRetry() int64 {
-	if x != nil {
-		return x.Retry
-	}
-	return 0
-}
-
-func (x *HTTPMonitor) GetFollowRedirects() bool {
-	if x != nil {
-		return x.FollowRedirects
-	}
-	return false
-}
-
-func (x *HTTPMonitor) GetHeaders() []*Headers {
-	if x != nil {
-		return x.Headers
-	}
-	return nil
-}
-
-func (x *HTTPMonitor) GetStatusCodeAssertions() []*StatusCodeAssertion {
-	if x != nil {
-		return x.StatusCodeAssertions
-	}
-	return nil
-}
-
-func (x *HTTPMonitor) GetBodyAssertions() []*BodyAssertion {
-	if x != nil {
-		return x.BodyAssertions
-	}
-	return nil
-}
-
-func (x *HTTPMonitor) GetHeaderAssertions() []*HeaderAssertion {
-	if x != nil {
-		return x.HeaderAssertions
+		return x.TcpMonitors
 	}
 	return nil
 }
@@ -382,37 +162,17 @@ var File_private_location_v1_private_location_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\n" +
-	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a$private_location/v1/assertions.proto\"\x11\n" +
-	"\x0fMonitorsRequest\"P\n" +
-	"\x10MonitorsResponse\x12<\n" +
-	"\bmonitors\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\bmonitors\"N\n" +
-	"\aMonitor\x12C\n" +
-	"\fhttp_monitor\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\vhttpMonitor\"1\n" +
-	"\aHeaders\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"\xa4\x04\n" +
-	"\vHTTPMonitor\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\x12\x16\n" +
-	"\x06method\x18\x03 \x01(\tR\x06method\x12\x12\n" +
-	"\x04body\x18\x04 \x01(\tR\x04body\x12\x18\n" +
-	"\atimeout\x18\x05 \x01(\x03R\atimeout\x12$\n" +
-	"\vdegraded_at\x18\x06 \x01(\x03H\x00R\n" +
-	"degradedAt\x88\x01\x01\x12\x14\n" +
-	"\x05retry\x18\a \x01(\x03R\x05retry\x12)\n" +
-	"\x10follow_redirects\x18\b \x01(\bR\x0ffollowRedirects\x126\n" +
-	"\aheaders\x18\t \x03(\v2\x1c.private_location.v1.HeadersR\aheaders\x12^\n" +
-	"\x16status_code_assertions\x18\n" +
-	" \x03(\v2(.private_location.v1.StatusCodeAssertionR\x14statusCodeAssertions\x12K\n" +
-	"\x0fbody_assertions\x18\v \x03(\v2\".private_location.v1.BodyAssertionR\x0ebodyAssertions\x12Q\n" +
-	"\x11header_assertions\x18\f \x03(\v2$.private_location.v1.HeaderAssertionR\x10headerAssertionsB\x0e\n" +
-	"\f_degraded_at*H\n" +
+	"*private_location/v1/private_location.proto\x12\x13private_location.v1\x1a&private_location/v1/http_monitor.proto\x1a%private_location/v1/tcp_monitor.proto\"\x11\n" +
+	"\x0fMonitorsRequest\"\x9d\x01\n" +
+	"\x10MonitorsResponse\x12E\n" +
+	"\rhttp_monitors\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\fhttpMonitors\x12B\n" +
+	"\ftcp_monitors\x18\x02 \x03(\v2\x1f.private_location.v1.TCPMonitorR\vtcpMonitors*H\n" +
 	"\aJobType\x12\x18\n" +
 	"\x14JOB_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rJOB_TYPE_HTTP\x10\x01\x12\x10\n" +
 	"\fJOB_TYPE_TCP\x10\x022s\n" +
 	"\x16PrivateLocationService\x12Y\n" +
-	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00b\x06proto3"
+	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (
 	file_private_location_v1_private_location_proto_rawDescOnce sync.Once
@@ -427,32 +187,24 @@ func file_private_location_v1_private_location_proto_rawDescGZIP() []byte {
 }
 
 var file_private_location_v1_private_location_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_private_location_v1_private_location_proto_goTypes = []any{
-	(JobType)(0),                // 0: private_location.v1.JobType
-	(*MonitorsRequest)(nil),     // 1: private_location.v1.MonitorsRequest
-	(*MonitorsResponse)(nil),    // 2: private_location.v1.MonitorsResponse
-	(*Monitor)(nil),             // 3: private_location.v1.Monitor
-	(*Headers)(nil),             // 4: private_location.v1.Headers
-	(*HTTPMonitor)(nil),         // 5: private_location.v1.HTTPMonitor
-	(*StatusCodeAssertion)(nil), // 6: private_location.v1.StatusCodeAssertion
-	(*BodyAssertion)(nil),       // 7: private_location.v1.BodyAssertion
-	(*HeaderAssertion)(nil),     // 8: private_location.v1.HeaderAssertion
+	(JobType)(0),             // 0: private_location.v1.JobType
+	(*MonitorsRequest)(nil),  // 1: private_location.v1.MonitorsRequest
+	(*MonitorsResponse)(nil), // 2: private_location.v1.MonitorsResponse
+	(*HTTPMonitor)(nil),      // 3: private_location.v1.HTTPMonitor
+	(*TCPMonitor)(nil),       // 4: private_location.v1.TCPMonitor
 }
 var file_private_location_v1_private_location_proto_depIdxs = []int32{
-	5, // 0: private_location.v1.MonitorsResponse.monitors:type_name -> private_location.v1.HTTPMonitor
-	5, // 1: private_location.v1.Monitor.http_monitor:type_name -> private_location.v1.HTTPMonitor
-	4, // 2: private_location.v1.HTTPMonitor.headers:type_name -> private_location.v1.Headers
-	6, // 3: private_location.v1.HTTPMonitor.status_code_assertions:type_name -> private_location.v1.StatusCodeAssertion
-	7, // 4: private_location.v1.HTTPMonitor.body_assertions:type_name -> private_location.v1.BodyAssertion
-	8, // 5: private_location.v1.HTTPMonitor.header_assertions:type_name -> private_location.v1.HeaderAssertion
-	1, // 6: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
-	2, // 7: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
-	7, // [7:8] is the sub-list for method output_type
-	6, // [6:7] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	3, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
+	4, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
+	1, // 2: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
+	2, // 3: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
+	3, // [3:4] is the sub-list for method output_type
+	2, // [2:3] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_private_location_v1_private_location_proto_init() }
@@ -460,15 +212,15 @@ func file_private_location_v1_private_location_proto_init() {
 	if File_private_location_v1_private_location_proto != nil {
 		return
 	}
-	file_private_location_v1_assertions_proto_init()
-	file_private_location_v1_private_location_proto_msgTypes[4].OneofWrappers = []any{}
+	file_private_location_v1_http_monitor_proto_init()
+	file_private_location_v1_tcp_monitor_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_private_location_v1_private_location_proto_rawDesc), len(file_private_location_v1_private_location_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

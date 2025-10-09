@@ -360,7 +360,7 @@ const file_private_location_v1_assertions_proto_rawDesc = "" +
 	"'STRING_COMPARATOR_GREATER_THAN_OR_EQUAL\x10\b\x12\x1f\n" +
 	"\x1bSTRING_COMPARATOR_LESS_THAN\x10\t\x12(\n" +
 	"$STRING_COMPARATOR_LESS_THAN_OR_EQUAL\x10\n" +
-	"b\x06proto3"
+	"BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (
 	file_private_location_v1_assertions_proto_rawDescOnce sync.Once
