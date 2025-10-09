@@ -17,7 +17,6 @@ import {
 import { env } from "@/env";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import {
-  flyRegionsDict,
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -114,16 +113,17 @@ export const cron = async ({
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
 
-      const flyRegion = flyRegionsDict[region as keyof typeof flyRegionsDict];
+      const r = regionDict[region as keyof typeof regionDict];
 
-      if (!flyRegion) {
+      if (!r) {
         console.error(`Invalid region ${region}`);
         continue;
       }
-      if (flyRegion.deprecated) {
+      if (r.deprecated) {
+        // Let's uncomment this when we are ready to remove deprecated regions
         // We should not use deprecated regions anymore
-        console.error(`Deprecated region ${region}`);
-        continue;
+        // console.error(`Deprecated region ${region}`);
+        // continue;
       }
       const response = createCronTask({
         row,
