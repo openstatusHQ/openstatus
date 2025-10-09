@@ -141,7 +141,7 @@ export function FormSchedulingRegions({
                         }}
                         className={cn(
                           !periodicity.includes(watchPeriodicity) &&
-                            "[&_[data-slot=slider-range]]:bg-destructive"
+                            "[&_[data-slot=slider-range]]:bg-destructive",
                         )}
                       />
                       <span
@@ -223,7 +223,7 @@ export function FormSchedulingRegions({
                                   size="sm"
                                   type="button"
                                   className={cn(
-                                    isAllSelected && "text-muted-foreground"
+                                    isAllSelected && "text-muted-foreground",
                                   )}
                                   disabled={disabled}
                                   onClick={() => {
@@ -231,7 +231,7 @@ export function FormSchedulingRegions({
                                       // Add all regions from this continent
                                       const newRegions = [...watchRegions];
                                       r.filter((r) =>
-                                        allowedRegions.includes(r.code)
+                                        allowedRegions.includes(r.code),
                                       ).forEach((region) => {
                                         if (!newRegions.includes(region.code)) {
                                           newRegions.push(region.code);
@@ -246,8 +246,8 @@ export function FormSchedulingRegions({
                                           (region) =>
                                             !r
                                               .map(({ code }) => code)
-                                              .includes(region as Region)
-                                        )
+                                              .includes(region as Region),
+                                        ),
                                       );
                                     }
                                   }}
@@ -264,12 +264,12 @@ export function FormSchedulingRegions({
                                       name="regions"
                                       render={({ field }) => {
                                         const checked = field.value?.includes(
-                                          region.code
+                                          region.code,
                                         );
                                         const disabled = checked
                                           ? false
                                           : !allowedRegions.includes(
-                                              region.code
+                                              region.code,
                                             ) || isMaxed;
                                         const deprecated = region.deprecated;
                                         return (
@@ -290,8 +290,8 @@ export function FormSchedulingRegions({
                                                 } else {
                                                   field.onChange(
                                                     field.value?.filter(
-                                                      (r) => r !== region.code
-                                                    )
+                                                      (r) => r !== region.code,
+                                                    ),
                                                   );
                                                 }
                                               }}
@@ -306,12 +306,12 @@ export function FormSchedulingRegions({
                                                     <FormLabel
                                                       htmlFor={region.code}
                                                       className={cn(
-                                                        "w-full truncate font-mono font-normal text-sm"
+                                                        "w-full truncate font-mono font-normal text-sm",
                                                       )}
                                                     >
                                                       <span className="text-nowrap text-destructive">
                                                         {formatRegionCode(
-                                                          region.code
+                                                          region.code,
                                                         )}{" "}
                                                         {region.flag}
                                                       </span>
@@ -342,7 +342,7 @@ export function FormSchedulingRegions({
                                               >
                                                 <span className="text-nowrap">
                                                   {formatRegionCode(
-                                                    region.code
+                                                    region.code,
                                                   )}{" "}
                                                   {region.flag}
                                                 </span>
@@ -364,7 +364,7 @@ export function FormSchedulingRegions({
                               </div>
                             </div>
                           );
-                        }
+                        },
                       )}
                     </div>
                   </FormControl>

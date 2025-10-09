@@ -423,7 +423,7 @@ export const groupByContinent = Object.entries(regionDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  }
+  },
 );
 
 export const vercelRegions = [
@@ -499,9 +499,12 @@ export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
 
 export function transformHeaders(headers: { key: string; value: string }[]) {
   return headers.length > 0
-    ? headers.reduce((acc, curr) => {
-        acc[curr.key] = curr.value;
-        return acc;
-      }, {} as Record<string, string>)
+    ? headers.reduce(
+        (acc, curr) => {
+          acc[curr.key] = curr.value;
+          return acc;
+        },
+        {} as Record<string, string>,
+      )
     : {};
 }
