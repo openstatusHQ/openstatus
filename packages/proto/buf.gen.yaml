@@ -5,9 +5,12 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: openhook/proto
+      value: github.com/openstatushq/openstatus/apps/private-location/proto
 
 plugins:
   - local: protoc-gen-go
+    out: ../../apps/private-location/proto
+    opt: paths=source_relative
+  - local: protoc-gen-connect-go
     out: ../../apps/private-location/proto
     opt: paths=source_relative

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+
+service PrivateLocationService {
+    rpc Monitors(MonitorsRequest) returns (MonitorsResponse) {}
+}
+
+message MonitorsRequest {}
+
+message MonitorsResponse {
+    repeated HTTPMonitor monitors = 1;
+}
+
+message Monitors {
+    repeated Monitor monitors = 1;
+}
+
+
+message Monitor {
+    repeated HTTPMonitor http_monitor = 1;
+}
+
+
+enum NumberComparator {
+    NUMBER_COMPARATOR_UNSPECIFIED = 0;
+    NUMBER_COMPARATOR_EQUAL = 1;
+    NUMBER_COMPARATOR_NOT_EQUAL = 2;
+    NUMBER_COMPARATOR_GREATER_THAN = 3;
+    NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL = 4;
+    NUMBER_COMPARATOR_LESS_THAN = 5;
+    NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL = 6;
+}
+
+enum StringComparator {
+    STRING_COMPARATOR_UNSPECIFIED = 0;
+    STRING_COMPARATOR_CONTAINS = 1;
+    STRING_COMPARATOR_NOT_CONTAINS = 2;
+    STRING_COMPARATOR_EQUAL = 3;
+    STRING_COMPARATOR_NOT_EQUAL = 4;
+    STRING_COMPARATOR_EMPTY = 5;
+    STRING_COMPARATOR_NOT_EMPTY = 6;
+    STRING_COMPARATOR_GREATER_THAN = 7;
+    STRING_COMPARATOR_GREATER_THAN_OR_EQUAL = 8;
+    STRING_COMPARATOR_LESS_THAN = 9;
+    STRING_COMPARATOR_LESS_THAN_OR_EQUAL = 10;
+}
+
+message StatusCodeAssertion {
+    int64 target = 1;
+    NumberComparator comparator = 2;
+}
+
+message BodyAssertion {
+    string target = 1;
+    StringComparator comparator = 2;
+}
+
+message HeaderAssertion {
+    string target = 1;
+    StringComparator comparator = 2;
+    string key = 3;
+}
+
+message HTTPMonitor {
+    string id = 1;
+    string method = 2;
+    string body = 3;
+    int64 timeout = 4;
+    optional int64 degraded_at = 5;
+    int64 retry = 6;
+    bool follow_redirects = 7;
+
+    repeated StatusCodeAssertion status_code_assertions = 8;
+    repeated BodyAssertion body_assertions = 9;
+    repeated HeaderAssertion header_assertions = 10;
+
+}
+
+enum JobType {
+    JOB_TYPE_UNSPECIFIED = 0;
+    JOB_TYPE_HTTP = 1;
+    JOB_TYPE_TCP = 2;
+}
