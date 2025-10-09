@@ -3,12 +3,11 @@
 import { Body, Head, Html, Link, Preview } from "@react-email/components";
 
 interface SubscribeProps {
-  token: string;
   page: string;
-  domain: string;
+  link: string;
 }
 
-const SubscribeEmail = ({ token, page, domain }: SubscribeProps) => {
+const SubscribeEmail = ({ page, link }: SubscribeProps) => {
   return (
     <Html>
       <Head>
@@ -26,9 +25,7 @@ const SubscribeEmail = ({ token, page, domain }: SubscribeProps) => {
           believe this is a mistake, please ignore this email.
         </p>
         <p>
-          <a href={`https://${domain}.openstatus.dev/verify/${token}`}>
-            Confirm subscription
-          </a>
+          <a href={link}>Confirm subscription</a>
         </p>
         <br />🚀 Powered by{" "}
         <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
@@ -38,9 +35,8 @@ const SubscribeEmail = ({ token, page, domain }: SubscribeProps) => {
 };
 
 SubscribeEmail.PreviewProps = {
-  token: "token",
   page: "OpenStatus",
-  domain: "slug",
+  link: "https://slug.openstatus.dev/verify/token-xyz",
 } satisfies SubscribeProps;
 
 export default SubscribeEmail;
