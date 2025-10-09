@@ -8,11 +8,9 @@ require (
 	github.com/go-chi/render v1.0.3
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
-	github.com/openstatushq/openstatus/packages/proto v0.0.1
 	github.com/tursodatabase/libsql-client-go v0.0.0-20240902231107-85af5b9d094d
 )
 
-replace github.com/openstatushq/openstatus/packages/proto => ./../../packages/proto
 
 require (
 	github.com/ajg/form v1.5.1 // indirect

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package private_location.v1;
 
+// import "private_location/v1/assertions.proto";
 
 enum NumberComparator {
     NUMBER_COMPARATOR_UNSPECIFIED = 0;

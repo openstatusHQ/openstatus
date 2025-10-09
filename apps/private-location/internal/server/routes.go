@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/jmoiron/sqlx"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
-	"github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1/private_locationv1connect"
+	v1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 )
 
 // JobType represents the type of job for a monitor.
@@ -64,7 +64,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/health", s.healthHandler)
 	privateLocationServer := NewPrivateLocationServer()
-	path, handler := private_locationv1connect.NewPrivateLocationServiceHandler(privateLocationServer)
+	path, handler := v1.NewPrivateLocationServiceHandler(privateLocationServer)
 
 
 	r.Group(func(r chi.Router) {

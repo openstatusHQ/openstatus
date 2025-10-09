@@ -15,9 +15,6 @@ message MonitorsResponse {
     repeated HTTPMonitor monitors = 1;
 }
 
-message Monitors {
-    repeated Monitor monitors = 1;
-}
 
 
 message Monitor {
@@ -27,10 +24,12 @@ message Monitor {
 
 
 
+
 message Headers {
     string key = 1;
     string value = 2;
 }
+
 message HTTPMonitor {
     string id = 1;
     string url = 2;

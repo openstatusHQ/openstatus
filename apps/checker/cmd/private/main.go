@@ -13,8 +13,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/openstatus"
 	"github.com/openstatushq/openstatus/apps/checker/request"
-	v1 "github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1"
-	"github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1/private_locationv1connect"
+	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 )
 
 const (
@@ -62,7 +61,7 @@ func getEnv(key, fallback string) string {
 
 // updateMonitors fetches the latest monitors and starts/stops jobs as needed
 func updateMonitors(apiKey string, monitors map[string]*v1.HTTPMonitor, monitorChannels map[string]chan bool) {
-	client := private_locationv1connect.NewPrivateLocationServiceClient(
+	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
 		connect.WithHTTPGet(),

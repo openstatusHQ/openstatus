@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"connectrpc.com/connect"
-	private_locationv1 "github.com/openstatushq/openstatus/packages/proto/gen/private_location/v1"
+	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 )
 
 // import (
