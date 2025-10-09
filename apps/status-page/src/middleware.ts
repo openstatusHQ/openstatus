@@ -61,7 +61,7 @@ export default async function middleware(req: NextRequest) {
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
-        const newURL = new URL(_page.customDomain);
+        const newURL = new URL(`https://${_page.customDomain}`);
         newURL.pathname = `/protected?redirect=${encodeURIComponent(pathname)}`;
         console.log(newURL.toString());
         return NextResponse.redirect(newURL);
@@ -79,7 +79,7 @@ export default async function middleware(req: NextRequest) {
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
-        const newURL = new URL(_page.customDomain);
+        const newURL = new URL(`https://${_page.customDomain}`);
         newURL.pathname = redirect ?? type === "pathname" ? `/${prefix}` : "/";
         console.log(newURL.toString());
         return NextResponse.redirect(newURL);
