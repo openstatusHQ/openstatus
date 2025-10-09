@@ -311,6 +311,7 @@ export default function Page() {
                 <ChartLineRegions
                   className="h-[250px]"
                   data={regionLatencyData}
+                  defaultRegions={tempMonitor?.regions}
                 />
               )}
             </StatusChartContent>
