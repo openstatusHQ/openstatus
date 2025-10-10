@@ -20,7 +20,7 @@ export function StatusEventGroup({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-4", className)} {...props}>
       {children}
     </div>
   );
@@ -140,7 +140,10 @@ export function StatusEventDate({
         {formatDate(date, { month: "short" })}
       </div>{" "}
       {isFuture ? (
-        <Badge variant="secondary" className="bg-info text-[10px]">
+        <Badge
+          variant="secondary"
+          className="bg-info text-[10px] text-background dark:text-foreground"
+        >
           Upcoming
         </Badge>
       ) : null}
