@@ -132,6 +132,7 @@ export const domainRouter = createTRPCRouter({
             .optional(),
         })
         .parse(json);
+      console.log({ result });
       return result;
     }),
   getConfigResponse: protectedProcedure
@@ -152,7 +153,6 @@ export const domainRouter = createTRPCRouter({
       );
       const json = await data.json();
       const result = domainConfigResponseSchema.parse(json);
-      console.log({ result });
       return result;
     }),
   verifyDomain: protectedProcedure
