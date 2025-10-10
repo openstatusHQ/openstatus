@@ -50,7 +50,8 @@ export const statusPageRouter = createTRPCRouter({
         with: {
           workspace: true,
           statusReports: {
-            orderBy: (reports, { desc }) => desc(reports.createdAt),
+            // TODO: we need to order the based on statusReportUpdates instead
+            // orderBy: (reports, { desc }) => desc(reports.createdAt),
             with: {
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
@@ -150,7 +151,20 @@ export const statusPageRouter = createTRPCRouter({
         ..._page,
         monitors,
         incidents: monitors.flatMap((m) => m.incidents) ?? [],
-        statusReports: _page.statusReports ?? [],
+        statusReports:
+          // NOTE: we need to sort the status reports by the first update date
+          _page.statusReports.sort((a, b) => {
+            if (a.statusReportUpdates.length === 0) return -1;
+            if (b.statusReportUpdates.length === 0) return -1;
+            return (
+              b.statusReportUpdates[
+                b.statusReportUpdates.length - 1
+              ].date.getTime() -
+              a.statusReportUpdates[
+                a.statusReportUpdates.length - 1
+              ].date.getTime()
+            );
+          }) ?? [],
         maintenances: _page.maintenances ?? [],
         workspacePlan: _page.workspace.plan,
         status,
