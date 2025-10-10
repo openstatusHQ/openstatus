@@ -1,9 +1,9 @@
 module github.com/openstatushq/openstatus/apps/checker
 
-go 1.24.0
+go 1.25.2
 
 require (
-	github.com/cenkalti/backoff/v4 v4.3.0
+	connectrpc.com/connect v1.19.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.6.0
 	github.com/rs/zerolog v1.32.0
@@ -13,6 +13,14 @@ require (
 	go.opentelemetry.io/otel/metric v1.34.0
 	go.opentelemetry.io/otel/sdk v1.34.0
 	go.opentelemetry.io/otel/sdk/metric v1.34.0
+	google.golang.org/protobuf v1.36.10
+)
+
+//replace github.com/openstatushq/openstatus/packages/proto => ./../../packages/proto
+
+require (
+	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.3
 )
 
 require (
@@ -51,6 +59,5 @@ require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	google.golang.org/grpc v1.69.4 // indirect
-	google.golang.org/protobuf v1.36.3 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

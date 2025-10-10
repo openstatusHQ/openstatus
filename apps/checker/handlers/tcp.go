@@ -10,7 +10,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
@@ -96,7 +96,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	op := func() error {
-		res, err := checker.PingTcp(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(int(req.Timeout), req.URI)
 
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)
@@ -113,13 +113,11 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		switch req.Status {
 		case "active":
 			requestStatus = "success"
-			break
 		case "error":
 			requestStatus = "error"
-			break
+
 		case "degraded":
 			requestStatus = "degraded"
-			break
 		}
 
 		id, err := uuid.NewV7()
@@ -282,7 +280,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	op := func() error {
 		called++
 		timestamp := time.Now().UTC().UnixMilli()
-		res, err := checker.PingTcp(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(int(req.Timeout), req.URI)
 
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)

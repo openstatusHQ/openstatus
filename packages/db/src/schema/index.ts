@@ -15,3 +15,4 @@ export * from "./applications";
 export * from "./maintenances";
 export * from "./check";
 export * from "./monitor_run";
+export * from "./private_locations";

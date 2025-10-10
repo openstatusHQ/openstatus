@@ -1,0 +1,29 @@
+# buf.gen.yaml defines a local generation template.
+# For details, see https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
+# managed:
+#   enabled: true
+#   override:
+#     - file_option: go_package_prefix
+#       value: github.com/openstatushq/openstatus/packages/proto/gen
+#
+#  This is not beautiful but while in dev let's generate it twice
+plugins:
+  - local: protoc-gen-go
+    out: ../../apps/private-location/proto
+    opt:
+       - paths=source_relative
+  - local: protoc-gen-connect-go
+    out: ../../apps/private-location/proto
+    opt:
+      - paths=source_relative
+      - package_suffix
+  - local: protoc-gen-go
+    out: ../../apps/checker/proto
+    opt:
+      - paths=source_relative
+  - local: protoc-gen-connect-go
+    out: ../../apps/checker/proto
+    opt:
+      - paths=source_relative
+      - package_suffix

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 

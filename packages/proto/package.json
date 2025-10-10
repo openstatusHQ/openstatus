@@ -1,0 +1,10 @@
+{
+  "name": "@openstatus/proto",
+  "version": "0.0.0",
+  "scripts": {
+    "buf": "buf generate"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "1.57.2"
+  }
+}

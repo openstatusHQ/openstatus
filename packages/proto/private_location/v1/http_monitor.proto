@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+import "private_location/v1/assertions.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
+
+
+message Headers {
+    string key = 1;
+    string value = 2;
+}
+
+message HTTPMonitor {
+    string id = 1;
+    string url = 2;
+    string periodicity = 3;
+    string method = 4;
+    string body = 5;
+    int64 timeout = 6;
+    optional int64 degraded_at = 7;
+    int64 retry = 8;
+    bool follow_redirects = 9;
+
+    repeated Headers headers = 10;
+
+    repeated StatusCodeAssertion status_code_assertions = 11;
+    repeated BodyAssertion body_assertions = 12;
+    repeated HeaderAssertion header_assertions = 13;
+
+}

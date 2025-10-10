@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
+
+
+
+
+message TCPMonitor {
+    string id = 1;
+    string uri = 2;
+    int64 timeout = 3;
+    optional int64 degraded_at = 4;
+
+}

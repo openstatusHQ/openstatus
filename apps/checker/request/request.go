@@ -66,7 +66,7 @@ type HttpCheckerRequest struct {
 	OtelConfig      struct {
 		Endpoint string            `json:"endpoint"`
 		Headers  map[string]string `json:"headers,omitempty"`
-	} `json:"otelConfig,omitempty"`
+	} `json:"otelConfig"`
 }
 
 type TCPCheckerRequest struct {
@@ -84,7 +84,7 @@ type TCPCheckerRequest struct {
 	OtelConfig    struct {
 		Endpoint string            `json:"endpoint"`
 		Headers  map[string]string `json:"headers,omitempty"`
-	} `json:"otelConfig,omitempty"`
+	} `json:"otelConfig"`
 }
 
 type TCPRequest struct {

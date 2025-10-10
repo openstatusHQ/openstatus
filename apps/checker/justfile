@@ -1,0 +1,20 @@
+build-probe:
+    go build -o probe ./cmd/server/main.go
+
+build-private:
+    go build -o provider ./cmd/private/main.go
+
+dev-probe:
+    air -c  .probe.air.toml
+
+
+dev-private:
+    air -c  .private.air.toml
+
+clean:
+	echo "Cleaning..."
+	rm -f main
+
+test:
+	echo "Running tests..."
+	go test ./... -v
