@@ -94,7 +94,7 @@ export function StatusFeed({
             There have been no reports within the last 7 days.
           </StatusBlankDescription>
           <StatusBlankLink href={`${prefix ? `/${prefix}` : ""}/events`}>
-            View all reports
+            View events history
           </StatusBlankLink>
         </StatusBlankContent>
       </StatusBlankContainer>
@@ -194,7 +194,7 @@ export function StatusFeed({
         className="mx-auto"
         href={`${prefix ? `/${prefix}` : ""}/events`}
       >
-        View all events
+        View events history
       </StatusBlankLink>
     </div>
   );
