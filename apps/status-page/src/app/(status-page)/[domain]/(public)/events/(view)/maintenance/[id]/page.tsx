@@ -3,8 +3,6 @@
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
-import { formatDate } from "@/lib/formatter";
-
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import {
@@ -13,6 +11,7 @@ import {
   StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
+  StatusEventDate,
   StatusEventTimelineMaintenance,
   StatusEventTitle,
 } from "@/components/status-page/status-events";
@@ -30,7 +29,6 @@ export default function MaintenancePage() {
 
   if (!maintenance) return null;
 
-  const isFuture = maintenance.from > new Date();
   return (
     <div className="flex flex-col gap-4">
       <div className="flex w-full flex-row items-center justify-between gap-2 py-0.5">
@@ -39,12 +37,7 @@ export default function MaintenancePage() {
       </div>
       <StatusEvent>
         <StatusEventAside>
-          <span className="font-medium text-foreground/80">
-            {formatDate(maintenance.from, { month: "short" })}
-          </span>
-          {isFuture ? (
-            <span className="text-info text-sm">Upcoming</span>
-          ) : null}
+          <StatusEventDate date={maintenance.from} />
         </StatusEventAside>
         <StatusEventContent hoverable={false}>
           <StatusEventTitle>{maintenance.title}</StatusEventTitle>

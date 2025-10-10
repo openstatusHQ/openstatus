@@ -13,6 +13,7 @@ import {
   StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
+  StatusEventDate,
   StatusEventGroup,
   StatusEventTimelineMaintenance,
   StatusEventTimelineReport,
@@ -20,7 +21,6 @@ import {
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -70,9 +70,7 @@ export default function Page() {
               return (
                 <StatusEvent key={report.id}>
                   <StatusEventAside>
-                    <span className="font-medium text-foreground/80">
-                      {formatDate(startedAt, { month: "short" })}
-                    </span>
+                    <StatusEventDate date={startedAt} />
                   </StatusEventAside>
                   <Link
                     href={`./events/report/${report.id}`}
@@ -123,16 +121,10 @@ export default function Page() {
         <StatusEventGroup>
           {maintenances.length > 0 ? (
             maintenances.map((maintenance) => {
-              const isFuture = maintenance.from > new Date();
               return (
                 <StatusEvent key={maintenance.id}>
                   <StatusEventAside>
-                    <span className="font-medium text-foreground/80">
-                      {formatDate(maintenance.from, { month: "short" })}
-                    </span>
-                    {isFuture ? (
-                      <span className="text-info text-sm">Upcoming</span>
-                    ) : null}
+                    <StatusEventDate date={maintenance.from} />
                   </StatusEventAside>
                   <Link
                     href={`./events/maintenance/${maintenance.id}`}

@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatDateRange, formatDateTime } from "@/lib/formatter";
+import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
@@ -126,20 +126,36 @@ export function StatusEventAffectedBadge({
   );
 }
 
+export function StatusEventDate({
+  className,
+  date,
+  ...props
+}: React.ComponentProps<"div"> & {
+  date: Date;
+}) {
+  const isFuture = date > new Date();
+  return (
+    <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
+      <div className="font-medium text-foreground">
+        {formatDate(date, { month: "short" })}
+      </div>{" "}
+      {isFuture ? (
+        <Badge variant="secondary" className="bg-info text-[10px]">
+          Upcoming
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
 export function StatusEventAside({
   className,
   children,
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className="lg:-left-32 lg:absolute lg:top-0 lg:h-full">
-      <div
-        className={cn(
-          "flex flex-col gap-1 lg:sticky lg:top-0 lg:left-0",
-          className,
-        )}
-        {...props}
-      >
+    <div className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full">
+      <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
         {children}
       </div>
     </div>
@@ -339,10 +355,7 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn(
-        "py-1.5 font-mono text-muted-foreground text-sm/relaxed",
-        className,
-      )}
+      className={cn("py-1.5 font-mono text-muted-foreground", className)}
       {...props}
     >
       {children}

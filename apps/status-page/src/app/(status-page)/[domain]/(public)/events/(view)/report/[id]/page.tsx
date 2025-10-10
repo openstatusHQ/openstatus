@@ -1,7 +1,5 @@
 "use client";
 
-import { formatDate } from "@/lib/formatter";
-
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import {
@@ -10,6 +8,7 @@ import {
   StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
+  StatusEventDate,
   StatusEventTimelineReport,
   StatusEventTitle,
   StatusEventTitleCheck,
@@ -45,9 +44,7 @@ export default function ReportPage() {
       </div>
       <StatusEvent>
         <StatusEventAside>
-          <span className="font-medium text-foreground/80">
-            {formatDate(firstUpdate.date, { month: "short" })}
-          </span>
+          <StatusEventDate date={firstUpdate.date} />
         </StatusEventAside>
         <StatusEventContent hoverable={false}>
           <StatusEventTitle className="inline-flex gap-1">

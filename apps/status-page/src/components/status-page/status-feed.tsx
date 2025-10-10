@@ -1,6 +1,5 @@
 "use client";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDate } from "@/lib/formatter";
 import Link from "next/link";
 import {
   StatusBlankContainer,
@@ -16,6 +15,7 @@ import {
   StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
+  StatusEventDate,
   StatusEventGroup,
   StatusEventTimelineMaintenance,
   StatusEventTimelineReport,
@@ -107,9 +107,7 @@ export function StatusFeed({
           return (
             <StatusEvent key={`report-${event.id}`}>
               <StatusEventAside>
-                <span className="font-medium text-foreground/80">
-                  {formatDate(event.startDate, { month: "short" })}
-                </span>
+                <StatusEventDate date={event.startDate} />
               </StatusEventAside>
               <Link
                 href={`${prefix ? `/${prefix}` : ""}/events/report/${
@@ -137,16 +135,10 @@ export function StatusFeed({
 
         if (event.type === "maintenance") {
           const maintenance = event.data as Maintenance;
-          const isFuture = maintenance.from > new Date();
           return (
             <StatusEvent key={`maintenance-${event.id}`}>
               <StatusEventAside>
-                <span className="font-medium text-foreground/80">
-                  {formatDate(event.startDate, { month: "short" })}
-                </span>
-                {isFuture ? (
-                  <span className="text-info text-sm">Upcoming</span>
-                ) : null}
+                <StatusEventDate date={event.startDate} />
               </StatusEventAside>
               <Link
                 href={`${prefix ? `/${prefix}` : ""}/events/maintenance/${
