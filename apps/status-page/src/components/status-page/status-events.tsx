@@ -1,5 +1,6 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -12,6 +13,18 @@ import { cn } from "@/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
 import { status } from "./messages";
+
+export function StatusEventGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export function StatusEvent({
   className,
@@ -67,7 +80,7 @@ export function StatusEventTitleCheck({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("mt-1 ml-1.5", className)} {...props}>
+    <div className={cn("flex items-center pl-1", className)} {...props}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger>
@@ -91,9 +104,25 @@ export function StatusEventAffected({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <div className={cn("flex flex-wrap gap-0.5", className)} {...props}>
       {children}
     </div>
+  );
+}
+
+export function StatusEventAffectedBadge({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <Badge
+      variant="secondary"
+      className={cn("text-[10px]", className)}
+      {...props}
+    >
+      {children}
+    </Badge>
   );
 }
 
@@ -203,7 +232,6 @@ function StatusEventTimelineReportUpdate({
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
-              {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
                   <span>{formatDateTime(report.date)}</span>
@@ -312,7 +340,7 @@ export function StatusEventTimelineMessage({
   return (
     <div
       className={cn(
-        "py-1.5 font-mono text-foreground/90 text-sm/relaxed",
+        "py-1.5 font-mono text-muted-foreground text-sm/relaxed",
         className,
       )}
       {...props}

@@ -10,12 +10,12 @@ import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import {
   StatusEvent,
   StatusEventAffected,
+  StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
   StatusEventTimelineMaintenance,
   StatusEventTitle,
 } from "@/components/status-page/status-events";
-import { Badge } from "@/components/ui/badge";
 import { useParams } from "next/navigation";
 
 export default function MaintenancePage() {
@@ -48,15 +48,11 @@ export default function MaintenancePage() {
         </StatusEventAside>
         <StatusEventContent hoverable={false}>
           <StatusEventTitle>{maintenance.title}</StatusEventTitle>
-          <StatusEventAffected className="flex flex-wrap gap-1">
+          <StatusEventAffected>
             {maintenance.maintenancesToMonitors.map((affected) => (
-              <Badge
-                key={affected.monitor.id}
-                variant="outline"
-                className="text-[10px]"
-              >
+              <StatusEventAffectedBadge key={affected.monitor.id}>
                 {affected.monitor.name}
-              </Badge>
+              </StatusEventAffectedBadge>
             ))}
           </StatusEventAffected>
           <StatusEventTimelineMaintenance maintenance={maintenance} />
