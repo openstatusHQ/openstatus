@@ -2,9 +2,9 @@ import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/d
 
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useCallback } from "react";
 
-export function useDomainStatus(domain: string) {
+export function useDomainStatus(domain?: string) {
   const trpc = useTRPC();
   const {
     data: domainJson,
@@ -30,14 +30,10 @@ export function useDomainStatus(domain: string) {
     ),
   );
 
-  // NOTE: refetch every 5 seconds to check for the status
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchDomain();
-      refetchConfig();
-      refetchVerification();
-    }, 5000);
-    return () => clearInterval(interval);
+  const refreshAll = useCallback(() => {
+    refetchDomain();
+    refetchConfig();
+    refetchVerification();
   }, [refetchDomain, refetchConfig, refetchVerification]);
 
   let status: DomainVerificationStatusProps = "Valid Configuration";
@@ -67,6 +63,7 @@ export function useDomainStatus(domain: string) {
   return {
     status,
     domainJson,
+    refresh: refreshAll,
     isLoading:
       isLoadingDomain ||
       isLoadingConfig ||

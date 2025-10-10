@@ -106,8 +106,11 @@ export const domainRouter = createTRPCRouter({
   //     return await data.json();
   //   }),
   getDomainResponse: protectedProcedure
-    .input(z.object({ domain: z.string() }))
+    .input(z.object({ domain: z.string().optional() }))
     .query(async (opts) => {
+      if (!opts.input.domain) {
+        return null;
+      }
       const data = await fetch(
         `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}?teamId=${env.TEAM_ID_VERCEL}`,
         {
@@ -132,8 +135,11 @@ export const domainRouter = createTRPCRouter({
       return result;
     }),
   getConfigResponse: protectedProcedure
-    .input(z.object({ domain: z.string() }))
+    .input(z.object({ domain: z.string().optional() }))
     .query(async (opts) => {
+      if (!opts.input.domain) {
+        return null;
+      }
       const data = await fetch(
         `https://api.vercel.com/v6/domains/${opts.input.domain}/config?teamId=${env.TEAM_ID_VERCEL}`,
         {
@@ -149,8 +155,11 @@ export const domainRouter = createTRPCRouter({
       return result;
     }),
   verifyDomain: protectedProcedure
-    .input(z.object({ domain: z.string() }))
+    .input(z.object({ domain: z.string().optional() }))
     .query(async (opts) => {
+      if (!opts.input.domain) {
+        return null;
+      }
       const data = await fetch(
         `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}/verify?teamId=${env.TEAM_ID_VERCEL}`,
         {

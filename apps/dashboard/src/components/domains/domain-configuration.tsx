@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       <div className="mb-4 flex items-center space-x-2">
         <DomainStatusIcon status={status} loading={isLoading} />
         <p className="font-semibold">{status}</p>
+        <Badge variant="secondary">{domain}</Badge>
       </div>
       {txtVerification ? (
         <>
@@ -144,9 +146,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                 </div>
                 <div>
                   <p className="font-bold text-sm">Value</p>
-                  <p className="mt-2 font-mono text-sm">
-                    {"cname.vercel-dns.com"}
-                  </p>
+                  <p className="mt-2 font-mono text-sm">cname.vercel-dns.com</p>
                 </div>
                 <div>
                   <p className="font-bold text-sm">TTL</p>
