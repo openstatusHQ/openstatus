@@ -1,4 +1,4 @@
-package openstatus
+package job
 
 import (
 	"context"
@@ -15,31 +15,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
-type statusCode int
-
-func (s statusCode) IsSuccessful() bool {
-	return s >= 200 && s < 300
-}
-
-type PingData struct {
-	ID            string `json:"id"`
-	URL           string `json:"url"`
-	Method        string `json:"method"`
-	Region        string `json:"region"`
-	Message       string `json:"message,omitempty"`
-	Timing        string `json:"timing,omitempty"`
-	Headers       string `json:"headers,omitempty"`
-	Assertions    string `json:"assertions"`
-	Body          string `json:"body,omitempty"`
-	RequestStatus string `json:"requestStatus,omitempty"`
-	Latency       int64  `json:"latency"`
-	CronTimestamp int64  `json:"cronTimestamp"`
-	Timestamp     int64  `json:"timestamp"`
-	StatusCode    int    `json:"statusCode,omitempty"`
-	Error         uint8  `json:"error"`
-}
-
-func HTTPJob(monitor v1.HTTPMonitor) (*checker.Response, error) {
+func HTTPJob(monitor v1.HTTPMonitor) (*HttpPingData, error) {
 	ctx := context.Background()
 
 	retry := monitor.Retry
@@ -99,9 +75,9 @@ func HTTPJob(monitor v1.HTTPMonitor) (*checker.Response, error) {
 	}
 
 	var called int
-	var result checker.Response
 
-	op := func() (*checker.Response, error) {
+
+	op := func() (*HttpPingData, error) {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
 		if err != nil {
@@ -164,7 +140,7 @@ func HTTPJob(monitor v1.HTTPMonitor) (*checker.Response, error) {
 			requestStatus = "degraded"
 		}
 
-		data := PingData{
+		data := HttpPingData{
 			ID:            id.String(),
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
@@ -186,17 +162,15 @@ func HTTPJob(monitor v1.HTTPMonitor) (*checker.Response, error) {
 			}
 		} else {
 			data.Error = 1
-			result.Error = "Error"
 			if called < int(retry) {
 				return nil, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 			}
 		}
 
-		result = res
-		result.JobType = "http"
+
 
 		fmt.Println(data)
-		return &result, nil
+		return &data, nil
 	}
 
 	resp, err := backoff.Retry(context.TODO(), op, backoff.WithMaxTries(uint(retry)), backoff.WithBackOff(backoff.NewExponentialBackOff()))

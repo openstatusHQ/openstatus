@@ -1,4 +1,4 @@
-package openstatus
+package job
 
 type Monitor struct {
 	ID            int         `json:"id"`
