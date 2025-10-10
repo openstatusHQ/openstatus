@@ -358,7 +358,10 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("py-1.5 font-mono text-muted-foreground", className)}
+      className={cn(
+        "py-1.5 font-mono text-muted-foreground text-base",
+        className,
+      )}
       {...props}
     >
       {children}
