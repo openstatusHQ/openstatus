@@ -122,8 +122,8 @@ export const cron = async ({
       if (r.deprecated) {
         // Let's uncomment this when we are ready to remove deprecated regions
         // We should not use deprecated regions anymore
-        // console.error(`Deprecated region ${region}`);
-        // continue;
+        console.error(`Deprecated region ${region}`);
+        continue;
       }
       const response = createCronTask({
         row,
