@@ -51,27 +51,26 @@ type Assertion struct {
 	RawTarget     json.RawMessage `json:"target"`
 }
 
-
 type StatusTarget struct {
 	AssertionType AssertionType    `json:"type"`
 	Comparator    NumberComparator `json:"compare"`
-	Target        int64                    `json:"target"`
+	Target        int64            `json:"target"`
 }
 
 type HeaderTarget struct {
 	AssertionType AssertionType    `json:"type"`
 	Comparator    StringComparator `json:"compare"`
-	Target        string                   `json:"target"`
-	Key           string                   `json:"key"`
+	Target        string           `json:"target"`
+	Key           string           `json:"key"`
 }
 
 type StringTargetType struct {
 	Comparator StringComparator `json:"compare"`
-	Target     string                   `json:"target"`
+	Target     string           `json:"target"`
 }
 
 type BodyString struct {
 	AssertionType AssertionType    `json:"type"`
 	Comparator    StringComparator `json:"compare"`
-	Target        string                   `json:"target"`
+	Target        string           `json:"target"`
 }

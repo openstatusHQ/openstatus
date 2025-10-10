@@ -10,10 +10,9 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/joho/godotenv/autoload"
-	 // "github.com/tursodatabase/go-libsql"
+	// "github.com/tursodatabase/go-libsql"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
-
 
 var DB *sqlx.DB
 
@@ -37,24 +36,24 @@ func New() *sqlx.DB {
 		os.Exit(1)
 	}
 	// dir, err := os.MkdirTemp("", "libsql-*")
- //    if err != nil {
- //        fmt.Println("Error creating temporary directory:", err)
- //        os.Exit(1)
- //    }
- //    defer os.RemoveAll(dir)
+	//    if err != nil {
+	//        fmt.Println("Error creating temporary directory:", err)
+	//        os.Exit(1)
+	//    }
+	//    defer os.RemoveAll(dir)
 
- //    dbPath := filepath.Join(dir, dbName)
- //    fmt.Println(dbPath)
- //    connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, url,
- //        libsql.WithAuthToken(authToken),
- //    )
- //    if err != nil {
- //        fmt.Println("Error creating connector:", err)
- //        os.Exit(1)
- //    }
- //    defer connector.Close()
+	//    dbPath := filepath.Join(dir, dbName)
+	//    fmt.Println(dbPath)
+	//    connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, url,
+	//        libsql.WithAuthToken(authToken),
+	//    )
+	//    if err != nil {
+	//        fmt.Println("Error creating connector:", err)
+	//        os.Exit(1)
+	//    }
+	//    defer connector.Close()
 
- //    c := sql.OpenDB(connector)
+	//    c := sql.OpenDB(connector)
 
 	db := sqlx.NewDb(c, "sqlite3")
 

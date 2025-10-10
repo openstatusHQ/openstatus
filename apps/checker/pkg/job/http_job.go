@@ -15,7 +15,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
-func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
+func HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
 
 	retry := monitor.Retry
 	if retry == 0 {
@@ -75,7 +75,6 @@ func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionDat
 
 	var called int
 
-
 	op := func() (*HttpPrivateRegionData, error) {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
@@ -101,13 +100,13 @@ func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionDat
 		if len(monitor.HeaderAssertions) > 0 {
 			headersAsString, err := json.Marshal(res.Headers)
 			if err != nil {
-				 return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
+				return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 			}
 			for _, assertion := range monitor.HeaderAssertions {
 				assert := assertions.HeaderTarget{
 					Comparator: request.StringComparator(assertion.Comparator.String()),
-					Target: assertion.Target,
-					Key:  assertion.Key,
+					Target:     assertion.Target,
+					Key:        assertion.Key,
 				}
 				assert.HeaderEvaluate(string(headersAsString))
 			}
@@ -117,7 +116,7 @@ func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionDat
 			for _, assertion := range monitor.StatusCodeAssertions {
 				assert := assertions.StatusTarget{
 					Comparator: request.NumberComparator(assertion.Comparator.String()),
-					Target: assertion.Target,
+					Target:     assertion.Target,
 				}
 				isSuccessful = isSuccessful && assert.StatusEvaluate(int64(res.Status))
 			}
@@ -126,7 +125,7 @@ func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionDat
 			for _, assertion := range monitor.BodyAssertions {
 				assert := assertions.StringTargetType{
 					Comparator: request.StringComparator(assertion.Comparator.String()),
-					Target: assertion.Target,
+					Target:     assertion.Target,
 				}
 				isSuccessful = isSuccessful && assert.StringEvaluate(res.Body)
 			}
@@ -152,7 +151,7 @@ func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionDat
 			Body:          "",
 			RequestStatus: requestStatus,
 			// Assertions:    assertionAsString,
-			Error:         0,
+			Error: 0,
 		}
 
 		if isSuccessful {
@@ -165,8 +164,6 @@ func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionDat
 				return nil, fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 			}
 		}
-
-
 
 		return &data, nil
 	}

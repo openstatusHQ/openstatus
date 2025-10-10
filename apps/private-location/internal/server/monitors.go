@@ -91,8 +91,8 @@ func ParseAssertions(assertions sql.NullString) (
 				continue
 			}
 			headerAssertions = append(headerAssertions, &private_locationv1.HeaderAssertion{
-				Key:       target.Key,
-				Target:    target.Target,
+				Key:        target.Key,
+				Target:     target.Target,
 				Comparator: convertStringComparator(target.Comparator),
 			})
 		case models.AssertionTextBody:
@@ -102,7 +102,7 @@ func ParseAssertions(assertions sql.NullString) (
 				continue
 			}
 			bodyAssertions = append(bodyAssertions, &private_locationv1.BodyAssertion{
-				Target:    target.Target,
+				Target:     target.Target,
 				Comparator: convertStringComparator(target.Comparator),
 			})
 		}
@@ -137,15 +137,15 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		statusAssertions, headerAssertions, bodyAssertions := ParseAssertions(monitor.Assertions)
 
 		httpMonitors = append(httpMonitors, &private_locationv1.HTTPMonitor{
-			Url:                 monitor.URL,
-			Periodicity:         monitor.Periodicity,
-			Id:                  strconv.Itoa(monitor.ID),
-			Method:              monitor.Method,
-			Body:                monitor.Body,
-			Timeout:             monitor.Timeout,
-			DegradedAt:          &monitor.DegradedAfter.Int64,
-			FollowRedirects:     monitor.FollowRedirects,
-			Headers:             headers,
+			Url:                  monitor.URL,
+			Periodicity:          monitor.Periodicity,
+			Id:                   strconv.Itoa(monitor.ID),
+			Method:               monitor.Method,
+			Body:                 monitor.Body,
+			Timeout:              monitor.Timeout,
+			DegradedAt:           &monitor.DegradedAfter.Int64,
+			FollowRedirects:      monitor.FollowRedirects,
+			Headers:              headers,
 			StatusCodeAssertions: statusAssertions,
 			HeaderAssertions:     headerAssertions,
 			BodyAssertions:       bodyAssertions,

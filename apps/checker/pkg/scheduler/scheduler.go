@@ -17,7 +17,6 @@ type MonitorManager struct {
 	MonitorChannels map[string]chan bool
 }
 
-
 func (mm *MonitorManager) UpdateMonitors(ctx context.Context, apiKey string) {
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
@@ -40,7 +39,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context, apiKey string) {
 			doneChan := make(chan bool)
 			mm.MonitorChannels[m.Id] = doneChan
 			mm.HttpMonitors[m.Id] = m
-			go ScheduleHTTPJob(ctx,m, doneChan)
+			go ScheduleHTTPJob(ctx, m, doneChan)
 			log.Printf("Started monitoring job for %s (%s)", m.Id, m.Url)
 		}
 	}
@@ -59,23 +58,23 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context, apiKey string) {
 	}
 }
 
-func intervalToSecond(interval string)int {
+func intervalToSecond(interval string) int {
 	switch interval {
-		case "30s":
-			return 30
-		case "1m":
-			return 60
-		case "5m":
-			return 300
-		case "10m":
-			return 600
-		case "30m":
-			return 1800
-		case "1h":
-			return 3600
+	case "30s":
+		return 30
+	case "1m":
+		return 60
+	case "5m":
+		return 300
+	case "10m":
+		return 600
+	case "30m":
+		return 1800
+	case "1h":
+		return 3600
 
-		default:
-			return 0
+	default:
+		return 0
 	}
 }
 func ScheduleHTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, done chan bool) {
@@ -91,13 +90,13 @@ func ScheduleHTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, done chan boo
 			fmt.Printf("Starting job for monitor %s (%s)\n", monitor.Id, monitor.Url)
 			data, err := job.HTTPJob(ctx, monitor)
 			if err != nil {
-				log.Printf("Monitor check failed for %s (%s): %v",monitor.Id, monitor.Url, err)
+				log.Printf("Monitor check failed for %s (%s): %v", monitor.Id, monitor.Url, err)
 			} else {
 				fmt.Print(data)
 				log.Printf("Monitor check succeeded for %s (%s)", monitor.Id, monitor.Url)
 			}
 		case <-done:
-			log.Printf("Shutting down job for monitor %s (%s)",monitor.Id, monitor.Url)
+			log.Printf("Shutting down job for monitor %s (%s)", monitor.Id, monitor.Url)
 			return
 		}
 	}

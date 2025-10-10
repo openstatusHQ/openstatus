@@ -42,11 +42,11 @@ func TestParseAssertions_HttpStatusEquals(t *testing.T) {
 
 	statusAssertion, _, _ := server.ParseAssertions(assertions)
 
-	if len(	statusAssertion) != 1 {
+	if len(statusAssertion) != 1 {
 		t.Fatalf("expected 1 body assertion, got %d", len(statusAssertion))
 	}
 
-	got := 	statusAssertion[0]
+	got := statusAssertion[0]
 	if got.Target != 200 {
 		t.Errorf("expected Target to be 'mydata', got '%d'", got.Target)
 	}

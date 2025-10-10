@@ -17,7 +17,6 @@ const (
 	configRefreshInterval = 1 * time.Minute
 )
 
-
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -39,14 +38,14 @@ func main() {
 
 	configTicker := time.NewTicker(configRefreshInterval)
 	defer configTicker.Stop()
-	monitorManager.UpdateMonitors(ctx,apiKey)
+	monitorManager.UpdateMonitors(ctx, apiKey)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-configTicker.C:
 			fmt.Println("fetching monitors")
-			monitorManager.UpdateMonitors(ctx,apiKey)
+			monitorManager.UpdateMonitors(ctx, apiKey)
 		}
 	}
 }

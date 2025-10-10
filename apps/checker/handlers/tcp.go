@@ -116,7 +116,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		case "error":
 			requestStatus = "error"
 
-			case "degraded":
+		case "degraded":
 			requestStatus = "degraded"
 		}
 

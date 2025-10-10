@@ -32,7 +32,7 @@ type Monitor struct {
 	Headers         string         `db:"headers"`
 	Body            string         `db:"body"`
 	Method          string         `db:"method"`
-	Timeout         int64            `db:"timeout"`
+	Timeout         int64          `db:"timeout"`
 	DegradedAfter   sql.NullInt64  `db:"degraded_after"`
 	Assertions      sql.NullString `db:"assertions"`
 	Retry           int            `db:"retry"`
@@ -65,7 +65,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/health", s.healthHandler)
 	privateLocationServer := NewPrivateLocationServer()
 	path, handler := v1.NewPrivateLocationServiceHandler(privateLocationServer)
-
 
 	r.Group(func(r chi.Router) {
 		r.Mount(path, handler)
