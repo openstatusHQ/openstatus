@@ -34,7 +34,7 @@ type TCPPrivateRegionData struct {
 func TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error) {
 	retry := 3 // monitor.Retry
 	if retry == 0 {
-		retry = defaultRetryCount
+		retry = 3
 	}
 
 	var degradedAfter int64
@@ -90,7 +90,7 @@ func TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData,
 			URI:           monitor.Uri,
 			RequestStatus: requestStatus,
 			Error:         0,
-			Message:       fmt.Sprintf("Successfully connected to %s:%d", monitor.Host, monitor.Port),
+			Message:       fmt.Sprintf("Successfully connected to %s", monitor.Uri),
 		}
 
 		return data, nil
