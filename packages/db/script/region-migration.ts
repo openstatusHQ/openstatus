@@ -8,7 +8,6 @@ const rawMonitors = await db.select().from(schema.monitor);
 const monitors = z.array(selectMonitorSchema).parse(rawMonitors);
 for (const monitor of monitors) {
   const regions = monitor.regions.slice();
-
   // Asia Pacific
   updateRegion("hkg", "sin", regions);
 
@@ -21,6 +20,7 @@ for (const monitor of monitors) {
   updateRegion("phx", "lax", regions);
   updateRegion("sea", "sjc", regions);
   updateRegion("yul", "yyz", regions);
+  updateRegion("den", "dfw", regions);
 
   // Europe
   updateRegion("waw", "ams", regions);
@@ -32,8 +32,8 @@ for (const monitor of monitors) {
   updateRegion("gig", "gru", regions);
   updateRegion("scl", "gru", regions);
   updateRegion("eze", "gru", regions);
-
   const newRegions = regions.join(",");
+  // console.log("new regions:",newRegions)
   await db
     .update(schema.monitor)
     .set({ regions: newRegions })
