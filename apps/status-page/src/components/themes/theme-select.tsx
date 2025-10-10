@@ -15,7 +15,7 @@ import { Laptop, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";
 
-export function ThemeToggle({
+export function ThemeSelect({
   className,
   ...props
 }: React.ComponentProps<typeof SelectTrigger>) {

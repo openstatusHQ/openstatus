@@ -1,5 +1,5 @@
 import { Link } from "@/components/common/link";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/themes/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import PlausibleProvider from "next-plausible";
