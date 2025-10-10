@@ -1,9 +1,5 @@
 "use client";
-
-import { Badge } from "@/components/ui/badge";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDate } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
   StatusBlankContainer,
@@ -16,8 +12,11 @@ import {
 import {
   StatusEvent,
   StatusEventAffected,
+  StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
+  StatusEventDate,
+  StatusEventGroup,
   StatusEventTimelineMaintenance,
   StatusEventTimelineReport,
   StatusEventTitle,
@@ -52,7 +51,6 @@ type UnifiedEvent = {
 };
 
 export function StatusFeed({
-  className,
   statusReports = [],
   maintenances = [],
   ...props
@@ -102,16 +100,14 @@ export function StatusFeed({
   }
 
   return (
-    <div className={cn("flex flex-col gap-4", className)} {...props}>
+    <StatusEventGroup {...props}>
       {unifiedEvents.map((event) => {
         if (event.type === "report") {
           const report = event.data as StatusReport;
           return (
             <StatusEvent key={`report-${event.id}`}>
               <StatusEventAside>
-                <span className="font-medium text-foreground/80">
-                  {formatDate(event.startDate, { month: "short" })}
-                </span>
+                <StatusEventDate date={event.startDate} />
               </StatusEventAside>
               <Link
                 href={`${prefix ? `/${prefix}` : ""}/events/report/${
@@ -122,15 +118,11 @@ export function StatusFeed({
                 <StatusEventContent>
                   <StatusEventTitle>{report.title}</StatusEventTitle>
                   {report.affected.length > 0 && (
-                    <StatusEventAffected className="flex flex-wrap gap-1">
+                    <StatusEventAffected>
                       {report.affected.map((affected, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-[10px]"
-                        >
+                        <StatusEventAffectedBadge key={index}>
                           {affected}
-                        </Badge>
+                        </StatusEventAffectedBadge>
                       ))}
                     </StatusEventAffected>
                   )}
@@ -143,16 +135,10 @@ export function StatusFeed({
 
         if (event.type === "maintenance") {
           const maintenance = event.data as Maintenance;
-          const isFuture = maintenance.from > new Date();
           return (
             <StatusEvent key={`maintenance-${event.id}`}>
               <StatusEventAside>
-                <span className="font-medium text-foreground/80">
-                  {formatDate(event.startDate, { month: "short" })}
-                </span>
-                {isFuture ? (
-                  <span className="text-info text-sm">Upcoming</span>
-                ) : null}
+                <StatusEventDate date={event.startDate} />
               </StatusEventAside>
               <Link
                 href={`${prefix ? `/${prefix}` : ""}/events/maintenance/${
@@ -163,15 +149,11 @@ export function StatusFeed({
                 <StatusEventContent>
                   <StatusEventTitle>{maintenance.title}</StatusEventTitle>
                   {maintenance.affected.length > 0 && (
-                    <StatusEventAffected className="flex flex-wrap gap-1">
+                    <StatusEventAffected>
                       {maintenance.affected.map((affected, index) => (
-                        <Badge
-                          key={index}
-                          variant="outline"
-                          className="text-[10px]"
-                        >
+                        <StatusEventAffectedBadge key={index}>
                           {affected}
-                        </Badge>
+                        </StatusEventAffectedBadge>
                       ))}
                     </StatusEventAffected>
                   )}
@@ -196,6 +178,6 @@ export function StatusFeed({
       >
         View events history
       </StatusBlankLink>
-    </div>
+    </StatusEventGroup>
   );
 }

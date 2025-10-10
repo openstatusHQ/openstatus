@@ -1,5 +1,6 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
@@ -7,11 +8,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatDateRange, formatDateTime } from "@/lib/formatter";
+import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
 import { status } from "./messages";
+
+export function StatusEventGroup({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex flex-col gap-4", className)} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export function StatusEvent({
   className,
@@ -67,7 +80,7 @@ export function StatusEventTitleCheck({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("mt-1 ml-1.5", className)} {...props}>
+    <div className={cn("flex items-center pl-1", className)} {...props}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger>
@@ -91,8 +104,49 @@ export function StatusEventAffected({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <div className={cn("flex flex-wrap gap-0.5", className)} {...props}>
       {children}
+    </div>
+  );
+}
+
+export function StatusEventAffectedBadge({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <Badge
+      variant="secondary"
+      className={cn("text-[10px]", className)}
+      {...props}
+    >
+      {children}
+    </Badge>
+  );
+}
+
+export function StatusEventDate({
+  className,
+  date,
+  ...props
+}: React.ComponentProps<"div"> & {
+  date: Date;
+}) {
+  const isFuture = date > new Date();
+  return (
+    <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
+      <div className="font-medium text-foreground">
+        {formatDate(date, { month: "short" })}
+      </div>{" "}
+      {isFuture ? (
+        <Badge
+          variant="secondary"
+          className="bg-info text-[10px] text-background dark:text-foreground"
+        >
+          Upcoming
+        </Badge>
+      ) : null}
     </div>
   );
 }
@@ -103,14 +157,8 @@ export function StatusEventAside({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className="lg:-left-32 lg:absolute lg:top-0 lg:h-full">
-      <div
-        className={cn(
-          "flex flex-col gap-1 lg:sticky lg:top-0 lg:left-0",
-          className,
-        )}
-        {...props}
-      >
+    <div className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full">
+      <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
         {children}
       </div>
     </div>
@@ -203,7 +251,6 @@ function StatusEventTimelineReportUpdate({
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
-              {/* underline decoration-dashed underline-offset-2 decoration-muted-foreground/30 */}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
                   <span>{formatDateTime(report.date)}</span>
@@ -311,10 +358,7 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn(
-        "py-1.5 font-mono text-foreground/90 text-sm/relaxed",
-        className,
-      )}
+      className={cn("py-1.5 font-mono text-muted-foreground", className)}
       {...props}
     >
       {children}

@@ -2,10 +2,10 @@
 
 import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeDropdown } from "@/components/themes/theme-dropdown";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { Clock } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export function Footer(props: React.ComponentProps<"footer">) {
@@ -14,6 +14,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
   const { data: page, dataUpdatedAt } = useQuery(
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   if (!page) return null;
 
@@ -21,16 +22,29 @@ export function Footer(props: React.ComponentProps<"footer">) {
     <footer {...props}>
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2">
         <div>
-          <p className="font-mono text-muted-foreground text-sm leading-none">
-            powered by <Link href="https://openstatus.dev">openstatus</Link>
+          <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
+            powered by{" "}
+            <Link
+              href="https://openstatus.dev"
+              target="_blank"
+              rel="noreferrer"
+            >
+              openstatus.dev
+            </Link>
           </p>
-          <TimestampHoverCard date={new Date(dataUpdatedAt)} side="top">
-            <span className="text-muted-foreground/70 text-xs">
-              {format(new Date(dataUpdatedAt), "LLL dd, y HH:mm:ss")}
-            </span>
-          </TimestampHoverCard>
         </div>
-        <ThemeToggle className="w-[140px]" />
+        <div className="flex items-center gap-4">
+          <TimestampHoverCard
+            date={new Date(dataUpdatedAt)}
+            side="top"
+            align="end"
+            className="flex items-center gap-1.5 text-muted-foreground/70"
+          >
+            <Clock className="size-3" />
+            <span className="font-mono text-xs">{timezone}</span>
+          </TimestampHoverCard>
+          <ThemeDropdown />
+        </div>
       </div>
     </footer>
   );

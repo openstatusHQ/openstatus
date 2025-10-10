@@ -4,7 +4,7 @@ import {
   StatusPageProvider,
 } from "@/components/status-page/floating-button";
 import { FloatingTheme } from "@/components/status-page/floating-theme";
-import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeProvider } from "@/components/themes/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import type { Metadata } from "next";

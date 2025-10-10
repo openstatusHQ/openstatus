@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -66,7 +66,7 @@ export function FloatingTheme({ className }: { className?: string }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="theme">Theme</Label>
-              <ThemeToggle id="theme" className="w-full" />
+              <ThemeSelect id="theme" className="w-full" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="community-theme">Community Theme</Label>
