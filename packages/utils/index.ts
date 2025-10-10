@@ -263,7 +263,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "San Jose, California, USA",
     flag: "🇺🇸",
     continent: "North America",
-    deprecated: true,
+    deprecated: false,
     provider: "fly",
   },
   sea: {
