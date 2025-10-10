@@ -12,5 +12,6 @@ message TCPMonitor {
     string uri = 2;
     int64 timeout = 3;
     optional int64 degraded_at = 4;
-
+    string periodicity = 5;
+    int64 interval = 6;
 }
