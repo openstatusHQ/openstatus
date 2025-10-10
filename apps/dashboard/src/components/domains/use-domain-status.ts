@@ -2,31 +2,38 @@ import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/d
 
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useCallback } from "react";
 
-export function useDomainStatus(domain: string) {
+export function useDomainStatus(domain?: string) {
   const trpc = useTRPC();
-  const { data: domainJson, refetch: refetchDomain } = useQuery(
-    trpc.domain.getDomainResponse.queryOptions({ domain }),
-  );
-  const { data: configJson, refetch: refetchConfig } = useQuery(
-    trpc.domain.getConfigResponse.queryOptions({ domain }),
-  );
-  const { data: verificationJson, refetch: refetchVerification } = useQuery(
+  const {
+    data: domainJson,
+    refetch: refetchDomain,
+    isLoading: isLoadingDomain,
+    isRefetching: isRefetchingDomain,
+  } = useQuery(trpc.domain.getDomainResponse.queryOptions({ domain }));
+  const {
+    data: configJson,
+    refetch: refetchConfig,
+    isLoading: isLoadingConfig,
+    isRefetching: isRefetchingConfig,
+  } = useQuery(trpc.domain.getConfigResponse.queryOptions({ domain }));
+  const {
+    data: verificationJson,
+    refetch: refetchVerification,
+    isLoading: isLoadingVerification,
+    isRefetching: isRefetchingVerification,
+  } = useQuery(
     trpc.domain.verifyDomain.queryOptions(
       { domain },
       { enabled: !domainJson?.verified },
     ),
   );
 
-  // NOTE: refetch every 5 seconds to check for the status
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refetchDomain();
-      refetchConfig();
-      refetchVerification();
-    }, 5000);
-    return () => clearInterval(interval);
+  const refreshAll = useCallback(() => {
+    refetchDomain();
+    refetchConfig();
+    refetchVerification();
   }, [refetchDomain, refetchConfig, refetchVerification]);
 
   let status: DomainVerificationStatusProps = "Valid Configuration";
@@ -52,8 +59,17 @@ export function useDomainStatus(domain: string) {
   } else {
     status = "Valid Configuration";
   }
+
   return {
     status,
     domainJson,
+    refresh: refreshAll,
+    isLoading:
+      isLoadingDomain ||
+      isLoadingConfig ||
+      isLoadingVerification ||
+      isRefetchingDomain ||
+      isRefetchingConfig ||
+      isRefetchingVerification,
   };
 }
