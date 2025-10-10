@@ -10,7 +10,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
@@ -113,13 +113,11 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		switch req.Status {
 		case "active":
 			requestStatus = "success"
-			break
 		case "error":
 			requestStatus = "error"
-			break
-		case "degraded":
+
+			case "degraded":
 			requestStatus = "degraded"
-			break
 		}
 
 		id, err := uuid.NewV7()

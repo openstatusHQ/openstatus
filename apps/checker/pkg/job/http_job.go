@@ -9,14 +9,13 @@ import (
 
 	"github.com/cenkalti/backoff/v5"
 	"github.com/google/uuid"
-	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
-func HTTPJob(monitor v1.HTTPMonitor) (*HttpPingData, error) {
-	ctx := context.Background()
+func HTTPJob(ctx context.Context,monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
 
 	retry := monitor.Retry
 	if retry == 0 {
@@ -77,7 +76,7 @@ func HTTPJob(monitor v1.HTTPMonitor) (*HttpPingData, error) {
 	var called int
 
 
-	op := func() (*HttpPingData, error) {
+	op := func() (*HttpPrivateRegionData, error) {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
 		if err != nil {
@@ -140,7 +139,7 @@ func HTTPJob(monitor v1.HTTPMonitor) (*HttpPingData, error) {
 			requestStatus = "degraded"
 		}
 
-		data := HttpPingData{
+		data := HttpPrivateRegionData{
 			ID:            id.String(),
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
@@ -169,11 +168,10 @@ func HTTPJob(monitor v1.HTTPMonitor) (*HttpPingData, error) {
 
 
 
-		fmt.Println(data)
 		return &data, nil
 	}
 
-	resp, err := backoff.Retry(context.TODO(), op, backoff.WithMaxTries(uint(retry)), backoff.WithBackOff(backoff.NewExponentialBackOff()))
+	resp, err := backoff.Retry(ctx, op, backoff.WithMaxTries(uint(retry)), backoff.WithBackOff(backoff.NewExponentialBackOff()))
 	if err != nil {
 		return nil, err
 	}

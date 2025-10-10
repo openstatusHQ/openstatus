@@ -39,14 +39,14 @@ func main() {
 
 	configTicker := time.NewTicker(configRefreshInterval)
 	defer configTicker.Stop()
-	monitorManager.UpdateMonitors(apiKey)
+	monitorManager.UpdateMonitors(ctx,apiKey)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-configTicker.C:
 			fmt.Println("fetching monitors")
-			monitorManager.UpdateMonitors(apiKey)
+			monitorManager.UpdateMonitors(ctx,apiKey)
 		}
 	}
 }

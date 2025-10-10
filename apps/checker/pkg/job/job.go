@@ -6,7 +6,7 @@ func (s statusCode) IsSuccessful() bool {
 	return s >= 200 && s < 300
 }
 
-type HttpPingData struct {
+type HttpPrivateRegionData struct {
 	ID            string `json:"id"`
 	URL           string `json:"url"`
 	Method        string `json:"method"`
@@ -14,7 +14,6 @@ type HttpPingData struct {
 	Message       string `json:"message,omitempty"`
 	Timing        string `json:"timing,omitempty"`
 	Headers       string `json:"headers,omitempty"`
-	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
 	RequestStatus string `json:"requestStatus,omitempty"`
 	Latency       int64  `json:"latency"`
@@ -23,3 +22,8 @@ type HttpPingData struct {
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
 }
+
+//  On the server we need to set
+//  - the trigger (private region)
+//  - the region
+//  - assertions

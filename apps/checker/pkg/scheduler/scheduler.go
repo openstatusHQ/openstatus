@@ -18,14 +18,14 @@ type MonitorManager struct {
 }
 
 
-func (mm *MonitorManager) UpdateMonitors(apiKey string) {
+func (mm *MonitorManager) UpdateMonitors(ctx context.Context, apiKey string) {
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",
 		connect.WithHTTPGet(),
 	)
 
-	ctx, callInfo := connect.NewClientContext(context.Background())
+	ctx, callInfo := connect.NewClientContext(ctx)
 	callInfo.RequestHeader().Set("openstatus-token", apiKey)
 	res, err := client.Monitors(ctx, &connect.Request[v1.MonitorsRequest]{})
 	if err != nil {
@@ -40,7 +40,7 @@ func (mm *MonitorManager) UpdateMonitors(apiKey string) {
 			doneChan := make(chan bool)
 			mm.MonitorChannels[m.Id] = doneChan
 			mm.HttpMonitors[m.Id] = m
-			go ScheduleJob(*m, doneChan)
+			go ScheduleHTTPJob(ctx,m, doneChan)
 			log.Printf("Started monitoring job for %s (%s)", m.Id, m.Url)
 		}
 	}
@@ -78,19 +78,18 @@ func intervalToSecond(interval string)int {
 			return 0
 	}
 }
-func ScheduleJob(monitor v1.HTTPMonitor, done chan bool) {
+func ScheduleHTTPJob(ctx context.Context, monitor *v1.HTTPMonitor, done chan bool) {
 
 	interval := intervalToSecond(monitor.Periodicity)
 
 	ticker := time.NewTicker(time.Duration(interval) * time.Second)
 	defer ticker.Stop()
 
-
 	for {
 		select {
 		case <-ticker.C:
 			fmt.Printf("Starting job for monitor %s (%s)\n", monitor.Id, monitor.Url)
-			data, err := job.HTTPJob(monitor)
+			data, err := job.HTTPJob(ctx, monitor)
 			if err != nil {
 				log.Printf("Monitor check failed for %s (%s): %v",monitor.Id, monitor.Url, err)
 			} else {

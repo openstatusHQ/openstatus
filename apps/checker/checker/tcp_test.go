@@ -3,7 +3,7 @@ package checker_test
 import (
 	"testing"
 
-	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 )
 
 func TestPingTcp(t *testing.T) {
