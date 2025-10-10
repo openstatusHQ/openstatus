@@ -1,19 +1,18 @@
 "use client";
 
-import { formatDate } from "@/lib/formatter";
-
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import {
   StatusEvent,
   StatusEventAffected,
+  StatusEventAffectedBadge,
   StatusEventAside,
   StatusEventContent,
+  StatusEventDate,
   StatusEventTimelineReport,
   StatusEventTitle,
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
-import { Badge } from "@/components/ui/badge";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -45,9 +44,7 @@ export default function ReportPage() {
       </div>
       <StatusEvent>
         <StatusEventAside>
-          <span className="font-medium text-foreground/80">
-            {formatDate(firstUpdate.date, { month: "short" })}
-          </span>
+          <StatusEventDate date={firstUpdate.date} />
         </StatusEventAside>
         <StatusEventContent hoverable={false}>
           <StatusEventTitle className="inline-flex gap-1">
@@ -55,15 +52,11 @@ export default function ReportPage() {
             {isReportResolvedOnly ? <StatusEventTitleCheck /> : null}
           </StatusEventTitle>
           {report.monitorsToStatusReports.length > 0 ? (
-            <StatusEventAffected className="flex flex-wrap gap-1">
+            <StatusEventAffected>
               {report.monitorsToStatusReports.map((affected) => (
-                <Badge
-                  key={affected.monitor.id}
-                  variant="outline"
-                  className="text-[10px]"
-                >
+                <StatusEventAffectedBadge key={affected.monitor.id}>
                   {affected.monitor.name}
-                </Badge>
+                </StatusEventAffectedBadge>
               ))}
             </StatusEventAffected>
           ) : null}

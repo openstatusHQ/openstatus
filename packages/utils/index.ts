@@ -18,6 +18,7 @@ export type RegionInfo = {
   location: string;
   flag: string;
   continent: Continent;
+  deprecated: boolean;
   provider: "fly" | "koyeb" | "railway";
 };
 
@@ -37,6 +38,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Amsterdam, Netherlands",
     flag: "🇳🇱",
     continent: "Europe",
+    deprecated: false,
     provider: "fly",
   },
   arn: {
@@ -44,6 +46,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Stockholm, Sweden",
     flag: "🇸🇪",
     continent: "Europe",
+    deprecated: false,
     provider: "fly",
   },
 
@@ -52,6 +55,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Atlanta, Georgia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   bog: {
@@ -59,6 +63,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Bogotá, Colombia",
     flag: "🇨🇴",
     continent: "South America",
+    deprecated: true,
     provider: "fly",
   },
   bom: {
@@ -66,6 +71,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Mumbai, India",
     flag: "🇮🇳",
     continent: "Asia",
+    deprecated: false,
     provider: "fly",
   },
   bos: {
@@ -73,6 +79,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Boston, Massachusetts, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   cdg: {
@@ -80,6 +87,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Paris, France",
     flag: "🇫🇷",
     continent: "Europe",
+    deprecated: false,
     provider: "fly",
   },
   den: {
@@ -87,6 +95,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Denver, Colorado, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   dfw: {
@@ -94,6 +103,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Dallas, Texas, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   ewr: {
@@ -101,6 +111,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Secaucus, New Jersey, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   eze: {
@@ -108,6 +119,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Ezeiza, Argentina",
     flag: "🇦🇷",
     continent: "South America",
+    deprecated: true,
     provider: "fly",
   },
   fra: {
@@ -115,6 +127,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Frankfurt, Germany",
     flag: "🇩🇪",
     continent: "Europe",
+    deprecated: false,
     provider: "fly",
   },
   gdl: {
@@ -122,6 +135,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Guadalajara, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   gig: {
@@ -129,6 +143,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Rio de Janeiro, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    deprecated: true,
     provider: "fly",
   },
   gru: {
@@ -136,6 +151,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Sao Paulo, Brazil",
     flag: "🇧🇷",
     continent: "South America",
+    deprecated: false,
     provider: "fly",
   },
   hkg: {
@@ -143,6 +159,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Hong Kong, Hong Kong",
     flag: "🇭🇰",
     continent: "Asia",
+    deprecated: true,
     provider: "fly",
   },
   iad: {
@@ -150,6 +167,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Ashburn, Virginia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   jnb: {
@@ -157,6 +175,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Johannesburg, South Africa",
     flag: "🇿🇦",
     continent: "Africa",
+    deprecated: false,
     provider: "fly",
   },
   lax: {
@@ -164,6 +183,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Los Angeles, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   lhr: {
@@ -171,6 +191,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "London, United Kingdom",
     flag: "🇬🇧",
     continent: "Europe",
+    deprecated: false,
     provider: "fly",
   },
   mad: {
@@ -178,6 +199,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Madrid, Spain",
     flag: "🇪🇸",
     continent: "Europe",
+    deprecated: true,
     provider: "fly",
   },
   mia: {
@@ -185,6 +207,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Miami, Florida, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   nrt: {
@@ -192,6 +215,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Tokyo, Japan",
     flag: "🇯🇵",
     continent: "Asia",
+    deprecated: false,
     provider: "fly",
   },
   ord: {
@@ -199,6 +223,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Chicago, Illinois, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   otp: {
@@ -206,6 +231,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Bucharest, Romania",
     flag: "🇷🇴",
     continent: "Europe",
+    deprecated: true,
     provider: "fly",
   },
   phx: {
@@ -213,6 +239,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Phoenix, Arizona, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   qro: {
@@ -220,6 +247,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Querétaro, Mexico",
     flag: "🇲🇽",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   scl: {
@@ -227,6 +255,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Santiago, Chile",
     flag: "🇨🇱",
     continent: "South America",
+    deprecated: true,
     provider: "fly",
   },
   sjc: {
@@ -234,6 +263,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "San Jose, California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   sea: {
@@ -241,6 +271,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Seattle, Washington, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   sin: {
@@ -248,6 +279,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Singapore, Singapore",
     flag: "🇸🇬",
     continent: "Asia",
+    deprecated: false,
     provider: "fly",
   },
   syd: {
@@ -255,6 +287,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Sydney, Australia",
     flag: "🇦🇺",
     continent: "Oceania",
+    deprecated: false,
     provider: "fly",
   },
   waw: {
@@ -262,6 +295,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Warsaw, Poland",
     flag: "🇵🇱",
     continent: "Europe",
+    deprecated: true,
     provider: "fly",
   },
   yul: {
@@ -269,6 +303,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Montreal, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    deprecated: true,
     provider: "fly",
   },
   yyz: {
@@ -276,6 +311,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Toronto, Canada",
     flag: "🇨🇦",
     continent: "North America",
+    deprecated: false,
     provider: "fly",
   },
   koyeb_fra: {
@@ -283,6 +319,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Frankfurt, Germany",
     flag: "🇩🇪",
     continent: "Europe",
+    deprecated: false,
     provider: "koyeb",
   },
   koyeb_par: {
@@ -290,6 +327,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Paris, France",
     flag: "🇫🇷",
     continent: "Europe",
+    deprecated: false,
     provider: "koyeb",
   },
   koyeb_sfo: {
@@ -297,6 +335,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "San Francisco, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "koyeb",
   },
   koyeb_sin: {
@@ -304,6 +343,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Singapore, Singapore",
     flag: "🇸🇬",
     continent: "Asia",
+    deprecated: false,
     provider: "koyeb",
   },
   koyeb_tyo: {
@@ -311,6 +351,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Tokyo, Japan",
     flag: "🇯🇵",
     continent: "Asia",
+    deprecated: false,
     provider: "koyeb",
   },
   koyeb_was: {
@@ -318,6 +359,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Washington, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "koyeb",
   },
   "railway_us-west2": {
@@ -325,6 +367,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "California, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "railway",
   },
   "railway_us-east4-eqdc4a": {
@@ -332,6 +375,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Virginia, USA",
     flag: "🇺🇸",
     continent: "North America",
+    deprecated: false,
     provider: "railway",
   },
   "railway_europe-west4-drams3a": {
@@ -339,6 +383,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Amsterdam, Netherlands",
     flag: "🇳🇱",
     continent: "Europe",
+    deprecated: false,
     provider: "railway",
   },
   "railway_asia-southeast1-eqsg3a": {
@@ -346,6 +391,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Singapore, Singapore",
     flag: "🇸🇬",
     continent: "Asia",
+    deprecated: false,
     provider: "railway",
   },
 } as const;

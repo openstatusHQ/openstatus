@@ -112,6 +112,19 @@ export const cron = async ({
     for (const region of row.regions) {
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
+
+      const r = regionDict[region as keyof typeof regionDict];
+
+      if (!r) {
+        console.error(`Invalid region ${region}`);
+        continue;
+      }
+      if (r.deprecated) {
+        // Let's uncomment this when we are ready to remove deprecated regions
+        // We should not use deprecated regions anymore
+        console.error(`Deprecated region ${region}`);
+        continue;
+      }
       const response = createCronTask({
         row,
         timestamp,

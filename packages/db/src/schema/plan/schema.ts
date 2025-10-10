@@ -19,7 +19,7 @@ export const limitsSchema = z.object({
     .default("14 days"),
   regions: monitorRegionSchema
     .array()
-    .default(["ams", "gru", "iad", "jnb", "hkg", "syd"]),
+    .default(["ams", "gru", "iad", "jnb", "sin", "syd"]),
   "private-locations": z.boolean().default(false),
   screenshots: z.boolean().default(false),
   "response-logs": z.boolean().default(false),

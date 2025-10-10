@@ -130,12 +130,16 @@ export function Header(props: React.ComponentProps<"header">) {
 function NavDesktop({ className, ...props }: React.ComponentProps<"ul">) {
   const nav = useNav();
   return (
-    <ul className={cn("flex flex-row gap-2", className)} {...props}>
+    <ul className={cn("flex flex-row gap-0.5", className)} {...props}>
       {nav.map((item) => {
         return (
           <li key={item.label}>
             <Button
               variant={item.isActive ? "secondary" : "ghost"}
+              className={cn(
+                "border",
+                item.isActive ? "border-input" : "border-transparent",
+              )}
               size="sm"
               asChild
             >

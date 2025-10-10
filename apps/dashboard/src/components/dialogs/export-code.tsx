@@ -19,7 +19,7 @@ const YML = `openstatus-marketing:
   active: true
   public: false
   frequency: "10m"
-  regions: ["ams", "fra", "gru", "hkg", "iad"]
+  regions: ["ams", "fra", "gru", "sin", "iad"]
   kind: "http"
   request:
     url: https://api.openstatus.dev
