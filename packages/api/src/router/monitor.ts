@@ -1419,8 +1419,7 @@ export const monitorRouter = createTRPCRouter({
       const regions = [...selectableRegions]
         // NOTE: make sure we don't use deprecated regions
         .filter((r) => {
-          const deprecated =
-            regionDict[r as keyof typeof regionDict].deprecated;
+          const deprecated = regionDict[r].deprecated;
           if (!deprecated) return true;
           return false;
         })
