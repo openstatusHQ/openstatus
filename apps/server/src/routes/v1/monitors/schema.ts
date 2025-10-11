@@ -6,6 +6,7 @@ import {
   monitorPeriodicitySchema,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/utils";
 import { ZodError } from "zod";
 
 const statusAssertion = z
@@ -94,21 +95,34 @@ export const MonitorSchema = z
     regions: z
       .preprocess(
         (val) => {
-          try {
-            if (Array.isArray(val)) return val;
-            if (String(val).length > 0) {
-              return String(val).split(",");
-            }
-            return [];
-          } catch (e) {
+          let regions: Array<unknown> = [];
+          if (Array.isArray(val)) {
+            regions = val;
+          }
+          if (String(val).length > 0) {
+            regions = String(val).split(",");
+          }
+
+          const deprecatedRegions = regions.filter((r) => {
+            const deprecated =
+              regionDict[r as keyof typeof regionDict].deprecated;
+            if (deprecated) return true;
+            return false;
+          });
+
+          if (deprecatedRegions.length > 0) {
             throw new ZodError([
               {
                 code: "custom",
-                path: ["headers"],
-                message: e instanceof Error ? e.message : "Invalid value",
+                path: ["regions"],
+                message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+                  ", ",
+                )}`,
               },
             ]);
           }
+
+          return regions;
         },
         z.array(z.enum(monitorRegions)),
       )
@@ -343,9 +357,45 @@ const baseRequest = z.object({
     description: "Whether the monitor is public",
     default: false,
   }),
-  regions: z.array(z.enum(monitorRegions)).openapi({
-    description: "Regions to run the request in",
-  }),
+  regions: z
+    .preprocess(
+      (val) => {
+        let regions: Array<unknown> = [];
+        if (Array.isArray(val)) {
+          regions = val;
+        }
+        if (String(val).length > 0) {
+          regions = String(val).split(",");
+        }
+
+        const deprecatedRegions = regions.filter((r) => {
+          const deprecated =
+            regionDict[r as keyof typeof regionDict].deprecated;
+          if (deprecated) return true;
+          return false;
+        });
+
+        if (deprecatedRegions.length > 0) {
+          throw new ZodError([
+            {
+              code: "custom",
+              path: ["regions"],
+              message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+                ", ",
+              )}`,
+            },
+          ]);
+        }
+
+        return regions;
+      },
+      z.array(z.enum(monitorRegions)),
+    )
+    .default([])
+    .openapi({
+      example: ["ams"],
+      description: "Where we should monitor it",
+    }),
   openTelemetry: z
     .object({
       endpoint: z
