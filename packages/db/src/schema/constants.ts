@@ -59,7 +59,7 @@ export const freeFlyRegions = [
   "ams",
   "gru",
   "syd",
-  "hkg",
+  "sin",
   "jnb",
 ] as const satisfies (typeof flyRegions)[number][];
 
