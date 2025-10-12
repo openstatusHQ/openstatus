@@ -102,24 +102,24 @@ export const MonitorSchema = z
           if (String(val).length > 0) {
             regions = String(val).split(",");
           }
-
-          const deprecatedRegions = regions.filter((r) => {
-            const deprecated =
-              regionDict[r as keyof typeof regionDict].deprecated;
-            if (deprecated) return true;
-            return false;
-          });
-
-          if (deprecatedRegions.length > 0) {
-            throw new ZodError([
-              {
-                code: "custom",
-                path: ["regions"],
-                message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
-                  ", ",
-                )}`,
-              },
-            ]);
+          if (!regions.length) {
+            const deprecatedRegions = regions.filter((r) => {
+              const deprecated =
+                regionDict[r as keyof typeof regionDict].deprecated;
+              if (deprecated) return true;
+              return false;
+            });
+            if (deprecatedRegions.length > 0) {
+              throw new ZodError([
+                {
+                  code: "custom",
+                  path: ["regions"],
+                  message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+                    ", ",
+                  )}`,
+                },
+              ]);
+            }
           }
 
           return regions;
@@ -368,23 +368,24 @@ const baseRequest = z.object({
           regions = String(val).split(",");
         }
 
-        const deprecatedRegions = regions.filter((r) => {
-          const deprecated =
-            regionDict[r as keyof typeof regionDict].deprecated;
-          if (deprecated) return true;
-          return false;
-        });
-
-        if (deprecatedRegions.length > 0) {
-          throw new ZodError([
-            {
-              code: "custom",
-              path: ["regions"],
-              message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
-                ", ",
-              )}`,
-            },
-          ]);
+        if (!regions.length) {
+          const deprecatedRegions = regions.filter((r) => {
+            const deprecated =
+              regionDict[r as keyof typeof regionDict].deprecated;
+            if (deprecated) return true;
+            return false;
+          });
+          if (deprecatedRegions.length > 0) {
+            throw new ZodError([
+              {
+                code: "custom",
+                path: ["regions"],
+                message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+                  ", ",
+                )}`,
+              },
+            ]);
+          }
         }
 
         return regions;
