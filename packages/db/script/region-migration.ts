@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { db, eq, schema } from "../src";
+import { db, schema } from "../src";
 import { selectMonitorSchema } from "../src/schema";
 import type { monitorRegionSchema } from "../src/schema/constants";
 
