@@ -12,7 +12,7 @@ ignore:
   - /packages/tracker
 builders:
   install:
-    fromImage: oven/bun
+    fromImage: oven/bun:1.2.23
     workdir: /app/
     # Copy project
     bind:
