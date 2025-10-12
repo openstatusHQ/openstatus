@@ -7,23 +7,6 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
@@ -58,6 +41,25 @@ effective: |
         source: packages/tsconfig/package.json
       - target: packages/assertions/package.json
         source: packages/assertions/package.json
+      - target: packages/regions/package.json
+        source: packages/regions/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
@@ -73,17 +75,17 @@ effective: |
   - port: 3000
 images:
   registry.hub.docker.com:443:
-    oven:
-      bun:
-        latest:
-          digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
     library:
       debian:
         bullseye-slim:
           digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
+    oven:
+      bun:
+        latest:
+          digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
 resources:
   dofigen.yml:
-    hash: d8fd3cc0e7fc97f77bb35e336fc7ce1a9f70131a2c0c24fb2056e112b128cbc2
+    hash: 3ecc7db3783cd8610f28ebf71548c121b9cbfbd401c65c2414fff374e74259de
     content: |
       ignore:
         - node_modules
@@ -110,6 +112,8 @@ resources:
             - packages/utils/package.json
             - packages/tsconfig/package.json
             - packages/assertions/package.json
+            - packages/regions/package.json
+
           # Install dependencies
           run: bun install --production --ignore-scripts --frozen-lockfile --verbose
           cache:
