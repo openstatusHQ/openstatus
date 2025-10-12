@@ -84,7 +84,7 @@ export default function Page() {
                   ) : (
                     <ChartAreaPercentiles
                       className="h-[80px]"
-                      legendClassName="pb-1"
+                      legendClassName="pb-1 justify-start"
                       data={data}
                       singleSeries
                     />
