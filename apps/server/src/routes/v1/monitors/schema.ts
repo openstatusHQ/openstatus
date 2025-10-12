@@ -96,6 +96,7 @@ export const MonitorSchema = z
       .preprocess(
         (val) => {
           let regions: Array<unknown> = [];
+          if (!val) return regions;
           if (Array.isArray(val)) {
             regions = val;
           }
@@ -361,6 +362,8 @@ const baseRequest = z.object({
     .preprocess(
       (val) => {
         let regions: Array<unknown> = [];
+        if (!val) return regions;
+
         if (Array.isArray(val)) {
           regions = val;
         }
