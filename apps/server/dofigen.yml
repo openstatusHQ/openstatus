@@ -3,6 +3,9 @@ ignore:
   - /apps/docs
   - /apps/screenshot-service
   - /apps/web
+  - /apps/dashboard
+  - /apps/status-page
+  - /apps/workflows
   - /packages/api
   - /packages/integrations/vercel
 builders:
@@ -17,6 +20,7 @@ builders:
       - packages/db/package.json
       - packages/emails/package.json
       - packages/error/package.json
+      - packages/regions/package.json
       - packages/tinybird/package.json
       - packages/tracker/package.json
       - packages/upstash/package.json
