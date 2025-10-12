@@ -22,6 +22,7 @@ RUN \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
+    --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --production --ignore-scripts --frozen-lockfile --verbose
 

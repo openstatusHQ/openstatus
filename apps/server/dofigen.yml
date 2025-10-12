@@ -27,6 +27,8 @@ builders:
       - packages/utils/package.json
       - packages/tsconfig/package.json
       - packages/assertions/package.json
+      - packages/regions/package.json
+
     # Install dependencies
     run: bun install --production --ignore-scripts --frozen-lockfile --verbose
     cache:
