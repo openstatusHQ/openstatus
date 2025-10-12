@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { RegionMetric } from "@/data/region-metrics";
 import { getActions } from "@/data/region-metrics.client";
-import { formatRegionCode, regionDict } from "@openstatus/utils";
+import { formatRegionCode, regionDict } from "@openstatus/regions";
 import type { ColumnDef } from "@tanstack/react-table";
 // import { toast } from "sonner";
 import { useRouter } from "next/navigation";

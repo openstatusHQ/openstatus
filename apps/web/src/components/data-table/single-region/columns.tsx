@@ -4,7 +4,7 @@ import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
 import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 

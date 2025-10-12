@@ -6,7 +6,7 @@ import {
   monitorPeriodicitySchema,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { ZodError } from "zod";
 
 const statusAssertion = z
@@ -105,10 +105,9 @@ export const MonitorSchema = z
           }
 
           const deprecatedRegions = regions.filter((r) => {
-            const deprecated =
-              regionDict[r as keyof typeof regionDict].deprecated;
-            if (deprecated) return true;
-            return false;
+            return !AVAILABLE_REGIONS.includes(
+              r as (typeof AVAILABLE_REGIONS)[number],
+            );
           });
 
           if (deprecatedRegions.length > 0) {
@@ -372,10 +371,9 @@ const baseRequest = z.object({
         }
 
         const deprecatedRegions = regions.filter((r) => {
-          const deprecated =
-            regionDict[r as keyof typeof regionDict].deprecated;
-          if (deprecated) return true;
-          return false;
+          return !AVAILABLE_REGIONS.includes(
+            r as (typeof AVAILABLE_REGIONS)[number],
+          );
         });
 
         if (deprecatedRegions.length > 0) {

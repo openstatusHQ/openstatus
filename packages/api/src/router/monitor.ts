@@ -41,7 +41,7 @@ import {
   monitorPeriodicity,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { testHttp, testTcp } from "./checker";
 

@@ -47,7 +47,7 @@ import {
   formatRegionCode,
   groupByContinent,
   regionDict,
-} from "@openstatus/utils";
+} from "@openstatus/regions";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { CircleX, Info } from "lucide-react";

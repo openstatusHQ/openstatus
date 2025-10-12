@@ -1,3 +1,4 @@
+import { regionDict } from "@openstatus/regions";
 import {
   Table,
   TableBody,
@@ -7,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui/src/components/table";
-import { regionDict } from "@openstatus/utils";
 
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
 import type { ResponseTimeMetricsByRegion } from "@/lib/tb";

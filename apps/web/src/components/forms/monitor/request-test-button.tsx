@@ -10,6 +10,7 @@ import {
   type Region,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/regions";
 import {
   Button,
   Dialog,
@@ -26,7 +27,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { regionDict } from "@openstatus/utils";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { RegionInfo } from "@/components/ping-response-analysis/region-info";

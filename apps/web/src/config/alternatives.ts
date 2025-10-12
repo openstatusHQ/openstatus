@@ -45,6 +45,7 @@ export const alternativesConfig = {
     features: [
       opensource(),
       bootstrap(),
+      multicloud(),
       global(),
       otelexport(),
       githubaction(),
@@ -58,6 +59,7 @@ export const alternativesConfig = {
     logo: "/assets/alternatives/uptime-kuma.png",
     features: [
       opensource(true),
+      multicloud(),
       global(),
       selfhost(),
       managed(),
@@ -103,7 +105,7 @@ function bootstrap(alternative = false): Feature {
 
 function global(alternative = false): Feature {
   return {
-    label: "Global (35 regions)",
+    label: "Global (28 regions)",
     description: "Monitor your endpoints globally.",
     openstatus: true,
     alternative,
@@ -114,7 +116,16 @@ function multiregion(alternative = 1): Feature {
   return {
     label: "Multi-region",
     description: "Monitor your endpoints globally",
-    openstatus: 35,
+    openstatus: 28,
+    alternative,
+  };
+}
+
+function multicloud(alternative = undefined): Feature {
+  return {
+    label: "Multi-cloud",
+    description: "Monitor from different cloud providers",
+    openstatus: 3,
     alternative,
   };
 }

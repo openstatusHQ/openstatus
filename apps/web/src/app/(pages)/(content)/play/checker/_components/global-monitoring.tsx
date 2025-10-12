@@ -10,7 +10,7 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 
 const TOTAL_REGIONS = Object.keys(regionDict).length;
 

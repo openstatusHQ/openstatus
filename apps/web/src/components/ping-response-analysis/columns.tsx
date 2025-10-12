@@ -6,13 +6,13 @@ import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { IconCloudProviderTooltip } from "@/components/icon-cloud-provider";
 import { cn } from "@/lib/utils";
+import { formatRegionCode, regionDict } from "@openstatus/regions";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardPortal,
   HoverCardTrigger,
 } from "@openstatus/ui";
-import { formatRegionCode, regionDict } from "@openstatus/utils";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {

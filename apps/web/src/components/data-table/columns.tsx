@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type * as z from "zod";
 
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 
 import type { Trigger } from "@/lib/monitor/utils";
 import type { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
