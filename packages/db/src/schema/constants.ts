@@ -1,8 +1,8 @@
 import {
   ALL_REGIONS,
+  AVAILABLE_REGIONS,
   FLY_REGIONS,
   FREE_FLY_REGIONS,
-  regionDict,
 } from "@openstatus/regions";
 import { z } from "zod";
 
@@ -16,10 +16,7 @@ export const monitorPeriodicity = [
   "other",
 ] as const;
 
-export const availableRegions = ALL_REGIONS.filter(
-  (r) => !regionDict[r as keyof typeof regionDict].deprecated,
-);
-
+export const availableRegions = AVAILABLE_REGIONS;
 export const monitorRegions = ALL_REGIONS;
 export const freeFlyRegions = FREE_FLY_REGIONS;
 export const flyRegions = FLY_REGIONS;

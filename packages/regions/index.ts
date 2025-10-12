@@ -460,6 +460,10 @@ export const regionDict: Record<Region, RegionInfo> = {
   },
 } as const;
 
+export const AVAILABLE_REGIONS = ALL_REGIONS.filter(
+  (r) => !regionDict[r].deprecated,
+);
+
 export function formatRegionCode(region: RegionInfo | Region) {
   const r = typeof region === "string" ? regionDict[region] : region;
   const suffix = r.code.replace(/(koyeb_|railway_|fly_)/g, "");
