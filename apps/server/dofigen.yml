@@ -10,7 +10,7 @@ ignore:
   - /packages/integrations/vercel
 builders:
   install:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.2.22
     workdir: /app/
     # Copy project
     bind:
@@ -34,7 +34,7 @@ builders:
     cache:
       - /root/.bun/install/cache
   build:
-    fromImage: oven/bun
+    fromImage: oven/bun:1.2.22
     workdir: /app/apps/server
     copy:
       - . /app/
