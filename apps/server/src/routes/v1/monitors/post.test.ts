@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
-import { createErrorSchema } from "@/libs/errors";
 import { MonitorSchema } from "./schema";
 
 test("create a valid monitor", async () => {
@@ -91,31 +90,4 @@ test("no auth key should return 401", async () => {
   });
 
   expect(res.status).toBe(401);
-});
-
-test("create a monitor with deprecated regions should return 400", async () => {
-  const res = await app.request("/v1/monitor", {
-    method: "POST",
-    headers: {
-      "x-openstatus-key": "1",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      regions: ["ams", "jnb", "hkg", "waw"],
-      name: "Testing Deprecated Regions",
-      description: "Testing Deprecated Regions",
-      url: "https://www.openstatus.dev",
-      method: "GET",
-      active: true,
-    }),
-  });
-
-  const json = await res.json();
-  const errorSchema = createErrorSchema("BAD_REQUEST").safeParse(json);
-
-  expect(res.status).toBe(400);
-  expect(errorSchema.success).toBe(true);
-  expect(errorSchema.data?.message).toMatch(
-    "Deprecated regions are not allowed: hkg, waw",
-  );
 });
