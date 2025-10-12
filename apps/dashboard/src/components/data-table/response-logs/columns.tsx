@@ -17,7 +17,7 @@ import {
 import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";

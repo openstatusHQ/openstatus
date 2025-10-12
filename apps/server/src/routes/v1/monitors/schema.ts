@@ -6,7 +6,7 @@ import {
   monitorPeriodicitySchema,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { ZodError } from "zod";
 
 const statusAssertion = z

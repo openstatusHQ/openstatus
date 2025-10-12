@@ -9,6 +9,7 @@ import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import { cn } from "@/lib/utils";
+import { groupByContinent } from "@openstatus/regions";
 import {
   FormControl,
   FormDescription,
@@ -22,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui";
-import { groupByContinent } from "@openstatus/utils";
 
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";

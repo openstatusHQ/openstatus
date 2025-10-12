@@ -25,7 +25,7 @@ import {
 import { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { formatRegionCode, groupByContinent } from "@openstatus/utils";
+import { formatRegionCode, groupByContinent } from "@openstatus/regions";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";

@@ -14,7 +14,7 @@ import { regionColors } from "@/data/regions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = monitorRegions.reduce((config, region) => {

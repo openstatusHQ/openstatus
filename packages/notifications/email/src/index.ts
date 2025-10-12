@@ -6,7 +6,7 @@ import {
 
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { EmailClient } from "@openstatus/emails/src/client";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { env } from "../env";
 
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });

@@ -33,6 +33,7 @@
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/react": "workspace:*",
+    "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
     "@openstatus/ui": "workspace:*",

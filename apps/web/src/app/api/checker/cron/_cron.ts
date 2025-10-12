@@ -16,12 +16,12 @@ import {
 
 import { env } from "@/env";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/regions";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import { regionDict } from "@openstatus/utils";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -263,7 +263,10 @@ const createCronTask = async ({
 function generateUrl({
   row,
   region,
-}: { row: z.infer<typeof selectMonitorSchema>; region: Region }) {
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  region: Region;
+}) {
   const regionInfo = regionDict[region];
 
   switch (regionInfo.provider) {

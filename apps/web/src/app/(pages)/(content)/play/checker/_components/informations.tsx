@@ -1,6 +1,6 @@
 import { Shell } from "@/components/dashboard/shell";
+import { regionDict } from "@openstatus/regions";
 import { Separator } from "@openstatus/ui";
-import { regionDict } from "@openstatus/utils";
 
 const TOTAL_REGIONS = Object.keys(regionDict).length;
 const TOTAL_PROVIDERS = Object.keys(regionDict).reduce((acc, region) => {

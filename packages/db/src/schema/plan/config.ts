@@ -1,4 +1,4 @@
-import { type Region, monitorRegions } from "../constants";
+import { type Region, availableRegions } from "../constants";
 import type { WorkspacePlan } from "../workspaces/validation";
 import type { Limits } from "./schema";
 
@@ -51,7 +51,7 @@ export const allPlans: Record<
       "notification-channels": 1,
       members: 1,
       "audit-log": false,
-      regions: ["ams", "gru", "iad", "jnb", "sin", "syd"] satisfies Region[],
+      regions: ["ams", "gru", "iad", "jnb", "hkg", "syd"] satisfies Region[],
       "private-locations": false,
     },
   },
@@ -89,7 +89,7 @@ export const allPlans: Record<
       "notification-channels": 10,
       members: "Unlimited",
       "audit-log": false,
-      regions: [...monitorRegions] satisfies Region[],
+      regions: [...availableRegions],
       "private-locations": false,
     },
   },
@@ -107,7 +107,7 @@ export const allPlans: Record<
       "synthetic-checks": 300,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
-      "max-regions": 41,
+      "max-regions": availableRegions.length,
       "data-retention": "12 months",
       "status-pages": 5,
       maintenance: true,
@@ -127,7 +127,7 @@ export const allPlans: Record<
       "notification-channels": 20,
       members: "Unlimited",
       "audit-log": true,
-      regions: [...monitorRegions] satisfies Region[],
+      regions: [...availableRegions],
       "private-locations": false,
     },
   },

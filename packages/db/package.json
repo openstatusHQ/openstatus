@@ -14,13 +14,14 @@
   },
   "dependencies": {
     "@libsql/client": "0.15.14",
+    "@openstatus/assertions": "workspace:*",
+    "@openstatus/regions": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
     "drizzle-orm": "0.44.4",
     "drizzle-zod": "0.5.1",
     "zod": "3.24.2"
   },
   "devDependencies": {
-    "@openstatus/assertions": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "22.10.2",
     "drizzle-kit": "0.31.4",
