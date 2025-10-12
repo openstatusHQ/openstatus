@@ -4,13 +4,19 @@ effective: |
   - /apps/docs
   - /apps/screenshot-service
   - /apps/web
+  - /apps/dashboard
+  - /apps/status-page
+  - /apps/workflows
   - /packages/api
   - /packages/integrations/vercel
   builders:
     build:
       fromImage:
         path: oven/bun
-        digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -27,7 +33,10 @@ effective: |
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -46,6 +55,8 @@ effective: |
         source: packages/emails/package.json
       - target: packages/error/package.json
         source: packages/error/package.json
+      - target: packages/regions/package.json
+        source: packages/regions/package.json
       - target: packages/tinybird/package.json
         source: packages/tinybird/package.json
       - target: packages/tracker/package.json
@@ -60,7 +71,11 @@ effective: |
         source: packages/assertions/package.json
   fromImage:
     path: debian
-    digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
+    digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+  label:
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+    io.dofigen.version: 2.5.0
   copy:
   - fromBuilder: build
     paths:
@@ -72,24 +87,27 @@ effective: |
   expose:
   - port: 3000
 images:
-  registry.hub.docker.com:443:
+  docker.io:
     oven:
       bun:
         latest:
-          digest: sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df
+          digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
     library:
       debian:
         bullseye-slim:
-          digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
+          digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
 resources:
   dofigen.yml:
-    hash: d8fd3cc0e7fc97f77bb35e336fc7ce1a9f70131a2c0c24fb2056e112b128cbc2
+    hash: fd8a2f5ef1a06150de07ca7ad4fe5c09ac47729841811ba2757511896aa4f346
     content: |
       ignore:
         - node_modules
         - /apps/docs
         - /apps/screenshot-service
         - /apps/web
+        - /apps/dashboard
+        - /apps/status-page
+        - /apps/workflows
         - /packages/api
         - /packages/integrations/vercel
       builders:
@@ -104,6 +122,7 @@ resources:
             - packages/db/package.json
             - packages/emails/package.json
             - packages/error/package.json
+            - packages/regions/package.json
             - packages/tinybird/package.json
             - packages/tracker/package.json
             - packages/upstash/package.json
