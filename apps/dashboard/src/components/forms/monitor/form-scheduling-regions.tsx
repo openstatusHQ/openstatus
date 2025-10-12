@@ -43,7 +43,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
-import { formatRegionCode, groupByContinent } from "@openstatus/utils";
+import {
+  formatRegionCode,
+  groupByContinent,
+  regionDict,
+} from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { CircleX, Info } from "lucide-react";
@@ -107,7 +111,9 @@ export function FormSchedulingRegions({
 
   if (!workspace) return null;
 
-  const allowedRegions = workspace.limits.regions;
+  const allowedRegions = workspace.limits.regions.filter(
+    (r) => !regionDict[r as keyof typeof regionDict].deprecated,
+  );
   const maxRegions = workspace.limits["max-regions"];
   const periodicity = workspace.limits.periodicity;
 
