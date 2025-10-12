@@ -104,7 +104,7 @@ export function StatusEventAffected({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex flex-wrap gap-0.5", className)} {...props}>
+    <div className={cn("flex flex-wrap gap-px", className)} {...props}>
       {children}
     </div>
   );
@@ -142,11 +142,10 @@ export function StatusEventDate({
       </div>{" "}
       <Badge
         variant="secondary"
-        className={
-          isFuture
-            ? "bg-info text-[10px] text-background dark:text-foreground"
-            : ""
-        }
+        className={cn(
+          "text-[10px]",
+          isFuture ? "bg-info text-background dark:text-foreground" : "",
+        )}
       >
         {distance}
       </Badge>
@@ -362,7 +361,7 @@ export function StatusEventTimelineMessage({
   return (
     <div
       className={cn(
-        "py-1.5 font-mono text-base text-muted-foreground",
+        "py-1.5 font-mono text-sm text-muted-foreground",
         className,
       )}
       {...props}

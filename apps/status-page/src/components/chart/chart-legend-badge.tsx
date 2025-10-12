@@ -65,7 +65,7 @@ export function ChartLegendBadge({
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-2",
+        "flex items-center justify-center gap-1.5",
         verticalAlign === "top" ? "pb-3" : "pt-3",
         className,
       )}
