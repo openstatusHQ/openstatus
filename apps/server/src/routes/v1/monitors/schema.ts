@@ -6,8 +6,8 @@ import {
   monitorPeriodicitySchema,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
 import { ZodError } from "zod";
+import { regionDict } from "@openstatus/utils";
 
 const statusAssertion = z
   .object({
@@ -121,8 +121,6 @@ export const MonitorSchema = z
               ]);
             }
           }
-
-          return regions;
         },
         z.array(z.enum(monitorRegions)),
       )

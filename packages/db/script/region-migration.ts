@@ -7,6 +7,7 @@ const rawMonitors = await db.select().from(schema.monitor);
 
 const monitors = z.array(selectMonitorSchema).parse(rawMonitors);
 for (const monitor of monitors) {
+  const oldRegions = monitor.regions.join(",");
   const regions = monitor.regions.slice();
   // Asia Pacific
   updateRegion("hkg", "sin", regions);
@@ -33,14 +34,19 @@ for (const monitor of monitors) {
   updateRegion("scl", "gru", regions);
   updateRegion("eze", "gru", regions);
   const newRegions = regions.join(",");
-  // console.log("new regions:",newRegions)
-  await db
-    .update(schema.monitor)
-    .set({ regions: newRegions })
-    .where(eq(schema.monitor.id, monitor.id))
-    .execute();
+  if (newRegions !== oldRegions) {
+    console.log("Updating regions for monitor:", monitor.id);
+    // await db
+    //   .update(schema.monitor)
+    //   .set({ regions: newRegions })
+    //   .where(eq(schema.monitor.id, monitor.id))
+    //   .execute();
+  }
+  console.log("old regions:", oldRegions);
+  console.log("new regions:", newRegions);
 }
 
+console.log(monitors.length);
 export function updateRegion(
   oldRegion: z.infer<typeof monitorRegionSchema>,
   newRegion: z.infer<typeof monitorRegionSchema>,
