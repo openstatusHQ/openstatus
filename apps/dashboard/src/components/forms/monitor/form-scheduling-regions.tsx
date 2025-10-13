@@ -46,15 +46,17 @@ import { useTRPC } from "@/lib/trpc/client";
 import { formatRegionCode, groupByContinent } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { CircleX, Info } from "lucide-react";
+import { CircleX, Globe, Info } from "lucide-react";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
 const PERIODICITY = monitorPeriodicity.filter((p) => p !== "other");
+const DEFAULT_PRIVATE_LOCATIONS = [] satisfies { id: number; name: string }[];
 
 const schema = z.object({
   regions: z.array(z.string()),
   periodicity: z.enum(monitorPeriodicity),
+  privateLocations: z.array(z.number()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -62,10 +64,12 @@ type FormValues = z.infer<typeof schema>;
 export function FormSchedulingRegions({
   defaultValues,
   onSubmit,
+  privateLocations,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
+  privateLocations: { id: number; name: string }[];
 }) {
   const trpc = useTRPC();
   const [openDialog, setOpenDialog] = useState(false);
@@ -75,11 +79,13 @@ export function FormSchedulingRegions({
     defaultValues: defaultValues ?? {
       regions: DEFAULT_REGIONS,
       periodicity: DEFAULT_PERIODICITY,
+      privateLocations: DEFAULT_PRIVATE_LOCATIONS,
     },
   });
   const [isPending, startTransition] = useTransition();
   const watchPeriodicity = form.watch("periodicity");
   const watchRegions = form.watch("regions");
+  const watchPrivateLocations = form.watch("privateLocations");
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -389,6 +395,102 @@ export function FormSchedulingRegions({
                 .
               </div>
             </Note>
+          </FormCardContent>
+          <FormCardSeparator />
+          <FormCardContent className="grid gap-4">
+            {privateLocations.length === 0 ? (
+              <Note>
+                <Globe />
+                Monitor your endpoints from private locations.
+                <NoteButton variant="outline" asChild>
+                  <Link href="/private-locations">Learn more</Link>
+                </NoteButton>
+              </Note>
+            ) : (
+              <FormField
+                control={form.control}
+                name="privateLocations"
+                render={() => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel>
+                        Private Locations{" "}
+                        <span className="align-baseline font-mono font-normal text-muted-foreground/70 text-xs tabular-nums">
+                          ({watchPrivateLocations.length}/
+                          {privateLocations.length})
+                        </span>
+                      </FormLabel>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className={cn(
+                          watchPrivateLocations.length ===
+                            privateLocations.length && "text-muted-foreground",
+                        )}
+                        onClick={() => {
+                          const allSelected = privateLocations.every((item) =>
+                            watchPrivateLocations.includes(item.id),
+                          );
+
+                          if (!allSelected) {
+                            form.setValue(
+                              "privateLocations",
+                              privateLocations.map((item) => item.id),
+                            );
+                          } else {
+                            form.setValue("privateLocations", []);
+                          }
+                        }}
+                      >
+                        Select all
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {privateLocations.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="privateLocations"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={item.id}
+                                className="flex items-center"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={
+                                      field.value?.includes(item.id) || false
+                                    }
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([
+                                            ...field.value,
+                                            item.id,
+                                          ])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== item.id,
+                                            ),
+                                          );
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="w-full truncate font-mono font-normal text-sm">
+                                  {item.name}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>

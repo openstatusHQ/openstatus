@@ -26,6 +26,9 @@ export function FormMonitorUpdate() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
+  const { data: privateLocations } = useQuery(
+    trpc.privateLocation.list.queryOptions(),
+  );
   const { data: notifications } = useQuery(
     trpc.notification.list.queryOptions(),
   );
@@ -105,7 +108,14 @@ export function FormMonitorUpdate() {
     }),
   );
 
-  if (!monitor || !statusPages || !notifications || !workspace) return null;
+  if (
+    !monitor ||
+    !statusPages ||
+    !notifications ||
+    !workspace ||
+    !privateLocations
+  )
+    return null;
 
   return (
     <FormCardGroup>
@@ -166,15 +176,18 @@ export function FormMonitorUpdate() {
         }}
       />
       <FormSchedulingRegions
+        privateLocations={privateLocations}
         defaultValues={{
           regions: monitor.regions,
           periodicity: monitor.periodicity,
+          privateLocations: monitor.privateLocations.map(({ id }) => id),
         }}
         onSubmit={async (values) => {
           await updateSchedulingRegionsMutation.mutateAsync({
             id: Number.parseInt(id),
             regions: values.regions,
             periodicity: values.periodicity,
+            privateLocations: values.privateLocations,
           });
         }}
       />

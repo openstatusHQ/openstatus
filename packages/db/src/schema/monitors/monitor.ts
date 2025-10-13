@@ -13,6 +13,7 @@ import { monitorStatusTable } from "../monitor_status/monitor_status";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { page } from "../pages";
+import { privateLocationToMonitors } from "../private_locations";
 import { monitorsToStatusReport } from "../status_reports";
 import { workspace } from "../workspaces/workspace";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
@@ -82,6 +83,7 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
   maintenancesToMonitors: many(maintenancesToMonitors),
   incidents: many(incidentTable),
   monitorStatus: many(monitorStatusTable),
+  privateLocationToMonitors: many(privateLocationToMonitors),
 }));
 
 export const monitorsToPages = sqliteTable(
