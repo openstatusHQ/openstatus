@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm/sql";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { monitor } from "../monitors/monitor";
@@ -22,11 +23,39 @@ export const privateLocationToMonitors = sqliteTable(
   {
     privateLocationId: integer("private_location_id").references(
       () => privateLocation.id,
+      { onDelete: "cascade" },
     ),
-    monitorId: integer("monitor_id").references(() => monitor.id),
+    monitorId: integer("monitor_id").references(() => monitor.id, {
+      onDelete: "cascade",
+    }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
     deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
+);
+
+export const privateLocationRelation = relations(
+  privateLocation,
+  ({ many, one }) => ({
+    privateLocationToMonitors: many(privateLocationToMonitors),
+    workspace: one(workspace, {
+      fields: [privateLocation.workspaceId],
+      references: [workspace.id],
+    }),
+  }),
+);
+
+export const privateLocationToMonitorsRelation = relations(
+  privateLocationToMonitors,
+  ({ one }) => ({
+    privateLocation: one(privateLocation, {
+      fields: [privateLocationToMonitors.privateLocationId],
+      references: [privateLocation.id],
+    }),
+    monitor: one(monitor, {
+      fields: [privateLocationToMonitors.monitorId],
+      references: [monitor.id],
+    }),
+  }),
 );
