@@ -27,6 +27,8 @@ type TCPMonitor struct {
 	Uri           string                 `protobuf:"bytes,2,opt,name=uri,proto3" json:"uri,omitempty"`
 	Timeout       int64                  `protobuf:"varint,3,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	DegradedAt    *int64                 `protobuf:"varint,4,opt,name=degraded_at,json=degradedAt,proto3,oneof" json:"degraded_at,omitempty"`
+	Periodicity   string                 `protobuf:"bytes,5,opt,name=periodicity,proto3" json:"periodicity,omitempty"`
+	Retry         int64                  `protobuf:"varint,6,opt,name=retry,proto3" json:"retry,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -89,18 +91,34 @@ func (x *TCPMonitor) GetDegradedAt() int64 {
 	return 0
 }
 
+func (x *TCPMonitor) GetPeriodicity() string {
+	if x != nil {
+		return x.Periodicity
+	}
+	return ""
+}
+
+func (x *TCPMonitor) GetRetry() int64 {
+	if x != nil {
+		return x.Retry
+	}
+	return 0
+}
+
 var File_private_location_v1_tcp_monitor_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_tcp_monitor_proto_rawDesc = "" +
 	"\n" +
-	"%private_location/v1/tcp_monitor.proto\x12\x13private_location.v1\"~\n" +
+	"%private_location/v1/tcp_monitor.proto\x12\x13private_location.v1\"\xb6\x01\n" +
 	"\n" +
 	"TCPMonitor\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03uri\x18\x02 \x01(\tR\x03uri\x12\x18\n" +
 	"\atimeout\x18\x03 \x01(\x03R\atimeout\x12$\n" +
 	"\vdegraded_at\x18\x04 \x01(\x03H\x00R\n" +
-	"degradedAt\x88\x01\x01B\x0e\n" +
+	"degradedAt\x88\x01\x01\x12 \n" +
+	"\vperiodicity\x18\x05 \x01(\tR\vperiodicity\x12\x14\n" +
+	"\x05retry\x18\x06 \x01(\x03R\x05retryB\x0e\n" +
 	"\f_degraded_atBJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (

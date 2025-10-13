@@ -1,5 +1,11 @@
 package job
 
+import (
+	"context"
+
+	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
+)
+
 type statusCode int
 
 func (s statusCode) IsSuccessful() bool {
@@ -9,8 +15,6 @@ func (s statusCode) IsSuccessful() bool {
 type HttpPrivateRegionData struct {
 	ID            string `json:"id"`
 	URL           string `json:"url"`
-	Method        string `json:"method"`
-	Region        string `json:"region"`
 	Message       string `json:"message,omitempty"`
 	Timing        string `json:"timing,omitempty"`
 	Headers       string `json:"headers,omitempty"`
@@ -27,3 +31,14 @@ type HttpPrivateRegionData struct {
 //  - the trigger (private region)
 //  - the region
 //  - assertions
+
+type JobRunner interface {
+	TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error)
+	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error)
+}
+
+type jobRunner struct {}
+
+func NewJobRunner() JobRunner {
+	return &jobRunner{}
+}

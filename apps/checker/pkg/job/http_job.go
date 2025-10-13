@@ -15,7 +15,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
-func HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
+func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
 
 	retry := monitor.Retry
 	if retry == 0 {
@@ -145,7 +145,7 @@ func HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionDa
 			Timestamp:     res.Timestamp,
 			CronTimestamp: req.CronTimestamp,
 			URL:           req.URL,
-			Method:        req.Method,
+			// Method:        req.Method,
 			Timing:        string(timingBytes),
 			Headers:       string(headersBytes),
 			Body:          "",

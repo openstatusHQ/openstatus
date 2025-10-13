@@ -5,12 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"log"
 	"strconv"
 
 	"connectrpc.com/connect"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/models"
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
+	"github.com/rs/zerolog/log"
 )
 
 // Converts models.NumberComparator to proto NumberComparator
@@ -87,7 +88,7 @@ func ParseAssertions(assertions sql.NullString) (
 		case models.AssertionHeader:
 			var target models.HeaderTarget
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Printf("Failed to unmarshal header target: %v", err)
+				log.Error().Err(err).Msg("unable to encode payload")
 				continue
 			}
 			headerAssertions = append(headerAssertions, &private_locationv1.HeaderAssertion{
@@ -116,7 +117,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing token"))
 	}
 
-	var monitors []Monitor
+	var monitors []database.Monitor
 	err := h.db.Select(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.key = ? AND monitor.deleted_at IS NULL", token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -130,7 +131,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 
 		var headers []*private_locationv1.Headers
 		if err := json.Unmarshal([]byte(monitor.Headers), &headers); err != nil {
-			log.Printf("Failed to unmarshal headers: %v", err)
+			log.Ctx(ctx).Error().Err(err).Msg("unable to unmarshal headers")
 			headers = nil
 		}
 

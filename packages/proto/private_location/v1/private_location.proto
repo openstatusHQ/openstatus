@@ -10,9 +10,8 @@ option go_package = "github.com/openstatushq/openstatus/packages/proto/private_l
 
 service PrivateLocationService {
     rpc Monitors(MonitorsRequest) returns (MonitorsResponse) {}
-    // TODO
-    // rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
-    // rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
+    rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
+    rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
 }
 
 message MonitorsRequest {}
@@ -23,10 +22,40 @@ message MonitorsResponse {
 }
 
 
+message IngestTCPRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string uri = 6;
+    string message = 7;
+    string requestStatus = 8;
+    int64 error = 9;
+    string timing = 10;
 
+}
 
-enum JobType {
-    JOB_TYPE_UNSPECIFIED = 0;
-    JOB_TYPE_HTTP = 1;
-    JOB_TYPE_TCP = 2;
+message IngestTCPResponse {
+
+}
+
+message IngestHTTPRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string url = 6;
+    string requestStatus = 7;
+    string message = 8;
+    string body = 9;
+    string headers = 10;
+    string timing = 11;
+    int64 statusCode = 12;
+    int64 error = 13;
+}
+
+message IngestHTTPResponse {
+
 }

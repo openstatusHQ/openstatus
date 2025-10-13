@@ -29,31 +29,12 @@ func New() *sqlx.DB {
 	}
 
 	url := fmt.Sprintf("%s?auth_token=%s", dbUrl, authToken)
-	fmt.Println(url)
 	c, err := sql.Open("libsql", url)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to open db %s: %s", url, err)
 		os.Exit(1)
 	}
-	// dir, err := os.MkdirTemp("", "libsql-*")
-	//    if err != nil {
-	//        fmt.Println("Error creating temporary directory:", err)
-	//        os.Exit(1)
-	//    }
-	//    defer os.RemoveAll(dir)
 
-	//    dbPath := filepath.Join(dir, dbName)
-	//    fmt.Println(dbPath)
-	//    connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, url,
-	//        libsql.WithAuthToken(authToken),
-	//    )
-	//    if err != nil {
-	//        fmt.Println("Error creating connector:", err)
-	//        os.Exit(1)
-	//    }
-	//    defer connector.Close()
-
-	//    c := sql.OpenDB(connector)
 
 	db := sqlx.NewDb(c, "sqlite3")
 

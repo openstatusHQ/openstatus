@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/scheduler"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 )
@@ -29,23 +31,25 @@ func main() {
 		cancel()
 	}()
 
-	monitorManager := scheduler.MonitorManager{
-		HttpMonitors:    make(map[string]*v1.HTTPMonitor),
-		MonitorChannels: make(map[string]chan bool),
-	}
 
 	apiKey := getEnv("OPENSTATUS_KEY", "key")
 
+	monitorManager := scheduler.MonitorManager{
+		HttpMonitors:    make(map[string]*v1.HTTPMonitor),
+		TcpMonitors:     make(map[string]*v1.TCPMonitor),
+		MonitorChannels: make(map[string]chan bool),
+		Client: getClient(ctx,apiKey),
+	}
 	configTicker := time.NewTicker(configRefreshInterval)
 	defer configTicker.Stop()
-	monitorManager.UpdateMonitors(ctx, apiKey)
+	monitorManager.UpdateMonitors(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-configTicker.C:
 			fmt.Println("fetching monitors")
-			monitorManager.UpdateMonitors(ctx, apiKey)
+			monitorManager.UpdateMonitors(ctx)
 		}
 	}
 }
@@ -58,3 +62,16 @@ func getEnv(key, fallback string) string {
 }
 
 // UpdateMonitors fetches the latest monitors and starts/stops jobs as needed
+
+
+func getClient (ctx context.Context, apiKey string) v1.PrivateLocationServiceClient {
+	client := v1.NewPrivateLocationServiceClient(
+		http.DefaultClient,
+		"http://localhost:8080",
+		connect.WithHTTPGet(),
+	)
+
+	_, callInfo := connect.NewClientContext(ctx)
+	callInfo.RequestHeader().Set("openstatus-token", apiKey)
+	return client
+}

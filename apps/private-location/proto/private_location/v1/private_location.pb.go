@@ -21,55 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type JobType int32
-
-const (
-	JobType_JOB_TYPE_UNSPECIFIED JobType = 0
-	JobType_JOB_TYPE_HTTP        JobType = 1
-	JobType_JOB_TYPE_TCP         JobType = 2
-)
-
-// Enum value maps for JobType.
-var (
-	JobType_name = map[int32]string{
-		0: "JOB_TYPE_UNSPECIFIED",
-		1: "JOB_TYPE_HTTP",
-		2: "JOB_TYPE_TCP",
-	}
-	JobType_value = map[string]int32{
-		"JOB_TYPE_UNSPECIFIED": 0,
-		"JOB_TYPE_HTTP":        1,
-		"JOB_TYPE_TCP":         2,
-	}
-)
-
-func (x JobType) Enum() *JobType {
-	p := new(JobType)
-	*p = x
-	return p
-}
-
-func (x JobType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (JobType) Descriptor() protoreflect.EnumDescriptor {
-	return file_private_location_v1_private_location_proto_enumTypes[0].Descriptor()
-}
-
-func (JobType) Type() protoreflect.EnumType {
-	return &file_private_location_v1_private_location_proto_enumTypes[0]
-}
-
-func (x JobType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use JobType.Descriptor instead.
-func (JobType) EnumDescriptor() ([]byte, []int) {
-	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{0}
-}
-
 type MonitorsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -158,6 +109,334 @@ func (x *MonitorsResponse) GetTcpMonitors() []*TCPMonitor {
 	return nil
 }
 
+type IngestTCPRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MonitorId     string                 `protobuf:"bytes,2,opt,name=monitorId,proto3" json:"monitorId,omitempty"`
+	Latency       int64                  `protobuf:"varint,3,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	CronTimestamp int64                  `protobuf:"varint,5,opt,name=cronTimestamp,proto3" json:"cronTimestamp,omitempty"`
+	Uri           string                 `protobuf:"bytes,6,opt,name=uri,proto3" json:"uri,omitempty"`
+	Message       string                 `protobuf:"bytes,7,opt,name=message,proto3" json:"message,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,8,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Error         int64                  `protobuf:"varint,9,opt,name=error,proto3" json:"error,omitempty"`
+	Timing        string                 `protobuf:"bytes,10,opt,name=timing,proto3" json:"timing,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestTCPRequest) Reset() {
+	*x = IngestTCPRequest{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestTCPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestTCPRequest) ProtoMessage() {}
+
+func (x *IngestTCPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestTCPRequest.ProtoReflect.Descriptor instead.
+func (*IngestTCPRequest) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *IngestTCPRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *IngestTCPRequest) GetMonitorId() string {
+	if x != nil {
+		return x.MonitorId
+	}
+	return ""
+}
+
+func (x *IngestTCPRequest) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *IngestTCPRequest) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *IngestTCPRequest) GetCronTimestamp() int64 {
+	if x != nil {
+		return x.CronTimestamp
+	}
+	return 0
+}
+
+func (x *IngestTCPRequest) GetUri() string {
+	if x != nil {
+		return x.Uri
+	}
+	return ""
+}
+
+func (x *IngestTCPRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *IngestTCPRequest) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *IngestTCPRequest) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+func (x *IngestTCPRequest) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
+type IngestTCPResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestTCPResponse) Reset() {
+	*x = IngestTCPResponse{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestTCPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestTCPResponse) ProtoMessage() {}
+
+func (x *IngestTCPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestTCPResponse.ProtoReflect.Descriptor instead.
+func (*IngestTCPResponse) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{3}
+}
+
+type IngestHTTPRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	MonitorId     string                 `protobuf:"bytes,2,opt,name=monitorId,proto3" json:"monitorId,omitempty"`
+	Latency       int64                  `protobuf:"varint,3,opt,name=latency,proto3" json:"latency,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	CronTimestamp int64                  `protobuf:"varint,5,opt,name=cronTimestamp,proto3" json:"cronTimestamp,omitempty"`
+	Url           string                 `protobuf:"bytes,6,opt,name=url,proto3" json:"url,omitempty"`
+	RequestStatus string                 `protobuf:"bytes,7,opt,name=requestStatus,proto3" json:"requestStatus,omitempty"`
+	Message       string                 `protobuf:"bytes,8,opt,name=message,proto3" json:"message,omitempty"`
+	Body          string                 `protobuf:"bytes,9,opt,name=body,proto3" json:"body,omitempty"`
+	Headers       string                 `protobuf:"bytes,10,opt,name=headers,proto3" json:"headers,omitempty"`
+	Timing        string                 `protobuf:"bytes,11,opt,name=timing,proto3" json:"timing,omitempty"`
+	StatusCode    int64                  `protobuf:"varint,12,opt,name=statusCode,proto3" json:"statusCode,omitempty"`
+	Error         int64                  `protobuf:"varint,13,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestHTTPRequest) Reset() {
+	*x = IngestHTTPRequest{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestHTTPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestHTTPRequest) ProtoMessage() {}
+
+func (x *IngestHTTPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestHTTPRequest.ProtoReflect.Descriptor instead.
+func (*IngestHTTPRequest) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *IngestHTTPRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetMonitorId() string {
+	if x != nil {
+		return x.MonitorId
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetLatency() int64 {
+	if x != nil {
+		return x.Latency
+	}
+	return 0
+}
+
+func (x *IngestHTTPRequest) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *IngestHTTPRequest) GetCronTimestamp() int64 {
+	if x != nil {
+		return x.CronTimestamp
+	}
+	return 0
+}
+
+func (x *IngestHTTPRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetRequestStatus() string {
+	if x != nil {
+		return x.RequestStatus
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetHeaders() string {
+	if x != nil {
+		return x.Headers
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetTiming() string {
+	if x != nil {
+		return x.Timing
+	}
+	return ""
+}
+
+func (x *IngestHTTPRequest) GetStatusCode() int64 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *IngestHTTPRequest) GetError() int64 {
+	if x != nil {
+		return x.Error
+	}
+	return 0
+}
+
+type IngestHTTPResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IngestHTTPResponse) Reset() {
+	*x = IngestHTTPResponse{}
+	mi := &file_private_location_v1_private_location_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IngestHTTPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IngestHTTPResponse) ProtoMessage() {}
+
+func (x *IngestHTTPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_private_location_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IngestHTTPResponse.ProtoReflect.Descriptor instead.
+func (*IngestHTTPResponse) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_private_location_proto_rawDescGZIP(), []int{5}
+}
+
 var File_private_location_v1_private_location_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_private_location_proto_rawDesc = "" +
@@ -166,13 +445,43 @@ const file_private_location_v1_private_location_proto_rawDesc = "" +
 	"\x0fMonitorsRequest\"\x9d\x01\n" +
 	"\x10MonitorsResponse\x12E\n" +
 	"\rhttp_monitors\x18\x01 \x03(\v2 .private_location.v1.HTTPMonitorR\fhttpMonitors\x12B\n" +
-	"\ftcp_monitors\x18\x02 \x03(\v2\x1f.private_location.v1.TCPMonitorR\vtcpMonitors*H\n" +
-	"\aJobType\x12\x18\n" +
-	"\x14JOB_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
-	"\rJOB_TYPE_HTTP\x10\x01\x12\x10\n" +
-	"\fJOB_TYPE_TCP\x10\x022s\n" +
+	"\ftcp_monitors\x18\x02 \x03(\v2\x1f.private_location.v1.TCPMonitorR\vtcpMonitors\"\x9e\x02\n" +
+	"\x10IngestTCPRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
+	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
+	"\alatency\x18\x03 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x04 \x01(\x03R\ttimestamp\x12$\n" +
+	"\rcronTimestamp\x18\x05 \x01(\x03R\rcronTimestamp\x12\x10\n" +
+	"\x03uri\x18\x06 \x01(\tR\x03uri\x12\x18\n" +
+	"\amessage\x18\a \x01(\tR\amessage\x12$\n" +
+	"\rrequestStatus\x18\b \x01(\tR\rrequestStatus\x12\x14\n" +
+	"\x05error\x18\t \x01(\x03R\x05error\x12\x16\n" +
+	"\x06timing\x18\n" +
+	" \x01(\tR\x06timing\"\x13\n" +
+	"\x11IngestTCPResponse\"\xed\x02\n" +
+	"\x11IngestHTTPRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1c\n" +
+	"\tmonitorId\x18\x02 \x01(\tR\tmonitorId\x12\x18\n" +
+	"\alatency\x18\x03 \x01(\x03R\alatency\x12\x1c\n" +
+	"\ttimestamp\x18\x04 \x01(\x03R\ttimestamp\x12$\n" +
+	"\rcronTimestamp\x18\x05 \x01(\x03R\rcronTimestamp\x12\x10\n" +
+	"\x03url\x18\x06 \x01(\tR\x03url\x12$\n" +
+	"\rrequestStatus\x18\a \x01(\tR\rrequestStatus\x12\x18\n" +
+	"\amessage\x18\b \x01(\tR\amessage\x12\x12\n" +
+	"\x04body\x18\t \x01(\tR\x04body\x12\x18\n" +
+	"\aheaders\x18\n" +
+	" \x01(\tR\aheaders\x12\x16\n" +
+	"\x06timing\x18\v \x01(\tR\x06timing\x12\x1e\n" +
+	"\n" +
+	"statusCode\x18\f \x01(\x03R\n" +
+	"statusCode\x12\x14\n" +
+	"\x05error\x18\r \x01(\x03R\x05error\"\x14\n" +
+	"\x12IngestHTTPResponse2\xb2\x02\n" +
 	"\x16PrivateLocationService\x12Y\n" +
-	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
+	"\bMonitors\x12$.private_location.v1.MonitorsRequest\x1a%.private_location.v1.MonitorsResponse\"\x00\x12\\\n" +
+	"\tIngestTCP\x12%.private_location.v1.IngestTCPRequest\x1a&.private_location.v1.IngestTCPResponse\"\x00\x12_\n" +
+	"\n" +
+	"IngestHTTP\x12&.private_location.v1.IngestHTTPRequest\x1a'.private_location.v1.IngestHTTPResponse\"\x00BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (
 	file_private_location_v1_private_location_proto_rawDescOnce sync.Once
@@ -186,22 +495,28 @@ func file_private_location_v1_private_location_proto_rawDescGZIP() []byte {
 	return file_private_location_v1_private_location_proto_rawDescData
 }
 
-var file_private_location_v1_private_location_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_private_location_v1_private_location_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_private_location_v1_private_location_proto_goTypes = []any{
-	(JobType)(0),             // 0: private_location.v1.JobType
-	(*MonitorsRequest)(nil),  // 1: private_location.v1.MonitorsRequest
-	(*MonitorsResponse)(nil), // 2: private_location.v1.MonitorsResponse
-	(*HTTPMonitor)(nil),      // 3: private_location.v1.HTTPMonitor
-	(*TCPMonitor)(nil),       // 4: private_location.v1.TCPMonitor
+	(*MonitorsRequest)(nil),    // 0: private_location.v1.MonitorsRequest
+	(*MonitorsResponse)(nil),   // 1: private_location.v1.MonitorsResponse
+	(*IngestTCPRequest)(nil),   // 2: private_location.v1.IngestTCPRequest
+	(*IngestTCPResponse)(nil),  // 3: private_location.v1.IngestTCPResponse
+	(*IngestHTTPRequest)(nil),  // 4: private_location.v1.IngestHTTPRequest
+	(*IngestHTTPResponse)(nil), // 5: private_location.v1.IngestHTTPResponse
+	(*HTTPMonitor)(nil),        // 6: private_location.v1.HTTPMonitor
+	(*TCPMonitor)(nil),         // 7: private_location.v1.TCPMonitor
 }
 var file_private_location_v1_private_location_proto_depIdxs = []int32{
-	3, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
-	4, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
-	1, // 2: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
-	2, // 3: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
+	6, // 0: private_location.v1.MonitorsResponse.http_monitors:type_name -> private_location.v1.HTTPMonitor
+	7, // 1: private_location.v1.MonitorsResponse.tcp_monitors:type_name -> private_location.v1.TCPMonitor
+	0, // 2: private_location.v1.PrivateLocationService.Monitors:input_type -> private_location.v1.MonitorsRequest
+	2, // 3: private_location.v1.PrivateLocationService.IngestTCP:input_type -> private_location.v1.IngestTCPRequest
+	4, // 4: private_location.v1.PrivateLocationService.IngestHTTP:input_type -> private_location.v1.IngestHTTPRequest
+	1, // 5: private_location.v1.PrivateLocationService.Monitors:output_type -> private_location.v1.MonitorsResponse
+	3, // 6: private_location.v1.PrivateLocationService.IngestTCP:output_type -> private_location.v1.IngestTCPResponse
+	5, // 7: private_location.v1.PrivateLocationService.IngestHTTP:output_type -> private_location.v1.IngestHTTPResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
 	2, // [2:2] is the sub-list for extension type_name
 	2, // [2:2] is the sub-list for extension extendee
 	0, // [0:2] is the sub-list for field type_name
@@ -219,14 +534,13 @@ func file_private_location_v1_private_location_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_private_location_v1_private_location_proto_rawDesc), len(file_private_location_v1_private_location_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   2,
+			NumEnums:      0,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_private_location_v1_private_location_proto_goTypes,
 		DependencyIndexes: file_private_location_v1_private_location_proto_depIdxs,
-		EnumInfos:         file_private_location_v1_private_location_proto_enumTypes,
 		MessageInfos:      file_private_location_v1_private_location_proto_msgTypes,
 	}.Build()
 	File_private_location_v1_private_location_proto = out.File

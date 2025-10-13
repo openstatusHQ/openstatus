@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/cenkalti/backoff/v5"
@@ -20,19 +21,20 @@ type AssertionResult struct {
 // TCPPrivateRegionData represents the result of a TCP monitor check
 type TCPPrivateRegionData struct {
 	ID            string `json:"id"`
+	URI           string `json:"uri"`
+	RequestStatus string `json:"request_status"`
+	Message       string `json:"message"`
 	Latency       int64  `json:"latency"`
 	Timestamp     int64  `json:"timestamp"`
 	CronTimestamp int64  `json:"cron_timestamp"`
-	URI           string `json:"uri"`
-	RequestStatus string `json:"request_status"`
 	Error         int    `json:"error"`
-	Message       string `json:"message"`
+	Timing string `json:"timing"`
 }
 
 // runAssertions performs all configured assertions for TCP and returns their results
 
-func TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error) {
-	retry := 3 // monitor.Retry
+func (jobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error) {
+	retry := monitor.Retry
 	if retry == 0 {
 		retry = 3
 	}
@@ -81,6 +83,10 @@ func TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData,
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate UUID: %w", err)
 		}
+		timingAsString, err := json.Marshal(res)
+		if err != nil {
+			return nil, fmt.Errorf("error while parsing timing data %s: %w", monitor.Uri, err)
+		}
 
 		data := &TCPPrivateRegionData{
 			ID:            id.String(),
@@ -91,6 +97,7 @@ func TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData,
 			RequestStatus: requestStatus,
 			Error:         0,
 			Message:       fmt.Sprintf("Successfully connected to %s", monitor.Uri),
+			Timing:        string(timingAsString),
 		}
 
 		return data, nil

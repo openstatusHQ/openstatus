@@ -35,12 +35,20 @@ const (
 	// PrivateLocationServiceMonitorsProcedure is the fully-qualified name of the
 	// PrivateLocationService's Monitors RPC.
 	PrivateLocationServiceMonitorsProcedure = "/private_location.v1.PrivateLocationService/Monitors"
+	// PrivateLocationServiceIngestTCPProcedure is the fully-qualified name of the
+	// PrivateLocationService's IngestTCP RPC.
+	PrivateLocationServiceIngestTCPProcedure = "/private_location.v1.PrivateLocationService/IngestTCP"
+	// PrivateLocationServiceIngestHTTPProcedure is the fully-qualified name of the
+	// PrivateLocationService's IngestHTTP RPC.
+	PrivateLocationServiceIngestHTTPProcedure = "/private_location.v1.PrivateLocationService/IngestHTTP"
 )
 
 // PrivateLocationServiceClient is a client for the private_location.v1.PrivateLocationService
 // service.
 type PrivateLocationServiceClient interface {
 	Monitors(context.Context, *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error)
+	IngestTCP(context.Context, *connect.Request[IngestTCPRequest]) (*connect.Response[IngestTCPResponse], error)
+	IngestHTTP(context.Context, *connect.Request[IngestHTTPRequest]) (*connect.Response[IngestHTTPResponse], error)
 }
 
 // NewPrivateLocationServiceClient constructs a client for the
@@ -60,12 +68,26 @@ func NewPrivateLocationServiceClient(httpClient connect.HTTPClient, baseURL stri
 			connect.WithSchema(privateLocationServiceMethods.ByName("Monitors")),
 			connect.WithClientOptions(opts...),
 		),
+		ingestTCP: connect.NewClient[IngestTCPRequest, IngestTCPResponse](
+			httpClient,
+			baseURL+PrivateLocationServiceIngestTCPProcedure,
+			connect.WithSchema(privateLocationServiceMethods.ByName("IngestTCP")),
+			connect.WithClientOptions(opts...),
+		),
+		ingestHTTP: connect.NewClient[IngestHTTPRequest, IngestHTTPResponse](
+			httpClient,
+			baseURL+PrivateLocationServiceIngestHTTPProcedure,
+			connect.WithSchema(privateLocationServiceMethods.ByName("IngestHTTP")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // privateLocationServiceClient implements PrivateLocationServiceClient.
 type privateLocationServiceClient struct {
-	monitors *connect.Client[MonitorsRequest, MonitorsResponse]
+	monitors   *connect.Client[MonitorsRequest, MonitorsResponse]
+	ingestTCP  *connect.Client[IngestTCPRequest, IngestTCPResponse]
+	ingestHTTP *connect.Client[IngestHTTPRequest, IngestHTTPResponse]
 }
 
 // Monitors calls private_location.v1.PrivateLocationService.Monitors.
@@ -73,10 +95,22 @@ func (c *privateLocationServiceClient) Monitors(ctx context.Context, req *connec
 	return c.monitors.CallUnary(ctx, req)
 }
 
+// IngestTCP calls private_location.v1.PrivateLocationService.IngestTCP.
+func (c *privateLocationServiceClient) IngestTCP(ctx context.Context, req *connect.Request[IngestTCPRequest]) (*connect.Response[IngestTCPResponse], error) {
+	return c.ingestTCP.CallUnary(ctx, req)
+}
+
+// IngestHTTP calls private_location.v1.PrivateLocationService.IngestHTTP.
+func (c *privateLocationServiceClient) IngestHTTP(ctx context.Context, req *connect.Request[IngestHTTPRequest]) (*connect.Response[IngestHTTPResponse], error) {
+	return c.ingestHTTP.CallUnary(ctx, req)
+}
+
 // PrivateLocationServiceHandler is an implementation of the
 // private_location.v1.PrivateLocationService service.
 type PrivateLocationServiceHandler interface {
 	Monitors(context.Context, *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error)
+	IngestTCP(context.Context, *connect.Request[IngestTCPRequest]) (*connect.Response[IngestTCPResponse], error)
+	IngestHTTP(context.Context, *connect.Request[IngestHTTPRequest]) (*connect.Response[IngestHTTPResponse], error)
 }
 
 // NewPrivateLocationServiceHandler builds an HTTP handler from the service implementation. It
@@ -92,10 +126,26 @@ func NewPrivateLocationServiceHandler(svc PrivateLocationServiceHandler, opts ..
 		connect.WithSchema(privateLocationServiceMethods.ByName("Monitors")),
 		connect.WithHandlerOptions(opts...),
 	)
+	privateLocationServiceIngestTCPHandler := connect.NewUnaryHandler(
+		PrivateLocationServiceIngestTCPProcedure,
+		svc.IngestTCP,
+		connect.WithSchema(privateLocationServiceMethods.ByName("IngestTCP")),
+		connect.WithHandlerOptions(opts...),
+	)
+	privateLocationServiceIngestHTTPHandler := connect.NewUnaryHandler(
+		PrivateLocationServiceIngestHTTPProcedure,
+		svc.IngestHTTP,
+		connect.WithSchema(privateLocationServiceMethods.ByName("IngestHTTP")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/private_location.v1.PrivateLocationService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case PrivateLocationServiceMonitorsProcedure:
 			privateLocationServiceMonitorsHandler.ServeHTTP(w, r)
+		case PrivateLocationServiceIngestTCPProcedure:
+			privateLocationServiceIngestTCPHandler.ServeHTTP(w, r)
+		case PrivateLocationServiceIngestHTTPProcedure:
+			privateLocationServiceIngestHTTPHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -107,4 +157,12 @@ type UnimplementedPrivateLocationServiceHandler struct{}
 
 func (UnimplementedPrivateLocationServiceHandler) Monitors(context.Context, *connect.Request[MonitorsRequest]) (*connect.Response[MonitorsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.Monitors is not implemented"))
+}
+
+func (UnimplementedPrivateLocationServiceHandler) IngestTCP(context.Context, *connect.Request[IngestTCPRequest]) (*connect.Response[IngestTCPResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.IngestTCP is not implemented"))
+}
+
+func (UnimplementedPrivateLocationServiceHandler) IngestHTTP(context.Context, *connect.Request[IngestHTTPRequest]) (*connect.Response[IngestHTTPResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("private_location.v1.PrivateLocationService.IngestHTTP is not implemented"))
 }
