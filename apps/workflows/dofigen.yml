@@ -12,10 +12,11 @@ ignore:
   - /packages/tracker
 builders:
   install:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun
     workdir: /app/
     # Copy project
     bind:
+      - bunfig.toml
       - package.json
       - apps/workflows/package.json
       - packages/assertions/package.json

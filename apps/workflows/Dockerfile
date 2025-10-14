@@ -3,12 +3,13 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74 AS install
+FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.2.23"
+    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:latest"
 WORKDIR /app/
 RUN \
+    --mount=type=bind,target=bunfig.toml,source=bunfig.toml \
     --mount=type=bind,target=package.json,source=package.json \
     --mount=type=bind,target=apps/workflows/package.json,source=apps/workflows/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \

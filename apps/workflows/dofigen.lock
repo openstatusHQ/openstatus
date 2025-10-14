@@ -12,39 +12,21 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    build:
+    install:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
         org.opencontainers.image.base.name: docker.io/oven/bun:latest
         org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
-    install:
-      fromImage:
-        path: oven/bun
-        digest: sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.2.23
-        org.opencontainers.image.base.digest: sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
       cache:
       - target: /root/.bun/install/cache
       bind:
+      - target: bunfig.toml
+        source: bunfig.toml
       - target: package.json
         source: package.json
       - target: apps/workflows/package.json
@@ -81,13 +63,33 @@ effective: |
         source: packages/tinybird/package.json
       - target: packages/upstash/package.json
         source: packages/upstash/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
   label:
-    io.dofigen.version: 2.5.0
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+    io.dofigen.version: 2.5.0
   copy:
   - fromBuilder: build
     paths:
@@ -108,11 +110,9 @@ images:
       bun:
         latest:
           digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-        1.2.23:
-          digest: sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74
 resources:
   dofigen.yml:
-    hash: 54e4e0066d6a49d4775fe6dd4f4d95c5649c0b86a9cc8df3950712b51c3acaaa
+    hash: 9be6075fa415f4f265964fb4db272498168c362211b09cdca638a0bd3ee00746
     content: |
       ignore:
         - node_modules
@@ -128,10 +128,11 @@ resources:
         - /packages/tracker
       builders:
         install:
-          fromImage: oven/bun:1.2.23
+          fromImage: oven/bun
           workdir: /app/
           # Copy project
           bind:
+            - bunfig.toml
             - package.json
             - apps/workflows/package.json
             - packages/assertions/package.json
