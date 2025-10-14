@@ -42,7 +42,7 @@ func main() {
 	monitorManager := scheduler.MonitorManager{
 		HttpMonitors: make(map[string]*v1.HTTPMonitor),
 		TcpMonitors:  make(map[string]*v1.TCPMonitor),
-		Client:       getClient(ctx, apiKey),
+		Client:       getClient(apiKey),
 		JobRunner:    job.NewJobRunner(),
 		Scheduler:    s,
 	}
@@ -70,7 +70,7 @@ func getEnv(key, fallback string) string {
 
 // UpdateMonitors fetches the latest monitors and starts/stops jobs as needed
 
-func getClient(ctx context.Context, apiKey string) v1.PrivateLocationServiceClient {
+func getClient(apiKey string) v1.PrivateLocationServiceClient {
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
 		"https://openstatus-private-location.fly.dev",
