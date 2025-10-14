@@ -71,7 +71,7 @@ func getEnv(key, fallback string) string {
 func getClient(ctx context.Context, apiKey string) v1.PrivateLocationServiceClient {
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
-		"http://localhost:8080",
+		"https://openstatus-private-location.fly.dev",
 		connect.WithHTTPGet(),
 	)
 
