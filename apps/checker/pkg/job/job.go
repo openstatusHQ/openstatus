@@ -27,10 +27,6 @@ type HttpPrivateRegionData struct {
 	Error         uint8  `json:"error"`
 }
 
-//  On the server we need to set
-//  - the trigger (private region)
-//  - the region
-//  - assertions
 
 type JobRunner interface {
 	TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error)

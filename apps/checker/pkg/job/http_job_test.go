@@ -6,11 +6,9 @@ import (
 
 	"github.com/openstatushq/openstatus/apps/checker/pkg/job"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
-	"github.com/openstatushq/openstatus/apps/checker/checker"
 )
 
 // Save original checker.Http for restoration
-var origCheckerHttp = checker.Http
 
 func TestHTTPJob_Success(t *testing.T) {
 

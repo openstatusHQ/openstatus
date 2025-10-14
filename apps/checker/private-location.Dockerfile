@@ -13,7 +13,7 @@ COPY go.* .
 RUN go mod download
 
 COPY . .
-RUN go build -trimpath -ldflags "-s -w" -o checker ./cmd/server
+RUN go build -trimpath -ldflags "-s -w" -o private ./cmd/private
 
 FROM scratch
 
@@ -22,10 +22,10 @@ WORKDIR /opt/bin
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-COPY --from=builder /go/src/app/checker /opt/bin/checker
+COPY --from=builder /go/src/app/private /opt/bin/private
 
 ENV TZ=UTC
 ENV USER=1000
 ENV GIN_MODE=release
 
-CMD [ "/opt/bin/checker" ]
+CMD [ "/opt/bin/private" ]

@@ -1,4 +1,4 @@
+version: "2"
+
 linters:
-  enable-all: true
-  disable-all: false
-  fast: true
+  default: fast
