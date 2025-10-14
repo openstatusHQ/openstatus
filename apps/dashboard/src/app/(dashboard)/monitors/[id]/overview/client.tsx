@@ -43,6 +43,9 @@ export function Client() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const { data: privateLocations } = useQuery(
+    trpc.privateLocation.list.queryOptions(),
+  );
 
   const regionTimelineQuery = {
     ...trpc.tinybird.metricsRegions.queryOptions({
@@ -90,7 +93,12 @@ export function Client() {
         <div className="flex flex-wrap gap-2">
           <div>
             <DropdownPeriod /> including{" "}
-            <CommandRegion regions={monitor.regions} />
+            <CommandRegion
+              regions={monitor.regions}
+              privateLocations={privateLocations?.filter((location) =>
+                location.monitors.some((m) => m.id === Number(id)),
+              )}
+            />
           </div>
           <div>
             <ButtonReset only={["period", "regions"]} />

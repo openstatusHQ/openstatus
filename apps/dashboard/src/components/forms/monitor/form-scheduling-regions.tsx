@@ -485,6 +485,7 @@ export function FormSchedulingRegions({
                                 </FormControl>
                                 <FormLabel className="w-full truncate font-mono font-normal text-sm">
                                   {item.name}
+                                  <Globe className="size-3" />
                                 </FormLabel>
                               </FormItem>
                             );

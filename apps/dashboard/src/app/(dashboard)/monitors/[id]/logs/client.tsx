@@ -43,6 +43,9 @@ export function Client() {
     setSearchParams,
   ] = useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: privateLocations } = useQuery(
+    trpc.privateLocation.list.queryOptions(),
+  );
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -96,7 +99,12 @@ export function Client() {
           <PopoverDate />
           {monitor.jobType === "http" ? <DropdownStatus /> : null}
           <DropdownTrigger />
-          <CommandRegion regions={monitor.regions} />
+          <CommandRegion
+            regions={monitor.regions}
+            privateLocations={privateLocations?.filter((location) =>
+              location.monitors.some((m) => m.id === Number(id)),
+            )}
+          />
           <ButtonReset />
         </div>
       </Section>
