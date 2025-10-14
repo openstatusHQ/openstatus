@@ -3,11 +3,14 @@ ignore:
   - /apps/docs
   - /apps/screenshot-service
   - /apps/web
+  - /apps/dashboard
+  - /apps/status-page
+  - /apps/workflows
   - /packages/api
   - /packages/integrations/vercel
 builders:
   install:
-    fromImage: oven/bun
+    fromImage: oven/bun:1.2.22
     workdir: /app/
     # Copy project
     bind:
@@ -17,18 +20,21 @@ builders:
       - packages/db/package.json
       - packages/emails/package.json
       - packages/error/package.json
+      - packages/regions/package.json
       - packages/tinybird/package.json
       - packages/tracker/package.json
       - packages/upstash/package.json
       - packages/utils/package.json
       - packages/tsconfig/package.json
       - packages/assertions/package.json
+      - packages/regions/package.json
+
     # Install dependencies
     run: bun install --production --ignore-scripts --frozen-lockfile --verbose
     cache:
       - /root/.bun/install/cache
   build:
-    fromImage: oven/bun
+    fromImage: oven/bun:1.2.22
     workdir: /app/apps/server
     copy:
       - . /app/

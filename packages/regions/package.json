@@ -1,13 +1,10 @@
 {
-  "name": "@openstatus/utils",
+  "name": "@openstatus/regions",
   "version": "1.0.0",
   "description": "",
   "main": "index.ts",
   "scripts": {},
   "dependencies": {
-    "@openstatus/assertions": "workspace:*",
-    "@openstatus/db": "workspace:*",
-    "@openstatus/regions": "workspace:*",
     "zod": "3.24.2"
   },
   "devDependencies": {

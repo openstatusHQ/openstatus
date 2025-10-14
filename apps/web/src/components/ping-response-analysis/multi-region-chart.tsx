@@ -6,6 +6,7 @@ import { getTimingPhases, regionFormatter } from "./utils";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
+import { formatRegionCode, regionDict } from "@openstatus/regions";
 import {
   type ChartConfig,
   ChartContainer,
@@ -14,7 +15,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/src/components/chart";
-import { formatRegionCode, regionDict } from "@openstatus/utils";
 
 const chartConfig = {
   dns: {

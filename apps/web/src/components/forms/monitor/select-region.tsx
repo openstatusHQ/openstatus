@@ -2,6 +2,12 @@
 
 import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
 
+import {
+  type Continent,
+  type RegionInfo,
+  formatRegionCode,
+  regionDict,
+} from "@openstatus/regions";
 import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {
   Command,
@@ -17,12 +23,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/src/components/popover";
-import {
-  type Continent,
-  type RegionInfo,
-  formatRegionCode,
-  regionDict,
-} from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
 import {

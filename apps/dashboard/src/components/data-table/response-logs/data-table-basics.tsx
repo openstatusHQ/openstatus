@@ -16,7 +16,7 @@ import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { Braces, TableProperties } from "lucide-react";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];

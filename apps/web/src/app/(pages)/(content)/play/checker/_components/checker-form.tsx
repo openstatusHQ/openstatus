@@ -46,7 +46,7 @@ import {
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/utils";
+import { regionDict } from "@openstatus/regions";
 import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";

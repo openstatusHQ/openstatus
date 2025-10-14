@@ -43,6 +43,7 @@ import {
   monitorPeriodicity,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
+import { regionDict } from "@openstatus/regions";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { testHttp, testTcp } from "./checker";
 
@@ -1439,6 +1440,12 @@ export const monitorRouter = createTRPCRouter({
       const randomRegions = ctx.workspace.plan === "free" ? 4 : 6;
 
       const regions = [...selectableRegions]
+        // NOTE: make sure we don't use deprecated regions
+        .filter((r) => {
+          const deprecated = regionDict[r].deprecated;
+          if (!deprecated) return true;
+          return false;
+        })
         .sort(() => 0.5 - Math.random())
         .slice(0, randomRegions);
 

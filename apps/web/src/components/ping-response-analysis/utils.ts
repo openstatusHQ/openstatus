@@ -6,7 +6,7 @@ import {
   monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { continentDict, regionDict } from "@openstatus/utils";
+import { continentDict, regionDict } from "@openstatus/regions";
 
 export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
