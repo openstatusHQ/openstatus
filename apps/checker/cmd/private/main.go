@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/madflojo/tasks"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/scheduler"
+
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 )
 
@@ -31,17 +33,20 @@ func main() {
 		cancel()
 	}()
 
+	s := tasks.New()
+	defer s.Stop()
 
 	apiKey := getEnv("OPENSTATUS_KEY", "key")
 
 	monitorManager := scheduler.MonitorManager{
-		HttpMonitors:    make(map[string]*v1.HTTPMonitor),
-		TcpMonitors:     make(map[string]*v1.TCPMonitor),
-		MonitorChannels: make(map[string]chan bool),
-		Client: getClient(ctx,apiKey),
+		HttpMonitors: make(map[string]*v1.HTTPMonitor),
+		TcpMonitors:  make(map[string]*v1.TCPMonitor),
+		Client:       getClient(ctx, apiKey),
+		Scheduler:    s,
 	}
 	configTicker := time.NewTicker(configRefreshInterval)
 	defer configTicker.Stop()
+
 	monitorManager.UpdateMonitors(ctx)
 	for {
 		select {
@@ -63,8 +68,7 @@ func getEnv(key, fallback string) string {
 
 // UpdateMonitors fetches the latest monitors and starts/stops jobs as needed
 
-
-func getClient (ctx context.Context, apiKey string) v1.PrivateLocationServiceClient {
+func getClient(ctx context.Context, apiKey string) v1.PrivateLocationServiceClient {
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
 		"http://localhost:8080",

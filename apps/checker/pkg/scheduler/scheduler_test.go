@@ -2,11 +2,14 @@ package scheduler_test
 
 import (
 	"context"
+	"sync/atomic"
+
 	"sync"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/madflojo/tasks"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/job"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/scheduler"
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
@@ -14,21 +17,18 @@ import (
 
 // mockJobRunner implements job.JobRunner for testing
 type mockJobRunner struct {
-	HTTPJobCalled bool
-	TCPJobCalled  bool
+	HTTPJobCalled atomic.Bool
+	TCPJobCalled  atomic.Bool
 	mu            sync.Mutex
 }
 
 func (m *mockJobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*job.HttpPrivateRegionData, error) {
-	m.mu.Lock()
-	m.HTTPJobCalled = true
-	m.mu.Unlock()
+	m.HTTPJobCalled.Store(true)
 	return &job.HttpPrivateRegionData{}, nil
 }
 func (m *mockJobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*job.TCPPrivateRegionData, error) {
-	m.mu.Lock()
-	m.TCPJobCalled = true
-	m.mu.Unlock()
+
+	m.TCPJobCalled.Store(true)
 	return &job.TCPPrivateRegionData{}, nil
 }
 
@@ -52,11 +52,10 @@ func (m *mockClient) IngestTCP(ctx context.Context, req *connect.Request[v1.Inge
 func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	ctx := t.Context()
 
-	// Patch intervalToSecond to run jobs quickly
 
 
-	httpMonitor := &v1.HTTPMonitor{Id: "http1", Url: "http://openstat.us", Periodicity: "30s"}
-	tcpMonitor := &v1.TCPMonitor{Id: "tcp1", Uri: "openstatus:80", Periodicity: "30s"}
+	httpMonitor := &v1.HTTPMonitor{Id: "http1", Url: "http://openstat.us", Periodicity: "10s"}
+	tcpMonitor := &v1.TCPMonitor{Id: "tcp1", Uri: "openstatus:80", Periodicity: "10s"}
 
 	client := &mockClient{
 		MonitorsFunc: func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
@@ -74,21 +73,26 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	}
 	jobRunner := &mockJobRunner{}
 
+	s := tasks.New()
+	defer s.Stop()
+
 	mm := &scheduler.MonitorManager{
 		TcpMonitors:     make(map[string]*v1.TCPMonitor),
 		HttpMonitors:    make(map[string]*v1.HTTPMonitor),
-		MonitorChannels: make(map[string]chan bool),
 		Client:          client,
 		JobRunner:       jobRunner,
+		Scheduler:  s,
 	}
 
 	mm.UpdateMonitors(ctx)
-	time.Sleep(150 * time.Millisecond) // allow jobs to run
+	time.Sleep(12 * time.Second) // allow jobs to run
 
-	if !jobRunner.HTTPJobCalled {
-		t.Errorf("expected HTTPJob to be called")
+
+
+	if !jobRunner.HTTPJobCalled.Load() == true {
+		t.Errorf("expected HTTPJob to be called",)
 	}
-	if !jobRunner.TCPJobCalled {
+	if !jobRunner.TCPJobCalled.Load() == true {
 		t.Errorf("expected TCPJob to be called")
 	}
 
@@ -100,7 +104,7 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 		}), nil
 	}
 	mm.UpdateMonitors(ctx)
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	if len(mm.HttpMonitors) != 0 {
 		t.Errorf("expected no HTTP monitors, got %d", len(mm.HttpMonitors))
@@ -108,7 +112,5 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	if len(mm.TcpMonitors) != 0 {
 		t.Errorf("expected no TCP monitors, got %d", len(mm.TcpMonitors))
 	}
-	if len(mm.MonitorChannels) != 0 {
-		t.Errorf("expected no monitor channels, got %d", len(mm.MonitorChannels))
-	}
+
 }

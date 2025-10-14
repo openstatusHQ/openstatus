@@ -1,4 +1,4 @@
-name: Checker CI
+name: Go Tests
 
 on:
   push:
@@ -11,6 +11,7 @@ on:
       - '**'
     paths:
       - "apps/checker/**"
+      - "apps/private-location/**"
 
 jobs:
   ci:
@@ -22,6 +23,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '>=1.25.0'
-      - name: Run test
+      - name: Run test Checker
         run: go test -timeout 30s -race -count=1 ./...
         working-directory: apps/checker
+      - name: Run test Private Location
+        run: go test -timeout 30s -race -count=1 ./...
+        working-directory: apps/private-location
