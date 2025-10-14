@@ -10,13 +10,33 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df
+      label:
+        org.opencontainers.image.base.digest: sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.2.22
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        digest: sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:latest
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.2.22
+        org.opencontainers.image.base.digest: sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -51,33 +71,13 @@ effective: |
         source: packages/assertions/package.json
       - target: packages/regions/package.json
         source: packages/regions/package.json
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:latest
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
   label:
     io.dofigen.version: 2.5.0
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   copy:
   - fromBuilder: build
     paths:
@@ -96,11 +96,11 @@ images:
           digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
     oven:
       bun:
-        latest:
-          digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        1.2.22:
+          digest: sha256:66ba69deede44e3af5dc542def218fdb3bcad2205900ea761dc5623bf973d2df
 resources:
   dofigen.yml:
-    hash: 7ed6bdb263366bac1007d6722ce962e307ad68a0ad5223fd8bd68547c032a005
+    hash: c33b0ae4d7cb8b20272296f794520ca20d7a2ad447e571a7dfb56c54100fbcf6
     content: |
       ignore:
         - node_modules
@@ -114,7 +114,7 @@ resources:
         - /packages/integrations/vercel
       builders:
         install:
-          fromImage: oven/bun
+          fromImage: oven/bun:1.2.22
           workdir: /app/
           # Copy project
           bind:
@@ -138,7 +138,7 @@ resources:
           cache:
             - /root/.bun/install/cache
         build:
-          fromImage: oven/bun
+          fromImage: oven/bun:1.2.22
           workdir: /app/apps/server
           copy:
             - . /app/
