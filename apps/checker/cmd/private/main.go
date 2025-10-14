@@ -12,6 +12,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/madflojo/tasks"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/job"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/scheduler"
 
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
@@ -36,12 +37,13 @@ func main() {
 	s := tasks.New()
 	defer s.Stop()
 
-	apiKey := getEnv("OPENSTATUS_KEY", "key")
+	apiKey := getEnv("OPENSTATUS_KEY", "my-secret-key")
 
 	monitorManager := scheduler.MonitorManager{
 		HttpMonitors: make(map[string]*v1.HTTPMonitor),
 		TcpMonitors:  make(map[string]*v1.TCPMonitor),
 		Client:       getClient(ctx, apiKey),
+		JobRunner:    job.NewJobRunner(),
 		Scheduler:    s,
 	}
 	configTicker := time.NewTicker(configRefreshInterval)
@@ -73,9 +75,29 @@ func getClient(ctx context.Context, apiKey string) v1.PrivateLocationServiceClie
 		http.DefaultClient,
 		"https://openstatus-private-location.fly.dev",
 		connect.WithHTTPGet(),
+		connect.WithInterceptors(NewAuthInterceptor(apiKey)),
 	)
 
-	_, callInfo := connect.NewClientContext(ctx)
-	callInfo.RequestHeader().Set("openstatus-token", apiKey)
 	return client
+}
+
+
+
+func NewAuthInterceptor(token string) connect.UnaryInterceptorFunc {
+
+  interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
+    return connect.UnaryFunc(func(
+      ctx context.Context,
+      req connect.AnyRequest,
+    ) (connect.AnyResponse, error) {
+      if req.Spec().IsClient {
+        // Send a token with client requests.
+        req.Header().Set("openstatus-token", token)
+      }
+
+      return next(ctx, req)
+    })
+  }
+  return connect.UnaryInterceptorFunc(interceptor)
+
 }

@@ -47,22 +47,26 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 			interval := time.Duration(intervalToSecond(m.Periodicity)) * time.Second
 			task := tasks.Task{
 				Interval:   interval,
-				StartAfter: time.Now().Add(5 * time.Millisecond),
 				RunOnce:    false,
 				RunSingleInstance: true,
 				// StartAfter: time.Duration(1) * time.Second,
+				ErrFunc: func(e error) {
+						log.Printf("An error occurred when executing task  %s",  e)
+					},
 				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
 					monitor := mm.HttpMonitors[ctx.ID()]
+					c := context.Background()
 					log.Printf("Starting job for monitor %s (%s)", monitor.Id, monitor.Url)
-					data, err := mm.JobRunner.HTTPJob(ctx.Context, monitor)
+					data, err := mm.JobRunner.HTTPJob(c, monitor)
 
 					if err != nil {
 						log.Printf("Monitor check failed for %s (%s): %v", monitor.Id, monitor.Url, err)
 						return err
 					}
-					resp, ingestErr := mm.Client.IngestHTTP(ctx.Context, &connect.Request[v1.IngestHTTPRequest]{
+					resp, ingestErr := mm.Client.IngestHTTP(c, &connect.Request[v1.IngestHTTPRequest]{
 						Msg: &v1.IngestHTTPRequest{
-							Id:            monitor.Id,
+							MonitorId: 		monitor.Id,
+							Id:            data.ID,
 							Url:           monitor.Url,
 							Message:       data.Message,
 							Latency:       data.Latency,
@@ -135,7 +139,8 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					}
 					resp, ingestErr := mm.Client.IngestTCP(ctx.Context, &connect.Request[v1.IngestTCPRequest]{
 						Msg: &v1.IngestTCPRequest{
-							Id:            monitor.Id,
+							MonitorId: 		monitor.Id,
+							Id:            data.ID,
 							Uri:           monitor.Uri,
 							Message:       data.Message,
 							Latency:       data.Latency,

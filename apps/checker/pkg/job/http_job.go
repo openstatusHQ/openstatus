@@ -143,7 +143,7 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
 			Timestamp:     res.Timestamp,
-			CronTimestamp: req.CronTimestamp,
+			CronTimestamp: res.Timestamp,
 			URL:           req.URL,
 			// Method:        req.Method,
 			Timing:        string(timingBytes),

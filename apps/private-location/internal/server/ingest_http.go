@@ -42,17 +42,20 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 	dataSourceName := "ping_response__v8"
 
 	var monitors database.Monitor
-
-	err := h.db.Get(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.key = $1 AND monitor.deleted_at IS NULL and monitor.id = $2", token, req.Msg.MonitorId)
+	err := h.db.Get(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.key = ? AND monitor.deleted_at IS NULL and monitor.id = ?", token, req.Msg.MonitorId)
 
 	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to get monitors")
+
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	var region database.PrivateLocation
-	err = h.db.Get(&region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = $1  and private_location.key = $2", monitors.ID, token)
+	err = h.db.Get(&region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = ? AND private_location.key = ?", monitors.ID, token)
 
 	if err != nil {
+
+		log.Ctx(ctx).Error().Err(err).Msg("Failed to get private location")
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
@@ -60,7 +63,7 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 		ID:            req.Msg.Id,
 		Latency:       req.Msg.Latency,
 		StatusCode:    int(req.Msg.StatusCode),
-		MonitorID:     req.Msg.Id,
+		MonitorID:     req.Msg.MonitorId,
 		Region:        strconv.Itoa(region.ID),
 		WorkspaceID:   strconv.Itoa(monitors.WorkspaceID),
 		Timestamp:     req.Msg.Timestamp,
@@ -72,6 +75,7 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 		Body:          req.Msg.Body,
 		Trigger:       "cron",
 		RequestStatus: req.Msg.RequestStatus,
+		Assertions: monitors.Assertions.String,
 	}
 	if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")

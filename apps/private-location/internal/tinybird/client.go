@@ -9,6 +9,7 @@ import (
 	"net/url"
 
 	"github.com/rs/zerolog/log"
+
 )
 
 const baseURL = "https://api.tinybird.co/v0/events"
