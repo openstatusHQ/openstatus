@@ -33,7 +33,10 @@ export const columns: ColumnDef<RegionMetric>[] = [
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger className="flex h-[50px] items-center gap-1">
-                {region.flag} {formatRegionCode(region.code)}
+                {region.flag}{" "}
+                <span className="truncate max-w-[90px]">
+                  {formatRegionCode(region.code)}
+                </span>
               </TooltipTrigger>
               <TooltipContent side="left">
                 {region.location} ({region.provider})
