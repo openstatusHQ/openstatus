@@ -31,8 +31,7 @@
   "name": "openstatus",
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "packages/config/*",
-    "packages/notifications/*"
+    "packages/**/*",
+    "packages/config/*"
   ]
 }
