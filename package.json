@@ -29,9 +29,5 @@
     "onlyBuiltDependencies": ["@swc/core", "sharp"]
   },
   "name": "openstatus",
-  "workspaces": [
-    "apps/*",
-    "packages/**/*",
-    "packages/config/*"
-  ]
+  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
 }
