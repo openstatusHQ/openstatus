@@ -10,8 +10,8 @@
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@openstatus/tsconfig": "workspace:*",
-    "@types/react": "19.1.13",
-    "@types/react-dom": "19.1.9",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "typescript": "5.7.2"
   },
   "dependencies": {

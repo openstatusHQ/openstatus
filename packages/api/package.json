@@ -34,8 +34,8 @@
     "@openstatus/tsconfig": "workspace:*",
     "bun-types": "1.0.8",
     "typescript": "5.7.2",
-    "@types/react": "19.1.10",
-    "@types/react-dom": "19.1.9"
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2"
   },
   "keywords": [],
   "author": "",
