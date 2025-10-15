@@ -1,6 +1,11 @@
-FROM golang:1.24-alpine as builder
+FROM golang:1.25-alpine as builder
 
 WORKDIR /go/src/app
+COPY ca/ca-bundle.crt /usr/local/share/ca-certificates/ca-bundle.crt
+
+RUN apk update \
+&& apk upgrade --available \
+&& update-ca-certificates
 
 RUN apk add --no-cache tzdata
 ENV TZ=UTC
@@ -19,7 +24,11 @@ FROM scratch
 
 WORKDIR /opt/bin
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/local/share/ca-certificates/ca-bundle.crt /etc/ssl/certs/ca-bundle.crt
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+
+
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 COPY --from=builder /go/src/app/checker /opt/bin/checker
