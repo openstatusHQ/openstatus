@@ -63,7 +63,10 @@ export function MarketingFooter({ className }: Props) {
             <p className="font-semibold text-foreground">Company</p>
             <FooterLink href="/about" label="About" />
             <FooterLink href="/changelog" label="Changelog" />
-            <FooterLink href="https://www.openstatus.dev/llms.txt" label="I'm an LLM" />
+            <FooterLink
+              href="https://www.openstatus.dev/llms.txt"
+              label="I'm an LLM"
+            />
             <FooterLink href="/legal/terms" label="Terms" />
             <FooterLink href="/legal/privacy" label="Privacy" />
           </div>
