@@ -59,7 +59,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
       <FormSheetPrivateLocation
         defaultValues={{
           name: props.row.original.name,
-          key: props.row.original.key,
+          key: props.row.original.token.toString(),
           monitors: props.row.original.monitors.map((m) => m.id),
         }}
         monitors={monitors ?? []}

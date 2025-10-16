@@ -17,7 +17,7 @@ import { DropdownInterval } from "@/components/controls-search/dropdown-interval
 import { DropdownPercentile } from "@/components/controls-search/dropdown-percentile";
 import { DropdownPeriod } from "@/components/controls-search/dropdown-period";
 import { AuditLogsWrapper } from "@/components/data-table/audit-logs/wrapper";
-import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
+import { getColumns as getRegionColumns } from "@/components/data-table/response-logs/regions/columns";
 import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
@@ -30,7 +30,7 @@ import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import React from "react";
+import React, { useMemo } from "react";
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
@@ -38,7 +38,7 @@ const TIMELINE_INTERVAL = 30; // in days
 export function Client() {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
-  const [{ period, regions: selectedRegions, percentile, interval }] =
+  const [{ period, regions, percentile, interval }] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
@@ -46,6 +46,8 @@ export function Client() {
   const { data: privateLocations } = useQuery(
     trpc.privateLocation.list.queryOptions(),
   );
+
+  const selectedRegions = regions ?? undefined;
 
   const regionTimelineQuery = {
     ...trpc.tinybird.metricsRegions.queryOptions({
@@ -68,10 +70,19 @@ export function Client() {
       // once the data is loaded, we show all the regions that we get from TB
       isLoading
         ? monitor?.regions ?? []
-        : (monitorRegions as unknown as (typeof monitorRegions)[number][]),
+        : [
+            ...monitorRegions,
+            ...(privateLocations?.map((location) => location.id.toString()) ??
+              []),
+          ],
       percentile,
     );
-  }, [regionTimeline, monitor, percentile, isLoading]);
+  }, [regionTimeline, monitor, percentile, isLoading, privateLocations]);
+
+  const regionColumns = useMemo(
+    () => getRegionColumns(privateLocations ?? []),
+    [privateLocations],
+  );
 
   if (!monitor) return null;
 
@@ -95,9 +106,7 @@ export function Client() {
             <DropdownPeriod /> including{" "}
             <CommandRegion
               regions={monitor.regions}
-              privateLocations={privateLocations?.filter((location) =>
-                location.monitors.some((m) => m.id === Number(id)),
-              )}
+              privateLocations={privateLocations}
             />
           </div>
           <div>
@@ -193,7 +202,7 @@ export function Client() {
               columns={regionColumns}
               defaultPagination={{
                 pageIndex: 0,
-                pageSize: selectedRegions.length,
+                pageSize: selectedRegions?.length ?? 0,
               }}
             />
           </TabsContent>
@@ -201,6 +210,7 @@ export function Client() {
             <ChartLineRegions
               className="mt-3"
               regions={selectedRegions}
+              privateLocations={privateLocations}
               data={regionMetrics.reduce(
                 (acc, region) => {
                   region.trend.forEach((t) => {

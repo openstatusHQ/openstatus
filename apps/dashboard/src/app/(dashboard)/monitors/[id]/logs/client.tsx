@@ -20,7 +20,7 @@ import { CommandRegion } from "@/components/controls-search/command-region";
 import { DropdownStatus } from "@/components/controls-search/dropdown-status";
 import { DropdownTrigger } from "@/components/controls-search/dropdown-trigger";
 import { PopoverDate } from "@/components/controls-search/popover-date";
-import { columns } from "@/components/data-table/response-logs/columns";
+import { getColumns } from "@/components/data-table/response-logs/columns";
 import { Sheet } from "@/components/data-table/response-logs/data-table-sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
@@ -76,6 +76,11 @@ export function Client() {
       }
     },
     [pageIndex, pageSize, setSearchParams],
+  );
+
+  const columns = useMemo(
+    () => getColumns(privateLocations ?? []),
+    [privateLocations],
   );
 
   if (!workspace || !monitor) return null;
@@ -140,6 +145,7 @@ export function Client() {
         )}
         <Sheet
           data={_log?.data?.length ? _log.data[0] : null}
+          privateLocations={privateLocations}
           onClose={() =>
             setTimeout(() => setSearchParams({ selected: null }), 300)
           }
@@ -150,6 +156,7 @@ export function Client() {
 }
 
 function BillingPlaceholder() {
+  const columns = useMemo(() => getColumns([]), []);
   return (
     <BillingOverlayContainer>
       <DataTable data={exampleLogs} columns={columns} />

@@ -16,29 +16,47 @@ import { getStatusCodeVariant, textColors } from "@/data/status-codes";
 import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
-import { regionDict } from "@openstatus/regions";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { getRegionInfo } from "@openstatus/regions";
 import { Braces, TableProperties } from "lucide-react";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
-export function DataTableBasics({ data }: { data: ResponseLog }) {
+export function DataTableBasics({
+  data,
+  privateLocations,
+}: {
+  data: ResponseLog;
+  privateLocations?: PrivateLocation[];
+}) {
   if (data.type === "http") {
-    return <DataTableBasicsHTTP data={data} />;
+    return (
+      <DataTableBasicsHTTP data={data} privateLocations={privateLocations} />
+    );
   }
   if (data.type === "tcp") {
-    return <DataTableBasicsTCP data={data} />;
+    return (
+      <DataTableBasicsTCP data={data} privateLocations={privateLocations} />
+    );
   }
   return null;
 }
 
 export function DataTableBasicsHTTP({
   data,
+  privateLocations,
 }: {
   data: Extract<ResponseLog, { type: "http" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
+  privateLocations?: PrivateLocation[];
 }) {
-  const regionConfig = regionDict[data.region];
+  const privateLocataion = privateLocations?.find(
+    (location) => String(location.id) === String(data.region),
+  );
+  const regionConfig = getRegionInfo(data.region, {
+    location: privateLocataion?.name,
+  });
   return (
     <Table className="table-fixed">
       <colgroup>
@@ -304,12 +322,19 @@ export function DataTableBasicsHTTP({
 
 export function DataTableBasicsTCP({
   data,
+  privateLocations,
 }: {
   data: Extract<ResponseLog, { type: "tcp" }> & {
     trigger?: "cron" | "api" | "test" | null;
   };
+  privateLocations?: PrivateLocation[];
 }) {
-  const regionConfig = regionDict[data.region];
+  const privateLocataion = privateLocations?.find(
+    (location) => String(location.id) === String(data.region),
+  );
+  const regionConfig = getRegionInfo(data.region, {
+    location: privateLocataion?.name,
+  });
   return (
     <Table className="table-fixed">
       <colgroup>

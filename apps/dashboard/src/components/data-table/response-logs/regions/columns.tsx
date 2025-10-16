@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/tooltip";
 import type { RegionMetric } from "@/data/region-metrics";
 import { getActions } from "@/data/region-metrics.client";
-import { formatRegionCode, regionDict } from "@openstatus/regions";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { formatRegionCode, getRegionInfo } from "@openstatus/regions";
 import type { ColumnDef } from "@tanstack/react-table";
 // import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -21,116 +22,124 @@ function TrendCell({ trend }: { trend: RegionMetric["trend"] }) {
   return <ChartLineRegion className="h-[50px]" data={trend} />;
 }
 
-export const columns: ColumnDef<RegionMetric>[] = [
-  {
-    accessorKey: "region",
-    header: "Region",
-    cell: ({ row }) => {
-      const value = row.getValue("region");
-      if (typeof value === "string") {
-        const region = regionDict[value as keyof typeof regionDict];
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger className="flex h-[50px] items-center gap-1">
-                {region.flag}{" "}
-                <span className="truncate max-w-[90px]">
-                  {formatRegionCode(region.code)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="left">
-                {region.location} ({region.provider})
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-      return null;
+export function getColumns(
+  privateLocations: PrivateLocation[],
+): ColumnDef<RegionMetric>[] {
+  return [
+    {
+      accessorKey: "region",
+      header: "Region",
+      cell: ({ row }) => {
+        const value = row.getValue("region");
+        if (typeof value === "string") {
+          const region = getRegionInfo(value, {
+            location: privateLocations.find(
+              (location) => String(location.id) === String(value),
+            )?.name,
+          });
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger className="flex h-[50px] items-center gap-1">
+                  {region.flag}{" "}
+                  <span className="truncate max-w-[90px]">
+                    {formatRegionCode(region.code)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  {region.location} ({region.provider})
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        }
+        return null;
+      },
+      enableSorting: false,
+      enableHiding: false,
+      meta: {
+        cellClassName: "w-24 font-mono",
+      },
     },
-    enableSorting: false,
-    enableHiding: false,
-    meta: {
-      cellClassName: "w-24 font-mono",
+    {
+      accessorKey: "trend",
+      header: "Trend",
+      cell: ({ row }) => {
+        return <TrendCell trend={row.original.trend} />;
+      },
+      enableSorting: false,
+      enableHiding: false,
+      meta: {
+        cellClassName: "w-full min-w-[200px] max-w-full",
+      },
     },
-  },
-  {
-    accessorKey: "trend",
-    header: "Trend",
-    cell: ({ row }) => {
-      return <TrendCell trend={row.original.trend} />;
+    {
+      accessorKey: "p50",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="P50" />
+      ),
+      cell: ({ row }) => {
+        return <TableCellNumber value={row.getValue("p50")} unit="ms" />;
+      },
+      enableHiding: false,
+      meta: {
+        cellClassName: "w-12",
+      },
     },
-    enableSorting: false,
-    enableHiding: false,
-    meta: {
-      cellClassName: "w-full min-w-[200px] max-w-full",
+    {
+      accessorKey: "p90",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="P90" />
+      ),
+      cell: ({ row }) => {
+        return <TableCellNumber value={row.getValue("p90")} unit="ms" />;
+      },
+      enableHiding: false,
+      meta: {
+        cellClassName: "w-12",
+      },
     },
-  },
-  {
-    accessorKey: "p50",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P50" />
-    ),
-    cell: ({ row }) => {
-      return <TableCellNumber value={row.getValue("p50")} unit="ms" />;
+    {
+      accessorKey: "p99",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="P99" />
+      ),
+      cell: ({ row }) => {
+        return <TableCellNumber value={row.getValue("p99")} unit="ms" />;
+      },
+      enableHiding: false,
+      meta: {
+        cellClassName: "w-12",
+      },
     },
-    enableHiding: false,
-    meta: {
-      cellClassName: "w-12",
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        // NOTE: works, but is not very react-esque
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const router = useRouter();
+        const actions = getActions({
+          filter: async () => {
+            router.push(`?regions=${row.original.region}`);
+          },
+          // TODO: add triggerById in TRPC client
+          // trigger: async () => {
+          //   console.log(row.original);
+          //   const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+          //   toast.promise(promise, {
+          //     loading: "Checking...",
+          //     success: "Success",
+          //     error: "Failed",
+          //   });
+          //   await promise;
+          // },
+        });
+        return <QuickActions actions={actions} />;
+      },
+      meta: {
+        headerClassName: "w-12",
+        cellClassName: "text-right",
+      },
     },
-  },
-  {
-    accessorKey: "p90",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P90" />
-    ),
-    cell: ({ row }) => {
-      return <TableCellNumber value={row.getValue("p90")} unit="ms" />;
-    },
-    enableHiding: false,
-    meta: {
-      cellClassName: "w-12",
-    },
-  },
-  {
-    accessorKey: "p99",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P99" />
-    ),
-    cell: ({ row }) => {
-      return <TableCellNumber value={row.getValue("p99")} unit="ms" />;
-    },
-    enableHiding: false,
-    meta: {
-      cellClassName: "w-12",
-    },
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      // NOTE: works, but is not very react-esque
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      const router = useRouter();
-      const actions = getActions({
-        filter: async () => {
-          router.push(`?regions=${row.original.region}`);
-        },
-        // TODO: add triggerById in TRPC client
-        // trigger: async () => {
-        //   console.log(row.original);
-        //   const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        //   toast.promise(promise, {
-        //     loading: "Checking...",
-        //     success: "Success",
-        //     error: "Failed",
-        //   });
-        //   await promise;
-        // },
-      });
-      return <QuickActions actions={actions} />;
-    },
-    meta: {
-      headerClassName: "w-12",
-      cellClassName: "text-right",
-    },
-  },
-];
+  ];
+}

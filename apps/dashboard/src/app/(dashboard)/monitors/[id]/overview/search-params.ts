@@ -1,9 +1,9 @@
 import { INTERVALS } from "@/data/metrics.client";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
   parseAsNumberLiteral,
+  parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
 
@@ -12,10 +12,7 @@ const PERCENTILE = ["p50", "p75", "p90", "p95", "p99"] as const;
 
 export const searchParamsParsers = {
   period: parseAsStringLiteral(PERIOD).withDefault("1d"),
-  regions: parseAsArrayOf(parseAsStringLiteral(monitorRegions)).withDefault(
-    // FIXME: readonly
-    monitorRegions as unknown as (typeof monitorRegions)[number][],
-  ),
+  regions: parseAsArrayOf(parseAsString),
   percentile: parseAsStringLiteral(PERCENTILE).withDefault("p50"),
   interval: parseAsNumberLiteral(INTERVALS).withDefault(30),
 };

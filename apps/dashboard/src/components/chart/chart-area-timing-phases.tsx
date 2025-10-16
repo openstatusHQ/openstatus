@@ -24,7 +24,6 @@ import {
   mapTimingPhases,
 } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChartTooltipNumber,
@@ -70,7 +69,7 @@ export function ChartAreaTimingPhases({
   period: "1d" | "7d" | "14d";
   percentile: (typeof PERCENTILES)[number];
   interval: (typeof INTERVALS)[number];
-  regions: (typeof monitorRegions)[number][];
+  regions: string[] | undefined;
   type: "http";
 }) {
   const trpc = useTRPC();

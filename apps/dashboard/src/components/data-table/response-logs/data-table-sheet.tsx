@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { RouterOutputs } from "@openstatus/api";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { Check, Copy } from "lucide-react";
 import { DataTableBasics } from "./data-table-basics";
 
@@ -18,9 +19,11 @@ type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
 
 export function Sheet({
   data,
+  privateLocations,
   onClose,
 }: {
   data: ResponseLog | null;
+  privateLocations?: PrivateLocation[];
   onClose: () => void;
 }) {
   const { copy, isCopied } = useCopyToClipboard();
@@ -32,7 +35,7 @@ export function Sheet({
         <DataTableSheetHeader className="px-2">
           <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
         </DataTableSheetHeader>
-        <DataTableBasics data={data} />
+        <DataTableBasics data={data} privateLocations={privateLocations} />
         <Separator />
         <DataTableSheetFooter>
           <Button

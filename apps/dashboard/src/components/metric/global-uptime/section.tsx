@@ -18,7 +18,6 @@ import {
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
-import type { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { formatDistanceToNow } from "date-fns";
 
 type Metric = {
@@ -40,7 +39,7 @@ export function GlobalUptimeSection({
   monitorId: string;
   jobType: "http" | "tcp";
   period: "1d" | "7d" | "14d";
-  regions: (typeof monitorRegions)[number][];
+  regions: string[] | undefined;
 }) {
   const trpc = useTRPC();
 

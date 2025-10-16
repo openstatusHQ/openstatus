@@ -1,8 +1,6 @@
-import type { Region } from "./regions";
-
 export const regionMetrics = [
   {
-    region: "ams" as const satisfies Region,
+    region: "ams",
     p50: 100,
     p90: 150,
     p99: 200,
@@ -13,7 +11,7 @@ export const regionMetrics = [
     }[],
   },
   {
-    region: "fra" as const satisfies Region,
+    region: "fra",
     p50: 110,
     p90: 155,
     p99: 220,
@@ -24,7 +22,7 @@ export const regionMetrics = [
     }[],
   },
   {
-    region: "gru" as const satisfies Region,
+    region: "gru",
     p50: 120,
     p90: 160,
     p99: 230,

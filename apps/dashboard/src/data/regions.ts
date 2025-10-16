@@ -376,3 +376,10 @@ export const regionColors = {
   "railway_us-east4-eqdc4a": "hsl(0 0% 45.1%)",
   "railway_us-west2": "hsl(0 0% 45.1%)",
 } satisfies Record<Region, string>;
+
+export function getRegionColor(region: string) {
+  if (region in regionColors) {
+    return regionColors[region as keyof typeof regionColors];
+  }
+  return "hsl(0 0% 45.1%)";
+}

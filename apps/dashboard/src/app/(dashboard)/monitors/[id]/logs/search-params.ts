@@ -1,5 +1,4 @@
 import { PERIODS, STATUS, TRIGGER } from "@/data/metrics.client";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { endOfDay } from "date-fns";
 import { startOfDay } from "date-fns";
 import {
@@ -13,10 +12,7 @@ import {
 
 export const searchParamsParsers = {
   period: parseAsStringLiteral(PERIODS).withDefault("1d"),
-  regions: parseAsArrayOf(parseAsStringLiteral(monitorRegions)).withDefault(
-    // FIXME: readonly
-    monitorRegions as unknown as (typeof monitorRegions)[number][],
-  ),
+  regions: parseAsArrayOf(parseAsString),
   status: parseAsStringLiteral(STATUS),
   trigger: parseAsStringLiteral(TRIGGER),
   selected: parseAsString,

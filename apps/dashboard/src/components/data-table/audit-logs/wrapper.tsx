@@ -12,7 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 
-import { columns } from "./columns";
+import { useMemo } from "react";
+import { getColumns } from "./columns";
 
 export function AuditLogsWrapper({
   monitorId,
@@ -25,6 +26,15 @@ export function AuditLogsWrapper({
 
   const { data: auditLogs, isLoading } = useQuery(
     trpc.tinybird.auditLog.queryOptions({ monitorId, interval }),
+  );
+
+  const { data: privateLocations } = useQuery(
+    trpc.privateLocation.list.queryOptions(),
+  );
+
+  const columns = useMemo(
+    () => getColumns(privateLocations),
+    [privateLocations],
   );
 
   if (isLoading) {

@@ -10,26 +10,37 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { regionColors } from "@/data/regions";
+import { getRegionColor } from "@/data/regions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { regionDict } from "@openstatus/regions";
+import { getRegionInfo } from "@openstatus/regions";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
-const chartConfig = monitorRegions.reduce((config, region) => {
-  const regionInfo = regionDict[region as keyof typeof regionDict];
-  const color = regionColors[region as keyof typeof regionColors];
+function getChartConfig(privateLocations?: PrivateLocation[]) {
+  return [
+    ...monitorRegions,
+    ...(privateLocations?.map((location) => location.id.toString()) ?? []),
+  ].reduce((config, region) => {
+    const privateLocation = privateLocations?.find(
+      (location) => String(location.id) === String(region),
+    );
+    const regionInfo = getRegionInfo(region, {
+      location: privateLocation?.name,
+    });
+    const color = getRegionColor(region);
 
-  if (regionInfo && color) {
-    config[region] = {
-      label: `${regionInfo.location} (${regionInfo.provider})`,
-      color,
-    };
-  }
+    if (regionInfo && color) {
+      config[region] = {
+        label: `${regionInfo.location} (${regionInfo.provider})`,
+        color,
+      };
+    }
 
-  return config;
-}, {} as ChartConfig) satisfies ChartConfig;
+    return config;
+  }, {} as ChartConfig) satisfies ChartConfig;
+}
 
 export type TrendPoint = {
   timestamp: number; // unix millis
@@ -40,14 +51,16 @@ export function ChartLineRegions({
   className,
   data,
   regions,
+  privateLocations,
 }: {
   className?: string;
   data: TrendPoint[];
-  regions: string[];
+  regions: string[] | undefined;
+  privateLocations?: PrivateLocation[];
 }) {
   const isMobile = useIsMobile();
   const trendData = data ?? [];
-
+  const chartConfig = getChartConfig(privateLocations);
   const chartData = trendData.map((d) => ({
     ...d,
     timestamp: new Date(d.timestamp).toLocaleString("default", {
@@ -87,7 +100,7 @@ export function ChartLineRegions({
             />
           }
         />
-        {regions.map((region) => {
+        {regions?.map((region) => {
           return (
             <Line
               key={region}
@@ -107,7 +120,7 @@ export function ChartLineRegions({
           orientation="right"
           tickFormatter={(value) => `${value}ms`}
         />
-        {regions.length <= 6 && !isMobile ? (
+        {regions && regions.length <= 6 && !isMobile ? (
           <ChartLegend
             className="flex-wrap"
             content={<ChartLegendContent className="text-nowrap" />}
