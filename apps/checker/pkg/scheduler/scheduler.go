@@ -23,12 +23,10 @@ const (
 )
 
 type MonitorManager struct {
-	TcpMonitors  map[string]*v1.TCPMonitor
-	HttpMonitors map[string]*v1.HTTPMonitor
-	Client       v1.PrivateLocationServiceClient
-	JobRunner    job.JobRunner
-	Scheduler    *tasks.Scheduler
-	mu           sync.Mutex
+	Client    v1.PrivateLocationServiceClient
+	JobRunner job.JobRunner
+	Scheduler *tasks.Scheduler
+	mu        sync.Mutex
 }
 
 func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
@@ -43,18 +41,19 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 	// HTTP monitors: start jobs for new monitors
 	for _, m := range res.Msg.HttpMonitors {
 		currentIDs[m.Id] = struct{}{}
-		if _, exists := mm.HttpMonitors[m.Id]; !exists {
+		_, err := mm.Scheduler.Lookup(m.Id)
+		if err != nil {
 			interval := time.Duration(intervalToSecond(m.Periodicity)) * time.Second
 			task := tasks.Task{
-				Interval:   interval,
-				RunOnce:    false,
+				Interval:          interval,
+				RunOnce:           false,
 				RunSingleInstance: true,
 				// StartAfter: time.Duration(1) * time.Second,
 				ErrFunc: func(e error) {
-						log.Printf("An error occurred when executing task  %s",  e)
-					},
+					log.Printf("An error occurred when executing task  %s", e)
+				},
 				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
-					monitor := mm.HttpMonitors[ctx.ID()]
+					monitor := m
 					c := context.Background()
 					log.Printf("Starting job for monitor %s (%s)", monitor.Id, monitor.Url)
 					data, err := mm.JobRunner.HTTPJob(c, monitor)
@@ -65,7 +64,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					}
 					resp, ingestErr := mm.Client.IngestHTTP(c, &connect.Request[v1.IngestHTTPRequest]{
 						Msg: &v1.IngestHTTPRequest{
-							MonitorId: 		monitor.Id,
+							MonitorId:     monitor.Id,
 							Id:            data.ID,
 							Url:           monitor.Url,
 							Message:       data.Message,
@@ -90,48 +89,43 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 			}
 
 			err := mm.Scheduler.AddWithID(m.Id, &task)
-			mm.mu.Lock()
-
-			mm.HttpMonitors[m.Id] = m
-			mm.mu.Unlock()
 
 			if err != nil {
 				log.Printf("Failed to add HTTP monitor job for %s (%s): %v", m.Id, m.Url, err)
 				continue
 			}
 			log.Printf("Started monitoring job for %s (%s)", m.Id, m.Url)
+			continue
 		}
+
 	}
 
-	// Stop jobs for monitors that no longer exist
-	for id := range mm.HttpMonitors {
-		if _, stillExists := currentIDs[id]; !stillExists {
-			mm.Scheduler.Del(id)
-			mm.mu.Lock()
-			delete(mm.HttpMonitors, id)
-			mm.mu.Unlock()
+	// // Stop jobs for monitors that no longer exist
+	// for id := range mm.HttpMonitors {
+	// 	if _, stillExists := currentIDs[id]; !stillExists {
+	// 		mm.Scheduler.Del(id)
+	// 		mm.mu.Lock()
+	// 		delete(mm.HttpMonitors, id)
+	// 		mm.mu.Unlock()
 
-
-		}
-	}
+	// 	}
+	// }
 
 	// TCP monitors: start jobs for new monitors
 	for _, m := range res.Msg.TcpMonitors {
 		currentIDs[m.Id] = struct{}{}
-		if _, exists := mm.TcpMonitors[m.Id]; !exists {
+		_, err := mm.Scheduler.Lookup(m.Id)
+		if err != nil {
 
-			mm.TcpMonitors[m.Id] = m
 			interval := time.Duration(intervalToSecond(m.Periodicity)) * time.Second
 			task := tasks.Task{
-				Interval:   interval,
-				RunOnce:    false,
+				Interval: interval,
+				RunOnce:  false,
 				// StartAfter: time.Now().Add(5 * time.Millisecond),
 				RunSingleInstance: true,
 				FuncWithTaskContext: func(ctx tasks.TaskContext) error {
-					mm.mu.Lock()
-					monitor := mm.TcpMonitors[ctx.ID()]
-					mm.mu.Unlock()
 
+					monitor := m
 					log.Printf("Starting TCP job for monitor %s (%s)", monitor.Id, monitor.Uri)
 					data, err := mm.JobRunner.TCPJob(ctx.Context, monitor)
 					if err != nil {
@@ -139,7 +133,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					}
 					resp, ingestErr := mm.Client.IngestTCP(ctx.Context, &connect.Request[v1.IngestTCPRequest]{
 						Msg: &v1.IngestTCPRequest{
-							MonitorId: 		monitor.Id,
+							MonitorId:     monitor.Id,
 							Id:            data.ID,
 							Uri:           monitor.Uri,
 							Message:       data.Message,
@@ -160,10 +154,6 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 				},
 			}
 			err := mm.Scheduler.AddWithID(m.Id, &task)
-			mm.mu.Lock()
-
-			mm.TcpMonitors[m.Id] = m
-			mm.mu.Unlock()
 
 			if err != nil {
 				log.Printf("Failed to add TCP monitor job for %s (%s): %v", m.Id, m.Uri, err)
@@ -173,15 +163,20 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 		}
 	}
 
-	// Stop jobs for TCP monitors that no longer exist
-	for id := range mm.TcpMonitors {
+	for id := range mm.Scheduler.Tasks() {
 		if _, stillExists := currentIDs[id]; !stillExists {
 			mm.Scheduler.Del(id)
-			mm.mu.Lock()
-			delete(mm.TcpMonitors, id)
-			mm.mu.Unlock()
 		}
 	}
+	// Stop jobs for TCP monitors that no longer exist
+	// for id := range mm.TcpMonitors {
+	// 	if _, stillExists := currentIDs[id]; !stillExists {
+	// 		mm.Scheduler.Del(id)
+	// 		mm.mu.Lock()
+	// 		delete(mm.TcpMonitors, id)
+	// 		mm.mu.Unlock()
+	// 	}
+	// }
 }
 
 func intervalToSecond(interval string) int {

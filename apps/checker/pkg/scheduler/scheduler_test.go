@@ -77,8 +77,7 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	defer s.Stop()
 
 	mm := &scheduler.MonitorManager{
-		TcpMonitors:     make(map[string]*v1.TCPMonitor),
-		HttpMonitors:    make(map[string]*v1.HTTPMonitor),
+
 		Client:          client,
 		JobRunner:       jobRunner,
 		Scheduler:  s,
@@ -106,11 +105,12 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	mm.UpdateMonitors(ctx)
 	time.Sleep(1 * time.Second)
 
-	if len(mm.HttpMonitors) != 0 {
-		t.Errorf("expected no HTTP monitors, got %d", len(mm.HttpMonitors))
+	if _, err := mm.Scheduler.Lookup("http1"); err == nil {
+		t.Errorf("expected HTTP job to be removed")
 	}
-	if len(mm.TcpMonitors) != 0 {
-		t.Errorf("expected no TCP monitors, got %d", len(mm.TcpMonitors))
+	if _, err := mm.Scheduler.Lookup("tcp1"); err == nil {
+		t.Errorf("expected TCP job to be removed")
 	}
+
 
 }

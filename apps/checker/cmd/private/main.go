@@ -40,8 +40,6 @@ func main() {
 	apiKey := getEnv("OPENSTATUS_KEY", "my-secret-key")
 
 	monitorManager := scheduler.MonitorManager{
-		HttpMonitors: make(map[string]*v1.HTTPMonitor),
-		TcpMonitors:  make(map[string]*v1.TCPMonitor),
 		Client:       getClient(apiKey),
 		JobRunner:    job.NewJobRunner(),
 		Scheduler:    s,
