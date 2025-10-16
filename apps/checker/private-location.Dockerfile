@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine as builder
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine as builder
 
 WORKDIR /go/src/app
 
@@ -6,14 +6,12 @@ RUN apk add --no-cache tzdata
 ENV TZ=UTC
 
 ENV CGO_ENABLED=0
-ENV GOOS=linux
-ENV GOARCH=amd64
 
 COPY go.* .
 RUN go mod download
 
 COPY . .
-RUN go build -trimpath -ldflags "-s -w" -o private ./cmd/private
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH}  go build -trimpath -ldflags "-s -w" -o private ./cmd/private
 
 FROM scratch
 

@@ -33,11 +33,11 @@ func main() {
 		<-sigChan
 		cancel()
 	}()
-
+	fmt.Println("Launching openstatus private location checker")
 	s := tasks.New()
 	defer s.Stop()
 
-	apiKey := getEnv("OPENSTATUS_KEY", "my-secret-key")
+	apiKey := getEnv("OPENSTATUS_KEY", "")
 
 	monitorManager := scheduler.MonitorManager{
 		Client:    getClient(apiKey),
