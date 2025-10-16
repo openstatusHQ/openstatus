@@ -37,7 +37,7 @@ func main() {
 	s := tasks.New()
 	defer s.Stop()
 
-	apiKey := getEnv("OPENSTATUS_KEY", "my-secret-key")
+	apiKey := getEnv("OPENSTATUS_KEY", "")
 
 	monitorManager := scheduler.MonitorManager{
 		Client:    getClient(apiKey),
