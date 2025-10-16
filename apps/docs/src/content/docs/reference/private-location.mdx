@@ -1,0 +1,22 @@
+---
+title: Private Location (WIP)
+---
+
+**Private locations** allow you to monitor internal applications and network resources from within your own infrastructure, rather than solely relying on public cloud-based servers. 
+
+By deploying our **monitoring probes** (as containers) on your own machines inside your firewall, you can run tests against private endpoints like internal APIs or servers and get detailed *timing phases and latency information* from your specific deployment location. This enables you to monitor not just *datacenter to datacenter* (when your web services are deployed on platforms like Cloudflare, AWS, or GCP), but also from **private locations** like on-prem servers or even Raspberry Pi devices. 
+
+Private locations are crucial for verifying *performance and availability* of internal systems, integrating with your development pipelines, and ensuring **security** without exposing sensitive services to the open internet.
+
+
+### How to use private locations?
+
+1. create a private location and access a generated `token`
+2. install the docker image on your server
+3. in the private location settings, choose which monitors to track (or vice versa, configure it in your monitor settings)
+4. done (within a couple of minutes, we'll check the everything)
+
+### What is missing?
+
+- Incidents will not be created (yet) if you run your monitors via privat regions. That means you should still use the openstatus regions to get alerts if a monitor is down.
+- Public monitors on status pages do not support private regions (yet).

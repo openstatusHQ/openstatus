@@ -160,6 +160,10 @@ export default defineConfig({
               slug: "reference/notification",
             },
             {
+              label: "Private Location",
+              slug: "reference/private-location",
+            },
+            {
               label: "Status Page",
               slug: "reference/status-page",
             },
