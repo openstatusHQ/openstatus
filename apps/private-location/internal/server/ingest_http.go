@@ -42,7 +42,7 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 	dataSourceName := "ping_response__v8"
 
 	var monitors database.Monitor
-	err := h.db.Get(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.key = ? AND monitor.deleted_at IS NULL and monitor.id = ?", token, req.Msg.MonitorId)
+	err := h.db.Get(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.id = ?", token, req.Msg.MonitorId)
 
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("Failed to get monitors")

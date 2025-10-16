@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0c7fa880-77a8-406f-8598-ab70c412b282",
+  "id": "e53ddda7-3764-4bc9-b6ac-478b6fccb923",
   "prevId": "686060ea-046b-414a-909f-1b087e086065",
   "tables": {
     "workspace": {
@@ -2552,7 +2552,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "private_location_to_monitor_monitor_id_monitor_id_fk": {
@@ -2565,7 +2565,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

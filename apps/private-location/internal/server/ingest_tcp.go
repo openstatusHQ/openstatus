@@ -42,14 +42,14 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 
 
 	var monitors database.Monitor
-	err := h.db.Get(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.key = $1 AND monitor.deleted_at IS NULL and monitor.id = $2", token, req.Msg.Id)
+	err := h.db.Get(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.id = ?", token, req.Msg.Id)
 
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
 	var region database.PrivateLocation
-	err = h.db.Get(&region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = $1  and private_location.key = $2", monitors.ID, token)
+	err = h.db.Get(&region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = ?  and private_location.key = ?", monitors.ID, token)
 
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)

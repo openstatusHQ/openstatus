@@ -14,6 +14,6 @@ CREATE TABLE `private_location_to_monitor` (
 	`monitor_id` integer,
 	`created_at` integer DEFAULT (strftime('%s', 'now')),
 	`deleted_at` integer,
-	FOREIGN KEY (`private_location_id`) REFERENCES `private_location`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`private_location_id`) REFERENCES `private_location`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade
 );

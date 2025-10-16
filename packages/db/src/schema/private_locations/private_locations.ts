@@ -7,7 +7,7 @@ import { workspace } from "../workspaces";
 export const privateLocation = sqliteTable("private_location", {
   id: integer("id").primaryKey(),
   name: text("name").notNull(),
-  key: text("key").notNull(),
+  token: text("key").notNull(),
   lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
   workspaceId: integer("workspace_id").references(() => workspace.id),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
