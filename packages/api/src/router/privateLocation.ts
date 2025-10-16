@@ -35,14 +35,14 @@ export const privateLocationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const key = crypto.randomUUID();
+      const token = crypto.randomUUID();
 
       return await opts.ctx.db.transaction(async (tx) => {
         const _privateLocation = await tx
           .insert(privateLocation)
           .values({
             name: opts.input.name,
-            key,
+            token,
             workspaceId: opts.ctx.workspace.id,
           })
           .returning()

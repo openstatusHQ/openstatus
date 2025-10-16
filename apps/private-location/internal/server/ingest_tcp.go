@@ -49,7 +49,7 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 	}
 
 	var region database.PrivateLocation
-	err = h.db.Get(&region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = ?  and private_location.key = ?", monitors.ID, token)
+	err = h.db.Get(&region, "SELECT private_location.id FROM private_location join private_location_to_monitor a ON private_location.id = a.private_location_id WHERE a.monitor_id = ?  and private_location.token = ?", monitors.ID, token)
 
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)

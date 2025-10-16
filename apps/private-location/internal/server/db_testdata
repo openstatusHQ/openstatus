@@ -458,7 +458,7 @@ INSERT INTO "status_report" ("id", "status", "title", "workspace_id", "page_id",
 INSERT INTO "maintenance" ("id", "title", "message", "from", "to", "workspace_id", "page_id", "created_at", "updated_at") VALUES
 ('1', 'Test Maintenance', 'Test message', '1760358329', '1760358330', '1', '1', '1760358329', '1760358329');
 
-INSERT INTO "private_location" ("id", "name", "key", "last_seen_at", "workspace_id", "created_at", "updated_at") VALUES
+INSERT INTO "private_location" ("id", "name", "token", "last_seen_at", "workspace_id", "created_at", "updated_at") VALUES
 ('1', 'My Home', 'my-secret-key', NULL, '3', '1760358329', '1760358329');
 
 INSERT INTO "private_location_to_monitor" ("private_location_id", "monitor_id", "created_at", "deleted_at") VALUES

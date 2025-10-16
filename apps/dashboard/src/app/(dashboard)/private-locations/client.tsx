@@ -26,7 +26,7 @@ const EXAMPLES = [
   {
     id: 1,
     name: "Private Location 1",
-    key: "1234567890",
+    token: "my-secret-token",
     createdAt: new Date("2025-01-01"),
     updatedAt: new Date("2025-01-01"),
     workspaceId: 1,
@@ -37,7 +37,7 @@ const EXAMPLES = [
   {
     id: 2,
     name: "Private Location 2",
-    key: "1234567890",
+    token: "my-secret-token",
     createdAt: new Date("2025-01-01"),
     updatedAt: new Date("2025-01-01"),
     workspaceId: 1,
