@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-		_ "github.com/joho/godotenv/autoload"
+	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -17,13 +17,13 @@ import (
 // Monitor represents a monitoring job.
 
 type privateLocationHandler struct {
-	db *sqlx.DB
-	TbClient      tinybird.Client
+	db       *sqlx.DB
+	TbClient tinybird.Client
 }
 
 func NewPrivateLocationServer(db *sqlx.DB, tbClient tinybird.Client) *privateLocationHandler {
 	return &privateLocationHandler{
-		db: db,
+		db:       db,
 		TbClient: tbClient,
 	}
 }
@@ -35,12 +35,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	tinyBirdToken := os.Getenv("TINYBIRD_TOKEN")
 
-
 	httpClient := &http.Client{
 		Timeout: 45 * time.Second,
 	}
-
-	defer httpClient.CloseIdleConnections()
 
 	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
 
@@ -52,7 +49,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	})
 	return r
 }
-
 
 // healthHandler responds with the health status of the server.
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {

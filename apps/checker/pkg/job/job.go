@@ -27,13 +27,12 @@ type HttpPrivateRegionData struct {
 	Error         uint8  `json:"error"`
 }
 
-
 type JobRunner interface {
 	TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error)
 	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error)
 }
 
-type jobRunner struct {}
+type jobRunner struct{}
 
 func NewJobRunner() JobRunner {
 	return &jobRunner{}

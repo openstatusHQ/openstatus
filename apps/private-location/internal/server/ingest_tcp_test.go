@@ -12,10 +12,8 @@ import (
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 )
 
-
-
 func TestIngestTCP_Unauthenticated(t *testing.T) {
-	h := server.NewPrivateLocationServer(testDB(),tinybird.NewClient(http.DefaultClient,""))
+	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(http.DefaultClient, ""))
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{})
 	// No token header
@@ -32,7 +30,7 @@ func TestIngestTCP_Unauthenticated(t *testing.T) {
 }
 
 func TestIngestTCP_DBError(t *testing.T) {
-	h := server.NewPrivateLocationServer(testDB(),tinybird.NewClient(http.DefaultClient,""))
+	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(http.DefaultClient, ""))
 
 	req := connect.NewRequest(&private_locationv1.IngestTCPRequest{})
 	req.Header().Set("openstatus-token", "token123")

@@ -40,9 +40,9 @@ func main() {
 	apiKey := getEnv("OPENSTATUS_KEY", "my-secret-key")
 
 	monitorManager := scheduler.MonitorManager{
-		Client:       getClient(apiKey),
-		JobRunner:    job.NewJobRunner(),
-		Scheduler:    s,
+		Client:    getClient(apiKey),
+		JobRunner: job.NewJobRunner(),
+		Scheduler: s,
 	}
 	configTicker := time.NewTicker(configRefreshInterval)
 	defer configTicker.Stop()
@@ -79,23 +79,21 @@ func getClient(apiKey string) v1.PrivateLocationServiceClient {
 	return client
 }
 
-
-
 func NewAuthInterceptor(token string) connect.UnaryInterceptorFunc {
 
-  interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
-    return connect.UnaryFunc(func(
-      ctx context.Context,
-      req connect.AnyRequest,
-    ) (connect.AnyResponse, error) {
-      if req.Spec().IsClient {
-        // Send a token with client requests.
-        req.Header().Set("openstatus-token", token)
-      }
+	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
+		return connect.UnaryFunc(func(
+			ctx context.Context,
+			req connect.AnyRequest,
+		) (connect.AnyResponse, error) {
+			if req.Spec().IsClient {
+				// Send a token with client requests.
+				req.Header().Set("openstatus-token", token)
+			}
 
-      return next(ctx, req)
-    })
-  }
-  return connect.UnaryInterceptorFunc(interceptor)
+			return next(ctx, req)
+		})
+	}
+	return connect.UnaryInterceptorFunc(interceptor)
 
 }

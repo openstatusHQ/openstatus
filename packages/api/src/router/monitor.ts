@@ -1120,7 +1120,7 @@ export const monitorRouter = createTRPCRouter({
 
         await tx
           .delete(privateLocationToMonitors)
-          .where(and(eq(privateLocationToMonitors.monitorId, input.id)));
+          .where(eq(privateLocationToMonitors.monitorId, input.id));
 
         if (input.privateLocations && input.privateLocations.length > 0) {
           await tx.insert(privateLocationToMonitors).values(

@@ -52,8 +52,6 @@ func (m *mockClient) IngestTCP(ctx context.Context, req *connect.Request[v1.Inge
 func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	ctx := t.Context()
 
-
-
 	httpMonitor := &v1.HTTPMonitor{Id: "http1", Url: "http://openstat.us", Periodicity: "10s"}
 	tcpMonitor := &v1.TCPMonitor{Id: "tcp1", Uri: "openstatus:80", Periodicity: "10s"}
 
@@ -78,18 +76,16 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 
 	mm := &scheduler.MonitorManager{
 
-		Client:          client,
-		JobRunner:       jobRunner,
-		Scheduler:  s,
+		Client:    client,
+		JobRunner: jobRunner,
+		Scheduler: s,
 	}
 
 	mm.UpdateMonitors(ctx)
 	time.Sleep(12 * time.Second) // allow jobs to run
 
-
-
 	if !jobRunner.HTTPJobCalled.Load() == true {
-		t.Errorf("expected HTTPJob to be called",)
+		t.Errorf("expected HTTPJob to be called")
 	}
 	if !jobRunner.TCPJobCalled.Load() == true {
 		t.Errorf("expected TCPJob to be called")
@@ -111,6 +107,5 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 	if _, err := mm.Scheduler.Lookup("tcp1"); err == nil {
 		t.Errorf("expected TCP job to be removed")
 	}
-
 
 }

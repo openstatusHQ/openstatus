@@ -75,12 +75,12 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 		Body:          req.Msg.Body,
 		Trigger:       "cron",
 		RequestStatus: req.Msg.RequestStatus,
-		Assertions: monitors.Assertions.String,
+		Assertions:    monitors.Assertions.String,
 	}
 	if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 	}
-	_,err = h.db.NamedExec("UPDATE private_location SET last_seen_at = :last_seen_at WHERE id = :id", map[string]any{
+	_, err = h.db.NamedExec("UPDATE private_location SET last_seen_at = :last_seen_at WHERE id = :id", map[string]any{
 		"last_seen_at": time.Now().Unix(),
 		"id":           region.ID,
 	})

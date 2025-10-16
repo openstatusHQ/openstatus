@@ -12,7 +12,6 @@ const (
 	JobTypeDNS  JobType = "dns"
 )
 
-
 type Monitor struct {
 	ID              int            `db:"id"`
 	Active          bool           `db:"active"`
@@ -41,6 +40,5 @@ type Monitor struct {
 }
 
 type PrivateLocation struct {
-	ID          int    `db:"id"`
-
+	ID int `db:"id"`
 }

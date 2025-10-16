@@ -58,7 +58,6 @@ func getTBClient(ctx context.Context) tinybird.Client {
 	return client
 }
 
-
 func TestIngestHTTP_Unauthenticated(t *testing.T) {
 	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
 

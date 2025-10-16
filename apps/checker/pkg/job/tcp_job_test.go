@@ -8,7 +8,6 @@ import (
 	v1 "github.com/openstatushq/openstatus/apps/checker/proto/private_location/v1"
 )
 
-
 func TestTCPJob_Success(t *testing.T) {
 
 	monitor := &v1.TCPMonitor{
@@ -36,8 +35,7 @@ func TestTCPJob_Failure(t *testing.T) {
 		Retry:   1,
 	}
 
-
-	data, err :=  job.NewJobRunner().TCPJob(context.Background(), monitor)
+	data, err := job.NewJobRunner().TCPJob(context.Background(), monitor)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

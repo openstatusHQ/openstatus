@@ -35,7 +35,6 @@ func New() *sqlx.DB {
 		os.Exit(1)
 	}
 
-
 	db := sqlx.NewDb(c, "sqlite3")
 
 	return db

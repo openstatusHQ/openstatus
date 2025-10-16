@@ -28,7 +28,7 @@ type TCPPrivateRegionData struct {
 	Timestamp     int64  `json:"timestamp"`
 	CronTimestamp int64  `json:"cron_timestamp"`
 	Error         int    `json:"error"`
-	Timing string `json:"timing"`
+	Timing        string `json:"timing"`
 }
 
 // runAssertions performs all configured assertions for TCP and returns their results
