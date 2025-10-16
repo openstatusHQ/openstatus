@@ -89,7 +89,11 @@ export function Client() {
                 .
               </BillingOverlayDescription>
             </BillingOverlay>
-            <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
+            <UpgradeDialog
+              open={openDialog}
+              onOpenChange={setOpenDialog}
+              limit="private-locations"
+            />
           </BillingOverlayContainer>
         ) : (
           <DataTable columns={columns} data={privateLocations} />

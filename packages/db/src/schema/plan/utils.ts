@@ -42,3 +42,57 @@ export function getPriceConfig(plan: WorkspacePlan, currency?: string) {
   }
   return { value: planConfig.price.USD, locale: "en-US", currency: "USD" };
 }
+
+export function getPlansForLimit(
+  currentPlan: WorkspacePlan,
+  limit: keyof Limits,
+): WorkspacePlan[] {
+  const currentLimitValue = allPlans[currentPlan].limits[limit];
+  const planOrder: WorkspacePlan[] = ["free", "starter", "team"];
+
+  // Get plans that come after the current plan
+  const availablePlans = planOrder.filter((plan) => {
+    const planIndex = planOrder.indexOf(plan);
+    const currentIndex = planOrder.indexOf(currentPlan);
+    return planIndex > currentIndex;
+  });
+
+  // Filter plans based on the limit feature value
+  return availablePlans.filter((plan) => {
+    const planLimitValue = allPlans[plan].limits[limit];
+
+    // For boolean limits, only show plans where the feature is enabled
+    if (typeof currentLimitValue === "boolean") {
+      return planLimitValue === true;
+    }
+
+    // For numeric limits, show plans with higher values
+    if (
+      typeof currentLimitValue === "number" &&
+      typeof planLimitValue === "number"
+    ) {
+      return planLimitValue > currentLimitValue;
+    }
+
+    // For array limits (e.g., periodicity, regions), show plans with more options
+    if (Array.isArray(currentLimitValue) && Array.isArray(planLimitValue)) {
+      return planLimitValue.length > currentLimitValue.length;
+    }
+
+    // For string limits (e.g., data-retention), check if it's "better"
+    // This is a simple heuristic - could be improved based on specific needs
+    if (
+      typeof currentLimitValue === "string" &&
+      typeof planLimitValue === "string"
+    ) {
+      return planLimitValue !== currentLimitValue;
+    }
+
+    // For "Unlimited" string literal in members
+    if (planLimitValue === "Unlimited") {
+      return true;
+    }
+
+    return false;
+  });
+}

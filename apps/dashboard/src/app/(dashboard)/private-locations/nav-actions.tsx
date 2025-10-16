@@ -53,7 +53,11 @@ export function NavActions() {
           <Button size="sm">Create Private Location</Button>
         </FormSheetPrivateLocation>
       )}
-      <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      <UpgradeDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        limit="private-locations"
+      />
     </div>
   );
 }
