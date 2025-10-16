@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	configRefreshInterval = 1 * time.Minute
+	configRefreshInterval = 10 * time.Minute
 )
 
 func main() {
