@@ -55,7 +55,7 @@ jobs:
       - name: Build and push
         uses: depot/build-push-action@v1
         with:
-          file: private-location.Dockerfile
+          file: private-location-image/Dockerfile
           project: 9cknw183m8
           context: apps/checker
           tags: ghcr.io/openstatushq/private-location:latest
