@@ -202,14 +202,14 @@ export function Client() {
               columns={regionColumns}
               defaultPagination={{
                 pageIndex: 0,
-                pageSize: selectedRegions?.length ?? 0,
+                pageSize: regionMetrics.length,
               }}
             />
           </TabsContent>
           <TabsContent value="chart">
             <ChartLineRegions
               className="mt-3"
-              regions={selectedRegions}
+              regions={regionMetrics.map((region) => region.region)}
               privateLocations={privateLocations}
               data={regionMetrics.reduce(
                 (acc, region) => {
