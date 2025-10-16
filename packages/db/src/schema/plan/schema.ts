@@ -1,3 +1,4 @@
+import { FREE_FLY_REGIONS } from "@openstatus/regions";
 import { z } from "zod";
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 
@@ -17,9 +18,7 @@ export const limitsSchema = z.object({
   "data-retention": z
     .enum(["14 days", "3 months", "12 months", "24 months"])
     .default("14 days"),
-  regions: monitorRegionSchema
-    .array()
-    .default(["ams", "gru", "iad", "jnb", "sin", "syd"]),
+  regions: monitorRegionSchema.array().default(FREE_FLY_REGIONS),
   "private-locations": z.boolean().default(false),
   screenshots: z.boolean().default(false),
   "response-logs": z.boolean().default(false),
