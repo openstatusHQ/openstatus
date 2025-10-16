@@ -5,7 +5,7 @@ import { Separator } from "@openstatus/ui";
 const TOTAL_REGIONS = Object.keys(regionDict).length;
 const TOTAL_PROVIDERS = Object.keys(regionDict).reduce((acc, region) => {
   return acc.add(regionDict[region as keyof typeof regionDict].provider);
-}, new Set<"fly" | "koyeb" | "railway">());
+}, new Set<"fly" | "koyeb" | "railway" | "private">());
 
 export function Informations() {
   return (

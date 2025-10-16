@@ -1,5 +1,4 @@
 import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { latencyFormatter, regionFormatter, timestampFormatter } from "./utils";
 
 export function RegionInfo({
@@ -7,7 +6,7 @@ export function RegionInfo({
   error,
 }: {
   check: {
-    region: Region;
+    region: string;
     timestamp: number;
     latency: number;
     status?: number;
