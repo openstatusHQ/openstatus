@@ -18,7 +18,7 @@ COPY go.* .
 RUN go mod download
 
 COPY . .
-RUN go build -trimpath -ldflags "-s -w" -o checker ./cmd
+RUN go build -trimpath -ldflags "-s -w" -o checker ./cmd/server
 
 FROM scratch
 

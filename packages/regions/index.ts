@@ -83,7 +83,7 @@ export type RegionInfo = {
   flag: string;
   continent: Continent;
   deprecated: boolean;
-  provider: "fly" | "koyeb" | "railway";
+  provider: "fly" | "koyeb" | "railway" | "private";
 };
 
 // TODO: we could think of doing the inverse and use "EU" as key
@@ -464,8 +464,8 @@ export const AVAILABLE_REGIONS = ALL_REGIONS.filter(
   (r) => !regionDict[r].deprecated,
 );
 
-export function formatRegionCode(region: RegionInfo | Region) {
-  const r = typeof region === "string" ? regionDict[region] : region;
+export function formatRegionCode(region: RegionInfo | Region | string) {
+  const r = typeof region === "string" ? getRegionInfo(region) : region;
   const suffix = r.code.replace(/(koyeb_|railway_|fly_)/g, "");
 
   if (r.provider === "railway") {
@@ -473,6 +473,25 @@ export function formatRegionCode(region: RegionInfo | Region) {
   }
 
   return suffix;
+}
+
+// NOTE: opts is used to override the location for private locations
+export function getRegionInfo(region: string, opts?: { location?: string }) {
+  if (region in regionDict) {
+    return regionDict[region as Region];
+  }
+
+  return {
+    code: region,
+    location: opts?.location ?? "Private Location",
+    flag: "🌐",
+    continent: "Private",
+    deprecated: false,
+    provider: "private",
+  } satisfies Omit<RegionInfo, "code" | "continent"> & {
+    code: string;
+    continent: "Private";
+  };
 }
 
 export const groupByContinent = Object.entries(regionDict).reduce<

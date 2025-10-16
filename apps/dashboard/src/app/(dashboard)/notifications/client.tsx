@@ -57,6 +57,9 @@ export function Client() {
     <SectionGroup>
       <SectionHeader>
         <SectionTitle>Notifications</SectionTitle>
+        <SectionDescription>
+          Define your notifications to receive alerts when downtime occurs.
+        </SectionDescription>
       </SectionHeader>
       <Section>
         {notifications.length === 0 ? (

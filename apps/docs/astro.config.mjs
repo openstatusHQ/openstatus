@@ -97,6 +97,10 @@ export default defineConfig({
               slug: "tutorial/how-to-configure-status-page",
             },
             {
+              label: "How to create a private location (beta)",
+              slug: "tutorial/how-to-create-private-location",
+            },
+            {
               label: "Get Started with OpenStatus CLI",
               slug: "tutorial/get-started-with-openstatus-cli",
             },

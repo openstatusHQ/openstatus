@@ -21,8 +21,8 @@ export default async function Layout({
   await queryClient.prefetchQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
-
   await queryClient.prefetchQuery(trpc.notification.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions());
 
   return (
     <HydrateClient>

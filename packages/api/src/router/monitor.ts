@@ -26,12 +26,14 @@ import {
   notification,
   notificationsToMonitors,
   page,
+  privateLocationToMonitors,
   selectIncidentSchema,
   selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
   selectPageSchema,
+  selectPrivateLocationSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 
@@ -887,6 +889,9 @@ export const monitorRouter = createTRPCRouter({
             with: { maintenance: true },
           },
           incidents: true,
+          privateLocationToMonitors: {
+            with: { privateLocation: true },
+          },
         },
       });
 
@@ -899,6 +904,7 @@ export const monitorRouter = createTRPCRouter({
           tags: z.array(selectMonitorTagSchema).default([]),
           maintenances: z.array(selectMaintenanceSchema).default([]),
           incidents: z.array(selectIncidentSchema).default([]),
+          privateLocations: z.array(selectPrivateLocationSchema).default([]),
         })
         .parse({
           ...data,
@@ -909,6 +915,9 @@ export const monitorRouter = createTRPCRouter({
           tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
           maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
           incidents: data.incidents,
+          privateLocations: data.privateLocationToMonitors.map(
+            (p) => p.privateLocation,
+          ),
         });
     }),
 
@@ -1060,6 +1069,7 @@ export const monitorRouter = createTRPCRouter({
         id: z.number(),
         regions: z.array(z.string()),
         periodicity: z.enum(monitorPeriodicity),
+        privateLocations: z.array(z.number()),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1085,8 +1095,6 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      console.log(input.regions, limits.regions);
-
       if (
         input.regions.length > 0 &&
         !input.regions.every((r) =>
@@ -1099,15 +1107,30 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      await ctx.db
-        .update(monitor)
-        .set({
-          regions: input.regions.join(","),
-          periodicity: input.periodicity,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .run();
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(monitor)
+          .set({
+            regions: input.regions.join(","),
+            periodicity: input.periodicity,
+            updatedAt: new Date(),
+          })
+          .where(and(...whereConditions))
+          .run();
+
+        await tx
+          .delete(privateLocationToMonitors)
+          .where(eq(privateLocationToMonitors.monitorId, input.id));
+
+        if (input.privateLocations && input.privateLocations.length > 0) {
+          await tx.insert(privateLocationToMonitors).values(
+            input.privateLocations.map((privateLocationId) => ({
+              monitorId: input.id,
+              privateLocationId,
+            })),
+          );
+        }
+      });
     }),
 
   updateResponseTime: protectedProcedure

@@ -21,11 +21,13 @@ import {
 
 import { Section } from "@/components/content/section";
 import { columns } from "@/components/data-table/subscribers/columns";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
 const EXAMPLES = [
   {
@@ -52,6 +54,7 @@ const EXAMPLES = [
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
+  const [openDialog, setOpenDialog] = useState(false);
   const trpc = useTRPC();
   const { data: page } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -79,7 +82,7 @@ export default function Page() {
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>
-              <BillingOverlayButton>
+              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
                 <Lock />
                 Upgrade
               </BillingOverlayButton>
@@ -95,6 +98,11 @@ export default function Page() {
                 .
               </BillingOverlayDescription>
             </BillingOverlay>
+            <UpgradeDialog
+              open={openDialog}
+              onOpenChange={setOpenDialog}
+              limit="status-subscribers"
+            />
           </BillingOverlayContainer>
         ) : subscribers?.length ? (
           <DataTable columns={columns} data={subscribers} />

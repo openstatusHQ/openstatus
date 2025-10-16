@@ -4,6 +4,7 @@ import {
   Activity,
   Bell,
   Cog,
+  Globe,
   LayoutGrid,
   PanelTop,
   Terminal,
@@ -68,6 +69,11 @@ const data = {
       name: "Settings",
       url: "/settings/general",
       icon: Cog,
+    },
+    {
+      name: "Private Locations",
+      url: "/private-locations",
+      icon: Globe,
     },
     {
       name: "CLI",

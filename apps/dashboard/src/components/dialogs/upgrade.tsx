@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { useTRPC } from "@/lib/trpc/client";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { getPlansForLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
@@ -19,13 +21,24 @@ const PLANS = {
   team: [],
 } satisfies Record<WorkspacePlan, WorkspacePlan[]>;
 
-export function UpgradeDialog(props: DialogProps) {
+export function UpgradeDialog(
+  props: DialogProps & {
+    limit?: keyof Limits;
+    restrictTo?: WorkspacePlan[];
+  },
+) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
   if (!workspace) return null;
 
-  const restrictTo = PLANS[workspace.plan];
+  const getRestrictTo = () => {
+    if (props.restrictTo) return props.restrictTo;
+    if (props.limit) return getPlansForLimit(workspace.plan, props.limit);
+    return PLANS[workspace.plan];
+  };
+
+  const restrictTo = getRestrictTo();
 
   return (
     <Dialog {...props}>
@@ -40,8 +53,7 @@ export function UpgradeDialog(props: DialogProps) {
         {restrictTo.length === 0 ? (
           <Note>
             <CalendarClock />
-            You&apos;re already on our highest plan. Let&apos;s chat about your
-            needs.
+            Please contact us to upgrade your plan.
             <NoteButton variant="outline" asChild>
               <a
                 href="https://openstatus.dev/cal"

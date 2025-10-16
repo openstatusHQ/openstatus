@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
 	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -64,7 +64,6 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			return
 		}
 	}
-
 
 	var req request.HttpCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -147,13 +146,10 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		switch req.Status {
 		case "active":
 			requestStatus = "success"
-			break
 		case "error":
 			requestStatus = "error"
-			break
 		case "degraded":
 			requestStatus = "degraded"
-			break
 		}
 
 		data := PingData{

@@ -31,9 +31,10 @@ type TCPResponse struct {
 	Error        uint8             `json:"error,omitempty"`
 }
 
-func PingTcp(timeout int, url string) (TCPResponseTiming, error) {
+func PingTCP(timeout int, url string) (TCPResponseTiming, error) {
 	start := time.Now().UTC().UnixMilli()
 	conn, err := net.DialTimeout("tcp", url, time.Duration(timeout)*time.Second)
+	stop := time.Now().UTC().UnixMilli()
 
 	if err != nil {
 		if e := err.(*net.OpError).Timeout(); e {
@@ -42,9 +43,8 @@ func PingTcp(timeout int, url string) (TCPResponseTiming, error) {
 		if strings.Contains(err.Error(), "connection refused") {
 			return TCPResponseTiming{}, fmt.Errorf("connection refused")
 		}
-		return TCPResponseTiming{}, fmt.Errorf("dial error: %v", err)
+		return TCPResponseTiming{}, fmt.Errorf("dial error: %w", err)
 	}
-	stop := time.Now().UTC().UnixMilli()
 	defer conn.Close()
 
 	return TCPResponseTiming{TCPStart: start, TCPDone: stop}, nil

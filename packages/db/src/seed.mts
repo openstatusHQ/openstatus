@@ -13,6 +13,8 @@ import {
   notification,
   notificationsToMonitors,
   page,
+  privateLocation,
+  privateLocationToMonitors,
   statusReport,
   statusReportUpdate,
   user,
@@ -47,6 +49,16 @@ async function main() {
         name: "test2",
         subscriptionId: "subscriptionId2",
         plan: "free",
+        endsAt: null,
+        paidUntil: null,
+      },
+      {
+        id: 3,
+        slug: "test3",
+        stripeId: "stripeId3",
+        name: "test3",
+        subscriptionId: "subscriptionId3",
+        plan: "team",
         endsAt: null,
         paidUntil: null,
       },
@@ -104,6 +116,16 @@ async function main() {
         public: true,
         otelEndpoint: "https://otel.com:4337",
         otelHeaders: '[{"key":"Authorization","value":"Basic"}]',
+      },
+      {
+        id: 5,
+        active: true,
+        workspaceId: 3,
+        periodicity: "10m",
+        url: "https://openstat.us",
+        method: "GET",
+        regions: "ams",
+        public: true,
       },
     ])
     .onConflictDoNothing()
@@ -288,6 +310,27 @@ async function main() {
       status: "monitoring",
       message: "test",
       date: new Date(),
+    })
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(privateLocation)
+    .values({
+      id: 1,
+      name: "My Home",
+      token: "my-secret-key",
+      workspaceId: 3,
+      createdAt: new Date(),
+    })
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(privateLocationToMonitors)
+    .values({
+      privateLocationId: 1,
+      monitorId: 5,
+      createdAt: new Date(),
     })
     .onConflictDoNothing()
     .run();

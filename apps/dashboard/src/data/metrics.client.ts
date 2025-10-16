@@ -5,7 +5,6 @@ import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import type { RegionMetric } from "./region-metrics";
-import type { Region } from "./regions";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
@@ -109,7 +108,7 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
  */
 export function mapRegionMetrics(
   timeline: RouterOutputs["tinybird"]["metricsRegions"] | undefined,
-  regions: Region[],
+  regions: string[],
   percentile: (typeof PERCENTILES)[number],
 ): RegionMetric[] {
   if (!timeline)
@@ -125,14 +124,14 @@ export function mapRegionMetrics(
           timestamp: number;
           [key: string]: number;
         }[],
-      })) ?? []) as RegionMetric[];
+      })) ?? []) satisfies RegionMetric[];
 
   type TimelineRow = (typeof timeline.data)[number];
 
   const map = new Map<
-    Region,
+    string,
     {
-      region: Region;
+      region: string;
       p50: number;
       p90: number;
       p99: number;
@@ -145,10 +144,10 @@ export function mapRegionMetrics(
   >();
 
   (timeline.data as TimelineRow[])
-    .filter((row) => regions.includes(row.region as Region))
+    .filter((row) => regions.includes(row.region))
     .sort((a, b) => a.region.localeCompare(b.region))
     .forEach((row) => {
-      const region = row.region as Region;
+      const region = row.region;
       const entry = map.get(region) ?? {
         region,
         p50: 0,

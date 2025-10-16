@@ -22,29 +22,29 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { REGIONS } from "@/data/metrics.client";
+import type { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { formatRegionCode, groupByContinent } from "@openstatus/regions";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Lock } from "lucide-react";
-import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
-
-export const parseRegions = (regions: (typeof REGIONS)[number][]) =>
-  parseAsArrayOf(
-    parseAsStringLiteral(REGIONS.filter((region) => regions.includes(region))),
-  ).withDefault(regions as unknown as (typeof REGIONS)[number][]);
+import { Check, Globe, Lock } from "lucide-react";
+import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 export function CommandRegion({
   regions,
+  privateLocations,
 }: {
   regions: (typeof REGIONS)[number][];
+  privateLocations?: { id: number; name: string }[];
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const [selectedRegions, setSelectedRegions] = useQueryState(
     "regions",
-    parseRegions(regions),
+    parseAsArrayOf(parseAsString).withDefault([
+      ...regions,
+      ...(privateLocations?.map((location) => location.id.toString()) ?? []),
+    ]),
   );
 
   const limited = workspace?.plan === "free";
@@ -148,6 +148,35 @@ export function CommandRegion({
                 );
               },
             )}
+            {privateLocations && privateLocations.length > 0 ? (
+              <CommandGroup heading="Private Locations">
+                {privateLocations.map((location) => (
+                  <CommandItem
+                    key={location.id}
+                    keywords={[location.name]}
+                    value={location.id.toString()}
+                    onSelect={() => {
+                      setSelectedRegions((prev) =>
+                        prev.includes(location.id.toString())
+                          ? prev.filter((r) => r !== location.id.toString())
+                          : [...prev, location.id.toString()],
+                      );
+                    }}
+                  >
+                    <Globe className="size-3" />
+                    <span className="font-mono truncate">{location.name}</span>
+                    <Check
+                      className={cn(
+                        "ml-auto",
+                        selectedRegions.includes(location.id.toString())
+                          ? "opacity-100"
+                          : "opacity-0",
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ) : null}
             <CommandEmpty>No region found.</CommandEmpty>
           </CommandList>
         </Command>

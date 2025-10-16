@@ -1,0 +1,465 @@
+DROP TABLE IF EXISTS "__drizzle_migrations";
+CREATE TABLE "__drizzle_migrations" (
+			id SERIAL PRIMARY KEY,
+			hash text NOT NULL,
+			created_at numeric
+		);
+
+DROP TABLE IF EXISTS "page";
+CREATE TABLE `page` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`title` text NOT NULL,
+	`description` text NOT NULL,
+	`icon` text(256),
+	`slug` text(256) NOT NULL,
+	`custom_domain` text(256) NOT NULL,
+	`published` integer DEFAULT false,
+	"created_at" integer DEFAULT (strftime('%s', 'now')), `updated_at` integer, `password` text(256), `password_protected` integer DEFAULT false, `show_monitor_values` integer DEFAULT true, `force_theme` text DEFAULT 'system' NOT NULL, `legacy_page` integer DEFAULT true NOT NULL, `configuration` text, `homepage_url` text(256), `contact_url` text(256),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "monitors_to_pages";
+CREATE TABLE `monitors_to_pages` (
+	`monitor_id` integer NOT NULL,
+	`page_id` integer NOT NULL, `created_at` integer DEFAULT (strftime('%s', 'now')), `order` integer DEFAULT 0,
+	PRIMARY KEY(`monitor_id`, `page_id`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "user";
+CREATE TABLE `user` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`tenant_id` text(256),
+	"created_at" integer DEFAULT (strftime('%s', 'now'))
+, `first_name` text DEFAULT '', `last_name` text DEFAULT '', `email` text DEFAULT '', `photo_url` text DEFAULT '', `updated_at` integer, `name` text, `emailVerified` integer);
+
+DROP TABLE IF EXISTS "users_to_workspaces";
+CREATE TABLE `users_to_workspaces` (
+	`user_id` integer NOT NULL,
+	`workspace_id` integer NOT NULL, `role` text DEFAULT 'owner' NOT NULL, `created_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY(`user_id`, `workspace_id`),
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "workspace";
+CREATE TABLE `workspace` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`slug` text NOT NULL,
+	`stripe_id` text(256),
+	`name` text,
+	"created_at" integer DEFAULT (strftime('%s', 'now'))
+, `updated_at` integer, `subscription_id` text, `plan` text(3), `ends_at` integer, `paid_until` integer, `dsn` text, `limits` text DEFAULT '{}' NOT NULL);
+
+DROP TABLE IF EXISTS "status_report_update";
+CREATE TABLE "status_report_update" (
+  `id` integer PRIMARY KEY NOT NULL,
+  "status" text NOT NULL,
+  `date` integer NOT NULL,
+  `message` text NOT NULL,
+  `created_at` integer DEFAULT (strftime('%s', 'now')),
+  `updated_at` integer DEFAULT (strftime('%s', 'now')),
+  "status_report_id" integer NOT NULL,
+  FOREIGN KEY ("status_report_id") REFERENCES "status_report"(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "status_report_to_monitors";
+CREATE TABLE "status_report_to_monitors" (
+	`monitor_id` integer NOT NULL,
+	"status_report_id" integer NOT NULL, `created_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY("status_report_id", `monitor_id`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY ("status_report_id") REFERENCES "status_report"(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "monitor";
+CREATE TABLE "monitor" (
+	`id` integer PRIMARY KEY NOT NULL,
+	`job_type` text(3) DEFAULT 'other' NOT NULL,
+	`periodicity` text(6) DEFAULT 'other' NOT NULL,
+	`active` integer DEFAULT false,
+	`url` text(512) NOT NULL,
+	`name` text(256) DEFAULT '' NOT NULL,
+	`description` text DEFAULT '' NOT NULL,
+	`workspace_id` integer,
+	`headers` text DEFAULT '',
+	`body` text DEFAULT '',
+	`method` text(5) DEFAULT 'GET',
+	`created_at` integer DEFAULT (strftime('%s', 'now')), `regions` text DEFAULT '' NOT NULL, `updated_at` integer, `status` text(2) DEFAULT 'active' NOT NULL, `assertions` text, `deleted_at` integer, `public` integer DEFAULT false, `timeout` integer DEFAULT 45000 NOT NULL, `degraded_after` integer, `otel_endpoint` text, `otel_headers` text, `retry` integer DEFAULT 3, `follow_redirects` integer DEFAULT true,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "integration";
+CREATE TABLE `integration` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`name` text(256) NOT NULL,
+	`workspace_id` integer,
+	`credential` text,
+	`external_id` text NOT NULL,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	`data` text NOT NULL,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "notification";
+CREATE TABLE `notification` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`provider` text NOT NULL,
+	`data` text DEFAULT '{}',
+	`workspace_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "notifications_to_monitors";
+CREATE TABLE `notifications_to_monitors` (
+	`monitor_id` integer NOT NULL,
+	`notification_id` integer NOT NULL, `created_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY(`monitor_id`, `notification_id`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`notification_id`) REFERENCES `notification`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "status_reports_to_pages";
+CREATE TABLE "status_reports_to_pages" (
+	`page_id` integer NOT NULL,
+	"status_report_id" integer NOT NULL, `created_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY("status_report_id", `page_id`),
+	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY ("status_report_id") REFERENCES "status_report"(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "monitor_status";
+CREATE TABLE `monitor_status` (
+	`monitor_id` integer NOT NULL,
+	`region` text DEFAULT '' NOT NULL,
+	`status` text DEFAULT 'active' NOT NULL,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY(`monitor_id`, `region`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "invitation";
+CREATE TABLE `invitation` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`email` text NOT NULL,
+	`role` text DEFAULT 'member' NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`token` text NOT NULL,
+	`expires_at` integer NOT NULL,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`accepted_at` integer
+);
+
+DROP TABLE IF EXISTS "incident";
+CREATE TABLE "incident" (
+    `id` integer PRIMARY KEY NOT NULL,
+	`title` text DEFAULT '' NOT NULL,
+	`summary` text DEFAULT '' NOT NULL,
+	`status` text DEFAULT 'triage' NOT NULL,
+	`monitor_id` integer,
+	`workspace_id` integer,
+	`started_at` integer DEFAULT (strftime('%s', 'now')) NOT NULL,
+	`acknowledged_at` integer,
+	`acknowledged_by` integer,
+	`resolved_at` integer,
+	`resolved_by` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')), `auto_resolved` integer DEFAULT false, `incident_screenshot_url` text, `recovery_screenshot_url` text,
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE set default,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`acknowledged_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`resolved_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "monitor_tag";
+CREATE TABLE `monitor_tag` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`workspace_id` integer NOT NULL,
+	`name` text NOT NULL,
+	`color` text NOT NULL,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "monitor_tag_to_monitor";
+CREATE TABLE `monitor_tag_to_monitor` (
+	`monitor_id` integer NOT NULL,
+	`monitor_tag_id` integer NOT NULL,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY(`monitor_id`, `monitor_tag_id`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`monitor_tag_id`) REFERENCES `monitor_tag`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "account";
+CREATE TABLE `account` (
+	`user_id` integer NOT NULL,
+	`type` text NOT NULL,
+	`provider` text NOT NULL,
+	`provider_account_id` text NOT NULL,
+	`refresh_token` text,
+	`access_token` text,
+	`expires_at` integer,
+	`token_type` text,
+	`scope` text,
+	`id_token` text,
+	`session_state` text,
+	PRIMARY KEY(`provider`, `provider_account_id`),
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "session";
+CREATE TABLE `session` (
+	`session_token` text PRIMARY KEY NOT NULL,
+	`user_id` integer NOT NULL,
+	`expires` integer NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "verification_token";
+CREATE TABLE `verification_token` (
+	`identifier` text NOT NULL,
+	`token` text NOT NULL,
+	`expires` integer NOT NULL,
+	PRIMARY KEY(`identifier`, `token`)
+);
+
+DROP TABLE IF EXISTS "application";
+CREATE TABLE `application` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`name` text,
+	`dsn` text,
+	`workspace_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "maintenance_to_monitor";
+CREATE TABLE `maintenance_to_monitor` (
+	`monitor_id` integer NOT NULL,
+	`maintenance_id` integer NOT NULL,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	PRIMARY KEY(`maintenance_id`, `monitor_id`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`maintenance_id`) REFERENCES `maintenance`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "check";
+CREATE TABLE `check` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`regions` text DEFAULT '' NOT NULL,
+	`url` text(4096) NOT NULL,
+	`headers` text DEFAULT '',
+	`body` text DEFAULT '',
+	`method` text DEFAULT 'GET',
+	`count_requests` integer DEFAULT 1,
+	`workspace_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+
+
+DROP TABLE IF EXISTS "monitor_run";
+CREATE TABLE `monitor_run` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`workspace_id` integer,
+	`monitor_id` integer,
+	`runned_at` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "page_subscriber";
+CREATE TABLE "page_subscriber" (
+	`id` integer PRIMARY KEY NOT NULL,
+	`email` text NOT NULL,
+	`page_id` integer NOT NULL,
+	`token` text,
+	`accepted_at` integer,
+	`expires_at` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "status_report";
+CREATE TABLE "status_report" (
+	`id` integer PRIMARY KEY NOT NULL,
+	`status` text NOT NULL,
+	`title` text(256) NOT NULL,
+	`workspace_id` integer,
+	`page_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "notification_trigger";
+CREATE TABLE "notification_trigger" (
+	`id` integer PRIMARY KEY NOT NULL,
+	`monitor_id` integer,
+	`notification_id` integer,
+	`cron_timestamp` integer NOT NULL,
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`notification_id`) REFERENCES `notification`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "maintenance";
+CREATE TABLE "maintenance" (
+	`id` integer PRIMARY KEY NOT NULL,
+	`title` text(256) NOT NULL,
+	`message` text NOT NULL,
+	`from` integer NOT NULL,
+	`to` integer NOT NULL,
+	`workspace_id` integer,
+	`page_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade
+);
+
+DROP TABLE IF EXISTS "private_location";
+CREATE TABLE `private_location` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`name` text NOT NULL,
+	`token` text NOT NULL,
+	`last_seen_at` integer,
+	`workspace_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`updated_at` integer DEFAULT (strftime('%s', 'now')),
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+DROP TABLE IF EXISTS "private_location_to_monitor";
+CREATE TABLE `private_location_to_monitor` (
+	`private_location_id` integer,
+	`monitor_id` integer,
+	`created_at` integer DEFAULT (strftime('%s', 'now')),
+	`deleted_at` integer,
+	FOREIGN KEY (`private_location_id`) REFERENCES `private_location`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE no action
+);
+
+
+INSERT INTO "__drizzle_migrations" ("id", "hash", "created_at") VALUES
+(NULL, 'ea497587bb639bbeae27f3f644634b7429f37df241c999e22f3acbf3cce74ec9', '1690309905039'),
+(NULL, '680e79fc5537135bcfa4da88cc0c06a7a9eaf810ab87f8ae06ef67f7b4802fad', '1690892003254'),
+(NULL, 'b8ae7d5887e4cd8416a443f193753dabc6bc1ee76a6cbcfd4b338fbc6d3d10e7', '1691573899721'),
+(NULL, '790cf15e409b0c02f0e164824289aaacacb7aee21f5e84ab4f5a48df4b46e528', '1691614487733'),
+(NULL, 'ac5db9b31935382412791565e1c11ce1c99e69bd6f826da9ff08fb4ea64acc67', '1691850907670'),
+(NULL, '4cc5cc57b2e087276e6283cbd639e2ccd27c800eec6def5bb3ff7ea3ee3d9ba9', '1691930414569'),
+(NULL, 'cc99f49622240771a187a79a7c5646ed7f1e6e86b6eefcc04e9a6be78e57a5b0', '1692646649111'),
+(NULL, '49e497500b2fdb01624090863808ab15db1e50d4bc393c1e6e820960cb070d60', '1694362217174'),
+(NULL, 'a76eb5c9a12c6828bdef95e6ca65483055e7dabdf94f0b95fdae437c811b6b55', '1695756345957'),
+(NULL, '223292dcce0a81148dfbf7338ed4fe5878503d6bf785e1a13042b7c7b7b5bf24', '1697285841283'),
+(NULL, '5cc395568f9f61ebf4b57f69fd6397da2661062db813a85c5433d56841cecc9c', '1700586221141'),
+(NULL, '4ceefb80e855b8fde6c430758d9b557cef09c42afca4575c8fe4236628112d33', '1701100570578'),
+(NULL, '4c8d34ebf56874f41a1b22cb93db50e022233ff53f763eb73a73d2e01223fa39', '1701713135829'),
+(NULL, '4f47a6efc84f60e41437134c6eec5b2a3be68aae2a0525f2109b61f7473bb5ea', '1702144660818'),
+(NULL, '6f1b9eac8a3c7cf72703171402a9f42ea7523c091e393b3972fd231ab6eac6f9', '1702227904130'),
+(NULL, '4ae3b4c679065c4ca450126e14a73dbb3d21d71b7b1de2be182c32500b5c16ea', '1705856545397'),
+(NULL, '04e2ca02dbf77bce1755dc28e624d1620d662bec94373cea08983f4801fe778d', '1706111184826'),
+(NULL, 'd3c0f8670dd8e3666b3e0bd3ef1d75aec6b593c11d35e5a75bf58abe6208c642', '1707411900987'),
+(NULL, 'a028a05328ef4480fb5d79caed96da17b68793f7c9af037dbe8bb77ce42f5e36', '1707770189561'),
+(NULL, '826d9207a73609ff0f15acb2109fed80a253beb826836a93e122157584f9ca35', '1707899175705'),
+(NULL, '0055fd4b62b8b1c7029ed978cdd2f946084acae39966cb8cf85c26923a87d1cc', '1707905605592'),
+(NULL, 'af0035a9de14837b62dddba9e40bb85bf249a0c75683867be2a2d6f70f28da6d', '1710677383007'),
+(NULL, '498de5adf9c0ea5ed4c3d57b6a0905b709a58550e79c157909f13e1269896c5a', '1711307113089'),
+(NULL, 'ce825562d32c32c28da76e2d06b5e76f4c1603d178ce82ff97e1436819f3273c', '1712311348272'),
+(NULL, '45fc9d668e1a0d69701267444ca79da8e392180635761f24e41d9a7ac30a6d8c', '1712354121499'),
+(NULL, 'e9a11163fbaa7bdb2e2350265cc3e260bdb24ae1eb42d975fbf03cba7b3c8ce7', '1713095971713'),
+(NULL, '62f1cd998d6258df5c2a89222f5b71082d575b474f6d86b75fb4bf3aefe1d063', '1713384976187'),
+(NULL, '4c0d7cd418b66257e0a49454c54e8e65c388c5a246b3f5a51df0618da1faa67d', '1714586658374'),
+(NULL, 'd785a89fd7aa7bad6dbae4db4a3daaaa26c5f14374ed045cfd22420453cc4cea', '1715173356076'),
+(NULL, '9216b9d717de25f7b615f625659b7acfbbb09adacd3b121fa4f05ec0796fbd3c', '1716215342026'),
+(NULL, 'a9ced3ac1a3f9e8de9d8240ccdeed9d9e9c80b1bb6caefea59a7dbf7cf411fa7', '1716364430118'),
+(NULL, '9d0ae1d1e4bc742555e5ae5d990b62d23bb3dcefd7f62079df0bfa908f74133b', '1717837961923'),
+(NULL, '698cdffe2cad7d5b65190d09cb8f2b2ba906b1218fedb1a727fb72049090dfb6', '1718027484219'),
+(NULL, '6255470457dc29e4e1f7b8aa84f349a68b04ba3d51b9380006ddac53d5ce90a2', '1719740057514'),
+(NULL, 'bbf2f3122e76c5cbd3b76bc36e97d8f8efdddfab25c98c16f8024154e9bb2609', '1720727898360'),
+(NULL, '812b9def5df2ffe21b91680764590eda65e5ac4674500966d921d9e8627ca2f0', '1721159796428'),
+(NULL, '56181582f13b5eb66f2598a28fc7800ec6a0b9dd31d74c99cea1299ea7321917', '1723459608109'),
+(NULL, '82e57027c88612343af361f30edb148f2fca91919d6fa44048e992462d71163d', '1729533101998'),
+(NULL, '215e2ab2354eaa50923566a10a99e79f8d8514d7e3d4ca5c5720a9f5d16714ee', '1729579461221'),
+(NULL, 'fca63d63ad18ce6864418f1597b7bb0013ab2a3e0b4c681326ee4b257de2eb66', '1739193014150'),
+(NULL, '42d3cbf03d76541be2bdd9036e2f97864aa2807fe625f3b4c2b4f6440db60bd4', '1740684132626'),
+(NULL, '1a8b01776fbc88eaad155e2d0d2c69fc41d970411193ddd97806d70e1c66248b', '1741936835660'),
+(NULL, '427ca6a7f11dce1f4c0a20344d32af5f3f146a128adce1e87c7f76c80ab080fd', '1747410497521'),
+(NULL, '150ecc57f8a96341713848b1eec1293e713289b8b87854067d543fce3ff03849', '1747908803707'),
+(NULL, '8980cf55bf7b9b7f9a2cb00e5f21be8454260dd2826644b7683aaad65ff40df6', '1753730490635'),
+(NULL, 'bd5e4767fcfcd79179bb9ac9576b58a0c51c0a3af65fc0140e53f57c40e56a9c', '1756185045968'),
+(NULL, 'c7180363acc6879b749b2e9c34d3b9ac012f13aed0c62bf7ed2104e936f72085', '1757580216081'),
+(NULL, '0b90478b428afe479c6da99669ba33dd78ca2b8b5039ca2305bd9771213f4089', '1757840904190'),
+(NULL, 'b2c7b149f424a30adbf9dbe4c1db363e85d5dfe9aca3845969b14238c1117178', '1759865914553');
+
+INSERT INTO "page" ("id", "workspace_id", "title", "description", "icon", "slug", "custom_domain", "published", "created_at", "updated_at", "password", "password_protected", "show_monitor_values", "force_theme", "legacy_page", "configuration", "homepage_url", "contact_url") VALUES
+('1', '1', 'Test Page', 'hello', 'https://www.openstatus.dev/favicon.ico', 'status', '', '1', '1760358329', '1760358329', NULL, '0', '1', 'system', '1', NULL, NULL, NULL);
+
+INSERT INTO "monitors_to_pages" ("monitor_id", "page_id", "created_at", "order") VALUES
+('1', '1', '1760358329', '0');
+
+INSERT INTO "user" ("id", "tenant_id", "created_at", "first_name", "last_name", "email", "photo_url", "updated_at", "name", "emailVerified") VALUES
+('1', '1', '1760358329', 'Speed', 'Matters', 'ping@openstatus.dev', '', '1760358329', NULL, NULL);
+
+INSERT INTO "users_to_workspaces" ("user_id", "workspace_id", "role", "created_at") VALUES
+('1', '1', 'member', '1760358329');
+
+INSERT INTO "workspace" ("id", "slug", "stripe_id", "name", "created_at", "updated_at", "subscription_id", "plan", "ends_at", "paid_until", "dsn", "limits") VALUES
+('1', 'love-openstatus', 'stripeId1', 'test', '1760358329', '1760358329', 'subscriptionId', 'team', NULL, NULL, NULL, '{"monitors":50,"synthetic-checks":150000,"periodicity":["30s","1m","5m","10m","30m","1h"],"multi-region":true,"max-regions":35,"data-retention":"24 months","status-pages":20,"maintenance":true,"status-subscribers":true,"custom-domain":true,"password-protection":true,"white-label":true,"notifications":true,"sms":true,"pagerduty":true,"notification-channels":50,"members":"Unlimited","audit-log":true,"regions":["ams","arn","atl","bog","bom","bos","cdg","den","dfw","ewr","eze","fra","gdl","gig","gru","hkg","iad","jnb","lax","lhr","mad","mia","nrt","ord","otp","phx","qro","scl","sea","sin","sjc","syd","waw","yul","yyz"]}'),
+('2', 'test2', 'stripeId2', 'test2', '1760358329', '1760358329', 'subscriptionId2', 'free', NULL, NULL, NULL, '{}'),
+('3', 'test3', 'stripeId3', 'test3', '1760358329', '1760358329', 'subscriptionId3', 'team', NULL, NULL, NULL, '{}');
+
+INSERT INTO "status_report_update" ("id", "status", "date", "message", "created_at", "updated_at", "status_report_id") VALUES
+('1', 'investigating', '1760358329', 'Message', '1760358329', '1760358329', '1'),
+('2', 'investigating', '1760358329', 'Message', '1760358329', '1760358329', '2'),
+('3', 'monitoring', '1760358329', 'test', '1760358329', '1760358329', '1');
+
+INSERT INTO "status_report_to_monitors" ("monitor_id", "status_report_id", "created_at") VALUES
+('1', '2', '1760358329'),
+('2', '2', '1760358329');
+
+INSERT INTO "monitor" ("id", "job_type", "periodicity", "active", "url", "name", "description", "workspace_id", "headers", "body", "method", "created_at", "regions", "updated_at", "status", "assertions", "deleted_at", "public", "timeout", "degraded_after", "otel_endpoint", "otel_headers", "retry", "follow_redirects") VALUES
+('1', 'http', '1m', '1', 'https://www.openstatus.dev', 'OpenStatus', 'OpenStatus website', '1', '[{"key":"key", "value":"value"}]', '{"hello":"world"}', 'POST', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '0', '45000', NULL, NULL, NULL, '3', '1'),
+('2', 'http', '10m', '0', 'https://www.google.com', '', '', '1', '', '', 'GET', '1760358329', 'gru', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, NULL, NULL, '3', '1'),
+('3', 'http', '1m', '1', 'https://www.openstatus.dev', 'OpenStatus', 'OpenStatus website', '1', '[{"key":"key", "value":"value"}]', '{"hello":"world"}', 'GET', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '0', '45000', NULL, NULL, NULL, '3', '1'),
+('4', 'http', '10m', '1', 'https://www.google.com', '', '', '1', '', '', 'GET', '1760358329', 'gru', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, 'https://otel.com:4337', '[{"key":"Authorization","value":"Basic"}]', '3', '1'),
+('5', 'http', '10m', '1', 'https://openstat.us', '', '', '3', '', '', 'GET', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, NULL, NULL, '3', '1');
+
+INSERT INTO "notification" ("id", "name", "provider", "data", "workspace_id", "created_at", "updated_at") VALUES
+('1', 'sample test notification', 'email', '{"email":"ping@openstatus.dev"}', '1', '1760358329', '1760358329');
+
+INSERT INTO "notifications_to_monitors" ("monitor_id", "notification_id", "created_at") VALUES
+('1', '1', '1760358329');
+
+INSERT INTO "incident" ("id", "title", "summary", "status", "monitor_id", "workspace_id", "started_at", "acknowledged_at", "acknowledged_by", "resolved_at", "resolved_by", "created_at", "updated_at", "auto_resolved", "incident_screenshot_url", "recovery_screenshot_url") VALUES
+('1', '', '', 'triage', '1', '1', '1760358329', NULL, NULL, NULL, NULL, '1760358329', '1760358329', '0', NULL, NULL),
+('2', '', '', 'triage', '1', '1', '1760358330', NULL, NULL, NULL, NULL, '1760358329', '1760358329', '0', NULL, NULL);
+
+INSERT INTO "maintenance_to_monitor" ("monitor_id", "maintenance_id", "created_at") VALUES
+('1', '1', '1760358329');
+
+INSERT INTO "status_report" ("id", "status", "title", "workspace_id", "page_id", "created_at", "updated_at") VALUES
+('1', 'monitoring', 'Test Status Report', '1', '1', '1760358329', '1760358329'),
+('2', 'investigating', 'Test Status Report', '1', '1', '1760358329', '1760358329');
+
+INSERT INTO "maintenance" ("id", "title", "message", "from", "to", "workspace_id", "page_id", "created_at", "updated_at") VALUES
+('1', 'Test Maintenance', 'Test message', '1760358329', '1760358330', '1', '1', '1760358329', '1760358329');
+
+INSERT INTO "private_location" ("id", "name", "token", "last_seen_at", "workspace_id", "created_at", "updated_at") VALUES
+('1', 'My Home', 'my-secret-key', NULL, '3', '1760358329', '1760358329');
+
+INSERT INTO "private_location_to_monitor" ("private_location_id", "monitor_id", "created_at", "deleted_at") VALUES
+('1', '5', '1760358329', NULL);

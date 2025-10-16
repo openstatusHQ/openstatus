@@ -6,7 +6,7 @@ import {
   monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { continentDict, regionDict } from "@openstatus/regions";
+import { continentDict, getRegionInfo, regionDict } from "@openstatus/regions";
 
 export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
@@ -22,10 +22,10 @@ export function continentFormatter(region: Region) {
 }
 
 export function regionFormatter(
-  region: Region,
+  region: string,
   type: "short" | "long" = "short",
 ) {
-  const { code, flag, location } = regionDict[region];
+  const { code, flag, location } = getRegionInfo(region);
   if (type === "short") return `${code} ${flag}`;
   return `${location} ${flag}`;
 }

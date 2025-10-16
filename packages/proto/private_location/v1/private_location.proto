@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package private_location.v1;
+
+import "private_location/v1/http_monitor.proto";
+import "private_location/v1/tcp_monitor.proto";
+
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
+
+service PrivateLocationService {
+    rpc Monitors(MonitorsRequest) returns (MonitorsResponse) {}
+    rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
+    rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
+}
+
+message MonitorsRequest {}
+
+message MonitorsResponse {
+    repeated HTTPMonitor http_monitors = 1;
+    repeated TCPMonitor tcp_monitors = 2;
+}
+
+
+message IngestTCPRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string uri = 6;
+    string message = 7;
+    string requestStatus = 8;
+    int64 error = 9;
+    string timing = 10;
+
+}
+
+message IngestTCPResponse {
+
+}
+
+message IngestHTTPRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string url = 6;
+    string requestStatus = 7;
+    string message = 8;
+    string body = 9;
+    string headers = 10;
+    string timing = 11;
+    int64 statusCode = 12;
+    int64 error = 13;
+}
+
+message IngestHTTPResponse {
+
+}

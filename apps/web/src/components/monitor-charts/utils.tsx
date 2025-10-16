@@ -1,4 +1,4 @@
-import { regionDict } from "@openstatus/regions";
+import { getRegionInfo, regionDict } from "@openstatus/regions";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";
 import type { ResponseGraph } from "@/lib/tb";
@@ -24,7 +24,7 @@ export function groupDataByTimestamp(
     (acc, curr) => {
       const { timestamp, region } = curr;
       const latency = curr[`${quantile}Latency`];
-      const { flag, code, location } = regionDict[region];
+      const { flag, code, location } = getRegionInfo(region);
       const fullNameRegion = `${code}`;
       regions[fullNameRegion] = { flag, code, location }; // to get the region keys
       if (timestamp === currentTimestamp) {
