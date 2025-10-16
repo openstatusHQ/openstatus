@@ -1,7 +1,7 @@
 CREATE TABLE `private_location` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
-	`key` text NOT NULL,
+	`token` text NOT NULL,
 	`last_seen_at` integer,
 	`workspace_id` integer,
 	`created_at` integer DEFAULT (strftime('%s', 'now')),

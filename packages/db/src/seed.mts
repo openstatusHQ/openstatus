@@ -319,7 +319,7 @@ async function main() {
     .values({
       id: 1,
       name: "My Home",
-      key: "my-secret-key",
+      token: "my-secret-key",
       workspaceId: 3,
       createdAt: new Date(),
     })

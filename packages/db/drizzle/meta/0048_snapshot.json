@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e53ddda7-3764-4bc9-b6ac-478b6fccb923",
+  "id": "091d5fb3-ae4f-4ce2-a91f-695d054c0f79",
   "prevId": "686060ea-046b-414a-909f-1b087e086065",
   "tables": {
     "workspace": {
@@ -2449,8 +2449,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "key": {
-          "name": "key",
+        "token": {
+          "name": "token",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
