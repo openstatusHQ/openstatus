@@ -11,37 +11,31 @@
   - ams
   - iad
   - jnb
-  - hkg
   - gru
   - syd
-  - mad
   - cdg
   - bom
   - sin
   - fra
-  - otp
   - lhr
   - arn
-  - waw
-  - atl
-  - bos
   - den
   - dfw
   - ord
-  - gdl
   - lax
-  - mia
-  - qro
-  - phx
-  - yul
   - sjc
-  - sea
   - ewr
   - yyz
-  - bog
-  - eze
-  - gig
-  - scl
+  - koyeb_fra
+  - koyeb_par
+  - koyeb_sfo
+  - koyeb_sin
+  - koyeb_tyo
+  - koyeb_was
+  - railway_asia-southeast1-eqsg3a
+  - railway_europe-west4-drams3a
+  - railway_us-east4-eqdc4a
+  - railway_us-west2
   request:
     method: GET
     url: https://www.openstatus.dev
@@ -57,37 +51,32 @@
   - ams
   - iad
   - jnb
-  - hkg
   - gru
   - syd
   - bom
   - sin
   - fra
-  - otp
   - lhr
-  - mad
   - cdg
-  - waw
   - arn
-  - atl
-  - bos
   - den
   - dfw
   - ord
-  - gdl
   - lax
-  - mia
-  - qro
-  - phx
   - sjc
-  - yul
-  - sea
   - ewr
   - yyz
-  - bog
-  - scl
-  - eze
-  - gig
+  - koyeb_fra
+  - koyeb_par
+  - koyeb_sfo
+  - koyeb_sin
+  - koyeb_tyo
+  - koyeb_was
+  - railway_asia-southeast1-eqsg3a
+  - railway_europe-west4-drams3a
+  - railway_us-east4-eqdc4a
+  - railway_us-west2
+
   request:
     method: GET
     url: https://status.openstatus.dev/
@@ -103,38 +92,31 @@
   - ams
   - iad
   - jnb
-  - hkg
   - gru
   - syd
-  - nrt
+  - bom
+  - sin
   - fra
   - lhr
-  - bom
-  - otp
-  - sin
   - cdg
-  - mad
-  - waw
   - arn
-  - atl
-  - bos
   - den
   - dfw
   - ord
-  - gdl
   - lax
-  - mia
-  - qro
-  - phx
-  - yul
   - sjc
-  - sea
   - ewr
   - yyz
-  - bog
-  - eze
-  - gig
-  - scl
+  - koyeb_fra
+  - koyeb_par
+  - koyeb_sfo
+  - koyeb_sin
+  - koyeb_tyo
+  - koyeb_was
+  - railway_asia-southeast1-eqsg3a
+  - railway_europe-west4-drams3a
+  - railway_us-east4-eqdc4a
+  - railway_us-west2
   request:
     method: GET
     url: https://api.openstatus.dev/ping
@@ -164,7 +146,7 @@
   regions:
   - ams
   - iad
-  - hkg
+  - sin
   - jnb
   - syd
   - gru
@@ -179,40 +161,33 @@
   name: 'OpenStatus TCP'
   regions:
   - ams
-  - arn
-  - atl
-  - bog
-  - bom
-  - bos
-  - cdg
-  - den
-  - dfw
-  - ewr
-  - eze
-  - fra
-  - gdl
-  - gig
-  - gru
-  - hkg
   - iad
   - jnb
-  - lax
-  - lhr
-  - mad
-  - mia
-  - nrt
-  - ord
-  - otp
-  - phx
-  - qro
-  - scl
-  - sea
-  - sin
-  - sjc
+  - gru
   - syd
-  - waw
-  - yul
+  - bom
+  - sin
+  - fra
+  - lhr
+  - cdg
+  - arn
+  - den
+  - dfw
+  - ord
+  - lax
+  - sjc
+  - ewr
   - yyz
+  - koyeb_fra
+  - koyeb_par
+  - koyeb_sfo
+  - koyeb_sin
+  - koyeb_tyo
+  - koyeb_was
+  - railway_asia-southeast1-eqsg3a
+  - railway_europe-west4-drams3a
+  - railway_us-east4-eqdc4a
+  - railway_us-west2
   request:
     host: openstatus.dev
     port: 443
