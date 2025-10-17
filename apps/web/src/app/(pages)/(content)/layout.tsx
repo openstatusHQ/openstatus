@@ -17,10 +17,10 @@ export default function ContentLayout({ children }: { children: ReactNode }) {
 function Banner() {
   return (
     <div className="border-b bg-muted/50 px-2 py-3 backdrop-blur-3xl">
-      <Link href="/blog/new-dashboard-we-are-so-back">
+      <Link href="/blog/deploy-private-locations-raspberry-pi">
         <div className="group mx-auto flex w-full max-w-4xl flex-row items-center justify-between">
           <p className="font-medium">
-            We Are So Back - New Dashboard. More Monitors.
+            Monitor from anywhere. Literally anywhere.
           </p>
           <div className="text-nowrap">
             <span className="mr-1">Read more</span>
