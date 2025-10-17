@@ -43,9 +43,6 @@ export function Client() {
     setSearchParams,
   ] = useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: privateLocations } = useQuery(
-    trpc.privateLocation.list.queryOptions(),
-  );
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
@@ -79,8 +76,8 @@ export function Client() {
   );
 
   const columns = useMemo(
-    () => getColumns(privateLocations ?? []),
-    [privateLocations],
+    () => getColumns(monitor?.privateLocations ?? []),
+    [monitor?.privateLocations],
   );
 
   if (!workspace || !monitor) return null;
@@ -106,9 +103,7 @@ export function Client() {
           <DropdownTrigger />
           <CommandRegion
             regions={monitor.regions}
-            privateLocations={privateLocations?.filter((location) =>
-              location.monitors.some((m) => m.id === Number(id)),
-            )}
+            privateLocations={monitor?.privateLocations}
           />
           <ButtonReset />
         </div>
@@ -145,7 +140,7 @@ export function Client() {
         )}
         <Sheet
           data={_log?.data?.length ? _log.data[0] : null}
-          privateLocations={privateLocations}
+          privateLocations={monitor?.privateLocations ?? []}
           onClose={() =>
             setTimeout(() => setSearchParams({ selected: null }), 300)
           }
