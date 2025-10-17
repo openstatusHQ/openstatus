@@ -32,17 +32,16 @@ export const privateLocationRouter = createTRPCRouter({
       z.object({
         name: z.string(),
         monitors: z.array(z.number()),
+        token: z.string(),
       }),
     )
     .mutation(async (opts) => {
-      const token = crypto.randomUUID();
-
       return await opts.ctx.db.transaction(async (tx) => {
         const _privateLocation = await tx
           .insert(privateLocation)
           .values({
             name: opts.input.name,
-            token,
+            token: opts.input.token,
             workspaceId: opts.ctx.workspace.id,
           })
           .returning()

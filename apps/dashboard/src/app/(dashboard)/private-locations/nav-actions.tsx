@@ -47,6 +47,7 @@ export function NavActions() {
             await createPrivateLocationMutation.mutateAsync({
               name: values.name,
               monitors: values.monitors,
+              token: values.token,
             });
           }}
         >
