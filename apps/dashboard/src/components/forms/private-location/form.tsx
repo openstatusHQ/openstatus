@@ -39,7 +39,7 @@ import { z } from "zod";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
-  key: z.string(),
+  token: z.string(),
   monitors: z.array(z.number()),
 });
 
@@ -60,7 +60,7 @@ export function FormPrivateLocation({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
-      key: crypto.randomUUID(),
+      token: crypto.randomUUID(),
       monitors: [],
     },
   });
@@ -116,15 +116,15 @@ export function FormPrivateLocation({
         <FormCardContent>
           <FormField
             control={form.control}
-            name="key"
+            name="token"
             disabled
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Key</FormLabel>
+                <FormLabel>Token</FormLabel>
                 <FormControl>
                   <InputGroup>
                     <InputGroupInput
-                      placeholder="Private Location Key"
+                      placeholder="Private Location Token"
                       readOnly
                       value={field.value}
                     />
@@ -135,7 +135,7 @@ export function FormPrivateLocation({
                         size="icon-xs"
                         onClick={() => {
                           copy(field.value, {
-                            successMessage: "Key copied to clipboard",
+                            successMessage: "Token copied to clipboard",
                           });
                         }}
                       >

@@ -22,6 +22,7 @@ import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
@@ -43,10 +44,6 @@ export function Client() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
-  const { data: privateLocations } = useQuery(
-    trpc.privateLocation.list.queryOptions(),
-  );
-
   const selectedRegions = regions ?? undefined;
 
   const regionTimelineQuery = {
@@ -72,16 +69,17 @@ export function Client() {
         ? monitor?.regions ?? []
         : [
             ...monitorRegions,
-            ...(privateLocations?.map((location) => location.id.toString()) ??
-              []),
+            ...(monitor?.privateLocations?.map((location) =>
+              location.id.toString(),
+            ) ?? []),
           ],
       percentile,
     );
-  }, [regionTimeline, monitor, percentile, isLoading, privateLocations]);
+  }, [regionTimeline, monitor, percentile, isLoading]);
 
   const regionColumns = useMemo(
-    () => getRegionColumns(privateLocations ?? []),
-    [privateLocations],
+    () => getRegionColumns(monitor?.privateLocations ?? []),
+    [monitor?.privateLocations],
   );
 
   if (!monitor) return null;
@@ -106,7 +104,7 @@ export function Client() {
             <DropdownPeriod /> including{" "}
             <CommandRegion
               regions={monitor.regions}
-              privateLocations={privateLocations}
+              privateLocations={monitor.privateLocations}
             />
           </div>
           <div>
@@ -200,17 +198,16 @@ export function Client() {
             <DataTable
               data={regionMetrics}
               columns={regionColumns}
-              defaultPagination={{
-                pageIndex: 0,
-                pageSize: regionMetrics.length,
-              }}
+              paginationComponent={({ table }) => (
+                <DataTablePagination table={table} />
+              )}
             />
           </TabsContent>
           <TabsContent value="chart">
             <ChartLineRegions
               className="mt-3"
               regions={regionMetrics.map((region) => region.region)}
-              privateLocations={privateLocations}
+              privateLocations={monitor?.privateLocations ?? []}
               data={regionMetrics.reduce(
                 (acc, region) => {
                   region.trend.forEach((t) => {
