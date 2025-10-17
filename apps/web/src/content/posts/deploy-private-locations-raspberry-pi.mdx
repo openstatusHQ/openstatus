@@ -10,21 +10,21 @@ image: /assets/posts/deploy-private-locations-raspberry-pi/raspberry-pi.png
 tag: engineering
 ---
 
-We just pushed the first version of **Private Regions** at OpenStatus - and I had to test it on my old **Raspberry Pi 3**.
+We just pushed the first version of **Private Locations** at openstatus - and I had to test it on my old **Raspberry Pi 3**.
 
-Since **2016**, I've been using the PI for **AirPlay** to connect to my received but other than that, it's been sitting around without any other use case.
+Since **2016**, I've been using the Pi for **AirPlay** to connect to my received but other than that, it's been sitting around without any other use case.
 
 Time to revive it!
 
-I didn’t know exactly which Debian version it was running, but it was _very_ old - so I took the opportunity to clean everything up and upgrade to the latest available version.
-
 <ImageWithCaption
   src="/assets/posts/deploy-private-locations-raspberry-pi/raspberry-pi-receiver.jpg"
-  alt="raw metal raspberrypi on a receiver"
-  caption="My raw metal Raspberry Pi on top of the receiver I'm using AirPlay with"
+  alt="bare metal raspberrypi on a receiver"
+  caption="My bare metal Raspberry Pi on top of the receiver I use for AirPlay"
 />
 
 ---
+
+## Deployment Guide
 
 Obviously connecting to the Raspberry Pi via `ssh` - and if you're like me, the default password is secure enough:
 
@@ -33,23 +33,25 @@ $ ssh pi@raspberrypi.local
 > password: raspberry 
 ```
 
-#### Hardware Specs
+### Hardware Specs
 
-Model
+I didn’t know exactly which Debian version it was running, but it was _very_ old - so I took the opportunity to clean everything up and upgrade to the latest available version.
+
+Model:
 
 ```shell
 $ cat /proc/device-tree/model
 > Raspberry Pi 3 Model B Rev 1.2
 ```
 
-Linux Kernel
+Linux Kernel:
 
 ```shell
 $ uname -a
 > Linux raspberrypi 6.12.47+rpt-rpi-v8 #1 SMP PREEMPT Debian 1:6.12.47-1+rpt1 (2025-09-16) aarch64 GNU/Linux
 ```
 
-OS
+Operating System:
 
 ```shell
 $ cat /etc/os-release
@@ -76,7 +78,7 @@ I'm running the OS on a **16GB micro SD** card. The Pi has **1GB of RAM**, which
 
 ### Install Docker Image
 
-Because I hadn’t used this Raspberry Pi for development before, I freshly installed **Docker** using the official Debian repository instructions: 
+Let's freshly install **Docker** using the official Debian repository instructions: 
 
 https://docs.docker.com/engine/install/debian/#install-using-the-repository
 
@@ -105,7 +107,7 @@ If you have access to Private Locations in the **Dashboard**, create one - it'll
 />
 
 
-Add it to your shell profile:
+Add the `token` to your shell profile:
 
 ```bash
 $ echo 'export OPENSTATUS_KEY=<token>’ >> ~/.bashrc
@@ -139,10 +141,10 @@ $ sudo docker run -d \
 ```
 
 What these flags do:
-- `-d` → run in background (detached mode)
-- `--restart` → auto-start on reboot
-- `--name` → give it a nice readable name
-- `-e` → pass your env var into the container
+- `-d`: run in background (detached mode)
+- `--restart`: auto-start on reboot
+- `--name`: give it a nice readable name
+- `-e`: pass your env var into the container
 
 > Don't sleep on `--restart=always`! How often I had to quickly switch position of and need to reboot the Raspberry, this is a game changer.
 
@@ -174,15 +176,13 @@ The responses of the pings are sent to our ingest endpoint for storage and aggre
 
 ### Light on Resources
 
-Our Docker image is just **8.5 MB** in size.
-
-Compare that to 1GB+ for some competitors (yes, they pack more features, but still 🤯).
+Our Docker image is just **8.5 MB** in size. Compare that to 1GB+ for some competitors (yes, they pack more features, but still 🤯).
 
 It's wild that a tiny 1 GB-RAM device from 2016 can now handle this so easily.
 
 ### Why Private Locations?
 
-Running a private probe means your checks happen **from within your own network** — not just from public cloud servers.
+Running a private probe means your checks happen **from within your own network** - not just from public cloud servers.
 
 It’s useful for:
 - Monitoring internal applications or databases
@@ -193,8 +193,7 @@ It’s useful for:
 
 ## Closing Thoughts
 
-And that’s it - my **Raspberry Pi (2016)** is officially back in action.  
-Running quietly next to my receiver, it’s now part of the openstatus network, checking endpoints from my home.
+And that’s it - my **Raspberry Pi (2016)** is officially back in action. Running quietly next to my receiver, it’s now part of the openstatus network, checking endpoints from my home.
 
 Not bad for a 9-year-old piece of hardware.
 
