@@ -18,6 +18,8 @@ export default async function Layout({
       <ThemeProvider
         attribute="class"
         defaultTheme="light"
+        // FIXME: forcing the theme to light for our "default" theme which, if dark would display two dark themes - there is no light: tailwind theme
+        forcedTheme="light"
         enableSystem
         disableTransitionOnChange
       >

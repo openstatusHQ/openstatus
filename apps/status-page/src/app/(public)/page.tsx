@@ -18,13 +18,17 @@ import {
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { useQuery } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
+  const [{ q }, setSearchParams] = useQueryStates(searchParamsParsers);
   return (
     <SectionGroup>
       <Section>
@@ -36,7 +40,28 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-4">
-          {THEME_KEYS.map((theme) => {
+          <div>
+            <Input
+              placeholder={`Search from ${THEME_KEYS.length} themes`}
+              value={q ?? ""}
+              onChange={(e) => {
+                if (e.target.value.length === 0) {
+                  setSearchParams({ q: undefined });
+                }
+                setSearchParams({ q: e.target.value.trim().toLowerCase() });
+              }}
+            />
+          </div>
+          {THEME_KEYS.filter((theme) => {
+            const t = THEMES[theme];
+            const themeName = t.name
+              .toLowerCase()
+              .includes(q?.toLowerCase() ?? "");
+            const themeAuthor = t.author.name
+              .toLowerCase()
+              .includes(q?.toLowerCase() ?? "");
+            return themeName || themeAuthor;
+          }).map((theme) => {
             const t = THEMES[theme];
             return (
               <div key={theme} className="flex flex-col gap-2">
@@ -93,6 +118,7 @@ export default function Page() {
           >
             Test it
           </Button>
+          {/* TODO: OR go to the status-page config and click on the View and Configure button */}
           <p>
             Or use the{" "}
             <code>sessionStorage.setItem("community-theme", "true");</code> on
