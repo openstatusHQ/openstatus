@@ -24,7 +24,7 @@ const packageJsonBuild = {
   name: packageJson.name,
   description: packageJson.description,
   version: packageJson.version,
-  type: "module",
+  // type: "module",
   dependencies: extractedDependencies,
 };
 

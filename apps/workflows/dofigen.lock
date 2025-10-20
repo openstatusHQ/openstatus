@@ -12,6 +12,20 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
+    docker:
+      fromImage:
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
     libsql:
       fromImage:
         path: oven/bun
@@ -27,27 +41,13 @@ effective: |
         target: /app/package.json
       run:
       - bun install
-    docker:
-      fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      label:
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-        org.opencontainers.image.base.name: docker.io/oven/bun:latest
-      workdir: /app/apps/workflows
-      copy:
-      - paths:
-        - .
-        target: /app/
-      run:
-      - bun run src/build-docker.ts
     install:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
         org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -97,8 +97,8 @@ effective: |
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
         org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -111,26 +111,31 @@ effective: |
         - /app/node_modules
         target: /app/node_modules
       run:
-      - bun build --compile --external "@libsql/*" --external libsql --sourcemap --format=cjs src/index.ts --outfile=app
+      - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
   fromImage:
     path: debian
     digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
   label:
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     io.dofigen.version: 2.5.0
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+  workdir: /app/
   copy:
   - fromBuilder: build
     paths:
     - /app/apps/workflows/app
-    target: /app/
+    target: /app/packages/db/app
     chmod: '555'
+  - fromBuilder: libsql
+    paths:
+    - /app/node_modules
+    target: /app/packages/db/node_modules
   - fromBuilder: libsql
     paths:
     - /app/node_modules
     target: /app/node_modules
   entrypoint:
-  - /app/app
+  - /app/packages/db/app
   expose:
   - port: 3000
 images:
@@ -145,7 +150,7 @@ images:
           digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
 resources:
   dofigen.yml:
-    hash: af05ffbdcbc4ce19a85ee4cf935a3c1ae3bc51b7d8107e0610fdccad52ae9125
+    hash: 81cc7f052785a2d79f1ecd2f9fe1f0bdb3e1cbe6c0b57c55eab381a70a7785a2
     content: |
       ignore:
         - node_modules
@@ -201,7 +206,7 @@ resources:
           # Compile the TypeScript application
           env:
             NODE_ENV: production
-          run: bun build --compile --external "@libsql/*" --external libsql --sourcemap --format=cjs src/index.ts --outfile=app
+          run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
         docker:
           fromImage: oven/bun
@@ -220,13 +225,17 @@ resources:
           run: bun install
 
       fromImage: debian:bullseye-slim
+      workdir: /app/
       copy:
         - fromBuilder: build
           source: /app/apps/workflows/app
-          target: /app/
+          target: /app/packages/db/app
           chmod: "555"
+        - fromBuilder: libsql
+          source: /app/node_modules
+          target: /app/packages/db/node_modules
         - fromBuilder: libsql
           source: /app/node_modules
           target: /app/node_modules
       expose: 3000
-      entrypoint: /app/app
+      entrypoint: /app/packages/db/app
