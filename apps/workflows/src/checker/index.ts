@@ -8,7 +8,7 @@ import {
   inArray,
   isNull,
   schema,
-  syncDB,
+  db,
 } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import {
@@ -75,7 +75,7 @@ checkerRoute.post("/updateStatus", async (c) => {
   });
   await publishStatus(result.data);
 
-  const currentMonitor = await syncDB
+  const currentMonitor = await  db
     .select()
     .from(schema.monitor)
     .where(eq(schema.monitor.id, Number(monitorId)))
@@ -84,7 +84,7 @@ checkerRoute.post("/updateStatus", async (c) => {
   const monitor = selectMonitorSchema.parse(currentMonitor);
   const numberOfRegions = monitor.regions.length;
 
-  const affectedRegion = await syncDB
+  const affectedRegion = await  db
     .select({ count: count() })
     .from(schema.monitorStatusTable)
     .where(
@@ -154,14 +154,14 @@ checkerRoute.post("/updateStatus", async (c) => {
         }
 
         console.log(`🔄 update monitorStatus ${monitor.id} status: ACTIVE`);
-        await syncDB
+        await  db
           .update(schema.monitor)
           .set({ status: "active" })
           .where(eq(schema.monitor.id, monitor.id));
 
         // we can't have a monitor in error without an incident
         if (monitor.status === "error") {
-          const incident = await syncDB
+          const incident = await  db
             .select()
             .from(incidentTable)
             .where(
@@ -183,7 +183,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           }
           console.log(`🤓 recovering incident ${incident.id}`);
 
-          await syncDB
+          await  db
             .update(incidentTable)
             .set({
               resolvedAt: new Date(cronTimestamp),
@@ -220,7 +220,7 @@ checkerRoute.post("/updateStatus", async (c) => {
         }
         console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
 
-        await syncDB
+        await  db
           .update(schema.monitor)
           .set({ status: "degraded" })
           .where(eq(schema.monitor.id, monitor.id));
@@ -245,13 +245,13 @@ checkerRoute.post("/updateStatus", async (c) => {
 
         console.log(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
 
-        await syncDB
+        await  db
           .update(schema.monitor)
           .set({ status: "error" })
           .where(eq(schema.monitor.id, monitor.id));
 
         try {
-          const incident = await syncDB
+          const incident = await  db
             .select()
             .from(incidentTable)
             .where(
@@ -266,7 +266,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             console.log("we are already in incident");
             break;
           }
-          const [newIncident] = await syncDB
+          const [newIncident] = await  db
             .insert(incidentTable)
             .values({
               monitorId: Number(monitorId),
@@ -297,7 +297,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             incidentId: String(newIncident.id),
           });
 
-          await syncDB
+          await  db
             .update(schema.monitor)
             .set({ status: "error" })
             .where(eq(schema.monitor.id, monitor.id));

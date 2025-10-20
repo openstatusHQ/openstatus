@@ -2,7 +2,7 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { z } from "zod";
 
-import { and, eq, gte, lte, notInArray, syncDB } from "@openstatus/db";
+import { and, eq, gte, lte, notInArray, db } from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
@@ -46,7 +46,7 @@ export async function sendCheckerTasks(
 
   const timestamp = Date.now();
 
-  const currentMaintenance = syncDB
+  const currentMaintenance = db
     .select({ id: maintenance.id })
     .from(maintenance)
     .where(
@@ -54,7 +54,7 @@ export async function sendCheckerTasks(
     )
     .as("currentMaintenance");
 
-  const currentMaintenanceMonitors = syncDB
+  const currentMaintenanceMonitors = db
     .select({ id: maintenancesToMonitors.monitorId })
     .from(maintenancesToMonitors)
     .innerJoin(
@@ -62,7 +62,7 @@ export async function sendCheckerTasks(
       eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id),
     );
 
-  const result = await syncDB
+  const result = await db
     .select()
     .from(monitor)
     .where(
@@ -86,7 +86,7 @@ export async function sendCheckerTasks(
   for (const row of monitors.data) {
     // const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
-    const result = await syncDB
+    const result = await db
       .select()
       .from(monitorStatusTable)
       .where(eq(monitorStatusTable.monitorId, row.id))
