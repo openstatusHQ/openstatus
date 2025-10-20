@@ -1,4 +1,4 @@
-import { and, count, eq, gte, inArray, schema, db } from "@openstatus/db";
+import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
