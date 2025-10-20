@@ -1,0 +1,10 @@
+name: server
+services:
+    server:
+        build:
+         context: ../..
+         dockerfile: apps/server/Dockerfile
+        ports:
+            - 3000:3000
+        image: server
+        command: .
