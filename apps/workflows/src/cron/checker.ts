@@ -28,7 +28,17 @@ export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };
 
+const channelOptions = {
+  // Conservative 5-minute keepalive (gRPC best practice)
+  'grpc.keepalive_time_ms': 300000,
+  // 5-second timeout sufficient for ping response
+  'grpc.keepalive_timeout_ms': 5000,
+  // Disable pings without active calls to avoid server conflicts
+  'grpc.keepalive_permit_without_calls': false,
+};
+
 const client = new CloudTasksClient({
+  channelOptions,
   projectId: env().GCP_PROJECT_ID,
   credentials: {
     client_email: env().GCP_CLIENT_EMAIL,
