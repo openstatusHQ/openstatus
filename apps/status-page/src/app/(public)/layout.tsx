@@ -15,14 +15,7 @@ export default async function Layout({
 }) {
   return (
     <PlausibleProvider domain="themes.openstatus.dev">
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="light"
-        // FIXME: forcing the theme to light for our "default" theme which, if dark would display two dark themes - there is no light: tailwind theme
-        forcedTheme="light"
-        enableSystem
-        disableTransitionOnChange
-      >
+      <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
         <main>{children}</main>
         <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
           <p>

@@ -17,56 +17,56 @@ import {
 } from "@/components/status-page/status";
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
+import { useEffect, useState } from "react";
 import { searchParamsParsers } from "./search-params";
 
+// TODO: add keyboard navigation for selection
+
 export default function Page() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const { q, t } = searchParams;
+  const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
+  const style =
+    theme && mounted ? theme[resolvedTheme as "dark" | "light"] : undefined;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const theme = resolvedTheme as "dark" | "light";
+    if (["dark", "light"].includes(theme)) {
+      Object.keys(THEMES[t][theme]).forEach((key) => {
+        const element = document.documentElement;
+        const value =
+          THEMES[t][theme][
+            key as keyof (typeof THEMES)[typeof t][typeof theme]
+          ];
+        if (value) {
+          element.style.setProperty(key, value as string);
+        }
+      });
+    }
+    if (t === "default") {
+      document.documentElement.removeAttribute("style");
+    }
+  }, [resolvedTheme, t]);
+
   return (
     <SectionGroup>
-      <Section>
-        <ThemePlayground>
-          <ThemePlaygroundMonitor />
-        </ThemePlayground>
-        <Input
-          placeholder={`Search from ${THEME_KEYS.length} themes`}
-          value={q ?? ""}
-          onChange={(e) => {
-            if (e.target.value.length === 0) {
-              setSearchParams({ q: undefined });
-            }
-            setSearchParams({ q: e.target.value.trim().toLowerCase() });
-          }}
-        />
-        <ul className="grid grid-cols-3 gap-4">
-          {THEME_KEYS.map((theme) => {
-            return (
-              <li
-                key={theme}
-                className={cn(
-                  "relative h-40 border overflow-hidden",
-                  theme === t
-                    ? "outline-2 outline-offset-2 outline-primary"
-                    : undefined,
-                )}
-              >
-                <ThemePlaygroundMonitor
-                  className="absolute scale-80"
-                  theme={theme}
-                />
-              </li>
-            );
-          })}
-        </ul>
-      </Section>
       <Section>
         <SectionHeader>
           <SectionTitle>Status Page Themes</SectionTitle>
@@ -75,33 +75,83 @@ export default function Page() {
             <Link href="#contribute-theme">Contribute your own?</Link>
           </SectionDescription>
         </SectionHeader>
-        <div className="flex flex-col gap-4">
-          {THEME_KEYS.map((theme) => {
-            const t = THEMES[theme];
+        <div style={style as React.CSSProperties}>
+          <ThemePlaygroundMonitor className="rounded-lg border p-8" />
+        </div>
+        <div className="flex gap-2">
+          <ThemeSelect />
+          <Input
+            placeholder={`Search from ${THEME_KEYS.length} themes`}
+            value={q ?? ""}
+            onChange={(e) => {
+              if (e.target.value.length === 0) {
+                setSearchParams({ q: null });
+              }
+              setSearchParams({ q: e.target.value.trim().toLowerCase() });
+            }}
+          />
+        </div>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+          {THEME_KEYS.filter((k) => {
+            const theme = THEMES[k];
             return (
-              <div key={theme} className="flex flex-col gap-2">
-                <ThemeHeader>
-                  <ThemeTitle>{t.name}</ThemeTitle>
-                  <ThemeAuthor>
-                    by{" "}
-                    <a
-                      href={t.author.url}
+              theme.author.name
+                .toLowerCase()
+                .includes(q?.toLowerCase() ?? "") ||
+              theme.name.toLowerCase().includes(q?.toLowerCase() ?? "")
+            );
+          }).map((k) => {
+            const theme = THEMES[k];
+            const style = mounted
+              ? theme[resolvedTheme as "dark" | "light"]
+              : undefined;
+            return (
+              <li key={k} className="space-y-1">
+                <div
+                  className={cn(
+                    "relative h-40 border overflow-hidden transition-all cursor-pointer outline-none focus:outline-ring/50 focus:ring-ring/50 focus:ring-2",
+                    k === t
+                      ? "outline-[3px] border-ring outline-ring/50"
+                      : undefined,
+                  )}
+                  onClick={() => setSearchParams({ t: k })}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setSearchParams({ t: k });
+                    }
+                  }}
+                >
+                  <div
+                    className="absolute w-full h-full bg-background text-foreground"
+                    style={style as React.CSSProperties}
+                    inert
+                  >
+                    <ThemePlaygroundMonitor className="pointer-events-none scale-80" />
+                  </div>
+                </div>
+                <div>
+                  <div className="font-medium text-foreground text-sm">
+                    {theme.name}
+                  </div>
+                  <div className="text-xs font-mono">
+                    <Link
+                      href={theme.author.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      className="text-muted-foreground"
                     >
-                      {t.author.name}
-                    </a>
-                  </ThemeAuthor>
-                </ThemeHeader>
-                <ThemeGroup>
-                  <ThemeCard theme={theme} mode="light" />
-                  <ThemeCard theme={theme} mode="dark" />
-                </ThemeGroup>
-              </div>
+                      by {theme.author.name}
+                    </Link>
+                  </div>
+                </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </Section>
+      <Separator />
       <Section>
         <SectionHeader id="contribute-theme">
           <SectionTitle>Contribute Theme</SectionTitle>
@@ -139,7 +189,16 @@ export default function Page() {
             <code>sessionStorage.setItem("community-theme", "true");</code> on
             your own status page.
           </p>
-          <hr />
+        </div>
+      </Section>
+      <Separator />
+      <Section>
+        <div className="prose dark:prose-invert prose-sm max-w-none">
+          <blockquote>
+            Ideally, we would allow you to customize your theme with{" "}
+            <code>ColorPicker</code> components to easily test and export your
+            theme. Contributions are welcome!
+          </blockquote>
           <p>
             Why don't we allow custom css styles to be overridden and only
             support themes?
@@ -160,144 +219,37 @@ export default function Page() {
   );
 }
 
-// function ThemeCarousel (choose between the existing themes)
-// function ThemePlayground (display the currently selected theme)
-
-function ThemePlayground({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("rounded-lg border p-8", className)} {...props}>
-      {children}
-      {/* TODO: dark/light mode switcher */}
-    </div>
-  );
-}
-
 function ThemePlaygroundMonitor({
-  mode = "light",
-  theme,
   className,
-  style,
   ...props
-}: React.ComponentProps<"div"> & {
-  mode?: "dark" | "light";
-  // NOTE: allow us to override the styles by fixing the theme
-  theme?: keyof typeof THEMES;
-}) {
-  const trpc = useTRPC();
-  const { data: uptimeData, isLoading } = useQuery(
-    trpc.statusPage.getNoopUptime.queryOptions(),
-  );
-  const t = theme ? THEMES[theme][mode] : undefined;
-  return (
-    <div className={cn(mode === "dark" ? "dark" : "")}>
-      <div
-        className={cn("bg-background text-foreground", className)}
-        style={{ ...(t as React.CSSProperties), ...style }}
-        {...props}
-      >
-        <Status variant="success">
-          <StatusHeader>
-            <StatusTitle>Acme Inc.</StatusTitle>
-            <StatusDescription>
-              Get informed about our services.
-            </StatusDescription>
-          </StatusHeader>
-          <StatusBanner status="success" />
-          <StatusContent>
-            <StatusMonitor
-              status="success"
-              data={uptimeData?.data || []}
-              monitor={monitors[0]}
-              showUptime={true}
-              uptime={uptimeData?.uptime}
-              isLoading={isLoading}
-            />
-          </StatusContent>
-        </Status>
-      </div>
-    </div>
-  );
-}
-
-// TODO: the status-tracker hover card is mounted on the body and looses the theme style context
-
-function ThemeCard({
-  theme,
-  mode,
-}: {
-  theme: keyof typeof THEMES;
-  mode: "dark" | "light";
-}) {
-  const t = THEMES[theme][mode];
+}: React.ComponentProps<"div"> & {}) {
   const trpc = useTRPC();
   const { data: uptimeData, isLoading } = useQuery(
     trpc.statusPage.getNoopUptime.queryOptions(),
   );
   return (
-    <div
-      className={cn(
-        "group/theme-card overflow-hidden rounded-lg border",
-        mode === "dark" ? "dark" : "",
-      )}
-    >
-      <div
-        style={t as React.CSSProperties}
-        className="h-full w-full bg-background"
-      >
-        {/* NOTE: we use pointer-events-none to prevent the hover card or tooltip from being interactive - the Portal container is document body and we loose the styles */}
-        <div className="pointer-events-none scale-85 bg-background text-foreground transition-all duration-300 group-hover/theme-card:scale-90">
-          <Status variant="success">
-            <StatusHeader>
-              <StatusTitle>Acme Inc.</StatusTitle>
-              <StatusDescription>
-                Get informed about our services.
-              </StatusDescription>
-            </StatusHeader>
-            <StatusBanner status="success" />
-            <StatusContent>
-              {/* TODO: create mock data */}
-              <StatusMonitor
-                status="success"
-                data={uptimeData?.data || []}
-                monitor={monitors[0]}
-                showUptime={true}
-                uptime={uptimeData?.uptime}
-                isLoading={isLoading}
-              />
-            </StatusContent>
-          </Status>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ThemeGroup({ children, className }: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("grid grid-cols-1 gap-4 sm:grid-cols-2", className)}>
-      {children}
-    </div>
-  );
-}
-
-function ThemeHeader({ children, className }: React.ComponentProps<"div">) {
-  return <div className={cn("flex flex-col", className)}>{children}</div>;
-}
-
-function ThemeTitle({ children, className }: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("font-semibold text-base", className)}>{children}</div>
-  );
-}
-
-function ThemeAuthor({ children, className }: React.ComponentProps<"div">) {
-  return (
-    <div className={cn("font-mono text-muted-foreground text-xs", className)}>
-      {children}
+    // NOTE: we use pointer-events-none to prevent the hover card or tooltip from being interactive - the Portal container is document body and we loose the styles
+    <div className={cn("h-full w-full", className)} {...props}>
+      <Status variant="success">
+        <StatusHeader>
+          <StatusTitle>Acme Inc.</StatusTitle>
+          <StatusDescription>
+            Get informed about our services.
+          </StatusDescription>
+        </StatusHeader>
+        <StatusBanner status="success" />
+        <StatusContent>
+          {/* TODO: create mock data */}
+          <StatusMonitor
+            status="success"
+            data={uptimeData?.data || []}
+            monitor={monitors[0]}
+            showUptime={true}
+            uptime={uptimeData?.uptime}
+            isLoading={isLoading}
+          />
+        </StatusContent>
+      </Status>
     </div>
   );
 }

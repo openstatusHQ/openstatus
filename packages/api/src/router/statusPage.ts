@@ -341,7 +341,7 @@ export const statusPageRouter = createTRPCRouter({
           type: "maintenance",
           from: new Date(new Date().setDate(new Date().getDate() - 10)),
           to: new Date(new Date().setDate(new Date().getDate() - 10)),
-          name: "",
+          name: "DB migration",
           id: 1,
           status: "info",
         },
