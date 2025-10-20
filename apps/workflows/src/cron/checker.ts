@@ -34,7 +34,7 @@ const channelOptions = {
   // 5-second timeout sufficient for ping response
   'grpc.keepalive_timeout_ms': 5000,
   // Disable pings without active calls to avoid server conflicts
-  'grpc.keepalive_permit_without_calls': false,
+  'grpc.keepalive_permit_without_calls': 1,
 };
 
 const client = new CloudTasksClient({
@@ -156,7 +156,7 @@ export async function sendCheckerTasks(
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
   const failedRequest = allRequests.filter((r) => r.status === "rejected")
-  console.log(failedRequest)
+  console.log(failedRequest?.at(0))
   console.log(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
