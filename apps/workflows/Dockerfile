@@ -45,7 +45,37 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
-RUN bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
+RUN bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+
+# ca-certs
+FROM debian@sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d AS ca-certs
+LABEL \
+    org.opencontainers.image.base.digest="sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d" \
+    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
+RUN apt update && apt install -y ca-certificates && update-ca-certificates
+
+# docker
+FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS docker
+LABEL \
+    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:latest"
+WORKDIR /app/apps/workflows
+COPY \
+    --link \
+    "." "/app/"
+RUN bun run src/build-docker.ts
+
+# libsql
+FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS libsql
+LABEL \
+    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:latest"
+WORKDIR /app/
+COPY \
+    --from=docker \
+    --link \
+    "/app/apps/build-docker/package.json" "/app/package.json"
+RUN bun install
 
 # runtime
 FROM debian@sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d AS runtime
@@ -53,12 +83,28 @@ LABEL \
     io.dofigen.version="2.5.0" \
     org.opencontainers.image.base.digest="sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
+WORKDIR /app/
 COPY \
     --from=build \
     --chown=1000:1000 \
     --chmod=555 \
     --link \
-    "/app/apps/workflows/app" "/bin/"
+    "/app/apps/workflows/app" "/app/apps/workflows/"
+COPY \
+    --from=libsql \
+    --chown=1000:1000 \
+    --link \
+    "/app/node_modules" "/app/packages/db/node_modules"
+COPY \
+    --from=libsql \
+    --chown=1000:1000 \
+    --link \
+    "/app/node_modules" "/app/node_modules"
+COPY \
+    --from=ca-certs \
+    --chown=1000:1000 \
+    --link \
+    "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
 USER 1000:1000
 EXPOSE 3000
-ENTRYPOINT ["/bin/app"]
+ENTRYPOINT ["/app/apps/workflows/app"]

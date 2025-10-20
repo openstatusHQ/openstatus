@@ -1094,6 +1094,9 @@ importers:
       '@hono/sentry':
         specifier: 1.2.2
         version: 1.2.2(hono@4.5.3)
+      '@libsql/client':
+        specifier: 0.15.15
+        version: 0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -1124,6 +1127,9 @@ importers:
       '@openstatus/notification-webhook':
         specifier: workspace:*
         version: link:../../packages/notifications/webhook
+      '@openstatus/regions':
+        specifier: workspace:*
+        version: link:../../packages/regions
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -1136,6 +1142,9 @@ importers:
       '@upstash/qstash':
         specifier: 2.6.2
         version: 2.6.2
+      drizzle-orm:
+        specifier: 0.44.4
+        version: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2))
       hono:
         specifier: 4.5.3
         version: 4.5.3
@@ -1279,8 +1288,8 @@ importers:
   packages/db:
     dependencies:
       '@libsql/client':
-        specifier: 0.15.14
-        version: 0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5)
+        specifier: 0.15.15
+        version: 0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5)
       '@openstatus/assertions':
         specifier: workspace:*
         version: link:../assertions
@@ -1292,10 +1301,10 @@ importers:
         version: 0.7.1(typescript@5.7.2)(zod@3.24.2)
       drizzle-orm:
         specifier: 0.44.4
-        version: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2))
+        version: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2))
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2)))(zod@3.24.2)
+        version: 0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2)))(zod@3.24.2)
       zod:
         specifier: 3.24.2
         version: 3.24.2
@@ -18821,19 +18830,19 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2)):
+  drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2)):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250303.0
-      '@libsql/client': 0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5)
+      '@libsql/client': 0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5)
       '@libsql/client-wasm': 0.14.0
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.10
       better-sqlite3: 11.7.0
       bun-types: 1.2.22(@types/react@19.2.2)
 
-  drizzle-zod@0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2)))(zod@3.24.2):
+  drizzle-zod@0.5.1(drizzle-orm@0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2)))(zod@3.24.2):
     dependencies:
-      drizzle-orm: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.14(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2))
+      drizzle-orm: 0.44.4(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(better-sqlite3@11.7.0)(bun-types@1.2.22(@types/react@19.2.2))
       zod: 3.24.2
 
   dset@3.1.4: {}

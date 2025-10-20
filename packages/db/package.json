@@ -13,7 +13,7 @@
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
-    "@libsql/client": "0.15.14",
+    "@libsql/client": "0.15.15",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
