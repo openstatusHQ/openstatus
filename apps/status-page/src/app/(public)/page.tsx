@@ -28,9 +28,45 @@ import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
-  const [{ q }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
+  const { q, t } = searchParams;
   return (
     <SectionGroup>
+      <Section>
+        <ThemePlayground>
+          <ThemePlaygroundMonitor />
+        </ThemePlayground>
+        <Input
+          placeholder={`Search from ${THEME_KEYS.length} themes`}
+          value={q ?? ""}
+          onChange={(e) => {
+            if (e.target.value.length === 0) {
+              setSearchParams({ q: undefined });
+            }
+            setSearchParams({ q: e.target.value.trim().toLowerCase() });
+          }}
+        />
+        <ul className="grid grid-cols-3 gap-4">
+          {THEME_KEYS.map((theme) => {
+            return (
+              <li
+                key={theme}
+                className={cn(
+                  "relative h-40 border overflow-hidden",
+                  theme === t
+                    ? "outline-2 outline-offset-2 outline-primary"
+                    : undefined,
+                )}
+              >
+                <ThemePlaygroundMonitor
+                  className="absolute scale-80"
+                  theme={theme}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      </Section>
       <Section>
         <SectionHeader>
           <SectionTitle>Status Page Themes</SectionTitle>
@@ -40,28 +76,7 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-col gap-4">
-          <div>
-            <Input
-              placeholder={`Search from ${THEME_KEYS.length} themes`}
-              value={q ?? ""}
-              onChange={(e) => {
-                if (e.target.value.length === 0) {
-                  setSearchParams({ q: undefined });
-                }
-                setSearchParams({ q: e.target.value.trim().toLowerCase() });
-              }}
-            />
-          </div>
-          {THEME_KEYS.filter((theme) => {
-            const t = THEMES[theme];
-            const themeName = t.name
-              .toLowerCase()
-              .includes(q?.toLowerCase() ?? "");
-            const themeAuthor = t.author.name
-              .toLowerCase()
-              .includes(q?.toLowerCase() ?? "");
-            return themeName || themeAuthor;
-          }).map((theme) => {
+          {THEME_KEYS.map((theme) => {
             const t = THEMES[theme];
             return (
               <div key={theme} className="flex flex-col gap-2">
@@ -142,6 +157,69 @@ export default function Page() {
         </div>
       </Section>
     </SectionGroup>
+  );
+}
+
+// function ThemeCarousel (choose between the existing themes)
+// function ThemePlayground (display the currently selected theme)
+
+function ThemePlayground({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("rounded-lg border p-8", className)} {...props}>
+      {children}
+      {/* TODO: dark/light mode switcher */}
+    </div>
+  );
+}
+
+function ThemePlaygroundMonitor({
+  mode = "light",
+  theme,
+  className,
+  style,
+  ...props
+}: React.ComponentProps<"div"> & {
+  mode?: "dark" | "light";
+  // NOTE: allow us to override the styles by fixing the theme
+  theme?: keyof typeof THEMES;
+}) {
+  const trpc = useTRPC();
+  const { data: uptimeData, isLoading } = useQuery(
+    trpc.statusPage.getNoopUptime.queryOptions(),
+  );
+  const t = theme ? THEMES[theme][mode] : undefined;
+  return (
+    <div className={cn(mode === "dark" ? "dark" : "")}>
+      <div
+        className={cn("bg-background text-foreground", className)}
+        style={{ ...(t as React.CSSProperties), ...style }}
+        {...props}
+      >
+        <Status variant="success">
+          <StatusHeader>
+            <StatusTitle>Acme Inc.</StatusTitle>
+            <StatusDescription>
+              Get informed about our services.
+            </StatusDescription>
+          </StatusHeader>
+          <StatusBanner status="success" />
+          <StatusContent>
+            <StatusMonitor
+              status="success"
+              data={uptimeData?.data || []}
+              monitor={monitors[0]}
+              showUptime={true}
+              uptime={uptimeData?.uptime}
+              isLoading={isLoading}
+            />
+          </StatusContent>
+        </Status>
+      </div>
+    </div>
   );
 }
 
