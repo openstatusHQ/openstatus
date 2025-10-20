@@ -27,6 +27,12 @@ importers:
         specifier: 5.7.2
         version: 5.7.2
 
+  apps/build-docker:
+    dependencies:
+      '@libsql/client':
+        specifier: 0.15.15
+        version: 0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5)
+
   apps/dashboard:
     dependencies:
       '@auth/core':

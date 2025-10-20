@@ -70,12 +70,16 @@ builders:
         target: /app/package.json
     run: bun install
 
+  ca-certs:
+    fromImage: debian:bullseye-slim
+    run: apt update && apt install -y ca-certificates && update-ca-certificates
+
 fromImage: debian:bullseye-slim
 workdir: /app/
 copy:
   - fromBuilder: build
     source: /app/apps/workflows/app
-    target: /app/packages/db/app
+    target: /app/apps/workflows/
     chmod: "555"
   - fromBuilder: libsql
     source: /app/node_modules
@@ -83,5 +87,8 @@ copy:
   - fromBuilder: libsql
     source: /app/node_modules
     target: /app/node_modules
+  - fromBuilder: ca-certs
+    source: /etc/ssl/certs/ca-certificates.crt
+    target: /etc/ssl/certs/
 expose: 3000
-entrypoint: /app/packages/db/app
+entrypoint: /app/apps/workflows/app
