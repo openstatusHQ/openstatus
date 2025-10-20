@@ -1,6 +1,9 @@
 name: workflows-test
 services:
     workflows-test:
+        build:
+         context: ../..
+         dockerfile: apps/workflows/Dockerfile
         environment:
             - DATABASE_URL=http://host.docker.internal:8081
             - DATABASE_AUTH_TOKEN=test
