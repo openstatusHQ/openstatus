@@ -1,0 +1,59 @@
+services:
+    internal-server:
+        build:
+         context: .
+         dockerfile: apps/workflows/Dockerfile
+        environment:
+            - DATABASE_URL=http://libsql:8080
+            - DATABASE_AUTH_TOKEN="basic:token"
+            - RESEND_API_KEY=test
+            - UPSTASH_REDIS_REST_URL=test
+            - UPSTASH_REDIS_REST_TOKEN=test
+            - NODE_ENV=production
+            - GCP_PROJECT_ID=test
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+
+        ports:
+            - 3000:3000
+        volumes:
+            - type: bind
+              source: ./data
+              target: /app/data
+        image: workflows-test
+        command: .
+    libsql:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        ports:
+          - 8080:8080
+          - 5001:5001
+    api:
+        build:
+         context: .
+         dockerfile: apps/server/Dockerfile
+        ports:
+            - 3001:3000
+        image: server
+        environment:
+            - DATABASE_URL=http://libsql-1:8080
+            - DATABASE_AUTH_TOKEN="basic:token"
+            - UPSTASH_REDIS_REST_URL=test
+            - UPSTASH_REDIS_REST_TOKEN=test
+            - NODE_ENV=production
+            - NEXT_PUBLIC_OPENPANEL_CLIENT_ID=test
+            - OPENPANEL_CLIENT_SECRET=test
+            - RESEND_API_KEY=test
+        command: .
+    # dashboard:
+    #     build:
+    #      context: .
+    #      dockerfile: apps/dashboard/Dockerfile
+    #     ports:
+    #         - 3002:3000
+    #     image: dashboard
+    #     environment:
+    #         - API_URL=http://host.docker.internal:3001
+    #         - NEXT_PUBLIC_OPENPANEL_CLIENT_ID=test
+    #         - OPENPANEL_CLIENT_SECRET=test
+    #         - NODE_ENV=production
+    #     command: .
