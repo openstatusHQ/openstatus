@@ -1,0 +1,19 @@
+name: workflows-test
+services:
+    workflows-test:
+        environment:
+            - DATABASE_URL=https://turso.io
+            - DATABASE_AUTH_TOKEN=test
+            - RESEND_API_KEY=test
+            - UPSTASH_REDIS_REST_URL=test
+            - UPSTASH_REDIS_REST_TOKEN=test
+            - NODE_ENV=production
+            - GCP_PROJECT_ID=test
+        ports:
+            - 3000:3000
+        volumes:
+            - type: bind
+              source: ./data
+              target: /app/data
+        image: workflows-test
+        command: .

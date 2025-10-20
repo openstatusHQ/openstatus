@@ -8,6 +8,7 @@
   "dependencies": {
     "@google-cloud/tasks": "4.0.1",
     "@hono/sentry": "1.2.2",
+    "@libsql/client": "0.15.15",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
@@ -23,6 +24,7 @@
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@upstash/qstash": "2.6.2",
+    "drizzle-orm": "0.44.4",
     "hono": "4.5.3",
     "limiter": "^3.0.0",
     "zod": "3.24.2"

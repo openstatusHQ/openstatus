@@ -2,7 +2,7 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { z } from "zod";
 
-import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
+import { and, eq, gte, lte, notInArray } from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
@@ -14,6 +14,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
+import { db } from "../lib/db";
 
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {

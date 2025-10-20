@@ -2,7 +2,7 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import {
   and,
-  db,
+  // db,
   desc,
   eq,
   isNull,
@@ -21,6 +21,7 @@ import { Redis } from "@openstatus/upstash";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
 import { env } from "../env";
+import { db } from "../lib/db";
 
 const redis = Redis.fromEnv();
 
