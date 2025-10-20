@@ -1,4 +1,21 @@
 services:
+  #  External deps
+    libsql:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        ports:
+          - 8080:8080
+          - 5001:5001
+    tinybird-local-classic:
+            image: tinybirdco/tinybird-local:latest
+            container_name: tinybird-local-classic
+            platform: linux/amd64
+            ports:
+              - "7181:7181"
+
+            environment:
+              - COMPATIBILITY_MODE=1
+
+# our services
     internal-server:
         build:
          context: .
@@ -22,11 +39,7 @@ services:
               target: /app/data
         image: workflows-test
         command: .
-    libsql:
-        image: ghcr.io/tursodatabase/libsql-server:latest
-        ports:
-          - 8080:8080
-          - 5001:5001
+
     api:
         build:
          context: .
