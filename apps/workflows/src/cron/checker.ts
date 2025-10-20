@@ -37,18 +37,21 @@ const channelOptions = {
   'grpc.keepalive_permit_without_calls': 1,
 };
 
-const client = new CloudTasksClient({
-  channelOptions,
-  projectId: env().GCP_PROJECT_ID,
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
 ) {
+
+
+  const client = new CloudTasksClient({
+    channelOptions,
+    projectId: env().GCP_PROJECT_ID,
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+
   const parent = client.queuePath(
     env().GCP_PROJECT_ID,
     env().GCP_LOCATION,
