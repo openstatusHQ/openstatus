@@ -1,4 +1,4 @@
-import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
+import { and, count, eq, gte, inArray, schema, syncDB } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
@@ -30,7 +30,7 @@ export const triggerNotifications = async ({
   latency?: number;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
-  const notifications = await db
+  const notifications = await syncDB
     .select()
     .from(schema.notificationsToMonitors)
     .innerJoin(
@@ -50,7 +50,7 @@ export const triggerNotifications = async ({
         continue;
       }
 
-      const workspace = await db
+      const workspace = await syncDB
         .select()
         .from(schema.workspace)
         .where(eq(schema.workspace.id, notif.notification.workspaceId));
@@ -64,7 +64,7 @@ export const triggerNotifications = async ({
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-      const smsNotification = await db
+      const smsNotification = await syncDB
         .select()
         .from(schema.notification)
         .where(
@@ -75,7 +75,7 @@ export const triggerNotifications = async ({
         );
       const ids = smsNotification.map((notification) => notification.id);
 
-      const smsSent = await db
+      const smsSent = await syncDB
         .select({ count: count() })
         .from(schema.notificationTrigger)
         .where(
@@ -172,7 +172,7 @@ const insertNotificationTrigger = async ({
   notificationId: number;
   cronTimestamp: number;
 }) => {
-  await db
+  await syncDB
     .insert(schema.notificationTrigger)
     .values({
       monitorId: Number(monitorId),
@@ -191,7 +191,7 @@ export const upsertMonitorStatus = async ({
   status: MonitorStatus;
   region: Region;
 }) => {
-  const newData = await db
+  const newData = await syncDB
     .insert(schema.monitorStatusTable)
     .values({ status, region, monitorId: Number(monitorId) })
     .onConflictDoUpdate({

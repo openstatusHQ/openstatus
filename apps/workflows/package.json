@@ -18,6 +18,7 @@
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
+    "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",

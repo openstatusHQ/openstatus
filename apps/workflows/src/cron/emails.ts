@@ -1,5 +1,5 @@
 import { and, gte, lte } from "@openstatus/db";
-import { db } from "@openstatus/db/src/db";
+import { syncDB as db } from "@openstatus/db/src/sync-db";
 import { user } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
 import { env } from "../env";
