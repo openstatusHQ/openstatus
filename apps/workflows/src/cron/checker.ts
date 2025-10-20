@@ -30,21 +30,18 @@ export const isAuthorizedDomain = (url: string) => {
 
 const channelOptions = {
   // Conservative 5-minute keepalive (gRPC best practice)
-  'grpc.keepalive_time_ms': 300000,
+  "grpc.keepalive_time_ms": 300000,
   // 5-second timeout sufficient for ping response
-  'grpc.keepalive_timeout_ms': 5000,
+  "grpc.keepalive_timeout_ms": 5000,
   // Disable pings without active calls to avoid server conflicts
-  'grpc.keepalive_permit_without_calls': 1,
+  "grpc.keepalive_permit_without_calls": 1,
 };
-
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
 ) {
-
-
   const client = new CloudTasksClient({
-    fallback:"rest",
+    fallback: "rest",
     channelOptions,
     projectId: env().GCP_PROJECT_ID,
     credentials: {
@@ -159,10 +156,9 @@ export async function sendCheckerTasks(
 
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
-  const failedRequest = allRequests.filter((r) => r.status === "rejected")
+  const failedRequest = allRequests.filter((r) => r.status === "rejected");
 
-
-  console.log(failedRequest?.at(0))
+  console.log(failedRequest?.at(0));
   console.log(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
