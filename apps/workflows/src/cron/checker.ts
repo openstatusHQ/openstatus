@@ -145,7 +145,8 @@ export async function sendCheckerTasks(
 
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
-
+  const failedRequest = allRequests.filter((r) => r.status === "rejected")
+  console.log(failedRequest)
   console.log(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
