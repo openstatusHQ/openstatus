@@ -1,7 +1,15 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { and, count, syncDB, eq, inArray, isNull, schema } from "@openstatus/db";
+import {
+  and,
+  count,
+  eq,
+  inArray,
+  isNull,
+  schema,
+  syncDB,
+} from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import {
   monitorStatusSchema,

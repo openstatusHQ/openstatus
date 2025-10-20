@@ -2,12 +2,12 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { z } from "zod";
 
-import { and,  eq, gte, lte, notInArray, syncDB } from "@openstatus/db";
+import { and, eq, gte, lte, notInArray, syncDB } from "@openstatus/db";
 import {
+  type MonitorStatus,
   maintenance,
   maintenancesToMonitors,
   monitor,
-  type MonitorStatus,
   monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
@@ -16,7 +16,11 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import { transformHeaders, type httpPayloadSchema, type tpcPayloadSchema } from "@openstatus/utils";
+import {
+  type httpPayloadSchema,
+  type tpcPayloadSchema,
+  transformHeaders,
+} from "@openstatus/utils";
 import { env } from "../env";
 
 export const isAuthorizedDomain = (url: string) => {
@@ -144,7 +148,7 @@ export async function sendCheckerTasks(
   console.log(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
-};
+}
 // timestamp needs to be in ms
 const createCronTask = async ({
   row,

@@ -1,6 +1,5 @@
 import path from "node:path";
 
-
 // Create package.json that contains @libsql/client as dependency. It will be used to create node_modules and copy them alongside compiled server https://github.com/oven-sh/bun/issues/18909
 type PackageJson = Record<"name" | "description" | "version", string> &
   Record<"dependencies", Record<string, string>>;
