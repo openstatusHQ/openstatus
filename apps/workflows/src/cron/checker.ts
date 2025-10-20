@@ -44,6 +44,7 @@ export async function sendCheckerTasks(
 
 
   const client = new CloudTasksClient({
+    fallback:"rest",
     channelOptions,
     projectId: env().GCP_PROJECT_ID,
     credentials: {
@@ -159,6 +160,8 @@ export async function sendCheckerTasks(
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
   const failedRequest = allRequests.filter((r) => r.status === "rejected")
+
+
   console.log(failedRequest?.at(0))
   console.log(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
