@@ -44,16 +44,40 @@ services:
             - OPENPANEL_CLIENT_SECRET=test
             - RESEND_API_KEY=test
         command: .
-    # dashboard:
-    #     build:
-    #      context: .
-    #      dockerfile: apps/dashboard/Dockerfile
-    #     ports:
-    #         - 3002:3000
-    #     image: dashboard
-    #     environment:
-    #         - API_URL=http://host.docker.internal:3001
-    #         - NEXT_PUBLIC_OPENPANEL_CLIENT_ID=test
-    #         - OPENPANEL_CLIENT_SECRET=test
-    #         - NODE_ENV=production
-    #     command: .
+    dashboard:
+        build:
+         context: ../..
+         dockerfile: apps/dashboard/Dockerfile
+
+        environment:
+            - DATABASE_URL=http://host.docker.internal:8081
+            - DATABASE_AUTH_TOKEN=test
+            - RESEND_API_KEY=test
+            - UPSTASH_REDIS_REST_URL=test
+            - UPSTASH_REDIS_REST_TOKEN=test
+            - NODE_ENV=production
+            - GCP_PROJECT_ID=test
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+
+        ports:
+            - 3002:3000
+        image: dashboard
+    status-page:
+        build:
+         context: .
+         dockerfile: apps/status-page/Dockerfile
+
+        environment:
+            - DATABASE_URL=http://host.docker.internal:8081
+            - DATABASE_AUTH_TOKEN=test
+            - RESEND_API_KEY=test
+            - UPSTASH_REDIS_REST_URL=test
+            - UPSTASH_REDIS_REST_TOKEN=test
+            - NODE_ENV=production
+            - GCP_PROJECT_ID=test
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        ports:
+            - 3003:3000
+        image: status-page

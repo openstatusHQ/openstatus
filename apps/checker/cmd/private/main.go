@@ -69,9 +69,12 @@ func getEnv(key, fallback string) string {
 // UpdateMonitors fetches the latest monitors and starts/stops jobs as needed
 
 func getClient(apiKey string) v1.PrivateLocationServiceClient {
+
+	ingestUrl := getEnv("OPENSTATUS_INGEST_URL", "https://openstatus-private-location.fly.dev")
+
 	client := v1.NewPrivateLocationServiceClient(
 		http.DefaultClient,
-		"https://openstatus-private-location.fly.dev",
+		ingestUrl,
 		connect.WithHTTPGet(),
 		connect.WithInterceptors(NewAuthInterceptor(apiKey)),
 	)
