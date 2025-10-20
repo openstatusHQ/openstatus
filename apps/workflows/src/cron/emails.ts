@@ -1,8 +1,9 @@
 import { and, gte, lte } from "@openstatus/db";
-import { db } from "@openstatus/db/src/db";
+import { db } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
 import { env } from "../env";
+// import { db } from "../lib/db";
 
 const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
 

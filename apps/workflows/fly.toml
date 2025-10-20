@@ -19,7 +19,7 @@ primary_region = 'ams'
   force_https = true
   auto_stop_machines = "suspend"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 2
   processes = ["app"]
 
 [http_service.concurrency]
@@ -40,3 +40,8 @@ primary_region = 'ams'
 [env]
   NODE_ENV = "production"
   PORT = "3000"
+
+
+[[mounts]]
+    source = "libsql_data"
+    destination = "/app/data"
