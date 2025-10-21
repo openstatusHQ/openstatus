@@ -38,3 +38,4 @@ jobs:
         uses: superfly/fly-pr-review-apps@1.2.1
         with:
           path: apps/workflows
+          name: workflows-pr-${{ github.event.number }}
