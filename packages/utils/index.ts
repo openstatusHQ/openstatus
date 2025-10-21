@@ -19,7 +19,7 @@ export const httpPayloadSchema = z.object({
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.record(z.string()),
+      headers: z.record(z.string(), z.string()),
     })
     .optional(),
   retry: z.number().default(3),
@@ -41,7 +41,7 @@ export const tpcPayloadSchema = z.object({
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.record(z.string()),
+      headers: z.record(z.string(), z.string()),
     })
     .optional(),
   retry: z.number().default(3),
