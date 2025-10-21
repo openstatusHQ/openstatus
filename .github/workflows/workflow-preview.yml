@@ -37,4 +37,4 @@ jobs:
         id: deploy
         uses: superfly/fly-pr-review-apps@1.2.1
         with:
-          path: apps/workflows/fly.toml
+          path: apps/workflows
