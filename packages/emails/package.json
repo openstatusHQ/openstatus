@@ -19,7 +19,7 @@
     "@t3-oss/env-core": "0.7.1",
     "react-email": "4.0.17",
     "resend": "4.6.0",
-    "zod": "3.24.2"
+    "zod": "4.1.12"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

@@ -87,7 +87,7 @@ export const ResponseSchema = z.object({
     .optional()
     .openapi({ description: "The body of the response" }),
   headers: z
-    .record(z.string())
+    .record(z.string(), z.string())
     .optional()
     .openapi({ description: "The headers of the response" }),
   timing: TimingSchema.openapi({

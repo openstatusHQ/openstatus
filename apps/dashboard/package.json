@@ -96,7 +96,7 @@
     "superjson": "2.2.2",
     "tailwind-merge": "3.3.1",
     "unified": "11.0.5",
-    "zod": "3.24.2"
+    "zod": "4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",

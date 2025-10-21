@@ -45,7 +45,7 @@ export const ntfyDataSchema = z.object({
 });
 export const webhookDataSchema = z.object({
   webhook: z.object({
-    endpoint: z.string().url(),
+    endpoint: z.url(),
     headers: z
       .array(z.object({ key: z.string(), value: z.string() }))
       .optional(),

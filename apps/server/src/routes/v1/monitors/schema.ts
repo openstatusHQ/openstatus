@@ -233,9 +233,13 @@ export const MonitorSchema = z
           .openapi({
             description: "The endpoint of the OpenTelemetry collector",
           }),
-        headers: z.record(z.string()).optional().default({}).openapi({
-          description: "The headers to send to the OpenTelemetry collector",
-        }),
+        headers: z
+          .record(z.string(), z.string())
+          .optional()
+          .default({})
+          .openapi({
+            description: "The headers to send to the OpenTelemetry collector",
+          }),
       })
       .optional()
       .openapi({

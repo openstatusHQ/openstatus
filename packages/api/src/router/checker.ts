@@ -87,7 +87,7 @@ export const httpOutput = z
     type: z.literal("http").default("http"),
     status: z.number(),
     latency: z.number(),
-    headers: z.record(z.string()),
+    headers: z.record(z.string(), z.string()),
     timestamp: z.number(),
     timing: z.object({
       dnsStart: z.number(),

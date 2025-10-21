@@ -104,7 +104,7 @@ export const checkerSchema = z.object({
   state: z.literal("success").default("success"),
   status: z.number(),
   latency: z.number(),
-  headers: z.record(z.string()),
+  headers: z.record(z.string(), z.string()),
   timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),
