@@ -26,8 +26,7 @@ jobs:
     # Deploying apps with this "review" environment allows the URL for the app to be displayed in the PR UI.
     # Feel free to change the name of this environment.
     environment:
-      name: review
-      # The script in the `deploy` sets the URL output for each review app.
+      name: pr-${{ github.event.number }}      # The script in the `deploy` sets the URL output for each review app.
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Get code
@@ -47,3 +46,11 @@ jobs:
             UPSTASH_REDIS_REST_URL=test
             UPSTASH_REDIS_REST_TOKEN=test
             GCP_PROJECT_ID=test
+
+      - name: Clean up GitHub environment
+        uses: strumwolf/delete-deployment-environment@v2
+        if: ${{ github.event.action == 'closed' }}
+        with:
+          # ⚠️ The provided token needs permission for admin write:org
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: pr-${{ github.event.number }}
