@@ -21,6 +21,12 @@ import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -31,7 +37,15 @@ import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
 import { searchParamsParsers } from "./search-params";
 
-// TODO: add keyboard navigation for selection
+const MAIN_COLORS = [
+  { key: "--primary", label: "Primary" },
+  { key: "--success", label: "Operational" },
+  { key: "--destructive", label: "Error" },
+  { key: "--warning", label: "Degraded" },
+  { key: "--info", label: "Maintenance" },
+] as const;
+
+// TODO: add keyboard navigation for selection?
 
 export default function Page() {
   const { resolvedTheme } = useTheme();
@@ -91,7 +105,7 @@ export default function Page() {
             }}
           />
         </div>
-        <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
           {THEME_KEYS.filter((k) => {
             const theme = THEMES[k];
             return (
@@ -108,10 +122,11 @@ export default function Page() {
             return (
               <li key={k} className="space-y-1">
                 <div
+                  // FIXME: use data-active to style instead of conditional
                   className={cn(
-                    "relative h-40 border overflow-hidden transition-all cursor-pointer outline-none focus:outline-ring/50 focus:ring-ring/50 focus:ring-2",
+                    "relative h-40 cursor-pointer overflow-hidden border rounded-md outline-none transition-all focus:outline-ring/50 focus:ring-2 focus:ring-ring/50",
                     k === t
-                      ? "outline-[3px] border-ring outline-ring/50"
+                      ? "border-ring outline-[3px] outline-ring/50"
                       : undefined,
                   )}
                   onClick={() => setSearchParams({ t: k })}
@@ -124,26 +139,49 @@ export default function Page() {
                   }}
                 >
                   <div
-                    className="absolute w-full h-full bg-background text-foreground"
+                    className="absolute h-full w-full bg-background text-foreground"
                     style={style as React.CSSProperties}
                     inert
                   >
                     <ThemePlaygroundMonitor className="pointer-events-none scale-80" />
                   </div>
                 </div>
-                <div>
-                  <div className="font-medium text-foreground text-sm">
-                    {theme.name}
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-medium text-foreground text-sm">
+                      {theme.name}
+                    </div>
+                    <div className="font-mono text-xs">
+                      <Link
+                        href={theme.author.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground"
+                      >
+                        by {theme.author.name}
+                      </Link>
+                    </div>
                   </div>
-                  <div className="text-xs font-mono">
-                    <Link
-                      href={theme.author.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground"
-                    >
-                      by {theme.author.name}
-                    </Link>
+                  <div className="flex gap-0.5">
+                    {MAIN_COLORS.map((color) => {
+                      const backgroundColor = style
+                        ? style[color.key]
+                        : undefined;
+                      return (
+                        // TODO: this is too colorful... maybe only show on hover/active
+                        <TooltipProvider key={color.key}>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div
+                                className="size-3.5 rounded border bg-foreground"
+                                style={{ backgroundColor }}
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>{color.label}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })}
                   </div>
                 </div>
               </li>
