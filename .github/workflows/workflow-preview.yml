@@ -1,0 +1,40 @@
+name: Fly Deploy Workflows
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+    paths:
+      - "apps/workflows/**"
+      - "packages/db/**"
+      - "packages/emails/**"
+      - "packages/utils/**"
+      - "packages/tsconfig/**"
+env:
+    FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    # Set these to your Fly.io organization and preferred region.
+    FLY_REGION: ams
+    FLY_ORG: openstatus
+
+jobs:
+  review_app:
+    runs-on: ubuntu-latest
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    # Only run one deployment at a time per PR.
+    concurrency:
+      group: pr-${{ github.event.number }}
+
+    # Deploying apps with this "review" environment allows the URL for the app to be displayed in the PR UI.
+    # Feel free to change the name of this environment.
+    environment:
+      name: review
+      # The script in the `deploy` sets the URL output for each review app.
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Get code
+        uses: actions/checkout@v4
+
+      - name: Deploy PR app to Fly.io
+        id: deploy
+        uses: superfly/fly-pr-review-apps@1.2.1
+        with:
+          path: apps/workflows/fly.toml
