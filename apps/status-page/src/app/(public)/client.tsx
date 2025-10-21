@@ -174,7 +174,7 @@ export function Client() {
                             <Tooltip>
                               <TooltipTrigger>
                                 <div
-                                  className="size-3.5 rounded border bg-foreground"
+                                  className="size-3.5 rounded-sm border bg-foreground"
                                   style={{ backgroundColor }}
                                 />
                               </TooltipTrigger>
