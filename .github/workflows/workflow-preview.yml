@@ -37,5 +37,5 @@ jobs:
         id: deploy
         uses: superfly/fly-pr-review-apps@1.2.1
         with:
-          path: apps/workflows
+          config: apps/workflows/fly.toml
           name: workflows-pr-${{ github.event.number }}
