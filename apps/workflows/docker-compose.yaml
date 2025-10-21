@@ -23,4 +23,4 @@ services:
               source: ./data
               target: /app/data
         image: workflows-test
-        command: .
+        # command: .
