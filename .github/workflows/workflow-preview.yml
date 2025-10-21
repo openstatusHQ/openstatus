@@ -42,3 +42,4 @@ jobs:
           secrets: |
             DATABASE_URL=${{ secrets.STAGING_DB_URL }}
             DATABASE_AUTH_TOKEN=${{ env.STAGING_DB_AUTH_TOKEN }}
+            RESEND_API_KEY=${{ secrets.STAGING_RESEND_API_KEY }}
