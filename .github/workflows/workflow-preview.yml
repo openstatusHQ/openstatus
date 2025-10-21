@@ -1,4 +1,4 @@
-name: Fly Deploy Workflows
+name: Fly Preview Workflows
 on:
   pull_request:
     types: [opened, reopened, synchronize, closed]
@@ -38,4 +38,7 @@ jobs:
         uses: superfly/fly-pr-review-apps@1.2.1
         with:
           config: apps/workflows/fly.toml
-          name: workflows-pr-${{ github.event.number }}
+          name: openstatus-workflows-pr-${{ github.event.number }}
+          secrets: |
+            DATABASE_URL=${{ secrets.STAGING_DB_URL }}
+            DATABASE_AUTH_TOKEN=${{ env.STAGING_DB_AUTH_TOKEN }}
