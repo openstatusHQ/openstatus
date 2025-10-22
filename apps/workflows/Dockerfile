@@ -45,7 +45,7 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
-RUN bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+RUN bun build --compile --target bun  --sourcemap src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
 # ca-certs
 FROM debian@sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d AS ca-certs

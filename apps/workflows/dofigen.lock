@@ -27,13 +27,22 @@ effective: |
         target: /app/package.json
       run:
       - bun install
+    ca-certs:
+      fromImage:
+        path: debian
+        digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+      label:
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+      run:
+      - apt update && apt install -y ca-certificates && update-ca-certificates
     docker:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
         org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/apps/workflows
       copy:
       - paths:
@@ -112,21 +121,12 @@ effective: |
         source: packages/tinybird/package.json
       - target: packages/upstash/package.json
         source: packages/upstash/package.json
-    ca-certs:
-      fromImage:
-        path: debian
-        digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
-      label:
-        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-        org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
-      run:
-      - apk update && apk upgrade --available && apk add ca-certificates && update-ca-certificates
   fromImage:
     path: debian
     digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
   label:
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     io.dofigen.version: 2.5.0
   workdir: /app/
   copy:
@@ -153,17 +153,17 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
     oven:
       bun:
         latest:
           digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
 resources:
   dofigen.yml:
-    hash: 4c0cfc9f42824ef083d401f675c335053cd0458addbcdf987bd0cd2713a31d42
+    hash: c194d77d0494d8fd58621f1b67b7c9e8fb7fb41204b39ccb06e87a11cb7dc423
     content: |
       ignore:
         - node_modules
@@ -239,7 +239,7 @@ resources:
 
         ca-certs:
           fromImage: debian:bullseye-slim
-          run: apk update && apk upgrade --available && apk add ca-certificates && update-ca-certificates
+          run: apt update && apt install -y ca-certificates && update-ca-certificates
 
       fromImage: debian:bullseye-slim
       workdir: /app/
