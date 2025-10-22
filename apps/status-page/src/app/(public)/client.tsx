@@ -5,6 +5,7 @@ import {
   Section,
   SectionDescription,
   SectionGroup,
+  SectionGroupHeader,
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
@@ -17,6 +18,7 @@ import {
 } from "@/components/status-page/status";
 import { StatusBanner } from "@/components/status-page/status-banner";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,21 +83,29 @@ export function Client() {
 
   return (
     <SectionGroup>
+      <SectionGroupHeader>
+        <h1 className="font-bold text-2xl md:text-4xl">
+          Status Page Theme Explorer
+        </h1>
+        <h2 className="font-medium text-muted-foreground md:text-lg">
+          View all the openstatus themes and learn how to create your own.
+        </h2>
+      </SectionGroupHeader>
       <Section>
         <SectionHeader>
-          <SectionTitle>Status Page Themes</SectionTitle>
+          <SectionTitle>Explorer</SectionTitle>
           <SectionDescription>
-            View all the current themes you can use.{" "}
+            Search for your favorite status page theme.{" "}
             <Link href="#contribute-theme">Contribute your own?</Link>
           </SectionDescription>
         </SectionHeader>
         <div
           // NOTE: not really needed because we override the document style
           style={style as React.CSSProperties}
-          className="sticky top-0 z-10 overflow-hidden rounded-lg border bg-background outline-[3px] outline-background sm:relative"
+          className="sticky top-0 z-10 overflow-hidden rounded-lg border border-border bg-background outline-[3px] outline-background sm:relative"
         >
           <div className="relative">
-            <div className="absolute top-0 right-0 rounded-bl-lg border-b border-l bg-muted px-2 py-0.5 text-[10px]">
+            <div className="absolute top-0 right-0 rounded-bl-lg border-border border-b border-l bg-muted/50 px-2 py-0.5 text-[10px]">
               {theme?.name}
             </div>
             <div className="sm:p-8">
@@ -115,6 +125,7 @@ export function Client() {
               setSearchParams({ q: e.target.value.trim().toLowerCase() });
             }}
           />
+          <ThemePalettePicker />
         </div>
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
           {THEME_KEYS.filter((k) => {
@@ -244,9 +255,9 @@ export function Client() {
       <Section>
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <blockquote>
-            Ideally, we would allow you to customize your theme with{" "}
-            <code>ColorPicker</code> components to easily test and export your
-            theme. Contributions are welcome!
+            Ideally, we would allow you to customize your theme with a{" "}
+            <code>ThemePalettePicker</code> component to easily test and export
+            your theme. Contributions are welcome!
           </blockquote>
           <p>
             Why don't we allow custom css styles to be overridden and only
