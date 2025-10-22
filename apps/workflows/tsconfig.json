@@ -1,6 +1,8 @@
 {
   "extends": "@openstatus/tsconfig/base.json",
   "compilerOptions": {
+    "module": "ESNext",
+    "target": "ES2024",
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "lib": ["ES2022"]

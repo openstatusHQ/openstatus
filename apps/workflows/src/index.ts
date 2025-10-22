@@ -1,21 +1,36 @@
-import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import * as Sentry from "@sentry/node";
+import { configure, getConsoleSink } from "@logtape/logtape";
+import { getSentrySink } from "@logtape/sentry";
 
 const { NODE_ENV, PORT } = env();
+
+Sentry.init({
+  dsn: env().SENTRY_DSN
+});
+
+
+await configure({
+  sinks: { console: getConsoleSink(), sentry: getSentrySink()},
+  loggers: [
+    { category: "workflow", lowestLevel: "debug", sinks: ["console","sentry"] }
+  ]
+});
+
 
 const app = new Hono({ strict: false }) // Add an onError hook to report unhandled exceptions to Sentry.
   .onError((err, c) => {
     // Report _all_ unhandled errors.
-    c.get("sentry").captureException(err);
+    Sentry.captureException(err);
     return c.text("Internal Server Error", 500);
   });
 
-app.use("*", sentry({ dsn: env().SENTRY_DSN }));
+// app.use("*", sentry({ dsn: env().SENTRY_DSN }));
 
 app.use("/*", logger());
 
@@ -32,6 +47,12 @@ app.get("/ping", (c) => c.json({ ping: "pong" }, 200));
 app.route("/cron", cronRouter);
 
 app.route("/", checkerRoute);
+
+app.get("/debug-sentry", () => {
+  console.log('test')
+  console.error("something strange")
+  throw new Error("My first Sentry error!");
+});
 
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
