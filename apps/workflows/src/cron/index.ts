@@ -1,5 +1,6 @@
 // import { getSentry } from "@hono/sentry";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import * as Sentry from "@sentry/node";
 import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
@@ -11,7 +12,6 @@ import {
   StepPaused,
   workflowStepSchema,
 } from "./monitor";
-import * as Sentry from "@sentry/node";
 
 const app = new Hono({ strict: false });
 
@@ -82,10 +82,7 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    Sentry.captureMessage(
-      "userId is missing in /monitors/:step cron",
-      "error",
-    );
+    Sentry.captureMessage("userId is missing in /monitors/:step cron", "error");
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {

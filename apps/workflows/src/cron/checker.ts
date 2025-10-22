@@ -16,7 +16,6 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import { db } from "../lib/db";
 
-import * as Sentry from "@sentry/node";
 // import { getSentry } from "@hono/sentry";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
@@ -24,6 +23,7 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import * as Sentry from "@sentry/node";
 import type { Context } from "hono";
 import { env } from "../env";
 

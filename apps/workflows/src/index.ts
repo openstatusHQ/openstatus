@@ -1,28 +1,31 @@
+import { configure, getConsoleSink, getLogger } from "@logtape/logtape";
+import { getSentrySink } from "@logtape/sentry";
+import * as Sentry from "@sentry/node";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
-import * as Sentry from "@sentry/node";
-import { configure, getConsoleSink, getLogger } from "@logtape/logtape";
-import { getSentrySink } from "@logtape/sentry";
 
 const { NODE_ENV, PORT } = env();
 
 Sentry.init({
-  dsn: env().SENTRY_DSN
+  dsn: env().SENTRY_DSN,
 });
-
 
 await configure({
-  sinks: { console: getConsoleSink(), sentry: getSentrySink()},
+  sinks: { console: getConsoleSink(), sentry: getSentrySink() },
   loggers: [
-    { category: "workflow", lowestLevel: "debug", sinks: ["console","sentry"] }
-  ]
+    {
+      category: "workflow",
+      lowestLevel: "debug",
+      sinks: ["console", "sentry"],
+    },
+  ],
 });
 
-const log = getLogger(["workflow"])
+const log = getLogger(["workflow"]);
 const app = new Hono({ strict: false }) // Add an onError hook to report unhandled exceptions to Sentry.
   .onError((err, c) => {
     // Report _all_ unhandled errors.
@@ -49,10 +52,10 @@ app.route("/cron", cronRouter);
 app.route("/", checkerRoute);
 
 app.get("/debug-sentry", () => {
-  console.log('test')
-  console.error("something strange")
-  log.info('test info')
-  log.error('test error')
+  console.log("test");
+  console.error("something strange");
+  log.info("test info");
+  log.error("test error");
   throw new Error("My first Sentry error!");
 });
 
