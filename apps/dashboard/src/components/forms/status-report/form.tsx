@@ -41,6 +41,7 @@ import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { colors } from "@/data/status-report-updates.client";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
@@ -78,6 +79,7 @@ export function FormStatusReport({
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
+  const mobile = useIsMobile();
   const form = useForm<FormValues>({
     resolver: zodResolver(defaultValues ? updateSchema : schema),
     defaultValues: defaultValues ?? {
@@ -215,7 +217,7 @@ export function FormStatusReport({
                       <PopoverContent
                         className="pointer-events-auto w-auto p-0"
                         align="start"
-                        side="left"
+                        side={mobile ? "bottom" : "left"}
                       >
                         <Calendar
                           mode="single"

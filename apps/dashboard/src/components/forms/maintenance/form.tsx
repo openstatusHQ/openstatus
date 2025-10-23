@@ -33,6 +33,7 @@ import { TabsContent } from "@/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
@@ -69,6 +70,7 @@ export function FormMaintenance({
   monitors: { id: number; name: string; url: string }[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
+  const mobile = useIsMobile();
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -166,7 +168,7 @@ export function FormMaintenance({
                   <PopoverContent
                     className="pointer-events-auto w-auto p-0"
                     align="start"
-                    side="left"
+                    side={mobile ? "bottom" : "left"}
                   >
                     <Calendar
                       mode="single"
@@ -270,7 +272,7 @@ export function FormMaintenance({
                   <PopoverContent
                     className="pointer-events-auto w-auto p-0"
                     align="start"
-                    side="left"
+                    side={mobile ? "bottom" : "left"}
                   >
                     <Calendar
                       mode="single"
