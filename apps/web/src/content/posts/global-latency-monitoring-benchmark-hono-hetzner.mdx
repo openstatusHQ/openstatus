@@ -6,7 +6,7 @@ author:
   name: Thibault Le Ouay Ducasse
   url: https://bsky.app/profile/thibaultleouay.dev
   avatar: /assets/authors/thibault.jpeg
-publishedAt: 2025-10-23
+publishedAt: 2025-10-22
 image: /assets/posts/global-latency-monitoring-benchmark-hono-hetzner/global.png
 tag: engineering
 ---
@@ -105,6 +105,14 @@ I have defined our monitor with the openstatus cli, and this is the exact config
 ```
 
 
+### Analyzing the Results
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/global-latency-monitoring-benchmark-hono-hetzner/hetzner.json"
+    caption="Hetzner data center global latency benchmark from multiple providers between 16 Oct and 23 Oct 2025 aggregated in a 1h window."
+  />
+</div>
 
 #### 1. Regional Consistency Across Providers
 
