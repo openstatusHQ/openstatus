@@ -231,7 +231,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             <HoverCardTrigger asChild>
               <div
                 className={cn(
-                  "rounded-full group relative mx-px flex h-full w-full cursor-pointer flex-col outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                  "group relative mx-px flex h-full w-full cursor-pointer flex-col rounded-full outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
                 )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}
@@ -253,7 +253,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                 {item.bar.map((segment, segmentIndex) => (
                   <div
                     key={`${item.day}-${segment.status}-${segmentIndex}`}
-                    className="w-full transition-all rounded-full"
+                    className="w-full rounded-full transition-all"
                     style={{
                       height: `${segment.height}%`,
                       backgroundColor: chartConfig[segment.status].color,

@@ -103,7 +103,7 @@ export function FloatingTheme({ className }: { className?: string }) {
                             <span className="truncate">
                               {THEMES[theme].name}
                             </span>
-                            <span className="text-muted-foreground text-xs truncate font-commit-mono">
+                            <span className="truncate font-commit-mono text-muted-foreground text-xs">
                               by {THEMES[theme].author.name}
                             </span>
                             <Check

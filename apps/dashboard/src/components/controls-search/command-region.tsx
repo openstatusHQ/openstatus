@@ -164,7 +164,7 @@ export function CommandRegion({
                     }}
                   >
                     <Globe className="size-3" />
-                    <span className="font-mono truncate">{location.name}</span>
+                    <span className="truncate font-mono">{location.name}</span>
                     <Check
                       className={cn(
                         "ml-auto",

@@ -42,7 +42,7 @@ export function getColumns(
               <Tooltip>
                 <TooltipTrigger className="flex h-[50px] items-center gap-1">
                   {region.flag}{" "}
-                  <span className="truncate max-w-[90px]">
+                  <span className="max-w-[90px] truncate">
                     {formatRegionCode(region.code)}
                   </span>
                 </TooltipTrigger>
