@@ -75,7 +75,6 @@ app.use("*", async (c, next) => {
   );
 });
 
-
 app.onError(handleError);
 
 /**
