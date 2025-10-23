@@ -5,6 +5,7 @@ import {
   configureSync,
   getConsoleSink,
   getLogger,
+  jsonLinesFormatter,
   withContext,
 } from "@logtape/logtape";
 import { getSentrySink } from "@logtape/sentry";
@@ -18,7 +19,10 @@ import { env } from "./env";
 const { NODE_ENV, PORT } = env();
 
 configureSync({
-  sinks: { console: getConsoleSink(), sentry: getSentrySink() },
+  sinks: {
+    console: getConsoleSink({ formatter: jsonLinesFormatter }),
+    sentry: getSentrySink(),
+  },
   loggers: [
     {
       category: "workflow",
