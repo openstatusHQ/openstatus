@@ -401,7 +401,7 @@ export function FormConfiguration({
                                         onSelect={(v) => field.onChange(v)}
                                       >
                                         <span className="truncate">{name}</span>
-                                        <span className="text-muted-foreground text-xs truncate font-commit-mono">
+                                        <span className="truncate font-commit-mono text-muted-foreground text-xs">
                                           by {author.name}
                                         </span>
                                         <Check
