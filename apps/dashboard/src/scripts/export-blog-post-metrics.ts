@@ -4,6 +4,8 @@ import { db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
+// WARNING: make sure to enable the Tinybird client in the env you are running this script in
+
 // Configuration
 const MONITOR_ID = "7002";
 const PERIOD = "7d" as const;
@@ -181,7 +183,7 @@ async function main() {
 
     if (!timelineMap.has(timestamp)) {
       timelineMap.set(timestamp, {
-        timestamp: new Date(timestamp * 1000).toISOString(),
+        timestamp: new Date(timestamp).toISOString(),
       });
     }
 

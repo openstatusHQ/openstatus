@@ -33,6 +33,9 @@ const OUTPUT_FILE = "blog-post-metrics.json"; // Output filename
 
 ## Usage
 
+> [!IMPORTANT]
+> Go to the `/tinybird/src/client.ts` file and make sure tb is **not using the NoopClient**.
+
 From the `apps/dashboard` directory:
 
 ```bash
