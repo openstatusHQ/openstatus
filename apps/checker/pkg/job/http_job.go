@@ -15,6 +15,44 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
+func ProtoNumberAssertionToComparator(assertion v1.NumberComparator) (request.NumberComparator, error) {
+	switch assertion {
+	case v1.NumberComparator_NUMBER_COMPARATOR_EQUAL:
+		return request.NumberEquals, nil
+	case v1.NumberComparator_NUMBER_COMPARATOR_NOT_EQUAL:
+		return request.NumberNotEquals, nil
+	case v1.NumberComparator_NUMBER_COMPARATOR_GREATER_THAN:
+		return request.NumberGreaterThan, nil
+	case v1.NumberComparator_NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL:
+		return request.NumberGreaterThanEqual, nil
+	case v1.NumberComparator_NUMBER_COMPARATOR_LESS_THAN:
+		return request.NumberLowerThan, nil
+	case v1.NumberComparator_NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL:
+		return request.NumberLowerThanEqual, nil
+	default:
+
+	}
+	return "", fmt.Errorf("unknown comparator type: %v", assertion)
+}
+
+func ProtoStringAssertionToComparator(assertion v1.StringComparator) (request.StringComparator, error) {
+	switch assertion {
+	case v1.StringComparator_STRING_COMPARATOR_CONTAINS:
+		return request.StringContains, nil
+	case v1.StringComparator_STRING_COMPARATOR_NOT_CONTAINS:
+		return request.StringNotContains, nil
+	case v1.StringComparator_STRING_COMPARATOR_EQUAL:
+		return request.StringEquals, nil
+	case v1.StringComparator_STRING_COMPARATOR_NOT_EQUAL:
+		return request.StringNotEquals, nil
+	case v1.StringComparator_STRING_COMPARATOR_EMPTY:
+		return request.StringEmpty, nil
+	case v1.StringComparator_STRING_COMPARATOR_NOT_EMPTY:
+		return request.StringNotEmpty, nil
+	}
+	return "", fmt.Errorf("unknown comparator type: %v", assertion)
+}
+
 func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error) {
 
 	retry := monitor.Retry
@@ -103,8 +141,13 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 				return nil, fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 			}
 			for _, assertion := range monitor.HeaderAssertions {
+
+				a, err := ProtoStringAssertionToComparator(assertion.Comparator)
+				if err != nil {
+					return nil, fmt.Errorf("error while parsing header assertion comparator: %w", err)
+				}
 				assert := assertions.HeaderTarget{
-					Comparator: request.StringComparator(assertion.Comparator.String()),
+					Comparator: a,
 					Target:     assertion.Target,
 					Key:        assertion.Key,
 				}
@@ -114,8 +157,13 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 
 		if len(monitor.StatusCodeAssertions) > 0 {
 			for _, assertion := range monitor.StatusCodeAssertions {
+				a, err := ProtoNumberAssertionToComparator(assertion.Comparator)
+				if err != nil {
+					return nil, fmt.Errorf("error while parsing header assertion comparator: %w", err)
+				}
+
 				assert := assertions.StatusTarget{
-					Comparator: request.NumberComparator(assertion.Comparator.String()),
+					Comparator: a,
 					Target:     assertion.Target,
 				}
 				isSuccessful = isSuccessful && assert.StatusEvaluate(int64(res.Status))
@@ -123,8 +171,12 @@ func (jr jobRunner) HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*Http
 		}
 		if len(monitor.BodyAssertions) > 0 {
 			for _, assertion := range monitor.BodyAssertions {
+				a, err := ProtoStringAssertionToComparator(assertion.Comparator)
+				if err != nil {
+					return nil, fmt.Errorf("error while parsing header assertion comparator: %w", err)
+				}
 				assert := assertions.StringTargetType{
-					Comparator: request.StringComparator(assertion.Comparator.String()),
+					Comparator: a,
 					Target:     assertion.Target,
 				}
 				isSuccessful = isSuccessful && assert.StringEvaluate(res.Body)
