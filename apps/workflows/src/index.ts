@@ -100,14 +100,6 @@ app.route("/cron", cronRouter);
 
 app.route("/", checkerRoute);
 
-app.get("/debug-sentry", () => {
-  console.log("test");
-  console.error("something strange");
-  logger.info("test info");
-  logger.error("test error");
-  throw new Error("My first Sentry error!");
-});
-
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
