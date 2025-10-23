@@ -11,14 +11,14 @@ image: /assets/posts/global-latency-monitoring-benchmark-hono-hetzner/global.png
 tag: engineering
 ---
 
-At OpenStatus, We offer **global monitoring** to give you an unbiased, external view of your service's performance. To truly test our monitoring capabilities and gather real-world latency data, we decided to benchmark a simple application deployed outside our internal network.
+At OpenStatus, we offer **global monitoring** to give you an unbiased, external view of your service's performance. To truly test our monitoring capabilities and gather real-world latency data, we decided to benchmark a simple application deployed outside our internal network.
 
 
-As software developer, I know that **latency** is critical for user experience. When building an application, understanding how your app performs from different locations around the world is essential.
+As a software developer, I know that **latency** is critical for user experience. When building an application, understanding how your app performs from different locations around the world is essential.
 
 ## The Benchmark Setup
 
-To prevent internal networking biases from skewing the results, I deployed a minimal test application a [**Hono server**](https://github.com/openstatusHQ/status-code/) on third-party cloud providers, independant from OpenStatus's infrastructure.
+To prevent internal networking biases from skewing the results, I deployed a minimal test application a [**Hono server**](https://github.com/openstatusHQ/status-code/) on third-party cloud providers, independent from OpenStatus's infrastructure.
 
 ### Why Hetzner?
 
@@ -26,7 +26,7 @@ I chose **Hetzner** for this experiment primarily for its **affordability** and 
 
 The test app is a single instance deployed in their **Finland datacenter**.
 
-> ⚠️ **A Note on Deployment Experience:** The initial setup experience with Hetzner involved some friction, including KYC verification, which felt a bit dated. To manage the deployment, I opted to use **Coolify Cloud**, which helped bridge the gap, but the inner  developer in me definitely missed the simplicity of a managed **PaaS** during the process.
+> ⚠️ **A Note on Deployment Experience:** The initial setup experience with Hetzner involved some friction, including KYC verification, which felt a bit dated. To manage the deployment, I opted to use **Coolify Cloud**, which helped bridge the gap, but the inner developer in me definitely missed the simplicity of a managed **PaaS** during the process.
 
 
 <Image
@@ -104,6 +104,7 @@ I have defined our monitor with the openstatus cli, and this is the exact config
   retry: 3
 ```
 
+Note that non prefixed regions are Fly regions.
 
 ### Analyzing the Results
 
@@ -139,6 +140,6 @@ In **Singapore**, for example, the probes from **Fly**, **Koyeb**, and **Railway
 
 Through this global setup, I gained valuable insights into external network performance. I confirmed that the core challenge remains **geographic distance**, but the multi-provider approach helped us establish a **reliable baseline** for external connections. Developers can use this methodology to move past internal network bias and truly understand their app's latency profile from various points on the globe.
 
-My 2cts ,if you want to pick a PaaS to deploy your next project, pick the one that fits your needs the best, because in the end, the network differences are minimal!
+My 2cts, if you want to pick a PaaS to deploy your next project, pick the one that fits your needs the best, because in the end, the network differences are minimal!
 
-If you want to try monitoring our app from multiple global locations, you can try our  [global speed checker](https://www.openstatus.dev/play/checker) for free.
+If you want to try monitoring our app from multiple global locations, you can try our [global speed checker](https://www.openstatus.dev/play/checker) for free.
