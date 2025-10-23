@@ -8,12 +8,12 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
 
+import { getLogger } from "@logtape/logtape";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Tinybird } from "@openstatus/tinybird";
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
-import { getLogger } from "@logtape/logtape";
 
 export const checkerRoute = new Hono();
 
@@ -34,11 +34,9 @@ const publishStatus = tb.buildIngestEndpoint({
   event: payloadSchema,
 });
 
-const logger  = getLogger(["workflow"]);
+const logger = getLogger(["workflow"]);
 
 checkerRoute.post("/updateStatus", async (c) => {
-
-
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env().CRON_SECRET}`) {
     logger.error("Unauthorized");
@@ -299,7 +297,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             .set({ status: "error" })
             .where(eq(schema.monitor.id, monitor.id));
         } catch {
-        logger.warning("incident was already created");
+          logger.warning("incident was already created");
         }
 
         break;
