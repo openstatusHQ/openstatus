@@ -8,9 +8,10 @@ import {
   jsonLinesFormatter,
   withContext,
 } from "@logtape/logtape";
-import { getSentrySink } from "@logtape/sentry";
+// import { getSentrySink } from "@logtape/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
+import { requestId } from "hono/request-id";
 // import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
@@ -21,13 +22,13 @@ const { NODE_ENV, PORT } = env();
 configureSync({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
-    sentry: getSentrySink(),
+    // sentry: getSentrySink(),
   },
   loggers: [
     {
       category: "workflow",
       lowestLevel: "debug",
-      sinks: ["console", "sentry"],
+      sinks: ["console"],
     },
   ],
   contextLocalStorage: new AsyncLocalStorage(),
@@ -36,10 +37,12 @@ configureSync({
 const logger = getLogger(["workflow"]);
 const app = new Hono({ strict: false });
 
+app.use("*", requestId());
+
 app.use("*", sentry({ dsn: env().SENTRY_DSN }));
 
 app.use("*", async (c, next) => {
-  const requestId = crypto.randomUUID();
+  const requestId = c.get("requestId");
   const startTime = Date.now();
 
   await withContext(
@@ -83,8 +86,6 @@ app.onError((err, c) => {
 
   return c.json({ error: "Internal server error" }, 500);
 });
-
-// app.use("/*", logger());
 
 app.get("/", (c) => c.text("workflows", 200));
 
