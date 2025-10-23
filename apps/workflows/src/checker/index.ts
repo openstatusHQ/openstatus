@@ -8,6 +8,7 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
 
+import { getLogger } from "@logtape/logtape";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { Tinybird } from "@openstatus/tinybird";
 import { env } from "../env";
@@ -33,10 +34,12 @@ const publishStatus = tb.buildIngestEndpoint({
   event: payloadSchema,
 });
 
+const logger = getLogger(["workflow"]);
+
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env().CRON_SECRET}`) {
-    console.error("Unauthorized");
+    logger.error("Unauthorized");
     return c.text("Unauthorized", 401);
   }
 
@@ -57,7 +60,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     latency,
   } = result.data;
 
-  console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
+  logger.info(`📝 update monitor status ${JSON.stringify(result.data)}`);
 
   // First we upsert the monitor status
   await upsertMonitorStatus({
@@ -145,7 +148,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
 
-        console.log(`🔄 update monitorStatus ${monitor.id} status: ACTIVE`);
+        logger.info(`🔄 update monitorStatus ${monitor.id} status: ACTIVE`);
         await db
           .update(schema.monitor)
           .set({ status: "active" })
@@ -173,7 +176,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             // incident is already resolved
             break;
           }
-          console.log(`🤓 recovering incident ${incident.id}`);
+          logger.info(`🤓 recovering incident ${incident.id}`);
 
           await db
             .update(incidentTable)
@@ -210,7 +213,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           // already degraded let's return early
           break;
         }
-        console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
+        logger.info(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
 
         await db
           .update(schema.monitor)
@@ -235,7 +238,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
 
-        console.log(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
+        logger.info(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
 
         await db
           .update(schema.monitor)
@@ -255,7 +258,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             )
             .get();
           if (incident) {
-            console.log("we are already in incident");
+            logger.info("we are already in incident");
             break;
           }
           const [newIncident] = await db
@@ -294,12 +297,12 @@ checkerRoute.post("/updateStatus", async (c) => {
             .set({ status: "error" })
             .where(eq(schema.monitor.id, monitor.id));
         } catch {
-          console.log("incident was already created");
+          logger.warning("incident was already created");
         }
 
         break;
       default:
-        console.log("should not happen");
+        logger.error("should not happen");
         break;
     }
   }
