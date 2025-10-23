@@ -55,8 +55,6 @@ export function Client() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const { q, t } = searchParams;
   const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
-  const style =
-    theme && mounted ? theme[resolvedTheme as "dark" | "light"] : undefined;
 
   useEffect(() => {
     setMounted(true);
@@ -99,11 +97,7 @@ export function Client() {
             <Link href="#contribute-theme">Contribute your own?</Link>
           </SectionDescription>
         </SectionHeader>
-        <div
-          // NOTE: not really needed because we override the document style
-          style={style as React.CSSProperties}
-          className="sticky top-0 z-10 overflow-hidden rounded-lg border border-border bg-background outline-[3px] outline-background sm:relative"
-        >
+        <div className="sticky top-0 z-10 overflow-hidden rounded-lg border border-border bg-background outline-[3px] outline-background sm:relative">
           <div className="relative">
             <div className="absolute top-0 right-0 rounded-bl-lg border-border border-b border-l bg-muted/50 px-2 py-0.5 text-[10px]">
               {theme?.name}
@@ -113,7 +107,7 @@ export function Client() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <ThemeSelect />
           <Input
             placeholder={`Search from ${THEME_KEYS.length} themes`}
@@ -127,7 +121,7 @@ export function Client() {
           />
           <ThemePalettePicker />
         </div>
-        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           {THEME_KEYS.filter((k) => {
             const theme = THEMES[k];
             return (
@@ -142,15 +136,12 @@ export function Client() {
               ? theme[resolvedTheme as "dark" | "light"]
               : undefined;
             return (
-              <li key={k} className="space-y-1">
+              <li key={k} className="group/theme-card space-y-1.5">
                 <div
-                  // FIXME: use data-active to style instead of conditional
-                  className={cn(
-                    "relative h-40 cursor-pointer overflow-hidden rounded-md border outline-none transition-all focus:outline-ring/50 focus:ring-2 focus:ring-ring/50",
-                    k === t
-                      ? "border-ring outline-[3px] outline-ring/50"
-                      : undefined,
-                  )}
+                  data-active={k === t}
+                  data-slot="theme-card"
+                  data-theme={k}
+                  className="relative h-40 cursor-pointer overflow-hidden rounded-md border outline-none transition-all focus:outline-ring/50 focus:ring-2 focus:ring-ring/50 data-[active=true]:border-ring data-[active=true]:outline-[3px] data-[active=true]:outline-ring/50"
                   onClick={() => setSearchParams({ t: k })}
                   role="button"
                   tabIndex={0}
@@ -169,8 +160,8 @@ export function Client() {
                   </div>
                 </div>
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-medium text-foreground text-sm">
+                  <div className="space-y-0.5">
+                    <div className="font-medium text-foreground text-sm leading-none">
                       {theme.name}
                     </div>
                     <div className="font-mono text-xs">
@@ -190,12 +181,11 @@ export function Client() {
                         ? style[color.key]
                         : undefined;
                       return (
-                        // TODO: this is too colorful... maybe only show on hover/active
                         <TooltipProvider key={color.key}>
                           <Tooltip>
                             <TooltipTrigger>
                               <div
-                                className="size-3.5 rounded-sm border bg-foreground"
+                                className="size-3.5 rounded-sm border bg-muted-foreground"
                                 style={{ backgroundColor }}
                               />
                             </TooltipTrigger>
