@@ -9,6 +9,7 @@ import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,8 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
 import { addDays, format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
-import type React from "react";
-import { useTransition } from "react";
+import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -81,6 +81,12 @@ export function FormMaintenance({
   });
   const watchMessage = form.watch("message");
   const [isPending, startTransition] = useTransition();
+  const { setIsDirty } = useFormSheetDirty();
+
+  const formIsDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    setIsDirty(formIsDirty);
+  }, [formIsDirty, setIsDirty]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -362,7 +368,7 @@ export function FormMaintenance({
             <TabsContent value="tab-2">
               <div className="grid gap-2">
                 <Label>Preview</Label>
-                <div className="rounded-md border px-3 py-2 text-foreground text-sm">
+                <div className="rounded-md border px-3 py-2 text-foreground text-sm prose prose-sm">
                   <ProcessMessage value={watchMessage} />
                 </div>
               </div>

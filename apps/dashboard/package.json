@@ -100,6 +100,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.11",
+    "@tailwindcss/typography": "0.5.10",
     "@types/dom-speech-recognition": "0.0.6",
     "@types/node": "24.0.8",
     "@types/react": "19.2.2",

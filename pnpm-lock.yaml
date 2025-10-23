@@ -27,12 +27,6 @@ importers:
         specifier: 5.7.2
         version: 5.7.2
 
-  apps/build-docker:
-    dependencies:
-      '@libsql/client':
-        specifier: 0.15.15
-        version: 0.15.15(bufferutil@4.0.8)(utf-8-validate@6.0.5)
-
   apps/dashboard:
     dependencies:
       '@auth/core':
@@ -300,6 +294,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: 4.1.11
         version: 4.1.11
+      '@tailwindcss/typography':
+        specifier: 0.5.10
+        version: 0.5.10(tailwindcss@4.1.11)
       '@types/dom-speech-recognition':
         specifier: 0.0.6
         version: 0.0.6
