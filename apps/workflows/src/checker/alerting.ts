@@ -9,6 +9,9 @@ import {
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
+import { getLogger } from "@logtape/logtape";
+
+const logger = getLogger('api-server')
 
 export const triggerNotifications = async ({
   monitorId,
@@ -90,13 +93,13 @@ export const triggerNotifications = async ({
         .all();
 
       if ((smsSent[0]?.count ?? 0) > data.limits["sms-limit"]) {
-        console.log(
+        logger.warn(
           `SMS quota exceeded for workspace ${notif.notification.workspaceId}`,
         );
         continue;
       }
     }
-    console.log(
+    logger.info(
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
     const monitor = selectMonitorSchema.parse(notif.monitor);
@@ -107,7 +110,7 @@ export const triggerNotifications = async ({
         cronTimestamp: cronTimestamp,
       });
     } catch (_e) {
-      console.log("notification trigger already exists dont send again");
+      logger.error("notification trigger already exists dont send again");
       continue;
     }
     switch (notifType) {
@@ -202,6 +205,6 @@ export const upsertMonitorStatus = async ({
       set: { status, updatedAt: new Date() },
     })
     .returning();
-  console.log(`📈 upsertMonitorStatus for ${monitorId} in region ${region}`);
-  console.log(`🤔 upsert monitor ${JSON.stringify(newData)}`);
+  logger.info(`📈 upsertMonitorStatus for ${monitorId} in region ${region}`);
+  logger.info("🤔 upsert monitor {*}", {...newData});
 };

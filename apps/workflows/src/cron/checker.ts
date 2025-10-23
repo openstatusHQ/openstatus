@@ -25,10 +25,13 @@ import {
 } from "@openstatus/utils";
 import type { Context } from "hono";
 import { env } from "../env";
+import { getLogger } from "@logtape/logtape";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };
+
+const logger = getLogger("api-server");
 
 const channelOptions = {
   // Conservative 5-minute keepalive (gRPC best practice)
@@ -89,12 +92,12 @@ export async function sendCheckerTasks(
     )
     .all();
 
-  console.log(`Start cron for ${periodicity}`);
+  logger.info(`Start cron for ${periodicity}`);
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
   if (!monitors.success) {
-    console.error(`Error while fetching the monitors ${monitors.error.errors}`);
+    logger.error(`Error while fetching the monitors ${monitors.error.errors}`);
     throw new Error("Error while fetching the monitors");
   }
 
@@ -121,13 +124,13 @@ export async function sendCheckerTasks(
       const r = regionDict[region as keyof typeof regionDict];
 
       if (!r) {
-        console.error(`Invalid region ${region}`);
+        logger.error(`Invalid region ${region}`);
         continue;
       }
       if (r.deprecated) {
         // Let's uncomment this when we are ready to remove deprecated regions
         // We should not use deprecated regions anymore
-        console.error(`Deprecated region ${region}`);
+        logger.error(`Deprecated region ${region}`);
         continue;
       }
       const response = createCronTask({
@@ -160,10 +163,11 @@ export async function sendCheckerTasks(
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
-  console.log(
+  logger.info(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
   if (failed > 0) {
+    logger.error("error with cron jobs")
     getSentry(c).captureMessage(
       `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
       "error",
