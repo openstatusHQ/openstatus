@@ -559,6 +559,7 @@ export const pageRouter = createTRPCRouter({
           slug: opts.input.slug,
           description: opts.input.description ?? "",
           icon: opts.input.icon ?? "",
+          legacyPage: false,
           customDomain: "", // TODO: make nullable
         })
         .returning()
