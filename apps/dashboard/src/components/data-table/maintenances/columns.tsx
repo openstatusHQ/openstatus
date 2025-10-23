@@ -25,7 +25,7 @@ export const columns: ColumnDef<Maintenance>[] = [
     cell: ({ row }) => {
       const value = String(row.getValue("message"));
       return (
-        <div className="max-w-[200px] truncate text-muted-foreground">
+        <div className="max-w-[200px] truncate text-muted-foreground prose prose-sm line-clamp-3">
           <ProcessMessage value={value} />
         </div>
       );

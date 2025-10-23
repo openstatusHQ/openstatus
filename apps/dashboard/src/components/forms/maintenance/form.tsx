@@ -362,7 +362,7 @@ export function FormMaintenance({
             <TabsContent value="tab-2">
               <div className="grid gap-2">
                 <Label>Preview</Label>
-                <div className="rounded-md border px-3 py-2 text-foreground text-sm">
+                <div className="rounded-md border px-3 py-2 text-foreground text-sm prose prose-sm">
                   <ProcessMessage value={watchMessage} />
                 </div>
               </div>
