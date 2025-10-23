@@ -211,8 +211,9 @@ export function Client() {
           <p>
             You can contribute your own theme by creating a new file in the{" "}
             <code>@openstatus.theme-store</code> package. You&apos;ll only need
-            to override css variables. Make sure your object is satisfiying the{" "}
-            <code>Theme</code> interface.
+            to override css variables. If you are familiar with shadcn, you'll
+            know the trick (it also allows you to override `--radius`). Make
+            sure your object is satisfying the <code>Theme</code> interface.
           </p>
           <p>
             Go to the{" "}
