@@ -11,7 +11,7 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
-const logger = getLogger("api-server");
+const logger = getLogger("workflow");
 
 export const triggerNotifications = async ({
   monitorId,
