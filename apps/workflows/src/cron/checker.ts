@@ -16,12 +16,14 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import { db } from "../lib/db";
 
+import { getSentry } from "@hono/sentry";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import type { Context } from "hono";
 import { env } from "../env";
 
 export const isAuthorizedDomain = (url: string) => {
@@ -39,6 +41,7 @@ const channelOptions = {
 
 export async function sendCheckerTasks(
   periodicity: z.infer<typeof monitorPeriodicitySchema>,
+  c: Context,
 ) {
   const client = new CloudTasksClient({
     fallback: "rest",
@@ -156,12 +159,16 @@ export async function sendCheckerTasks(
 
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
-  const failedRequest = allRequests.filter((r) => r.status === "rejected");
 
-  console.log(failedRequest?.at(0));
   console.log(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
+  if (failed > 0) {
+    getSentry(c).captureMessage(
+      `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
+      "error",
+    );
+  }
 }
 // timestamp needs to be in ms
 const createCronTask = async ({
