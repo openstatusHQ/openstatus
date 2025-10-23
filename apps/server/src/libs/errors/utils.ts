@@ -12,7 +12,9 @@ import {
 
 import { z } from "@hono/zod-openapi";
 import { ZodError } from "zod";
+import { getLogger } from "@logtape/logtape";
 
+const logger = getLogger("api-server")
 export class OpenStatusApiError extends HTTPException {
   public readonly code: ErrorCode;
 
@@ -81,6 +83,18 @@ export function handleError(err: Error, c: Context): Response {
       { status: err.status },
     );
   }
+
+  logger.error("Request error", {
+    error: {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+    },
+    method: c.req.method,
+    url: c.req.url,
+  });
+  c.get("sentry").captureException(err);
+
 
   return c.json<ErrorSchema>(
     {

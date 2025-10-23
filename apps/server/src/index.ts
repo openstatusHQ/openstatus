@@ -32,7 +32,7 @@ configureSync({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-const logger = getLogger(["workflow"]);
+const logger = getLogger("api-server");
 
 export const app = new Hono({ strict: false });
 
@@ -75,20 +75,6 @@ app.use("*", async (c, next) => {
   );
 });
 
-app.onError((err, c) => {
-  logger.error("Request error", {
-    error: {
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-    },
-    method: c.req.method,
-    url: c.req.url,
-  });
-  c.get("sentry").captureException(err);
-
-  return c.json({ error: "Internal server error" }, 500);
-});
 
 app.onError(handleError);
 
