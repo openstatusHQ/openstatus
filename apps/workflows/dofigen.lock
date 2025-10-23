@@ -12,27 +12,13 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    docker:
-      fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:latest
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      workdir: /app/apps/workflows
-      copy:
-      - paths:
-        - .
-        target: /app/
-      run:
-      - bun run src/build-docker.ts
     libsql:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
         org.opencontainers.image.base.name: docker.io/oven/bun:latest
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/
       copy:
       - fromBuilder: docker
@@ -41,15 +27,40 @@ effective: |
         target: /app/package.json
       run:
       - bun install
-    ca-certs:
+    docker:
       fromImage:
-        path: debian
-        digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-        org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.base.name: docker.io/oven/bun:latest
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
       run:
-      - apt update && apt install -y ca-certificates && update-ca-certificates
+      - bun run src/build-docker.ts
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.base.name: docker.io/oven/bun:latest
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
     install:
       fromImage:
         path: oven/bun
@@ -101,33 +112,22 @@ effective: |
         source: packages/tinybird/package.json
       - target: packages/upstash/package.json
         source: packages/upstash/package.json
-    build:
+    ca-certs:
       fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        path: debian
+        digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:latest
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
       run:
-      - bun build --compile --target bun  --sourcemap  src/index.ts --outfile=app --external '@libsql/*' --external libsql
+      - apk update && apk upgrade --available && apk add ca-certificates && update-ca-certificates
   fromImage:
     path: debian
     digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
   label:
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.base.digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
     io.dofigen.version: 2.5.0
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -153,17 +153,17 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    oven:
-      bun:
-        latest:
-          digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
     library:
       debian:
         bullseye-slim:
           digest: sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d
+    oven:
+      bun:
+        latest:
+          digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
 resources:
   dofigen.yml:
-    hash: ce35af59334c2e4255e11cb7c064e75b99b71d80a046caf396e96430c5031ad5
+    hash: 4c0cfc9f42824ef083d401f675c335053cd0458addbcdf987bd0cd2713a31d42
     content: |
       ignore:
         - node_modules
@@ -202,7 +202,7 @@ resources:
             - packages/tsconfig/package.json
             - packages/tinybird/package.json
             - packages/upstash/package.json
-            # - patches
+
           # Install dependencies
           run: bun install --production --ignore-scripts --frozen-lockfile --verbose
           cache:
@@ -219,7 +219,8 @@ resources:
           # Compile the TypeScript application
           env:
             NODE_ENV: production
-          run: bun build --compile --target bun  --sourcemap  src/index.ts --outfile=app --external '@libsql/*' --external libsql
+          run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+
         docker:
           fromImage: oven/bun
           workdir: /app/apps/workflows
@@ -238,7 +239,7 @@ resources:
 
         ca-certs:
           fromImage: debian:bullseye-slim
-          run: apt update && apt install -y ca-certificates && update-ca-certificates
+          run: apk update && apk upgrade --available && apk add ca-certificates && update-ca-certificates
 
       fromImage: debian:bullseye-slim
       workdir: /app/

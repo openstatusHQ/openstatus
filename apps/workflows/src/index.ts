@@ -1,4 +1,4 @@
-import { configure, getConsoleSink, getLogger } from "@logtape/logtape";
+import { configureSync, getConsoleSink, getLogger } from "@logtape/logtape";
 import { getSentrySink } from "@logtape/sentry";
 import * as Sentry from "@sentry/node";
 import { Hono } from "hono";
@@ -14,8 +14,9 @@ Sentry.init({
   dsn: env().SENTRY_DSN,
 });
 
-await configure({
-  sinks: { console: getConsoleSink(), sentry: getSentrySink() },
+
+configureSync({
+  sinks: { console: getConsoleSink(), sentry: getSentrySink()},
   loggers: [
     {
       category: "workflow",

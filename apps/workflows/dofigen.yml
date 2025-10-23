@@ -35,7 +35,7 @@ builders:
       - packages/tsconfig/package.json
       - packages/tinybird/package.json
       - packages/upstash/package.json
-      # - patches
+
     # Install dependencies
     run: bun install --production --ignore-scripts --frozen-lockfile --verbose
     cache:
@@ -52,7 +52,8 @@ builders:
     # Compile the TypeScript application
     env:
       NODE_ENV: production
-    run: bun build --compile --target bun  --sourcemap  src/index.ts --outfile=app --external '@libsql/*' --external libsql
+    run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+
   docker:
     fromImage: oven/bun
     workdir: /app/apps/workflows
