@@ -1,5 +1,5 @@
 export * from "./types";
-import { DEFAULT_THEME } from "./default";
+import { DEFAULT_ROUNDED_THEME, DEFAULT_THEME } from "./default";
 import { GITHUB_CONTRAST } from "./github-contrast";
 import { SUPABASE } from "./supabase";
 import type { Theme, ThemeMap } from "./types";
@@ -7,8 +7,9 @@ import type { Theme, ThemeMap } from "./types";
 // TODO: Add validation to ensure that the theme IDs are unique
 const THEMES_LIST = [
   DEFAULT_THEME,
-  GITHUB_CONTRAST,
+  DEFAULT_ROUNDED_THEME,
   SUPABASE,
+  GITHUB_CONTRAST,
 ] satisfies Theme[];
 
 export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {

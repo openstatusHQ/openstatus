@@ -90,19 +90,18 @@ export function StatusPageProvider({
   useEffect(() => {
     const theme = resolvedTheme as "dark" | "light";
     if (["dark", "light"].includes(theme)) {
+      const element = document.documentElement;
+      element.removeAttribute("style"); // reset the style
       Object.keys(THEMES[communityTheme][theme]).forEach((key) => {
-        const element = document.documentElement;
         const value =
           THEMES[communityTheme][theme][
             key as keyof (typeof THEMES)[typeof communityTheme][typeof theme]
           ];
+        console.log(key, value);
         if (value) {
           element.style.setProperty(key, value as string);
         }
       });
-    }
-    if (communityTheme === "default") {
-      document.documentElement.removeAttribute("style");
     }
   }, [resolvedTheme, communityTheme]);
 

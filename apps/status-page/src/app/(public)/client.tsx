@@ -63,8 +63,9 @@ export function Client() {
   useEffect(() => {
     const theme = resolvedTheme as "dark" | "light";
     if (["dark", "light"].includes(theme)) {
+      const element = document.documentElement;
+      element.removeAttribute("style"); // reset the style
       Object.keys(THEMES[t][theme]).forEach((key) => {
-        const element = document.documentElement;
         const value =
           THEMES[t][theme][
             key as keyof (typeof THEMES)[typeof t][typeof theme]
@@ -73,9 +74,6 @@ export function Client() {
           element.style.setProperty(key, value as string);
         }
       });
-    }
-    if (t === "default") {
-      document.documentElement.removeAttribute("style");
     }
   }, [resolvedTheme, t]);
 

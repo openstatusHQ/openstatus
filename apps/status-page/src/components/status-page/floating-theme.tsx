@@ -61,11 +61,11 @@ export function FloatingTheme({ className }: { className?: string }) {
             <div className="space-y-2">
               <h4 className="font-medium leading-none">Theme Settings</h4>
               <p className="text-muted-foreground text-sm">
-                Test the community themes on the status page.
+                Test community themes on the status page.
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="theme">Theme</Label>
+              <Label htmlFor="theme">Theme Mode</Label>
               <ThemeSelect id="theme" className="w-full" />
             </div>
             <div className="space-y-2">

@@ -45,3 +45,17 @@ export const DEFAULT_THEME = {
     "--info": "oklch(62% 0.19 260)",
   },
 } as const satisfies Theme;
+
+export const DEFAULT_ROUNDED_THEME = {
+  id: "default-rounded" as const,
+  name: "Default (Rounded)",
+  author: DEFAULT_THEME.author,
+  light: {
+    ...DEFAULT_THEME.light,
+    "--radius": "0.625rem",
+  },
+  dark: {
+    ...DEFAULT_THEME.dark,
+    "--radius": "0.625rem",
+  },
+} as const satisfies Theme;
