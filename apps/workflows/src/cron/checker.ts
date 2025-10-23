@@ -31,7 +31,7 @@ export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };
 
-const logger = getLogger("api-server");
+const logger = getLogger("workflow");
 
 const channelOptions = {
   // Conservative 5-minute keepalive (gRPC best practice)

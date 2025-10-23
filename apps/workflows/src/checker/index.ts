@@ -60,7 +60,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     latency,
   } = result.data;
 
-  logger.info(`📝 update monitor status ${JSON.stringify(result.data)}`);
+  logger.info("📝 update monitor status {*}", { ...result.data });
 
   // First we upsert the monitor status
   await upsertMonitorStatus({
