@@ -1,18 +1,19 @@
-import { configureSync, getConsoleSink, getLogger } from "@logtape/logtape";
+import { configureSync, getConsoleSink, getLogger, withContext } from "@logtape/logtape";
 import { getSentrySink } from "@logtape/sentry";
-import * as Sentry from "@sentry/node";
+// import * as Sentry from "@sentry/node";
+import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
-import { logger } from "hono/logger";
+// import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import { AsyncLocalStorage
+ } from "node:async_hooks";
 
 const { NODE_ENV, PORT } = env();
 
-Sentry.init({
-  dsn: env().SENTRY_DSN,
-});
+
 
 
 configureSync({
@@ -24,19 +25,58 @@ configureSync({
       sinks: ["console", "sentry"],
     },
   ],
+  contextLocalStorage: new AsyncLocalStorage(),
 });
 
-const log = getLogger(["workflow"]);
-const app = new Hono({ strict: false }) // Add an onError hook to report unhandled exceptions to Sentry.
-  .onError((err, c) => {
-    // Report _all_ unhandled errors.
-    Sentry.captureException(err);
-    return c.text("Internal Server Error", 500);
+const logger = getLogger(["workflow"]);
+const app = new Hono({ strict: false });
+
+app.use("*", sentry({ dsn: env().SENTRY_DSN }));
+
+app.use("*", async (c, next) => {
+  const requestId = crypto.randomUUID();
+  const startTime = Date.now();
+
+  await withContext({
+    requestId,
+    method: c.req.method,
+    url: c.req.url,
+    userAgent: c.req.header("User-Agent"),
+    // ipAddress: c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For")
+  }, async () => {
+    logger.info("Request started", {
+      method: c.req.method,
+      url: c.req.url,
+      requestId
+    });
+
+    await next();
+
+    const duration = Date.now() - startTime;
+    logger.info("Request completed", {
+      status: c.res.status,
+      duration,
+      requestId
+    });
   });
+});
 
-// app.use("*", sentry({ dsn: env().SENTRY_DSN }));
+app.onError((err, c) => {
+  logger.error("Request error", {
+    error: {
+      name: err.name,
+      message: err.message,
+      stack: err.stack
+    },
+    method: c.req.method,
+    url: c.req.url
+  });
+  c.get("sentry").captureException(err);
 
-app.use("/*", logger());
+  return c.json({ error: "Internal server error" }, 500);
+});
+
+// app.use("/*", logger());
 
 app.get("/", (c) => c.text("workflows", 200));
 
@@ -55,8 +95,8 @@ app.route("/", checkerRoute);
 app.get("/debug-sentry", () => {
   console.log("test");
   console.error("something strange");
-  log.info("test info");
-  log.error("test error");
+  logger.info("test info");
+  logger.error("test error");
   throw new Error("My first Sentry error!");
 });
 

@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@google-cloud/tasks": "4.0.1",
+    "@hono/sentry": "1.2.2",
     "@libsql/client": "0.15.15",
     "@logtape/logtape": "1.1.2",
     "@logtape/sentry": "1.1.2",
@@ -24,7 +25,6 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@sentry/node": "10.21.0",
     "@upstash/qstash": "2.6.2",
     "drizzle-orm": "0.44.4",
     "hono": "4.5.3",

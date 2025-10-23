@@ -1,6 +1,5 @@
-// import { getSentry } from "@hono/sentry";
+import { getSentry } from "@hono/sentry";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import * as Sentry from "@sentry/node";
 import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
@@ -31,14 +30,14 @@ app.get("/checker/:period", async (c) => {
   if (!schema.success) {
     return c.json({ error: schema.error.issues?.[0].message }, 400);
   }
-  // const sentry = getSentry(c);
-  const checkInId = Sentry.captureCheckIn({
+  const sentry = getSentry(c);
+  const checkInId = sentry.captureCheckIn({
     monitorSlug: period,
     status: "in_progress",
   });
   try {
     await sendCheckerTasks(schema.data, c);
-    Sentry.captureCheckIn({
+    sentry.captureCheckIn({
       checkInId,
       monitorSlug: period,
       status: "ok",
@@ -46,8 +45,8 @@ app.get("/checker/:period", async (c) => {
     return c.json({ success: schema.data }, 200);
   } catch (e) {
     console.error(e);
-    Sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
-    Sentry.captureCheckIn({
+    sentry.captureMessage(`Error in /checker/${period} cron: ${e}`, "error");
+    sentry.captureCheckIn({
       checkInId,
       monitorSlug: period,
       status: "error",
@@ -82,11 +81,14 @@ app.get("/monitors/:step", async (c) => {
   }
 
   if (!userId) {
-    Sentry.captureMessage("userId is missing in /monitors/:step cron", "error");
+    getSentry(c).captureMessage(
+      "userId is missing in /monitors/:step cron",
+      "error",
+    );
     return c.json({ error: "userId is required" }, 400);
   }
   if (!initialRun) {
-    Sentry.captureMessage(
+    getSentry(c).captureMessage(
       "initalRun is missing in /monitors/:step cron",
       "error",
     );

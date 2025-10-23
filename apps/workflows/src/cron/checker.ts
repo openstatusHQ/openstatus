@@ -16,14 +16,13 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import { db } from "../lib/db";
 
-// import { getSentry } from "@hono/sentry";
+import { getSentry } from "@hono/sentry";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
-import * as Sentry from "@sentry/node";
 import type { Context } from "hono";
 import { env } from "../env";
 
@@ -165,7 +164,7 @@ export async function sendCheckerTasks(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
   if (failed > 0) {
-    Sentry.captureMessage(
+    getSentry(c).captureMessage(
       `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
       "error",
     );
