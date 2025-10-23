@@ -18,3 +18,4 @@ export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
 }, {} as ThemeMap);
 
 export const THEME_KEYS = THEMES_LIST.map((theme) => theme.id);
+export type ThemeKey = (typeof THEME_KEYS)[number];

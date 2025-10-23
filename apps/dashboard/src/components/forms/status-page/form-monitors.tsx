@@ -193,7 +193,6 @@ export function FormMonitors({
                             "w-[200px] justify-between",
                             !field.value && "text-muted-foreground",
                           )}
-                          size="sm"
                         >
                           {field.value.length > 0
                             ? `${field.value.length} monitors selected`

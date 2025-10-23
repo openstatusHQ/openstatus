@@ -2,6 +2,13 @@
 
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
+import {
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -18,7 +25,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
-import { Settings } from "lucide-react";
+import { Check, ChevronsUpDown, Command, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
@@ -314,24 +321,56 @@ export function FloatingButton({
               ) : null}
               <div className="space-y-2">
                 <Label htmlFor="community-theme">Community Theme</Label>
-                <Select
-                  value={communityTheme}
-                  onValueChange={(v) => setCommunityTheme(v as CommunityTheme)}
-                >
-                  <SelectTrigger
-                    id="community-theme"
-                    className="w-full capitalize"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COMMUNITY_THEME.map((v) => (
-                      <SelectItem key={v} value={v} className="capitalize">
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="community-theme"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      {communityTheme}
+                      <ChevronsUpDown className="opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0">
+                    <Command>
+                      <CommandInput
+                        placeholder="Search themes..."
+                        className="h-9"
+                      />
+                      <CommandList>
+                        <CommandEmpty>No themes found.</CommandEmpty>
+                        <CommandGroup>
+                          {COMMUNITY_THEME.map((theme) => (
+                            <CommandItem
+                              value={theme}
+                              key={theme}
+                              onSelect={(v) =>
+                                setCommunityTheme(v as CommunityTheme)
+                              }
+                            >
+                              <span className="truncate">
+                                {THEMES[theme].name}
+                              </span>
+                              <span className="text-muted-foreground text-xs truncate font-commit-mono">
+                                by {THEMES[theme].author.name}
+                              </span>
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  theme === communityTheme
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
           </div>
