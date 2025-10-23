@@ -1,0 +1,132 @@
+---
+title: "Global Latency Monitoring: Benchmarking a Hono App on Hetzner with OpenStatus"
+description:
+  "Benchmarking network latency: See the results of monitoring our Hono server on Hetzner from global locations hosted by Fly, Koyeb, and Railway. We analyze the impact of distance and provider networks."
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+  avatar: /assets/authors/thibault.jpeg
+publishedAt: 2025-10-23
+image: /assets/posts/global-latency-monitoring-benchmark-hono-hetzner/global.png
+tag: engineering
+---
+
+At OpenStatus, I offer **global monitoring** to give you an unbiased, external view of your service's performance. To truly test our monitoring capabilities and gather real-world latency data, I decided to benchmark a simple application deployed outside our internal network.
+
+
+As software developer, I know that **latency** is critical for user experience. When building an application, understanding how your app performs from different locations around the world is essential.
+
+## The Benchmark Setup
+
+To prevent internal networking biases from skewing the results, I deployed a minimal test application—a **Hono server**—on a third-party cloud providers, independant from OpenStatus's infrastructure.
+
+### Why Hetzner?
+
+I chose **Hetzner** for this experiment primarily for its **affordability** and robust infrastructure. It’s a popular choice for developers, making it a relevant target for benchmarking.
+
+The test app is a single instance deployed in their **Finland datacenter**.
+
+> ⚠️ **A Note on Deployment Experience:** The initial setup experience with Hetzner involved some friction, including KYC verification, which felt a bit dated. To manage the deployment, I opted to use **Coolify Cloud**, which helped bridge the gap, but the inner  developer in me definitely missed the simplicity of a managed **PaaS** during the process.
+
+
+<Image
+  alt="hetzner kyc"
+  src="/assets/posts/global-latency-monitoring-benchmark-hono-hetzner/hetzner.jpg"
+  width={800}
+  height={800}
+/>
+
+
+##  Monitoring Strategy with OpenStatus
+
+The core of this experiment is to see how different cloud providers' network paths affect the latency to our Finland-based Hetzner app.
+
+We've set up OpenStatus probes across multiple continents and providers, specifically leveraging monitoring locations from:
+
+- **Fly.io**
+- **Koyeb**
+- **Railway**
+
+The goal is to monitor latency from similar geographic regions across these different providers to observe any network path variations.
+
+
+### OpenStatus Probe Configuration
+
+Our monitoring strategy is focused on diverse, yet regionally comparable, deployment regions:
+
+| Location          | Providers           |
+| ----------------- | ------------------- |
+| Frankfurt         | Koyeb, Fly          |
+| Amsterdam         | Fly, Railway        |
+| Paris             | Koyeb, Fly          |
+| US East           | Koyeb, Fly, Railway |
+| US West (LAX/SFO) | Koyeb, Fly, Railway |
+| Singapore         | Koyeb, Fly, Railway |
+| Tokyo             | Koyeb, Fly          |
+
+
+I have defined our monitor with the openstatus cli, and this is the exact configuration used for it :
+
+
+```yaml
+"hetzner-monitoring":
+  active: true
+  assertions:
+  - compare: eq
+    kind: statusCode
+    target: 200
+  frequency: 1m
+  kind: http
+  name: Hetzner Monitoring
+  openTelemetry: {}
+  public: true
+  regions:
+  - koyeb_fra
+  - cdg
+  - ams
+  - railway_europe-west4-drams3a
+  - fra
+  - koyeb_par
+  - koyeb_sfo
+  - railway_us-west2
+  - lax
+  - iad
+  - koyeb_was
+  - railway_us-east4-eqdc4a
+  - koyeb_sin
+  - railway_asia-southeast1-eqsg3a
+  - koyeb_tyo
+  - sin
+  - nrt
+  request:
+    method: GET
+    url: https://hetzner.openstat.us/
+  retry: 3
+```
+
+
+
+#### 1. Regional Consistency Across Providers
+
+In regions geographically close to the Hetzner Finland datacenter, probes deployed on different cloud providers showed remarkably similar performance.
+
+For instance, from **Frankfurt, Germany**:
+
+- The latency from the **Koyeb** probe and the **Fly** probe had an almost identical **P95 latency of ≈80ms**.
+
+This indicates that in proximate locations, the difference in the cloud provider's network path to the target server is minimal; the dominant factor is the geographical distance and core internet routing.
+
+#### 2. Distance is the Primary Factor
+
+The most significant finding reinforces a basic network principle: **the farther you are from the server location, the longer the latency is.**
+
+#### 3. Consistency Even at Extreme Distance
+
+Even across vast distances, the latency differences between providers remained small.
+
+In **Singapore**, for example, the probes from **Fly**, **Koyeb**, and **Railway** all reported very similar latencies, often with **less than a 10% difference** between their average results. This suggests that while all are far, none of the providers offer a vastly superior or inferior route for transcontinental communication in this case.
+
+
+## Conclusion
+
+Through this global setup, I gained valuable insights into external network performance. I confirmed that the core challenge remains **geographic distance**, but the multi-provider approach helped us establish a **reliable baseline** for external connections. Developers can use this methodology to move past internal network bias and truly understand their app's latency profile from various points on the globe.
