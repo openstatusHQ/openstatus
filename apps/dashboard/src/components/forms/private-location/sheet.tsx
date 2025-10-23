@@ -2,13 +2,13 @@
 
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
-  FormSheet,
   FormSheetContent,
   FormSheetDescription,
   FormSheetFooter,
   FormSheetHeader,
   FormSheetTitle,
   FormSheetTrigger,
+  FormSheetWithDirtyProtection,
 } from "@/components/forms/form-sheet";
 import {
   FormPrivateLocation,
@@ -31,7 +31,7 @@ export function FormSheetPrivateLocation({
   const [open, setOpen] = useState(false);
 
   return (
-    <FormSheet open={open} onOpenChange={setOpen}>
+    <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
       <FormSheetTrigger {...props} asChild>
         {children}
       </FormSheetTrigger>
@@ -62,6 +62,6 @@ export function FormSheetPrivateLocation({
           </Button>
         </FormSheetFooter>
       </FormSheetContent>
-    </FormSheet>
+    </FormSheetWithDirtyProtection>
   );
 }

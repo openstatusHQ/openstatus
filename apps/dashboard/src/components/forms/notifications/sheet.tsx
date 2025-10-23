@@ -2,13 +2,13 @@
 
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
-  FormSheet,
   FormSheetContent,
   FormSheetDescription,
   FormSheetFooter,
   FormSheetHeader,
   FormSheetTitle,
   FormSheetTrigger,
+  FormSheetWithDirtyProtection,
 } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
 import { config } from "@/data/notifications.client";
@@ -34,7 +34,7 @@ export function FormSheetNotifier({
   const Form = provider ? config[provider].form : undefined;
 
   return (
-    <FormSheet open={open} onOpenChange={setOpen}>
+    <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
       <FormSheetTrigger {...props} asChild>
         {children}
       </FormSheetTrigger>
@@ -78,6 +78,6 @@ export function FormSheetNotifier({
           </Button>
         </FormSheetFooter>
       </FormSheetContent>
-    </FormSheet>
+    </FormSheetWithDirtyProtection>
   );
 }

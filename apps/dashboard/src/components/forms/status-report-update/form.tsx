@@ -5,6 +5,7 @@ import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -38,7 +39,7 @@ import { statusReportStatus } from "@openstatus/db/src/schema";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
-import { useTransition } from "react";
+import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -70,6 +71,12 @@ export function FormStatusReportUpdate({
   });
   const watchMessage = form.watch("message");
   const [isPending, startTransition] = useTransition();
+  const { setIsDirty } = useFormSheetDirty();
+
+  const formIsDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    setIsDirty(formIsDirty);
+  }, [formIsDirty, setIsDirty]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;

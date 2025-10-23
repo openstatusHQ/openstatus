@@ -2,13 +2,13 @@
 
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
-  FormSheet,
   FormSheetContent,
   FormSheetDescription,
   FormSheetFooter,
   FormSheetHeader,
   FormSheetTitle,
   FormSheetTrigger,
+  FormSheetWithDirtyProtection,
 } from "@/components/forms/form-sheet";
 import {
   FormStatusReport,
@@ -33,7 +33,7 @@ export function FormSheetStatusReport({
   const [open, setOpen] = useState(false);
 
   return (
-    <FormSheet open={open} onOpenChange={setOpen}>
+    <FormSheetWithDirtyProtection open={open} onOpenChange={setOpen}>
       <FormSheetTrigger asChild>{children}</FormSheetTrigger>
       <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
@@ -68,6 +68,6 @@ export function FormSheetStatusReport({
           </Button>
         </FormSheetFooter>
       </FormSheetContent>
-    </FormSheet>
+    </FormSheetWithDirtyProtection>
   );
 }

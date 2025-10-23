@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
-import { useTransition } from "react";
+import React, { useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -58,6 +59,12 @@ export function FormMonitorTag({
   });
 
   const [isPending, startTransition] = useTransition();
+  const { setIsDirty } = useFormSheetDirty();
+
+  const formIsDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    setIsDirty(formIsDirty);
+  }, [formIsDirty, setIsDirty]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
