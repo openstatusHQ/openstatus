@@ -49,6 +49,8 @@ jobs:
             UPSTASH_REDIS_REST_URL=test
             UPSTASH_REDIS_REST_TOKEN=test
             GCP_PROJECT_ID=test
+            NEXT_PUBLIC_OPENPANEL_CLIENT_ID=test
+            OPENPANEL_CLIENT_SECRET=test
 
       - name: Clean up GitHub environment
         uses: strumwolf/delete-deployment-environment@v2
