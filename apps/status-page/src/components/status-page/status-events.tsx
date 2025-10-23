@@ -361,7 +361,7 @@ export function StatusEventTimelineMessage({
   return (
     <div
       className={cn(
-        "py-1.5 font-mono text-sm text-muted-foreground",
+        "py-1.5 font-mono text-muted-foreground text-sm",
         className,
       )}
       {...props}

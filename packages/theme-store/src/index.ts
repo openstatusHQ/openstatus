@@ -1,21 +1,15 @@
 export * from "./types";
+import { DEFAULT_ROUNDED_THEME, DEFAULT_THEME } from "./default";
 import { GITHUB_CONTRAST } from "./github-contrast";
 import { SUPABASE } from "./supabase";
 import type { Theme, ThemeMap } from "./types";
 
-const DEFAULT_THEME = {
-  id: "default" as const,
-  name: "Default",
-  author: { name: "@openstatus", url: "https://openstatus.dev" },
-  light: {},
-  dark: {},
-} as const satisfies Theme;
-
 // TODO: Add validation to ensure that the theme IDs are unique
 const THEMES_LIST = [
   DEFAULT_THEME,
-  GITHUB_CONTRAST,
+  DEFAULT_ROUNDED_THEME,
   SUPABASE,
+  GITHUB_CONTRAST,
 ] satisfies Theme[];
 
 export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
@@ -24,3 +18,4 @@ export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
 }, {} as ThemeMap);
 
 export const THEME_KEYS = THEMES_LIST.map((theme) => theme.id);
+export type ThemeKey = (typeof THEME_KEYS)[number];

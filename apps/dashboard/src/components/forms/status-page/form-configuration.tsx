@@ -15,6 +15,14 @@ import {
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -34,6 +42,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -41,10 +54,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import { THEMES, THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
 import { isTRPCClientError } from "@trpc/client";
-import { ArrowUpRight, Info } from "lucide-react";
+import { ArrowUpRight, Check, ChevronsUpDown, Info } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -350,29 +364,62 @@ export function FormConfiguration({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Theme</FormLabel>
-                        <FormControl>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={String(field.value) ?? "default"}
-                          >
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <FormControl>
-                              <SelectTrigger className="w-full capitalize">
-                                <SelectValue placeholder="Select a theme" />
-                              </SelectTrigger>
+                              <Button
+                                id="community-theme"
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {THEMES[field.value as ThemeKey]?.name ||
+                                  "Select a theme"}
+                                <ChevronsUpDown className="opacity-50" />
+                              </Button>
                             </FormControl>
-                            <SelectContent>
-                              {Object.values(THEMES).map((theme) => (
-                                <SelectItem
-                                  key={theme.id}
-                                  value={theme.id}
-                                  className="capitalize"
-                                >
-                                  {theme.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="p-0" align="start">
+                            <Command>
+                              <CommandInput
+                                placeholder="Search themes..."
+                                className="h-9"
+                              />
+                              <CommandList>
+                                <CommandEmpty>No themes found.</CommandEmpty>
+                                <CommandGroup>
+                                  {THEME_KEYS.map((theme) => {
+                                    const { name, author } = THEMES[theme];
+                                    return (
+                                      <CommandItem
+                                        value={theme}
+                                        key={theme}
+                                        keywords={[theme, name, author.name]}
+                                        onSelect={(v) => field.onChange(v)}
+                                      >
+                                        <span className="truncate">{name}</span>
+                                        <span className="text-muted-foreground text-xs truncate font-commit-mono">
+                                          by {author.name}
+                                        </span>
+                                        <Check
+                                          className={cn(
+                                            "ml-auto",
+                                            theme === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </FormItem>
                     )}
                   />
