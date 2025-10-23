@@ -6,12 +6,12 @@ import {
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 
+import { getLogger } from "@logtape/logtape";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
-import { getLogger } from "@logtape/logtape";
 
-const logger = getLogger('api-server')
+const logger = getLogger("api-server");
 
 export const triggerNotifications = async ({
   monitorId,
@@ -206,5 +206,5 @@ export const upsertMonitorStatus = async ({
     })
     .returning();
   logger.info(`📈 upsertMonitorStatus for ${monitorId} in region ${region}`);
-  logger.info("🤔 upsert monitor {*}", {...newData});
+  logger.info("🤔 upsert monitor {*}", { ...newData });
 };

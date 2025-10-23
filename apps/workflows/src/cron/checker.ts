@@ -17,6 +17,7 @@ import { regionDict } from "@openstatus/regions";
 import { db } from "../lib/db";
 
 import { getSentry } from "@hono/sentry";
+import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
@@ -25,7 +26,6 @@ import {
 } from "@openstatus/utils";
 import type { Context } from "hono";
 import { env } from "../env";
-import { getLogger } from "@logtape/logtape";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
@@ -167,7 +167,7 @@ export async function sendCheckerTasks(
     `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
   );
   if (failed > 0) {
-    logger.error("error with cron jobs")
+    logger.error("error with cron jobs");
     getSentry(c).captureMessage(
       `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
       "error",
