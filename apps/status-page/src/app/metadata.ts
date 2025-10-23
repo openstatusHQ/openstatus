@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
 export const DESCRIPTION =
-  "Easily customize your status page using our built-in themes. Explore our themes and contribute new ones to the community.";
+  "Easily customize your status page using our built-in themes. Explore all themes and contribute new ones to the community.";
 
-const OG_TITLE = "Theme explorer";
+const OG_TITLE = "Theme Explorer";
 const OG_DESCRIPTION =
-  "Explore our themes for your status page and contribute new ones to the community.";
+  "Explore all themes for your status page and contribute new ones to the community.";
 const FOOTER = "themes.openstatus.dev";
-const IMAGE = "assets/og/dashboard-v2.png";
+const IMAGE = "assets/og/theme-explorer.png";
 
 export const defaultMetadata: Metadata = {
   title: {
