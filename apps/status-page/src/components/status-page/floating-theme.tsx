@@ -79,7 +79,9 @@ export function FloatingTheme({ className }: { className?: string }) {
                     role="combobox"
                     className="w-full justify-between font-normal"
                   >
-                    {THEMES[communityTheme].name}
+                    <span className="truncate">
+                      {THEMES[communityTheme].name}
+                    </span>
                     <ChevronsUpDown className="opacity-50" />
                   </Button>
                 </PopoverTrigger>
