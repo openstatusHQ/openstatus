@@ -102,7 +102,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
                     </div>
                   );
                 }}
-                formatter={(value, name) => (
+                formatter={(value, name, item, index) => (
                   <>
                     <div
                       className="h-2.5 w-2.5 shrink-0 rounded-[2px] bg-(--color-bg)"
@@ -120,6 +120,20 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
                         ms
                       </span>
                     </div>
+                    {index === Object.keys(chartConfig).length - 1 && (
+                      <div className="flex basis-full items-center border-t pt-1.5 font-medium text-foreground text-xs">
+                        Latency
+                        <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
+                          {Object.keys(chartConfig).reduce((acc, key) => {
+                            if (key === "transfer") return acc;
+                            return acc + item.payload[key];
+                          }, 0)}
+                          <span className="font-normal text-muted-foreground">
+                            ms
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               />

@@ -1,6 +1,7 @@
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
 import { Mdx } from "@/components/content/mdx";
+import { Icons } from "@/components/icons";
 import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
@@ -102,15 +103,17 @@ export function FeatureStatusPageTracker(
   );
 }
 
-export function FeatureCharts(
-  props: Partial<Pick<InteractiveFeatureProps, "position">>,
-) {
+export function FeatureCharts({
+  title = "Opinionated Dashboard.",
+  subTitle = "Keep an overview about Uptime, P50, P75, P90, P95, P99 of your monitors. Share it with your team or make it public.",
+  position = "top",
+}: Partial<Pick<InteractiveFeatureProps, "position" | "title" | "subTitle">>) {
   return (
     <InteractiveFeature
       icon="line-chart"
       iconText="Charts"
-      title="Opinionated Dashboard."
-      subTitle="Keep an overview about Uptime, P50, P75, P90, P95, P99 of your monitors. Share it with your team or make it public."
+      title={title}
+      subTitle={subTitle}
       action={
         <div className="mt-2">
           <Button variant="outline" className="rounded-full" asChild>
@@ -126,7 +129,7 @@ export function FeatureCharts(
         </div>
       }
       col={2}
-      position={props.position || "top"}
+      position={position}
       withGradient
     />
   );
@@ -581,6 +584,73 @@ export function FeatureOpenTelemetry(
       col={2}
       position={props.position || "top"}
       withGradient
+    />
+  );
+}
+
+export function FeaturePrivateLocationsDockerImage(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  return (
+    <InteractiveFeature
+      icon="cpu"
+      iconText="Performance"
+      title="Run anywhere."
+      position={props.position || "left"}
+      col={1}
+      subTitle="The Docker image is so small, you can run it on your own homelab or Raspberry Pi."
+      component={
+        <div className="flex h-full flex-col items-center justify-center gap-3">
+          <Icons.cpu className="size-8 text-muted-foreground" />
+          <p className="font-medium">8.5MB</p>
+        </div>
+      }
+      action={
+        <Button variant="outline" className="w-max rounded-full" asChild>
+          <Link href="https://docs.openstatus.dev/blog/deploy-private-locations-raspberry-pi">
+            Blog Post
+          </Link>
+        </Button>
+      }
+    />
+  );
+}
+
+export function FeaturePrivateLocationsDockerInstall(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  const blockCLI = allUnrelateds.find(
+    (unrelated) => unrelated.slug === "cli-docker-private-locations",
+  );
+
+  if (!blockCLI) {
+    throw new Error("CLI Docker Private Locations block not found");
+  }
+  return (
+    <InteractiveFeature
+      icon="terminal"
+      iconText="Docker"
+      title="Deploy anywhere."
+      subTitle="Run our Docker container on your infrastructure."
+      component={
+        <Mdx
+          code={blockCLI.mdx}
+          className="my-auto max-w-none prose-pre:overflow-hidden"
+        />
+      }
+      action={
+        <Button variant="outline" className="w-max rounded-full" asChild>
+          <a
+            href="https://docs.openstatus.dev/tutorial/how-to-create-private-location/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Documentation
+          </a>
+        </Button>
+      }
+      col={1}
+      position={props.position || "top"}
     />
   );
 }
