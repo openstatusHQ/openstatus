@@ -2,7 +2,7 @@ import type { Theme } from "./types";
 
 export const GITHUB_CONTRAST = {
   id: "github-contrast",
-  name: "Github (High Contrast)",
+  name: "GitHub (High Contrast)",
   author: { name: "@openstatus", url: "https://openstatus.dev" },
   light: {
     "--background": "oklch(100% 0 0)",

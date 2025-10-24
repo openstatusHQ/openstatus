@@ -2,7 +2,7 @@ import type { Theme } from "./types";
 
 export const DEFAULT_THEME = {
   id: "default" as const,
-  name: "Default",
+  name: "Openstatus",
   author: { name: "@openstatus", url: "https://openstatus.dev" },
   light: {
     "--background": "oklch(100% 0 0)",
@@ -48,7 +48,7 @@ export const DEFAULT_THEME = {
 
 export const DEFAULT_ROUNDED_THEME = {
   id: "default-rounded" as const,
-  name: "Default (Rounded)",
+  name: "Openstatus (Rounded)",
   author: DEFAULT_THEME.author,
   light: {
     ...DEFAULT_THEME.light,
