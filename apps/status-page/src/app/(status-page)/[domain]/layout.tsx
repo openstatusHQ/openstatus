@@ -7,6 +7,11 @@ import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import {
+  THEME_KEYS,
+  type ThemeKey,
+  generateThemeStyles,
+} from "@openstatus/theme-store";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -15,7 +20,7 @@ export const schema = z.object({
   value: z.enum(["duration", "requests", "manual"]).default("duration"),
   type: z.enum(["absolute", "manual"]).default("absolute"),
   uptime: z.coerce.boolean().default(true),
-  theme: z.enum(["default"]).default("default"),
+  theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]).default("default"),
 });
 
 export default async function Layout({
@@ -32,9 +37,16 @@ export default async function Layout({
   );
 
   const validation = schema.safeParse(page?.configuration);
+  const communityTheme = validation.data?.theme;
 
   return (
     <HydrateClient>
+      <style
+        id="theme-styles"
+        dangerouslySetInnerHTML={{
+          __html: generateThemeStyles(communityTheme),
+        }}
+      />
       <ThemeProvider
         attribute="class"
         defaultTheme={page?.forceTheme ?? "system"}
