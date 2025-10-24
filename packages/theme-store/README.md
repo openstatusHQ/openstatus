@@ -24,8 +24,8 @@ Community themes are predefined color schemes that users can apply to their stat
 
 Want to contribute a theme? Follow these steps:
 
-### 1. Fork the Repository
-Start by forking the openstatus repository to your GitHub account. And run the project locally following [Getting Started](https://github.com/openstatusHQ/openstatus?tab=readme-ov-file#getting-started-).
+### 1. Run the project
+Start by forking the openstatus repository to your GitHub account and run the command `dev:status-page` locally following [Getting Started](https://github.com/openstatusHQ/openstatus?tab=readme-ov-file#getting-started-) steps.
 
 ### 2. Create Your Theme File
 Create a new TypeScript file in this directory (e.g., `my-theme.ts`). You can copy an existing theme file as a starting template.
