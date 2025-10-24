@@ -53,6 +53,9 @@ export const columns: ColumnDef<StatusReport>[] = [
     header: "Title",
     enableSorting: false,
     enableHiding: false,
+    meta: {
+      cellClassName: "max-w-[200px] truncate",
+    },
   },
   {
     accessorKey: "status",
