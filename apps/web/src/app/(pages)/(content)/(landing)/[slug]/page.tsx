@@ -91,9 +91,9 @@ export default async function Page({
 
 function Hero({ hero, description }: { hero: string; description: string }) {
   return (
-    <div className="mx-auto my-12 flex flex-col items-center gap-4 sm:my-16 md:gap-6">
+    <div className="mx-auto my-12 flex flex-col items-center gap-4 md:my-16 md:gap-6">
       <div className="flex flex-col gap-2 text-center md:gap-4">
-        <h1 className="max-w-md font-cal text-5xl leading-tight md:max-w-3xl md:text-6xl">
+        <h1 className="max-w-md font-cal text-3xl leading-tight md:max-w-3xl md:text-5xl">
           {hero}
         </h1>
         <h2 className="mx-auto max-w-md text-muted-foreground text-xl md:max-w-xl md:text-2xl">
