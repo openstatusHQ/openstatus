@@ -376,8 +376,10 @@ export function FormConfiguration({
                                   !field.value && "text-muted-foreground",
                                 )}
                               >
-                                {THEMES[field.value as ThemeKey]?.name ||
-                                  "Select a theme"}
+                                <span className="truncate">
+                                  {THEMES[field.value as ThemeKey]?.name ||
+                                    "Select a theme"}
+                                </span>
                                 <ChevronsUpDown className="opacity-50" />
                               </Button>
                             </FormControl>

@@ -3,6 +3,7 @@
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import {
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -25,7 +26,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
-import { Check, ChevronsUpDown, Command, Settings } from "lucide-react";
+import { Check, ChevronsUpDown, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
@@ -329,7 +330,9 @@ export function FloatingButton({
                       role="combobox"
                       className="w-full justify-between font-normal"
                     >
-                      {communityTheme}
+                      <span className="truncate">
+                        {THEMES[communityTheme].name}
+                      </span>
                       <ChevronsUpDown className="opacity-50" />
                     </Button>
                   </PopoverTrigger>
