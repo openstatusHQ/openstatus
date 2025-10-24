@@ -12,9 +12,10 @@ Community themes are predefined color schemes that users can apply to their stat
 
 ## Themes Examples
 
-- **Default** - The standard openstatus theme
-- **GitHub (High Contrast)** - High contrast theme inspired by GitHub's design
+- **Openstatus** - The standard openstatus theme
+- **Openstatus** - The rounded openstatus theme (similar to the legacy page)
 - **Supabase** - Theme matching Supabase's brand colors
+- **GitHub (High Contrast)** - High contrast theme inspired by GitHub's design
 
 ## Creating a New Theme
 
@@ -56,6 +57,8 @@ export const MY_THEME = {
   },
 } as const satisfies Theme;
 ```
+
+You don't need to add every single css var from the `THEME_VAR_NAMES` list.
 
 ### 4. Add to Theme Registry
 Update `index.ts` to include your theme in the `THEMES_LIST` array.
