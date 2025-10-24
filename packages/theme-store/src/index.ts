@@ -3,14 +3,17 @@ import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { SUPABASE_THEME } from "./supabase";
 import type { Theme, ThemeMap } from "./types";
+import { assertUniqueThemeIds } from "./utils";
 
-// TODO: Add validation to ensure that the theme IDs are unique
 const THEMES_LIST = [
   OPENSTATUS_THEME,
   OPENSTATUS_ROUNDED_THEME,
   SUPABASE_THEME,
   GITHUB_HIGH_CONTRAST_THEME,
 ] satisfies Theme[];
+
+// NOTE: runtime validation to ensure that the theme IDs are unique
+assertUniqueThemeIds(THEMES_LIST);
 
 export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
   acc[theme.id as keyof ThemeMap] = theme;
