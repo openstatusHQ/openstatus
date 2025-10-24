@@ -551,6 +551,14 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      // REMINDER: default config from legacy page
+      const defaultConfiguration = {
+        type: "absolute",
+        value: "requests",
+        uptime: true,
+        theme: "default-rounded",
+      } satisfies Record<string, string | boolean | undefined>;
+
       const newPage = await opts.ctx.db
         .insert(page)
         .values({
@@ -560,6 +568,7 @@ export const pageRouter = createTRPCRouter({
           description: opts.input.description ?? "",
           icon: opts.input.icon ?? "",
           legacyPage: false,
+          configuration: defaultConfiguration,
           customDomain: "", // TODO: make nullable
         })
         .returning()
