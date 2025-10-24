@@ -122,6 +122,16 @@ export default function Page() {
                     </StatusBannerTabsContent>
                   );
                 }
+                if (e.type === "incident") {
+                  return (
+                    <StatusBannerTabsContent
+                      value={`${e.type}-${e.id}`}
+                      key={e.id}
+                    >
+                      <StatusBanner status={e.status} />
+                    </StatusBannerTabsContent>
+                  );
+                }
                 return null;
               })}
             </StatusBannerTabs>
