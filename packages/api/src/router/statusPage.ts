@@ -311,7 +311,10 @@ export const statusPageRouter = createTRPCRouter({
           monitorId: m.monitor.id,
         });
         const rawData = statusDataByMonitorId.get(monitorId) || [];
-        const filledData = fillStatusDataFor45Days(rawData, monitorId);
+        const filledData =
+          process.env.NOOP_UPTIME === "true"
+            ? fillStatusDataFor45DaysNoop({ errorDays: [], degradedDays: [] })
+            : fillStatusDataFor45Days(rawData, monitorId);
         const processedData = setDataByType({
           events,
           data: filledData,
@@ -334,7 +337,10 @@ export const statusPageRouter = createTRPCRouter({
 
   // NOTE: used for the theme store
   getNoopUptime: publicProcedure.query(async () => {
-    const data = fillStatusDataFor45DaysNoop();
+    const data = fillStatusDataFor45DaysNoop({
+      errorDays: [4],
+      degradedDays: [40],
+    });
     const processedData = setDataByType({
       events: [
         {

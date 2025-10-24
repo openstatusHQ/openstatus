@@ -1,5 +1,4 @@
 import { createClient } from "@libsql/client";
-import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
@@ -136,8 +135,8 @@ async function main() {
     .values({
       id: 1,
       workspaceId: 1,
-      title: "Test Page",
-      description: "hello",
+      title: "Acme Inc.",
+      description: "Get informed about our services.",
       icon: "https://www.openstatus.dev/favicon.ico",
       slug: "status",
       customDomain: "",
@@ -180,36 +179,81 @@ async function main() {
     })
     .onConflictDoNothing()
     .run();
+
   await db
     .insert(notificationsToMonitors)
     .values({ monitorId: 1, notificationId: 1 })
     .onConflictDoNothing()
     .run();
 
+  // Status Report 1 - Resolved incident from 7 days ago
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgoPlus30Min = new Date(
+    sevenDaysAgo.getTime() + 30 * 60 * 1000,
+  );
+  const sevenDaysAgoPlus90Min = new Date(
+    sevenDaysAgo.getTime() + 90 * 60 * 1000,
+  );
+  const sevenDaysAgoPlus120Min = new Date(
+    sevenDaysAgo.getTime() + 120 * 60 * 1000,
+  );
+
   await db
     .insert(statusReport)
     .values({
       id: 1,
       workspaceId: 1,
       pageId: 1,
-      title: "Test Status Report",
-      status: "investigating",
-      updatedAt: new Date(),
+      title: "API Gateway Degraded Performance",
+      status: "resolved",
+      updatedAt: sevenDaysAgoPlus120Min,
     })
     .onConflictDoNothing()
     .run();
 
   await db
     .insert(statusReportUpdate)
-    .values({
-      id: 1,
-      statusReportId: 1,
-      status: "investigating",
-      message: "Message",
-      date: new Date(),
-    })
+    .values([
+      {
+        id: 1,
+        statusReportId: 1,
+        status: "investigating",
+        message:
+          "We are investigating reports of slow API response times affecting some customers.",
+        date: sevenDaysAgo,
+      },
+      {
+        id: 2,
+        statusReportId: 1,
+        status: "identified",
+        message:
+          "We have identified the issue as a database connection pool exhaustion and are working on a fix.",
+        date: sevenDaysAgoPlus30Min,
+      },
+      {
+        id: 3,
+        statusReportId: 1,
+        status: "monitoring",
+        message:
+          "A fix has been deployed and we are monitoring the system. Response times are returning to normal.",
+        date: sevenDaysAgoPlus90Min,
+      },
+      {
+        id: 4,
+        statusReportId: 1,
+        status: "resolved",
+        message:
+          "All systems are operating normally. The issue has been fully resolved.",
+        date: sevenDaysAgoPlus120Min,
+      },
+    ])
     .onConflictDoNothing()
     .run();
+
+  // Status Report 2 - Ongoing incident from 2 hours ago
+  const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  const oneHourAgo = new Date(Date.now() - 1 * 60 * 60 * 1000);
+  const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
 
   await db
     .insert(statusReport)
@@ -217,45 +261,90 @@ async function main() {
       id: 2,
       workspaceId: 1,
       pageId: 1,
-      title: "Test Status Report",
-      status: "investigating",
-      updatedAt: new Date(),
+      title: "Increased Error Rates on Monitoring Checks",
+      status: "resolved",
+      updatedAt: oneHourAgo,
     })
     .onConflictDoNothing()
     .run();
 
   await db
     .insert(statusReportUpdate)
-    .values({
-      id: 2,
-      statusReportId: 2,
-      status: "investigating",
-      message: "Message",
-      date: new Date(),
-    })
+    .values([
+      {
+        id: 5,
+        statusReportId: 2,
+        status: "investigating",
+        message:
+          "We are seeing elevated error rates on some monitoring checks and are investigating the root cause.",
+        date: twoHoursAgo,
+      },
+      {
+        id: 6,
+        statusReportId: 2,
+        status: "monitoring",
+        message:
+          "We have applied a fix and are monitoring the situation. Error rates are decreasing.",
+        date: oneHourAgo,
+      },
+      {
+        id: 7,
+        statusReportId: 2,
+        status: "resolved",
+        message:
+          "Everything is under control, we continue to monitor the situation.",
+        date: twentyMinutesAgo,
+      },
+    ])
     .onConflictDoNothing()
     .run();
+
+  // Maintenance windows spread across 30 days
+  const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
+  const twentyDaysAgoPlus2Hours = new Date(
+    twentyDaysAgo.getTime() + 2 * 60 * 60 * 1000,
+  );
+
+  const fiveDaysFromNow = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+  const fiveDaysFromNowPlus4Hours = new Date(
+    fiveDaysFromNow.getTime() + 4 * 60 * 60 * 1000,
+  );
 
   await db
     .insert(maintenance)
-    .values({
-      id: 1,
-      workspaceId: 1,
-      title: "Test Maintenance",
-      message: "Test message",
-      from: new Date(),
-      to: new Date(Date.now() + 1000),
-      pageId: 1,
-    })
+    .values([
+      {
+        id: 1,
+        workspaceId: 1,
+        title: "Database Migration and Optimization",
+        message:
+          "We will be performing database maintenance to improve performance. Some queries may be slower during this window.",
+        from: twentyDaysAgo,
+        to: twentyDaysAgoPlus2Hours,
+        pageId: 1,
+      },
+      {
+        id: 2,
+        workspaceId: 1,
+        title: "Infrastructure Upgrade",
+        message:
+          "We will be upgrading our monitoring infrastructure to the latest version. Expect brief interruptions in data collection.",
+        from: fiveDaysFromNow,
+        to: fiveDaysFromNowPlus4Hours,
+        pageId: 1,
+      },
+    ])
     .onConflictDoNothing()
     .run();
 
   await db
     .insert(maintenancesToMonitors)
-    .values({
-      maintenanceId: 1,
-      monitorId: 1,
-    })
+    .values([
+      {
+        maintenanceId: 1,
+        monitorId: 1,
+      },
+    ])
     .onConflictDoNothing()
     .run();
 
@@ -266,51 +355,43 @@ async function main() {
         monitorId: 1,
         statusReportId: 2,
       },
-      {
-        monitorId: 2,
-        statusReportId: 2,
-      },
     ])
     .onConflictDoNothing()
     .run();
 
-  await db
-    .insert(incidentTable)
-    .values({
-      id: 1,
-      workspaceId: 1,
-      monitorId: 1,
-      createdAt: new Date(),
-      startedAt: new Date(),
-    })
-    .onConflictDoNothing()
-    .run();
+  // Incidents - realistic past incidents that were resolved
+  const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+  const fifteenDaysAgoPlus2Hours = new Date(
+    fifteenDaysAgo.getTime() + 2 * 60 * 60 * 1000,
+  );
+
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const threeDaysAgoPlus20Min = new Date(
+    threeDaysAgo.getTime() + 20 * 60 * 1000,
+  );
 
   await db
     .insert(incidentTable)
-    .values({
-      id: 2,
-      workspaceId: 1,
-      monitorId: 1,
-      createdAt: new Date(),
-      startedAt: new Date(Date.now() + 1000),
-    })
-    .onConflictDoNothing()
-    .run();
-  // on status update
-  await db
-    .update(statusReport)
-    .set({ status: "monitoring" })
-    .where(eq(statusReport.id, 1));
-  await db
-    .insert(statusReportUpdate)
-    .values({
-      id: 3,
-      statusReportId: 1,
-      status: "monitoring",
-      message: "test",
-      date: new Date(),
-    })
+    .values([
+      {
+        id: 1,
+        workspaceId: 1,
+        monitorId: 1,
+        createdAt: fifteenDaysAgo,
+        startedAt: fifteenDaysAgo,
+        acknowledgedAt: new Date(fifteenDaysAgo.getTime() + 5 * 60 * 1000),
+        resolvedAt: fifteenDaysAgoPlus2Hours,
+      },
+      {
+        id: 2,
+        workspaceId: 1,
+        monitorId: 1,
+        createdAt: threeDaysAgo,
+        startedAt: threeDaysAgo,
+        acknowledgedAt: new Date(threeDaysAgo.getTime() + 2 * 60 * 1000),
+        resolvedAt: threeDaysAgoPlus20Min,
+      },
+    ])
     .onConflictDoNothing()
     .run();
 

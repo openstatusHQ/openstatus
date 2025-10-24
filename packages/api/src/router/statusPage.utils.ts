@@ -63,15 +63,24 @@ export function fillStatusDataFor45Days(
   );
 }
 
-export function fillStatusDataFor45DaysNoop(): Array<StatusData> {
-  const data: StatusData[] = Array.from({ length: 45 }, (_, i) => ({
-    day: new Date(new Date().setDate(new Date().getDate() - i)).toISOString(),
-    count: 1,
-    ok: [4, 40].includes(i) ? 0 : 1,
-    degraded: i === 40 ? 1 : 0,
-    error: i === 4 ? 1 : 0,
-    monitorId: "1",
-  }));
+export function fillStatusDataFor45DaysNoop({
+  errorDays,
+  degradedDays,
+}: {
+  errorDays: number[];
+  degradedDays: number[];
+}): Array<StatusData> {
+  const issueDays = [...errorDays, ...degradedDays];
+  const data: StatusData[] = Array.from({ length: 45 }, (_, i) => {
+    return {
+      day: new Date(new Date().setDate(new Date().getDate() - i)).toISOString(),
+      count: 1,
+      ok: issueDays.includes(i) ? 0 : 1,
+      degraded: degradedDays.includes(i) ? 1 : 0,
+      error: errorDays.includes(i) ? 1 : 0,
+      monitorId: "1",
+    };
+  });
   return fillStatusDataFor45Days(data, "1");
 }
 
