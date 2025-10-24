@@ -111,7 +111,7 @@ export function DataTable({
                 </div>
               </TableCell>
               <TableCell>
-                <div className="prose prose-sm line-clamp-3 text-wrap">
+                <div className="prose dark:prose-invert prose-sm line-clamp-3 text-wrap text-muted-foreground">
                   <ProcessMessage value={update.message} />
                 </div>
               </TableCell>

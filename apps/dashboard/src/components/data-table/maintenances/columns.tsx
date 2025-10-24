@@ -16,6 +16,9 @@ export const columns: ColumnDef<Maintenance>[] = [
     header: "Title",
     enableSorting: false,
     enableHiding: false,
+    meta: {
+      cellClassName: "max-w-[200px] truncate",
+    },
   },
   {
     accessorKey: "message",
@@ -25,7 +28,7 @@ export const columns: ColumnDef<Maintenance>[] = [
     cell: ({ row }) => {
       const value = String(row.getValue("message"));
       return (
-        <div className="prose prose-sm line-clamp-3 max-w-[200px] truncate text-muted-foreground">
+        <div className="prose dark:prose-invert prose-sm line-clamp-3 max-w-[200px] truncate text-muted-foreground">
           <ProcessMessage value={value} />
         </div>
       );

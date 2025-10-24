@@ -19,3 +19,22 @@ export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
 
 export const THEME_KEYS = THEMES_LIST.map((theme) => theme.id);
 export type ThemeKey = (typeof THEME_KEYS)[number];
+
+export function generateThemeStyles(themeKey: ThemeKey = "default") {
+  const theme = THEMES[themeKey];
+  const lightVars = Object.entries(theme.light)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join("\n    ");
+  const darkVars = Object.entries(theme.dark)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join("\n    ");
+
+  return `
+      :root {
+        ${lightVars}
+      }
+      .dark {
+        ${darkVars}
+      }
+    `;
+}

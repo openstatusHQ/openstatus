@@ -23,6 +23,7 @@ import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -32,7 +33,11 @@ import {
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import {
+  THEMES,
+  THEME_KEYS,
+  generateThemeStyles,
+} from "@openstatus/theme-store";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
@@ -61,21 +66,11 @@ export function Client() {
   }, []);
 
   useEffect(() => {
-    const theme = resolvedTheme as "dark" | "light";
-    if (["dark", "light"].includes(theme)) {
-      const element = document.documentElement;
-      element.removeAttribute("style"); // reset the style
-      Object.keys(THEMES[t][theme]).forEach((key) => {
-        const value =
-          THEMES[t][theme][
-            key as keyof (typeof THEMES)[typeof t][typeof theme]
-          ];
-        if (value) {
-          element.style.setProperty(key, value as string);
-        }
-      });
+    const themeStyles = document.getElementById("theme-styles");
+    if (t && themeStyles) {
+      themeStyles.innerHTML = generateThemeStyles(t);
     }
-  }, [resolvedTheme, t]);
+  }, [t]);
 
   return (
     <SectionGroup>
@@ -133,6 +128,7 @@ export function Client() {
             const style = mounted
               ? theme[resolvedTheme as "dark" | "light"]
               : undefined;
+
             return (
               <li key={k} className="group/theme-card space-y-1.5">
                 <div
@@ -149,13 +145,17 @@ export function Client() {
                     }
                   }}
                 >
-                  <div
-                    className="absolute h-full w-full bg-background text-foreground"
-                    style={style as React.CSSProperties}
-                    inert
-                  >
-                    <ThemePlaygroundMonitor className="pointer-events-none scale-80" />
-                  </div>
+                  {mounted ? (
+                    <div
+                      className="absolute h-full w-full bg-background text-foreground"
+                      style={style as React.CSSProperties}
+                      inert
+                    >
+                      <ThemePlaygroundMonitor className="pointer-events-none scale-80" />
+                    </div>
+                  ) : (
+                    <Skeleton className="absolute h-full w-full" />
+                  )}
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-0.5">
@@ -178,6 +178,15 @@ export function Client() {
                       const backgroundColor = style
                         ? style[color.key]
                         : undefined;
+
+                      if (!mounted) {
+                        return (
+                          <Skeleton
+                            key={color.key}
+                            className="size-3.5 rounded-sm"
+                          />
+                        );
+                      }
                       return (
                         <TooltipProvider key={color.key}>
                           <Tooltip>

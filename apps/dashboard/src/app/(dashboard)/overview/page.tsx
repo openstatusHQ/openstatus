@@ -103,13 +103,17 @@ export default async function Page() {
       icon: List,
     },
     {
-      title: lastIncident?.resolvedAt ? "Recent Incident" : "Active Incident",
+      title:
+        lastIncident?.resolvedAt === undefined && lastIncident
+          ? "Active Incident"
+          : "Recent Incident",
       value: incidentDistance,
       disabled: !lastIncident?.monitorId,
       href: `/monitors/${lastIncident?.monitorId}/incidents`,
-      variant: lastIncident?.resolvedAt
-        ? ("default" as const)
-        : ("warning" as const),
+      variant:
+        lastIncident?.resolvedAt === undefined && lastIncident
+          ? ("warning" as const)
+          : ("default" as const),
       icon: Search,
     },
     {

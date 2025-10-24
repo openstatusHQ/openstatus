@@ -25,9 +25,12 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import {
+  THEMES,
+  THEME_KEYS,
+  generateThemeStyles,
+} from "@openstatus/theme-store";
 import { Check, ChevronsUpDown, Settings } from "lucide-react";
-import { useTheme } from "next-themes";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -46,8 +49,6 @@ export type BarType = (typeof BAR_TYPE)[number];
 export const COMMUNITY_THEME = THEME_KEYS;
 export type CommunityTheme = (typeof COMMUNITY_THEME)[number];
 
-export const RADIUS = ["square", "rounded"] as const;
-export type Radius = (typeof RADIUS)[number];
 interface StatusPageContextType {
   cardType: CardType;
   setCardType: (cardType: CardType) => void;
@@ -57,8 +58,6 @@ interface StatusPageContextType {
   setShowUptime: (showUptime: boolean) => void;
   communityTheme: CommunityTheme;
   setCommunityTheme: (communityTheme: CommunityTheme) => void;
-  radius: Radius;
-  setRadius: (radius: Radius) => void;
 }
 
 const StatusPageContext = createContext<StatusPageContextType | null>(null);
@@ -77,52 +76,26 @@ export function StatusPageProvider({
   defaultBarType = "absolute",
   defaultShowUptime = true,
   defaultCommunityTheme = "default",
-  defaultRadius = "square",
 }: {
   children: React.ReactNode;
   defaultCardType?: CardType;
   defaultBarType?: BarType;
   defaultShowUptime?: boolean;
   defaultCommunityTheme?: CommunityTheme;
-  defaultRadius?: Radius;
 }) {
   const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [barType, setBarType] = useState<BarType>(defaultBarType);
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
-  const [radius, setRadius] = useState<Radius>(defaultRadius);
-  const { resolvedTheme } = useTheme();
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
 
   useEffect(() => {
-    const theme = resolvedTheme as "dark" | "light";
-    if (["dark", "light"].includes(theme)) {
-      const element = document.documentElement;
-      element.removeAttribute("style"); // reset the style
-      Object.keys(THEMES[communityTheme][theme]).forEach((key) => {
-        const value =
-          THEMES[communityTheme][theme][
-            key as keyof (typeof THEMES)[typeof communityTheme][typeof theme]
-          ];
-        console.log(key, value);
-        if (value) {
-          element.style.setProperty(key, value as string);
-        }
-      });
+    const themeStyles = document.getElementById("theme-styles");
+    if (themeStyles) {
+      themeStyles.innerHTML = generateThemeStyles(communityTheme);
     }
-  }, [resolvedTheme, communityTheme]);
-
-  useEffect(() => {
-    const computedRadius = getComputedStyle(
-      document.documentElement,
-    ).getPropertyValue("--radius");
-    if (radius === "square" && computedRadius !== "0rem") {
-      document.documentElement.style.setProperty("--radius", "0rem");
-    } else if (radius === "rounded" && computedRadius !== "0.625rem") {
-      document.documentElement.style.setProperty("--radius", "0.625rem");
-    }
-  }, [radius]);
+  }, [communityTheme]);
 
   return (
     <StatusPageContext.Provider
@@ -135,21 +108,9 @@ export function StatusPageProvider({
         setShowUptime,
         communityTheme,
         setCommunityTheme,
-        radius,
-        setRadius,
       }}
     >
-      <div
-        style={
-          communityTheme
-            ? (THEMES[communityTheme][
-                resolvedTheme as "dark" | "light"
-              ] as React.CSSProperties)
-            : undefined
-        }
-      >
-        {children}
-      </div>
+      {children}
     </StatusPageContext.Provider>
   );
 }
@@ -172,8 +133,6 @@ export function FloatingButton({
     setShowUptime,
     communityTheme,
     setCommunityTheme,
-    radius,
-    setRadius,
   } = useStatusPage();
   const [display, setDisplay] = useState(false);
   const [configToken, setConfigToken] = useQueryState(
@@ -294,26 +253,6 @@ export function FloatingButton({
                   </SelectContent>
                 </Select>
               </div>
-              {IS_DEV ? (
-                <div className="space-y-2">
-                  <Label htmlFor="radius">Radius</Label>
-                  <Select
-                    value={radius}
-                    onValueChange={(v) => setRadius(v as Radius)}
-                  >
-                    <SelectTrigger id="radius" className="w-full capitalize">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RADIUS.map((v) => (
-                        <SelectItem key={v} value={v} className="capitalize">
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : null}
               {IS_DEV ? (
                 <div className="space-y-2">
                   <Label htmlFor="theme">Theme</Label>
