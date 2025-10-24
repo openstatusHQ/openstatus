@@ -1,5 +1,7 @@
 # Community Themes
 
+**Help us build epic status page themes!**
+
 This directory contains community-contributed themes for openstatus status pages. These themes allow users to customize the visual appearance of their status pages with different color schemes and design styles.
 
 ## What are Community Themes?
@@ -12,9 +14,10 @@ Community themes are predefined color schemes that users can apply to their stat
 
 ## Themes Examples
 
-- **Default** - The standard openstatus theme
-- **GitHub (High Contrast)** - High contrast theme inspired by GitHub's design
+- **Openstatus** - The standard openstatus theme
+- **Openstatus (Rounded)** - The rounded openstatus theme (similar to the legacy page)
 - **Supabase** - Theme matching Supabase's brand colors
+- **GitHub (High Contrast)** - High contrast theme inspired by GitHub's design
 
 ## Creating a New Theme
 
@@ -23,13 +26,26 @@ Community themes are predefined color schemes that users can apply to their stat
 
 Want to contribute a theme? Follow these steps:
 
-### 1. Fork the Repository
-Start by forking the openstatus repository to your GitHub account.
+### 1. Run the project
+
+Start by forking the openstatus repository to your GitHub account and run the command `dev:status-page` locally following [Getting Started](https://github.com/openstatusHQ/openstatus?tab=readme-ov-file#getting-started-) steps.
+
+Once you run the `@openstatus/status-page` app, e.g. via the following command in the root directory:
+
+```bash
+pnpm dev:status-page
+```
+
+You can either access [localhost:3000](http://localhost:3000) to see the theme explorer or [localhost:3000/status](http://localhost:3000/status) to have a status page with seeded entries. On the bottom right is a configration button which has access to settings, including the community theme.
+
+> If something is off, our you think improvements can be made, feel free to raise an issue, join Discord, or DM us!
 
 ### 2. Create Your Theme File
+
 Create a new TypeScript file in this directory (e.g., `my-theme.ts`). You can copy an existing theme file as a starting template.
 
 ### 3. Define Your Theme
+
 Your theme file should export a constant that matches the `Theme` interface:
 
 ```typescript
@@ -40,7 +56,7 @@ export const MY_THEME = {
   name: "My Awesome Theme", // Display name
   author: { 
     name: "@yourusername", 
-    url: "https://github.com/yourusername" 
+    url: "https://github.com/yourusername" // Add your personal website or a social link
   },
   light: {
     // CSS custom properties for light mode
@@ -57,10 +73,24 @@ export const MY_THEME = {
 } as const satisfies Theme;
 ```
 
+You don't need to add every single css var from the `THEME_VAR_NAMES` list.
+
 ### 4. Add to Theme Registry
+
 Update `index.ts` to include your theme in the `THEMES_LIST` array.
 
+```typescript
+const THEMES_LIST = [
+  OPENSTATUS_THEME,
+  OPENSTATUS_ROUNDED_THEME,
+  //...
+  MY_THEME
+] satisfies Theme[];
+
+```
+
 ### 5. Submit a Pull Request
+
 Create a pull request with your theme for review.
 
 ## Design Guidelines
@@ -94,7 +124,7 @@ Before submitting:
 3. Check accessibility with browser dev tools
 4. Ensure all status indicators (operational, degraded, etc.) are clearly distinguishable
 
-To test a theme, you can use the `sessionStorage.setItem("community-theme", "true");` on your stpg.dev or vercel preview link. It will open a floating button on the right left corner where you can choose between the themes and dark/light mode.
+To test a theme on non-development environment, you can use the `sessionStorage.setItem("community-theme", "true");`. It will open a floating button on the right left corner where you can choose between the themes and dark/light mode.
 
 ## Questions?
 

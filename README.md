@@ -129,15 +129,19 @@ In another terminal, run the following command:
 pnpm dx
 ```
 
-4. Launch the web app
+4. Launch whatever app you wish to:
 
 ```sh
 pnpm dev:web
+pnpm dev:status-page
+pnpm dev:dashboard
 ```
+
+The above commands whill automatically run the libSQL client on `8080` so you might wanna kill the turso command from step 3.
 
 5. See the results:
 
-- open [http://localhost:3000](http://localhost:3000) for the web app
+- open [http://localhost:3000](http://localhost:3000) (default port)
 
 ### Videos
 

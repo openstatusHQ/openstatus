@@ -1,4 +1,5 @@
 export const THEME_VAR_NAMES = [
+  // NOTE: default shadcn/ui colors
   "--radius",
   "--background",
   "--foreground",
@@ -14,26 +15,25 @@ export const THEME_VAR_NAMES = [
   "--muted-foreground",
   "--accent",
   "--accent-foreground",
-  "--destructive",
   "--border",
   "--input",
   "--ring",
+  "--destructive", // red, outage/error status
+  // NOTE: the following colors are used for the public monitors UI to differentiate the percentiles of the response times
   "--chart-1",
   "--chart-2",
   "--chart-3",
   "--chart-4",
   "--chart-5",
-  "--sidebar",
-  "--sidebar-foreground",
-  "--sidebar-primary",
-  "--sidebar-primary-foreground",
-  "--sidebar-accent",
-  "--sidebar-accent-foreground",
-  "--sidebar-border",
-  "--sidebar-ring",
-  "--success",
-  "--warning",
-  "--info",
+
+  // NOTE: the following colors are not part of shadcn/ui, but are essential part of the status page
+  "--success", // green, operational status
+  "--warning", // yellow, degraded status
+  "--info", // blue, monitoring status
+
+  // NOTE: the following colors are used for the public monitors UI to differentiate the different regions
+  // It is not required to add them to your custom theme, but you can if you want to.
+  // DEFAULT: https://github.com/openstatusHQ/openstatus/blob/main/apps/status-page/src/app/globals.css#L98
   "--rainbow-1",
   "--rainbow-2",
   "--rainbow-3",

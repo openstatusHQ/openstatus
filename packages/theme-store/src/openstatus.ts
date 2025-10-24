@@ -1,8 +1,8 @@
 import type { Theme } from "./types";
 
-export const DEFAULT_THEME = {
+export const OPENSTATUS_THEME = {
   id: "default" as const,
-  name: "Default",
+  name: "Openstatus",
   author: { name: "@openstatus", url: "https://openstatus.dev" },
   light: {
     "--background": "oklch(100% 0 0)",
@@ -46,16 +46,16 @@ export const DEFAULT_THEME = {
   },
 } as const satisfies Theme;
 
-export const DEFAULT_ROUNDED_THEME = {
+export const OPENSTATUS_ROUNDED_THEME = {
   id: "default-rounded" as const,
-  name: "Default (Rounded)",
-  author: DEFAULT_THEME.author,
+  name: "Openstatus (Rounded)",
+  author: OPENSTATUS_THEME.author,
   light: {
-    ...DEFAULT_THEME.light,
+    ...OPENSTATUS_THEME.light,
     "--radius": "0.625rem",
   },
   dark: {
-    ...DEFAULT_THEME.dark,
+    ...OPENSTATUS_THEME.dark,
     "--radius": "0.625rem",
   },
 } as const satisfies Theme;

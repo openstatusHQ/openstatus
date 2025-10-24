@@ -1,6 +1,6 @@
 import type { Theme } from "./types";
 
-export const SUPABASE = {
+export const SUPABASE_THEME = {
   id: "supabase",
   name: "Supabase",
   author: { name: "@supabase", url: "https://supabase.com/" },
