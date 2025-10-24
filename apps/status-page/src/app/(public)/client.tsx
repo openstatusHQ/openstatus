@@ -32,7 +32,11 @@ import {
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import {
+  THEMES,
+  THEME_KEYS,
+  generateThemeStyles,
+} from "@openstatus/theme-store";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
@@ -61,21 +65,11 @@ export function Client() {
   }, []);
 
   useEffect(() => {
-    const theme = resolvedTheme as "dark" | "light";
-    if (["dark", "light"].includes(theme)) {
-      const element = document.documentElement;
-      element.removeAttribute("style"); // reset the style
-      Object.keys(THEMES[t][theme]).forEach((key) => {
-        const value =
-          THEMES[t][theme][
-            key as keyof (typeof THEMES)[typeof t][typeof theme]
-          ];
-        if (value) {
-          element.style.setProperty(key, value as string);
-        }
-      });
+    const themeStyles = document.getElementById("theme-styles");
+    if (t && themeStyles) {
+      themeStyles.innerHTML = generateThemeStyles(t);
     }
-  }, [resolvedTheme, t]);
+  }, [t]);
 
   return (
     <SectionGroup>

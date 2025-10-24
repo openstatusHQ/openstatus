@@ -43,6 +43,7 @@ export default async function Layout({
     <HydrateClient>
       <style
         id="theme-styles"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
           __html: generateThemeStyles(communityTheme),
         }}
