@@ -12,6 +12,8 @@ import {
   FeatureOpenTelemetry,
   FeatureOperationalBanner,
   FeaturePasswordProtection,
+  FeaturePrivateLocationsDockerImage,
+  FeaturePrivateLocationsDockerInstall,
   FeatureRaycastIntegration,
   FeatureRegions,
   FeatureResponseDetails,
@@ -121,6 +123,23 @@ export const landingsConfig = {
       />,
       <FeatureTerraformProvider key="feature-terraform-provider" />,
       <BookingBanner key="booking-banner" />,
+    ],
+  },
+  "private-locations": {
+    icon: "globe",
+    title: "Private Locations",
+    hero: "Monitor from anywhere. Literally anywhere.",
+    description: "Monitor your services from your own infrastructure.",
+    blocks: [
+      <SpeedBanner key="speed-banner" />,
+      <FeaturePrivateLocationsDockerImage key="feature-private-locations-docker-image" />,
+      <FeaturePrivateLocationsDockerInstall key="feature-private-locations-docker-install" />,
+      <FeatureCharts
+        key="feature-charts"
+        title="Private Locations."
+        subTitle="Latency, availability and performance of your internal services. Always be close to your users."
+      />,
+      <BookingBanner key="enterprise-banner" />,
     ],
   },
 } satisfies Record<string, Landing>;
