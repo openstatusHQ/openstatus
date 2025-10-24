@@ -1,6 +1,6 @@
 import type { Theme } from "./types";
 
-export const GITHUB_CONTRAST = {
+export const GITHUB_HIGH_CONTRAST_THEME = {
   id: "github-contrast",
   name: "GitHub (High Contrast)",
   author: { name: "@openstatus", url: "https://openstatus.dev" },

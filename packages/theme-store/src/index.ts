@@ -1,15 +1,15 @@
 export * from "./types";
-import { DEFAULT_ROUNDED_THEME, DEFAULT_THEME } from "./default";
-import { GITHUB_CONTRAST } from "./github-contrast";
-import { SUPABASE } from "./supabase";
+import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
+import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
+import { SUPABASE_THEME } from "./supabase";
 import type { Theme, ThemeMap } from "./types";
 
 // TODO: Add validation to ensure that the theme IDs are unique
 const THEMES_LIST = [
-  DEFAULT_THEME,
-  DEFAULT_ROUNDED_THEME,
-  SUPABASE,
-  GITHUB_CONTRAST,
+  OPENSTATUS_THEME,
+  OPENSTATUS_ROUNDED_THEME,
+  SUPABASE_THEME,
+  GITHUB_HIGH_CONTRAST_THEME,
 ] satisfies Theme[];
 
 export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
@@ -20,8 +20,14 @@ export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
 export const THEME_KEYS = THEMES_LIST.map((theme) => theme.id);
 export type ThemeKey = (typeof THEME_KEYS)[number];
 
-export function generateThemeStyles(themeKey: ThemeKey = "default") {
-  const theme = THEMES[themeKey];
+export function generateThemeStyles(themeKey?: string) {
+  let theme = themeKey ? THEMES[themeKey] : undefined;
+
+  if (!theme) {
+    // NOTE: fallback to openstatus theme if no theme is found
+    theme = OPENSTATUS_THEME;
+  }
+
   const lightVars = Object.entries(theme.light)
     .map(([key, value]) => `${key}: ${value};`)
     .join("\n    ");
