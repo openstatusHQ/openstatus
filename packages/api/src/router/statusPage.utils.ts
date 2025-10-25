@@ -447,6 +447,15 @@ export function setDataByType({
       }));
   }
 
+  function createOperationalBarData(): UptimeData["bar"] {
+    return [
+      {
+        status: "success",
+        height: 100,
+      },
+    ];
+  }
+
   function createEmptyBarData(): UptimeData["bar"] {
     return [
       {
@@ -603,9 +612,14 @@ export function setDataByType({
           // Empty day - no data available
           barData = createEmptyBarData();
         } else {
-          // Multiple segments for absolute view - show proportional distribution of status data
-          const statusSegments = createStatusSegments(dayData);
-          barData = segmentsToBarData(statusSegments, total);
+          if (cardType === "duration") {
+            // If no eventStatus and cardType is duration, show operational bar
+            barData = createOperationalBarData();
+          } else {
+            // Multiple segments for absolute view - show proportional distribution of status data
+            const statusSegments = createStatusSegments(dayData);
+            barData = segmentsToBarData(statusSegments, total);
+          }
         }
         break;
       case "dominant":
