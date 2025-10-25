@@ -184,4 +184,12 @@
   .rounded-full {
     border-radius: calc(var(--radius) * 99999999);
   }
+  .rounded-b-full {
+    border-bottom-left-radius: calc(var(--radius) * 99999999);
+    border-bottom-right-radius: calc(var(--radius) * 99999999);
+  }
+  .rounded-t-full {
+    border-top-left-radius: calc(var(--radius) * 99999999);
+    border-top-right-radius: calc(var(--radius) * 99999999);
+  }
 }
