@@ -66,14 +66,18 @@ export function Client() {
   }, []);
 
   useEffect(() => {
-    const themeStyles = document.getElementById("theme-styles");
-    if (t && themeStyles) {
+    if (t) {
       // NOTE: remove the old style element and create a new one
       // this ensures the browser properly recomputes all CSS variables
+      const oldThemeStyles = document.getElementById("theme-styles");
+      if (oldThemeStyles) {
+        oldThemeStyles.remove();
+      }
+
       const newStyleElement = document.createElement("style");
       newStyleElement.id = "theme-styles";
       newStyleElement.innerHTML = generateThemeStyles(t);
-      themeStyles.replaceWith(newStyleElement);
+      document.head.appendChild(newStyleElement);
     }
   }, [t]);
 

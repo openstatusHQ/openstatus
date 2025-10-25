@@ -91,15 +91,17 @@ export function StatusPageProvider({
   );
 
   useEffect(() => {
-    const themeStyles = document.getElementById("theme-styles");
-    if (themeStyles) {
-      // Remove the old style element and create a new one
-      // This ensures the browser properly recomputes all CSS variables
-      const newStyleElement = document.createElement("style");
-      newStyleElement.id = "theme-styles";
-      newStyleElement.innerHTML = generateThemeStyles(communityTheme);
-      themeStyles.replaceWith(newStyleElement);
+    // NOTE: remove the old style element and create a new one
+    // this ensures the browser properly recomputes all CSS variables
+    const oldThemeStyles = document.getElementById("theme-styles");
+    if (oldThemeStyles) {
+      oldThemeStyles.remove();
     }
+
+    const newStyleElement = document.createElement("style");
+    newStyleElement.id = "theme-styles";
+    newStyleElement.innerHTML = generateThemeStyles(communityTheme);
+    document.head.appendChild(newStyleElement);
   }, [communityTheme]);
 
   return (
