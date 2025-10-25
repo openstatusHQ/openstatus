@@ -53,20 +53,20 @@ const MAIN_COLORS = [
 
 export function Client() {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
   const { q, t } = searchParams;
   const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
 
   useEffect(() => {
-    setMounted(true);
+    setIsMounted(true);
   }, []);
 
   useEffect(() => {
-    if (t) {
+    if (isMounted && t) {
       recomputeStyles(t);
     }
-  }, [t]);
+  }, [t, isMounted]);
 
   return (
     <SectionGroup>
@@ -121,7 +121,7 @@ export function Client() {
             );
           }).map((k) => {
             const theme = THEMES[k];
-            const style = mounted
+            const style = isMounted
               ? theme[resolvedTheme as "dark" | "light"]
               : undefined;
 
@@ -141,7 +141,7 @@ export function Client() {
                     }
                   }}
                 >
-                  {mounted ? (
+                  {isMounted ? (
                     <div
                       className="absolute h-full w-full bg-background text-foreground"
                       style={style as React.CSSProperties}
@@ -175,7 +175,7 @@ export function Client() {
                         ? style[color.key]
                         : undefined;
 
-                      if (!mounted) {
+                      if (!isMounted) {
                         return (
                           <Skeleton
                             key={color.key}

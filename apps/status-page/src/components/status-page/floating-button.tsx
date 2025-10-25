@@ -89,10 +89,17 @@ export function StatusPageProvider({
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    recomputeStyles(communityTheme);
-  }, [communityTheme]);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      recomputeStyles(communityTheme);
+    }
+  }, [communityTheme, isMounted]);
 
   return (
     <StatusPageContext.Provider
@@ -334,14 +341,8 @@ export function FloatingButton({
 }
 
 export function recomputeStyles(newTheme: CommunityTheme) {
-  // NOTE: find and replace the existing style element wherever it is (head or body)
-  const oldThemeStyles = document.getElementById("theme-styles");
-  if (oldThemeStyles) {
-    const newStyleElement = document.createElement("style");
-    newStyleElement.id = "theme-styles";
-    newStyleElement.innerHTML = generateThemeStyles(newTheme);
-    // Replace in the same location (head or body)
-    oldThemeStyles.parentNode?.insertBefore(newStyleElement, oldThemeStyles);
-    oldThemeStyles.remove();
+  const themeStyles = document.getElementById("theme-styles");
+  if (themeStyles) {
+    themeStyles.textContent = generateThemeStyles(newTheme);
   }
 }
