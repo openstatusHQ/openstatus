@@ -94,6 +94,8 @@ export function StatusPageProvider({
     const themeStyles = document.getElementById("theme-styles");
     if (themeStyles) {
       themeStyles.innerHTML = generateThemeStyles(communityTheme);
+      // Force browser to recompute styles
+      void document.documentElement.offsetHeight;
     }
   }, [communityTheme]);
 

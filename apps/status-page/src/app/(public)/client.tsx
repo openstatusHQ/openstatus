@@ -69,6 +69,8 @@ export function Client() {
     const themeStyles = document.getElementById("theme-styles");
     if (t && themeStyles) {
       themeStyles.innerHTML = generateThemeStyles(t);
+      // Force browser to recompute styles
+      void document.documentElement.offsetHeight;
     }
   }, [t]);
 
