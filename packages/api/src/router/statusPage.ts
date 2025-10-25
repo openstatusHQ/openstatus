@@ -342,6 +342,7 @@ export const statusPageRouter = createTRPCRouter({
           data: filledData,
           events,
           barType: opts.input.barType,
+          cardType: opts.input.cardType,
         });
 
         return {

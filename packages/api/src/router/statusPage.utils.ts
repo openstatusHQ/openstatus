@@ -769,10 +769,12 @@ export function getUptime({
   data,
   events,
   barType,
+  cardType,
 }: {
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
+  cardType: "requests" | "duration" | "dominant" | "manual";
 }): string {
   if (barType === "manual") {
     const duration = events
@@ -785,6 +787,18 @@ export function getUptime({
 
     const total = data.length * MILLISECONDS_PER_DAY;
 
+    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+  }
+
+  if (cardType === "duration") {
+    const duration = events
+      .filter((e) => e.type === "incident")
+      .reduce((acc, item) => {
+        if (!item.from) return acc;
+        return acc + ((item.to || new Date()).getTime() - item.from.getTime());
+      }, 0);
+
+    const total = data.length * MILLISECONDS_PER_DAY;
     return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
   }
 
