@@ -253,7 +253,10 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                 {item.bar.map((segment, segmentIndex) => (
                   <div
                     key={`${item.day}-${segment.status}-${segmentIndex}`}
-                    className="w-full rounded-full transition-all"
+                    className={cn("w-full transition-all", {
+                      "rounded-t-full": segmentIndex === 0,
+                      "rounded-b-full": segmentIndex === item.bar.length - 1,
+                    })}
                     style={{
                       height: `${segment.height}%`,
                       backgroundColor: chartConfig[segment.status].color,

@@ -28,6 +28,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useMemo } from "react";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
@@ -48,6 +49,20 @@ export default function Page() {
     }),
   );
 
+  // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
+  // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
+  const events = useMemo(() => {
+    let hasIncident = false;
+    return (
+      page?.openEvents.filter((e) => {
+        if (e.type !== "incident") return true;
+        if (hasIncident) return false;
+        hasIncident = true;
+        return true;
+      }) ?? []
+    );
+  }, [page]);
+
   if (!page) return null;
 
   return (
@@ -57,13 +72,13 @@ export default function Page() {
           <StatusTitle>{page.title}</StatusTitle>
           <StatusDescription>{page.description}</StatusDescription>
         </StatusHeader>
-        {page.openEvents.length > 0 ? (
+        {events.length > 0 ? (
           <StatusContent>
             <StatusBannerTabs
-              defaultValue={`${page.openEvents[0].type}-${page.openEvents[0].id}`}
+              defaultValue={`${events[0].type}-${events[0].id}`}
             >
               <StatusBannerTabsList>
-                {page.openEvents.map((e, i) => {
+                {events.map((e, i) => {
                   return (
                     <StatusBannerTabsTrigger
                       value={`${e.type}-${e.id}`}
@@ -71,7 +86,7 @@ export default function Page() {
                       key={e.id}
                       className={cn(
                         i === 0 && "rounded-tl-lg",
-                        i === page.openEvents.length - 1 && "rounded-tr-lg",
+                        i === events.length - 1 && "rounded-tr-lg",
                       )}
                     >
                       {e.name}
@@ -79,7 +94,7 @@ export default function Page() {
                   );
                 })}
               </StatusBannerTabsList>
-              {page.openEvents.map((e) => {
+              {events.map((e) => {
                 if (e.type === "report") {
                   const report = page.statusReports.find(
                     (report) => report.id === e.id,
@@ -119,6 +134,16 @@ export default function Page() {
                           />
                         </StatusBannerContent>
                       </StatusBannerContainer>
+                    </StatusBannerTabsContent>
+                  );
+                }
+                if (e.type === "incident") {
+                  return (
+                    <StatusBannerTabsContent
+                      value={`${e.type}-${e.id}`}
+                      key={e.id}
+                    >
+                      <StatusBanner status={e.status} />
                     </StatusBannerTabsContent>
                   );
                 }

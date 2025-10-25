@@ -89,13 +89,17 @@ export function StatusPageProvider({
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
     defaultCommunityTheme,
   );
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const themeStyles = document.getElementById("theme-styles");
-    if (themeStyles) {
-      themeStyles.innerHTML = generateThemeStyles(communityTheme);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      recomputeStyles(communityTheme);
     }
-  }, [communityTheme]);
+  }, [communityTheme, isMounted]);
 
   return (
     <StatusPageContext.Provider
@@ -253,12 +257,10 @@ export function FloatingButton({
                   </SelectContent>
                 </Select>
               </div>
-              {IS_DEV ? (
-                <div className="space-y-2">
-                  <Label htmlFor="theme">Theme</Label>
-                  <ThemeSelect id="theme" className="w-full" />
-                </div>
-              ) : null}
+              <div className="space-y-2">
+                <Label htmlFor="theme">Theme</Label>
+                <ThemeSelect id="theme" className="w-full" />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="community-theme">Community Theme</Label>
                 <Popover>
@@ -336,4 +338,17 @@ export function FloatingButton({
       </Popover>
     </div>
   );
+}
+
+export function recomputeStyles(newTheme: CommunityTheme) {
+  // FIXME: only on prod, we have two style elements with the same id
+  // we need to get rid of all of them except the one we want to update
+  const allThemeStyles = document.querySelectorAll("style[id='theme-styles']");
+  allThemeStyles.forEach((style, index) => {
+    if (index === 0) {
+      style.textContent = generateThemeStyles(newTheme);
+    } else {
+      style.remove();
+    }
+  });
 }
