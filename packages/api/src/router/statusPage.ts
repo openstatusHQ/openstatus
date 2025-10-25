@@ -40,7 +40,15 @@ import {
 
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase() }))
+    .input(
+      z.object({
+        slug: z.string().toLowerCase(),
+        cardType: z
+          .enum(["requests", "duration", "dominant", "manual"])
+          .default("requests"),
+        barType: z.enum(["absolute", "dominant", "manual"]).default("dominant"),
+      }),
+    )
     .output(selectPublicPageSchemaWithRelation.nullish())
     .query(async (opts) => {
       if (!opts.input.slug) return null;
@@ -90,29 +98,33 @@ export const statusPageRouter = createTRPCRouter({
             reports: _page.statusReports,
             monitorId: m.monitor.id,
           });
-          const status = events.some((e) => e.type === "incident" && !e.to)
-            ? "error"
-            : events.some((e) => e.type === "report" && !e.to)
-              ? "degraded"
-              : events.some(
-                    (e) =>
-                      e.type === "maintenance" &&
-                      e.to &&
-                      e.from.getTime() <= new Date().getTime() &&
-                      e.to.getTime() >= new Date().getTime(),
-                  )
-                ? "info"
-                : "success";
+          const status =
+            events.some((e) => e.type === "incident" && !e.to) &&
+            opts.input.barType !== "manual"
+              ? "error"
+              : events.some((e) => e.type === "report" && !e.to)
+                ? "degraded"
+                : events.some(
+                      (e) =>
+                        e.type === "maintenance" &&
+                        e.to &&
+                        e.from.getTime() <= new Date().getTime() &&
+                        e.to.getTime() >= new Date().getTime(),
+                    )
+                  ? "info"
+                  : "success";
           return { ...m.monitor, status, events };
         });
 
-      const status = monitors.some((m) => m.status === "error")
-        ? "error"
-        : monitors.some((m) => m.status === "degraded")
-          ? "degraded"
-          : monitors.some((m) => m.status === "info")
-            ? "info"
-            : "success";
+      const status =
+        monitors.some((m) => m.status === "error") &&
+        opts.input.barType !== "manual"
+          ? "error"
+          : monitors.some((m) => m.status === "degraded")
+            ? "degraded"
+            : monitors.some((m) => m.status === "info")
+              ? "info"
+              : "success";
 
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
@@ -134,7 +146,12 @@ export const statusPageRouter = createTRPCRouter({
         .sort((a, b) => a.from.getTime() - b.from.getTime());
 
       const openEvents = pageEvents.filter((event) => {
-        if (event.type === "incident" || event.type === "report") {
+        if (event.type === "incident" && opts.input.barType !== "manual") {
+          if (!event.to) return true;
+          if (event.to < new Date()) return false;
+          return false;
+        }
+        if (event.type === "report") {
           if (!event.to) return true;
           if (event.to < new Date()) return false;
           return false;
