@@ -35,7 +35,7 @@ export default function Page() {
   const { cardType, barType, showUptime } = useStatusPage();
   const trpc = useTRPC();
   const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
+    trpc.statusPage.get.queryOptions({ slug: domain, cardType, barType }),
   );
 
   // NOTE: we can prefetch that to avoid loading state

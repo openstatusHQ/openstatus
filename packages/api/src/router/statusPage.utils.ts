@@ -447,6 +447,15 @@ export function setDataByType({
       }));
   }
 
+  function createOperationalBarData(): UptimeData["bar"] {
+    return [
+      {
+        status: "success",
+        height: 100,
+      },
+    ];
+  }
+
   function createEmptyBarData(): UptimeData["bar"] {
     return [
       {
@@ -603,9 +612,14 @@ export function setDataByType({
           // Empty day - no data available
           barData = createEmptyBarData();
         } else {
-          // Multiple segments for absolute view - show proportional distribution of status data
-          const statusSegments = createStatusSegments(dayData);
-          barData = segmentsToBarData(statusSegments, total);
+          if (cardType === "duration") {
+            // If no eventStatus and cardType is duration, show operational bar
+            barData = createOperationalBarData();
+          } else {
+            // Multiple segments for absolute view - show proportional distribution of status data
+            const statusSegments = createStatusSegments(dayData);
+            barData = segmentsToBarData(statusSegments, total);
+          }
         }
         break;
       case "dominant":
@@ -755,10 +769,12 @@ export function getUptime({
   data,
   events,
   barType,
+  cardType,
 }: {
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
+  cardType: "requests" | "duration" | "dominant" | "manual";
 }): string {
   if (barType === "manual") {
     const duration = events
@@ -771,6 +787,18 @@ export function getUptime({
 
     const total = data.length * MILLISECONDS_PER_DAY;
 
+    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+  }
+
+  if (cardType === "duration") {
+    const duration = events
+      .filter((e) => e.type === "incident")
+      .reduce((acc, item) => {
+        if (!item.from) return acc;
+        return acc + ((item.to || new Date()).getTime() - item.from.getTime());
+      }, 0);
+
+    const total = data.length * MILLISECONDS_PER_DAY;
     return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
   }
 
