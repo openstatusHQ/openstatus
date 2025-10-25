@@ -87,7 +87,7 @@ export function StatusPageProvider({
   const [barType, setBarType] = useState<BarType>(defaultBarType);
   const [showUptime, setShowUptime] = useState<boolean>(defaultShowUptime);
   const [communityTheme, setCommunityTheme] = useState<CommunityTheme>(
-    defaultCommunityTheme
+    defaultCommunityTheme,
   );
   const [isMounted, setIsMounted] = useState(false);
 
@@ -141,7 +141,7 @@ export function FloatingButton({
   const [display, setDisplay] = useState(false);
   const [configToken, setConfigToken] = useQueryState(
     "configuration-token",
-    parseAsString
+    parseAsString,
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -305,7 +305,7 @@ export function FloatingButton({
                                   "ml-auto",
                                   theme === communityTheme
                                     ? "opacity-100"
-                                    : "opacity-0"
+                                    : "opacity-0",
                                 )}
                               />
                             </CommandItem>
