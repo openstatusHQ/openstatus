@@ -1,0 +1,104 @@
+ignore:
+  - node_modules
+  - /apps/docs
+  - /apps/screenshot-service
+  - /apps/web
+  - /apps/dashboard
+  - /apps/workflows
+  - /packages/api
+  - /packages/integrations/vercel
+builders:
+  pnpm:
+    fromImage: node:22-slim
+    workdir: /app/
+    # Copy project
+    copy:
+      - . /app/
+    # bind:
+    #   - bunfig.toml
+    #   - package.json
+    #   - apps/dashboard/package.json
+    #   - packages/analytics/package.json
+    #   - packages/db/package.json
+    #   - packages/emails/package.json
+    #   - packages/error/package.json
+    #   - packages/regions/package.json
+    #   - packages/tinybird/package.json
+    #   - packages/tracker/package.json
+    #   - packages/upstash/package.json
+    #   - packages/utils/package.json
+    #   - packages/tsconfig/package.json
+    #   - packages/assertions/package.json
+    #   - packages/regions/package.json
+
+    env:
+        PNPM_HOME: /pnpm
+        PATH: $PNPM_HOME:$PATH
+    run:
+     - corepack enable
+
+  install:
+    fromBuilder: pnpm
+    workdir: /app/apps/dashboard
+    cache:
+       - /pnpm/store
+    copy:
+      - fromBuilder: pnpm
+        source: /app/
+        target: /app/
+    # Install dependencies
+    run:
+      - pnpm install --frozen-lockfile
+
+  # build:
+  #   fromBuilder: pnpm
+  #   workdir: /app/apps/dashboard
+  #   copy:
+  #     - fromBuilder: install
+  #       source: /app/
+  #       target: /app/
+  #   cache:
+  #     - /pnpm/store
+
+  #     #  Should set env to production here
+  #   # Compile the TypeScript application
+  #   env:
+  #     NODE_ENV: production
+  #     OPENPANEL_CLIENT_SECRET: dummy
+  #     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: dummy
+  #     DATABASE_URL: http://host.docker.internal:8081
+  #     DATABASE_AUTH_TOKEN: dummy
+  #     RESEND_API_KEY: dummy
+  #     UPSTASH_REDIS_REST_URL: dummy
+  #     UPSTASH_REDIS_REST_TOKEN: dummy
+  #     STRIPE_SECRET_KEY: "test"
+  #     PROJECT_ID_VERCEL: "test"
+  #     TEAM_ID_VERCEL: "test"
+  #     VERCEL_AUTH_BEARER_TOKEN: "test"
+  #     TINY_BIRD_API_KEY: test
+  #     CRON_SECRET: test
+  #     UNKEY_TOKEN: test
+  #     UNKEY_API_ID: test
+  #   run: pnpm run build
+  #   depens_on:
+  #     - install
+
+fromBuilder: pnpm
+copy:
+  # - fromBuilder: install
+  #   source: /app/
+  #   target: /app/
+  - fromBuilder: install
+    source: /app/
+    target: /app/
+  # - fromBuilder: install
+  #   source: /app/node_modules/apps/dashboard/node_modules/
+  #   target: /app/node_modules/apps/dashboard/node_modules/
+    # chmod: "555"
+expose: 3000
+workdir: /app/apps/dashboard
+cmd:
+  - pnpm
+  - dev
+  # - run
+  # - dev
