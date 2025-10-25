@@ -91,17 +91,7 @@ export function StatusPageProvider({
   );
 
   useEffect(() => {
-    // NOTE: remove the old style element and create a new one
-    // this ensures the browser properly recomputes all CSS variables
-    const oldThemeStyles = document.getElementById("theme-styles");
-    if (oldThemeStyles) {
-      oldThemeStyles.remove();
-    }
-
-    const newStyleElement = document.createElement("style");
-    newStyleElement.id = "theme-styles";
-    newStyleElement.innerHTML = generateThemeStyles(communityTheme);
-    document.head.appendChild(newStyleElement);
+    recomputeStyles(communityTheme);
   }, [communityTheme]);
 
   return (
@@ -341,4 +331,17 @@ export function FloatingButton({
       </Popover>
     </div>
   );
+}
+
+export function recomputeStyles(newTheme: CommunityTheme) {
+  // NOTE: find and replace the existing style element wherever it is (head or body)
+  const oldThemeStyles = document.getElementById("theme-styles");
+  if (oldThemeStyles) {
+    const newStyleElement = document.createElement("style");
+    newStyleElement.id = "theme-styles";
+    newStyleElement.innerHTML = generateThemeStyles(newTheme);
+    // Replace in the same location (head or body)
+    oldThemeStyles.parentNode?.insertBefore(newStyleElement, oldThemeStyles);
+    oldThemeStyles.remove();
+  }
 }
