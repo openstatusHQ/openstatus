@@ -1,7 +1,9 @@
 "use client";
 
+import { recomputeStyles } from "@/components/status-page/floating-button";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,9 +25,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { THEMES, type ThemeVarName } from "@openstatus/theme-store";
+import {
+  THEMES,
+  type ThemeKey,
+  type ThemeVarName,
+} from "@openstatus/theme-store";
 import { ChevronDown, PanelRightIcon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
+import { useEffect, useState } from "react";
 import { searchParamsParsers } from "./search-params";
 
 type ThemeBuilderColor = {
@@ -34,11 +42,11 @@ type ThemeBuilderColor = {
   values: { id: ThemeVarName; label: string }[];
 };
 
-type ThemeBuilderSlider = {
+type ThemeBuilderCheckbox = {
   label: string;
-  type: "slider";
+  type: "checkbox";
   values: { id: ThemeVarName; label: string }[];
-  steps: number[];
+  options: { value: string; label: boolean }[];
 };
 
 const THEME_BUILDER_INFO = {
@@ -102,11 +110,14 @@ const THEME_STYLE_BUILDER = {
   },
   "border-radius": {
     label: "Border Radius",
-    type: "slider",
+    type: "checkbox",
     values: [{ id: "--radius", label: "Border Radius" }],
-    steps: [0, 0.625], // 0.625 is default shadcn/ui value
+    options: [
+      { value: "0rem", label: false },
+      { value: "0.625rem", label: true },
+    ],
   },
-} satisfies Record<string, ThemeBuilderColor | ThemeBuilderSlider>;
+} satisfies Record<string, ThemeBuilderColor | ThemeBuilderCheckbox>;
 
 // Helper function to get nested property value from an object
 function getNestedValue(obj: any, path: string): string | undefined {
@@ -121,10 +132,12 @@ function getNestedValue(obj: any, path: string): string | undefined {
 
 export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const [{ t }] = useQueryStates(searchParamsParsers);
+  const { resolvedTheme } = useTheme();
   const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
+
   return (
     <Sidebar side="right" {...props}>
-      <SidebarHeader className="border-b border-border">
+      <SidebarHeader className="border-b border-border px-3 font-medium">
         Theme Builder
       </SidebarHeader>
       <SidebarContent>
@@ -185,9 +198,13 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     {config.values.map((value) => {
                       return (
                         <SidebarMenuItem key={value.id}>
-                          <SidebarMenuButton>
+                          <SidebarMenuButton key={t}>
                             <span className="truncate">{value.label}</span>
-                            <ThemeValueSelector config={config} id={value.id} />
+                            <ThemeValueSelector
+                              config={config}
+                              id={value.id}
+                              theme={t}
+                            />
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -200,29 +217,74 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter className="border-t border-border">
-        <Button variant="outline" size="sm">
-          Copy Configuration
-        </Button>
+        <Button size="sm">Copy Configuration</Button>
       </SidebarFooter>
     </Sidebar>
   );
 }
 
 function ThemeValueSelector(props: {
-  config: ThemeBuilderColor | ThemeBuilderSlider;
+  config: ThemeBuilderColor | ThemeBuilderCheckbox;
   id: ThemeVarName;
+  theme: ThemeKey;
 }) {
-  const value = getComputedValue(props.id);
+  const [value, setValue] = useState(getComputedValue(props.id));
+
+  useEffect(() => {
+    recomputeStyles(props.theme, {
+      light: {
+        [props.id]: value,
+      },
+      dark: {
+        [props.id]: value,
+      },
+    });
+  }, [props.id, value]);
+
   if (!value) return null;
 
   if (props.config.type === "color") {
     return (
-      <div
-        className="ml-auto size-3 border border-foreground/70 rounded-full"
+      <label
+        className="ml-auto size-4 border border-foreground/70 rounded-full"
         style={{ backgroundColor: value }}
-      />
+        htmlFor={props.id}
+      >
+        <input
+          type="color"
+          id={props.id}
+          name={props.id}
+          value={value}
+          className="sr-only"
+          onChange={(e) => setValue(e.target.value)}
+        />
+      </label>
     );
   }
+
+  if (props.config.type === "checkbox") {
+    const { options } = props.config;
+    const checked = options.find((option) => option.value === value)?.label;
+    return (
+      <label htmlFor={props.id} className="ml-auto flex items-center gap-2">
+        <span className="text-xs text-muted-foreground font-mono">{value}</span>
+        <Checkbox
+          id={props.id}
+          name={props.id}
+          checked={checked}
+          className="size-4 bg-background"
+          onCheckedChange={(checked) =>
+            setValue(
+              checked
+                ? options.find((option) => option.label === true)?.value ?? ""
+                : options.find((option) => option.label === false)?.value ?? "",
+            )
+          }
+        />
+      </label>
+    );
+  }
+
   return (
     <span className="ml-auto text-muted-foreground font-mono text-xs">
       {value}
@@ -230,13 +292,9 @@ function ThemeValueSelector(props: {
   );
 }
 
-function getComputedValue(value: string | { key: string; label: string }) {
+function getComputedValue(value: string) {
   if (typeof window === "undefined") return null;
-  const element = document.getElementById("theme-styles");
-  if (!element) return null;
-  return getComputedStyle(element).getPropertyValue(
-    typeof value === "string" ? value : value.key,
-  );
+  return getComputedStyle(document.documentElement).getPropertyValue(value);
 }
 
 export function SidebarTrigger({
