@@ -93,9 +93,12 @@ export function StatusPageProvider({
   useEffect(() => {
     const themeStyles = document.getElementById("theme-styles");
     if (themeStyles) {
-      themeStyles.innerHTML = generateThemeStyles(communityTheme);
-      // Force browser to recompute styles
-      void document.documentElement.offsetHeight;
+      // Remove the old style element and create a new one
+      // This ensures the browser properly recomputes all CSS variables
+      const newStyleElement = document.createElement("style");
+      newStyleElement.id = "theme-styles";
+      newStyleElement.innerHTML = generateThemeStyles(communityTheme);
+      themeStyles.replaceWith(newStyleElement);
     }
   }, [communityTheme]);
 

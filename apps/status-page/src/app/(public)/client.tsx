@@ -68,9 +68,12 @@ export function Client() {
   useEffect(() => {
     const themeStyles = document.getElementById("theme-styles");
     if (t && themeStyles) {
-      themeStyles.innerHTML = generateThemeStyles(t);
-      // Force browser to recompute styles
-      void document.documentElement.offsetHeight;
+      // NOTE: remove the old style element and create a new one
+      // this ensures the browser properly recomputes all CSS variables
+      const newStyleElement = document.createElement("style");
+      newStyleElement.id = "theme-styles";
+      newStyleElement.innerHTML = generateThemeStyles(t);
+      themeStyles.replaceWith(newStyleElement);
     }
   }, [t]);
 
