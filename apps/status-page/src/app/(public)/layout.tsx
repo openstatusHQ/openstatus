@@ -32,7 +32,7 @@ export default async function Layout({
           }
         >
           <SidebarInset className="relative">
-            <SidebarTrigger className="absolute top-4 right-4" />
+            <SidebarTrigger className="absolute top-2 right-2" />
             <main className="mx-auto">{children}</main>
             <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
               <p>
