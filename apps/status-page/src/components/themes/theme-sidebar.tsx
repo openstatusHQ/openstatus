@@ -1,5 +1,6 @@
 "use client";
 
+import { searchParamsParsers } from "@/app/(public)/search-params";
 import { recomputeStyles } from "@/components/status-page/floating-button";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
@@ -10,6 +11,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { Label } from "@/components/ui/label";
 import {
   Sidebar,
@@ -26,7 +28,13 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
 import {
   THEMES,
@@ -38,7 +46,6 @@ import { Check, ChevronDown, Copy, PanelRightIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
-import { searchParamsParsers } from "./search-params";
 
 type ThemeBuilderColor = {
   label: string;
@@ -141,15 +148,20 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const { resolvedTheme, setTheme } = useTheme();
   const { copy, isCopied } = useCopyToClipboard();
   const [isMounted, setIsMounted] = useState(false);
+  const debouncedNewTheme = useDebounce(newTheme, 100);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
+    setNewTheme(THEMES[t]);
+  }, [t]);
+
+  useEffect(() => {
     if (!resolvedTheme || !isMounted) return;
-    recomputeStyles(newTheme.id as ThemeKey, { ...newTheme });
-  }, [newTheme, resolvedTheme, isMounted]);
+    recomputeStyles(debouncedNewTheme.id as ThemeKey, { ...debouncedNewTheme });
+  }, [resolvedTheme, isMounted, debouncedNewTheme]);
 
   return (
     <Sidebar side="right" {...props}>
@@ -374,20 +386,34 @@ export function SidebarTrigger({
   const { toggleSidebar } = useSidebar();
 
   return (
-    <Button
-      data-sidebar="trigger"
-      data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("size-7", className)}
-      onClick={(event) => {
-        onClick?.(event);
-        toggleSidebar();
-      }}
-      {...props}
-    >
-      <PanelRightIcon />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          data-sidebar="trigger"
+          data-slot="sidebar-trigger"
+          variant="ghost"
+          size="icon"
+          className={cn("size-7", className)}
+          onClick={(event) => {
+            onClick?.(event);
+            toggleSidebar();
+          }}
+          {...props}
+        >
+          <PanelRightIcon />
+          <span className="sr-only">Toggle Sidebar</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">
+        <p>
+          Toggle Sidebar{" "}
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <span>+</span>
+            <Kbd>B</Kbd>
+          </KbdGroup>
+        </p>
+      </TooltipContent>
+    </Tooltip>
   );
 }
