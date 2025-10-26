@@ -1,14 +1,34 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useSidebar } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Palette } from "lucide-react";
-import { Button } from "../ui/button";
 
 export function ThemePalettePicker() {
   const { toggleSidebar } = useSidebar();
   return (
-    <Button size="icon" variant="outline" onClick={toggleSidebar}>
-      <Palette className="size-4" />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button size="icon" variant="outline" onClick={toggleSidebar}>
+          <Palette className="size-4" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>
+          Toggle Sidebar{" "}
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <span>+</span>
+            <Kbd>B</Kbd>
+          </KbdGroup>
+        </p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

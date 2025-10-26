@@ -395,6 +395,94 @@ export const statusPageRouter = createTRPCRouter({
       return _report;
     }),
 
+  getNoopReport: publicProcedure.query(async () => {
+    const date = new Date(new Date().setDate(new Date().getDate() - 4));
+
+    const resolvedDate = new Date(date.setMinutes(date.getMinutes() - 81));
+    const monitoringDate = new Date(date.setMinutes(date.getMinutes() - 54));
+    const identifiedDate = new Date(date.setMinutes(date.getMinutes() - 32));
+    const investigatingDate = new Date(date.setMinutes(date.getMinutes() - 4));
+
+    return {
+      id: 1,
+      pageId: 1,
+      status: "investigating" as const,
+      title: "API Latency Issues",
+      message: "We are currently investigating elevated API response times.",
+      createdAt: new Date(new Date().setDate(new Date().getDate() - 2)),
+      updatedAt: new Date(new Date().setDate(new Date().getDate() - 1)),
+      monitorsToStatusReports: [
+        {
+          monitorId: 1,
+          statusReportId: 1,
+          monitor: {
+            id: 1,
+            jobType: "http" as const,
+            periodicity: "30s" as const,
+            status: "active" as const,
+            active: true,
+            regions: ["ams", "fra"],
+            url: "https://api.example.com",
+            name: "API Monitor",
+            description: "Main API endpoint",
+            headers: null,
+            body: null,
+            method: "GET" as const,
+            public: true,
+            deletedAt: null,
+            createdAt: new Date(new Date().setDate(new Date().getDate() - 30)),
+            updatedAt: new Date(new Date().setDate(new Date().getDate() - 30)),
+            workspaceId: 1,
+            timeout: 30000,
+            degradedAfter: null,
+            assertions: null,
+          },
+        },
+      ],
+      statusReportUpdates: [
+        {
+          id: 4,
+          statusReportId: 1,
+          status: "resolved" as const,
+          message:
+            "All systems are operating normally. The issue has been fully resolved.",
+          date: resolvedDate,
+          createdAt: resolvedDate,
+          updatedAt: resolvedDate,
+        },
+        {
+          id: 3,
+          statusReportId: 1,
+          status: "monitoring" as const,
+          message:
+            "We are continuing to monitor the situation to ensure that the issue is resolved.",
+          date: monitoringDate,
+          createdAt: monitoringDate,
+          updatedAt: monitoringDate,
+        },
+        {
+          id: 2,
+          statusReportId: 1,
+          status: "identified" as const,
+          message: "The issue has been identified and a fix is being deployed.",
+          date: identifiedDate,
+          createdAt: identifiedDate,
+          updatedAt: identifiedDate,
+        },
+        {
+          id: 1,
+          statusReportId: 1,
+          status: "investigating" as const,
+          message:
+            "We are investigating reports of increased latency on our API endpoints.",
+          date: investigatingDate,
+          createdAt: investigatingDate,
+          updatedAt: investigatingDate,
+        },
+      ],
+    };
+  }),
+
   getMonitors: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {

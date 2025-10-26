@@ -42,7 +42,13 @@ import {
   type ThemeKey,
   type ThemeVarName,
 } from "@openstatus/theme-store";
-import { Check, ChevronDown, Copy, PanelRightIcon } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  PanelRightIcon,
+  RotateCcw,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
@@ -143,12 +149,13 @@ function getNestedValue(obj: any, path: string): string | undefined {
 }
 
 export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const [{ t }] = useQueryStates(searchParamsParsers);
+  const [{ t, b }, setSearchParams] = useQueryStates(searchParamsParsers);
   const [newTheme, setNewTheme] = useState<Theme>(THEMES[t]);
   const { resolvedTheme, setTheme } = useTheme();
   const { copy, isCopied } = useCopyToClipboard();
   const [isMounted, setIsMounted] = useState(false);
   const debouncedNewTheme = useDebounce(newTheme, 100);
+  const { setOpen } = useSidebar();
 
   useEffect(() => {
     setIsMounted(true);
@@ -159,6 +166,13 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   }, [t]);
 
   useEffect(() => {
+    if (b) {
+      setOpen(true);
+      setSearchParams({ b: null });
+    }
+  }, [b, setOpen, setSearchParams]);
+
+  useEffect(() => {
     if (!resolvedTheme || !isMounted) return;
     recomputeStyles(debouncedNewTheme.id as ThemeKey, { ...debouncedNewTheme });
   }, [resolvedTheme, isMounted, debouncedNewTheme]);
@@ -166,7 +180,25 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar side="right" {...props}>
       <SidebarHeader className="border-border border-b px-3 font-medium">
-        Theme Builder
+        <div className="flex items-center justify-between gap-2">
+          <div>Theme Builder</div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                onClick={() => setNewTheme(THEMES[t])}
+              >
+                <span className="sr-only">Reset</span>
+                <RotateCcw />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Reset theme</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <Collapsible key="info" defaultOpen className="group/collapsible">

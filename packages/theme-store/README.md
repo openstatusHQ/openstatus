@@ -21,10 +21,12 @@ Community themes are predefined color schemes that users can apply to their stat
 
 ## Creating a New Theme
 
-> **Help us ship an epic palette picker!**
-> We are looking for contributions to build an epic [palette picker](https://github.com/openstatusHQ/openstatus/blob/main/apps/status-page/src/components/themes/theme-palette-picker.tsx) to help others generate and export their own themes.
+Want to contribute a theme? 
 
-Want to contribute a theme? Follow these steps:
+We only support themes via GitHub contributions to keep a certain version control. You can:
+
+- Configure your [themes.openstatus.dev](https://themes.openstatus.dev/?b=true) and copy the configuration
+- Directly test by running it locally
 
 ### 1. Run the project
 

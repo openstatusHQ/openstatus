@@ -18,6 +18,15 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusBanner } from "@/components/status-page/status-banner";
+import {
+  StatusEvent,
+  StatusEventAffected,
+  StatusEventAffectedBadge,
+  StatusEventContent,
+  StatusEventDate,
+  StatusEventTimelineReport,
+  StatusEventTitle,
+} from "@/components/status-page/status-events";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
@@ -54,8 +63,7 @@ const MAIN_COLORS = [
 export function Client() {
   const { resolvedTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParsers);
-  const { q, t } = searchParams;
+  const [{ q, t }, setSearchParams] = useQueryStates(searchParamsParsers);
   const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
 
   useEffect(() => {
@@ -92,7 +100,7 @@ export function Client() {
               {theme?.name}
             </div>
             <div className="sm:p-8">
-              <ThemePlaygroundMonitor className="scale-80 sm:scale-100" />
+              <ThemePlaygroundStatus className="scale-80 sm:scale-100" />
             </div>
           </div>
         </div>
@@ -147,7 +155,7 @@ export function Client() {
                       style={style as React.CSSProperties}
                       inert
                     >
-                      <ThemePlaygroundMonitor className="pointer-events-none scale-80" />
+                      <ThemePlaygroundStatus className="pointer-events-none scale-80" />
                     </div>
                   ) : (
                     <Skeleton className="absolute h-full w-full" />
@@ -248,11 +256,6 @@ export function Client() {
       <Separator />
       <Section>
         <div className="prose dark:prose-invert prose-sm max-w-none">
-          <blockquote>
-            Ideally, we would allow you to customize your theme with a{" "}
-            <code>ThemePalettePicker</code> component to easily test and export
-            your theme. Contributions are welcome!
-          </blockquote>
           <p>
             Why don't we allow custom css styles to be overridden and only
             support themes?
@@ -273,7 +276,7 @@ export function Client() {
   );
 }
 
-function ThemePlaygroundMonitor({
+function ThemePlaygroundStatus({
   className,
   ...props
 }: React.ComponentProps<"div"> & {}) {
@@ -303,6 +306,45 @@ function ThemePlaygroundMonitor({
             isLoading={isLoading}
           />
         </StatusContent>
+      </Status>
+    </div>
+  );
+}
+
+// NOTE: we could add a tabs component here to switch between status and events
+function ThemePlaygroundEvents({
+  className,
+  ...props
+}: React.ComponentProps<"div"> & {}) {
+  const trpc = useTRPC();
+  const { data: report } = useQuery(
+    trpc.statusPage.getNoopReport.queryOptions(),
+  );
+  const firstUpdate = report?.statusReportUpdates[0];
+
+  if (!firstUpdate || !report) return null;
+
+  return (
+    <div className={cn("h-full w-full", className)} {...props}>
+      <Status variant="success">
+        <StatusEvent>
+          <StatusEventDate date={firstUpdate.date} className="lg:flex-row" />
+          <StatusEventContent hoverable={false}>
+            <StatusEventTitle className="inline-flex gap-1">
+              {report.title}
+            </StatusEventTitle>
+            {report.monitorsToStatusReports.length > 0 ? (
+              <StatusEventAffected>
+                {report.monitorsToStatusReports.map((affected) => (
+                  <StatusEventAffectedBadge key={affected.monitor.id}>
+                    {affected.monitor.name}
+                  </StatusEventAffectedBadge>
+                ))}
+              </StatusEventAffected>
+            ) : null}
+            <StatusEventTimelineReport updates={report.statusReportUpdates} />
+          </StatusEventContent>
+        </StatusEvent>
       </Status>
     </div>
   );
