@@ -34,16 +34,36 @@ export default function Page() {
   const { domain } = useParams<{ domain: string }>();
   const { cardType, barType, showUptime } = useStatusPage();
   const trpc = useTRPC();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain, cardType, barType }),
+
+  // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
+  // It wouldn't match the server prefetch keys and we would have to refetch the page here
+  const { data: pageInitial } = useQuery(
+    trpc.statusPage.get.queryOptions({
+      slug: domain,
+    }),
   );
+
+  const hasCustomConfig = pageInitial?.configuration
+    ? pageInitial.configuration.type !== barType ||
+      pageInitial.configuration.value !== cardType
+    : false;
+
+  // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs
+  const { data: pageWithCustomConfiguration } = useQuery({
+    ...trpc.statusPage.get.queryOptions({
+      slug: domain,
+      cardType,
+      barType,
+    }),
+    enabled: hasCustomConfig,
+  });
 
   // NOTE: we can prefetch that to avoid loading state
   const { data: uptimeData, isLoading } = useQuery(
     trpc.statusPage.getUptime.queryOptions({
       slug: domain,
-      monitorIds: page?.monitors?.map((monitor) => monitor.id.toString()) || [],
-      // NOTE: we could move that to the server as we query the page entry anyways
+      monitorIds:
+        pageInitial?.monitors?.map((monitor) => monitor.id.toString()) || [],
       cardType,
       barType,
     }),
@@ -54,16 +74,19 @@ export default function Page() {
   const events = useMemo(() => {
     let hasIncident = false;
     return (
-      page?.openEvents.filter((e) => {
+      pageInitial?.openEvents.filter((e) => {
         if (e.type !== "incident") return true;
         if (hasIncident) return false;
         hasIncident = true;
         return true;
       }) ?? []
     );
-  }, [page]);
+  }, [pageInitial]);
 
-  if (!page) return null;
+  if (!pageInitial) return null;
+
+  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
+  const page = pageWithCustomConfiguration ?? pageInitial;
 
   return (
     <div className="flex flex-col gap-6">

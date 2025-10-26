@@ -1,3 +1,5 @@
+import type { ThemeKey } from "@openstatus/theme-store";
+import { THEME_KEYS } from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -38,12 +40,22 @@ export const insertPageSchema = createInsertSchema(page, {
     .default([]),
 });
 
+export const pageConfigurationSchema = z.object({
+  value: z
+    .enum(["duration", "requests", "manual"])
+    .nullish()
+    .default("requests"),
+  type: z.enum(["absolute", "manual"]).nullish().default("absolute"),
+  uptime: z.coerce.boolean().nullish().default(true),
+  theme: z
+    .enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]])
+    .nullish()
+    .default("default"),
+});
+
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().default(""),
-  configuration: z
-    .record(z.string(), z.string().or(z.boolean()).optional())
-    .nullish()
-    .default({}),
+  configuration: pageConfigurationSchema.nullish().default({}),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

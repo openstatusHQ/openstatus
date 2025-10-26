@@ -36,6 +36,8 @@ export default async function Layout({
     trpc.statusPage.get.queryOptions({ slug: domain }),
   );
 
+  if (!page) return notFound();
+
   const validation = schema.safeParse(page?.configuration);
   const communityTheme = validation.data?.theme;
 
