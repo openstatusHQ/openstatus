@@ -31,7 +31,6 @@
       "@swc/core",
       "sharp"
     ]
-    "onlyBuiltDependencies": ["@swc/core", "sharp"]
   },
   "name": "openstatus",
   "workspaces": [
