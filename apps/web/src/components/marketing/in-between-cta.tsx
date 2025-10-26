@@ -62,7 +62,10 @@ export function BottomCTA(props: Pick<InBetweenCTAProps, "className">) {
     <InBetweenCTA
       description="Learn how your services are performing over time, and notify your users of any issues."
       actions={{
-        primary: { label: "Start for Free", href: "/app/login" },
+        primary: {
+          label: "Start for Free",
+          href: "https://app.openstatus.dev",
+        },
         secondary: { label: "Schedule a Demo", href: "/cal", target: "_blank" },
       }}
       {...props}

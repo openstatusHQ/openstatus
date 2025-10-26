@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
@@ -62,12 +61,12 @@ export default async function CheckPage(props: Props) {
         The data will be stored for{" "}
         <span className="text-foreground">7 days</span>. If you want to persist
         the data,{" "}
-        <Link
-          href="/app/login"
+        <a
+          href="https://app.openstatus.dev"
           className="text-foreground underline underline-offset-4 hover:no-underline"
         >
           login
-        </Link>{" "}
+        </a>{" "}
         to your account.
       </p>
     </Shell>

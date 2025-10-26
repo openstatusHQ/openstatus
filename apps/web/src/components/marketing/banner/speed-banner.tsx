@@ -1,5 +1,4 @@
 import { Button } from "@openstatus/ui";
-import Link from "next/link";
 import { SpeedCheckerButton } from "../speed-checker-button";
 import { GenericBanner } from "./generic-banner";
 
@@ -23,9 +22,9 @@ export function SpeedBanner() {
       actions={
         <div className="flex gap-2">
           <Button className="rounded-full" variant="outline" asChild>
-            <Link href="/app/login" className="text-nowrap">
+            <a href="https://app.openstatus.dev" className="text-nowrap">
               Start for free
-            </Link>
+            </a>
           </Button>
           <SpeedCheckerButton />
         </div>

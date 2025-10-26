@@ -6,7 +6,6 @@ import {
 import { landingsConfig } from "@/config/landings";
 import { Button } from "@openstatus/ui";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { WebPage, WithContext } from "schema-dts";
 
@@ -102,7 +101,7 @@ function Hero({ hero, description }: { hero: string; description: string }) {
       </div>
       <div className="flex gap-2">
         <Button className="rounded-full" asChild>
-          <Link href="/app/login">Get Started</Link>
+          <a href="https://app.openstatus.dev">Get Started</a>
         </Button>
         <Button variant="outline" className="rounded-full" asChild>
           <a href="/cal" rel="noreferrer" target="_blank">
