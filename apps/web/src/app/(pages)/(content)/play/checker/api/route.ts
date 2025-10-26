@@ -46,7 +46,7 @@ async function* makeIterator({
         })}\n`,
       );
     } catch (error) {
-      console.error(error);
+      console.log(error);
       return encoder.encode("");
     }
   });
