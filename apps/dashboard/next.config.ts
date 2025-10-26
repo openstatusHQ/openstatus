@@ -22,8 +22,9 @@ module.exports = withSentryConfig(
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
 
-    // Suppresses source map uploading logs during build
-    silent: true,
+    // Only print logs for uploading source maps in CI
+    // Set to `true` to suppress logs
+    silent: !process.env.CI,
 
     org: "openstatus",
     project: "openstatus",
@@ -32,14 +33,14 @@ module.exports = withSentryConfig(
     // For all available options, see:
     // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
+    // Pass the auth token
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+
     // Upload a larger set of source maps for prettier stack traces (increases build time)
     widenClientFileUpload: true,
 
     // Transpiles SDK to be compatible with IE11 (increases bundle size)
     transpileClientSDK: false,
-
-    // Hides source maps from generated client bundles
-    hideSourceMaps: true,
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,
