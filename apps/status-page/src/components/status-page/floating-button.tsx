@@ -345,18 +345,18 @@ export function recomputeStyles(
   newTheme: CommunityTheme,
   overrides?: Partial<ThemeDefinition>,
 ) {
-  // FIXME: only on prod, we have two style elements with the same id
-  // we need to get rid of all of them except the one we want to update
   try {
+    // Only update the text content of existing style tags, don't remove them
+    // This prevents React hydration errors during navigation
     const allThemeStyles = document.querySelectorAll(
       "style[id='theme-styles']",
     );
-    allThemeStyles.forEach((style, index) => {
-      if (index === 0) {
-        style.textContent = generateThemeStyles(newTheme, overrides);
-      } else {
-        style.remove();
-      }
+    const newStyles = generateThemeStyles(newTheme, overrides);
+
+    // Update all style elements with the same content
+    // This way React can manage the DOM without conflicts
+    allThemeStyles.forEach((style) => {
+      style.textContent = newStyles;
     });
   } catch (error) {
     console.error(error);
