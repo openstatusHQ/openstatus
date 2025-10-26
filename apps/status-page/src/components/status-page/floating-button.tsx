@@ -347,12 +347,18 @@ export function recomputeStyles(
 ) {
   // FIXME: only on prod, we have two style elements with the same id
   // we need to get rid of all of them except the one we want to update
-  const allThemeStyles = document.querySelectorAll("style[id='theme-styles']");
-  allThemeStyles.forEach((style, index) => {
-    if (index === 0) {
-      style.textContent = generateThemeStyles(newTheme, overrides);
-    } else {
-      style.remove();
-    }
-  });
+  try {
+    const allThemeStyles = document.querySelectorAll(
+      "style[id='theme-styles']",
+    );
+    allThemeStyles.forEach((style, index) => {
+      if (index === 0) {
+        style.textContent = generateThemeStyles(newTheme, overrides);
+      } else {
+        style.remove();
+      }
+    });
+  } catch (error) {
+    console.error(error);
+  }
 }
