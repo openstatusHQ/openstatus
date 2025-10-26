@@ -65,7 +65,10 @@ import { toast } from "sonner";
 
 const schema = z.object({
   new: z.boolean(),
-  configuration: z.record(z.string(), z.string().or(z.boolean()).optional()),
+  configuration: z.record(
+    z.string(),
+    z.string().or(z.boolean().nullish()).optional(),
+  ),
   homepageUrl: z.string().optional(),
   contactUrl: z.string().optional(),
 });
