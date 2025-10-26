@@ -29,7 +29,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     "/",
     "/about",
-    "/app/login",
     "/blog",
     "/changelog",
     "/play",

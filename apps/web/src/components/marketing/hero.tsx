@@ -42,7 +42,7 @@ export function Hero() {
       <div className="my-4 grid gap-2 sm:grid-cols-2">
         <div className="text-center sm:block sm:text-right">
           <Button className="w-48 rounded-full sm:w-auto" asChild>
-            <Link href="/app/login">Get Started</Link>
+            <a href="https://app.openstatus.dev">Get Started</a>
           </Button>
         </div>
         <div className="text-center sm:block sm:text-left">

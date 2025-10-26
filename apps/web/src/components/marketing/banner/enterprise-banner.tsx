@@ -1,5 +1,4 @@
 import { Button } from "@openstatus/ui";
-import Link from "next/link";
 import { GenericBanner } from "./generic-banner";
 
 export function EnterpriseBanner() {
@@ -10,9 +9,9 @@ export function EnterpriseBanner() {
       actions={
         <div className="flex gap-2">
           <Button className="rounded-full" variant="outline" asChild>
-            <Link href="/app/login" className="text-nowrap">
+            <a href="https://app.openstatus.dev" className="text-nowrap">
               Start for free
-            </Link>
+            </a>
           </Button>
           <Button className="rounded-full" asChild>
             <a
