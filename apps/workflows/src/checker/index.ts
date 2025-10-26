@@ -10,14 +10,11 @@ import {
 
 import { getLogger } from "@logtape/logtape";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { Tinybird } from "@openstatus/tinybird";
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
 
 export const checkerRoute = new Hono();
-
-const tb = new Tinybird({ token: env().TINY_BIRD_API_KEY });
 
 const payloadSchema = z.object({
   monitorId: z.string(),
@@ -27,11 +24,6 @@ const payloadSchema = z.object({
   cronTimestamp: z.number(),
   status: monitorStatusSchema,
   latency: z.number().optional(),
-});
-
-const publishStatus = tb.buildIngestEndpoint({
-  datasource: "alerts__v0",
-  event: payloadSchema,
 });
 
 const logger = getLogger(["workflow"]);
@@ -68,7 +60,6 @@ checkerRoute.post("/updateStatus", async (c) => {
     status,
     region: region,
   });
-  await publishStatus(result.data);
 
   const currentMonitor = await db
     .select()
