@@ -112,7 +112,7 @@ export const sendDegraded = async ({
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
   const body = PayloadSchema.parse({
-    monitior: monitor,
+    monitor: monitor,
     cronTimestamp,
     status: "degraded",
     statusCode,
