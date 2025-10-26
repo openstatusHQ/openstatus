@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  StatusBlankContainer,
-  StatusBlankContent,
-  StatusBlankDescription,
-  StatusBlankReport,
-  StatusBlankTitle,
-} from "@/components/status-page/status-blank";
+import { StatusBlankEvents } from "@/components/status-page/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -101,19 +95,7 @@ export default function Page() {
               );
             })
           ) : (
-            <StatusBlankContainer>
-              <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-                <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-                <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
-                <StatusBlankReport />
-              </div>
-              <StatusBlankContent>
-                <StatusBlankTitle>No reports found</StatusBlankTitle>
-                <StatusBlankDescription>
-                  No reports found for this status page.
-                </StatusBlankDescription>
-              </StatusBlankContent>
-            </StatusBlankContainer>
+            <StatusBlankEvents />
           )}
         </StatusEventGroup>
       </TabsContent>
@@ -154,19 +136,10 @@ export default function Page() {
               );
             })
           ) : (
-            <StatusBlankContainer>
-              <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-                <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-                <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
-                <StatusBlankReport />
-              </div>
-              <StatusBlankContent>
-                <StatusBlankTitle>No maintenances found</StatusBlankTitle>
-                <StatusBlankDescription>
-                  No maintenances found for this status page.
-                </StatusBlankDescription>
-              </StatusBlankContent>
-            </StatusBlankContainer>
+            <StatusBlankEvents
+              title="No maintenances found"
+              description="No maintenances found for this status page."
+            />
           )}
         </StatusEventGroup>
       </TabsContent>

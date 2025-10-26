@@ -5,6 +5,7 @@ import {
   maintenance,
   monitorsToPages,
   page,
+  pageConfigurationSchema,
   pageSubscriber,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
@@ -43,10 +44,11 @@ export const statusPageRouter = createTRPCRouter({
     .input(
       z.object({
         slug: z.string().toLowerCase(),
+        // NOTE: override the defaults we are getting from the page configuration
         cardType: z
           .enum(["requests", "duration", "dominant", "manual"])
-          .default("requests"),
-        barType: z.enum(["absolute", "dominant", "manual"]).default("dominant"),
+          .nullish(),
+        barType: z.enum(["absolute", "dominant", "manual"]).nullish(),
       }),
     )
     .output(selectPublicPageSchemaWithRelation.nullish())
@@ -88,6 +90,18 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_page) return null;
 
+      const configuration = pageConfigurationSchema.safeParse(
+        _page.configuration ?? {},
+      );
+
+      if (!configuration.success) {
+        console.error("Invalid configuration", configuration.error);
+        return null;
+      }
+
+      const barType = opts.input.barType ?? configuration.data.type;
+      // const cardType = opts.input.cardType ?? configuration.data.value;
+
       const monitors = _page.monitorsToPages
         // NOTE: we cannot nested `where` in drizzle to filter active monitors
         .filter((m) => !m.monitor.deletedAt)
@@ -100,7 +114,7 @@ export const statusPageRouter = createTRPCRouter({
           });
           const status =
             events.some((e) => e.type === "incident" && !e.to) &&
-            opts.input.barType !== "manual"
+            barType !== "manual"
               ? "error"
               : events.some((e) => e.type === "report" && !e.to)
                 ? "degraded"
@@ -117,8 +131,7 @@ export const statusPageRouter = createTRPCRouter({
         });
 
       const status =
-        monitors.some((m) => m.status === "error") &&
-        opts.input.barType !== "manual"
+        monitors.some((m) => m.status === "error") && barType !== "manual"
           ? "error"
           : monitors.some((m) => m.status === "degraded")
             ? "degraded"
@@ -146,7 +159,7 @@ export const statusPageRouter = createTRPCRouter({
         .sort((a, b) => a.from.getTime() - b.from.getTime());
 
       const openEvents = pageEvents.filter((event) => {
-        if (event.type === "incident" && opts.input.barType !== "manual") {
+        if (event.type === "incident" && barType !== "manual") {
           if (!event.to) return true;
           if (event.to < new Date()) return false;
           return false;

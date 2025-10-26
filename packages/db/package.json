@@ -16,6 +16,7 @@
     "@libsql/client": "0.15.15",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/regions": "workspace:*",
+    "@openstatus/theme-store": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
     "drizzle-orm": "0.44.4",
     "drizzle-zod": "0.5.1",

@@ -22,6 +22,7 @@ import {
   StatusHeader,
   StatusTitle,
 } from "@/components/status-page/status";
+import { StatusBlankMonitors } from "@/components/status-page/status-blank";
 import {
   StatusChartContent,
   StatusChartDescription,
@@ -200,6 +201,15 @@ export default function Page() {
             : "N/A",
       };
     }, [uptimeData, regionLatencyData, globalLatencyData]);
+
+  if (!isLoading && !monitor) {
+    return (
+      <StatusBlankMonitors
+        title="Monitor not found"
+        description="The monitor you are looking for does not exist."
+      />
+    );
+  }
 
   return (
     <Status>
