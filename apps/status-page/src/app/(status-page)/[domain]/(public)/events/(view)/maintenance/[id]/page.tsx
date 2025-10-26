@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
+import { StatusBlankEvents } from "@/components/status-page/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -27,7 +28,14 @@ export default function MaintenancePage() {
     }),
   );
 
-  if (!maintenance) return null;
+  if (!maintenance) {
+    return (
+      <StatusBlankEvents
+        title="Maintenance not found"
+        description="The maintenance you are looking for does not exist."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

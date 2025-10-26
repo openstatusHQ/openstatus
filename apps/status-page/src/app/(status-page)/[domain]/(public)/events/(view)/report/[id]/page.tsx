@@ -2,6 +2,7 @@
 
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
+import { StatusBlankEvents } from "@/components/status-page/status-blank";
 import {
   StatusEvent,
   StatusEventAffected,
@@ -24,7 +25,14 @@ export default function ReportPage() {
     trpc.statusPage.getReport.queryOptions({ id: Number(id), slug: domain }),
   );
 
-  if (!report) return null;
+  if (!report) {
+    return (
+      <StatusBlankEvents
+        title="Report not found"
+        description="The report you are looking for does not exist."
+      />
+    );
+  }
 
   const updates = report.statusReportUpdates.sort(
     (a, b) => b.date.getTime() - a.date.getTime(),

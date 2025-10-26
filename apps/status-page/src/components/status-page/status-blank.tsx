@@ -213,3 +213,49 @@ export function StatusBlankOverlay({
     </div>
   );
 }
+
+export function StatusBlankEvents({
+  title = "No reports found",
+  description = "No reports found for this status page.",
+  ...props
+}: React.ComponentProps<typeof StatusBlankContainer> & {
+  title?: string;
+  description?: string;
+}) {
+  return (
+    <StatusBlankContainer {...props}>
+      <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+        <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
+        <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+        <StatusBlankReport />
+      </div>
+      <StatusBlankContent>
+        <StatusBlankTitle>{title}</StatusBlankTitle>
+        <StatusBlankDescription>{description}</StatusBlankDescription>
+      </StatusBlankContent>
+    </StatusBlankContainer>
+  );
+}
+
+export function StatusBlankMonitors({
+  title = "No public monitors",
+  description = "No public monitors have been added to this page.",
+  ...props
+}: React.ComponentProps<typeof StatusBlankContainer> & {
+  title?: string;
+  description?: string;
+}) {
+  return (
+    <StatusBlankContainer {...props}>
+      <div className="relative mt-8 flex w-full flex-col items-center justify-center">
+        <StatusBlankMonitor className="-top-16 absolute scale-60 opacity-50" />
+        <StatusBlankMonitor className="-top-8 absolute scale-80 opacity-80" />
+        <StatusBlankMonitor />
+      </div>
+      <StatusBlankContent>
+        <StatusBlankTitle>{title}</StatusBlankTitle>
+        <StatusBlankDescription>{description}</StatusBlankDescription>
+      </StatusBlankContent>
+    </StatusBlankContainer>
+  );
+}
