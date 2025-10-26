@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import {
   THEMES,
   THEME_KEYS,
+  type ThemeDefinition,
   generateThemeStyles,
 } from "@openstatus/theme-store";
 import { Check, ChevronsUpDown, Settings } from "lucide-react";
@@ -340,15 +341,24 @@ export function FloatingButton({
   );
 }
 
-export function recomputeStyles(newTheme: CommunityTheme) {
+export function recomputeStyles(
+  newTheme: CommunityTheme,
+  overrides?: Partial<ThemeDefinition>,
+) {
   // FIXME: only on prod, we have two style elements with the same id
   // we need to get rid of all of them except the one we want to update
-  const allThemeStyles = document.querySelectorAll("style[id='theme-styles']");
-  allThemeStyles.forEach((style, index) => {
-    if (index === 0) {
-      style.textContent = generateThemeStyles(newTheme);
-    } else {
-      style.remove();
-    }
-  });
+  try {
+    const allThemeStyles = document.querySelectorAll(
+      "style[id='theme-styles']",
+    );
+    allThemeStyles.forEach((style, index) => {
+      if (index === 0) {
+        style.textContent = generateThemeStyles(newTheme, overrides);
+      } else {
+        style.remove();
+      }
+    });
+  } catch (error) {
+    console.error(error);
+  }
 }

@@ -2,7 +2,7 @@ export * from "./types";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { SUPABASE_THEME } from "./supabase";
-import type { Theme, ThemeMap } from "./types";
+import type { Theme, ThemeDefinition, ThemeMap } from "./types";
 import { assertUniqueThemeIds } from "./utils";
 
 const THEMES_LIST = [
@@ -23,7 +23,10 @@ export const THEMES = THEMES_LIST.reduce<ThemeMap>((acc, theme) => {
 export const THEME_KEYS = THEMES_LIST.map((theme) => theme.id);
 export type ThemeKey = (typeof THEME_KEYS)[number];
 
-export function generateThemeStyles(themeKey?: string) {
+export function generateThemeStyles(
+  themeKey?: string,
+  overrides?: Partial<ThemeDefinition>,
+) {
   let theme = themeKey ? THEMES[themeKey] : undefined;
 
   if (!theme) {
@@ -31,10 +34,10 @@ export function generateThemeStyles(themeKey?: string) {
     theme = OPENSTATUS_THEME;
   }
 
-  const lightVars = Object.entries(theme.light)
+  const lightVars = Object.entries({ ...theme.light, ...overrides?.light })
     .map(([key, value]) => `${key}: ${value};`)
     .join("\n    ");
-  const darkVars = Object.entries(theme.dark)
+  const darkVars = Object.entries({ ...theme.dark, ...overrides?.dark })
     .map(([key, value]) => `${key}: ${value};`)
     .join("\n    ");
 
