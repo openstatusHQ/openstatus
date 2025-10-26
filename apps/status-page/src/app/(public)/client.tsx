@@ -118,7 +118,7 @@ export function Client() {
           />
           <ThemePalettePicker />
         </div>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {THEME_KEYS.filter((k) => {
             const theme = THEMES[k];
             return (
@@ -162,8 +162,8 @@ export function Client() {
                   )}
                 </div>
                 <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-0.5">
-                    <div className="font-medium text-foreground text-sm leading-none">
+                  <div className="space-y-0.5 truncate">
+                    <div className="font-medium text-foreground text-sm leading-none truncate">
                       {theme.name}
                     </div>
                     <div className="font-mono text-xs">
