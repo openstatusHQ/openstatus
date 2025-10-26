@@ -19,15 +19,13 @@ export function ThemePalettePicker() {
           <Palette className="size-4" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>
-        <p>
-          Toggle Sidebar{" "}
-          <KbdGroup>
-            <Kbd>⌘</Kbd>
-            <span>+</span>
-            <Kbd>B</Kbd>
-          </KbdGroup>
-        </p>
+      <TooltipContent className="flex items-center gap-2">
+        Toggle Sidebar{" "}
+        <KbdGroup>
+          <Kbd>⌘</Kbd>
+          <span>+</span>
+          <Kbd>B</Kbd>
+        </KbdGroup>
       </TooltipContent>
     </Tooltip>
   );
