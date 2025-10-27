@@ -12,7 +12,7 @@ ignore:
   - /packages/tracker
 builders:
   install:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.3.1
     workdir: /app/
     # Copy project
     bind:
@@ -37,11 +37,11 @@ builders:
       - packages/upstash/package.json
       - packages/theme-store/package.json
     # Install dependencies
-    run: bun install --production --ignore-scripts --frozen-lockfile --verbose
+    run: bun install --production  --frozen-lockfile --verbose
     cache:
       - /root/.bun/install/cache
   build:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.3.1
     workdir: /app/apps/workflows
     copy:
       - . /app/
@@ -55,14 +55,14 @@ builders:
     run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
   docker:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.3.1
     workdir: /app/apps/workflows
     copy:
      - . /app/
     run: bun run src/build-docker.ts
 
   libsql:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.3.1
     workdir: /app/
     copy:
       - fromBuilder: docker
