@@ -10,7 +10,7 @@ on:
 jobs:
   dx:
     name: 🧑‍💻 DX checker
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
       sqld:
