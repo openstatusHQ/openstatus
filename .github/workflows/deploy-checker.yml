@@ -9,6 +9,7 @@ jobs:
   deploy-checker:
     name: Deploy Checker
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master

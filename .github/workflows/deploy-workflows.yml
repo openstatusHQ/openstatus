@@ -14,6 +14,7 @@ jobs:
   deploy-workflows:
     name: Deploy Workflows
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master

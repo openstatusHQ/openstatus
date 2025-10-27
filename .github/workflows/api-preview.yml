@@ -20,6 +20,7 @@ env:
 jobs:
   review_app:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       url: ${{ steps.deploy.outputs.url }}
     # Only run one deployment at a time per PR.
