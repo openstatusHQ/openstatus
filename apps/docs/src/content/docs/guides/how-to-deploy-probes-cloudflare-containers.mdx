@@ -1,0 +1,53 @@
+---
+title: How to deploy the openstatus probe to Cloudflare Containers
+description: Learn how to use OpenStatus monitoring data and deploy your own Status Page to cloudflare pages.
+sidebar:
+  label: Deploy private probes on Cloudflare Containers
+---
+
+In this guide we will show you how to deploy the OpenStatus probe to Cloudflare Containers.
+
+Cloudflare Containers is a platform that allows you to run serverless containers in the Cloudflare network.
+
+The code showcased in this guide is available on [GitHub](https://github.com/openstatusHQ/private-location-cloudflare-container)
+
+### Requirements
+- A Cloudflare Account.
+- An [OpenStatus](https://www.openstatus.dev) Account.
+
+
+
+### Create a private location on OpenStatus
+
+1. Go to the OpenStatus dashboard.
+2. Click on the `Private locations` in the sidebar.
+3. Click on the `Create Private Location` button.
+4. Give it a human readable name.
+5. Save token.
+6. Click submit to save the newly created private location.
+
+### Create a Cloudflare Container
+
+1. Create a new cloudflare workers container template using the following command:
+
+```bash
+pnpm create cloudflare@latest --template=cloudflare/templates/containers-template
+```
+
+2. Fetch openstatus private location image from Docker Hub, we need to specify the platform to linux/amd64 because Cloudflare Containers currently only supports amd64 architecture.:
+
+```bash
+docker docker pull --platform linux/amd64 ghcr.io/openstatushq/private-location:latest
+```
+
+3. Tag the image, be aware we cannot use the `latest` tag on Cloudflare Containers:
+
+```bash
+docker tag ghcr.io/openstatushq/private-location:latest openstatus-private-location:v1
+```
+
+4. Push the image to Cloudflare Container Registry:
+
+```bash
+pnpm wrangler containers push openstatus-private-location:v1
+```
