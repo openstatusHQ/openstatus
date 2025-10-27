@@ -130,6 +130,10 @@ export default defineConfig({
               label: "How to use React Status Widget",
               slug: "guides/how-to-use-react-widget",
             },
+            {
+              label: "How to deploy probes on Cloudflare Containers ",
+              slug: "guides/how-to-deploy-probes-cloudflare-containers",
+            },
           ],
         },
         {

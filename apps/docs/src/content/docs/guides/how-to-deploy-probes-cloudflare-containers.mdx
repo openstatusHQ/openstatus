@@ -4,16 +4,22 @@ description: Learn how to use OpenStatus monitoring data and deploy your own Sta
 sidebar:
   label: Deploy private probes on Cloudflare Containers
 ---
+import { Image } from 'astro:assets';
+import log from '../../../assets/guides/how-to-deploy-probes-cf-containters/cloudflare-log.png';
+import os from '../../../assets/guides/how-to-deploy-probes-cf-containters/private-location.jpg';
+
 
 In this guide we will show you how to deploy the OpenStatus probe to Cloudflare Containers.
 
 Cloudflare Containers is a platform that allows you to run serverless containers in the Cloudflare network.
 
+Cloudflare containers automatically scales down after a given time. We will push a cron worker that will keep our container alive and running on Cloudflare Containers platform.
+
 The code showcased in this guide is available on [GitHub](https://github.com/openstatusHQ/private-location-cloudflare-container)
 
 ### Requirements
 - A Cloudflare Account.
-- An [OpenStatus](https://www.openstatus.dev) Account.
+- An [openstatus](https://www.openstatus.dev) Account.
 
 
 
@@ -51,3 +57,72 @@ docker tag ghcr.io/openstatushq/private-location:latest openstatus-private-locat
 ```bash
 pnpm wrangler containers push openstatus-private-location:v1
 ```
+
+5. Update the `wrangler.toml` file to use the pushed image:
+
+```toml
+[containers]
+    image = "registry.cloudflare.com/GENERATED_ID/openstatus-private-location:cf-1"
+```
+
+6. Update the worker to use a cron trigger to keep the container alive, add the following to your `wrangler.toml` file:
+
+```toml
+triggers = { cron = ["*/2 * * * *"] }
+```
+
+7. Update the `index.ts` file to run a simple command to keep the container alive:
+
+```ts
+sleepAfter = "150s";
+```
+and
+
+```ts
+async scheduled(_controller: any, env: Env) {
+  try {
+    const container = getContainer(env.MY_CONTAINER);
+    await container.start({
+      envVars: {
+        OPENSTATUS_KEY: env.OPENSTATUS_KEY,
+      },
+    });
+  } catch (e) {
+    console.error("Error in scheduled task:", e);
+  }
+
+  return new Response("ok");
+},
+```
+
+9. Add you OpenStatus API secret
+
+```bash
+pnpm wrangler secret put OPENSTATUS_KEY
+```
+
+
+10. Deploy the container to Cloudflare Containers:
+
+```bash
+pnpm wrangler deploy
+```
+
+
+
+
+## Conclusion
+
+You have successfully deployed the openstatus private location probe to Cloudflare Containers. Thus you can monitor your endpoint from Cloudflare's global network.
+
+
+  <Image
+    src={log}
+    alt="OpenStatus Private Location on Cloudflare Containers"
+    caption="Cloudflare Workers Logs showing OpenStatus Private Location running"
+  />
+
+  <Image
+    src={os}
+    alt="OpenStatus Private Location on Cloudflare Containers"
+  />
