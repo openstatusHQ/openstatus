@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useState } from "react";
@@ -26,21 +27,21 @@ export function ThemeSelect({
     setMounted(true);
   }, []);
 
-  // NOTE: hydration error if we don't do this
   if (!mounted) {
-    return (
-      <Select>
-        <SelectTrigger className={cn("w-[180px]", className)} {...props}>
-          <SelectValue placeholder="Select theme" />
-        </SelectTrigger>
-      </Select>
-    );
+    return <Skeleton className="h-9 rounded-md border border-border" />;
   }
 
   return (
     <Select value={theme} onValueChange={setTheme}>
-      <SelectTrigger className={cn("w-[180px]", className)} {...props}>
-        <SelectValue defaultValue={theme} placeholder="Select theme" />
+      <SelectTrigger
+        className={cn("min-w-[110px] max-w-[110px]", className)}
+        {...props}
+      >
+        <SelectValue
+          className="w-full"
+          defaultValue={theme}
+          placeholder="Select theme"
+        />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="light">

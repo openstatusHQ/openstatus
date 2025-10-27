@@ -141,7 +141,7 @@ export function Client() {
                   data-active={k === t}
                   data-slot="theme-card"
                   data-theme={k}
-                  className="relative h-40 cursor-pointer overflow-hidden rounded-md border outline-none transition-all focus:outline-ring/50 focus:ring-2 focus:ring-ring/50 data-[active=true]:border-ring data-[active=true]:outline-[3px] data-[active=true]:outline-ring/50"
+                  className="relative h-40 cursor-pointer overflow-hidden rounded-md border border-border outline-none transition-all focus:outline-ring/50 focus:ring-2 focus:ring-ring/50 data-[active=true]:border-ring data-[active=true]:outline-[3px] data-[active=true]:outline-ring/50"
                   onClick={() => setSearchParams({ t: k })}
                   role="button"
                   tabIndex={0}
@@ -165,7 +165,7 @@ export function Client() {
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-0.5 truncate">
-                    <div className="font-medium text-foreground text-sm leading-none truncate">
+                    <div className="truncate font-medium text-foreground text-sm leading-none">
                       {theme.name}
                     </div>
                     <div className="font-mono text-xs">
