@@ -9,6 +9,7 @@ on:
       - "packages/emails/**"
       - "packages/utils/**"
       - "packages/tsconfig/**"
+      - "packages/notifications/**"
 jobs:
   deploy-workflows:
     name: Deploy Workflows
