@@ -33,6 +33,7 @@ import { ThemeSelect } from "@/components/themes/theme-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useSidebar } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -65,6 +66,7 @@ export function Client() {
   const [isMounted, setIsMounted] = useState(false);
   const [{ q, t }, setSearchParams] = useQueryStates(searchParamsParsers);
   const theme = t ? THEMES[t as keyof typeof THEMES] : undefined;
+  const { toggleSidebar } = useSidebar();
 
   useEffect(() => {
     setIsMounted(true);
@@ -223,11 +225,13 @@ export function Client() {
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <p>
             You can contribute your own theme by creating a new file in the{" "}
-            <code>@openstatus.theme-store</code> package. You&apos;ll only need
+            <code>@openstatus/theme-store</code> package. You&apos;ll only need
             to override css variables. If you are familiar with shadcn, you'll
             know the trick (it also allows you to override `--radius`). Make
-            sure your object is satisfying the <code>Theme</code> interface.
+            sure your object is satisfying the <code>Theme</code> interface. We
+            provide a theme builder to help you with the process.
           </p>
+          <Button onClick={toggleSidebar}>Toggle Theme Builder</Button>
           <p>
             Go to the{" "}
             <Link href="https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store">
@@ -235,6 +239,16 @@ export function Client() {
             </Link>{" "}
             to see the existing themes and create a new one by forking and
             creating a pull request.
+          </p>
+          <p>
+            Once you're done, you can test it by adding the following snippet to
+            your status page:
+          </p>
+          <pre>
+            <code>sessionStorage.setItem("community-theme", "true");</code>
+          </pre>
+          <p>
+            Or use the following button to test it on the `status` page slug:
           </p>
           <Button
             onClick={() => {
@@ -246,11 +260,6 @@ export function Client() {
             Test it
           </Button>
           {/* TODO: OR go to the status-page config and click on the View and Configure button */}
-          <p>
-            Or use the{" "}
-            <code>sessionStorage.setItem("community-theme", "true");</code> on
-            your own status page.
-          </p>
         </div>
       </Section>
       <Separator />
