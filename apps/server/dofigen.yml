@@ -10,7 +10,7 @@ ignore:
   - /packages/integrations/vercel
 builders:
   install:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.3.1
     workdir: /app/
     # Copy project
     bind:
@@ -32,11 +32,11 @@ builders:
       - packages/theme-store/package.json
 
     # Install dependencies
-    run: bun install --production --ignore-scripts --frozen-lockfile --verbose
+    run: bun install --production  --frozen-lockfile --verbose
     cache:
       - /root/.bun/install/cache
   build:
-    fromImage: oven/bun:1.2.23
+    fromImage: oven/bun:1.3.1
     workdir: /app/apps/server
     copy:
       - . /app/

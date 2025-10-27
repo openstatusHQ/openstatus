@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74 AS install
+FROM oven/bun@sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.2.23"
+    org.opencontainers.image.base.digest="sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.1"
 WORKDIR /app/
 RUN \
     --mount=type=bind,target=bunfig.toml,source=bunfig.toml \
@@ -26,13 +26,13 @@ RUN \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
     --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
-    bun install --production --ignore-scripts --frozen-lockfile --verbose
+    bun install --production  --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74 AS build
+FROM oven/bun@sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.2.23"
+    org.opencontainers.image.base.digest="sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.1"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
 COPY \
