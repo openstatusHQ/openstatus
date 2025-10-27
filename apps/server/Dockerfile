@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS install
+FROM oven/bun@sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:latest"
+    org.opencontainers.image.base.digest="sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.2.23"
 WORKDIR /app/
 RUN \
     --mount=type=bind,target=bunfig.toml,source=bunfig.toml \
@@ -24,14 +24,15 @@ RUN \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
+    --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --production --ignore-scripts --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS build
+FROM oven/bun@sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:latest"
+    org.opencontainers.image.base.digest="sha256:6ebf306367da43ad75c4d5119563e24de9b66372929ad4fa31546be053a16f74" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.2.23"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
 COPY \
@@ -44,10 +45,10 @@ COPY \
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d AS runtime
+FROM debian@sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b AS runtime
 LABEL \
     io.dofigen.version="2.5.0" \
-    org.opencontainers.image.base.digest="sha256:f807f4b16002c623115b0247dca6a55711c6b1ae821dc64fb8a2339e4ce2115d" \
+    org.opencontainers.image.base.digest="sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
 COPY \
     --from=build \
