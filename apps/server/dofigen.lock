@@ -13,10 +13,10 @@ effective: |
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.1
-        org.opencontainers.image.base.digest: sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/
       run:
       - bun install --production  --frozen-lockfile --verbose
@@ -58,10 +58,10 @@ effective: |
     build:
       fromImage:
         path: oven/bun
-        digest: sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.1
-        org.opencontainers.image.base.digest: sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -79,8 +79,8 @@ effective: |
     path: debian
     digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
   label:
-    io.dofigen.version: 2.5.0
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    io.dofigen.version: 2.5.0
     org.opencontainers.image.base.digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
   copy:
   - fromBuilder: build
@@ -94,17 +94,17 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    oven:
-      bun:
-        1.3.1:
-          digest: sha256:9c5d3c92b234b4708198577d2f39aab7397a242a40da7c2f059e51b9dc62b408
     library:
       debian:
         bullseye-slim:
           digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
+    oven:
+      bun:
+        1.3.0:
+          digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
 resources:
   dofigen.yml:
-    hash: 1fa9ed07d4ab89eff305e1a9826095326b894888b2fd3b6e298c93e0304ba332
+    hash: ba8e45ee056a394477b49883e8a43090fc6e91d253bce9620042845c3e3970cd
     content: |
       ignore:
         - node_modules
@@ -118,7 +118,7 @@ resources:
         - /packages/integrations/vercel
       builders:
         install:
-          fromImage: oven/bun:1.3.1
+          fromImage: oven/bun:1.3.0
           workdir: /app/
           # Copy project
           bind:
@@ -144,7 +144,7 @@ resources:
           cache:
             - /root/.bun/install/cache
         build:
-          fromImage: oven/bun:1.3.1
+          fromImage: oven/bun:1.3.0
           workdir: /app/apps/server
           copy:
             - . /app/
