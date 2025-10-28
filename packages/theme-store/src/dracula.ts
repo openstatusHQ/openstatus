@@ -21,6 +21,8 @@ export const DRACULA_THEME = {
     "--destructive": "#cb3a2a",
     "--warning": "#A34D14",
     "--info": "#036A96",
+    "--popover-foreground": "var(--foreground)",
+    "--popover": "var(--background)"
   },
   dark: {
     "--background": "#282a36",
@@ -39,5 +41,7 @@ export const DRACULA_THEME = {
     "--destructive": "#ff5555",
     "--warning": "#ffb86c",
     "--info": "#8BE9FD",
+    "--popover-foreground": "var(--foreground)",
+    "--popover": "var(--background)"
   },
 } as const satisfies Theme;

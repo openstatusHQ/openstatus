@@ -5,13 +5,13 @@ import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { SUPABASE_THEME } from "./supabase";
 import type { Theme, ThemeDefinition, ThemeMap } from "./types";
 import { assertUniqueThemeIds } from "./utils";
-
+// Please keep the themes ordered :)
 const THEMES_LIST = [
-  DRACULA_THEME,
   OPENSTATUS_THEME,
   OPENSTATUS_ROUNDED_THEME,
   SUPABASE_THEME,
   GITHUB_HIGH_CONTRAST_THEME,
+  DRACULA_THEME,
 ] satisfies Theme[];
 
 // NOTE: runtime validation to ensure that the theme IDs are unique
