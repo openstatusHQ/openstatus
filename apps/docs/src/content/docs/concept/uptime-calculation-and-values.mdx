@@ -1,0 +1,70 @@
+---
+title: Uptime Calculation and Shared Values
+---
+
+Let’s face it - uptime values can be a complete lie if they’re not properly connected to monitoring.
+
+We want to make uptime transparent and configurable. You decide how your uptime is calculated and which values you want to share on your status page.
+When monitoring an endpoint, a check can end up in one of three states:
+
+- ✅ Success – everything’s fine
+- ⚠️ Degraded – slow or partially failing
+- ❌ Down – no response or full failure
+
+We now offer multiple types of uptime calculation:
+- **Absolute** (default): derived directly from your monitoring data
+    - **Duration**: aggregated from the incidents duration
+    - **Requests** (default): aggregated from the request values
+- **Manual**: for teams that prefer full control over what’s shown
+
+**TL;DR**
+
+| Type        | Source of Truth      | What Users See                      | Best For                        |
+|-------------|----------------------|-------------------------------------|----------------------------------|
+| **Duration** (Absolute) | Incident duration    | Time based uptime, proportional colors | Accurate long-term view         |
+| **Request** (Absolute)  | Every ping result    | Request-based uptime %              | Real-time reflection            |
+| **Manual**   | Manually set status  | Controlled, narrative updates       | Transparency without monitoring |
+
+<br />
+
+Let’s break them down!
+
+## Absolute Type
+
+The absolute type calculates uptime based on actual monitoring results. It’s the most accurate reflection of what’s really happening, and comes in two variants: _Duration_ and _Request_.
+Both of these share real data with your users - incidents, degraded states, and historical uptime - but they differ in how they aggregate and display that data.
+
+---
+
+### Duration
+
+The duration value is calculated from the **total monitoring time and the duration of incidents**.
+
+In simple terms: `uptime = (total time - incident duration) / total time`
+
+This means uptime is based on how long something was down, not how many checks failed. Only incident durations are included in the calculation. Temporary single-region ping failures (e.g., one location failing once) are not propagated to users - because these often don’t represent a real outage. That’s also why we recommend at least three locations per monitor for redundancy. The proportional colors in the status bar are drawn from these duration values. Hovering over a day shows both incidents and status reports, so users can explore what happened.
+
+---
+
+### Request
+
+The request value is more straightforward - it looks at each ping result individually. **Every check we run contributes to your uptime score**.
+
+In simple terms: `uptime = (success + degraded - error) / total requests`
+
+This is the current default mode for most openstatus users. It’s simple, data-driven, and updates immediately as new results come in. Like with duration, hover cards display incidents and status reports, giving your users a quick overview of recent events.
+
+---
+
+## Manual Type
+
+The manual type is for teams who want to **fully control what’s shown** on your status page, without relying on automatic checks.
+By default, your monitor is marked operational. You can then manually create and publish status reports whenever you want to reflect changes — independent of any monitoring data.
+
+This is ideal if:
+- you don’t have synthetic monitoring set up yet,
+- or you’re sharing updates that aren’t tied to uptime (e.g., service degradation due to external dependencies).
+
+In this mode, all displayed uptime values and statuses come from your shared data, not from active pings.
+
+> **Note**: the values you are defining are attached to a status page. You cannot change the per monitor.

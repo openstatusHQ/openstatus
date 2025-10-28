@@ -72,6 +72,10 @@ export default defineConfig({
               slug: "concept/best-practices-status-page",
             },
             {
+              label: "Uptime Calculation and Values",
+              slug: "concept/uptime-calculation-and-values",
+            },
+            {
               label: "Uptime Monitoring as Code",
               slug: "concept/uptime-monitoring-as-code",
             },

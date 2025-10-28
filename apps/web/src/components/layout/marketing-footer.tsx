@@ -84,6 +84,10 @@ export function MarketingFooter({ className }: Props) {
             <FooterLink href="/play/checker" label="Speed Checker" />
             <FooterLink href="/play/curl" label="cURL Builder" />
             <FooterLink href="/play/uptime-sla" label="Uptime SLA Calculator" />
+            <FooterLink
+              href="https://themes.openstatus.dev"
+              label="Theme Explorer"
+            />
             <FooterLink href="https://openstat.us" label="All Status Codes" />
             <FooterLink
               href="https://light.openstatus.dev"

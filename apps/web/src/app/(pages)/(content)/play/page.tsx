@@ -76,6 +76,12 @@ const playgrounds: CardProps[] = [
     icon: ShieldCheck,
   },
   {
+    href: "https://themes.openstatus.dev",
+    title: "Theme Explorer",
+    description: "Explore our collection of themes for your status page.",
+    icon: Palette,
+  },
+  {
     href: "https://light.openstatus.dev",
     title: "Vercel Edge Ping",
     description:
