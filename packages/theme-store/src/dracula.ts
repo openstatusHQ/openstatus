@@ -1,13 +1,13 @@
 import type { Theme } from "./types";
 
-export const GITHUB_HIGH_CONTRAST_THEME = {
+export const DRACULA_THEME = {
   id: "dracula",
   name: "Dracula",
   author: { name: "@thibaultleouay", url: "https://thibaultleouay.dev" },
   light: {
     "--background": "#FFFBEB",
     "--foreground": "#1F1F1F",
-    "--border": "oklch(92.2% 0 0)",
+    "--border": "#6C664B",
     "--input": "oklch(92.2% 0 0)",
     "--primary": "oklch(20.5% 0 0)",
     "--primary-foreground": "oklch(98.5% 0 0)",
@@ -20,12 +20,12 @@ export const GITHUB_HIGH_CONTRAST_THEME = {
     "--success": "#14710a",
     "--destructive": "#cb3a2a",
     "--warning": "#A34D14",
-    "--info": "#6C664B",
+    "--info": "#036A96",
   },
   dark: {
     "--background": "#282a36",
     "--foreground": "#f8f8f2",
-    "--border": "oklch(100% 0 0 / 10%)",
+    "--border": "#6272A4",
     "--input": "oklch(100% 0 0 / 15%)",
     "--primary": "oklch(92.2% 0 0)",
     "--primary-foreground": "oklch(20.5% 0 0)",
@@ -38,6 +38,6 @@ export const GITHUB_HIGH_CONTRAST_THEME = {
     "--success": "#50fa7b",
     "--destructive": "#ff5555",
     "--warning": "#ffb86c",
-    "--info": "#6171a3",
+    "--info": "#8BE9FD",
   },
 } as const satisfies Theme;
