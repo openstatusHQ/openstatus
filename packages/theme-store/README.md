@@ -98,7 +98,7 @@ Create a pull request with your theme for review.
 ## Design Guidelines
 
 ### Color System
-- Use **OKLCH color space** for better perceptual uniformity
+- Use **OKLCH color space** for better perceptual uniformity (but all css color specs are supported)
 - Ensure sufficient contrast ratios for accessibility
 - Test both light and dark modes thoroughly
 
