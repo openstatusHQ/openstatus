@@ -42,7 +42,11 @@ The duration value is calculated from the **total monitoring time and the durati
 
 In simple terms: `uptime = (total time - incident duration) / total time`
 
-This means uptime is based on how long something was down, not how many checks failed. Only incident durations are included in the calculation. Temporary single-region ping failures (e.g., one location failing once) are not propagated to users - because these often don’t represent a real outage. That’s also why we recommend at least three locations per monitor for redundancy. The proportional colors in the status bar are drawn from these duration values. Hovering over a day shows both incidents and status reports, so users can explore what happened.
+This means uptime is based on how long something was down, not how many checks failed. Only incident durations are included in the calculation. 
+
+Temporary single-region ping failures (e.g., one location failing once, sometimes this just happens) are not propagated to users - because these often don’t represent a real outage. That’s also why we recommend at least three locations per monitor for redundancy. 
+
+The proportional colors in the status bar are drawn from these duration values. Hovering over a day shows both incidents and status reports, so users can explore what happened.
 
 ---
 
@@ -52,19 +56,23 @@ The request value is more straightforward - it looks at each ping result individ
 
 In simple terms: `uptime = (success + degraded - error) / total requests`
 
-This is the current default mode for most openstatus users. It’s simple, data-driven, and updates immediately as new results come in. Like with duration, hover cards display incidents and status reports, giving your users a quick overview of recent events.
+This is the current default mode for most openstatus users. It’s simple, data-driven, and updates immediately as new results come in. 
+
+Like with duration, hover cards display incidents and status reports, giving your users a quick overview of recent events.
 
 ---
 
 ## Manual Type
 
 The manual type is for teams who want to **fully control what’s shown** on your status page, without relying on automatic checks.
-By default, your monitor is marked operational. You can then manually create and publish status reports whenever you want to reflect changes — independent of any monitoring data.
+By default, your monitor is marked operational. You can then manually create status reports whenever you want to reflect changes — independent of any monitoring data.
 
 This is ideal if:
 - you don’t have synthetic monitoring set up yet,
 - or you’re sharing updates that aren’t tied to uptime (e.g., service degradation due to external dependencies).
 
-In this mode, all displayed uptime values and statuses come from your shared data, not from active pings.
+In this mode, all displayed uptime values and statuses come from your shared report data, not from active pings.
 
-> **Note**: the values you are defining are attached to a status page. You cannot change the per monitor.
+In simple terms: `uptime = (total duration - status report duration) / total duration`
+
+> **Note**: the values you are defining are attached to a status page. You cannot change them per monitor (for now).
