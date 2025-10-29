@@ -28,7 +28,11 @@ export function ThemeSelect({
   }, []);
 
   if (!mounted) {
-    return <Skeleton className="h-9 rounded-md border border-border" />;
+    return (
+      <Skeleton
+        className={cn("h-9 rounded-md border border-border", className)}
+      />
+    );
   }
 
   return (
