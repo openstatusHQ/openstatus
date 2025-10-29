@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
 	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
 
@@ -34,6 +33,7 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 	opts := &auth.Options2LO{
 		Email:      os.Getenv("GCP_CLIENT_EMAIL"),
 		PrivateKey: []byte(os.Getenv("GCP_PRIVATE_KEY")),
+		PrivateKeyID: os.Getenv("GCP_PRIVATE_KEY_ID"),
 		Scopes: []string{
 			"https://www.googleapis.com/auth/cloud-platform",
 		},

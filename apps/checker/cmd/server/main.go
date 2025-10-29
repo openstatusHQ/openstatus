@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/handlers"
 
 	"github.com/openstatushq/openstatus/apps/checker/pkg/logger"
@@ -75,6 +76,18 @@ func main() {
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "region": region, "provider": cloudProvider})
+	})
+
+	router.GET("/test", func(c *gin.Context) {
+		ctx := context.Background()
+		err := checker.UpdateStatus(ctx, checker.UpdateData{
+			MonitorId:     "test-monitor",
+			Status:        "up",
+			Message:       "All good",
+		})
+		if err != nil {
+			fmt.Println("Error updating status:", err)
+		}
 	})
 
 	httpServer := &http.Server{
