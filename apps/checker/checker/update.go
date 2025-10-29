@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
-	"os"
 
 	"cloud.google.com/go/auth"
 	cloudtasks "cloud.google.com/go/cloudtasks/apiv2"
@@ -29,10 +31,11 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 	url := "https://openstatus-workflows.fly.dev/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
-
+	c := os.Getenv("GCP_PRIVATE_KEY")
+	c = strings.ReplaceAll(c, "\\n", "\n")
 	opts := &auth.Options2LO{
 		Email:        os.Getenv("GCP_CLIENT_EMAIL"),
-		PrivateKey:   []byte(os.Getenv("GCP_PRIVATE_KEY")),
+		PrivateKey:   []byte(c),
 		PrivateKeyID: os.Getenv("GCP_PRIVATE_KEY_ID"),
 		Scopes: []string{
 			"https://www.googleapis.com/auth/cloud-platform",
