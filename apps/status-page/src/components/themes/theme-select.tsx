@@ -33,10 +33,7 @@ export function ThemeSelect({
 
   return (
     <Select value={theme} onValueChange={setTheme}>
-      <SelectTrigger
-        className={cn("min-w-[110px] max-w-[110px]", className)}
-        {...props}
-      >
+      <SelectTrigger className={cn("w-full", className)} {...props}>
         <SelectValue
           className="w-full"
           defaultValue={theme}

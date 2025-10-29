@@ -260,7 +260,7 @@ export function FloatingButton({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="theme">Theme</Label>
-                <ThemeSelect id="theme" className="w-full" />
+                <ThemeSelect id="theme" className="max-w-full" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="community-theme">Community Theme</Label>

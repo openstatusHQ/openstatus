@@ -107,7 +107,7 @@ export function Client() {
           </div>
         </div>
         <div className="flex gap-3">
-          <ThemeSelect />
+          <ThemeSelect className="min-w-[110px] max-w-[110px]" />
           <Input
             placeholder={`Search from ${THEME_KEYS.length} themes`}
             value={q ?? ""}
