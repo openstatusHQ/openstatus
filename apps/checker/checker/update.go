@@ -82,6 +82,7 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 
 	_, err = client.CreateTask(ctx, req)
 	if err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while creating the cloud task")
 		return fmt.Errorf("cloudtasks.CreateTask: %w", err)
 	}
 
