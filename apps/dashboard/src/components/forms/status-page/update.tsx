@@ -121,6 +121,7 @@ export function FormStatusPageUpdate() {
             order: monitor.order,
             active: monitor.active ?? null,
           })),
+          groups: [],
         }}
         onSubmit={async (values) => {
           await updateMonitorsMutation.mutateAsync({
