@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { selectIncidentSchema } from "./incidents/validation";
 import { selectMaintenanceSchema } from "./maintenances";
+import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
 import {
@@ -84,16 +85,41 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
     id: true,
   });
 
-export const selectPublicPageSchemaWithRelation = selectPageSchema
-  .extend({
-    // TODO: include status of the monitor
-    monitors: selectPublicMonitorSchema
-      .extend({
+const selectPublicMonitorWithStatusSchema = selectPublicMonitorSchema.extend({
+  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+  monitorGroupId: z.number().nullable().optional(),
+  order: z.number().default(0).optional(),
+  groupOrder: z.number().default(0).optional(),
+});
+
+const trackersSchema = z
+  .array(
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("monitor"),
+        monitor: selectPublicMonitorWithStatusSchema,
+        order: z.number(),
+      }),
+      z.object({
+        type: z.literal("group"),
+        groupId: z.number(),
+        groupName: z.string(),
+        monitors: z.array(selectPublicMonitorWithStatusSchema),
         status: z
           .enum(["success", "degraded", "error", "info"])
           .default("success"),
-      })
-      .array(),
+        order: z.number(),
+      }),
+    ]),
+  )
+  .default([]);
+
+export const selectPublicPageSchemaWithRelation = selectPageSchema
+  .extend({
+    monitorGroups: selectMonitorGroupSchema.array().default([]),
+    // TODO: include status of the monitor
+    monitors: selectPublicMonitorWithStatusSchema.array(),
+    trackers: trackersSchema,
     lastEvents: z.array(
       z.object({
         id: z.number(),

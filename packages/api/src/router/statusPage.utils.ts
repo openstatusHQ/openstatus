@@ -204,6 +204,21 @@ export function getEvents({
 // Keep the old function name for backward compatibility
 export const getEventsByMonitorId = getEvents;
 
+export function getWorstVariant(
+  statuses: (keyof typeof STATUS_PRIORITY)[],
+): keyof typeof STATUS_PRIORITY {
+  if (statuses.length === 0) return "success";
+
+  return statuses.reduce(
+    (worst, current) => {
+      return STATUS_PRIORITY[current] > STATUS_PRIORITY[worst]
+        ? current
+        : worst;
+    },
+    "success" as keyof typeof STATUS_PRIORITY,
+  );
+}
+
 type UptimeData = {
   day: string;
   events: Event[];

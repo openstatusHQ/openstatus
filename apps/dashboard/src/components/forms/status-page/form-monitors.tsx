@@ -102,7 +102,9 @@ const schema = z.object({
       id: z.number(),
       order: z.number(),
       name: z.string(),
-      monitors: z.array(monitorSchema),
+      monitors: z
+        .array(monitorSchema)
+        .min(1, { message: "At least one monitor is required" }),
     }),
   ),
 });
@@ -189,6 +191,11 @@ export function FormMonitors({
       defaultValues?.monitors ?? [],
       defaultValues?.groups ?? [],
     ),
+  );
+
+  // Get all monitor IDs that are already used in groups
+  const monitorsInGroups = new Set(
+    (watchGroups ?? []).flatMap((g) => g.monitors.map((m) => m.id)),
   );
 
   useEffect(() => {
@@ -357,7 +364,7 @@ export function FormMonitors({
                           variant="outline"
                           role="combobox"
                           className={cn(
-                            "justify-between",
+                            "w-full justify-between",
                             !field.value && "text-muted-foreground",
                           )}
                         >
@@ -377,43 +384,48 @@ export function FormMonitors({
                         <CommandList>
                           <CommandEmpty>No monitors found.</CommandEmpty>
                           <CommandGroup>
-                            {monitors.map((monitor) => (
-                              <CommandItem
-                                value={monitor.name}
-                                key={monitor.id}
-                                onSelect={() => {
-                                  if (
-                                    field.value.some((m) => m.id === monitor.id)
-                                  ) {
-                                    form.setValue(
-                                      "monitors",
-                                      field.value.filter(
-                                        (m) => m.id !== monitor.id,
-                                      ),
-                                    );
-                                  } else {
-                                    form.setValue("monitors", [
-                                      ...field.value,
-                                      {
-                                        id: monitor.id,
-                                        order: watchMonitors.length,
-                                        active: monitor.active,
-                                      },
-                                    ]);
-                                  }
-                                }}
-                              >
-                                {monitor.name}
-                                <Check
-                                  className={cn(
-                                    "ml-auto",
-                                    field.value.some((m) => m.id === monitor.id)
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
+                            {monitors.map((monitor) => {
+                              const isInGroup = monitorsInGroups.has(
+                                monitor.id,
+                              );
+                              const isSelected = field.value.some(
+                                (m) => m.id === monitor.id,
+                              );
+                              return (
+                                <CommandItem
+                                  value={monitor.name}
+                                  key={monitor.id}
+                                  disabled={isInGroup}
+                                  onSelect={() => {
+                                    if (isSelected) {
+                                      form.setValue(
+                                        "monitors",
+                                        field.value.filter(
+                                          (m) => m.id !== monitor.id,
+                                        ),
+                                      );
+                                    } else {
+                                      form.setValue("monitors", [
+                                        ...field.value,
+                                        {
+                                          id: monitor.id,
+                                          order: watchMonitors.length,
+                                          active: monitor.active,
+                                        },
+                                      ]);
+                                    }
+                                  }}
+                                >
+                                  {monitor.name}
+                                  <Check
+                                    className={cn(
+                                      "ml-auto",
+                                      isSelected ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                </CommandItem>
+                              );
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>
@@ -571,7 +583,17 @@ function MonitorGroup({
   monitors,
 }: MonitorGroupProps) {
   const watchGroup = form.watch(`groups.${groupIndex}`);
+  const watchMonitors = form.watch("monitors");
+  const watchGroups = form.watch("groups");
   const [data, setData] = useState<Monitor[]>(group.monitors);
+
+  // Calculate taken monitors (in main list or other groups)
+  const takenMonitorIds = new Set([
+    ...watchMonitors.map((m) => m.id),
+    ...watchGroups
+      .filter((g) => g.id !== group.id)
+      .flatMap((g) => g.monitors.map((m) => m.id)),
+  ]);
 
   const onValueChange = useCallback(
     (newMonitors: Monitor[]) => {
@@ -667,42 +689,48 @@ function MonitorGroup({
                     <CommandList>
                       <CommandEmpty>No monitors found.</CommandEmpty>
                       <CommandGroup>
-                        {monitors.map((monitor) => (
-                          <CommandItem
-                            value={monitor.name}
-                            key={monitor.id}
-                            onSelect={() => {
-                              const current = field.value ?? [];
-                              if (current.some((m) => m.id === monitor.id)) {
-                                form.setValue(
-                                  `groups.${groupIndex}.monitors`,
-                                  current.filter((m) => m.id !== monitor.id),
-                                );
-                              } else {
-                                form.setValue(`groups.${groupIndex}.monitors`, [
-                                  ...current,
-                                  {
-                                    id: monitor.id,
-                                    order: 0,
-                                    active: monitor.active,
-                                  },
-                                ]);
-                              }
-                            }}
-                          >
-                            {monitor.name}
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                (field.value ?? []).some(
-                                  (m) => m.id === monitor.id,
-                                )
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
+                        {monitors.map((monitor) => {
+                          const current = field.value ?? [];
+                          const isSelected = current.some(
+                            (m) => m.id === monitor.id,
+                          );
+                          const isTaken = takenMonitorIds.has(monitor.id);
+                          return (
+                            <CommandItem
+                              value={monitor.name}
+                              key={monitor.id}
+                              disabled={isTaken}
+                              onSelect={() => {
+                                if (isSelected) {
+                                  form.setValue(
+                                    `groups.${groupIndex}.monitors`,
+                                    current.filter((m) => m.id !== monitor.id),
+                                  );
+                                } else {
+                                  form.setValue(
+                                    `groups.${groupIndex}.monitors`,
+                                    [
+                                      ...current,
+                                      {
+                                        id: monitor.id,
+                                        order: 0,
+                                        active: monitor.active,
+                                      },
+                                    ],
+                                  );
+                                }
+                              }}
+                            >
+                              {monitor.name}
+                              <Check
+                                className={cn(
+                                  "ml-auto",
+                                  isSelected ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                            </CommandItem>
+                          );
+                        })}
                       </CommandGroup>
                     </CommandList>
                   </Command>
