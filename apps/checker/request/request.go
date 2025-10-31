@@ -103,3 +103,22 @@ type PingRequest struct {
 	RequestId   int64             `json:"requestId"`
 	WorkspaceId int64             `json:"workspaceId"`
 }
+
+
+type DNSCheckerRequest struct {
+	Status        string            `json:"status"`
+	WorkspaceID   string            `json:"workspaceId"`
+	URI           string            `json:"uri"`
+	MonitorID     string            `json:"monitorId"`
+	Trigger       string            `json:"trigger,omitempty"`
+	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
+	RequestId     int64             `json:"requestId,omitempty"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+	Retry         int64             `json:"retry,omitempty"`
+	OtelConfig    struct {
+		Endpoint string            `json:"endpoint"`
+		Headers  map[string]string `json:"headers,omitempty"`
+	} `json:"otelConfig"`
+}
