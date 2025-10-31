@@ -1,6 +1,7 @@
 "use client";
 
 import { ProcessMessage } from "@/components/content/process-message";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,7 +117,7 @@ export function DataTable({
                 </div>
               </TableCell>
               <TableCell className="w-[170px] text-muted-foreground">
-                {update.date.toLocaleString()}
+                <TableCellDate value={update.date} />
               </TableCell>
               <TableCell className="w-8">
                 <DataTableRowActions row={update} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { ProcessMessage } from "@/components/content/process-message";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
@@ -39,18 +40,7 @@ export const columns: ColumnDef<Maintenance>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Start Date" />
     ),
-    cell: ({ row }) => {
-      const value = row.getValue("from");
-      if (value instanceof Date) {
-        return (
-          <div className="text-muted-foreground">{value.toLocaleString()}</div>
-        );
-      }
-      if (typeof value === "string") {
-        return <div className="text-muted-foreground">{value}</div>;
-      }
-      return <div className="text-muted-foreground">-</div>;
-    },
+    cell: ({ row }) => <TableCellDate value={row.getValue("from")} />,
     enableHiding: false,
   },
   {

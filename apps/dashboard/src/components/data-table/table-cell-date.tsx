@@ -1,3 +1,4 @@
+import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -9,9 +10,11 @@ export function TableCellDate({
 }: React.ComponentProps<"div"> & { value: unknown; formatStr?: string }) {
   if (value instanceof Date) {
     return (
-      <div className={cn("text-muted-foreground", className)} {...props}>
-        {format(value, formatStr)}
-      </div>
+      <HoverCardTimestamp date={value}>
+        <div className={cn("text-muted-foreground", className)} {...props}>
+          {format(value, formatStr)}
+        </div>
+      </HoverCardTimestamp>
     );
   }
   if (typeof value === "string") {

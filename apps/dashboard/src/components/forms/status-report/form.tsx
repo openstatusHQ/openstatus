@@ -80,6 +80,7 @@ export function FormStatusReport({
   monitors: { id: number; name: string }[];
 }) {
   const mobile = useIsMobile();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
     resolver: zodResolver(defaultValues ? updateSchema : schema),
     defaultValues: defaultValues ?? {
@@ -284,7 +285,16 @@ export function FormStatusReport({
                       </PopoverContent>
                     </Popover>
                     <FormDescription>
-                      When the status report was created.
+                      When the status report was created. Shown in your timezone
+                      (
+                      <code className="font-commit-mono text-foreground/70">
+                        {timezone}
+                      </code>
+                      ) and saved as Unix time (
+                      <code className="font-commit-mono text-foreground/70">
+                        UTC
+                      </code>
+                      ).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
