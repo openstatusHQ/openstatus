@@ -702,6 +702,9 @@ importers:
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
+      feed:
+        specifier: 4.2.2
+        version: 4.2.2
       lucide-react:
         specifier: 0.525.0
         version: 0.525.0(react@19.2.0)

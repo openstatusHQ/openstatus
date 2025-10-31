@@ -45,7 +45,7 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { regionDict } from "@openstatus/regions";
 import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -311,7 +311,7 @@ function TableResult({
             <p className="w-[95px]">
               Region{" "}
               <span className="font-normal text-xs tabular-nums">
-                ({result.length}/{monitorRegions.length})
+                ({result.length}/{AVAILABLE_REGIONS.length})
               </span>
             </p>
             {loading ? (
@@ -322,7 +322,7 @@ function TableResult({
             {id &&
             !loading &&
             result.length > 0 &&
-            result.length !== monitorRegions.length ? (
+            result.length !== AVAILABLE_REGIONS.length ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>

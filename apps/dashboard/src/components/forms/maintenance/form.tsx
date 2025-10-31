@@ -71,6 +71,7 @@ export function FormMaintenance({
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const mobile = useIsMobile();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -81,6 +82,7 @@ export function FormMaintenance({
       monitors: [],
     },
   });
+  const watchEndDate = form.watch("endDate");
   const watchMessage = form.watch("message");
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
@@ -184,17 +186,22 @@ export function FormMaintenance({
                           field.value.getMilliseconds(),
                         );
                         field.onChange(newDate);
+
+                        // NOTE: if end date is before start date, set it to the same day as the start date
+                        if (watchEndDate && newDate > watchEndDate) {
+                          form.setValue("endDate", newDate);
+                        }
                       }}
                       initialFocus
                     />
                     <div className="border-t p-3">
                       <div className="flex items-center gap-3">
-                        <Label htmlFor="time" className="text-xs">
+                        <Label htmlFor="time-start" className="text-xs">
                           Enter time
                         </Label>
                         <div className="relative grow">
                           <Input
-                            id="time"
+                            id="time-start"
                             type="time"
                             step="1"
                             value={
@@ -234,7 +241,17 @@ export function FormMaintenance({
                     </div>
                   </PopoverContent>
                 </Popover>
-                <FormDescription>When the maintenance starts.</FormDescription>
+                <FormDescription>
+                  When the maintenance starts. Shown in your timezone (
+                  <code className="font-commit-mono text-foreground/70">
+                    {timezone}
+                  </code>
+                  ) and saved as Unix time (
+                  <code className="font-commit-mono text-foreground/70">
+                    UTC
+                  </code>
+                  ).
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -293,12 +310,12 @@ export function FormMaintenance({
                     />
                     <div className="border-t p-3">
                       <div className="flex items-center gap-3">
-                        <Label htmlFor="time" className="text-xs">
+                        <Label htmlFor="time-end" className="text-xs">
                           Enter time
                         </Label>
                         <div className="relative grow">
                           <Input
-                            id="time"
+                            id="time-end"
                             type="time"
                             step="1"
                             value={
@@ -338,7 +355,17 @@ export function FormMaintenance({
                     </div>
                   </PopoverContent>
                 </Popover>
-                <FormDescription>When the maintenance ends.</FormDescription>
+                <FormDescription>
+                  When the maintenance ends. Shown in your timezone (
+                  <code className="font-commit-mono text-foreground/70">
+                    {timezone}
+                  </code>
+                  ) and saved as Unix time (
+                  <code className="font-commit-mono text-foreground/70">
+                    UTC
+                  </code>
+                  ).
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

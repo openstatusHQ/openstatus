@@ -11,28 +11,36 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { getBaseUrl } from "@/lib/base-url";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
 import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
 type StatusUpdateType = "email" | "rss" | "ssh";
 
+type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
+
 // TODO: use domain instead of openstatus subdomain if available
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
   types?: StatusUpdateType[];
-  slug?: string;
+  page?: Page | null;
   onSubscribe?: (value: string) => Promise<void> | void;
 }
 
 export function StatusUpdates({
   className,
   types = ["rss", "ssh"],
-  slug,
+  page,
   onSubscribe,
   ...props
 }: StatusUpdatesProps) {
   const [success, setSuccess] = useState(false);
+  const baseUrl = getBaseUrl({
+    slug: page?.slug,
+    customDomain: page?.customDomain,
+  });
 
   return (
     <Popover>
@@ -91,7 +99,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="rss"
-                value={`https://${slug}.openstatus.dev/feed/rss`}
+                value={`${baseUrl}/feed/rss`}
               />
             </div>
             <Separator />
@@ -100,7 +108,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="atom"
-                value={`https://${slug}.openstatus.dev/feed/atom`}
+                value={`${baseUrl}/feed/atom`}
               />
             </div>
           </TabsContent>
@@ -110,7 +118,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="ssh"
-                value={`ssh ${slug}@ssh.openstatus.dev`}
+                value={`ssh ${page?.slug}@ssh.openstatus.dev`}
               />
             </div>
           </TabsContent>

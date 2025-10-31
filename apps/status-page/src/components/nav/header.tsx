@@ -118,7 +118,7 @@ export function Header(props: React.ComponentProps<"header">) {
             onSubscribe={async (email) => {
               await subscribeMutation.mutateAsync({ slug: domain, email });
             }}
-            slug={page?.slug}
+            page={page}
           />
           <NavMobile className="md:hidden" />
         </div>
