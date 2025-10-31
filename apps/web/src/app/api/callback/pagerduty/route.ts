@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     process.env.NODE_ENV === "development" // FIXME: This sucks
       ? "http://localhost:3000"
       : "https://app.openstatus.dev"
-  }/notifiers?${searchParams}&channel=pagerduty`;
+  }/notifications?${searchParams}&channel=pagerduty`;
 
   const WWW_URL = `${
     process.env.NODE_ENV === "development" // FIXME: This sucks
