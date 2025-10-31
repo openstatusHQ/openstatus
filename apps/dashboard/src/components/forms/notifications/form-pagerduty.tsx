@@ -71,7 +71,7 @@ export function FormPagerDuty({
 
   useEffect(() => {
     if (searchConfig) {
-      const data = PagerDutySchema.safeParse(searchConfig);
+      const data = PagerDutySchema.safeParse(JSON.parse(searchConfig));
       if (data.success) {
         form.setValue("data", JSON.stringify(data.data));
       } else {
@@ -110,12 +110,18 @@ export function FormPagerDuty({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(
-          data as unknown as {
-            url: string;
-            integrationKey: string;
-          },
-        );
+        if (!data) {
+          toast.error("No PagerDuty configuration found");
+          return;
+        }
+        const validation = PagerDutySchema.safeParse(JSON.parse(data));
+        if (!validation.success) {
+          toast.error("Invalid PagerDuty configuration");
+          return;
+        }
+        const promise = config[provider].sendTest({
+          integrationKey: validation.data.integration_keys[0].integration_key,
+        });
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
