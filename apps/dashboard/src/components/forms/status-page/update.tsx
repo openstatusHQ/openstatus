@@ -123,6 +123,7 @@ export function FormStatusPageUpdate() {
           })),
           groups: [],
         }}
+        legacy={statusPage.legacyPage}
         onSubmit={async (values) => {
           await updateMonitorsMutation.mutateAsync({
             id: Number.parseInt(id),

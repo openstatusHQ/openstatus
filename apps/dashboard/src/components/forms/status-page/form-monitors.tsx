@@ -54,6 +54,12 @@ import {
   SortableItemHandle,
   SortableOverlay,
 } from "@/components/ui/sortable";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -159,10 +165,15 @@ export function FormMonitors({
   defaultValues,
   onSubmit,
   monitors,
+  legacy,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   monitors: Monitor[];
+  /**
+   * Whether the status page is legacy or new
+   */
+  legacy: boolean;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
@@ -413,10 +424,40 @@ export function FormMonitors({
                 </FormItem>
               )}
             />
-            <Button variant="outline" type="button" onClick={handleAddGroup}>
-              <Plus />
-              Add Group
-            </Button>
+            {legacy ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="w-full">
+                      <Button
+                        variant="outline"
+                        type="button"
+                        className="w-full"
+                        disabled={legacy}
+                      >
+                        <Plus />
+                        Add Group
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Enable the new redesign to add groups to your status page.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <Button
+                variant="outline"
+                type="button"
+                className="w-full"
+                onClick={handleAddGroup}
+              >
+                <Plus />
+                Add Group
+              </Button>
+            )}
           </FormCardContent>
           <FormCardSeparator />
           <FormCardContent>
