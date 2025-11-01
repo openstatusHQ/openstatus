@@ -70,8 +70,10 @@ func main() {
 	router.POST("/checker", h.HTTPCheckerHandler)
 	router.POST("/checker/http", h.HTTPCheckerHandler)
 	router.POST("/checker/tcp", h.TCPHandler)
+	router.POST("/checker/dns", h.DNSHandler)
 	router.POST("/ping/:region", h.PingRegionHandler)
 	router.POST("/tcp/:region", h.TCPHandlerRegion)
+	router.POST("/dns/:region", h.DNSHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "region": region, "provider": cloudProvider})

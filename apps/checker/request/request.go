@@ -107,6 +107,7 @@ type TCPCheckerRequest struct {
 	} `json:"otelConfig"`
 }
 
+
 type TCPRequest struct {
 	WorkspaceID   string `json:"workspaceId"`
 	URL           string `json:"url"`

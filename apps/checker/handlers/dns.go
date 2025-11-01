@@ -170,6 +170,8 @@ func (h Handler) DNSHandler(c *gin.Context) {
 			Latency:       latency,
 		})
 		data.RequestStatus = "error"
+		data.Error = 1
+		data.ErrorMessage = err.Error()
 	}
 	// it's degraded
 	if isSuccessfull && req.DegradedAfter > 0 &&latency > req.DegradedAfter && req.Status != "degraded" {
@@ -208,13 +210,180 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 	}
 
-	returnData := c.Query("data")
-	if returnData == "true" {
-		c.JSON(http.StatusOK, data)
+	c.JSON(http.StatusOK, data)
+}
+
+
+func (h Handler) DNSHandlerRegion(c *gin.Context) {
+	ctx := c.Request.Context()
+	dataSourceName := "check_dns_response__v0"
+
+	region := c.Param("region")
+	if region == "" {
+		c.String(http.StatusBadRequest, "region is required")
+
 		return
 	}
 
-	c.JSON(http.StatusOK, nil)
+	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
+		return
+	}
+
+	if h.CloudProvider == "fly" {
+		// if the request has been routed to a wrong region, we forward it to the correct one.
+		region := c.GetHeader("fly-prefer-region")
+		if region != "" && region != h.Region {
+			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+
+			return
+		}
+	}
+	var req request.DNSCheckerRequest
+
+	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
+		return
+	}
+
+	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
+		return
+	}
+
+
+	var called int
+
+	var retry int
+	if req.Retry == 0 {
+		retry = int(req.Retry)
+	} else {
+		retry = 3
+	}
+
+	id, e := uuid.NewV7()
+	if e != nil {
+		log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
+		return
+	}
+
+	var requestStatus = ""
+	switch req.Status {
+	case "active":
+		requestStatus = "success"
+	case "error":
+		requestStatus = "error"
+	case "degraded":
+		requestStatus = "degraded"
+	}
+
+	data := DNSResponse{
+		ID:            id.String(),
+		Region:        h.Region,
+		Trigger:       "api",
+		URI:           req.URI,
+		WorkspaceID:   workspaceId,
+		MonitorID:     monitorId,
+		CronTimestamp: req.CronTimestamp,
+		RequestStatus: requestStatus,
+	}
+
+	var latency int64
+	var isSuccessfull bool = true
+
+	op := func() (*checker.DnsResponse, error) {
+		called++
+
+		start := time.Now().UTC().UnixMilli()
+
+		response, err := checker.Dns(ctx, req.URI)
+		stop := time.Now().UTC().UnixMilli()
+
+		latency = stop - start
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
+			return nil, err
+		}
+		if len(req.RawAssertions) > 0 {
+			isSuccessfull, err = EvaluateDNSAssertions(req.RawAssertions, response)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if !isSuccessfull && called < retry {
+			return nil, fmt.Errorf("assertion failed for record type")
+		}
+		return response, err
+	}
+
+	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
+
+
+	r := FormatDNSResult(result)
+	data.Latency = latency
+	data.Records = r
+
+	if !isSuccessfull && req.Status != "error" {
+		// Q: Why here we do not check if the status was previously active?
+		checker.UpdateStatus(ctx, checker.UpdateData{
+			MonitorId:     req.MonitorID,
+			Status:        "error",
+			Region:        h.Region,
+			Message:       err.Error(),
+			CronTimestamp: req.CronTimestamp,
+			Latency:       latency,
+		})
+		data.RequestStatus = "error"
+		data.Error = 1
+		data.ErrorMessage = err.Error()
+	}
+	// it's degraded
+	if isSuccessfull && req.DegradedAfter > 0 &&latency > req.DegradedAfter && req.Status != "degraded" {
+		checker.UpdateStatus(ctx, checker.UpdateData{
+			MonitorId:     req.MonitorID,
+			Status:        "degraded",
+			Region:        h.Region,
+			CronTimestamp: req.CronTimestamp,
+			Latency:       latency,
+		})
+		data.RequestStatus = "degraded"
+	}
+	// it's active
+	if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
+		checker.UpdateStatus(ctx, checker.UpdateData{
+			MonitorId:     req.MonitorID,
+			Status:        "active",
+			Region:        h.Region,
+			CronTimestamp: req.CronTimestamp,
+			Latency:       latency,
+		})
+		data.RequestStatus = "success"
+	}
+	// it's active
+	if isSuccessfull && latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
+		checker.UpdateStatus(ctx, checker.UpdateData{
+			MonitorId:     req.MonitorID,
+			Status:        "active",
+			Region:        h.Region,
+			CronTimestamp: req.CronTimestamp,
+		})
+		data.RequestStatus = "success"
+	}
+
+	if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+	}
+
+	c.JSON(http.StatusOK, data)
+
 }
 
 func FormatDNSResult(result *checker.DnsResponse) map[string][]string {
