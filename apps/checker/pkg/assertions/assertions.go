@@ -3,6 +3,7 @@ package assertions
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -30,6 +31,12 @@ type HeaderTarget struct {
 type StringTargetType struct {
 	Comparator request.StringComparator `json:"compare"`
 	Target     string                   `json:"target"`
+}
+
+type RecordTarget struct {
+	Comparator request.RecordComparator `json:"compare"`
+	Target     string                   `json:"target"`
+	Record     request.Record           `json:"record"`
 }
 
 func (target StringTargetType) StringEvaluate(s string) bool {
@@ -109,5 +116,36 @@ func (target StatusTarget) StatusEvaluate(value int64) bool {
 	default:
 		fmt.Println("something strange ", target)
 	}
+	return true
+}
+
+func (target RecordTarget) RecordEvaluate(s []string) bool {
+	switch target.Comparator {
+	case request.RecordEquals:
+		if !slices.Contains(s, target.Target) {
+			return false
+		}
+
+	case request.RecordNotEquals:
+		if slices.Contains(s, target.Target) {
+			return false
+		}
+
+	case request.RecordContains:
+	for _, record := range s {
+			if strings.Contains(record, target.Target) {
+				return true
+			}
+		}
+	return false
+	case request.RecordNotContains:
+		for _, record := range s {
+			if strings.Contains(record, target.Target) {
+				return false
+			}
+		}
+		return true
+	}
+
 	return true
 }

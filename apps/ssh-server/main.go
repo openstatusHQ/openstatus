@@ -114,7 +114,6 @@ func main() {
 
 	}
 	ssh.HostKeyFile("/data/id_rsa")
-	// server.AddHostKey(ssh.HostKeyFile(filepath string))
 
 	log.Println("starting ssh server on port 2222...")
 	log.Fatal(server.ListenAndServe())
