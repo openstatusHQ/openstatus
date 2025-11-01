@@ -118,3 +118,85 @@ func TestHeaderTarget_HeaderEvaluate(t *testing.T) {
 		})
 	}
 }
+
+func TestRecordTarget_RecordEvaluate(t *testing.T) {
+	type fields struct {
+		Comparator request.RecordComparator
+		Target     string
+	}
+	type args struct {
+		s []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name:   "RecordEquals true",
+			fields: fields{Comparator: request.RecordEquals, Target: "foo"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   true,
+		},
+		{
+			name:   "RecordEquals false",
+			fields: fields{Comparator: request.RecordEquals, Target: "baz"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   false,
+		},
+		{
+			name:   "RecordNotEquals true",
+			fields: fields{Comparator: request.RecordNotEquals, Target: "baz"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   true,
+		},
+		{
+			name:   "RecordNotEquals false",
+			fields: fields{Comparator: request.RecordNotEquals, Target: "foo"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   false,
+		},
+		{
+			name:   "RecordContains true",
+			fields: fields{Comparator: request.RecordContains, Target: "ba"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   true,
+		},
+		{
+			name:   "RecordContains false",
+			fields: fields{Comparator: request.RecordContains, Target: "baz"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   false,
+		},
+		{
+			name:   "RecordNotContains true",
+			fields: fields{Comparator: request.RecordNotContains, Target: "baz"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   true,
+		},
+		{
+			name:   "RecordNotContains false",
+			fields: fields{Comparator: request.RecordNotContains, Target: "ba"},
+			args:   args{s: []string{"foo", "bar"}},
+			want:   false,
+		},
+		{
+			name:   "Empty slice",
+			fields: fields{Comparator: request.RecordEquals, Target: "foo"},
+			args:   args{s: []string{}},
+			want:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			target := RecordTarget{
+				Comparator: tt.fields.Comparator,
+				Target:     tt.fields.Target,
+			}
+			if got := target.RecordEvaluate(tt.args.s); got != tt.want {
+				t.Errorf("RecordTarget.RecordEvaluate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

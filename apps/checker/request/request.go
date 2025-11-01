@@ -11,6 +11,7 @@ const (
 	AssertionTextBody AssertionType = "textBody"
 	AssertionStatus   AssertionType = "status"
 	AssertionJsonBody AssertionType = "jsonBody"
+	AssertionDnsRecord AssertionType = "dnsRecord"
 )
 
 type StringComparator string
@@ -37,6 +38,25 @@ const (
 	NumberGreaterThanEqual NumberComparator = "gte"
 	NumberLowerThan        NumberComparator = "lt"
 	NumberLowerThanEqual   NumberComparator = "lte"
+)
+
+type RecordComparator string
+
+const (
+	RecordEquals    RecordComparator = "eq"
+	RecordNotEquals RecordComparator = "not_eq"
+	RecordContains  RecordComparator = "contains"
+	RecordNotContains RecordComparator = "not_contains"
+)
+
+type Record string
+const (
+	RecordA    Record = "A"
+	RecordAAAA Record = "AAAA"
+	RecordCNAME Record = "CNAME"
+	RecordMX   Record = "MX"
+	RecordNS   Record = "NS"
+	RecordTXT  Record = "TXT"
 )
 
 type Assertion struct {
