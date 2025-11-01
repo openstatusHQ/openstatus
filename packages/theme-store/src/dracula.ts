@@ -24,13 +24,13 @@ export const DRACULA_THEME = {
     "--success": "#14710a", // Green
     "--destructive": "#cb3a2a", // Red
     "--warning": "#A34D14", // Orange
-    "--info": "#036A96", // Blue
+    "--info": "#644AC9", // Purple
 
     "--chart-1": "#A3144D", // Pink
     "--chart-2": "#A34D14", // Orange
     "--chart-3": "#846E15", // Yellow
     "--chart-4": "#14710a", // Green
-    "--chart-5": "#644AC9", // Purple
+    "--chart-5": "#036A96", // Cyan
 
     "--popover-foreground": "var(--foreground)",
     "--popover": "var(--background)",
@@ -55,13 +55,13 @@ export const DRACULA_THEME = {
     "--success": "#50fa7b", // Green
     "--destructive": "#ff5555", // Red
     "--warning": "#ffb86c", // Orange
-    "--info": "#8BE9FD", // Blue
+    "--info": "#644AC9", // Purple
 
     "--chart-1": "#ff79c6", // Pink
     "--chart-2": "#ffb86c", // Orange
     "--chart-3": "#f1fa8c", // Yellow
     "--chart-4": "#50fa7b", // Green
-    "--chart-5": "#bd93f9", // Purple
+    "--chart-5": "#036A96", // Cyan
 
     "--popover-foreground": "var(--foreground)",
     "--popover": "var(--background)",
