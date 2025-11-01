@@ -21,6 +21,7 @@ import {
   fillStatusDataFor45DaysNoop,
   getEvents,
   getUptime,
+  getWorstVariant,
   setDataByType,
 } from "./statusPage.utils";
 import {
@@ -82,6 +83,7 @@ export const statusPageRouter = createTRPCRouter({
                   incidents: true,
                 },
               },
+              monitorGroup: true,
             },
             orderBy: (monitorsToPages, { asc }) => asc(monitorsToPages.order),
           },
@@ -127,7 +129,14 @@ export const statusPageRouter = createTRPCRouter({
                     )
                   ? "info"
                   : "success";
-          return { ...m.monitor, status, events };
+          return {
+            ...m.monitor,
+            status,
+            events,
+            monitorGroupId: m.monitorGroupId,
+            order: m.order,
+            groupOrder: m.groupOrder,
+          };
         });
 
       const status =
@@ -177,9 +186,109 @@ export const statusPageRouter = createTRPCRouter({
         return false;
       });
 
+      const monitorGroups = Array.from(
+        new Map(
+          _page.monitorsToPages.map((m) => [
+            m.monitorGroup?.id,
+            m.monitorGroup,
+          ]),
+        )
+          .values()
+          .filter(Boolean),
+      );
+
+      // Create trackers array with grouped and ungrouped monitors
+      const groupedMap = new Map<
+        number | null,
+        {
+          groupId: number | null;
+          groupName: string | null;
+          monitors: typeof monitors;
+          minOrder: number;
+        }
+      >();
+
+      monitors.forEach((monitor) => {
+        const groupId = monitor.monitorGroupId ?? null;
+        const group = groupId
+          ? monitorGroups.find((g) => g?.id === groupId)
+          : null;
+        const groupName = group?.name ?? null;
+
+        if (!groupedMap.has(groupId)) {
+          groupedMap.set(groupId, {
+            groupId,
+            groupName,
+            monitors: [],
+            minOrder: monitor.order ?? 0,
+          });
+        }
+        const currentGroup = groupedMap.get(groupId);
+        if (currentGroup) {
+          currentGroup.monitors.push(monitor);
+          currentGroup.minOrder = Math.min(
+            currentGroup.minOrder,
+            monitor.order ?? 0,
+          );
+        }
+      });
+
+      // Convert to trackers array
+      type MonitorTracker = {
+        type: "monitor";
+        monitor: (typeof monitors)[number];
+        order: number;
+      };
+
+      type GroupTracker = {
+        type: "group";
+        groupId: number;
+        groupName: string;
+        monitors: typeof monitors;
+        status: "success" | "degraded" | "error" | "info" | "empty";
+        order: number;
+      };
+
+      type Tracker = MonitorTracker | GroupTracker;
+
+      const trackers: Tracker[] = Array.from(groupedMap.values())
+        .flatMap((group): Tracker[] => {
+          if (group.groupId === null) {
+            // Ungrouped monitors - return as individual trackers
+            return group.monitors.map(
+              (monitor): MonitorTracker => ({
+                type: "monitor",
+                monitor,
+                order: monitor.order ?? 0,
+              }),
+            );
+          }
+          // Grouped monitors - return as single group tracker
+          const sortedMonitors = group.monitors.sort(
+            (a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0),
+          );
+          return [
+            {
+              type: "group",
+              groupId: group.groupId,
+              groupName: group.groupName ?? "",
+              monitors: sortedMonitors,
+              status: getWorstVariant(
+                group.monitors.map(
+                  (m) => m.status as "success" | "degraded" | "error" | "info",
+                ),
+              ),
+              order: group.minOrder,
+            },
+          ];
+        })
+        .sort((a, b) => a.order - b.order);
+
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         monitors,
+        monitorGroups,
+        trackers,
         incidents: monitors.flatMap((m) => m.incidents) ?? [],
         statusReports:
           // NOTE: we need to sort the status reports by the first update date

@@ -9,6 +9,7 @@ import {
 import { monitorPeriodicity } from "../constants";
 import { incidentTable } from "../incidents/incident";
 import { maintenancesToMonitors } from "../maintenances";
+import { monitorGroup } from "../monitor_groups";
 import { monitorStatusTable } from "../monitor_status/monitor_status";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
@@ -99,6 +100,12 @@ export const monitorsToPages = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
     order: integer("order").default(0),
+
+    monitorGroupId: integer("monitor_group_id").references(
+      () => monitorGroup.id,
+      { onDelete: "cascade" },
+    ),
+    groupOrder: integer("group_order").default(0),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.monitorId, t.pageId] }),
@@ -115,6 +122,10 @@ export const monitorsToPagesRelation = relations(
     page: one(page, {
       fields: [monitorsToPages.pageId],
       references: [page.id],
+    }),
+    monitorGroup: one(monitorGroup, {
+      fields: [monitorsToPages.monitorGroupId],
+      references: [monitorGroup.id],
     }),
   }),
 );
