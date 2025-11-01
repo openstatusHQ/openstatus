@@ -1,3 +1,5 @@
+// https://draculatheme.com/spec
+
 import type { Theme } from "./types";
 
 export const DRACULA_THEME = {
@@ -5,43 +7,65 @@ export const DRACULA_THEME = {
   name: "Dracula",
   author: { name: "@thibaultleouay", url: "https://thibaultleouay.dev" },
   light: {
-    "--background": "#FFFBEB",
-    "--foreground": "#1F1F1F",
-    "--border": "#6C664B",
-    "--input": "oklch(92.2% 0 0)",
-    "--primary": "oklch(20.5% 0 0)",
-    "--primary-foreground": "oklch(98.5% 0 0)",
-    "--secondary": "oklch(97% 0 0)",
-    "--secondary-foreground": "oklch(20.5% 0 0)",
-    "--muted": "oklch(97% 0 0)",
-    "--muted-foreground": "oklch(55.6% 0 0)",
-    "--accent": "oklch(97% 0 0)",
-    "--accent-foreground": "oklch(20.5% 0 0)",
-    "--success": "#14710a",
-    "--destructive": "#cb3a2a",
-    "--warning": "#A34D14",
-    "--info": "#036A96",
+    "--background": "#FFFBEB", // Background
+    "--foreground": "#1F1F1F", // Foreground
+    "--border": "#6C664B", // Current Line
+    "--input": "var(--border)", // Current Line
+
+    "--primary": "var(--foreground)",
+    "--primary-foreground": "var(--background)",
+    "--secondary": "var(--muted)",
+    "--secondary-foreground": "var(--accent-foreground)",
+    "--muted": "#CFCFDE", // Section
+    "--muted-foreground": "#6C664B", // NOTE: non standard color for improved readability
+    "--accent": "var(--muted)",
+    "--accent-foreground": "var(--foreground)",
+
+    "--success": "#14710a", // Green
+    "--destructive": "#cb3a2a", // Red
+    "--warning": "#A34D14", // Orange
+    "--info": "#036A96", // Blue
+
+    "--chart-1": "#A3144D", // Pink
+    "--chart-2": "#A34D14", // Orange
+    "--chart-3": "#846E15", // Yellow
+    "--chart-4": "#14710a", // Green
+    "--chart-5": "#644AC9", // Purple
+
     "--popover-foreground": "var(--foreground)",
     "--popover": "var(--background)",
+    "--card": "var(--background)",
+    "--card-foreground": "var(--foreground)",
   },
   dark: {
-    "--background": "#282a36",
-    "--foreground": "#f8f8f2",
-    "--border": "#6272A4",
-    "--input": "oklch(100% 0 0 / 15%)",
-    "--primary": "oklch(92.2% 0 0)",
-    "--primary-foreground": "oklch(20.5% 0 0)",
-    "--secondary": "oklch(26.9% 0 0)",
-    "--secondary-foreground": "oklch(98.5% 0 0)",
-    "--muted": "oklch(26.9% 0 0)",
-    "--muted-foreground": "oklch(70.8% 0 0)",
-    "--accent": "oklch(26.9% 0 0)",
-    "--accent-foreground": "oklch(98.5% 0 0)",
-    "--success": "#50fa7b",
-    "--destructive": "#ff5555",
-    "--warning": "#ffb86c",
-    "--info": "#8BE9FD",
+    "--background": "#282a36", // Background
+    "--foreground": "#f8f8f2", // Foreground
+    "--border": "#6272A4", // Current Line
+    "--input": "var(--border)", // Current Line
+
+    "--primary": "var(--foreground)",
+    "--primary-foreground": "var(--background)",
+    "--secondary": "var(--muted)",
+    "--secondary-foreground": "var(--accent-foreground)",
+    "--muted": "#44475A", // Section
+    "--muted-foreground": "#A6ACCD", // NOTE: non standard color for improved readability
+    "--accent": "var(--muted)",
+    "--accent-foreground": "var(--foreground)",
+
+    "--success": "#50fa7b", // Green
+    "--destructive": "#ff5555", // Red
+    "--warning": "#ffb86c", // Orange
+    "--info": "#8BE9FD", // Blue
+
+    "--chart-1": "#ff79c6", // Pink
+    "--chart-2": "#ffb86c", // Orange
+    "--chart-3": "#f1fa8c", // Yellow
+    "--chart-4": "#50fa7b", // Green
+    "--chart-5": "#bd93f9", // Purple
+
     "--popover-foreground": "var(--foreground)",
     "--popover": "var(--background)",
+    "--card": "var(--background)",
+    "--card-foreground": "var(--foreground)",
   },
 } as const satisfies Theme;
