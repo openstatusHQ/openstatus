@@ -49,7 +49,6 @@ export const tpcPayloadSchema = z.object({
 
 export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
 
-
 export const DNSPayloadSchema = z.object({
   status: z.enum(monitorStatus),
   workspaceId: z.string(),
@@ -66,7 +65,7 @@ export const DNSPayloadSchema = z.object({
       headers: z.record(z.string()),
     })
     .optional(),
-  retry: z.number().default(3)
+  retry: z.number().default(3),
 });
 
 export type DNSPayload = z.infer<typeof DNSPayloadSchema>;

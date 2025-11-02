@@ -194,7 +194,7 @@ const createCronTask = async ({
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
-  | z.infer<typeof DNSPayloadSchema>
+    | z.infer<typeof DNSPayloadSchema>
     | null = null;
 
   //

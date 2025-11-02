@@ -24,7 +24,6 @@ export const recordCompare = z.enum([
   "not_eq",
 ]);
 
-
 function evaluateNumber(
   value: number,
   compare: z.infer<typeof numberCompare>,
@@ -215,7 +214,6 @@ export const recordAssertion = base.merge(
     target: z.string(),
   }),
 );
-
 
 export const assertion = z.discriminatedUnion("type", [
   statusAssertion,
