@@ -196,8 +196,6 @@ export function FormGeneral({
     });
   }
 
-  console.log(form.getValues("skipCheck"));
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
