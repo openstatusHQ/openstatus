@@ -17,6 +17,7 @@ import {
   FeatureRaycastIntegration,
   FeatureRegions,
   FeatureResponseDetails,
+  FeatureStatusPageThemes,
   FeatureStatusPageTracker,
   FeatureStatusPageTrackerToggle,
   FeatureStatusUpdates,
@@ -62,6 +63,7 @@ export const landingsConfig = {
     blocks: [
       <FeatureCustomDomain key="feature-custom-domain" />,
       <FeatureStatusPageTrackerToggle key="feature-status-page-tracker" />,
+      <FeatureStatusPageThemes key="feature-status-page-themes" />,
       <FeatureSubscriptions key="feature-subscriptions" />,
       <FeatureStatusUpdates key="feature-status-updates" />,
       <FeaturePasswordProtection key="feature-password-protection" />,

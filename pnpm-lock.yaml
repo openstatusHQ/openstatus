@@ -190,7 +190,7 @@ importers:
         version: 1.2.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@sentry/nextjs':
         specifier: 10.22.0
-        version: 10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1)
+        version: 10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1)
       '@stripe/stripe-js':
         specifier: 2.1.6
         version: 2.1.6
@@ -205,7 +205,7 @@ importers:
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2)
       '@trpc/next':
         specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(next@15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
       '@trpc/react-query':
         specifier: 11.4.4
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
@@ -665,7 +665,7 @@ importers:
         version: 1.2.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@sentry/nextjs':
         specifier: 10.22.0
-        version: 10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1)
+        version: 10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1)
       '@stripe/stripe-js':
         specifier: 2.1.6
         version: 2.1.6
@@ -680,7 +680,7 @@ importers:
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2)
       '@trpc/next':
         specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(next@15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
       '@trpc/react-query':
         specifier: 11.4.4
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
@@ -874,6 +874,9 @@ importers:
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../../packages/regions
+      '@openstatus/theme-store':
+        specifier: workspace:*
+        version: link:../../packages/theme-store
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -16381,32 +16384,6 @@ snapshots:
 
   '@sentry/core@9.46.0': {}
 
-  '@sentry/nextjs@10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.0
-      '@opentelemetry/semantic-conventions': 1.37.0
-      '@rollup/plugin-commonjs': 28.0.1(rollup@4.45.1)
-      '@sentry-internal/browser-utils': 10.22.0
-      '@sentry/bundler-plugin-core': 4.5.0(encoding@0.1.13)
-      '@sentry/core': 10.22.0
-      '@sentry/node': 10.22.0
-      '@sentry/opentelemetry': 10.22.0(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.37.0)
-      '@sentry/react': 10.22.0(react@19.2.0)
-      '@sentry/vercel-edge': 10.22.0
-      '@sentry/webpack-plugin': 4.5.0(encoding@0.1.13)(webpack@5.97.1)
-      next: 15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      resolve: 1.22.8
-      rollup: 4.45.1
-      stacktrace-parser: 0.1.10
-    transitivePeerDependencies:
-      - '@opentelemetry/context-async-hooks'
-      - '@opentelemetry/core'
-      - '@opentelemetry/sdk-trace-base'
-      - encoding
-      - react
-      - supports-color
-      - webpack
-
   '@sentry/nextjs@10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1(esbuild@0.21.5))':
     dependencies:
       '@opentelemetry/api': 1.9.0
@@ -16420,6 +16397,32 @@ snapshots:
       '@sentry/react': 10.22.0(react@19.2.0)
       '@sentry/vercel-edge': 10.22.0
       '@sentry/webpack-plugin': 4.5.0(encoding@0.1.13)(webpack@5.97.1(esbuild@0.21.5))
+      next: 15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      resolve: 1.22.8
+      rollup: 4.45.1
+      stacktrace-parser: 0.1.10
+    transitivePeerDependencies:
+      - '@opentelemetry/context-async-hooks'
+      - '@opentelemetry/core'
+      - '@opentelemetry/sdk-trace-base'
+      - encoding
+      - react
+      - supports-color
+      - webpack
+
+  '@sentry/nextjs@10.22.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(webpack@5.97.1)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@opentelemetry/semantic-conventions': 1.37.0
+      '@rollup/plugin-commonjs': 28.0.1(rollup@4.45.1)
+      '@sentry-internal/browser-utils': 10.22.0
+      '@sentry/bundler-plugin-core': 4.5.0(encoding@0.1.13)
+      '@sentry/core': 10.22.0
+      '@sentry/node': 10.22.0
+      '@sentry/opentelemetry': 10.22.0(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.37.0)
+      '@sentry/react': 10.22.0(react@19.2.0)
+      '@sentry/vercel-edge': 10.22.0
+      '@sentry/webpack-plugin': 4.5.0(encoding@0.1.13)(webpack@5.97.1)
       next: 15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       resolve: 1.22.8
       rollup: 4.45.1
@@ -17188,7 +17191,7 @@ snapshots:
       '@tanstack/react-query': 5.80.7(react@19.2.0)
       '@trpc/react-query': 11.4.4(@tanstack/react-query@5.80.7(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)
 
-  '@trpc/next@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(next@15.5.3(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)':
+  '@trpc/next@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.0))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.7.2)':
     dependencies:
       '@trpc/client': 11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2)
       '@trpc/server': 11.4.4(typescript@5.7.2)
