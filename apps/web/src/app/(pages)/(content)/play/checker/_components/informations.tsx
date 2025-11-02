@@ -1,10 +1,17 @@
 import { Shell } from "@/components/dashboard/shell";
-import { regionDict } from "@openstatus/regions";
+import {
+  AVAILABLE_REGIONS,
+  type Region,
+  regionDict,
+} from "@openstatus/regions";
 import { Separator } from "@openstatus/ui";
 
-const TOTAL_REGIONS = Object.keys(regionDict).length;
+const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
 const TOTAL_PROVIDERS = Object.keys(regionDict).reduce((acc, region) => {
-  return acc.add(regionDict[region as keyof typeof regionDict].provider);
+  if (AVAILABLE_REGIONS.includes(region as Region)) {
+    return acc.add(regionDict[region as keyof typeof regionDict].provider);
+  }
+  return acc;
 }, new Set<"fly" | "koyeb" | "railway" | "private">());
 
 export function Informations() {

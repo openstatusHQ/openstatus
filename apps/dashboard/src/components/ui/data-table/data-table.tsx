@@ -66,7 +66,7 @@ export function DataTable<TData, TValue>({
   defaultSorting = [],
   defaultColumnVisibility = {},
   defaultColumnFilters = [],
-  defaultPagination = { pageIndex: 0, pageSize: 10 },
+  defaultPagination = { pageIndex: 0, pageSize: 20 },
   autoResetPageIndex = true,
   columnFilters,
   setColumnFilters,

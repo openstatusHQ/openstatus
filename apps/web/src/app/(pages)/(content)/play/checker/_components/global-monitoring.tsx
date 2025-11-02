@@ -10,9 +10,9 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
-import { regionDict } from "@openstatus/regions";
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
 
-const TOTAL_REGIONS = Object.keys(regionDict).length;
+const TOTAL_REGIONS = AVAILABLE_REGIONS.length;
 
 const features: {
   icon: ValidIcon;
