@@ -30,6 +30,7 @@ type HttpPrivateRegionData struct {
 type JobRunner interface {
 	TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*TCPPrivateRegionData, error)
 	HTTPJob(ctx context.Context, monitor *v1.HTTPMonitor) (*HttpPrivateRegionData, error)
+	DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*DNSPrivateRegionData, error)
 }
 
 type jobRunner struct{}

@@ -112,7 +112,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	var result checker.Response
 
 	var retry int
-	if req.Retry == 0 {
+	if req.Retry != 0 {
 		retry = int(req.Retry)
 	} else {
 		retry = 3

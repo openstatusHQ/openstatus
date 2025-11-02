@@ -209,7 +209,7 @@ export const jsonBodyAssertion = base.merge(
 export const recordAssertion = base.merge(
   z.object({
     type: z.literal("dnsRecord"),
-    recordType: z.enum(["A", "AAAA", "CNAME", "MX", "TXT", "NS"]),
+    record: z.enum(["A", "AAAA", "CNAME", "MX", "TXT", "NS"]),
     compare: recordCompare,
     target: z.string(),
   }),

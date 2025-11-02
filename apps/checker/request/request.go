@@ -7,10 +7,10 @@ import (
 type AssertionType string
 
 const (
-	AssertionHeader   AssertionType = "header"
-	AssertionTextBody AssertionType = "textBody"
-	AssertionStatus   AssertionType = "status"
-	AssertionJsonBody AssertionType = "jsonBody"
+	AssertionHeader    AssertionType = "header"
+	AssertionTextBody  AssertionType = "textBody"
+	AssertionStatus    AssertionType = "status"
+	AssertionJsonBody  AssertionType = "jsonBody"
 	AssertionDnsRecord AssertionType = "dnsRecord"
 )
 
@@ -43,20 +43,21 @@ const (
 type RecordComparator string
 
 const (
-	RecordEquals    RecordComparator = "eq"
-	RecordNotEquals RecordComparator = "not_eq"
-	RecordContains  RecordComparator = "contains"
+	RecordEquals      RecordComparator = "eq"
+	RecordNotEquals   RecordComparator = "not_eq"
+	RecordContains    RecordComparator = "contains"
 	RecordNotContains RecordComparator = "not_contains"
 )
 
 type Record string
+
 const (
-	RecordA    Record = "A"
-	RecordAAAA Record = "AAAA"
+	RecordA     Record = "A"
+	RecordAAAA  Record = "AAAA"
 	RecordCNAME Record = "CNAME"
-	RecordMX   Record = "MX"
-	RecordNS   Record = "NS"
-	RecordTXT  Record = "TXT"
+	RecordMX    Record = "MX"
+	RecordNS    Record = "NS"
+	RecordTXT   Record = "TXT"
 )
 
 type Assertion struct {
@@ -107,7 +108,6 @@ type TCPCheckerRequest struct {
 	} `json:"otelConfig"`
 }
 
-
 type TCPRequest struct {
 	WorkspaceID   string `json:"workspaceId"`
 	URL           string `json:"url"`
@@ -124,7 +124,6 @@ type PingRequest struct {
 	RequestId   int64             `json:"requestId"`
 	WorkspaceId int64             `json:"workspaceId"`
 }
-
 
 type DNSCheckerRequest struct {
 	Status        string            `json:"status"`

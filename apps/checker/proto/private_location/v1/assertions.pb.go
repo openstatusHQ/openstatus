@@ -155,6 +155,61 @@ func (StringComparator) EnumDescriptor() ([]byte, []int) {
 	return file_private_location_v1_assertions_proto_rawDescGZIP(), []int{1}
 }
 
+type RecordComparator int32
+
+const (
+	RecordComparator_RECORD_COMPARATOR_UNSPECIFIED  RecordComparator = 0
+	RecordComparator_RECORD_COMPARATOR_EQUAL        RecordComparator = 1
+	RecordComparator_RECORD_COMPARATOR_NOT_EQUAL    RecordComparator = 2
+	RecordComparator_RECORD_COMPARATOR_CONTAINS     RecordComparator = 3
+	RecordComparator_RECORD_COMPARATOR_NOT_CONTAINS RecordComparator = 4
+)
+
+// Enum value maps for RecordComparator.
+var (
+	RecordComparator_name = map[int32]string{
+		0: "RECORD_COMPARATOR_UNSPECIFIED",
+		1: "RECORD_COMPARATOR_EQUAL",
+		2: "RECORD_COMPARATOR_NOT_EQUAL",
+		3: "RECORD_COMPARATOR_CONTAINS",
+		4: "RECORD_COMPARATOR_NOT_CONTAINS",
+	}
+	RecordComparator_value = map[string]int32{
+		"RECORD_COMPARATOR_UNSPECIFIED":  0,
+		"RECORD_COMPARATOR_EQUAL":        1,
+		"RECORD_COMPARATOR_NOT_EQUAL":    2,
+		"RECORD_COMPARATOR_CONTAINS":     3,
+		"RECORD_COMPARATOR_NOT_CONTAINS": 4,
+	}
+)
+
+func (x RecordComparator) Enum() *RecordComparator {
+	p := new(RecordComparator)
+	*p = x
+	return p
+}
+
+func (x RecordComparator) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RecordComparator) Descriptor() protoreflect.EnumDescriptor {
+	return file_private_location_v1_assertions_proto_enumTypes[2].Descriptor()
+}
+
+func (RecordComparator) Type() protoreflect.EnumType {
+	return &file_private_location_v1_assertions_proto_enumTypes[2]
+}
+
+func (x RecordComparator) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RecordComparator.Descriptor instead.
+func (RecordComparator) EnumDescriptor() ([]byte, []int) {
+	return file_private_location_v1_assertions_proto_rawDescGZIP(), []int{2}
+}
+
 type StatusCodeAssertion struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Target        int64                  `protobuf:"varint,1,opt,name=target,proto3" json:"target,omitempty"`
@@ -319,6 +374,66 @@ func (x *HeaderAssertion) GetKey() string {
 	return ""
 }
 
+type RecordAssertion struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Record        string                 `protobuf:"bytes,1,opt,name=record,proto3" json:"record,omitempty"`
+	Comparator    RecordComparator       `protobuf:"varint,2,opt,name=comparator,proto3,enum=private_location.v1.RecordComparator" json:"comparator,omitempty"`
+	Targert       string                 `protobuf:"bytes,3,opt,name=targert,proto3" json:"targert,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordAssertion) Reset() {
+	*x = RecordAssertion{}
+	mi := &file_private_location_v1_assertions_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordAssertion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordAssertion) ProtoMessage() {}
+
+func (x *RecordAssertion) ProtoReflect() protoreflect.Message {
+	mi := &file_private_location_v1_assertions_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordAssertion.ProtoReflect.Descriptor instead.
+func (*RecordAssertion) Descriptor() ([]byte, []int) {
+	return file_private_location_v1_assertions_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RecordAssertion) GetRecord() string {
+	if x != nil {
+		return x.Record
+	}
+	return ""
+}
+
+func (x *RecordAssertion) GetComparator() RecordComparator {
+	if x != nil {
+		return x.Comparator
+	}
+	return RecordComparator_RECORD_COMPARATOR_UNSPECIFIED
+}
+
+func (x *RecordAssertion) GetTargert() string {
+	if x != nil {
+		return x.Targert
+	}
+	return ""
+}
+
 var File_private_location_v1_assertions_proto protoreflect.FileDescriptor
 
 const file_private_location_v1_assertions_proto_rawDesc = "" +
@@ -339,7 +454,13 @@ const file_private_location_v1_assertions_proto_rawDesc = "" +
 	"\n" +
 	"comparator\x18\x02 \x01(\x0e2%.private_location.v1.StringComparatorR\n" +
 	"comparator\x12\x10\n" +
-	"\x03key\x18\x03 \x01(\tR\x03key*\x8f\x02\n" +
+	"\x03key\x18\x03 \x01(\tR\x03key\"\x8a\x01\n" +
+	"\x0fRecordAssertion\x12\x16\n" +
+	"\x06record\x18\x01 \x01(\tR\x06record\x12E\n" +
+	"\n" +
+	"comparator\x18\x02 \x01(\x0e2%.private_location.v1.RecordComparatorR\n" +
+	"comparator\x12\x18\n" +
+	"\atargert\x18\x03 \x01(\tR\atargert*\x8f\x02\n" +
 	"\x10NumberComparator\x12!\n" +
 	"\x1dNUMBER_COMPARATOR_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17NUMBER_COMPARATOR_EQUAL\x10\x01\x12\x1f\n" +
@@ -360,7 +481,13 @@ const file_private_location_v1_assertions_proto_rawDesc = "" +
 	"'STRING_COMPARATOR_GREATER_THAN_OR_EQUAL\x10\b\x12\x1f\n" +
 	"\x1bSTRING_COMPARATOR_LESS_THAN\x10\t\x12(\n" +
 	"$STRING_COMPARATOR_LESS_THAN_OR_EQUAL\x10\n" +
-	"BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
+	"*\xb7\x01\n" +
+	"\x10RecordComparator\x12!\n" +
+	"\x1dRECORD_COMPARATOR_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17RECORD_COMPARATOR_EQUAL\x10\x01\x12\x1f\n" +
+	"\x1bRECORD_COMPARATOR_NOT_EQUAL\x10\x02\x12\x1e\n" +
+	"\x1aRECORD_COMPARATOR_CONTAINS\x10\x03\x12\"\n" +
+	"\x1eRECORD_COMPARATOR_NOT_CONTAINS\x10\x04BJZHgithub.com/openstatushq/openstatus/packages/proto/private_location/v1;v1b\x06proto3"
 
 var (
 	file_private_location_v1_assertions_proto_rawDescOnce sync.Once
@@ -374,24 +501,27 @@ func file_private_location_v1_assertions_proto_rawDescGZIP() []byte {
 	return file_private_location_v1_assertions_proto_rawDescData
 }
 
-var file_private_location_v1_assertions_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_private_location_v1_assertions_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_private_location_v1_assertions_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
+var file_private_location_v1_assertions_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_private_location_v1_assertions_proto_goTypes = []any{
 	(NumberComparator)(0),       // 0: private_location.v1.NumberComparator
 	(StringComparator)(0),       // 1: private_location.v1.StringComparator
-	(*StatusCodeAssertion)(nil), // 2: private_location.v1.StatusCodeAssertion
-	(*BodyAssertion)(nil),       // 3: private_location.v1.BodyAssertion
-	(*HeaderAssertion)(nil),     // 4: private_location.v1.HeaderAssertion
+	(RecordComparator)(0),       // 2: private_location.v1.RecordComparator
+	(*StatusCodeAssertion)(nil), // 3: private_location.v1.StatusCodeAssertion
+	(*BodyAssertion)(nil),       // 4: private_location.v1.BodyAssertion
+	(*HeaderAssertion)(nil),     // 5: private_location.v1.HeaderAssertion
+	(*RecordAssertion)(nil),     // 6: private_location.v1.RecordAssertion
 }
 var file_private_location_v1_assertions_proto_depIdxs = []int32{
 	0, // 0: private_location.v1.StatusCodeAssertion.comparator:type_name -> private_location.v1.NumberComparator
 	1, // 1: private_location.v1.BodyAssertion.comparator:type_name -> private_location.v1.StringComparator
 	1, // 2: private_location.v1.HeaderAssertion.comparator:type_name -> private_location.v1.StringComparator
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // 3: private_location.v1.RecordAssertion.comparator:type_name -> private_location.v1.RecordComparator
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_private_location_v1_assertions_proto_init() }
@@ -404,8 +534,8 @@ func file_private_location_v1_assertions_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_private_location_v1_assertions_proto_rawDesc), len(file_private_location_v1_assertions_proto_rawDesc)),
-			NumEnums:      2,
-			NumMessages:   3,
+			NumEnums:      3,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

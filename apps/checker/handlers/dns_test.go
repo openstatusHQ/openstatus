@@ -121,7 +121,7 @@ func TestEvaluateDNSAssertions(t *testing.T) {
 			name: "A record matches",
 			args: args{
 				rawAssertions: []json.RawMessage{
-					json.RawMessage(`{"Record":"A","Comparator":"RecordEquals","Target":"1.2.3.4"}`),
+					json.RawMessage(`{"record":"A","compare":"eq","target":"1.2.3.4"}`),
 				},
 				response: &checker.DnsResponse{
 					A: []string{"1.2.3.4", "5.6.7.8"},
@@ -134,20 +134,20 @@ func TestEvaluateDNSAssertions(t *testing.T) {
 			name: "CNAME does not match",
 			args: args{
 				rawAssertions: []json.RawMessage{
-					json.RawMessage(`{"Record":"CNAME","Comparator":"RecordEquals","Target":"not-example.com"}`),
+					json.RawMessage(`{"record":"CNAME","compare":"eq","target":"not-example.com"}`),
 				},
 				response: &checker.DnsResponse{
 					CNAME: "example.com",
 				},
 			},
-			wantSuccess: true,
+			wantSuccess: false,
 			wantErr:     false,
 		},
 		{
 			name: "Unknown record type",
 			args: args{
 				rawAssertions: []json.RawMessage{
-					json.RawMessage(`{"Record":"FOO","Comparator":"RecordEquals","Target":"bar"}`),
+					json.RawMessage(`{"record":"FOO","compare":"eq","target":"bar"}`),
 				},
 				response: &checker.DnsResponse{},
 			},

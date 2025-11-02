@@ -18,14 +18,15 @@ import (
 )
 
 type DNSResponse struct {
-	ID            string              `json:"id"`
-	Timing        string              `json:"timing"`
-	ErrorMessage  string              `json:"errorMessage"`
-	Region        string              `json:"region"`
-	Trigger       string              `json:"trigger"`
-	URI           string              `json:"uri"`
-	RequestStatus string              `json:"requestStatus,omitempty"`
-	Records       map[string][]string `json:"records"`
+	ID            string `json:"id"`
+	ErrorMessage  string `json:"errorMessage"`
+	Region        string `json:"region"`
+	Trigger       string `json:"trigger"`
+	URI           string `json:"uri"`
+	RequestStatus string `json:"requestStatus,omitempty"`
+	Assertions    string `json:"assertions"`
+
+	Records map[string][]string `json:"records"`
 
 	RequestId     int64 `json:"requestId,omitempty"`
 	WorkspaceID   int64 `json:"workspaceId"`
@@ -91,12 +92,12 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	var called int
 
 	var retry int
-	if req.Retry == 0 {
+	if req.Retry != 0 {
 		retry = int(req.Retry)
 	} else {
 		retry = 3
 	}
-
+	fmt.Println(req.Retry)
 	id, e := uuid.NewV7()
 	if e != nil {
 		log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
@@ -122,6 +123,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		MonitorID:     monitorId,
 		CronTimestamp: req.CronTimestamp,
 		RequestStatus: requestStatus,
+		Timestamp:     time.Now().UTC().UnixMilli(),
 	}
 
 	var latency int64
@@ -129,7 +131,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	op := func() (*checker.DnsResponse, error) {
 		called++
-
+		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
 		start := time.Now().UTC().UnixMilli()
 
 		response, err := checker.Dns(ctx, req.URI)
@@ -141,25 +143,38 @@ func (h Handler) DNSHandler(c *gin.Context) {
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
+			log.Ctx(ctx).Debug().Msgf("evaluating %d dns assertions", len(req.RawAssertions))
 			isSuccessfull, err = EvaluateDNSAssertions(req.RawAssertions, response)
 			if err != nil {
-				return nil, err
+				return nil, backoff.Permanent(err)
 			}
 		}
 		if !isSuccessfull && called < retry {
-			return nil, fmt.Errorf("assertion failed for record type")
+			return nil, backoff.RetryAfter(1)
 		}
-		return response, err
+		if !isSuccessfull {
+			log.Ctx(ctx).Debug().Msg("dns assertions failed")
+			return response, backoff.Permanent(fmt.Errorf("assertion failed"))
+		}
+		return response, nil
 	}
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 
-
 	r := FormatDNSResult(result)
 	data.Latency = latency
 	data.Records = r
+	if len(req.RawAssertions) > 0 {
+		j, err := json.Marshal(req.RawAssertions)
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal assertions")
+		}
+
+		data.Assertions = string(j)
+	}
 
 	if !isSuccessfull && req.Status != "error" {
+		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
 		// Q: Why here we do not check if the status was previously active?
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -174,7 +189,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		data.ErrorMessage = err.Error()
 	}
 	// it's degraded
-	if isSuccessfull && req.DegradedAfter > 0 &&latency > req.DegradedAfter && req.Status != "degraded" {
+	if isSuccessfull && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded" {
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "degraded",
@@ -212,7 +227,6 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, data)
 }
-
 
 func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
@@ -258,7 +272,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 
 		return
 	}
-
 
 	var called int
 
@@ -326,7 +339,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 
-
 	r := FormatDNSResult(result)
 	data.Latency = latency
 	data.Records = r
@@ -346,7 +358,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		data.ErrorMessage = err.Error()
 	}
 	// it's degraded
-	if isSuccessfull && req.DegradedAfter > 0 &&latency > req.DegradedAfter && req.Status != "degraded" {
+	if isSuccessfull && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded" {
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "degraded",

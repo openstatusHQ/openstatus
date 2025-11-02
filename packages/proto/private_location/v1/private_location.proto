@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package private_location.v1;
 
+import "google/protobuf/struct.proto";
+
+import "private_location/v1/dns_monitor.proto";
 import "private_location/v1/http_monitor.proto";
 import "private_location/v1/tcp_monitor.proto";
 
@@ -12,6 +15,8 @@ service PrivateLocationService {
     rpc Monitors(MonitorsRequest) returns (MonitorsResponse) {}
     rpc IngestTCP(IngestTCPRequest) returns (IngestTCPResponse) {}
     rpc IngestHTTP(IngestHTTPRequest) returns (IngestHTTPResponse) {}
+    rpc IngestDNS(IngestDNSRequest) returns (IngestDNSResponse) {}
+
 }
 
 message MonitorsRequest {}
@@ -19,6 +24,7 @@ message MonitorsRequest {}
 message MonitorsResponse {
     repeated HTTPMonitor http_monitors = 1;
     repeated TCPMonitor tcp_monitors = 2;
+    repeated DNSMonitor dns_monitors = 3;
 }
 
 
@@ -57,5 +63,26 @@ message IngestHTTPRequest {
 }
 
 message IngestHTTPResponse {
+
+}
+
+
+message Records {
+    repeated string record = 1;
+}
+message IngestDNSRequest {
+    string id = 1;
+    string monitorId = 2;
+    int64 latency = 3;
+    int64 timestamp = 4;
+    int64 cronTimestamp = 5;
+    string uri = 6;
+    string requestStatus = 7;
+    string message = 8;
+    map<string, Records>  records = 9;
+    string timing = 10;
+    int64 error = 11;
+}
+message IngestDNSResponse {
 
 }
