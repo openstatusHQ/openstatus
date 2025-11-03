@@ -97,7 +97,7 @@ export default defineConfig({
               slug: "tutorial/how-to-create-status-page",
             },
             {
-              label: "How to configure a status page (beta)",
+              label: "How to configure a status page",
               slug: "tutorial/how-to-configure-status-page",
             },
             {
@@ -156,12 +156,12 @@ export default defineConfig({
               },
             },
             {
-              label: "Incident",
-              slug: "reference/incident",
-            },
-            {
               label: "HTTP Monitor",
               slug: "reference/http-monitor",
+            },
+            {
+              label: "Incident",
+              slug: "reference/incident",
             },
             {
               label: "TCP Monitor",
@@ -170,6 +170,10 @@ export default defineConfig({
             {
               label: "Notification",
               slug: "reference/notification",
+            },
+            {
+              label: "Private location",
+              slug: "reference/private-location",
             },
             {
               label: "Status Page",
