@@ -85,7 +85,7 @@ export function Client() {
           Status Page Theme Explorer
         </h1>
         <h2 className="font-medium text-muted-foreground md:text-lg">
-          View all the openstatus themes and learn how to create your own.
+          View all the openstatus themes for your status page and learn how to create your own theme.
         </h2>
       </SectionGroupHeader>
       <Section>
