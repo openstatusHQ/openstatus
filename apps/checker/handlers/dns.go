@@ -40,79 +40,67 @@ type DNSResponse struct {
 
 func (h Handler) DNSHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-
+	const defaultRetry = 3
 	dataSourceName := "dns_response__v0"
 
+	// Authorization check
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
 		return
 	}
 
+	// Fly region forwarding
 	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
 		region := c.GetHeader("fly-prefer-region")
 		if region != "" && region != h.Region {
 			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
 			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
 			return
 		}
 	}
 
+	// Parse request
 	var req request.DNSCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
 		return
 	}
 
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
-
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
 		return
 	}
 
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
-
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid monitor id"})
 		return
 	}
 
-	var trigger = "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
+	trigger := req.Trigger
+	if trigger == "" {
+		trigger = "cron"
 	}
 
-	var called int
-
-	var retry int
+	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
-	} else {
-		retry = 3
 	}
-	fmt.Println(req.Retry)
+
 	id, e := uuid.NewV7()
 	if e != nil {
-		log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
+		log.Ctx(ctx).Error().Err(e).Msg("failed to generate UUID")
 		return
 	}
 
-	var requestStatus = ""
-	switch req.Status {
-	case "active":
-		requestStatus = "success"
-	case "error":
-		requestStatus = "error"
-	case "degraded":
-		requestStatus = "degraded"
+	statusMap := map[string]string{
+		"active":   "success",
+		"error":    "error",
+		"degraded": "degraded",
 	}
+	requestStatus := statusMap[req.Status]
 
 	data := DNSResponse{
 		ID:            id.String(),
@@ -126,33 +114,34 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		Timestamp:     time.Now().UTC().UnixMilli(),
 	}
 
-	var latency int64
-	var isSuccessfull bool = true
+	var (
+		latency      int64
+		isSuccessful = true
+		called       int
+	)
 
 	op := func() (*checker.DnsResponse, error) {
 		called++
 		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
 		start := time.Now().UTC().UnixMilli()
-
 		response, err := checker.Dns(ctx, req.URI)
-		stop := time.Now().UTC().UnixMilli()
+		latency = time.Now().UTC().UnixMilli() - start
 
-		latency = stop - start
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
 			log.Ctx(ctx).Debug().Msgf("evaluating %d dns assertions", len(req.RawAssertions))
-			isSuccessfull, err = EvaluateDNSAssertions(req.RawAssertions, response)
+			isSuccessful, err = EvaluateDNSAssertions(req.RawAssertions, response)
 			if err != nil {
 				return nil, backoff.Permanent(err)
 			}
 		}
-		if !isSuccessfull && called < retry {
+		if !isSuccessful && called < retry {
 			return nil, backoff.RetryAfter(1)
 		}
-		if !isSuccessfull {
+		if !isSuccessful {
 			log.Ctx(ctx).Debug().Msg("dns assertions failed")
 			return response, backoff.Permanent(fmt.Errorf("assertion failed"))
 		}
@@ -160,22 +149,21 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	}
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
-
-	r := FormatDNSResult(result)
 	data.Latency = latency
-	data.Records = r
+	data.Records = FormatDNSResult(result)
+
 	if len(req.RawAssertions) > 0 {
-		j, err := json.Marshal(req.RawAssertions)
-		if err != nil {
+		if j, err := json.Marshal(req.RawAssertions); err == nil {
+			data.Assertions = string(j)
+		} else {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal assertions")
 		}
-
-		data.Assertions = string(j)
 	}
 
-	if !isSuccessfull && req.Status != "error" {
+	// Status update logic
+	switch {
+	case !isSuccessful && req.Status != "error":
 		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
-		// Q: Why here we do not check if the status was previously active?
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "error",
@@ -187,9 +175,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		data.RequestStatus = "error"
 		data.Error = 1
 		data.ErrorMessage = err.Error()
-	}
-	// it's degraded
-	if isSuccessfull && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded" {
+	case isSuccessful && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded":
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "degraded",
@@ -198,25 +184,13 @@ func (h Handler) DNSHandler(c *gin.Context) {
 			Latency:       latency,
 		})
 		data.RequestStatus = "degraded"
-	}
-	// it's active
-	if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
+	case isSuccessful && ((req.DegradedAfter == 0 && req.Status != "active") || (latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active")):
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "active",
 			Region:        h.Region,
 			CronTimestamp: req.CronTimestamp,
 			Latency:       latency,
-		})
-		data.RequestStatus = "success"
-	}
-	// it's active
-	if isSuccessfull && latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "active",
-			Region:        h.Region,
-			CronTimestamp: req.CronTimestamp,
 		})
 		data.RequestStatus = "success"
 	}
@@ -231,120 +205,119 @@ func (h Handler) DNSHandler(c *gin.Context) {
 func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "check_dns_response__v0"
+	const defaultRetry = 3
 
-	region := c.Param("region")
-	if region == "" {
-		c.String(http.StatusBadRequest, "region is required")
-
-		return
-	}
-
+	// Authorization check
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
 		return
 	}
 
+	// Fly region forwarding
 	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
 		region := c.GetHeader("fly-prefer-region")
 		if region != "" && region != h.Region {
 			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
 			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
 			return
 		}
 	}
+
+	// Parse request
 	var req request.DNSCheckerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
 
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
-
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
 		return
 	}
 
-	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 
-		return
-	}
 
-	var called int
-
-	var retry int
-	if req.Retry == 0 {
+	retry := defaultRetry
+	if req.Retry != 0 {
 		retry = int(req.Retry)
-	} else {
-		retry = 3
 	}
 
 	id, e := uuid.NewV7()
 	if e != nil {
-		log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
+		log.Ctx(ctx).Error().Err(e).Msg("failed to generate UUID")
 		return
 	}
 
-	var requestStatus = ""
-	switch req.Status {
-	case "active":
-		requestStatus = "success"
-	case "error":
-		requestStatus = "error"
-	case "degraded":
-		requestStatus = "degraded"
+	statusMap := map[string]string{
+		"active":   "success",
+		"error":    "error",
+		"degraded": "degraded",
 	}
+	requestStatus := statusMap[req.Status]
 
 	data := DNSResponse{
 		ID:            id.String(),
 		Region:        h.Region,
-		Trigger:       "api",
 		URI:           req.URI,
 		WorkspaceID:   workspaceId,
-		MonitorID:     monitorId,
 		CronTimestamp: req.CronTimestamp,
 		RequestStatus: requestStatus,
+		Timestamp:     time.Now().UTC().UnixMilli(),
 	}
 
-	var latency int64
-	var isSuccessfull bool = true
+	var (
+		latency      int64
+		isSuccessful = true
+		called       int
+	)
 
 	op := func() (*checker.DnsResponse, error) {
 		called++
-
+		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
 		start := time.Now().UTC().UnixMilli()
-
 		response, err := checker.Dns(ctx, req.URI)
-		stop := time.Now().UTC().UnixMilli()
+		latency = time.Now().UTC().UnixMilli() - start
 
-		latency = stop - start
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
-			isSuccessfull, err = EvaluateDNSAssertions(req.RawAssertions, response)
+			log.Ctx(ctx).Debug().Msgf("evaluating %d dns assertions", len(req.RawAssertions))
+			isSuccessful, err = EvaluateDNSAssertions(req.RawAssertions, response)
 			if err != nil {
-				return nil, err
+				return nil, backoff.Permanent(err)
 			}
 		}
-		if !isSuccessfull && called < retry {
-			return nil, fmt.Errorf("assertion failed for record type")
+		if !isSuccessful && called < retry {
+			return nil, backoff.RetryAfter(1)
 		}
-		return response, err
+		if !isSuccessful {
+			log.Ctx(ctx).Debug().Msg("dns assertions failed")
+			return response, backoff.Permanent(fmt.Errorf("assertion failed"))
+		}
+		return response, nil
 	}
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
-
-	r := FormatDNSResult(result)
 	data.Latency = latency
-	data.Records = r
+	data.Records = FormatDNSResult(result)
 
-	if !isSuccessfull && req.Status != "error" {
-		// Q: Why here we do not check if the status was previously active?
+	if len(req.RawAssertions) > 0 {
+		if j, err := json.Marshal(req.RawAssertions); err == nil {
+			data.Assertions = string(j)
+		} else {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal assertions")
+		}
+	}
+
+	// Status update logic
+	switch {
+	case !isSuccessful && req.Status != "error":
+		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "error",
@@ -356,9 +329,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		data.RequestStatus = "error"
 		data.Error = 1
 		data.ErrorMessage = err.Error()
-	}
-	// it's degraded
-	if isSuccessfull && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded" {
+	case isSuccessful && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded":
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "degraded",
@@ -367,25 +338,13 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 			Latency:       latency,
 		})
 		data.RequestStatus = "degraded"
-	}
-	// it's active
-	if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
+	case isSuccessful && ((req.DegradedAfter == 0 && req.Status != "active") || (latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active")):
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
 			Status:        "active",
 			Region:        h.Region,
 			CronTimestamp: req.CronTimestamp,
 			Latency:       latency,
-		})
-		data.RequestStatus = "success"
-	}
-	// it's active
-	if isSuccessfull && latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "active",
-			Region:        h.Region,
-			CronTimestamp: req.CronTimestamp,
 		})
 		data.RequestStatus = "success"
 	}

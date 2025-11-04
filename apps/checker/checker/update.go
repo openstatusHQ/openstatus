@@ -28,8 +28,6 @@ type UpdateData struct {
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) error {
 
-	return nil
-
 	url := "https://openstatus-workflows.fly.dev/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)

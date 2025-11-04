@@ -46,6 +46,7 @@ type PingData struct {
 
 func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	ctx := c.Request.Context()
+	const defaultRetry = 3
 	dataSourceName := "ping_response__v8"
 
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
@@ -111,11 +112,9 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 	var result checker.Response
 
-	var retry int
+	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
-	} else {
-		retry = 3
 	}
 
 	op := func() error {
@@ -170,48 +169,10 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			RequestStatus: requestStatus,
 		}
 
-		statusCode := statusCode(res.Status)
-
 		var isSuccessfull bool = true
-		if len(req.RawAssertions) > 0 {
-			for _, a := range req.RawAssertions {
-				var assert request.Assertion
-				err = json.Unmarshal(a, &assert)
-				if err != nil {
-					// handle error
-					return fmt.Errorf("unable to unmarshal assertion: %w", err)
-				}
-
-				switch assert.AssertionType {
-				case request.AssertionHeader:
-					var target assertions.HeaderTarget
-					if err := json.Unmarshal(a, &target); err != nil {
-						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
-					}
-
-					isSuccessfull = isSuccessfull && target.HeaderEvaluate(data.Headers)
-				case request.AssertionTextBody:
-					var target assertions.StringTargetType
-					if err := json.Unmarshal(a, &target); err != nil {
-						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
-					}
-
-					isSuccessfull = isSuccessfull && target.StringEvaluate(data.Body)
-				case request.AssertionStatus:
-					var target assertions.StatusTarget
-					if err := json.Unmarshal(a, &target); err != nil {
-						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
-					}
-
-					isSuccessfull = isSuccessfull && target.StatusEvaluate(int64(res.Status))
-				case request.AssertionJsonBody:
-					fmt.Println("assertion type", assert.AssertionType)
-				default:
-					fmt.Println("! Not Handled assertion type", assert.AssertionType)
-				}
-			}
-		} else {
-			isSuccessfull = statusCode.IsSuccessful()
+		isSuccessfull, err = EvaluateHTTPAssertions(req.RawAssertions, data, res)
+		if err != nil {
+			return err
 		}
 
 		// let's retry at least once if the status code is not successful.
@@ -353,4 +314,44 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, nil)
+}
+
+func EvaluateHTTPAssertions(raw []json.RawMessage, data PingData, res checker.Response) (bool, error) {
+	statusCode := statusCode(res.Status)
+	if len(raw) == 0 {
+		return statusCode.IsSuccessful(), nil
+	}
+	isSuccessful := true
+	for _, a := range raw {
+		var assert request.Assertion
+		if err := json.Unmarshal(a, &assert); err != nil {
+			return false, fmt.Errorf("unable to unmarshal assertion: %w", err)
+		}
+		switch assert.AssertionType {
+		case request.AssertionHeader:
+			var target assertions.HeaderTarget
+			if err := json.Unmarshal(a, &target); err != nil {
+				return false, fmt.Errorf("unable to unmarshal HeaderTarget: %w", err)
+			}
+			isSuccessful = isSuccessful && target.HeaderEvaluate(data.Headers)
+		case request.AssertionTextBody:
+			var target assertions.StringTargetType
+			if err := json.Unmarshal(a, &target); err != nil {
+				return false, fmt.Errorf("unable to unmarshal StringTargetType: %w", err)
+			}
+			isSuccessful = isSuccessful && target.StringEvaluate(data.Body)
+		case request.AssertionStatus:
+			var target assertions.StatusTarget
+			if err := json.Unmarshal(a, &target); err != nil {
+				return false, fmt.Errorf("unable to unmarshal StatusTarget: %w", err)
+			}
+			isSuccessful = isSuccessful && target.StatusEvaluate(int64(res.Status))
+		case request.AssertionJsonBody:
+			// TODO: Implement JSON body assertion
+		default:
+			fmt.Println("unknown assertion type: ", assert.AssertionType)
+			// TODO: Handle unknown assertion type
+		}
+	}
+	return isSuccessful, nil
 }

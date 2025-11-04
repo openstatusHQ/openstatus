@@ -10,7 +10,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/handlers"
+
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/stretchr/testify/assert"
@@ -104,5 +106,161 @@ func TestHandler_HTTPCheckerHandler(t *testing.T) {
 
 		assert.Equal(t, 200, w.Code)
 		fmt.Println(w.Body.String())
+	})
+}
+
+
+func TestEvaluateAssertions_raw(t *testing.T) {
+	// Helper to marshal assertion
+	marshal := func(a any) json.RawMessage {
+		b, _ := json.Marshal(a)
+		return b
+	}
+
+	// Success if no assertions and status code is 200
+	t.Run("no assertions, status code 200", func(t *testing.T) {
+		raw := []json.RawMessage{}
+		data := handlers.PingData{}
+		res := checker.Response{Status: 200}
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.True(t, ok)
+		assert.NoError(t, err)
+	})
+
+	// Header assertion success
+	t.Run("header assertion success", func(t *testing.T) {
+		assertion := request.Assertion{AssertionType: request.AssertionHeader}
+		target := struct {
+			request.Assertion
+			Comparator request.StringComparator `json:"compare"`
+			Key string `json:"key"`
+			Target string `json:"target"`
+		}{
+			assertion,
+			request.StringContains,
+			"X-Test",
+			"ok",
+		}
+		rawMsg := marshal(target)
+		raw := []json.RawMessage{rawMsg}
+		data := handlers.PingData{Headers: `{"X-Test":"ok-value"}`}
+		res := checker.Response{Status: 200}
+
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.True(t, ok)
+		assert.NoError(t, err)
+	})
+
+	t.Run("header assertion failed", func(t *testing.T) {
+		assertion := request.Assertion{AssertionType: request.AssertionHeader}
+		target := struct {
+			request.Assertion
+			Comparator request.StringComparator `json:"compare"`
+			Key string `json:"key"`
+			Target string `json:"target"`
+		}{
+			assertion,
+			request.StringContains,
+			"X-Test",
+			"not-ok",
+		}
+		rawMsg := marshal(target)
+		raw := []json.RawMessage{rawMsg}
+		data := handlers.PingData{Headers: `{"X-Test":"ok-value"}`}
+		res := checker.Response{Status: 200}
+
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.False(t, ok)
+		assert.NoError(t, err)
+	})
+
+	// Text body assertion failure
+	t.Run("text body assertion failure", func(t *testing.T) {
+		assertion := request.Assertion{AssertionType: request.AssertionTextBody}
+		target := struct {
+			request.Assertion
+			Comparator request.StringComparator `json:"compare"`
+			Target string `json:"target"`
+		}{
+			assertion,
+			request.StringEquals,
+			"fail",
+		}
+		rawMsg := marshal(target)
+		raw := []json.RawMessage{rawMsg}
+		data := handlers.PingData{Body: "ok"}
+		res := checker.Response{Status: 200}
+
+
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.False(t, ok)
+		assert.NoError(t, err)
+	})
+
+	// Text body assertion failure
+	t.Run("text body assertion success", func(t *testing.T) {
+		assertion := request.Assertion{AssertionType: request.AssertionTextBody}
+		target := struct {
+			request.Assertion
+			Comparator request.StringComparator `json:"compare"`
+			Target string `json:"target"`
+		}{
+			assertion,
+			request.StringEquals,
+			"success",
+		}
+		rawMsg := marshal(target)
+		raw := []json.RawMessage{rawMsg}
+		data := handlers.PingData{Body: "success"}
+		res := checker.Response{Status: 200}
+
+
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.True(t, ok)
+		assert.NoError(t, err)
+	})
+	// Status assertion success
+	t.Run("status assertion success", func(t *testing.T) {
+		assertion := request.Assertion{AssertionType: request.AssertionStatus}
+		target := struct {
+			request.Assertion
+			Comparator request.NumberComparator `json:"compare"`
+			Target int64 `json:"target"`
+		}{
+			assertion,
+			request.NumberEquals,
+			200,
+		}
+		rawMsg := marshal(target)
+		raw := []json.RawMessage{rawMsg}
+		data := handlers.PingData{}
+		res := checker.Response{Status: 200}
+
+
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.True(t, ok)
+		assert.NoError(t, err)
+	})
+
+	// Malformed assertion
+	t.Run("malformed assertion", func(t *testing.T) {
+		raw := []json.RawMessage{[]byte(`{not valid json}`)}
+		data := handlers.PingData{}
+		res := checker.Response{Status: 200}
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.False(t, ok)
+		assert.Error(t, err)
+	})
+
+	// Unknown assertion type
+	t.Run("unknown assertion type", func(t *testing.T) {
+		assertion := request.Assertion{AssertionType: "unknown"}
+		rawMsg := marshal(assertion)
+		raw := []json.RawMessage{rawMsg}
+		data := handlers.PingData{}
+		res := checker.Response{Status: 200}
+		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
+		assert.True(t, ok) // Should not fail, just skip
+		assert.NoError(t, err)
 	})
 }
