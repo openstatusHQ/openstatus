@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const TITLE = "Status Page Themes";
+export const TITLE = "Status Page";
 export const DESCRIPTION =
   "Status page customization with built-in themes. Explore all themes and contribute your own theme.";
 
