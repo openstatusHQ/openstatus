@@ -99,9 +99,7 @@ function StatusReportEmail({
           </Row>
           <Row style={styles.row}>
             <Column>
-              <Markdown>
-                {message}
-              </Markdown>
+              <Markdown>{message}</Markdown>
             </Column>
           </Row>
         </Layout>
