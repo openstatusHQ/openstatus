@@ -56,7 +56,7 @@ const posts = defineCollection({
       url: z.string().optional(),
       avatar: z.string().optional(),
     }),
-    tag: z.enum(["company", "engineering", "education"]),
+    tag: z.enum(["company", "engineering", "education", "guide"]),
   }),
   transform: async (document, context) => {
     const mdx = await compileMDX(context, document, {
