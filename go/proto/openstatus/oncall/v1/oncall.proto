@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package openstatus.oncall.v1;
+
+option go_package = "github.com/openstatushq/openstatus/go/proto/gen/oncall/v1;oncall";
