@@ -787,7 +787,7 @@ export function getUptime({
 
     const total = data.length * MILLISECONDS_PER_DAY;
 
-    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
   }
 
   if (cardType === "duration") {
@@ -799,7 +799,7 @@ export function getUptime({
       }, 0);
 
     const total = data.length * MILLISECONDS_PER_DAY;
-    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
   }
 
   const { ok, total } = data.reduce(
@@ -814,5 +814,5 @@ export function getUptime({
   );
 
   if (total === 0) return "100%";
-  return `${Math.round((ok / total) * 10000) / 100}%`;
+  return `${Math.floor((ok / total) * 10000) / 100}%`;
 }
