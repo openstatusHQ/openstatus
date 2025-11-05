@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package openstatus.incident.v1;
+
+option go_package = "github.com/openstatushq/openstatus/go/proto/gen/incident/v1;incident";
