@@ -646,8 +646,8 @@ function MonitorGroup({
                 <FormLabel className="sr-only">Group name</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Group name"
-                    className="w-full"
+                    placeholder="Group Name"
+                    className="w-full bg-background"
                     {...field}
                   />
                 </FormControl>
