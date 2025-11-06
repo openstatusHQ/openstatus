@@ -875,12 +875,13 @@ export const pageRouter = createTRPCRouter({
       }
 
       await opts.ctx.db.transaction(async (tx) => {
-        await tx
-          .delete(monitorGroup)
-          .where(eq(monitorGroup.pageId, opts.input.id));
+        // Delete child records first to avoid foreign key constraint violation
         await tx
           .delete(monitorsToPages)
           .where(eq(monitorsToPages.pageId, opts.input.id));
+        await tx
+          .delete(monitorGroup)
+          .where(eq(monitorGroup.pageId, opts.input.id));
 
         if (opts.input.groups.length > 0) {
           const monitorGroups = await tx
