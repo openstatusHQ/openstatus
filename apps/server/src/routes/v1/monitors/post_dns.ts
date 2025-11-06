@@ -88,8 +88,6 @@ export function registerPostMonitorDNS(api: typeof monitorsApi) {
 
     const { request, regions, assertions, openTelemetry, ...rest } = input;
 
-
-
     const otelHeadersEntries = openTelemetry?.headers
       ? Object.entries(openTelemetry.headers).map(([key, value]) => ({
           key: key,

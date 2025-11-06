@@ -17,7 +17,6 @@ test("create a valid monitor", async () => {
       regions: ["ams", "gru"],
       request: {
         uri: "openstatus.dev",
-
       },
       active: true,
       public: true,
@@ -47,7 +46,6 @@ test("create a status report with invalid payload should return 400", async () =
       },
       active: true,
       public: true,
-
     }),
   });
 
