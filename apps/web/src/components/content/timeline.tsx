@@ -20,12 +20,12 @@ export function Timeline({
     <div className="grid gap-8">
       <div className="grid gap-4 md:grid-cols-5 md:gap-8">
         <div className="md:col-span-1" />
-        <div className="flex items-end justify-between gap-3 md:col-span-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 md:col-span-4">
           <div className="grid gap-4">
             <h1 className="font-cal text-4xl text-foreground">{title}</h1>
             <p className="text-muted-foreground">{description}</p>
           </div>
-          <div className="flex items-center gap-2">{actions}</div>
+          <div className="flex self-end items-center gap-2">{actions}</div>
         </div>
       </div>
       {children}
