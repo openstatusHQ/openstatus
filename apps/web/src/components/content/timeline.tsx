@@ -25,7 +25,7 @@ export function Timeline({
             <h1 className="font-cal text-4xl text-foreground">{title}</h1>
             <p className="text-muted-foreground">{description}</p>
           </div>
-          <div>{actions}</div>
+          <div className="flex items-center gap-2">{actions}</div>
         </div>
       </div>
       {children}
