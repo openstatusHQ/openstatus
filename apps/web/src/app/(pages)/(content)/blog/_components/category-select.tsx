@@ -20,7 +20,7 @@ export function CategorySelect() {
 
   return (
     <Select
-      value={category || undefined}
+      value={category || "all"}
       onValueChange={async (e) => {
         await setSearchParams({
           category: e === "all" ? null : (e as typeof category),
@@ -32,7 +32,7 @@ export function CategorySelect() {
         <SelectValue placeholder="Select a category" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All</SelectItem>
+        <SelectItem value="all">All Categories</SelectItem>
         {Array.from(categories).map((category) => (
           <SelectItem key={category} value={category} className="capitalize">
             {category}
