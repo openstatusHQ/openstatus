@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-import { numberCompare, stringCompare } from "@openstatus/assertions";
+import { numberCompare, recordCompare, stringCompare } from "@openstatus/assertions";
 import { monitorJobTypes, monitorMethods } from "@openstatus/db/src/schema";
 import {
   monitorPeriodicitySchema,
@@ -454,6 +454,13 @@ const tcpRequestSchema = z.object({
   }),
 });
 
+const dnsRequestSchema = z.object({
+  uri: z.string().openapi({
+    description: "The DNS server to query",
+    examples: ["openstatus.dev"],
+  }),
+});
+
 const statusCodeAssertion = z
   .object({
     kind: z.literal("statusCode"),
@@ -514,6 +521,22 @@ const textBodyAssertions = z.object({
   }),
 });
 
+
+const dnsRecordAssertion = z.object({
+  kind: z.literal("dnsRecord"),
+  recordType: z.enum(["A", "AAAA", "CNAME", "MX", "TXT"]).openapi({
+    description: "Type of DNS record to check",
+    examples: ["A", "CNAME"],
+  }),
+  compare: recordCompare.openapi({
+    description: "Comparison operator",
+    examples: ["eq", "not_eq", "contains", "not_contains"],
+  }),
+  target: z.string().openapi({
+    description: "DNS record value to assert",
+    examples: ["example.com"],
+  }),
+});
 export const assertionsSchema = z.discriminatedUnion("kind", [
   statusCodeAssertion,
   headerAssertions,
@@ -542,3 +565,14 @@ export const TCPMonitorSchema = baseRequest
   .openapi({
     title: "TCP Monitor Schema",
   });
+
+export const DNSMonitorSchema = baseRequest.extend({
+  request: dnsRequestSchema.openapi({
+    description: "The DNS Request we are sending",
+  }),
+  assertions: z.array(dnsRecordAssertion).optional().openapi({
+    description: "Assertions to run on the DNS response",
+  }),
+}).openapi({
+  title: "DNS Monitor Schema",
+});
