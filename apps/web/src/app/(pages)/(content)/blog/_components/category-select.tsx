@@ -28,7 +28,7 @@ export function CategorySelect() {
         });
       }}
     >
-      <SelectTrigger className="capitalize">
+      <SelectTrigger className="capitalize h-9">
         <SelectValue placeholder="Select a category" />
       </SelectTrigger>
       <SelectContent>
