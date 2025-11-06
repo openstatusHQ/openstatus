@@ -116,16 +116,38 @@ export function FormStatusPageUpdate() {
       <FormMonitors
         monitors={monitors ?? []}
         defaultValues={{
-          monitors: statusPage.monitors.map((monitor) => ({
-            id: monitor.id,
-            order: monitor.order,
-            active: monitor.active ?? null,
-          })),
+          monitors: statusPage.monitors
+            .filter((m) => !m.groupId)
+            .map((monitor) => ({
+              id: monitor.id,
+              order: monitor.order,
+              active: monitor.active ?? null,
+            })),
+          groups: statusPage.monitorGroups.map((group) => {
+            const order =
+              statusPage.monitors.find((m) => m.groupId === group.id)
+                ?.groupOrder ?? 0;
+            console.log(group);
+            return {
+              id: -1 * group.id, // negative id to avoid conflicts with monitors
+              order,
+              name: group.name,
+              monitors: statusPage.monitors
+                .filter((m) => m.groupId === group.id)
+                .map((monitor) => ({
+                  id: monitor.id,
+                  order: monitor.order,
+                  active: monitor.active ?? null,
+                })),
+            };
+          }),
         }}
+        legacy={statusPage.legacyPage}
         onSubmit={async (values) => {
           await updateMonitorsMutation.mutateAsync({
             id: Number.parseInt(id),
             monitors: values.monitors,
+            groups: values.groups,
           });
         }}
       />

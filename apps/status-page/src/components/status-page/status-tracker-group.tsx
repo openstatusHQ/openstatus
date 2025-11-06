@@ -10,28 +10,28 @@ import { StatusMonitorIcon, StatusMonitorStatus } from "./status-monitor";
 export function StatusTrackerGroup({
   children,
   title,
-  variant,
+  status,
   className,
   ...props
 }: React.ComponentProps<typeof CollapsibleTrigger> & {
   title: string;
-  variant?: VariantType;
+  status?: VariantType;
 }) {
   return (
     <Collapsible
       className={cn(
         "-mx-3",
-        "rounded-lg border border-transparent hover:border-border/50 hover:bg-muted/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",
+        "rounded-lg border border-transparent bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",
         className,
       )}
     >
       <CollapsibleTrigger
         className={cn(
-          "group/monitor flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium",
+          "group/monitor flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium font-mono",
           "cursor-pointer",
           className,
         )}
-        data-variant={variant}
+        data-variant={status}
         {...props}
       >
         {title}

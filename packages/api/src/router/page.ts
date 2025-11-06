@@ -18,9 +18,11 @@ import {
   legacy_selectPublicPageSchemaWithRelation,
   maintenance,
   monitor,
+  monitorGroup,
   monitorsToPages,
   page,
   selectMaintenanceSchema,
+  selectMonitorGroupSchema,
   selectMonitorSchema,
   selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
@@ -490,7 +492,7 @@ export const pageRouter = createTRPCRouter({
       const data = await opts.ctx.db.query.page.findFirst({
         where: and(...whereConditions),
         with: {
-          monitorsToPages: { with: { monitor: true } },
+          monitorsToPages: { with: { monitor: true, monitorGroup: true } },
           maintenances: true,
         },
       });
@@ -498,8 +500,15 @@ export const pageRouter = createTRPCRouter({
       return selectPageSchema
         .extend({
           monitors: z
-            .array(selectMonitorSchema.extend({ order: z.number().default(0) }))
+            .array(
+              selectMonitorSchema.extend({
+                order: z.number().default(0),
+                groupOrder: z.number().default(0),
+                groupId: z.number().nullable(),
+              }),
+            )
             .default([]),
+          monitorGroups: z.array(selectMonitorGroupSchema).default([]),
           maintenances: z.array(selectMaintenanceSchema).default([]),
         })
         .parse({
@@ -507,7 +516,16 @@ export const pageRouter = createTRPCRouter({
           monitors: data?.monitorsToPages.map((m) => ({
             ...m.monitor,
             order: m.order,
+            groupId: m.monitorGroupId,
+            groupOrder: m.groupOrder,
           })),
+          monitorGroups: Array.from(
+            new Map(
+              data?.monitorsToPages
+                .filter((m) => m.monitorGroup)
+                .map((m) => [m.monitorGroup?.id, m.monitorGroup]),
+            ).values(),
+          ),
           maintenances: data?.maintenances,
         });
     }),
@@ -824,21 +842,32 @@ export const pageRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         monitors: z.array(z.object({ id: z.number(), order: z.number() })),
+        groups: z.array(
+          z.object({
+            // id: z.number(), // we dont need it as we are deleting and adding
+            order: z.number(),
+            name: z.string(),
+            monitors: z.array(z.object({ id: z.number(), order: z.number() })),
+          }),
+        ),
       }),
     )
     .mutation(async (opts) => {
+      const monitorIds = opts.input.monitors.map((m) => m.id);
+      const groupMonitorIds = opts.input.groups.flatMap((g) =>
+        g.monitors.map((m) => m.id),
+      );
+
+      const allMonitorIds = [...new Set([...monitorIds, ...groupMonitorIds])];
       // check if the monitors are in the workspace
       const monitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
-          inArray(
-            monitor.id,
-            opts.input.monitors.map((m) => m.id),
-          ),
+          inArray(monitor.id, allMonitorIds),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
         ),
       });
 
-      if (monitors.length !== opts.input.monitors.length) {
+      if (monitors.length !== allMonitorIds.length) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You don't have access to all the monitors.",
@@ -847,8 +876,36 @@ export const pageRouter = createTRPCRouter({
 
       await opts.ctx.db.transaction(async (tx) => {
         await tx
+          .delete(monitorGroup)
+          .where(eq(monitorGroup.pageId, opts.input.id));
+        await tx
           .delete(monitorsToPages)
           .where(eq(monitorsToPages.pageId, opts.input.id));
+
+        if (opts.input.groups.length > 0) {
+          const monitorGroups = await tx
+            .insert(monitorGroup)
+            .values(
+              opts.input.groups.map((g) => ({
+                workspaceId: opts.ctx.workspace.id,
+                pageId: opts.input.id,
+                name: g.name,
+              })),
+            )
+            .returning();
+
+          await tx.insert(monitorsToPages).values(
+            opts.input.groups.flatMap((g, i) =>
+              g.monitors.map((m) => ({
+                pageId: opts.input.id,
+                monitorId: m.id,
+                order: g.order,
+                monitorGroupId: monitorGroups[i].id,
+                groupOrder: m.order,
+              })),
+            ),
+          );
+        }
 
         if (opts.input.monitors.length > 0) {
           await tx.insert(monitorsToPages).values(
