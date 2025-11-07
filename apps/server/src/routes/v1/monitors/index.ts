@@ -15,6 +15,8 @@ import { registerGetMonitorResult } from "./results/get";
 import { registerRunMonitor } from "./run/post";
 import { registerGetMonitorSummary } from "./summary/get";
 import { registerTriggerMonitor } from "./trigger/post";
+import { registerPostMonitorDNS } from "./post_dns";
+import { registerPutDNSMonitor } from "./put_dns";
 
 const monitorsApi = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,
@@ -27,8 +29,10 @@ registerDeleteMonitor(monitorsApi);
 registerPostMonitor(monitorsApi);
 registerPostMonitorHTTP(monitorsApi);
 registerPostMonitorTCP(monitorsApi);
+registerPostMonitorDNS(monitorsApi);
 registerPutHTTPMonitor(monitorsApi);
 registerPutTCPMonitor(monitorsApi);
+registerPutDNSMonitor(monitorsApi);
 //
 registerGetMonitorSummary(monitorsApi);
 registerTriggerMonitor(monitorsApi);
