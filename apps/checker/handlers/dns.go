@@ -298,7 +298,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 	data.Latency = latency
-	data.Records = FormatDNSResult(result)
 
 	if len(req.RawAssertions) > 0 {
 		if j, err := json.Marshal(req.RawAssertions); err == nil {
@@ -313,6 +312,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
+	data.Records = FormatDNSResult(result)
 	if req.RequestId != 0 {
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
