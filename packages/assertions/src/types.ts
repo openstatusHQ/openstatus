@@ -2,11 +2,17 @@ import type { z } from "zod";
 
 import type { assertion } from "./v1";
 
-export type AssertionRequest = {
+export type HttpAssertionRequest = {
   body: string;
   header: Record<string, string>;
   status: number;
 };
+
+export type DnsAssertionRequest = {
+  records: Partial<Record<string, string[]>>;
+};
+
+export type AssertionRequest = HttpAssertionRequest | DnsAssertionRequest;
 
 export type AssertionResult =
   | {

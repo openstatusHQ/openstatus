@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { Assertion } from "./types";
 import {
+  DnsRecordAssertion,
   HeaderAssertion,
   JsonBodyAssertion,
   StatusAssertion,
@@ -9,6 +10,7 @@ import {
   base,
   headerAssertion,
   jsonBodyAssertion,
+  recordAssertion,
   statusAssertion,
   textBodyAssertion,
 } from "./v1";
@@ -28,6 +30,8 @@ export function deserialize(s: string): Assertion[] {
         return new JsonBodyAssertion(jsonBodyAssertion.parse(b));
       case "textBody":
         return new TextBodyAssertion(textBodyAssertion.parse(b));
+      case "dnsRecord":
+        return new DnsRecordAssertion(recordAssertion.parse(b));
 
       default:
         throw new Error(`unknown assertion type: ${b.type}`);

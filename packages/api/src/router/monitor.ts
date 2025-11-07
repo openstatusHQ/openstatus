@@ -3,11 +3,13 @@ import { z } from "zod";
 
 import {
   type Assertion,
+  DnsRecordAssertion,
   HeaderAssertion,
   StatusAssertion,
   TextBodyAssertion,
   headerAssertion,
   jsonBodyAssertion,
+  recordAssertion,
   serialize,
   statusAssertion,
   textBodyAssertion,
@@ -45,7 +47,7 @@ import {
 } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { testHttp, testTcp } from "./checker";
+import { testDns, testHttp, testTcp } from "./checker";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -1259,6 +1261,7 @@ export const monitorRouter = createTRPCRouter({
             headerAssertion,
             textBodyAssertion,
             jsonBodyAssertion,
+            recordAssertion,
           ]),
         ),
         active: z.boolean().default(true),
@@ -1286,6 +1289,9 @@ export const monitorRouter = createTRPCRouter({
         if (a.type === "textBody") {
           assertions.push(new TextBodyAssertion(a));
         }
+        if (a.type === "dnsRecord") {
+          assertions.push(new DnsRecordAssertion(a));
+        }
       }
 
       // NOTE: we are checking the endpoint before saving
@@ -1296,13 +1302,20 @@ export const monitorRouter = createTRPCRouter({
             method: input.method,
             headers: input.headers,
             body: input.body,
-            assertions: input.assertions,
+            // Filter out DNS record assertions as they can't be validated via HTTP
+            assertions: input.assertions.filter((a) => a.type !== "dnsRecord"),
             region: "ams",
           });
         } else if (input.jobType === "tcp") {
           await testTcp({
             url: input.url,
             region: "ams",
+          });
+        } else if (input.jobType === "dns") {
+          await testDns({
+            url: input.url,
+            region: "ams",
+            assertions: input.assertions.filter((a) => a.type === "dnsRecord"),
           });
         }
       }
@@ -1374,6 +1387,7 @@ export const monitorRouter = createTRPCRouter({
             headerAssertion,
             textBodyAssertion,
             jsonBodyAssertion,
+            recordAssertion,
           ]),
         ),
         active: z.boolean().default(false),
@@ -1414,6 +1428,9 @@ export const monitorRouter = createTRPCRouter({
         if (a.type === "textBody") {
           assertions.push(new TextBodyAssertion(a));
         }
+        if (a.type === "dnsRecord") {
+          assertions.push(new DnsRecordAssertion(a));
+        }
       }
 
       // NOTE: we are checking the endpoint before saving
@@ -1424,13 +1441,20 @@ export const monitorRouter = createTRPCRouter({
             method: input.method,
             headers: input.headers,
             body: input.body,
-            assertions: input.assertions,
+            // Filter out DNS record assertions as they can't be validated via HTTP
+            assertions: input.assertions.filter((a) => a.type !== "dnsRecord"),
             region: "ams",
           });
         } else if (input.jobType === "tcp") {
           await testTcp({
             url: input.url,
             region: "ams",
+          });
+        } else if (input.jobType === "dns") {
+          await testDns({
+            url: input.url,
+            region: "ams",
+            assertions: input.assertions.filter((a) => a.type === "dnsRecord"),
           });
         }
       }

@@ -133,7 +133,8 @@ export function Sidebar() {
                   });
 
                   if (
-                    assertion.schema.type === "header" &&
+                    (assertion.schema.type === "header" ||
+                      assertion.schema.type === "dnsRecord") &&
                     assertion.schema.key
                   ) {
                     arr.push({

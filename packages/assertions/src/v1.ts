@@ -1,6 +1,7 @@
 import { JSONPath } from "jsonpath-plus";
 import { z } from "zod";
 
+import { isDnsAssertionRequest, isHttpAssertionRequest } from "./type-guards";
 import type { Assertion, AssertionRequest, AssertionResult } from "./types";
 
 export const stringCompare = z.enum([
@@ -166,6 +167,50 @@ function evaluateString(
   return { success: true };
 }
 
+function evaluateRecord(
+  values: string[],
+  compare: z.infer<typeof recordCompare>,
+  target: string,
+): AssertionResult {
+  const valuesString = values.join(", ");
+
+  switch (compare) {
+    case "contains":
+      if (!values.some((v) => v.includes(target))) {
+        return {
+          success: false,
+          message: `Expected DNS records [${valuesString}] to contain ${target}`,
+        };
+      }
+      break;
+    case "not_contains":
+      if (values.some((v) => v.includes(target))) {
+        return {
+          success: false,
+          message: `Expected DNS records [${valuesString}] to not contain ${target}`,
+        };
+      }
+      break;
+    case "eq":
+      if (!values.includes(target)) {
+        return {
+          success: false,
+          message: `Expected DNS records [${valuesString}] to equal ${target}`,
+        };
+      }
+      break;
+    case "not_eq":
+      if (values.includes(target)) {
+        return {
+          success: false,
+          message: `Expected DNS records [${valuesString}] to not equal ${target}`,
+        };
+      }
+      break;
+  }
+  return { success: true };
+}
+
 export const base = z
   .object({
     version: z.enum(["v1"]).default("v1"),
@@ -206,10 +251,12 @@ export const jsonBodyAssertion = base.merge(
   }),
 );
 
+export const dnsRecords = ["A", "AAAA", "CNAME", "MX", "TXT", "NS"] as const;
+
 export const recordAssertion = base.merge(
   z.object({
     type: z.literal("dnsRecord"),
-    record: z.enum(["A", "AAAA", "CNAME", "MX", "TXT", "NS"]),
+    key: z.enum(dnsRecords),
     compare: recordCompare,
     target: z.string(),
   }),
@@ -220,6 +267,7 @@ export const assertion = z.discriminatedUnion("type", [
   headerAssertion,
   textBodyAssertion,
   jsonBodyAssertion,
+  recordAssertion,
 ]);
 
 export class StatusAssertion implements Assertion {
@@ -230,6 +278,12 @@ export class StatusAssertion implements Assertion {
   }
 
   public assert(req: AssertionRequest): AssertionResult {
+    if (!isHttpAssertionRequest(req)) {
+      return {
+        success: false,
+        message: "Invalid request type for status assertion",
+      };
+    }
     const { success, message } = evaluateNumber(
       req.status,
       this.schema.compare,
@@ -242,7 +296,7 @@ export class StatusAssertion implements Assertion {
   }
 }
 
-export class HeaderAssertion {
+export class HeaderAssertion implements Assertion {
   readonly schema: z.infer<typeof headerAssertion>;
 
   constructor(schema: z.infer<typeof headerAssertion>) {
@@ -250,6 +304,12 @@ export class HeaderAssertion {
   }
 
   public assert(req: AssertionRequest): AssertionResult {
+    if (!isHttpAssertionRequest(req)) {
+      return {
+        success: false,
+        message: "Invalid request type for header assertion",
+      };
+    }
     const { success, message } = evaluateString(
       req.header[this.schema.key],
       this.schema.compare,
@@ -262,7 +322,7 @@ export class HeaderAssertion {
   }
 }
 
-export class TextBodyAssertion {
+export class TextBodyAssertion implements Assertion {
   readonly schema: z.infer<typeof textBodyAssertion>;
 
   constructor(schema: z.infer<typeof textBodyAssertion>) {
@@ -270,6 +330,12 @@ export class TextBodyAssertion {
   }
 
   public assert(req: AssertionRequest): AssertionResult {
+    if (!isHttpAssertionRequest(req)) {
+      return {
+        success: false,
+        message: "Invalid request type for text body assertion",
+      };
+    }
     const { success, message } = evaluateString(
       req.body,
       this.schema.compare,
@@ -289,6 +355,12 @@ export class JsonBodyAssertion implements Assertion {
   }
 
   public assert(req: AssertionRequest): AssertionResult {
+    if (!isHttpAssertionRequest(req)) {
+      return {
+        success: false,
+        message: "Invalid request type for JSON body assertion",
+      };
+    }
     try {
       const json = JSON.parse(req.body);
       const value = JSONPath({ path: this.schema.path, json });
@@ -305,5 +377,32 @@ export class JsonBodyAssertion implements Assertion {
       console.error("Unable to parse json");
       return { success: false, message: "Unable to parse json" };
     }
+  }
+}
+
+export class DnsRecordAssertion implements Assertion {
+  readonly schema: z.infer<typeof recordAssertion>;
+
+  constructor(schema: z.infer<typeof recordAssertion>) {
+    this.schema = schema;
+  }
+
+  public assert(req: AssertionRequest): AssertionResult {
+    if (!isDnsAssertionRequest(req)) {
+      return {
+        success: false,
+        message: "Invalid request type for DNS record assertion",
+      };
+    }
+    const records = req.records[this.schema.key] || [];
+    const { success, message } = evaluateRecord(
+      records,
+      this.schema.compare,
+      this.schema.target,
+    );
+    if (success) {
+      return { success };
+    }
+    return { success, message: `DNS Record ${this.schema.key}: ${message}` };
   }
 }
