@@ -1492,4 +1492,31 @@ export class OSTinybird {
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
+
+  public get dnsGetBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_get_14d__v0",
+      parameters: z.object({
+        id: z.string().nullable(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("dns").default("dns"),
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+        records: z.record(z.string(), z.array(z.string())).default({}),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
 }

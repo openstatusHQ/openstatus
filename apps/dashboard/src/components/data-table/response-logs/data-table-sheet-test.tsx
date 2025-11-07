@@ -88,7 +88,21 @@ function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
       } as const;
     // FIXM: add DNS props
     case "dns":
-      return null;
+      return {
+        id: null,
+        trigger: null,
+        timestamp: data.timestamp,
+        cronTimestamp: data.timestamp,
+        region: data.region,
+        type: data.type,
+        requestStatus: "success",
+        monitorId: String(monitor.id),
+        error: false,
+        uri: monitor.url,
+        latency: data.latency ?? 0,
+        records: data.records,
+        errorMessage: null,
+      } as const;
     default:
       return null;
   }

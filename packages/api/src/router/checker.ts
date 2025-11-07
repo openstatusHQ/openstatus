@@ -134,7 +134,7 @@ export const dnsOutput = z
   .object({
     state: z.literal("success").default("success"),
     type: z.literal("dns").default("dns"),
-    dnsRecords: z.record(z.enum(dnsRecords), z.array(z.string())).default({}),
+    records: z.record(z.enum(dnsRecords), z.array(z.string())).default({}),
     latency: z.number().optional(),
     timestamp: z.number(),
     region: monitorRegionSchema,
@@ -157,7 +157,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
   try {
     const res = await fetch(
-      `https://checker.openstatus.dev/ping/${input.region}`,
+      `https://openstatus-checker.fly.dev/ping/${input.region}`,
       {
         method: "POST",
         headers: {
@@ -235,6 +235,10 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
     return result.data;
   } catch (error) {
     console.error("Checker HTTP test failed", error);
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: error instanceof Error ? error.message : "HTTP check failed",
@@ -245,7 +249,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 export async function testTcp(input: z.infer<typeof tcpTestInput>) {
   try {
     const res = await fetch(
-      `https://checker.openstatus.dev/tcp/${input.region}`,
+      `https://openstatus-checker.fly.dev/tcp/${input.region}`,
       {
         method: "POST",
         headers: {
@@ -282,6 +286,10 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
     return result.data;
   } catch (error) {
     console.error("Checker TCP test failed", error);
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "TCP check failed",
@@ -292,7 +300,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 export async function testDns(input: z.infer<typeof dnsTestInput>) {
   try {
     const res = await fetch(
-      `https://checker.openstatus.dev/dns/${input.region}`,
+      `https://openstatus-checker.fly.dev/dns/${input.region}`,
       {
         method: "POST",
         headers: {
@@ -300,7 +308,9 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
           "Content-Type": "application/json",
           "fly-prefer-region": input.region,
         },
-        body: JSON.stringify({ uri: input.url }),
+        body: JSON.stringify({
+          uri: input.url,
+        }),
         signal: AbortSignal.timeout(ABORT_TIMEOUT),
       },
     );
@@ -327,7 +337,7 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
     }
 
     if (result.data.state === "success") {
-      const { dnsRecords: records } = result.data;
+      const { records } = result.data;
 
       const assertions = deserialize(JSON.stringify(input.assertions)).map(
         (assertion) => assertion.assert({ records }),
@@ -346,6 +356,10 @@ export async function testDns(input: z.infer<typeof dnsTestInput>) {
     return result.data;
   } catch (error) {
     console.error("Checker DNS test failed", error);
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "DNS check failed",

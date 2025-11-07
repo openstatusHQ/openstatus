@@ -13,5 +13,5 @@ export function isHttpAssertionRequest(
 export function isDnsAssertionRequest(
   req: AssertionRequest,
 ): req is DnsAssertionRequest {
-  return "dnsRecords" in req;
+  return "records" in req;
 }

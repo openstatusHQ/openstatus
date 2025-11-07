@@ -13,7 +13,7 @@ import { calculatePeriod } from "./utils";
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const periods = ["1d", "7d", "14d"] as const;
-const types = ["http", "tcp"] as const;
+const types = ["http", "tcp", "dns"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
@@ -119,9 +119,15 @@ export function getStatusProcedure(_period: "45d", type: Type) {
 export function getGetProcedure(period: "14d", type: Type) {
   switch (period) {
     case "14d":
-      return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
+      if (type === "http") return tb.httpGetBiweekly;
+      if (type === "tcp") return tb.tcpGetBiweekly;
+      if (type === "dns") return tb.dnsGetBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
+      if (type === "http") return tb.httpGetBiweekly;
+      if (type === "tcp") return tb.tcpGetBiweekly;
+      if (type === "dns") return tb.dnsGetBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
@@ -481,7 +487,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getGetProcedure(
         opts.input.period,
-        _monitor.jobType as "http" | "tcp",
+        _monitor.jobType as "http" | "tcp" | "dns",
       );
       return await procedure(opts.input);
     }),
