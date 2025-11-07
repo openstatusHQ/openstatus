@@ -231,11 +231,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
-		return
-	}
 
 	retry := defaultRetry
 	if req.Retry != 0 {
@@ -248,6 +243,8 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
+	workspaceId , _ := strconv.Atoi(req.WorkspaceID)
+
 	statusMap := map[string]string{
 		"active":   "success",
 		"error":    "error",
@@ -259,7 +256,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		ID:            id.String(),
 		Region:        h.Region,
 		URI:           req.URI,
-		WorkspaceID:   workspaceId,
+		WorkspaceID:   int64(workspaceId),
 		CronTimestamp: req.CronTimestamp,
 		RequestStatus: requestStatus,
 		Timestamp:     time.Now().UTC().UnixMilli(),
@@ -311,11 +308,17 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		}
 	}
 
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"message": "uri not reachable"})
+		return
+	}
+
 	if req.RequestId != 0 {
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 	}
+
 	c.JSON(http.StatusOK, data)
 
 }
