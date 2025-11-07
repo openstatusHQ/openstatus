@@ -89,7 +89,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	var response checker.TCPResponse
 
 	var retry int
-	if req.Retry == 0 {
+	if req.Retry != 0 {
 		retry = int(req.Retry)
 	} else {
 		retry = 3

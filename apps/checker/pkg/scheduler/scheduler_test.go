@@ -19,6 +19,7 @@ import (
 type mockJobRunner struct {
 	HTTPJobCalled atomic.Bool
 	TCPJobCalled  atomic.Bool
+	DNSJobCalled  atomic.Bool
 	mu            sync.Mutex
 }
 
@@ -32,11 +33,17 @@ func (m *mockJobRunner) TCPJob(ctx context.Context, monitor *v1.TCPMonitor) (*jo
 	return &job.TCPPrivateRegionData{}, nil
 }
 
+func (m *mockJobRunner) DNSJob(ctx context.Context, monitor *v1.DNSMonitor) (*job.DNSPrivateRegionData, error) {
+
+	m.TCPJobCalled.Store(true)
+	return &job.DNSPrivateRegionData{}, nil
+}
 // mockClient implements v1.PrivateLocationServiceClient for testing
 type mockClient struct {
 	MonitorsFunc   func(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error)
 	IngestHTTPFunc func(ctx context.Context, req *connect.Request[v1.IngestHTTPRequest]) (*connect.Response[v1.IngestHTTPResponse], error)
 	IngestTCPFunc  func(ctx context.Context, req *connect.Request[v1.IngestTCPRequest]) (*connect.Response[v1.IngestTCPResponse], error)
+	IngestDNSFunc  func(ctx context.Context, req *connect.Request[v1.IngestDNSRequest]) (*connect.Response[v1.IngestDNSResponse], error)
 }
 
 func (m *mockClient) Monitors(ctx context.Context, req *connect.Request[v1.MonitorsRequest]) (*connect.Response[v1.MonitorsResponse], error) {
@@ -47,6 +54,9 @@ func (m *mockClient) IngestHTTP(ctx context.Context, req *connect.Request[v1.Ing
 }
 func (m *mockClient) IngestTCP(ctx context.Context, req *connect.Request[v1.IngestTCPRequest]) (*connect.Response[v1.IngestTCPResponse], error) {
 	return m.IngestTCPFunc(ctx, req)
+}
+func (m *mockClient) IngestDNS(ctx context.Context, req *connect.Request[v1.IngestDNSRequest]) (*connect.Response[v1.IngestDNSResponse], error) {
+	return m.IngestDNSFunc(ctx, req)
 }
 
 func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
@@ -68,6 +78,7 @@ func TestMonitorManager_StartAndStopJobs_WithJobRunner(t *testing.T) {
 		IngestTCPFunc: func(ctx context.Context, req *connect.Request[v1.IngestTCPRequest]) (*connect.Response[v1.IngestTCPResponse], error) {
 			return connect.NewResponse(&v1.IngestTCPResponse{}), nil
 		},
+
 	}
 	jobRunner := &mockJobRunner{}
 

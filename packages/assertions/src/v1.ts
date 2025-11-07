@@ -17,6 +17,13 @@ export const stringCompare = z.enum([
 ]);
 export const numberCompare = z.enum(["eq", "not_eq", "gt", "gte", "lt", "lte"]);
 
+export const recordCompare = z.enum([
+  "contains",
+  "not_contains",
+  "eq",
+  "not_eq",
+]);
+
 function evaluateNumber(
   value: number,
   compare: z.infer<typeof numberCompare>,
@@ -195,6 +202,15 @@ export const jsonBodyAssertion = base.merge(
     type: z.literal("jsonBody"),
     path: z.string(), // https://www.npmjs.com/package/jsonpath-plus
     compare: stringCompare,
+    target: z.string(),
+  }),
+);
+
+export const recordAssertion = base.merge(
+  z.object({
+    type: z.literal("dnsRecord"),
+    record: z.enum(["A", "AAAA", "CNAME", "MX", "TXT", "NS"]),
+    compare: recordCompare,
     target: z.string(),
   }),
 );

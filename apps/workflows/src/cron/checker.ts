@@ -20,6 +20,7 @@ import { getSentry } from "@hono/sentry";
 import { getLogger } from "@logtape/logtape";
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import {
+  type DNSPayloadSchema,
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
@@ -193,6 +194,7 @@ const createCronTask = async ({
   let payload:
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
+    | z.infer<typeof DNSPayloadSchema>
     | null = null;
 
   //
@@ -238,6 +240,26 @@ const createCronTask = async ({
             headers: transformHeaders(row.otelHeaders),
           }
         : undefined,
+    };
+  }
+  if (row.jobType === "dns") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      url: row.url,
+      cronTimestamp: timestamp,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+      trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? {
+            endpoint: row.otelEndpoint,
+            headers: transformHeaders(row.otelHeaders),
+          }
+        : undefined,
+      retry: row.retry || 3,
     };
   }
 

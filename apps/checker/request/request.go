@@ -7,10 +7,11 @@ import (
 type AssertionType string
 
 const (
-	AssertionHeader   AssertionType = "header"
-	AssertionTextBody AssertionType = "textBody"
-	AssertionStatus   AssertionType = "status"
-	AssertionJsonBody AssertionType = "jsonBody"
+	AssertionHeader    AssertionType = "header"
+	AssertionTextBody  AssertionType = "textBody"
+	AssertionStatus    AssertionType = "status"
+	AssertionJsonBody  AssertionType = "jsonBody"
+	AssertionDnsRecord AssertionType = "dnsRecord"
 )
 
 type StringComparator string
@@ -37,6 +38,26 @@ const (
 	NumberGreaterThanEqual NumberComparator = "gte"
 	NumberLowerThan        NumberComparator = "lt"
 	NumberLowerThanEqual   NumberComparator = "lte"
+)
+
+type RecordComparator string
+
+const (
+	RecordEquals      RecordComparator = "eq"
+	RecordNotEquals   RecordComparator = "not_eq"
+	RecordContains    RecordComparator = "contains"
+	RecordNotContains RecordComparator = "not_contains"
+)
+
+type Record string
+
+const (
+	RecordA     Record = "A"
+	RecordAAAA  Record = "AAAA"
+	RecordCNAME Record = "CNAME"
+	RecordMX    Record = "MX"
+	RecordNS    Record = "NS"
+	RecordTXT   Record = "TXT"
 )
 
 type Assertion struct {
@@ -102,4 +123,22 @@ type PingRequest struct {
 	Body        string            `json:"body"`
 	RequestId   int64             `json:"requestId"`
 	WorkspaceId int64             `json:"workspaceId"`
+}
+
+type DNSCheckerRequest struct {
+	Status        string            `json:"status"`
+	WorkspaceID   string            `json:"workspaceId"`
+	URI           string            `json:"uri"`
+	MonitorID     string            `json:"monitorId"`
+	Trigger       string            `json:"trigger,omitempty"`
+	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
+	RequestId     int64             `json:"requestId,omitempty"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+	Retry         int64             `json:"retry,omitempty"`
+	OtelConfig    struct {
+		Endpoint string            `json:"endpoint"`
+		Headers  map[string]string `json:"headers,omitempty"`
+	} `json:"otelConfig"`
 }
