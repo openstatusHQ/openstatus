@@ -125,9 +125,8 @@ export function FormStatusPageUpdate() {
             })),
           groups: statusPage.monitorGroups.map((group) => {
             const order =
-              statusPage.monitors.find((m) => m.groupId === group.id)
-                ?.groupOrder ?? 0;
-            console.log(group);
+              statusPage.monitors.find((m) => m.groupId === group.id)?.order ??
+              0;
             return {
               id: -1 * group.id, // negative id to avoid conflicts with monitors
               order,
@@ -136,7 +135,7 @@ export function FormStatusPageUpdate() {
                 .filter((m) => m.groupId === group.id)
                 .map((monitor) => ({
                   id: monitor.id,
-                  order: monitor.order,
+                  order: monitor.groupOrder,
                   active: monitor.active ?? null,
                 })),
             };
