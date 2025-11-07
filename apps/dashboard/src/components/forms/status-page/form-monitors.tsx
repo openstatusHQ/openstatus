@@ -318,8 +318,6 @@ export function FormMonitors({
   function submitAction(values: FormValues) {
     if (isPending) return;
 
-    console.log("submitAction", values);
-
     startTransition(async () => {
       try {
         const promise = onSubmit(values);
@@ -639,6 +637,7 @@ function MonitorGroup({
             />
           </SortableItemHandle>
           <FormField
+            key={`${group.id}-name-${groupIndex}`}
             control={form.control}
             name={`groups.${groupIndex}.name` as const}
             render={({ field }) => (
@@ -657,6 +656,7 @@ function MonitorGroup({
           />
         </div>
         <FormField
+          key={`${group.id}-monitors-${groupIndex}`}
           control={form.control}
           name={`groups.${groupIndex}.monitors` as const}
           render={({ field }) => (
