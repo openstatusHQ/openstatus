@@ -1,4 +1,30 @@
-import { Copy, CopyPlus, Pencil, Trash2 } from "lucide-react";
+import {
+  Copy,
+  CopyPlus,
+  Globe,
+  Network,
+  Pencil,
+  Server,
+  Trash2,
+} from "lucide-react";
+
+export const monitorTypes = [
+  {
+    id: "http",
+    label: "HTTP",
+    icon: Globe,
+  },
+  {
+    id: "tcp",
+    label: "TCP",
+    icon: Network,
+  },
+  {
+    id: "dns",
+    label: "DNS",
+    icon: Server,
+  },
+] as const;
 
 export const actions = [
   {

@@ -3,6 +3,7 @@
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import { Badge } from "@/components/ui/badge";
+import { monitorTypes } from "@/data/monitors.client";
 import { formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { deserialize } from "@openstatus/assertions";
@@ -21,6 +22,7 @@ export function Sidebar() {
   if (!monitor) return null;
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
+  const type = monitorTypes.find((type) => type.id === monitor.jobType);
 
   return (
     <SidebarRight
@@ -36,7 +38,14 @@ export function Sidebar() {
             },
             {
               label: "Type",
-              value: <span className="uppercase">{monitor.jobType}</span>,
+              value: type ? (
+                <span className="flex items-center gap-1">
+                  <span className="uppercase">{type.label}</span>
+                  <type.icon className="h-2.5 w-2.5 text-muted-foreground" />
+                </span>
+              ) : (
+                <span className="uppercase">{monitor.jobType}</span>
+              ),
             },
             {
               label: "Endpoint",
