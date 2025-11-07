@@ -1502,7 +1502,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("dns").default("dns"),
-        id: z.string().nullable(),
+        id: z.coerce.string().nullable(),
         uri: z.string(),
         latency: z.number().int(),
         monitorId: z.coerce.string(),
@@ -1513,9 +1513,54 @@ export class OSTinybird {
         timestamp: z.number(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
         errorMessage: z.string().nullable(),
-        records: z.record(z.string(), z.array(z.string())).default({}),
+        records: z
+          .string()
+          .transform((str) => {
+            try {
+              return JSON.parse(str) as Record<string, unknown>;
+            } catch (error) {
+              console.error(error);
+              return {};
+            }
+          })
+          .pipe(z.record(z.string(), z.array(z.string()))),
       }),
       // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_list_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("dns").default("dns"),
+        id: z.coerce.string().nullable(),
+        uri: z.string(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        records: z
+          .string()
+          .transform((str) => {
+            try {
+              return JSON.parse(str) as Record<string, unknown>;
+            } catch (error) {
+              console.error(error);
+              return {};
+            }
+          })
+          .pipe(z.record(z.string(), z.array(z.string()))),
+      }),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }

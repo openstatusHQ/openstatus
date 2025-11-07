@@ -25,13 +25,25 @@ export function getWorkspace30dProcedure(type: Type) {
 export function getListProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
-      return type === "http" ? tb.httpListDaily : tb.tcpListDaily;
+      if (type === "http") return tb.httpListDaily;
+      if (type === "tcp") return tb.tcpListDaily;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
-      return type === "http" ? tb.httpListWeekly : tb.tcpListWeekly;
+      if (type === "http") return tb.httpListWeekly;
+      if (type === "tcp") return tb.tcpListWeekly;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "14d":
-      return type === "http" ? tb.httpListBiweekly : tb.tcpListBiweekly;
+      if (type === "http") return tb.httpListBiweekly;
+      if (type === "tcp") return tb.tcpListBiweekly;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpListDaily : tb.tcpListDaily;
+      if (type === "http") return tb.httpListDaily;
+      if (type === "tcp") return tb.tcpListDaily;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
@@ -214,7 +226,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getListProcedure(
         period,
-        _monitor.jobType as "http" | "tcp",
+        _monitor.jobType as "http" | "tcp" | "dns",
       );
       return await procedure({
         ...opts.input,
