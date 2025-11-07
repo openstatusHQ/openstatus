@@ -237,9 +237,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-
-
-
 	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
@@ -314,45 +311,11 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		}
 	}
 
-	// Status update logic
-	switch {
-	case !isSuccessful && req.Status != "error":
-		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "error",
-			Region:        h.Region,
-			Message:       err.Error(),
-			CronTimestamp: req.CronTimestamp,
-			Latency:       latency,
-		})
-		data.RequestStatus = "error"
-		data.Error = 1
-		data.ErrorMessage = err.Error()
-	case isSuccessful && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded":
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "degraded",
-			Region:        h.Region,
-			CronTimestamp: req.CronTimestamp,
-			Latency:       latency,
-		})
-		data.RequestStatus = "degraded"
-	case isSuccessful && ((req.DegradedAfter == 0 && req.Status != "active") || (latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active")):
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "active",
-			Region:        h.Region,
-			CronTimestamp: req.CronTimestamp,
-			Latency:       latency,
-		})
-		data.RequestStatus = "success"
+	if req.RequestId != 0 {
+		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+		}
 	}
-
-	if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
-	}
-
 	c.JSON(http.StatusOK, data)
 
 }

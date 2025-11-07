@@ -6,17 +6,17 @@ import { registerDeleteMonitor } from "./delete";
 import { registerGetMonitor } from "./get";
 import { registerGetAllMonitors } from "./get_all";
 import { registerPostMonitor } from "./post";
+import { registerPostMonitorDNS } from "./post_dns";
 import { registerPostMonitorHTTP } from "./post_http";
 import { registerPostMonitorTCP } from "./post_tcp";
 import { registerPutMonitor } from "./put";
+import { registerPutDNSMonitor } from "./put_dns";
 import { registerPutHTTPMonitor } from "./put_http";
 import { registerPutTCPMonitor } from "./put_tcp";
 import { registerGetMonitorResult } from "./results/get";
 import { registerRunMonitor } from "./run/post";
 import { registerGetMonitorSummary } from "./summary/get";
 import { registerTriggerMonitor } from "./trigger/post";
-import { registerPostMonitorDNS } from "./post_dns";
-import { registerPutDNSMonitor } from "./put_dns";
 
 const monitorsApi = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,
