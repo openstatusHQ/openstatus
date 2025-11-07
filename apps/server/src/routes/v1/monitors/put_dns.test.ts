@@ -30,8 +30,7 @@ test("invalid monitor id should return 404", async () => {
       description: "OpenStatus website",
       regions: ["ams", "gru"],
       request: {
-        host: "openstatus.dev",
-        port: 443,
+        uri: "openstatus.dev",
       },
       active: true,
       public: true,
