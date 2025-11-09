@@ -6,6 +6,16 @@ template: splash
 import { ScalarComponent } from '@scalar/astro'
 
 <ScalarComponent configuration={{
- url: 'https://api.openstatus.dev/v1/openapi',
- showSidebar: false,
+  url: 'https://api.openstatus.dev/v1/openapi',
+  showSidebar: true,
+  servers: [
+    {
+      url: "https://api.openstatus.dev/v1",
+      description: "Production server",
+    },
+    {
+      url: "http://localhost:3000/v1",
+      description: "Dev server",
+    },
+  ],
 }} />
