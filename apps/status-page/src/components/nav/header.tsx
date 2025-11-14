@@ -92,7 +92,12 @@ export function Header(props: React.ComponentProps<"header">) {
         {/* NOTE: same width as the `StatusUpdates` button */}
         <div className="flex w-[150px] shrink-0">
           <div className="flex items-center justify-center">
-            <Button variant="outline" size="icon" className="size-8" asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8 overflow-hidden"
+              asChild
+            >
               <Link
                 href={page?.homepageUrl || "/"}
                 target={page?.homepageUrl ? "_blank" : undefined}
