@@ -19,6 +19,7 @@
     "@openpanel/astro": "1.0.1",
     "@tailwindcss/vite": "4.1.8",
     "astro": "5.13.7",
+    "@scalar/astro": "0.1.0",
     "sharp": "0.33.5",
     "starlight-image-zoom": "0.13.0",
     "starlight-links-validator": "0.17.2",

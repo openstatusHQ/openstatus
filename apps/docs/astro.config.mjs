@@ -149,11 +149,13 @@ export default defineConfig({
             },
             {
               label: "API Reference",
-              link: "https://api.openstatus.dev/v1",
+              slug: "reference/api-reference",
+
+              // link: "https://api.openstatus.dev/v1",
               // badge: { text: 'External' },
-              attrs: {
-                target: "_blank",
-              },
+              // attrs: {
+              //   target: "_blank",
+              // },
             },
             {
               label: "HTTP Monitor",
