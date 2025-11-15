@@ -19,6 +19,6 @@ SQL >
     WHERE
         monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
     GROUP BY h, monitorId
-    ORDER BY h DESC
+    ORDER BY h ASC
 
 
