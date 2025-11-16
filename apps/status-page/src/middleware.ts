@@ -57,7 +57,7 @@ export default async function middleware(req: NextRequest) {
     const protectedCookie = cookies.get(createProtectedCookieKey(_page.slug));
     const cookiePassword = protectedCookie ? protectedCookie.value : undefined;
     const queryPassword = url.searchParams.get("pw");
-    const password = queryPassword ?? cookiePassword;
+    const password = queryPassword || cookiePassword;
 
     if (password !== _page.password && !url.pathname.endsWith("/protected")) {
       const { pathname, origin } = req.nextUrl;
