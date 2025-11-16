@@ -16,7 +16,12 @@ You can configure a custom domain for your status page. e.g `status.example.com`
 
 ### Password
 
-You can add a password for your status page.
+You can add a password for your status page to protect a status page. If you are not authenticated, you will get redirected to the `/protected`.
+
+The password is stored in plain text in a `cookie`, so keep the password easy and fun. You can share any page by appending the password via the `pw` search param like: `https://custom.stpg.dev/?pw=my-secret-password` and we will automatically authenticate the user. This can be useful to authenticate to private RSS feeds.
+
+> If you need an email confirmed status page, e.g. by whitelisting domains for specific partners who would access the page with a magic link, please contact ping@openstatus.dev - we have that on our backlog and are happy to prioritze it.
+
 
 ### Favicon
 
