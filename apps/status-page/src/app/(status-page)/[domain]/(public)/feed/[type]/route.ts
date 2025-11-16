@@ -25,7 +25,12 @@ export async function GET(
     trpc.page.getPageBySlug.queryOptions({ slug: domain }),
   );
   if (!page) return notFound();
-  if (page.passwordProtected) return unauthorized();
+
+  if (page.passwordProtected) {
+    const url = new URL(_request.url);
+    const password = url.searchParams.get("pw");
+    if (password !== page.password) return unauthorized();
+  }
 
   const baseUrl = getBaseUrl({
     slug: page.slug,
