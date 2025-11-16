@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect } from "react";
 
-export function PasswordWrapper({ children }: { children: React.ReactNode }) {
+export function PasswordWrapper({ children }: { children?: React.ReactNode }) {
   const [password, setPassword] = useQueryState("pw", parseAsString);
   const { domain } = useParams<{ domain: string }>();
 
@@ -17,7 +17,7 @@ export function PasswordWrapper({ children }: { children: React.ReactNode }) {
       ).toUTCString()}`;
       setPassword(null);
     }
-  }, [password, domain]);
+  }, [password, domain, setPassword]);
 
   return children;
 }
