@@ -3,6 +3,7 @@ import { z } from "zod";
 import { and, eq, isNotNull } from "@openstatus/db";
 import {
   invitation,
+  maintenance,
   pageSubscriber,
   selectWorkspaceSchema,
   statusReportUpdate,
@@ -71,6 +72,49 @@ export const emailRouter = createTRPCRouter({
             _statusReportUpdate.statusReport.monitorsToStatusReports.map(
               (i) => i.monitor.name,
             ),
+        });
+      }
+    }),
+  sendMaintenance: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const limits = opts.ctx.workspace.limits;
+
+      if (limits["status-subscribers"]) {
+        const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
+          where: eq(maintenance.id, opts.input.id),
+          with: {
+            maintenancesToMonitors: {
+              with: {
+                monitor: true,
+              },
+            },
+            page: {
+              with: {
+                pageSubscribers: {
+                  where: isNotNull(pageSubscriber.acceptedAt),
+                },
+              },
+            },
+          },
+        });
+
+        if (!_maintenance) return;
+        if (!_maintenance.page) return;
+        if (!_maintenance.page.pageSubscribers.length) return;
+
+        await emailClient.sendStatusReportUpdate({
+          to: _maintenance.page.pageSubscribers.map(
+            (subscriber) => subscriber.email,
+          ),
+          pageTitle: _maintenance.page.title,
+          reportTitle: _maintenance.title,
+          status: "maintenance",
+          message: _maintenance.message,
+          date: new Date(_maintenance.from).toISOString(),
+          monitors: _maintenance.maintenancesToMonitors.map(
+            (i) => i.monitor.name,
+          ),
         });
       }
     }),

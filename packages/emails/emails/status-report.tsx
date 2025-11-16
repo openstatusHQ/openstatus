@@ -18,7 +18,13 @@ import { colors, styles } from "./_components/styles";
 export const StatusReportSchema = z.object({
   pageTitle: z.string(),
   // statusReportStatus from db
-  status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
+  status: z.enum([
+    "investigating",
+    "identified",
+    "monitoring",
+    "resolved",
+    "maintenance",
+  ]),
   date: z.string(),
   message: z.string(),
   reportTitle: z.string(),
@@ -36,6 +42,8 @@ function getStatusColor(status: string) {
     case "resolved":
       return colors.success;
     case "monitoring":
+      return colors.info;
+    case "maintenance":
       return colors.info;
     default:
       return colors.success;

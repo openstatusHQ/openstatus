@@ -8,6 +8,7 @@ import {
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -49,6 +50,7 @@ const schema = z.object({
   status: z.enum(statusReportStatus),
   message: z.string(),
   date: z.date(),
+  notifySubscribers: z.boolean().nullish(),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -70,6 +72,7 @@ export function FormStatusReportUpdate({
       status: "identified",
       message: "",
       date: new Date(),
+      notifySubscribers: true,
     },
   });
   const watchMessage = form.watch("message");
@@ -293,6 +296,35 @@ export function FormStatusReportUpdate({
               </div>
             </TabsContent>
           </Tabs>
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent>
+          <FormField
+            control={form.control}
+            name="notifySubscribers"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notify Subscribers</FormLabel>
+                <FormControl>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="notifySubscribers"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <Label htmlFor="notifySubscribers">
+                      Send email notification to subscribers
+                    </Label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+                <FormDescription>
+                  Subscribers will receive an email when creating a status
+                  report.
+                </FormDescription>
+              </FormItem>
+            )}
+          />
         </FormCardContent>
       </form>
     </Form>

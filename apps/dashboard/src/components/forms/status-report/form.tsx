@@ -59,11 +59,13 @@ const schema = z.object({
   message: z.string(),
   date: z.date(),
   monitors: z.array(z.number()),
+  notifySubscribers: z.boolean().nullish(),
 });
 
 const updateSchema = schema.omit({
   message: true,
   date: true,
+  notifySubscribers: true,
 });
 
 export type FormValues = z.infer<typeof schema> | z.infer<typeof updateSchema>;
@@ -89,6 +91,7 @@ export function FormStatusReport({
       message: "",
       date: new Date(),
       monitors: [],
+      notifySubscribers: true,
     },
   });
   const watchMessage = form.watch("message");
@@ -391,6 +394,39 @@ export function FormStatusReport({
             )}
           />
         </FormCardContent>
+        {!defaultValues ? (
+          <>
+            <FormCardSeparator />
+            <FormCardContent>
+              <FormField
+                control={form.control}
+                name="notifySubscribers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notify Subscribers</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="notifySubscribers"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="notifySubscribers">
+                          Send email notification to subscribers
+                        </Label>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Subscribers will receive an email when creating a status
+                      report.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+            </FormCardContent>
+          </>
+        ) : null}
       </form>
     </Form>
   );

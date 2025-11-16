@@ -51,6 +51,7 @@ const schema = z
     startDate: z.date(),
     endDate: z.date(),
     monitors: z.array(z.number()),
+    notifySubscribers: z.boolean().nullish(),
   })
   .refine((data) => data.endDate > data.startDate, {
     message: "End date cannot be earlier than start date.",
@@ -80,6 +81,7 @@ export function FormMaintenance({
       startDate: new Date(),
       endDate: addDays(new Date(), 1),
       monitors: [],
+      notifySubscribers: true,
     },
   });
   const watchEndDate = form.watch("endDate");
@@ -456,6 +458,34 @@ export function FormMaintenance({
                   </EmptyStateContainer>
                 )}
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent>
+          <FormField
+            control={form.control}
+            name="notifySubscribers"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notify Subscribers</FormLabel>
+                <FormControl>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="notifySubscribers"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                    <Label htmlFor="notifySubscribers">
+                      Send email notification to subscribers
+                    </Label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+                <FormDescription>
+                  Subscribers will receive an email when creating a maintenance.
+                </FormDescription>
               </FormItem>
             )}
           />
