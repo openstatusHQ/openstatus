@@ -56,6 +56,11 @@ export const emailRouter = createTRPCRouter({
 
         if (!_statusReportUpdate) return;
         if (!_statusReportUpdate.statusReport.page) return;
+        if (
+          _statusReportUpdate.statusReport.page.workspaceId !==
+          opts.ctx.workspace.id
+        )
+          return;
         if (!_statusReportUpdate.statusReport.page.pageSubscribers.length)
           return;
 
@@ -82,7 +87,10 @@ export const emailRouter = createTRPCRouter({
 
       if (limits["status-subscribers"]) {
         const _maintenance = await opts.ctx.db.query.maintenance.findFirst({
-          where: eq(maintenance.id, opts.input.id),
+          where: and(
+            eq(maintenance.id, opts.input.id),
+            eq(maintenance.workspaceId, opts.ctx.workspace.id),
+          ),
           with: {
             maintenancesToMonitors: {
               with: {
