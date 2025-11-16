@@ -34,8 +34,10 @@ import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { addDays, format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
@@ -51,7 +53,7 @@ const schema = z
     startDate: z.date(),
     endDate: z.date(),
     monitors: z.array(z.number()),
-    notifySubscribers: z.boolean().nullish(),
+    notifySubscribers: z.boolean().optional(),
   })
   .refine((data) => data.endDate > data.startDate, {
     message: "End date cannot be earlier than start date.",
@@ -71,6 +73,10 @@ export function FormMaintenance({
   monitors: { id: number; name: string; url: string }[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(
+    trpc.workspace.getWorkspace.queryOptions(),
+  );
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -462,34 +468,39 @@ export function FormMaintenance({
             )}
           />
         </FormCardContent>
-        <FormCardSeparator />
-        <FormCardContent>
-          <FormField
-            control={form.control}
-            name="notifySubscribers"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notify Subscribers</FormLabel>
-                <FormControl>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="notifySubscribers"
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                    <Label htmlFor="notifySubscribers">
-                      Send email notification to subscribers
-                    </Label>
-                  </div>
-                </FormControl>
-                <FormMessage />
-                <FormDescription>
-                  Subscribers will receive an email when creating a maintenance.
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-        </FormCardContent>
+        {!defaultValues && workspace?.limits["status-subscribers"] ? (
+          <>
+            <FormCardSeparator />
+            <FormCardContent>
+              <FormField
+                control={form.control}
+                name="notifySubscribers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notify Subscribers</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="notifySubscribers"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="notifySubscribers">
+                          Send email notification to subscribers
+                        </Label>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Subscribers will receive an email when creating a
+                      maintenance.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+            </FormCardContent>
+          </>
+        ) : null}
       </form>
     </Form>
   );

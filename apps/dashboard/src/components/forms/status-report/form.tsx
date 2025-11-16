@@ -42,9 +42,11 @@ import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { colors } from "@/data/status-report-updates.client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
+import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
@@ -59,7 +61,7 @@ const schema = z.object({
   message: z.string(),
   date: z.date(),
   monitors: z.array(z.number()),
-  notifySubscribers: z.boolean().nullish(),
+  notifySubscribers: z.boolean().optional(),
 });
 
 const updateSchema = schema.omit({
@@ -81,6 +83,10 @@ export function FormStatusReport({
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(
+    trpc.workspace.getWorkspace.queryOptions(),
+  );
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -394,7 +400,7 @@ export function FormStatusReport({
             )}
           />
         </FormCardContent>
-        {!defaultValues ? (
+        {!defaultValues && workspace?.limits["status-subscribers"] ? (
           <>
             <FormCardSeparator />
             <FormCardContent>
