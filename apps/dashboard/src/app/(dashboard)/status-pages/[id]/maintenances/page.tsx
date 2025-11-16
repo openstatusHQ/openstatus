@@ -30,7 +30,7 @@ export default function Page() {
     }),
   );
   const sendMaintenanceUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.emailRouter.sendMaintenance.mutationOptions(),
   );
   const createStatusPageMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
