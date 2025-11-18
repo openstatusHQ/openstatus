@@ -1,10 +1,21 @@
-import { describe, expect, spyOn, test } from "bun:test";
-import { selectNotificationSchema } from "@openstatus/db/src/schema/notifications/validation";
+import { describe, expect, spyOn, test,afterEach, beforeEach, jest } from "bun:test";
+import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 describe("PagerDuty Notifications", () => {
+
+  let fetchMock: any = undefined;
+
+    beforeEach(() => {
+        fetchMock = spyOn(global, "fetch")
+        .mockImplementation(() => Promise.resolve(new Response(null, { status: 200 })));
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
   test("Send degraded", async () => {
-    const spy = spyOn(global, "fetch");
 
     const monitor = {
       id: "monitor-1",
@@ -37,11 +48,10 @@ describe("PagerDuty Notifications", () => {
       message: "Something went wrong",
       cronTimestamp: Date.now(),
     });
-    expect(spy).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
   });
 
   test("Send Recovered", async () => {
-    const spy = spyOn(global, "fetch");
 
     const monitor = {
       id: "monitor-1",
@@ -74,11 +84,11 @@ describe("PagerDuty Notifications", () => {
       message: "Something went wrong",
       cronTimestamp: Date.now(),
     });
-    expect(spy).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
   });
 
   test("Send Alert", async () => {
-    const spy = spyOn(global, "fetch");
+
 
     const monitor = {
       id: "monitor-1",
@@ -111,6 +121,6 @@ describe("PagerDuty Notifications", () => {
       message: "Something went wrong",
       cronTimestamp: Date.now(),
     });
-    expect(spy).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalled();
   });
 });
