@@ -11,6 +11,7 @@ import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 describe("PagerDuty Notifications", () => {
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {
