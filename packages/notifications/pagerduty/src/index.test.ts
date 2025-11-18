@@ -1,22 +1,29 @@
-import { describe, expect, spyOn, test,afterEach, beforeEach, jest } from "bun:test";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  jest,
+  spyOn,
+  test,
+} from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 describe("PagerDuty Notifications", () => {
-
   let fetchMock: any = undefined;
 
-    beforeEach(() => {
-        fetchMock = spyOn(global, "fetch")
-        .mockImplementation(() => Promise.resolve(new Response(null, { status: 200 })));
-    });
+  beforeEach(() => {
+    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
+      Promise.resolve(new Response(null, { status: 200 })),
+    );
+  });
 
-    afterEach(() => {
-        jest.resetAllMocks();
-    });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
 
   test("Send degraded", async () => {
-
     const monitor = {
       id: "monitor-1",
       name: "API Health Check",
@@ -52,7 +59,6 @@ describe("PagerDuty Notifications", () => {
   });
 
   test("Send Recovered", async () => {
-
     const monitor = {
       id: "monitor-1",
       name: "API Health Check",
@@ -88,8 +94,6 @@ describe("PagerDuty Notifications", () => {
   });
 
   test("Send Alert", async () => {
-
-
     const monitor = {
       id: "monitor-1",
       name: "API Health Check",
