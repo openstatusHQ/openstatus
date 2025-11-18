@@ -1,4 +1,4 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import { pagerdutyDataSchema, type Monitor, type Notification } from "@openstatus/db/src/schema";
 
 import type { Region } from "@openstatus/db/src/schema/constants";
 import {
@@ -24,7 +24,11 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
+
+  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data))
+
+  const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
+
   const { name } = monitor;
 
   try {
@@ -72,29 +76,33 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
+  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data))
+
+  const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
   const { name } = monitor;
 
-  const event = triggerEventPayloadSchema.parse({
-    routing_key: notificationData.integration_keys[0].integration_key,
-    dedup_key: `${monitor.id}}`,
-    event_action: "trigger",
-    payload: {
-      summary: `${name} is degraded`,
-      source: "Open Status",
-      severity: "warning",
-      timestamp: new Date().toISOString(),
-      custom_details: {
-        statusCode,
-        message,
-      },
-    },
-  });
+
 
   try {
     for await (const integrationKey of notificationData.integration_keys) {
       // biome-ignore lint/correctness/noUnusedVariables: <explanation>
       const { integration_key, type } = integrationKey;
+
+      const event = triggerEventPayloadSchema.parse({
+        routing_key: integration_key,
+        dedup_key: `${monitor.id}}`,
+        event_action: "trigger",
+        payload: {
+          summary: `${name} is degraded`,
+          source: "Open Status",
+          severity: "warning",
+          timestamp: new Date().toISOString(),
+          custom_details: {
+            statusCode,
+            message,
+          },
+        },
+      });
 
       await fetch("https://events.pagerduty.com/v2/enqueue", {
         method: "POST",
@@ -125,7 +133,9 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
+  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data))
+
+  const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
 
   try {
     for await (const integrationKey of notificationData.integration_keys) {
