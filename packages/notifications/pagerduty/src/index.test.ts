@@ -1,12 +1,11 @@
-import { expect, spyOn, test, afterEach } from "bun:test";
-import { sendAlert, sendDegraded, sendRecovery } from "./index";
-import { selectNotificationSchema } from "@openstatus/db/src/schema/notifications/validation";
+import { expect, spyOn, test } from "bun:test";
 import { describe } from "node:test";
+import { selectNotificationSchema } from "@openstatus/db/src/schema/notifications/validation";
+import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 describe("PagerDuty Notifications", () => {
-  test('Send degraded', async () => {
-
-    const spy = spyOn(global, 'fetch')
+  test("Send degraded", async () => {
+    const spy = spyOn(global, "fetch");
 
     const monitor = {
       id: "monitor-1",
@@ -18,13 +17,19 @@ describe("PagerDuty Notifications", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       region: "us-east-1",
+    };
 
-    }
+    const a = {
+      id: 1,
+      name: "PagerDuty Notification",
+      provider: "pagerduty",
+      workspaceId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+    };
 
-    const a = { "id": 1, "name": "PagerDuty Notification", "provider": "pagerduty", "workspaceId": 1, "createdAt": new Date(), "updatedAt": new Date(), "data": "{\"pagerduty\":\"{\\\"integration_keys\\\":[{\\\"integration_key\\\":\\\"my_key\\\",\\\"name\\\":\\\"Default Service\\\",\\\"id\\\":\\\"ABCD\\\",\\\"type\\\":\\\"service\\\"}],\\\"account\\\":{\\\"subdomain\\\":\\\"test\\\",\\\"name\\\":\\\"test\\\"}}\"}" }
-
-
-    const n = selectNotificationSchema.parse((a))
+    const n = selectNotificationSchema.parse(a);
     await sendDegraded({
       // @ts-expect-error
       monitor,
@@ -34,11 +39,10 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
     expect(spy).toHaveBeenCalled();
-  })
+  });
 
-  test('Send Recovered', async () => {
-
-    const spy = spyOn(global, 'fetch')
+  test("Send Recovered", async () => {
+    const spy = spyOn(global, "fetch");
 
     const monitor = {
       id: "monitor-1",
@@ -50,13 +54,19 @@ describe("PagerDuty Notifications", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       region: "us-east-1",
+    };
 
-    }
+    const a = {
+      id: 1,
+      name: "PagerDuty Notification",
+      provider: "pagerduty",
+      workspaceId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+    };
 
-    const a = { "id": 1, "name": "PagerDuty Notification", "provider": "pagerduty", "workspaceId": 1, "createdAt": new Date(), "updatedAt": new Date(), "data": "{\"pagerduty\":\"{\\\"integration_keys\\\":[{\\\"integration_key\\\":\\\"my_key\\\",\\\"name\\\":\\\"Default Service\\\",\\\"id\\\":\\\"ABCD\\\",\\\"type\\\":\\\"service\\\"}],\\\"account\\\":{\\\"subdomain\\\":\\\"test\\\",\\\"name\\\":\\\"test\\\"}}\"}" }
-
-
-    const n = selectNotificationSchema.parse((a))
+    const n = selectNotificationSchema.parse(a);
     await sendRecovery({
       // @ts-expect-error
       monitor,
@@ -66,11 +76,10 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
     expect(spy).toHaveBeenCalled();
-  })
+  });
 
-  test('Send Alert', async () => {
-
-    const spy = spyOn(global, 'fetch')
+  test("Send Alert", async () => {
+    const spy = spyOn(global, "fetch");
 
     const monitor = {
       id: "monitor-1",
@@ -82,11 +91,18 @@ describe("PagerDuty Notifications", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       region: "us-east-1",
+    };
+    const a = {
+      id: 1,
+      name: "PagerDuty Notification",
+      provider: "pagerduty",
+      workspaceId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+    };
 
-    }
-    const a = { "id": 1, "name": "PagerDuty Notification", "provider": "pagerduty", "workspaceId": 1, "createdAt": new Date(), "updatedAt": new Date(), "data": "{\"pagerduty\":\"{\\\"integration_keys\\\":[{\\\"integration_key\\\":\\\"my_key\\\",\\\"name\\\":\\\"Default Service\\\",\\\"id\\\":\\\"ABCD\\\",\\\"type\\\":\\\"service\\\"}],\\\"account\\\":{\\\"subdomain\\\":\\\"test\\\",\\\"name\\\":\\\"test\\\"}}\"}" }
-
-    const n = selectNotificationSchema.parse((a))
+    const n = selectNotificationSchema.parse(a);
 
     await sendAlert({
       // @ts-expect-error
@@ -97,6 +113,5 @@ describe("PagerDuty Notifications", () => {
       cronTimestamp: Date.now(),
     });
     expect(spy).toHaveBeenCalled();
-  })
-
-})
+  });
+});

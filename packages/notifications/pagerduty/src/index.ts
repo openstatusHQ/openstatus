@@ -1,4 +1,8 @@
-import { pagerdutyDataSchema, type Monitor, type Notification } from "@openstatus/db/src/schema";
+import {
+  type Monitor,
+  type Notification,
+  pagerdutyDataSchema,
+} from "@openstatus/db/src/schema";
 
 import type { Region } from "@openstatus/db/src/schema/constants";
 import {
@@ -24,8 +28,7 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-
-  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data))
+  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
 
@@ -76,12 +79,10 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data))
+  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
   const { name } = monitor;
-
-
 
   try {
     for await (const integrationKey of notificationData.integration_keys) {
@@ -133,7 +134,7 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data))
+  const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
 
