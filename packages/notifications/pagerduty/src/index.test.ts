@@ -1,5 +1,4 @@
-import { expect, spyOn, test } from "bun:test";
-import { describe } from "node:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema/notifications/validation";
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
