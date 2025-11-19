@@ -10,7 +10,7 @@ import {
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
-describe("PagerDuty Notifications", () => {
+describe("Slack Notifications", () => {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
@@ -40,12 +40,12 @@ describe("PagerDuty Notifications", () => {
 
     const a = {
       id: 1,
-      name: "PagerDuty Notification",
-      provider: "pagerduty",
+      name: "slack Notification",
+      provider: "slack",
       workspaceId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+      data: '{"slack":"https://hooks.slack.com/services/url"}',
     };
 
     const n = selectNotificationSchema.parse(a);
@@ -75,12 +75,12 @@ describe("PagerDuty Notifications", () => {
 
     const a = {
       id: 1,
-      name: "PagerDuty Notification",
-      provider: "pagerduty",
+      name: "slack Notification",
+      provider: "slack",
       workspaceId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+      data: '{"slack":"https://hooks.slack.com/services/url"}',
     };
 
     const n = selectNotificationSchema.parse(a);
@@ -109,12 +109,12 @@ describe("PagerDuty Notifications", () => {
     };
     const a = {
       id: 1,
-      name: "PagerDuty Notification",
-      provider: "pagerduty",
+      name: "slack Notification",
+      provider: "slack",
       workspaceId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+      data: '{"slack":"https://hooks.slack.com/services/url"}',
     };
 
     const n = selectNotificationSchema.parse(a);

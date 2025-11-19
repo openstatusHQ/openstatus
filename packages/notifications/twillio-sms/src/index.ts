@@ -37,7 +37,7 @@ export const sendAlert = async ({
   );
 
   try {
-    fetch(
+    await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
       {
         method: "post",
@@ -85,7 +85,7 @@ export const sendRecovery = async ({
   body.set("Body", `Your monitor ${name} / ${monitor.url} is up again`);
 
   try {
-    fetch(
+    await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
       {
         method: "post",
@@ -131,7 +131,7 @@ export const sendDegraded = async ({
   body.set("Body", `Your monitor ${name} / ${monitor.url} is degraded `);
 
   try {
-    fetch(
+    await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
       {
         method: "post",
