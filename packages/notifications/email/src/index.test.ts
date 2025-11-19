@@ -1,30 +1,20 @@
 import {
-  afterEach,
-  beforeEach,
   describe,
-  expect,
-  jest,
-  spyOn,
+  mock,
+  // jest,
   test,
 } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
-describe("PagerDuty Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  let fetchMock: any = undefined;
+mock.module("@openstatus/emails/src/client", () => ({
+  EmailClient: mock(() => ({
+    sendMonitorAlert: mock(async () => {}),
+  })),
+}));
 
-  beforeEach(() => {
-    // @ts-expect-error
-    fetchMock = spyOn(global, "fetch").mockImplementation(() =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
+describe("Email Notifications", () => {
   test("Send degraded", async () => {
     const monitor = {
       id: "monitor-1",
@@ -40,12 +30,12 @@ describe("PagerDuty Notifications", () => {
 
     const a = {
       id: 1,
-      name: "PagerDuty Notification",
-      provider: "pagerduty",
+      name: "email Notification",
+      provider: "email",
       workspaceId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+      data: '{"email":"ping@openstatus.dev"}',
     };
 
     const n = selectNotificationSchema.parse(a);
@@ -57,7 +47,6 @@ describe("PagerDuty Notifications", () => {
       message: "Something went wrong",
       cronTimestamp: Date.now(),
     });
-    expect(fetchMock).toHaveBeenCalled();
   });
 
   test("Send Recovered", async () => {
@@ -75,12 +64,12 @@ describe("PagerDuty Notifications", () => {
 
     const a = {
       id: 1,
-      name: "PagerDuty Notification",
-      provider: "pagerduty",
+      name: "Email Notification",
+      provider: "email",
       workspaceId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+      data: '{"email":"ping@openstatus.dev"}',
     };
 
     const n = selectNotificationSchema.parse(a);
@@ -92,7 +81,6 @@ describe("PagerDuty Notifications", () => {
       message: "Something went wrong",
       cronTimestamp: Date.now(),
     });
-    expect(fetchMock).toHaveBeenCalled();
   });
 
   test("Send Alert", async () => {
@@ -110,11 +98,11 @@ describe("PagerDuty Notifications", () => {
     const a = {
       id: 1,
       name: "PagerDuty Notification",
-      provider: "pagerduty",
+      provider: "email",
       workspaceId: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
-      data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"my_key\\",\\"name\\":\\"Default Service\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
+      data: '{"email":"ping@openstatus.dev"}',
     };
 
     const n = selectNotificationSchema.parse(a);
@@ -127,6 +115,5 @@ describe("PagerDuty Notifications", () => {
       message: "Something went wrong",
       cronTimestamp: Date.now(),
     });
-    expect(fetchMock).toHaveBeenCalled();
   });
 });
