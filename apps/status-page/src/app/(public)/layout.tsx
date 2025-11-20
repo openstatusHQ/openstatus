@@ -27,7 +27,7 @@ export default async function Layout({
       />
       <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
         <SidebarProvider
-          defaultOpen={false}
+          defaultOpen={true}
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH,
