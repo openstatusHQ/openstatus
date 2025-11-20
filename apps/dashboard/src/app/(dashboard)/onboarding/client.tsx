@@ -234,8 +234,8 @@ export function Client() {
           <Section>
             <SectionHeader className="h-8 flex-row items-center justify-between">
               <SectionDescription>
-                We&apos;d love to know what you are looking for with openstatus. This will help us
-                improve our product and services.
+                We&apos;d love to know what you are looking for with openstatus.
+                This will help us improve our product and services.
               </SectionDescription>
             </SectionHeader>
             <LearnFromForm
