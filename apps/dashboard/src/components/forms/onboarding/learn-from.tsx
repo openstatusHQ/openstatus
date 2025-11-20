@@ -20,38 +20,18 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const learnedFrom = [
+const wantFrom = [
   {
-    id: "twitter",
-    title: "Twitter / X",
+    id: "statuspage",
+    title: "Status Page",
   },
   {
-    id: "bsky",
-    title: "Bluesky",
+    id: "uptime-monitoring",
+    title: "Uptime Monitoring",
   },
   {
-    id: "linkedin",
-    title: "LinkedIn",
-  },
-  {
-    id: "reddit",
-    title: "Reddit",
-  },
-  {
-    id: "github",
-    title: "GitHub",
-  },
-  {
-    id: "friends",
-    title: "Friends or Colleagues",
-  },
-  {
-    id: "seo",
-    title: "Search Engine (Google, Bing, etc.)",
-  },
-  {
-    id: "newsletter",
-    title: "Blog post or Newsletter",
+    id: "both",
+    title: "Both",
   },
   {
     id: "other",
@@ -130,7 +110,7 @@ export function LearnFromForm({
                   defaultValue={field.value}
                   className="grid grid-cols-1 gap-4 sm:grid-cols-2"
                 >
-                  {learnedFrom.map((item) => (
+                  {wantFrom.map((item) => (
                     <FormItem key={item.id} className="flex items-center gap-3">
                       <FormControl>
                         <RadioGroupItem value={item.id} id={item.id} />
