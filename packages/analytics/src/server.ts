@@ -55,9 +55,9 @@ export async function setupAnalytics(props: IdentifyProps) {
       const { name, ...rest } = opts;
       return op.track(name, rest);
     },
-    revenue: (amount:number ) => {
+    revenue: (amount: number) => {
       return op.revenue(amount);
-    }
+    },
   };
 }
 
@@ -74,11 +74,11 @@ async function noop() {
         resolve(null);
       });
     },
-    revenue: (amount:number) => {
+    revenue: (amount: number) => {
       return new Promise((resolve) => {
         console.log(`>>> Track Revenue  amount: ${amount}`);
         resolve(null);
       });
-    }
+    },
   };
 }

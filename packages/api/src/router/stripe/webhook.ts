@@ -88,7 +88,7 @@ export const webhookRouter = createTRPCRouter({
         plan: plan.plan,
       });
       await analytics.track(Events.UpgradeWorkspace);
-      await analytics.revenue(session.amount_total || 0)
+      await analytics.revenue(session.amount_total || 0);
     }
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {

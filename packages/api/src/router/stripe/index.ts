@@ -50,12 +50,12 @@ export const stripeRouter = createTRPCRouter({
       let stripeId = result.stripeId;
       if (!stripeId) {
         const customerData: {
-          metadata: { workspaceId: string, profileId: string };
+          metadata: { workspaceId: string; profileId: string };
           email?: string;
         } = {
           metadata: {
             workspaceId: String(result.id),
-            profileId: String(currentUser.id)
+            profileId: String(currentUser.id),
           },
           email: userHasAccess.currentUser.email || "",
         };
