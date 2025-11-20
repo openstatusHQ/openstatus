@@ -1183,8 +1183,8 @@ importers:
   packages/analytics:
     dependencies:
       '@openpanel/sdk':
-        specifier: 1.0.0
-        version: 1.0.0
+        specifier: 1.0.1
+        version: 1.0.1
       '@t3-oss/env-core':
         specifier: 0.7.1
         version: 0.7.1(typescript@5.7.2)(zod@3.24.2)
@@ -3846,6 +3846,9 @@ packages:
 
   '@openpanel/sdk@1.0.0':
     resolution: {integrity: sha512-FNmmfjdXoC/VHEjA+WkrQ4lyM5lxEmV7xDd57uj4E+lIS0sU3DLG2mV/dpS8AscnZbUvuMn3kPhiLCqYzuv/gg==}
+
+  '@openpanel/sdk@1.0.1':
+    resolution: {integrity: sha512-9YQlrEnmqyr5u+y+MRE/pHYnrtV/oInPJZclVqVDiiQyEL4GmpaU/ZAbJPNVln7ZPw4i5Voj7vrlVY3rlbWfyw==}
 
   '@openpanel/web@1.0.1':
     resolution: {integrity: sha512-cVZ7Kr9SicczJ/RDIfEtZs8+1iGDzwkabVA/j3NqSl8VSucsC8m1+LVbjmCDzCJNnK4yVn6tEcc9PJRi2rtllw==}
@@ -14261,6 +14264,8 @@ snapshots:
       react-dom: 19.2.0(react@19.2.0)
 
   '@openpanel/sdk@1.0.0': {}
+
+  '@openpanel/sdk@1.0.1': {}
 
   '@openpanel/web@1.0.1':
     dependencies:
