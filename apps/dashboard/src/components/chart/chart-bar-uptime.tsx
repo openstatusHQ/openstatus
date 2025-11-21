@@ -61,7 +61,7 @@ export function ChartBarUptime({
       regions,
       interval,
       type,
-    })
+    }),
   );
 
   const refinedUptime = uptime ? mapUptime(uptime) : [];

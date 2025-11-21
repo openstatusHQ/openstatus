@@ -19,11 +19,11 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
+import { periodToFromDate } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { ChartTooltipNumber } from "./chart-tooltip-number";
 import { endOfDay } from "date-fns";
-import { periodToFromDate } from "@/data/metrics.client";
+import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
   latency: {
@@ -61,7 +61,7 @@ export function ChartAreaLatency({
       regions,
       fromDate: fromDate.toISOString(),
       toDate: toDate.toISOString(),
-    })
+    }),
   );
 
   const refinedLatency = latency ? mapLatency(latency, percentile) : [];

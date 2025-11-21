@@ -1,4 +1,4 @@
-import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
+import { Tinybird as Client } from "@chronark/zod-bird";
 import { z } from "zod";
 import { monitorRegions } from "../../db/src/schema/constants";
 import {

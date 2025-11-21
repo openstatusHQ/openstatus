@@ -25,16 +25,16 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
+import { periodToFromDate } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import React, { useMemo } from "react";
 import { searchParamsParsers } from "./search-params";
-import { periodToFromDate } from "@/data/metrics.client";
-import { endOfDay } from "date-fns";
 
 const TIMELINE_INTERVAL = 30; // in days
 
@@ -44,7 +44,7 @@ export function Client() {
   const [{ period, regions, percentile, interval }] =
     useQueryStates(searchParamsParsers);
   const { data: monitor } = useQuery(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const selectedRegions = regions ?? undefined;
   const fromDate = periodToFromDate[period];
@@ -76,16 +76,16 @@ export function Client() {
         : [
             ...monitorRegions,
             ...(monitor?.privateLocations?.map((location) =>
-              location.id.toString()
+              location.id.toString(),
             ) ?? []),
           ],
-      percentile
+      percentile,
     );
   }, [regionTimeline, monitor, percentile, isLoading]);
 
   const regionColumns = useMemo(
     () => getRegionColumns(monitor?.privateLocations ?? []),
-    [monitor?.privateLocations]
+    [monitor?.privateLocations],
   );
 
   if (!monitor) return null;
@@ -214,20 +214,25 @@ export function Client() {
               className="mt-3"
               regions={regionMetrics.map((region) => region.region)}
               privateLocations={monitor?.privateLocations ?? []}
-              data={regionMetrics.reduce((acc, region) => {
-                region.trend.forEach((t) => {
-                  const existing = acc.find((d) => d.timestamp === t.timestamp);
-                  if (existing) {
-                    existing[region.region] = t[region.region];
-                  } else {
-                    acc.push({
-                      timestamp: t.timestamp,
-                      [region.region]: t[region.region],
-                    });
-                  }
-                });
-                return acc;
-              }, [] as { timestamp: number; [key: string]: number }[])}
+              data={regionMetrics.reduce(
+                (acc, region) => {
+                  region.trend.forEach((t) => {
+                    const existing = acc.find(
+                      (d) => d.timestamp === t.timestamp,
+                    );
+                    if (existing) {
+                      existing[region.region] = t[region.region];
+                    } else {
+                      acc.push({
+                        timestamp: t.timestamp,
+                        [region.region]: t[region.region],
+                      });
+                    }
+                  });
+                  return acc;
+                },
+                [] as { timestamp: number; [key: string]: number }[],
+              )}
             />
           </TabsContent>
         </Tabs>
