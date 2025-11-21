@@ -142,7 +142,10 @@ export function getMetricsRegionsProcedure(period: Period, type: Type) {
 }
 
 export function getStatusProcedure(_period: "45d", type: Type) {
-  return type === "http" ? tb.httpStatus45d : tb.tcpStatus45d;
+  if (type === "dns") return tb.dnsStatus45d;
+  if (type === "http") return tb.httpStatus45d;
+  if (type === "tcp") return tb.tcpStatus45d;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
 export function getGetProcedure(period: "14d", type: Type) {
@@ -206,9 +209,10 @@ export function getMetricsLatencyProcedure(_period: Period, type: Type) {
 }
 
 export function getMetricsLatencyMultiProcedure(_period: Period, type: Type) {
-  return type === "http"
-    ? tb.httpMetricsLatency1dMulti
-    : tb.tcpMetricsLatency1dMulti;
+  if (type === "dns") return tb.dnsMetricsLatency1dMulti;
+  if (type === "http") return tb.httpMetricsLatency1dMulti;
+  if (type === "tcp") return tb.tcpMetricsLatency1dMulti;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
 export function getTimingPhasesProcedure(type: Type) {

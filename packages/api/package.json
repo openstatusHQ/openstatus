@@ -22,6 +22,7 @@
     "@trpc/server": "11.4.4",
     "@unkey/api": "0.26.1",
     "@vercel/blob": "0.23.3",
+    "date-fns": "2.30.0",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
     "next": "15.5.3",

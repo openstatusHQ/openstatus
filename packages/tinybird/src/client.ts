@@ -1711,4 +1711,46 @@ export class OSTinybird {
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
+
+  public get dnsStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_status_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().default(0),
+        ok: z.number().default(0),
+        degraded: z.number().default(0),
+        error: z.number().default(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_latency_1d_multi__v0",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        monitorId: z.coerce.string(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
 }
