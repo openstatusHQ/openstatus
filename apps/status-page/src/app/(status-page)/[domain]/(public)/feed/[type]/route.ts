@@ -30,6 +30,7 @@ export async function GET(
     if (page.passwordProtected) {
       const url = new URL(_request.url);
       const password = url.searchParams.get("pw");
+      console.log({ url, page, password });
       if (password !== page.password) return unauthorized();
     }
 
