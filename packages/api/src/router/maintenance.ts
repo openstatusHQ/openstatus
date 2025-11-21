@@ -266,6 +266,7 @@ export const maintenanceRouter = createTRPCRouter({
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
         monitors: z.array(z.number()).optional(),
+        notifySubscribers: z.boolean().nullish(),
       }),
     )
     .mutation(async (opts) => {
@@ -289,7 +290,7 @@ export const maintenanceRouter = createTRPCRouter({
         }
       }
 
-      await opts.ctx.db.transaction(async (tx) => {
+      const newMaintenance = await opts.ctx.db.transaction(async (tx) => {
         const newMaintenance = await tx
           .insert(maintenance)
           .values({
@@ -314,6 +315,11 @@ export const maintenanceRouter = createTRPCRouter({
 
         return newMaintenance;
       });
+
+      return {
+        ...newMaintenance,
+        notifySubscribers: opts.input.notifySubscribers,
+      };
     }),
 
   update: protectedProcedure

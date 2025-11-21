@@ -9,8 +9,6 @@ import { EmailClient } from "@openstatus/emails/src/client";
 import { regionDict } from "@openstatus/regions";
 import { env } from "../env";
 
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
-
 export const sendAlert = async ({
   monitor,
   notification,
@@ -29,6 +27,8 @@ export const sendAlert = async ({
   region?: Region;
   latency?: number;
 }) => {
+  const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
   if (!config.success) return;
@@ -63,6 +63,8 @@ export const sendRecovery = async ({
   region?: Region;
   latency?: number;
 }) => {
+  const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
   if (!config.success) return;
@@ -95,6 +97,8 @@ export const sendDegraded = async ({
   region?: Region;
   latency?: number;
 }) => {
+  const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
   if (!config.success) return;

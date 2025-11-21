@@ -42,9 +42,11 @@ import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { colors } from "@/data/status-report-updates.client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { statusReportStatus } from "@openstatus/db/src/schema";
+import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
@@ -59,11 +61,13 @@ const schema = z.object({
   message: z.string(),
   date: z.date(),
   monitors: z.array(z.number()),
+  notifySubscribers: z.boolean().optional(),
 });
 
 const updateSchema = schema.omit({
   message: true,
   date: true,
+  notifySubscribers: true,
 });
 
 export type FormValues = z.infer<typeof schema> | z.infer<typeof updateSchema>;
@@ -79,6 +83,10 @@ export function FormStatusReport({
   onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(
+    trpc.workspace.getWorkspace.queryOptions(),
+  );
   const mobile = useIsMobile();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
@@ -89,6 +97,7 @@ export function FormStatusReport({
       message: "",
       date: new Date(),
       monitors: [],
+      notifySubscribers: true,
     },
   });
   const watchMessage = form.watch("message");
@@ -391,6 +400,39 @@ export function FormStatusReport({
             )}
           />
         </FormCardContent>
+        {!defaultValues && workspace?.limits["status-subscribers"] ? (
+          <>
+            <FormCardSeparator />
+            <FormCardContent>
+              <FormField
+                control={form.control}
+                name="notifySubscribers"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notify Subscribers</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="notifySubscribers"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                        <Label htmlFor="notifySubscribers">
+                          Send email notification to subscribers
+                        </Label>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                    <FormDescription>
+                      Subscribers will receive an email when creating a status
+                      report.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+            </FormCardContent>
+          </>
+        ) : null}
       </form>
     </Form>
   );

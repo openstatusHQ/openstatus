@@ -65,6 +65,7 @@ export const columns: ColumnDef<StatusPage>[] = [
   },
   {
     accessorKey: "domain",
+    accessorFn: (row) => row.customDomain,
     header: "Domain",
     cell: ({ row }) => {
       const value = row.getValue("domain");

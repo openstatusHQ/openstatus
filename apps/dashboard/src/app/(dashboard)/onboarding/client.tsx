@@ -234,14 +234,14 @@ export function Client() {
           <Section>
             <SectionHeader className="h-8 flex-row items-center justify-between">
               <SectionDescription>
-                We&apos;d love to know how you heard about us. This will help us
-                improve our product and services.
+                We&apos;d love to know what you are looking for with openstatus.
+                This will help us improve our product and services.
               </SectionDescription>
             </SectionHeader>
             <LearnFromForm
               onSubmit={async (values) => {
                 await createFeedbackMutation.mutateAsync({
-                  message: `I learned about OpenStatus from *${values.from}${
+                  message: `I want to use OpenStatus for *${values.from}${
                     values.other ? `: ${values.other || "others"}` : ""
                   }*`,
                 });

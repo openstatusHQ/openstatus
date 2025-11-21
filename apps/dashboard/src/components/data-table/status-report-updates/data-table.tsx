@@ -48,7 +48,7 @@ export function DataTable({
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
       onSuccess: (update) => {
         // TODO: move to server
-        if (update) {
+        if (update?.notifySubscribers) {
           sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
         }
         //
@@ -83,6 +83,7 @@ export function DataTable({
                       message: values.message,
                       status: values.status,
                       date: values.date,
+                      notifySubscribers: values.notifySubscribers,
                     });
                   }}
                 >

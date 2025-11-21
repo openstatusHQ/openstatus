@@ -89,13 +89,40 @@ export function Sidebar() {
           label: "Configuration",
           items: [
             {
+              label: "Legacy",
+              value: <TableCellBoolean value={statusPage.legacyPage} />,
+            },
+            {
               label: "Protected",
               value: <TableCellBoolean value={statusPage.passwordProtected} />,
             },
-            {
-              label: "Show values",
-              value: <TableCellBoolean value={statusPage.showMonitorValues} />,
-            },
+            ...(statusPage.legacyPage
+              ? [
+                  {
+                    label: "Show values",
+                    value: (
+                      <TableCellBoolean value={statusPage.showMonitorValues} />
+                    ),
+                  },
+                ]
+              : [
+                  {
+                    label: "Theme",
+                    value: statusPage.configuration?.theme ?? "-",
+                  },
+                  {
+                    label: "Bar Value",
+                    value: statusPage.configuration?.type ?? "-",
+                  },
+                  {
+                    label: "Card Value",
+                    value: statusPage.configuration?.value ?? "-",
+                  },
+                  {
+                    label: "Show Uptime",
+                    value: statusPage.configuration?.uptime ? "Yes" : "No",
+                  },
+                ]),
           ],
         },
         {

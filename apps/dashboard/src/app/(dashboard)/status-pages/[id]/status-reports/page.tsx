@@ -35,9 +35,11 @@ export default function Page() {
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
-      onSuccess: (update) => {
+      onSuccess: (statusReport) => {
         // TODO: move to server
-        sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+        if (statusReport.notifySubscribers) {
+          sendStatusReportUpdateMutation.mutateAsync({ id: statusReport.id });
+        }
         //
         refetch();
         queryClient.invalidateQueries({
@@ -90,6 +92,7 @@ export default function Page() {
                     monitors: values.monitors,
                     date: values.date,
                     message: values.message,
+                    notifySubscribers: values.notifySubscribers,
                   });
                 }
               }}

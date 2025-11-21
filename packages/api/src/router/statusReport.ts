@@ -64,7 +64,11 @@ export const statusReportRouter = createTRPCRouter({
 
   createStatusReportUpdate: protectedProcedure
     .meta({ track: Events.CreateReportUpdate })
-    .input(insertStatusReportUpdateSchema)
+    .input(
+      insertStatusReportUpdateSchema.extend({
+        notifySubscribers: z.boolean().nullish(),
+      }),
+    )
     .mutation(async (opts) => {
       // update parent status report with latest status
       const _statusReport = await opts.ctx.db
@@ -89,7 +93,10 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      return selectStatusReportUpdateSchema.parse(updatedValue);
+      return {
+        ...selectStatusReportUpdateSchema.parse(updatedValue),
+        notifySubscribers: opts.input.notifySubscribers,
+      };
     }),
 
   updateStatusReport: protectedProcedure
@@ -431,6 +438,7 @@ export const statusReportRouter = createTRPCRouter({
         monitors: z.array(z.number()),
         date: z.coerce.date(),
         message: z.string(),
+        notifySubscribers: z.boolean().nullish(),
       }),
     )
     .mutation(async (opts) => {
@@ -470,7 +478,10 @@ export const statusReportRouter = createTRPCRouter({
             .get();
         }
 
-        return newStatusReportUpdate;
+        return {
+          ...newStatusReportUpdate,
+          notifySubscribers: opts.input.notifySubscribers,
+        };
       });
     }),
 

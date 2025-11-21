@@ -15,9 +15,10 @@ import { allPosts } from "content-collections";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CategorySelect } from "./_components/category-select";
 import {
   ITEMS_PER_PAGE,
-  MAX_PAGE_INDEX,
+  getMaxPageIndex,
   searchParamsCache,
 } from "./search-params";
 
@@ -38,28 +39,45 @@ export default async function Post(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const searchParams = await props.searchParams;
-  const { pageIndex } = searchParamsCache.parse(searchParams);
+  const { pageIndex, category } = searchParamsCache.parse(searchParams);
+
+  const maxPageIndex = getMaxPageIndex(category);
+  const currentPageIndex = Math.min(pageIndex, maxPageIndex);
 
   const posts = allPosts
     .sort(
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
-    .slice(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE);
+    .filter((post) => {
+      if (!category) return true;
+      return post.tag === category;
+    })
+    .slice(
+      currentPageIndex * ITEMS_PER_PAGE,
+      (currentPageIndex + 1) * ITEMS_PER_PAGE,
+    );
 
   return (
     <Shell>
       <Timeline
         title="Blog"
         description="All the latest articles and news from OpenStatus."
-        actions={
-          <Button variant="outline" size="icon" asChild>
+        actions={[
+          <CategorySelect key="category-select" />,
+          <Button
+            key="rss-feed"
+            variant="outline"
+            size="icon"
+            className="shrink-0"
+            asChild
+          >
             <a href="/blog/feed.xml" target="_blank" rel="noreferrer">
               <Rss className="h-4 w-4" />
               <span className="sr-only">RSS feed</span>
             </a>
-          </Button>
-        }
+          </Button>,
+        ]}
       >
         {posts.map((post) => (
           <Timeline.Article
@@ -84,12 +102,14 @@ export default async function Post(props: {
           <div className="w-full md:order-2 md:col-span-4">
             <Pagination>
               <PaginationContent>
-                {Array.from({ length: MAX_PAGE_INDEX + 1 }).map((_, index) => {
+                {Array.from({ length: maxPageIndex + 1 }).map((_, index) => {
                   return (
                     <PaginationLink
                       key={index}
-                      href={`?pageIndex=${index}`}
-                      isActive={pageIndex === index}
+                      href={`?pageIndex=${index}${
+                        category ? `&category=${category}` : ""
+                      }`}
+                      isActive={currentPageIndex === index}
                     >
                       {index + 1}
                     </PaginationLink>

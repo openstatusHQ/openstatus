@@ -246,7 +246,7 @@ const createCronTask = async ({
     payload = {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
-      url: row.url,
+      uri: row.url,
       cronTimestamp: timestamp,
       status: status,
       assertions: row.assertions ? JSON.parse(row.assertions) : null,

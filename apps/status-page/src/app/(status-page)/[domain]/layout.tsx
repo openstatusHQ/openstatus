@@ -1,4 +1,5 @@
 import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
+import { PasswordWrapper } from "@/components/password-wrapper";
 import {
   FloatingButton,
   StatusPageProvider,
@@ -78,6 +79,7 @@ export default async function Layout({
             richColors
             expand
           />
+          <PasswordWrapper />
         </StatusPageProvider>
       </ThemeProvider>
     </HydrateClient>

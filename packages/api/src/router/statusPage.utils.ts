@@ -204,6 +204,21 @@ export function getEvents({
 // Keep the old function name for backward compatibility
 export const getEventsByMonitorId = getEvents;
 
+export function getWorstVariant(
+  statuses: (keyof typeof STATUS_PRIORITY)[],
+): keyof typeof STATUS_PRIORITY {
+  if (statuses.length === 0) return "success";
+
+  return statuses.reduce(
+    (worst, current) => {
+      return STATUS_PRIORITY[current] > STATUS_PRIORITY[worst]
+        ? current
+        : worst;
+    },
+    "success" as keyof typeof STATUS_PRIORITY,
+  );
+}
+
 type UptimeData = {
   day: string;
   events: Event[];
@@ -787,7 +802,7 @@ export function getUptime({
 
     const total = data.length * MILLISECONDS_PER_DAY;
 
-    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
   }
 
   if (cardType === "duration") {
@@ -799,7 +814,7 @@ export function getUptime({
       }, 0);
 
     const total = data.length * MILLISECONDS_PER_DAY;
-    return `${Math.round(((total - duration) / total) * 10000) / 100}%`;
+    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
   }
 
   const { ok, total } = data.reduce(
@@ -814,5 +829,5 @@ export function getUptime({
   );
 
   if (total === 0) return "100%";
-  return `${Math.round((ok / total) * 10000) / 100}%`;
+  return `${Math.floor((ok / total) * 10000) / 100}%`;
 }

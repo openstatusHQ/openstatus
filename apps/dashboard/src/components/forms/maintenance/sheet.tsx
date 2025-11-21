@@ -36,7 +36,7 @@ export function FormSheetMaintenance({
       <FormSheetTrigger {...props} asChild>
         {children}
       </FormSheetTrigger>
-      <FormSheetContent>
+      <FormSheetContent className="sm:max-w-lg">
         <FormSheetHeader>
           <FormSheetTitle>Maintenance</FormSheetTitle>
           <FormSheetDescription>

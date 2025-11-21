@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-export const TITLE = "openstatus";
+export const TITLE = "Status Page";
 export const DESCRIPTION =
-  "Easily customize your status page using our built-in themes. Explore all themes and contribute new ones to the community.";
+  "Status page customization with built-in themes. Explore all themes and contribute your own theme.";
 
 const OG_TITLE = "Theme Explorer";
 const OG_DESCRIPTION =

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { selectIncidentSchema } from "./incidents/validation";
 import { selectMaintenanceSchema } from "./maintenances";
+import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
 import {
@@ -84,54 +85,73 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
     id: true,
   });
 
-export const selectPublicPageSchemaWithRelation = selectPageSchema
-  .extend({
-    // TODO: include status of the monitor
-    monitors: selectPublicMonitorSchema
-      .extend({
-        status: z
-          .enum(["success", "degraded", "error", "info"])
-          .default("success"),
-      })
-      .array(),
-    lastEvents: z.array(
+const selectPublicMonitorWithStatusSchema = selectPublicMonitorSchema.extend({
+  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+  monitorGroupId: z.number().nullable().optional(),
+  order: z.number().default(0).optional(),
+  groupOrder: z.number().default(0).optional(),
+});
+
+const trackersSchema = z
+  .array(
+    z.discriminatedUnion("type", [
       z.object({
-        id: z.number(),
-        name: z.string(),
-        from: z.date(),
-        to: z.date().nullable(),
-        status: z
-          .enum(["success", "degraded", "error", "info"])
-          .default("success"),
-        type: z.enum(["maintenance", "incident", "report"]),
+        type: z.literal("monitor"),
+        monitor: selectPublicMonitorWithStatusSchema,
+        order: z.number(),
       }),
-    ),
-    openEvents: z.array(
       z.object({
-        id: z.number(),
-        name: z.string(),
-        from: z.date(),
-        to: z.date().nullable(),
+        type: z.literal("group"),
+        groupId: z.number(),
+        groupName: z.string(),
+        monitors: z.array(selectPublicMonitorWithStatusSchema),
         status: z
           .enum(["success", "degraded", "error", "info"])
           .default("success"),
-        type: z.enum(["maintenance", "incident", "report"]),
+        order: z.number(),
       }),
-    ),
-    statusReports: z.array(selectStatusReportPageSchema),
-    incidents: z.array(selectIncidentSchema),
-    maintenances: z.array(selectMaintenancePageSchema),
-    status: z.enum(["success", "degraded", "error", "info"]).default("success"),
-    workspacePlan: workspacePlanSchema
-      .nullable()
-      .default("free")
-      .transform((val) => val ?? "free"),
-  })
-  .omit({
-    // workspaceId: true,
-    // id: true,
-    password: true,
-  });
+    ]),
+  )
+  .default([]);
+
+export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
+  monitorGroups: selectMonitorGroupSchema.array().default([]),
+  // TODO: include status of the monitor
+  monitors: selectPublicMonitorWithStatusSchema.array(),
+  trackers: trackersSchema,
+  lastEvents: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      from: z.date(),
+      to: z.date().nullable(),
+      status: z
+        .enum(["success", "degraded", "error", "info"])
+        .default("success"),
+      type: z.enum(["maintenance", "incident", "report"]),
+    }),
+  ),
+  openEvents: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      from: z.date(),
+      to: z.date().nullable(),
+      status: z
+        .enum(["success", "degraded", "error", "info"])
+        .default("success"),
+      type: z.enum(["maintenance", "incident", "report"]),
+    }),
+  ),
+  statusReports: z.array(selectStatusReportPageSchema),
+  incidents: z.array(selectIncidentSchema),
+  maintenances: z.array(selectMaintenancePageSchema),
+  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+  workspacePlan: workspacePlanSchema
+    .nullable()
+    .default("free")
+    .transform((val) => val ?? "free"),
+});
 
 export const selectPublicStatusReportSchemaWithRelation =
   selectStatusReportSchema.extend({

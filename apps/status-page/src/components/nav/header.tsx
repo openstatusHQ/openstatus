@@ -92,20 +92,36 @@ export function Header(props: React.ComponentProps<"header">) {
         {/* NOTE: same width as the `StatusUpdates` button */}
         <div className="flex w-[150px] shrink-0">
           <div className="flex items-center justify-center">
-            <Link
-              href={page?.homepageUrl || "/"}
-              target={page?.homepageUrl ? "_blank" : undefined}
-              rel={page?.homepageUrl ? "noreferrer" : undefined}
-              className="rounded-full"
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8 overflow-hidden"
+              asChild
             >
-              {page?.icon ? (
-                <img
-                  src={page.icon}
-                  alt={`${page.title} status page`}
-                  className="size-8 rounded-full border"
-                />
-              ) : null}
-            </Link>
+              <Link
+                href={page?.homepageUrl || "/"}
+                target={page?.homepageUrl ? "_blank" : undefined}
+                rel={page?.homepageUrl ? "noreferrer" : undefined}
+              >
+                {page?.icon ? (
+                  <img
+                    src={page.icon}
+                    alt={`${page.title} status page`}
+                    className="size-8"
+                  />
+                ) : (
+                  <div className="flex size-8 items-center justify-center font-mono">
+                    {/* NOTE: show the first two letters of the title and if its multiple words, show the first letter of the first two words */}
+                    {page?.title
+                      ?.split(" ")
+                      .map((word) => word.charAt(0))
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()}
+                  </div>
+                )}
+              </Link>
+            </Button>
           </div>
         </div>
         <NavDesktop className="hidden md:flex" />

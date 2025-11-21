@@ -29,9 +29,19 @@ export default function Page() {
       pageId: Number.parseInt(id),
     }),
   );
+  const sendMaintenanceUpdateMutation = useMutation(
+    trpc.emailRouter.sendMaintenance.mutationOptions(),
+  );
   const createStatusPageMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
-      onSuccess: () => refetch(),
+      onSuccess: (maintenance) => {
+        // TODO: move to server
+        if (maintenance.notifySubscribers) {
+          sendMaintenanceUpdateMutation.mutateAsync({ id: maintenance.id });
+        }
+        //
+        refetch();
+      },
     }),
   );
 
@@ -62,6 +72,7 @@ export default function Page() {
                   startDate: values.startDate,
                   endDate: values.endDate,
                   monitors: values.monitors,
+                  notifySubscribers: values.notifySubscribers,
                 });
               }}
             >

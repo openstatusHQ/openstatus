@@ -23,6 +23,7 @@ import {
 } from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
+import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -178,21 +179,48 @@ export default function Page() {
           <StatusBanner status={page.status} />
         )}
         {/* NOTE: check what gap feels right */}
-        {page.monitors.length > 0 ? (
+        {page.trackers.length > 0 ? (
           <StatusContent className="gap-5">
-            {page.monitors.map((monitor) => {
-              const { data, uptime } =
-                uptimeData?.find((m) => m.id === monitor.id) ?? {};
+            {page.trackers.map((tracker) => {
+              if (tracker.type === "monitor") {
+                const monitor = tracker.monitor;
+                const { data, uptime } =
+                  uptimeData?.find((m) => m.id === monitor.id) ?? {};
+                return (
+                  <StatusMonitor
+                    key={`monitor-${monitor.id}`}
+                    status={monitor.status}
+                    data={data}
+                    monitor={monitor}
+                    uptime={uptime}
+                    showUptime={showUptime}
+                    isLoading={isLoading}
+                  />
+                );
+              }
+
               return (
-                <StatusMonitor
-                  key={monitor.id}
-                  status={monitor.status}
-                  data={data}
-                  monitor={monitor}
-                  uptime={uptime}
-                  showUptime={showUptime}
-                  isLoading={isLoading}
-                />
+                <StatusTrackerGroup
+                  key={`group-${tracker.groupId}`}
+                  title={tracker.groupName}
+                  status={tracker.status}
+                >
+                  {tracker.monitors.map((monitor) => {
+                    const { data, uptime } =
+                      uptimeData?.find((m) => m.id === monitor.id) ?? {};
+                    return (
+                      <StatusMonitor
+                        key={`monitor-${monitor.id}`}
+                        status={monitor.status}
+                        data={data}
+                        monitor={monitor}
+                        uptime={uptime}
+                        showUptime={showUptime}
+                        isLoading={isLoading}
+                      />
+                    );
+                  })}
+                </StatusTrackerGroup>
               );
             })}
           </StatusContent>

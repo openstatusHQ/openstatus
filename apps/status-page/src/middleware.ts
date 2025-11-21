@@ -55,8 +55,9 @@ export default async function middleware(req: NextRequest) {
 
   if (_page?.passwordProtected) {
     const protectedCookie = cookies.get(createProtectedCookieKey(_page.slug));
-    const password = protectedCookie ? protectedCookie.value : undefined;
-    console.log({ protectedCookie, password });
+    const cookiePassword = protectedCookie ? protectedCookie.value : undefined;
+    const queryPassword = url.searchParams.get("pw");
+    const password = queryPassword || cookiePassword;
 
     if (password !== _page.password && !url.pathname.endsWith("/protected")) {
       const { pathname, origin } = req.nextUrl;
@@ -104,17 +105,22 @@ export default async function middleware(req: NextRequest) {
   console.log({ proxy });
 
   if (proxy) {
-    return NextResponse.rewrite(new URL(`/${prefix}${url.pathname}`, req.url));
+    const rewriteUrl = new URL(`/${prefix}${url.pathname}`, req.url);
+    // Preserve search params from original request
+    rewriteUrl.search = url.search;
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
     if (pathnames.length > 2) {
       const pathname = pathnames.slice(2).join("/");
-      return NextResponse.rewrite(
-        new URL(`/${_page.slug}/${pathname}`, req.url),
-      );
+      const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
+      rewriteUrl.search = url.search;
+      return NextResponse.rewrite(rewriteUrl);
     }
-    return NextResponse.rewrite(new URL(`/${_page.slug}`, req.url));
+    const rewriteUrl = new URL(`/${_page.slug}`, req.url);
+    rewriteUrl.search = url.search;
+    return NextResponse.rewrite(rewriteUrl);
   }
 
   return response;

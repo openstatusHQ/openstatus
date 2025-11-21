@@ -99,7 +99,9 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="rss"
-                value={`${baseUrl}/feed/rss`}
+                value={`${baseUrl}/feed/rss${
+                  page?.passwordProtected ? `?pw=${page?.password}` : ""
+                }`}
               />
             </div>
             <Separator />
@@ -108,7 +110,9 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="atom"
-                value={`${baseUrl}/feed/atom`}
+                value={`${baseUrl}/feed/atom${
+                  page?.passwordProtected ? `?pw=${page?.password}` : ""
+                }`}
               />
             </div>
           </TabsContent>

@@ -11,7 +11,15 @@ import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { Button, InputWithAddons } from "@openstatus/ui";
+import { THEMES } from "@openstatus/theme-store";
+import {
+  Button,
+  InputWithAddons,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 import { allUnrelateds } from "content-collections";
 import Link from "next/link";
@@ -269,6 +277,96 @@ export function FeatureMaintenance(
             {...maintenanceData}
           />
         </div>
+      }
+      col={2}
+      position={props.position || "left"}
+    />
+  );
+}
+
+export function FeatureStatusPageThemes(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  return (
+    <InteractiveFeature
+      icon="palette"
+      iconText="Make it yours"
+      title="Themes."
+      subTitle="Customize your status page with the built-in themes. Or just build your own."
+      component={
+        <div className="space-y-3">
+          <style>
+            {Object.values(THEMES)
+              .map((theme) => {
+                const lightVars = Object.entries(theme.light)
+                  .map(([key, value]) => `${key}: ${value};`)
+                  .join(" ");
+                const darkVars = Object.entries(theme.dark)
+                  .map(([key, value]) => `${key}: ${value};`)
+                  .join(" ");
+
+                return `
+                .theme-${theme.id} {
+                  ${lightVars}
+                }
+                .dark .theme-${theme.id} {
+                  ${darkVars}
+                }
+              `;
+              })
+              .join("\n")}
+          </style>
+          <ul className="flex flex-col gap-2">
+            {Object.values(THEMES).map((theme) => (
+              <li
+                key={theme.id}
+                className={`theme-${theme.id} flex flex-row justify-between gap-1 font-mono text-sm`}
+              >
+                <div>{theme.name}</div>
+                <div className="flex gap-2">
+                  {Object.entries({
+                    "--primary": "Primary",
+                    "--success": "Success",
+                    "--destructive": "Destructive",
+                    "--warning": "Degraded",
+                    "--info": "Maintenance",
+                  }).map(([color, label]) => (
+                    <TooltipProvider key={color}>
+                      <Tooltip delayDuration={100}>
+                        <TooltipTrigger>
+                          <div
+                            className="size-4 rounded border border-border"
+                            style={{ backgroundColor: `var(${color})` }}
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>{label}</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="space-y-1 text-muted-foreground text-xs">
+            <p>More themes coming soon...</p>
+            <p>
+              Feel free to contribute to the theme store.{" "}
+              <Link
+                className="text-foreground underline"
+                href="https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store#readme"
+              >
+                README.md
+              </Link>
+            </p>
+          </div>
+        </div>
+      }
+      action={
+        <Button variant="outline" className="w-max rounded-full" asChild>
+          <Link href="https://themes.openstatus.dev" target="_blank">
+            Theme Explorer
+          </Link>
+        </Button>
       }
       col={2}
       position={props.position || "left"}

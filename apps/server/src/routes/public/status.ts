@@ -45,6 +45,10 @@ status.get("/:slug", async (c) => {
       return c.json({ status: Status.Unknown });
     }
 
+    if (currentPage.passwordProtected) {
+      return c.json({ status: Status.Unknown });
+    }
+
     const {
       pageStatusReportData,
       monitorStatusReportData,

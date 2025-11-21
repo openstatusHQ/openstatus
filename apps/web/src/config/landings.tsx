@@ -17,6 +17,7 @@ import {
   FeatureRaycastIntegration,
   FeatureRegions,
   FeatureResponseDetails,
+  FeatureStatusPageThemes,
   FeatureStatusPageTracker,
   FeatureStatusPageTrackerToggle,
   FeatureStatusUpdates,
@@ -60,8 +61,9 @@ export const landingsConfig = {
     description:
       "Keep users informed during downtime, so you can focus on the fix.",
     blocks: [
-      <FeatureCustomDomain key="feature-custom-domain" />,
+      <FeatureStatusPageThemes key="feature-status-page-themes" />,
       <FeatureStatusPageTrackerToggle key="feature-status-page-tracker" />,
+      <FeatureCustomDomain key="feature-custom-domain" />,
       <FeatureSubscriptions key="feature-subscriptions" />,
       <FeatureStatusUpdates key="feature-status-updates" />,
       <FeaturePasswordProtection key="feature-password-protection" />,
@@ -128,12 +130,12 @@ export const landingsConfig = {
   "private-locations": {
     icon: "globe",
     title: "Private Locations",
-    hero: "Monitor from anywhere. Literally anywhere.",
-    description: "Monitor your services from your own infrastructure.",
+    hero: "Monitor from anywhere. Literally anywhere, even from your own VPC",
+    description: "Monitor your services from your own infrastructure",
     blocks: [
-      <SpeedBanner key="speed-banner" />,
       <FeaturePrivateLocationsDockerImage key="feature-private-locations-docker-image" />,
       <FeaturePrivateLocationsDockerInstall key="feature-private-locations-docker-install" />,
+      <SpeedBanner key="speed-banner" />,
       <FeatureCharts
         key="feature-charts"
         title="Private Locations."
