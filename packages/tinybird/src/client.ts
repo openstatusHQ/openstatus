@@ -10,18 +10,18 @@ import {
 
 const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
-const REVALIDATE = 0; // process.env.NODE_ENV === "development" ? DEV_CACHE : 0;
+const REVALIDATE = process.env.NODE_ENV === "development" ? DEV_CACHE : 0;
 
 export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
-    // if (process.env.NODE_ENV === "development") {
-    //   this.tb = new NoopTinybird();
-    // } else {
-    //   this.tb = new Client({ token });
-    // }
-    this.tb = new Client({ token });
+    if (process.env.NODE_ENV === "development") {
+      this.tb = new NoopTinybird();
+    } else {
+      this.tb = new Client({ token });
+    }
+    // this.tb = new Client({ token });
   }
 
   public get homeStats() {
