@@ -8,7 +8,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { generateThemeStyles } from "@openstatus/theme-store";
 import PlausibleProvider from "next-plausible";
-import { Suspense } from "react";
 
 const SIDEBAR_WIDTH = "20rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -44,9 +43,7 @@ export default async function Layout({
               </p>
             </footer>
           </SidebarInset>
-          <Suspense fallback={null}>
-            <ThemeSidebar />
-          </Suspense>
+          <ThemeSidebar />
         </SidebarProvider>
         <Toaster richColors expand />
       </ThemeProvider>
