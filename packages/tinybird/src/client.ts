@@ -1525,6 +1525,7 @@ export class OSTinybird {
         timestamp: z.number(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
         errorMessage: z.string().nullable(),
+        assertions: z.string().nullable(),
         records: z
           .string()
           .transform((str) => {

@@ -583,11 +583,50 @@ export function DataTableBasicsDNS({
             <TableRow>
               <TableHead colSpan={2}>Records</TableHead>
             </TableRow>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               <TableCell colSpan={2} className="p-0">
-                <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
-                  {JSON.stringify(data.records, null, 2)}
-                </pre>
+                <Tabs defaultValue="table" className="w-full gap-0">
+                  <TabsList className="w-full justify-start rounded-none border-b px-2">
+                    <TabsTrigger value="table">
+                      <TableProperties className="size-3 rotate-180" />
+                    </TabsTrigger>
+                    <TabsTrigger value="raw">
+                      <Braces className="size-3" />
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="table">
+                    <Table className="table-fixed">
+                      <colgroup>
+                        <col className="w-1/3" />
+                        <col className="w-2/3" />
+                      </colgroup>
+                      <TableBody>
+                        {Object.entries(data?.records ?? {}).map(
+                          ([key, value]) => (
+                            <TableRow
+                              key={key}
+                              className="[&>:not(:last-child)]:border-r"
+                            >
+                              <TableHead className="overflow-x-auto bg-muted/50 font-normal text-muted-foreground">
+                                {key.toUpperCase()}
+                              </TableHead>
+                              <TableCell className="max-w-full overflow-x-auto whitespace-normal font-mono">
+                                {Array.isArray(value)
+                                  ? value.join(", ")
+                                  : value}
+                              </TableCell>
+                            </TableRow>
+                          ),
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                  <TabsContent value="raw">
+                    <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm">
+                      {JSON.stringify(data?.records, null, 2)}
+                    </pre>
+                  </TabsContent>
+                </Tabs>
               </TableCell>
             </TableRow>
           </>
@@ -602,6 +641,26 @@ export function DataTableBasicsDNS({
                 <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
                   {data.errorMessage}
                 </pre>
+              </TableCell>
+            </TableRow>
+          </>
+        ) : null}
+        {data.assertions ? (
+          <>
+            <TableRow>
+              <TableHead colSpan={2}>Assertions</TableHead>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} className="p-0">
+                {!data.assertions || data.assertions === "[]" ? (
+                  <div className="p-2 font-mono text-muted-foreground text-sm">
+                    No assertions
+                  </div>
+                ) : (
+                  <pre className="max-w-full overflow-x-auto whitespace-pre-wrap rounded-none bg-muted/50 p-2 font-mono text-sm">
+                    {JSON.stringify(data.assertions, null, 2)}
+                  </pre>
+                )}
               </TableCell>
             </TableRow>
           </>
