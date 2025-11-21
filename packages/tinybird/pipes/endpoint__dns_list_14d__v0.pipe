@@ -1,0 +1,15 @@
+TAGS "dns"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT *
+    FROM dns_response__v0
+    WHERE
+    monitorId = {{ String(monitorId, '7417', required=True) }}
+        {% if defined(fromDate) %} AND timestamp >= toInt64({{ String(fromDate) }}) {% end %}
+        {% if defined(toDate) %} AND timestamp <= toInt64({{ String(toDate) }}) {% end %}
+    ORDER BY timestamp DESC
+
+
