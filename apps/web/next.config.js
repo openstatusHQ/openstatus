@@ -106,6 +106,52 @@ const nextConfig = {
           ],
           destination: "https://www.stpg.dev/:path*",
         },
+        // enfore routes to avoid infinite redirects - https://github.com/vercel/vercel/issues/6126#issuecomment-823523122
+        // testing with https://validator.w3.org/feed/check.cgi
+        {
+          source: "/feed/rss",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:domain/feed/rss",
+        },
+        {
+          source: "/feed/atom",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "^(?!.*\\.openstatus\\.dev$)(?!openstatus\\.dev$)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:domain/feed/atom",
+        },
+        {
+          source: "/feed/rss",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "^(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:domain/feed/rss",
+        },
+        {
+          source: "/feed/atom",
+          has: [
+            { type: "cookie", key: "sp_mode", value: "new" },
+            {
+              type: "host",
+              value: "^(?<domain>.+)$",
+            },
+          ],
+          destination: "https://www.stpg.dev/:domain/feed/atom",
+        },
         {
           source:
             "/:path((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|badge|feed|events|monitors|protected|verify).*)",
