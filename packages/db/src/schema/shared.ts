@@ -114,50 +114,44 @@ const trackersSchema = z
   )
   .default([]);
 
-export const selectPublicPageSchemaWithRelation = selectPageSchema
-  .extend({
-    monitorGroups: selectMonitorGroupSchema.array().default([]),
-    // TODO: include status of the monitor
-    monitors: selectPublicMonitorWithStatusSchema.array(),
-    trackers: trackersSchema,
-    lastEvents: z.array(
-      z.object({
-        id: z.number(),
-        name: z.string(),
-        from: z.date(),
-        to: z.date().nullable(),
-        status: z
-          .enum(["success", "degraded", "error", "info"])
-          .default("success"),
-        type: z.enum(["maintenance", "incident", "report"]),
-      }),
-    ),
-    openEvents: z.array(
-      z.object({
-        id: z.number(),
-        name: z.string(),
-        from: z.date(),
-        to: z.date().nullable(),
-        status: z
-          .enum(["success", "degraded", "error", "info"])
-          .default("success"),
-        type: z.enum(["maintenance", "incident", "report"]),
-      }),
-    ),
-    statusReports: z.array(selectStatusReportPageSchema),
-    incidents: z.array(selectIncidentSchema),
-    maintenances: z.array(selectMaintenancePageSchema),
-    status: z.enum(["success", "degraded", "error", "info"]).default("success"),
-    workspacePlan: workspacePlanSchema
-      .nullable()
-      .default("free")
-      .transform((val) => val ?? "free"),
-  })
-  .omit({
-    // workspaceId: true,
-    // id: true,
-    password: true,
-  });
+export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
+  monitorGroups: selectMonitorGroupSchema.array().default([]),
+  // TODO: include status of the monitor
+  monitors: selectPublicMonitorWithStatusSchema.array(),
+  trackers: trackersSchema,
+  lastEvents: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      from: z.date(),
+      to: z.date().nullable(),
+      status: z
+        .enum(["success", "degraded", "error", "info"])
+        .default("success"),
+      type: z.enum(["maintenance", "incident", "report"]),
+    }),
+  ),
+  openEvents: z.array(
+    z.object({
+      id: z.number(),
+      name: z.string(),
+      from: z.date(),
+      to: z.date().nullable(),
+      status: z
+        .enum(["success", "degraded", "error", "info"])
+        .default("success"),
+      type: z.enum(["maintenance", "incident", "report"]),
+    }),
+  ),
+  statusReports: z.array(selectStatusReportPageSchema),
+  incidents: z.array(selectIncidentSchema),
+  maintenances: z.array(selectMaintenancePageSchema),
+  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+  workspacePlan: workspacePlanSchema
+    .nullable()
+    .default("free")
+    .transform((val) => val ?? "free"),
+});
 
 export const selectPublicStatusReportSchemaWithRelation =
   selectStatusReportSchema.extend({
