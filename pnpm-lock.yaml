@@ -693,9 +693,6 @@ importers:
       nuqs:
         specifier: 2.4.3
         version: 2.4.3(next@15.5.3(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
-      random-word-slugs:
-        specifier: 0.1.7
-        version: 0.1.7
       react:
         specifier: 19.2.0
         version: 19.2.0
@@ -1232,8 +1229,8 @@ importers:
         specifier: 13.8.0
         version: 13.8.0
       superjson:
-        specifier: 1.13.3
-        version: 1.13.3
+        specifier: 2.2.2
+        version: 2.2.2
       zod:
         specifier: 3.24.2
         version: 3.24.2
@@ -1834,8 +1831,8 @@ importers:
         specifier: 2.30.0
         version: 2.30.0
       lucide-react:
-        specifier: 0.468.0
-        version: 0.468.0(react@19.2.0)
+        specifier: 0.525.0
+        version: 0.525.0(react@19.2.0)
       luxon:
         specifier: 3.5.0
         version: 3.5.0
@@ -9325,11 +9322,6 @@ packages:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
 
-  lucide-react@0.468.0:
-    resolution: {integrity: sha512-6koYRhnM2N0GGZIdXzSeiNwguv1gt/FAjZOiPl76roBi3xKEXa4WmfpxgQwTTL4KipXjefrnf3oV4IsYhi4JFA==}
-    peerDependencies:
-      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0-rc
-
   lucide-react@0.525.0:
     resolution: {integrity: sha512-Tm1txJ2OkymCGkvwoHt33Y2JpN5xucVq1slHcgE6Lk0WjDfjgKWor5CdVER8U6DvcfMwh4M8XxmpTiyzfmfDYQ==}
     peerDependencies:
@@ -11090,10 +11082,6 @@ packages:
 
   summary@2.1.0:
     resolution: {integrity: sha512-nMIjMrd5Z2nuB2RZCKJfFMjgS3fygbeyGk9PxPPaJR1RIcyN9yn4A63Isovzm3ZtQuEkLBVgMdPup8UeLH7aQw==}
-
-  superjson@1.13.3:
-    resolution: {integrity: sha512-mJiVjfd2vokfDxsQPOwJ/PtanO87LhpYY88ubI5dUB1Ab58Txbyje3+jpm+/83R/fevaq/107NNhtYBLuoTrFg==}
-    engines: {node: '>=10'}
 
   superjson@2.2.2:
     resolution: {integrity: sha512-5JRxVqC8I8NuOUjzBbvVJAKNM8qoVuH0O77h4WInc/qC2q5IreqKxYwgkga3PfA22OayK2ikceb/B26dztPl+Q==}
@@ -20683,10 +20671,6 @@ snapshots:
 
   lru-cache@7.18.3: {}
 
-  lucide-react@0.468.0(react@19.2.0):
-    dependencies:
-      react: 19.2.0
-
   lucide-react@0.525.0(react@19.2.0):
     dependencies:
       react: 19.2.0
@@ -23173,10 +23157,6 @@ snapshots:
       ts-interface-checker: 0.1.13
 
   summary@2.1.0: {}
-
-  superjson@1.13.3:
-    dependencies:
-      copy-anything: 3.0.5
 
   superjson@2.2.2:
     dependencies:
