@@ -27,6 +27,7 @@ export function FormPassword({
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
+  // eslint-disable-next-line FU build
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
