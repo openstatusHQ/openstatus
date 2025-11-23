@@ -28,7 +28,7 @@ export function FormPassword({
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
-  // eslint-disable-next-line FU build
+    // eslint-disable-next-line FU build
     resolver: zodResolver(schema),
     defaultValues: {
       password: "",
