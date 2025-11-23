@@ -67,7 +67,7 @@ function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
         workspaceId: String(monitor.workspaceId),
         error: false,
         monitorId: String(monitor.id),
-        assertions: monitor.assertions,
+        assertions: monitor.assertions ?? null,
         message: null,
         body: data.body ?? null,
       } as const;
@@ -85,6 +85,7 @@ function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
         uri: monitor.url,
         monitorId: String(monitor.id),
         errorMessage: null,
+        assertions: null,
       } as const;
     // FIXM: add DNS props
     case "dns":
@@ -102,6 +103,7 @@ function mapping(data: TestTCP | TestHTTP | TestDNS, monitor: Monitor) {
         latency: data.latency ?? 0,
         records: data.records,
         errorMessage: null,
+        assertions: null,
       } as const;
     default:
       return null;
