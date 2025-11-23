@@ -16,6 +16,7 @@ export function StatusTrackerGroup({
 }: React.ComponentProps<typeof CollapsibleTrigger> & {
   title: string;
   status?: VariantType;
+  children?: React.ReactNode;
 }) {
   return (
     <Collapsible
