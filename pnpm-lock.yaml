@@ -552,9 +552,6 @@ importers:
       '@openstatus/api':
         specifier: workspace:*
         version: link:../../packages/api
-      '@openstatus/assertions':
-        specifier: workspace:*
-        version: link:../../packages/assertions
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -564,30 +561,6 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../../packages/error
-      '@openstatus/header-analysis':
-        specifier: workspace:*
-        version: link:../../packages/header-analysis
-      '@openstatus/notification-discord':
-        specifier: workspace:*
-        version: link:../../packages/notifications/discord
-      '@openstatus/notification-emails':
-        specifier: workspace:*
-        version: link:../../packages/notifications/email
-      '@openstatus/notification-ntfy':
-        specifier: workspace:*
-        version: link:../../packages/notifications/ntfy
-      '@openstatus/notification-opsgenie':
-        specifier: workspace:*
-        version: link:../../packages/notifications/opsgenie
-      '@openstatus/notification-pagerduty':
-        specifier: workspace:*
-        version: link:../../packages/notifications/pagerduty
-      '@openstatus/notification-slack':
-        specifier: workspace:*
-        version: link:../../packages/notifications/slack
-      '@openstatus/notification-webhook':
-        specifier: workspace:*
-        version: link:../../packages/notifications/webhook
       '@openstatus/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -600,9 +573,6 @@ importers:
       '@openstatus/tracker':
         specifier: workspace:*
         version: link:../../packages/tracker
-      '@openstatus/upstash':
-        specifier: workspace:*
-        version: link:../../packages/upstash
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -756,9 +726,6 @@ importers:
       sonner:
         specifier: 2.0.5
         version: 2.0.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      stripe:
-        specifier: 13.8.0
-        version: 13.8.0
       superjson:
         specifier: 2.2.2
         version: 2.2.2
