@@ -271,9 +271,6 @@ export function FormGeneral({
                         { value: "tcp", icon: Network, label: "TCP" },
                         { value: "dns", icon: Server, label: "DNS" },
                       ].map((type) => {
-                        if (type.value === "dns") {
-                          return null;
-                        }
                         return (
                           <FormItem
                             key={type.value}
