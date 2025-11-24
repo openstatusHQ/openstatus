@@ -132,6 +132,7 @@ export default async function middleware(req: NextRequest) {
     if(_page.customDomain && subdomain) {
       console.log({ url: req.url });
       const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
+      console.log({newUrl: vercelURL})
       const rewriteUrl = new URL(`/${_page.slug}/${url.pathname}`,vercelURL );
       console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
