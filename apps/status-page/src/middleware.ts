@@ -129,15 +129,17 @@ export default async function middleware(req: NextRequest) {
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
     }
-    if(_page.customDomain && subdomain ) {
+    if (_page.customDomain && subdomain) {
       console.log({ url: req.url });
       // const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
       // console.log({newUrl: vercelURL})
       if (pathnames.length > 2) {
-
         const pathname = pathnames.slice(2).join("/");
 
-        const rewriteUrl = new URL(`/${pathname}`, `https://${_page.slug}.stpg.dev`);
+        const rewriteUrl = new URL(
+          `/${pathname}`,
+          `https://${_page.slug}.stpg.dev`,
+        );
         console.log({ rewriteUrl });
         rewriteUrl.search = url.search;
         return NextResponse.rewrite(rewriteUrl);
