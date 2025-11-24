@@ -130,7 +130,8 @@ export default async function middleware(req: NextRequest) {
       return NextResponse.rewrite(rewriteUrl);
     }
     if(_page.customDomain && subdomain) {
-      const rewriteUrl = new URL(`/${url.pathname}`, req.url);
+      console.log({ url: req.url });
+      const rewriteUrl = new URL(`/${url.pathname}`, url.host);
       console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
