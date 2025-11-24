@@ -123,7 +123,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   console.log({customDomain: _page.customDomain, host, expectedHost: `${_page.slug}.stpg.dev`})
-  if (_page.customDomain && url.host !== `${_page.slug}.stpg.dev`) {
+  if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
     if (pathnames.length > 2 && !subdomain) {
       const pathname = pathnames.slice(2).join("/");
       const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
@@ -135,7 +135,7 @@ export default async function middleware(req: NextRequest) {
       // const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
       // console.log({newUrl: vercelURL})
       if (pathnames.length > 2) {
-        const pathname = pathnames.slice(2).join("/");
+        const pathname = pathnames.slice(1).join("/");
 
         const rewriteUrl = new URL(
           `${pathname}`,
