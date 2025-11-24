@@ -129,6 +129,11 @@ export default async function middleware(req: NextRequest) {
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
     }
+    if(_page.customDomain && subdomain) {
+      const rewriteUrl = new URL(`/${_page.slug}/${url.pathname}`, req.url);
+      rewriteUrl.search = url.search;
+      return NextResponse.rewrite(rewriteUrl);
+    }
     const rewriteUrl = new URL(`/${_page.slug}`, req.url);
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
