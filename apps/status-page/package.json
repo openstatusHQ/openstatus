@@ -86,6 +86,7 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
     "@tailwindcss/postcss": "4.1.8",
     "@tailwindcss/typography": "0.5.10",
     "@types/dom-speech-recognition": "0.0.6",
