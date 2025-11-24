@@ -17,7 +17,14 @@ export default async function middleware(req: NextRequest) {
   const hostnames = host?.split(/[.:]/) ?? url.host.split(/[.:]/);
   const pathnames = url.pathname.split("/");
 
-  console.log({ hostnames, pathnames, host, urlHost: url.host });
+  const subdomain = getValidSubdomain(url.host);
+  console.log({
+    hostnames,
+    pathnames,
+    host,
+    urlHost: url.host,
+    subdomain,
+  });
 
   if (
     hostnames.length > 2 &&
@@ -29,6 +36,10 @@ export default async function middleware(req: NextRequest) {
   } else {
     prefix = pathnames[1].toLowerCase();
     type = "pathname";
+  }
+
+  if (subdomain !== null) {
+    prefix = subdomain.toLowerCase();
   }
 
   console.log({ pathname: url.pathname, type, prefix });
@@ -130,4 +141,27 @@ export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
+};
+
+export const getValidSubdomain = (host?: string | null) => {
+  let subdomain: string | null = null;
+  if (!host && typeof window !== "undefined") {
+    // On client side, get the host from window
+    // biome-ignore lint: to fix later
+    host = window.location.host;
+  }
+  // we should improve here for custom vercel deploy page
+  if (host?.includes(".") && !host.includes(".vercel.app")) {
+    const candidate = host.split(".")[0];
+    if (candidate && !candidate.includes("www")) {
+      // Valid candidate
+      subdomain = candidate;
+    }
+  }
+
+  // In case the host is a custom domain
+  if (host && !(host?.includes("stpg.dev") || host?.endsWith(".vercel.app"))) {
+    subdomain = host;
+  }
+  return subdomain;
 };
