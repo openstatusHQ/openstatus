@@ -12,6 +12,7 @@ export function useProcessor(text: string) {
     unified()
       .use(remarkParse)
       .use(remarkRehype)
+      // @ts-expect-error
       .use(rehypeReact, {
         createElement,
         Fragment,
