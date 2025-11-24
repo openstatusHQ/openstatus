@@ -42,7 +42,7 @@ export default async function middleware(req: NextRequest) {
     prefix = subdomain.toLowerCase();
   }
 
-  console.log({ pathname: url.pathname, type, prefix });
+  console.log({ pathname: url.pathname, type, prefix, subdomain });
 
   if (url.pathname === "/" && type !== "hostname") {
     return response;
@@ -137,7 +137,7 @@ export default async function middleware(req: NextRequest) {
         const pathname = pathnames.slice(2).join("/");
 
         const rewriteUrl = new URL(
-          `/${pathname}`,
+          `${pathname}`,
           `https://${_page.slug}.stpg.dev`,
         );
         console.log({ rewriteUrl });
@@ -146,6 +146,7 @@ export default async function middleware(req: NextRequest) {
       }
     }
     const rewriteUrl = new URL(`/${_page.slug}`, req.url);
+    console.log({ rewriteUrl });
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
   }
