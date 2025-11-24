@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { useFeature } from "@/hooks/use-feature";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -106,7 +105,6 @@ export function FormGeneral({
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
 }) {
-  const isDnsCheckerEnabled = useFeature("dns-checker");
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -273,7 +271,7 @@ export function FormGeneral({
                         { value: "tcp", icon: Network, label: "TCP" },
                         { value: "dns", icon: Server, label: "DNS" },
                       ].map((type) => {
-                        if (type.value === "dns" && !isDnsCheckerEnabled) {
+                        if (type.value === "dns") {
                           return null;
                         }
                         return (
@@ -306,8 +304,7 @@ export function FormGeneral({
                       })}
                       <div
                         className={cn(
-                          "self-end text-muted-foreground text-xs sm:place-self-end",
-                          isDnsCheckerEnabled ? "col-span-1" : "col-span-2",
+                          "col-span-1 self-end text-muted-foreground text-xs sm:place-self-end",
                         )}
                       >
                         Missing a type?{" "}
