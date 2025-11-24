@@ -122,6 +122,7 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
+  console.log({customDomain: _page.customDomain, host, expectedHost: `${_page.slug}.stpg.dev`})
   if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
     if (pathnames.length > 2) {
       const pathname = pathnames.slice(2).join("/");
