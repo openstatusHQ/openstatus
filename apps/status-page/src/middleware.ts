@@ -187,7 +187,7 @@ export const getValidSubdomain = (host?: string | null) => {
   }
 
   // In case the host is a custom domain
-  if (host && !(host?.includes("stpg.dev") || host?.endsWith(".vercel.app"))) {
+  if (host && !(host?.includes("stpg.dev") || host?.includes("openstatus.dev") || host?.endsWith(".vercel.app"))) {
     subdomain = host;
   }
   return subdomain;
