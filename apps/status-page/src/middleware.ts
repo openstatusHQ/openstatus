@@ -137,7 +137,7 @@ export default async function middleware(req: NextRequest) {
         const pathname = pathnames.slice(2).join("/");
 
         const rewriteUrl = new URL(
-          `/${pathname}`,
+          `${pathname}`,
           `https://${_page.slug}.stpg.dev`,
         );
         console.log({ rewriteUrl });
@@ -145,7 +145,7 @@ export default async function middleware(req: NextRequest) {
         return NextResponse.rewrite(rewriteUrl);
       }
         const rewriteUrl = new URL(
-          `/${url.pathname}`,
+          `${url.pathname}`,
           `https://${_page.slug}.stpg.dev`,
         );
         console.log({ rewriteUrl });
