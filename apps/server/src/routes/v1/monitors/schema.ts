@@ -63,18 +63,20 @@ const _jsonBodyAssertion = z.object({
 
 export const dnsRecords = ["A", "AAAA", "CNAME", "MX", "TXT", "NS"] as const;
 
-export const recordAssertion = z.object({
+export const recordAssertion = z
+  .object({
     type: z.literal("dnsRecord"),
     key: z.enum(dnsRecords),
     compare: recordCompare,
     target: z.string(),
-  }).openapi({ description: "The DNS record assertion" });
+  })
+  .openapi({ description: "The DNS record assertion" });
 
 export const assertion = z.discriminatedUnion("type", [
   statusAssertion,
   headerAssertion,
   textBodyAssertion,
-  recordAssertion
+  recordAssertion,
   // jsonBodyAssertion,
 ]);
 
