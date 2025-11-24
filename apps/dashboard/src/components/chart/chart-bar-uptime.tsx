@@ -10,11 +10,16 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { type PERIODS, mapUptime } from "@/data/metrics.client";
+import {
+  type PERIODS,
+  mapUptime,
+  periodToFromDate,
+  periodToInterval,
+} from "@/data/metrics.client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { endOfDay, startOfDay, subDays } from "date-fns";
+import { endOfDay } from "date-fns";
 
 const chartConfig = {
   ok: {
@@ -30,18 +35,6 @@ const chartConfig = {
     color: "var(--color-destructive)",
   },
 } satisfies ChartConfig;
-
-const periodToInterval = {
-  "1d": 60,
-  "7d": 240,
-  "14d": 480,
-} satisfies Record<(typeof PERIODS)[number], number>;
-
-const periodToFromDate = {
-  "1d": startOfDay(subDays(new Date(), 1)),
-  "7d": startOfDay(subDays(new Date(), 7)),
-  "14d": startOfDay(subDays(new Date(), 14)),
-} satisfies Record<(typeof PERIODS)[number], Date>;
 
 export function ChartBarUptime({
   monitorId,

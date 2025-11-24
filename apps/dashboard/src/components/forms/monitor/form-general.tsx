@@ -42,26 +42,31 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useFeature } from "@/hooks/use-feature";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  dnsRecords,
   headerAssertion,
   jsonBodyAssertion,
   numberCompareDictionary,
+  recordAssertion,
+  recordCompareDictionary,
   statusAssertion,
   stringCompareDictionary,
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { monitorMethods } from "@openstatus/db/src/schema";
 import { isTRPCClientError } from "@trpc/client";
-import { Globe, Network, Plus, X } from "lucide-react";
+import { Globe, Network, Plus, Server, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const TYPES = ["http", "tcp"] as const;
-const ASSERTION_TYPES = ["status", "header", "textBody"] as const;
+const TYPES = ["http", "tcp", "dns"] as const;
+const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
+const DNS_ASSERTION_TYPES = dnsRecords;
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -81,6 +86,7 @@ const schema = z.object({
       headerAssertion,
       textBodyAssertion,
       jsonBodyAssertion,
+      recordAssertion,
     ]),
   ),
   body: z.string().optional(),
@@ -100,6 +106,7 @@ export function FormGeneral({
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
 }) {
+  const isDnsCheckerEnabled = useFeature("dns-checker");
   const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -166,14 +173,21 @@ export function FormGeneral({
           });
           return;
         }
+      } else if (assertion.type === "dnsRecord") {
+        if (!assertion.key || assertion.key.trim() === "") {
+          form.setError(`assertions.${i}.key`, {
+            message: "DNS record key is required",
+          });
+          return;
+        }
+        if (!assertion.target || assertion.target.trim() === "") {
+          form.setError(`assertions.${i}.target`, {
+            message: "DNS record target is required",
+          });
+          return;
+        }
       }
     }
-
-    // TODO: validate url if HTTP
-    // if (values.type === "http" && !values.url.startsWith("http")) {
-    //   form.setError("url", { message: "Please enter a valid URL" });
-    //   return;
-    // }
 
     startTransition(async () => {
       try {
@@ -254,56 +268,48 @@ export function FormGeneral({
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                       disabled={!!defaultValues?.type}
                     >
-                      <FormItem
+                      {[
+                        { value: "http", icon: Globe, label: "HTTP" },
+                        { value: "tcp", icon: Network, label: "TCP" },
+                        { value: "dns", icon: Server, label: "DNS" },
+                      ].map((type) => {
+                        if (type.value === "dns" && !isDnsCheckerEnabled) {
+                          return null;
+                        }
+                        return (
+                          <FormItem
+                            key={type.value}
+                            className={cn(
+                              "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+                              defaultValues &&
+                                defaultValues.type !== type.value &&
+                                "pointer-events-none opacity-50",
+                            )}
+                          >
+                            <FormControl>
+                              <RadioGroupItem
+                                value={type.value}
+                                className="sr-only"
+                                disabled={!!defaultValues?.type}
+                              />
+                            </FormControl>
+                            <type.icon
+                              className="shrink-0 text-muted-foreground"
+                              size={16}
+                              aria-hidden="true"
+                            />
+                            <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                              {type.label}
+                            </FormLabel>
+                          </FormItem>
+                        );
+                      })}
+                      <div
                         className={cn(
-                          "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
-                          // FIXME: ugly af
-                          defaultValues &&
-                            defaultValues.type !== "http" &&
-                            "pointer-events-none opacity-50",
+                          "self-end text-muted-foreground text-xs sm:place-self-end",
+                          isDnsCheckerEnabled ? "col-span-1" : "col-span-2",
                         )}
                       >
-                        <FormControl>
-                          <RadioGroupItem
-                            value="http"
-                            className="sr-only"
-                            disabled={!!defaultValues?.type}
-                          />
-                        </FormControl>
-                        <Globe
-                          className="shrink-0 text-muted-foreground"
-                          size={16}
-                          aria-hidden="true"
-                        />
-                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
-                          HTTP
-                        </FormLabel>
-                      </FormItem>
-                      <FormItem
-                        className={cn(
-                          "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
-                          defaultValues &&
-                            defaultValues.type !== "tcp" &&
-                            "pointer-events-none opacity-50",
-                        )}
-                      >
-                        <FormControl>
-                          <RadioGroupItem
-                            value="tcp"
-                            className="sr-only"
-                            disabled={!!defaultValues?.type}
-                          />
-                        </FormControl>
-                        <Network
-                          className="shrink-0 text-muted-foreground"
-                          size={16}
-                          aria-hidden="true"
-                        />
-                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
-                          TCP
-                        </FormLabel>
-                      </FormItem>
-                      <div className="col-span-2 self-end text-muted-foreground text-xs sm:place-self-end">
                         Missing a type?{" "}
                         <a href="mailto:ping@openstatus.dev">Contact us</a>
                       </div>
@@ -487,7 +493,7 @@ export function FormGeneral({
                                     <SelectValue placeholder="Select type" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {ASSERTION_TYPES.map((type) => (
+                                    {HTTP_ASSERTION_TYPES.map((type) => (
                                       <SelectItem key={type} value={type}>
                                         {type}
                                       </SelectItem>
@@ -700,6 +706,204 @@ export function FormGeneral({
                 </ul>
               </div>
             </FormCardContent>
+          )}
+          {watchType === "dns" && (
+            <>
+              <FormCardContent className="grid gap-4 sm:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>URI</FormLabel>
+                      <FormControl>
+                        <Input placeholder="openstatus.dev" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      <FormDescription>
+                        The input supports both domain names and URIs.
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </FormCardContent>
+              <FormCardSeparator />
+              <FormCardContent>
+                <FormField
+                  control={form.control}
+                  name="assertions"
+                  render={({ field }) => (
+                    <FormItem className="col-span-full">
+                      <FormLabel>Assertions</FormLabel>
+                      <FormDescription>
+                        Validate the response to ensure your service is working
+                        as expected. <br />
+                        Add DNS record assertions.
+                      </FormDescription>
+                      {field.value.map((assertion, index) => (
+                        <div key={index} className="grid gap-2 sm:grid-cols-6">
+                          <FormField
+                            control={form.control}
+                            name={`assertions.${index}.type`}
+                            defaultValue={"dnsRecord"}
+                            render={({ field }) => (
+                              <FormItem className="hidden">
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  disabled
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                </Select>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`assertions.${index}.key`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger
+                                    aria-invalid={
+                                      !!form.formState.errors.assertions?.[
+                                        index
+                                      ]?.type
+                                    }
+                                    className="w-full"
+                                  >
+                                    <SelectValue placeholder="Select type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {DNS_ASSERTION_TYPES.map((type) => (
+                                      <SelectItem key={type} value={type}>
+                                        {type}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`assertions.${index}.compare`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger className="w-full min-w-16">
+                                    <span className="truncate">
+                                      <SelectValue placeholder="Select compare" />
+                                    </span>
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.entries(
+                                      recordCompareDictionary,
+                                    ).map(([key, value]) => (
+                                      <SelectItem key={key} value={key}>
+                                        {value}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          {assertion.type === "header" && (
+                            <FormField
+                              control={form.control}
+                              name={`assertions.${index}.key`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <Input
+                                    placeholder="Header key"
+                                    className="w-full"
+                                    {...field}
+                                  />
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
+                          <FormField
+                            control={form.control}
+                            name={`assertions.${index}.target`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <Input
+                                  placeholder="Target value"
+                                  className="w-full"
+                                  type={
+                                    assertion.type === "status"
+                                      ? "number"
+                                      : "text"
+                                  }
+                                  {...field}
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) => {
+                                    const value =
+                                      assertion.type === "status"
+                                        ? Number.parseInt(e.target.value) || 0
+                                        : e.target.value;
+                                    field.onChange(value);
+                                  }}
+                                />
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            type="button"
+                            onClick={() => {
+                              const newAssertions = field.value.filter(
+                                (_, i) => i !== index,
+                              );
+                              field.onChange(newAssertions);
+                            }}
+                          >
+                            <X />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            field.onChange([
+                              ...field.value,
+                              {
+                                type: "dnsRecord",
+                                version: "v1",
+                                compare: "eq",
+                                key: "A",
+                                target: "",
+                              },
+                            ]);
+                          }}
+                        >
+                          <Plus />
+                          Add DNS Record Assertion
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </FormCardContent>
+            </>
           )}
           <FormCardFooter>
             <FormCardFooterInfo>

@@ -22,13 +22,14 @@
     "@trpc/server": "11.4.4",
     "@unkey/api": "0.26.1",
     "@vercel/blob": "0.23.3",
+    "date-fns": "2.30.0",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
-    "next": "15.5.3",
+    "next": "15.5.5",
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
-    "superjson": "1.13.3",
-    "zod": "3.24.2"
+    "superjson": "2.2.2",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

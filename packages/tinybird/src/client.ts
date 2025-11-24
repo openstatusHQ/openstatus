@@ -1391,6 +1391,8 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1408,6 +1410,8 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1425,6 +1429,8 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_1d_multi__v1",
       parameters: z.object({
         monitorIds: z.string().array().min(1),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1445,6 +1451,8 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1462,6 +1470,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),
@@ -1479,6 +1489,257 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_1d_multi__v1",
       parameters: z.object({
         monitorIds: z.string().array().min(1),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        monitorId: z.coerce.string(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsGetBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_get_14d__v0",
+      parameters: z.object({
+        id: z.string().nullable(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("dns").default("dns"),
+        id: z.coerce.string().nullable(),
+        uri: z.string(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+        assertions: z.string().nullable(),
+        records: z
+          .string()
+          .transform((str) => {
+            try {
+              return JSON.parse(str) as Record<string, unknown>;
+            } catch (error) {
+              console.error(error);
+              return {};
+            }
+          })
+          .pipe(z.record(z.string(), z.array(z.string()))),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_list_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.number().int().optional(),
+        toDate: z.number().int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("dns").default("dns"),
+        id: z.coerce.string().nullable(),
+        uri: z.string(),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        records: z
+          .string()
+          .transform((str) => {
+            try {
+              return JSON.parse(str) as Record<string, unknown>;
+            } catch (error) {
+              console.error(error);
+              return {};
+            }
+          })
+          .pipe(z.record(z.string(), z.array(z.string()))),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_1d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_7d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_14d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int().default(0),
+        success: z.number().int().default(0),
+        degraded: z.number().int().default(0),
+        error: z.number().int().default(0),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsUptime30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_uptime_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+        regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+        interval: z.number().int().optional(),
+      }),
+      data: z.object({
+        interval: z.coerce.date(),
+        success: z.number().int(),
+        degraded: z.number().int(),
+        error: z.number().int(),
+      }),
+    });
+  }
+
+  public get dnsMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_latency_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.number().int(),
+        p50Latency: z.number().int(),
+        p75Latency: z.number().int(),
+        p90Latency: z.number().int(),
+        p95Latency: z.number().int(),
+        p99Latency: z.number().int(),
+      }),
+    });
+  }
+
+  public get dnsMetricsRegionsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_regions_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        interval: z.number().int().optional(),
+        // Comma-separated list of regions, e.g. "ams,fra". Keeping string to pass directly.
+        regions: z.string().array().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        region: z.enum(monitorRegions).or(z.string()),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_status_45d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().default(0),
+        ok: z.number().default(0),
+        degraded: z.number().default(0),
+        error: z.number().default(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_latency_1d_multi__v0",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
       data: z.object({
         timestamp: z.number().int(),

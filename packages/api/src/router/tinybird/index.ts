@@ -13,7 +13,7 @@ import { calculatePeriod } from "./utils";
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const periods = ["1d", "7d", "14d"] as const;
-const types = ["http", "tcp"] as const;
+const types = ["http", "tcp", "dns"] as const;
 type Period = (typeof periods)[number];
 type Type = (typeof types)[number];
 
@@ -23,28 +23,53 @@ export function getWorkspace30dProcedure(type: Type) {
 }
 // Helper functions to get the right procedure based on period and type
 export function getListProcedure(period: Period, type: Type) {
+  console.log({ period, type });
   switch (period) {
     case "1d":
-      return type === "http" ? tb.httpListDaily : tb.tcpListDaily;
+      if (type === "http") return tb.httpListDaily;
+      if (type === "tcp") return tb.tcpListDaily;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
-      return type === "http" ? tb.httpListWeekly : tb.tcpListWeekly;
+      if (type === "http") return tb.httpListWeekly;
+      if (type === "tcp") return tb.tcpListWeekly;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "14d":
-      return type === "http" ? tb.httpListBiweekly : tb.tcpListBiweekly;
+      if (type === "http") return tb.httpListBiweekly;
+      if (type === "tcp") return tb.tcpListBiweekly;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpListDaily : tb.tcpListDaily;
+      if (type === "http") return tb.httpListDaily;
+      if (type === "tcp") return tb.tcpListDaily;
+      if (type === "dns") return tb.dnsListBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
 export function getMetricsProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
-      return type === "http" ? tb.httpMetricsDaily : tb.tcpMetricsDaily;
+      if (type === "dns") return tb.dnsMetricsDaily;
+      if (type === "http") return tb.httpMetricsDaily;
+      if (type === "tcp") return tb.tcpMetricsDaily;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
-      return type === "http" ? tb.httpMetricsWeekly : tb.tcpMetricsWeekly;
+      if (type === "dns") return tb.dnsMetricsWeekly;
+      if (type === "http") return tb.httpMetricsWeekly;
+      if (type === "tcp") return tb.tcpMetricsWeekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "14d":
-      return type === "http" ? tb.httpMetricsBiweekly : tb.tcpMetricsBiweekly;
+      if (type === "dns") return tb.dnsMetricsBiweekly;
+      if (type === "http") return tb.httpMetricsBiweekly;
+      if (type === "tcp") return tb.tcpMetricsBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpMetricsDaily : tb.tcpMetricsDaily;
+      if (type === "dns") return tb.dnsMetricsDaily;
+      if (type === "http") return tb.httpMetricsDaily;
+      if (type === "tcp") return tb.tcpMetricsDaily;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
@@ -94,34 +119,47 @@ export function getMetricsByIntervalProcedure(period: Period, type: Type) {
 export function getMetricsRegionsProcedure(period: Period, type: Type) {
   switch (period) {
     case "1d":
-      return type === "http"
-        ? tb.httpMetricsRegionsDaily
-        : tb.tcpMetricsByIntervalDaily;
+      if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
+      if (type === "http") return tb.httpMetricsRegionsDaily;
+      if (type === "tcp") return tb.tcpMetricsByIntervalDaily;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
-      return type === "http"
-        ? tb.httpMetricsRegionsWeekly
-        : tb.tcpMetricsByIntervalWeekly;
+      if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
+      if (type === "http") return tb.httpMetricsRegionsWeekly;
+      if (type === "tcp") return tb.tcpMetricsByIntervalWeekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "14d":
-      return type === "http"
-        ? tb.httpMetricsRegionsBiweekly
-        : tb.tcpMetricsByIntervalBiweekly;
+      if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
+      if (type === "http") return tb.httpMetricsRegionsBiweekly;
+      if (type === "tcp") return tb.tcpMetricsByIntervalBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http"
-        ? tb.httpMetricsRegionsDaily
-        : tb.tcpMetricsByIntervalDaily;
+      if (type === "dns") return tb.dnsMetricsRegionsBiweekly;
+      if (type === "http") return tb.httpMetricsRegionsDaily;
+      if (type === "tcp") return tb.tcpMetricsByIntervalDaily;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
 export function getStatusProcedure(_period: "45d", type: Type) {
-  return type === "http" ? tb.httpStatus45d : tb.tcpStatus45d;
+  if (type === "dns") return tb.dnsStatus45d;
+  if (type === "http") return tb.httpStatus45d;
+  if (type === "tcp") return tb.tcpStatus45d;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
 export function getGetProcedure(period: "14d", type: Type) {
   switch (period) {
     case "14d":
-      return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
+      if (type === "http") return tb.httpGetBiweekly;
+      if (type === "tcp") return tb.tcpGetBiweekly;
+      if (type === "dns") return tb.dnsGetBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpGetBiweekly : tb.tcpGetBiweekly;
+      if (type === "http") return tb.httpGetBiweekly;
+      if (type === "tcp") return tb.tcpGetBiweekly;
+      if (type === "dns") return tb.dnsGetBiweekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
@@ -132,11 +170,20 @@ export function getGlobalMetricsProcedure(type: Type) {
 export function getUptimeProcedure(period: "7d" | "30d", type: Type) {
   switch (period) {
     case "7d":
-      return type === "http" ? tb.httpUptimeWeekly : tb.tcpUptimeWeekly;
+      if (type === "dns") return tb.dnsUptime30d;
+      if (type === "http") return tb.httpUptimeWeekly;
+      if (type === "tcp") return tb.tcpUptimeWeekly;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "30d":
-      return type === "http" ? tb.httpUptime30d : tb.tcpUptime30d;
+      if (type === "dns") return tb.dnsUptime30d;
+      if (type === "http") return tb.httpUptime30d;
+      if (type === "tcp") return tb.tcpUptime30d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpUptime30d : tb.httpUptime30d;
+      if (type === "dns") return tb.dnsUptime30d;
+      if (type === "http") return tb.httpUptime30d;
+      if (type === "tcp") return tb.tcpUptime30d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
@@ -144,18 +191,28 @@ export function getUptimeProcedure(period: "7d" | "30d", type: Type) {
 export function getMetricsLatencyProcedure(_period: Period, type: Type) {
   switch (_period) {
     case "1d":
-      return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+      if (type === "dns") return tb.dnsMetricsLatency7d;
+      if (type === "http") return tb.httpMetricsLatency1d;
+      if (type === "tcp") return tb.tcpMetricsLatency1d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     case "7d":
-      return type === "http" ? tb.httpMetricsLatency7d : tb.tcpMetricsLatency7d;
+      if (type === "dns") return tb.dnsMetricsLatency7d;
+      if (type === "http") return tb.httpMetricsLatency7d;
+      if (type === "tcp") return tb.tcpMetricsLatency7d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
     default:
-      return type === "http" ? tb.httpMetricsLatency1d : tb.tcpMetricsLatency1d;
+      if (type === "dns") return tb.dnsMetricsLatency7d;
+      if (type === "http") return tb.httpMetricsLatency1d;
+      if (type === "tcp") return tb.tcpMetricsLatency1d;
+      throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
   }
 }
 
 export function getMetricsLatencyMultiProcedure(_period: Period, type: Type) {
-  return type === "http"
-    ? tb.httpMetricsLatency1dMulti
-    : tb.tcpMetricsLatency1dMulti;
+  if (type === "dns") return tb.dnsMetricsLatency1dMulti;
+  if (type === "http") return tb.httpMetricsLatency1dMulti;
+  if (type === "tcp") return tb.tcpMetricsLatency1dMulti;
+  throw new TRPCError({ code: "NOT_FOUND", message: "Invalid type" });
 }
 
 export function getTimingPhasesProcedure(type: Type) {
@@ -208,7 +265,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getListProcedure(
         period,
-        _monitor.jobType as "http" | "tcp",
+        _monitor.jobType as "http" | "tcp" | "dns",
       );
       return await procedure({
         ...opts.input,
@@ -393,6 +450,8 @@ export const tinybirdRouter = createTRPCRouter({
         interval: z.number().int().optional(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         cronTimestamp: z.number().int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
     )
     .query(async (opts) => {
@@ -481,7 +540,7 @@ export const tinybirdRouter = createTRPCRouter({
 
       const procedure = getGetProcedure(
         opts.input.period,
-        _monitor.jobType as "http" | "tcp",
+        _monitor.jobType as "http" | "tcp" | "dns",
       );
       return await procedure(opts.input);
     }),
@@ -521,6 +580,8 @@ export const tinybirdRouter = createTRPCRouter({
         period: z.enum(periods),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
         type: z.enum(types).default("http"),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
       }),
     )
     .query(async (opts) => {

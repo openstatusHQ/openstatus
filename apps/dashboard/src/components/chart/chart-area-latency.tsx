@@ -19,8 +19,10 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
+import { periodToFromDate } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {
@@ -48,6 +50,8 @@ export function ChartAreaLatency({
   regions: string[] | undefined;
 }) {
   const trpc = useTRPC();
+  const fromDate = periodToFromDate[period];
+  const toDate = endOfDay(new Date());
 
   const { data: latency } = useQuery(
     trpc.tinybird.metricsLatency.queryOptions({
@@ -55,6 +59,8 @@ export function ChartAreaLatency({
       period,
       type,
       regions,
+      fromDate: fromDate.toISOString(),
+      toDate: toDate.toISOString(),
     }),
   );
 

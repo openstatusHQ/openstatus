@@ -15,6 +15,7 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   fillStatusDataFor45Days,
@@ -395,14 +396,16 @@ export const statusPageRouter = createTRPCRouter({
       const monitorsByType = {
         http: monitors.filter((m) => m.monitor.jobType === "http"),
         tcp: monitors.filter((m) => m.monitor.jobType === "tcp"),
+        dns: monitors.filter((m) => m.monitor.jobType === "dns"),
       };
 
       const proceduresByType = {
         http: getStatusProcedure("45d", "http"),
         tcp: getStatusProcedure("45d", "tcp"),
+        dns: getStatusProcedure("45d", "dns"),
       };
 
-      const [statusHttp, statusTcp] = await Promise.all(
+      const [statusHttp, statusTcp, statusDns] = await Promise.all(
         Object.entries(proceduresByType).map(([type, procedure]) => {
           const monitorIds = monitorsByType[
             type as keyof typeof proceduresByType
@@ -419,6 +422,7 @@ export const statusPageRouter = createTRPCRouter({
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
       >();
 
       if (statusHttp?.data) {
@@ -433,6 +437,16 @@ export const statusPageRouter = createTRPCRouter({
 
       if (statusTcp?.data) {
         statusTcp.data.forEach((status) => {
+          const monitorId = status.monitorId;
+          if (!statusDataByMonitorId.has(monitorId)) {
+            statusDataByMonitorId.set(monitorId, []);
+          }
+          statusDataByMonitorId.get(monitorId)?.push(status);
+        });
+      }
+
+      if (statusDns?.data) {
+        statusDns.data.forEach((status) => {
           const monitorId = status.monitorId;
           if (!statusDataByMonitorId.has(monitorId)) {
             statusDataByMonitorId.set(monitorId, []);
@@ -649,28 +663,34 @@ export const statusPageRouter = createTRPCRouter({
       const monitorsByType = {
         http: publicMonitors.filter((m) => m.monitor.jobType === "http"),
         tcp: publicMonitors.filter((m) => m.monitor.jobType === "tcp"),
+        dns: publicMonitors.filter((m) => m.monitor.jobType === "dns"),
       };
 
       const proceduresByType = {
         http: getMetricsLatencyMultiProcedure("1d", "http"),
         tcp: getMetricsLatencyMultiProcedure("1d", "tcp"),
+        dns: getMetricsLatencyMultiProcedure("1d", "dns"),
       };
 
-      const [metricsLatencyMultiHttp, metricsLatencyMultiTcp] =
-        await Promise.all(
-          Object.entries(proceduresByType).map(([type, procedure]) => {
-            const monitorIds = monitorsByType[
-              type as keyof typeof proceduresByType
-            ].map((m) => m.monitor.id.toString());
-            if (monitorIds.length === 0) return null;
-            return procedure({ monitorIds });
-          }),
-        );
+      const [
+        metricsLatencyMultiHttp,
+        metricsLatencyMultiTcp,
+        metricsLatencyMultiDns,
+      ] = await Promise.all(
+        Object.entries(proceduresByType).map(([type, procedure]) => {
+          const monitorIds = monitorsByType[
+            type as keyof typeof proceduresByType
+          ].map((m) => m.monitor.id.toString());
+          if (monitorIds.length === 0) return null;
+          return procedure({ monitorIds });
+        }),
+      );
 
       const metricsDataByMonitorId = new Map<
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
         | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
+        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
       >();
 
       if (metricsLatencyMultiHttp?.data) {
@@ -685,6 +705,16 @@ export const statusPageRouter = createTRPCRouter({
 
       if (metricsLatencyMultiTcp?.data) {
         metricsLatencyMultiTcp.data.forEach((metric) => {
+          const monitorId = metric.monitorId;
+          if (!metricsDataByMonitorId.has(monitorId)) {
+            metricsDataByMonitorId.set(monitorId, []);
+          }
+          metricsDataByMonitorId.get(monitorId)?.push(metric);
+        });
+      }
+
+      if (metricsLatencyMultiDns?.data) {
+        metricsLatencyMultiDns.data.forEach((metric) => {
           const monitorId = metric.monitorId;
           if (!metricsDataByMonitorId.has(monitorId)) {
             metricsDataByMonitorId.set(monitorId, []);
@@ -744,18 +774,32 @@ export const statusPageRouter = createTRPCRouter({
           regions: getMetricsRegionsProcedure("7d", "tcp"),
           uptime: getUptimeProcedure("7d", "tcp"),
         },
+        dns: {
+          latency: getMetricsLatencyProcedure("7d", "dns"),
+          regions: getMetricsRegionsProcedure("7d", "dns"),
+          uptime: getUptimeProcedure("7d", "dns"),
+        },
       };
+
+      const fromDate = startOfDay(subDays(new Date(), 7)).toISOString();
+      const toDate = endOfDay(new Date()).toISOString();
 
       const [latency, regions, uptime] = await Promise.all([
         await proceduresByType[type].latency({
           monitorId: _monitor.id.toString(),
+          fromDate,
+          toDate,
         }),
         await proceduresByType[type].regions({
           monitorId: _monitor.id.toString(),
+          fromDate,
+          toDate,
         }),
         await proceduresByType[type].uptime({
           monitorId: _monitor.id.toString(),
           interval: 240,
+          fromDate,
+          toDate,
         }),
       ]);
 

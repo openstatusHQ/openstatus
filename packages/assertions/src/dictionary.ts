@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { numberCompare, stringCompare } from "./v1";
+import type { numberCompare, recordCompare, stringCompare } from "./v1";
 
 export const numberCompareDictionary: Record<
   z.infer<typeof numberCompare>,
@@ -28,4 +28,14 @@ export const stringCompareDictionary: Record<
   gte: "Greater than or equal",
   lt: "Less than",
   lte: "Less than or equal",
+};
+
+export const recordCompareDictionary: Record<
+  z.infer<typeof recordCompare>,
+  string
+> = {
+  eq: "Equal",
+  not_eq: "Not Equal",
+  contains: "Contains",
+  not_contains: "Does not contain",
 };

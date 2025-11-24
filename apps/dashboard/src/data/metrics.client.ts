@@ -4,6 +4,7 @@ import type { MetricCard } from "@/components/metric/metric-card";
 import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { startOfDay, subDays } from "date-fns";
 import type { RegionMetric } from "./region-metrics";
 
 export const STATUS = ["success", "error", "degraded"] as const;
@@ -323,3 +324,15 @@ export function mapTimingPhases(
     };
   });
 }
+
+export const periodToInterval = {
+  "1d": 60,
+  "7d": 240,
+  "14d": 480,
+} satisfies Record<(typeof PERIODS)[number], number>;
+
+export const periodToFromDate = {
+  "1d": startOfDay(subDays(new Date(), 1)),
+  "7d": startOfDay(subDays(new Date(), 7)),
+  "14d": startOfDay(subDays(new Date(), 14)),
+} satisfies Record<(typeof PERIODS)[number], Date>;

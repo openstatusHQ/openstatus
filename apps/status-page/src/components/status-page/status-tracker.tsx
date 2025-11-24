@@ -232,7 +232,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
               <div
                 className={cn(
                   "group relative mx-px flex h-full w-full cursor-pointer flex-col rounded-full outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
-                  "rounded-full overflow-hidden",
+                  "overflow-hidden rounded-full",
                 )}
                 onClick={() => handleBarClick(index)}
                 onFocus={() => handleBarFocus(index)}

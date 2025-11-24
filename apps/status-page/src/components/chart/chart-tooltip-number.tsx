@@ -17,6 +17,10 @@ export function ChartTooltipNumber({
   chartConfig,
   labelFormatter,
 }: ChartTooltipNumberProps) {
+  const label: React.ReactNode = labelFormatter
+    ? labelFormatter(value, name)
+    : chartConfig[name as keyof typeof chartConfig]?.label || name;
+
   return (
     <>
       <div
@@ -27,11 +31,7 @@ export function ChartTooltipNumber({
           } as React.CSSProperties
         }
       />
-      <span>
-        {labelFormatter
-          ? labelFormatter(value, name)
-          : chartConfig[name as keyof typeof chartConfig]?.label || name}
-      </span>
+      <span>{label}</span>
       <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
         {value}
         <span className="font-normal text-muted-foreground">ms</span>

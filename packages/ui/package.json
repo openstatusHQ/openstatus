@@ -49,16 +49,16 @@
     "clsx": "2.1.1",
     "cmdk": "1.0.4",
     "date-fns": "2.30.0",
-    "lucide-react": "0.468.0",
+    "lucide-react": "0.525.0",
     "luxon": "3.5.0",
-    "next": "15.5.3",
+    "next": "15.5.5",
     "react": "19.2.0",
     "react-day-picker": "8.10.1",
-    "react-hook-form": "7.54.2",
+    "react-hook-form": "7.66.1",
     "recharts": "2.15.0",
     "tailwind-merge": "2.5.5",
     "tailwindcss-animate": "1.0.7",
-    "zod": "3.24.2"
+    "zod": "3.25.76"
   },
   "peerDependencies": {
     "next-themes": "0.2.1",

@@ -3,14 +3,16 @@ import { TRPCError } from "@trpc/server";
 import { Events } from "@openstatus/analytics";
 import {
   deserialize,
+  dnsRecords,
   headerAssertion,
   jsonBodyAssertion,
+  recordAssertion,
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { and, db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
+import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
@@ -40,10 +42,32 @@ const httpTestInput = z.object({
     .default("GET"),
   headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
   body: z.string().optional(),
-  region: monitorFlyRegionSchema.optional().default("ams"),
+  region: monitorRegionSchema.optional().default("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
+        statusAssertion,
+        headerAssertion,
+        textBodyAssertion,
+        jsonBodyAssertion,
+        recordAssertion,
+      ]),
+    )
+    .default([]),
+});
+
+const tcpTestInput = z.object({
+  url: z.string(),
+  region: monitorRegionSchema.optional().default("ams"),
+});
+
+const dnsTestInput = z.object({
+  url: z.string(),
+  region: monitorRegionSchema.optional().default("ams"),
+  assertions: z
+    .array(
+      z.discriminatedUnion("type", [
+        recordAssertion,
         statusAssertion,
         headerAssertion,
         textBodyAssertion,
@@ -53,12 +77,7 @@ const httpTestInput = z.object({
     .default([]),
 });
 
-const tcpTestInput = z.object({
-  url: z.string(),
-  region: monitorFlyRegionSchema.optional().default("ams"),
-});
-
-export const tcpTextOutput = z
+export const tcpOutput = z
   .object({
     state: z.literal("success").default("success"),
     type: z.literal("tcp").default("tcp"),
@@ -71,7 +90,7 @@ export const tcpTextOutput = z
       tcpDone: z.number(),
     }),
     error: z.string().optional(),
-    region: monitorFlyRegionSchema,
+    region: monitorRegionSchema,
     latency: z.number().optional(),
   })
   .or(
@@ -102,7 +121,23 @@ export const httpOutput = z
       transferDone: z.number(),
     }),
     body: z.string().optional().nullable(),
-    region: monitorFlyRegionSchema,
+    region: monitorRegionSchema,
+  })
+  .or(
+    z.object({
+      state: z.literal("error").default("error"),
+      message: z.string(),
+    }),
+  );
+
+export const dnsOutput = z
+  .object({
+    state: z.literal("success").default("success"),
+    type: z.literal("dns").default("dns"),
+    records: z.record(z.enum(dnsRecords), z.array(z.string())).default({}),
+    latency: z.number().optional(),
+    timestamp: z.number(),
+    region: monitorRegionSchema,
   })
   .or(
     z.object({
@@ -122,7 +157,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 
   try {
     const res = await fetch(
-      `https://checker.openstatus.dev/ping/${input.region}`,
+      `https://openstatus-checker.fly.dev/ping/${input.region}`,
       {
         method: "POST",
         headers: {
@@ -200,6 +235,10 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
     return result.data;
   } catch (error) {
     console.error("Checker HTTP test failed", error);
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: error instanceof Error ? error.message : "HTTP check failed",
@@ -210,7 +249,7 @@ export async function testHttp(input: z.infer<typeof httpTestInput>) {
 export async function testTcp(input: z.infer<typeof tcpTestInput>) {
   try {
     const res = await fetch(
-      `https://checker.openstatus.dev/tcp/${input.region}`,
+      `https://openstatus-checker.fly.dev/tcp/${input.region}`,
       {
         method: "POST",
         headers: {
@@ -224,7 +263,7 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
     );
 
     const json = await res.json();
-    const result = tcpTextOutput.safeParse(json);
+    const result = tcpOutput.safeParse(json);
 
     if (!result.success) {
       console.error(
@@ -247,9 +286,83 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
     return result.data;
   } catch (error) {
     console.error("Checker TCP test failed", error);
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
       message: "TCP check failed",
+    });
+  }
+}
+
+export async function testDns(input: z.infer<typeof dnsTestInput>) {
+  try {
+    const res = await fetch(
+      `https://openstatus-checker.fly.dev/dns/${input.region}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${env.CRON_SECRET}`,
+          "Content-Type": "application/json",
+          "fly-prefer-region": input.region,
+        },
+        body: JSON.stringify({
+          uri: input.url,
+        }),
+        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+      },
+    );
+
+    const json = await res.json();
+    const result = dnsOutput.safeParse(json);
+
+    if (!result.success) {
+      console.error(
+        `Checker DNS test failed for ${input.url}:`,
+        result.error.message,
+      );
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: `Checker response is not valid. Please try again. If the problem persists, please contact support. ${result.error.message}`,
+      });
+    }
+
+    if (result.data.state === "error") {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: result.data.message,
+      });
+    }
+
+    if (result.data.state === "success") {
+      const { records } = result.data;
+
+      const assertions = deserialize(JSON.stringify(input.assertions)).map(
+        (assertion) => assertion.assert({ records }),
+      );
+
+      if (assertions.some((assertion) => !assertion.success)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Assertion error: ${
+            assertions.find((assertion) => !assertion.success)?.message
+          }`,
+        });
+      }
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error("Checker DNS test failed", error);
+    if (error instanceof TRPCError) {
+      throw error;
+    }
+
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "DNS check failed",
     });
   }
 }
@@ -313,6 +426,27 @@ export async function triggerChecker(
       followRedirects: input.followRedirects || true,
     };
   }
+  if (input.jobType === "dns") {
+    payload = {
+      workspaceId: String(input.workspaceId),
+      monitorId: String(input.id),
+      uri: input.url,
+      status: "active",
+      assertions: input.assertions ? JSON.parse(input.assertions) : null,
+      cronTimestamp: timestamp,
+      degradedAfter: input.degradedAfter,
+      timeout: input.timeout,
+      trigger: "cron",
+      retry: input.retry || 3,
+      otelConfig: input.otelEndpoint
+        ? {
+            endpoint: input.otelEndpoint,
+            headers: transformHeaders(input.otelHeaders),
+          }
+        : undefined,
+      followRedirects: input.followRedirects || true,
+    };
+  }
   const allResult = [];
 
   for (const region of input.regions) {
@@ -338,6 +472,8 @@ function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
       return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
     case "tcp":
       return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+    case "dns":
+      return `https://openstatus-checker.fly.dev/checker/dns?monitor_id=${row.id}`;
     default:
       throw new Error("Invalid jobType");
   }
@@ -356,6 +492,12 @@ export const checkerRouter = createTRPCRouter({
     .input(tcpTestInput)
     .mutation(async ({ input }) => {
       return testTcp(input);
+    }),
+  testDns: protectedProcedure
+    .meta({ track: Events.TestMonitor })
+    .input(dnsTestInput)
+    .mutation(async ({ input }) => {
+      return testDns(input);
     }),
 
   triggerChecker: protectedProcedure

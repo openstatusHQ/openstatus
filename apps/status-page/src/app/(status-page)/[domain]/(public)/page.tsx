@@ -107,7 +107,7 @@ export default function Page() {
                     <StatusBannerTabsTrigger
                       value={`${e.type}-${e.id}`}
                       status={e.status}
-                      key={e.id}
+                      key={`${e.type}-${e.id}`}
                       className={cn(
                         i === 0 && "rounded-tl-lg",
                         i === events.length - 1 && "rounded-tr-lg",
@@ -127,7 +127,7 @@ export default function Page() {
                   return (
                     <StatusBannerTabsContent
                       value={`${e.type}-${e.id}`}
-                      key={e.id}
+                      key={`${e.type}-${e.id}`}
                     >
                       <StatusBannerContainer status={e.status}>
                         <StatusBannerContent>

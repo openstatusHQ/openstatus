@@ -25,10 +25,12 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
+import { periodToFromDate } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
 import { useParams } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import React, { useMemo } from "react";
@@ -45,6 +47,8 @@ export function Client() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const selectedRegions = regions ?? undefined;
+  const fromDate = periodToFromDate[period];
+  const toDate = endOfDay(new Date());
 
   const regionTimelineQuery = {
     ...trpc.tinybird.metricsRegions.queryOptions({
@@ -54,6 +58,8 @@ export function Client() {
       regions: selectedRegions,
       // Request 30-minute buckets by default
       interval: 30,
+      fromDate: fromDate.toISOString(),
+      toDate: toDate.toISOString(),
     }),
     enabled: !!monitor,
   } as const;
