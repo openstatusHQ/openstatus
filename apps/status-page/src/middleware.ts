@@ -124,7 +124,7 @@ export default async function middleware(req: NextRequest) {
 
   console.log({customDomain: _page.customDomain, host, expectedHost: `${_page.slug}.stpg.dev`})
   if (_page.customDomain && url.host !== `${_page.slug}.stpg.dev`) {
-    if (pathnames.length > 2) {
+    if (pathnames.length > 2 && !subdomain) {
       const pathname = pathnames.slice(2).join("/");
       const rewriteUrl = new URL(`/${_page.slug}/${pathname}`, req.url);
       rewriteUrl.search = url.search;
