@@ -19,37 +19,38 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   return (
-        <Suspense fallback={<>...</>}>
-    <PlausibleProvider domain="themes.openstatus.dev">
-      <style
-        id="theme-styles"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-        dangerouslySetInnerHTML={{ __html: generateThemeStyles() }}
-      />
-      <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
-        <SidebarProvider
-          defaultOpen={true}
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH,
-              "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-        >
-          <SidebarInset className="relative">
-            <SidebarTrigger className="absolute top-2 right-2" />
-            <main className="mx-auto">{children}</main>
-            <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
-              <p>
-                powered by <Link href="https://openstatus.dev">openstatus</Link>
-              </p>
-            </footer>
-          </SidebarInset>
-          <ThemeSidebar />
-        </SidebarProvider>
-        <Toaster richColors expand />
-      </ThemeProvider>
-    </PlausibleProvider>
-  </Suspense>
+    <Suspense fallback={<>...</>}>
+      <PlausibleProvider domain="themes.openstatus.dev">
+        <style
+          id="theme-styles"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+          dangerouslySetInnerHTML={{ __html: generateThemeStyles() }}
+        />
+        <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
+          <SidebarProvider
+            defaultOpen={true}
+            style={
+              {
+                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
+              } as React.CSSProperties
+            }
+          >
+            <SidebarInset className="relative">
+              <SidebarTrigger className="absolute top-2 right-2" />
+              <main className="mx-auto">{children}</main>
+              <footer className="flex items-center justify-center gap-4 p-4 text-center font-mono text-muted-foreground text-sm">
+                <p>
+                  powered by{" "}
+                  <Link href="https://openstatus.dev">openstatus</Link>
+                </p>
+              </footer>
+            </SidebarInset>
+            <ThemeSidebar />
+          </SidebarProvider>
+          <Toaster richColors expand />
+        </ThemeProvider>
+      </PlausibleProvider>
+    </Suspense>
   );
 }
