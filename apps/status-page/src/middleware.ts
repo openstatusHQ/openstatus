@@ -133,7 +133,7 @@ export default async function middleware(req: NextRequest) {
       console.log({ url: req.url });
       const vercelURL = process.env.VERCEL_URL || "www.stpg.dev";
       console.log({newUrl: vercelURL})
-      const rewriteUrl = new URL(`/${_page.slug}/${url.pathname}`,`https://${vercelURL}` );
+      const rewriteUrl = new URL(`/${_page.slug}${url.pathname}`,`https://${vercelURL}` );
       console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
