@@ -11,8 +11,6 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@auth/core": "0.40.0",
-    "@auth/drizzle-adapter": "1.10.0",
     "@date-fns/tz": "1.2.0",
     "@date-fns/utc": "2.1.0",
     "@dnd-kit/core": "6.3.1",
@@ -85,7 +83,7 @@
     "superjson": "2.2.2",
     "tailwind-merge": "3.3.1",
     "unified": "11.0.5",
-    "zod": "3.24.2"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.8",

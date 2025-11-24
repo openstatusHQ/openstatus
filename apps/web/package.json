@@ -92,7 +92,7 @@
     "superjson": "2.2.2",
     "tailwind-merge": "3.3.1",
     "tailwindcss-animate": "1.0.7",
-    "zod": "3.24.2"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@content-collections/core": "0.7.3",
