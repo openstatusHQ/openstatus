@@ -85,7 +85,7 @@
     "react": "19.2.0",
     "react-day-picker": "8.10.1",
     "react-dom": "19.2.0",
-    "react-hook-form": "7.54.2",
+    "react-hook-form": "7.66.1",
     "recharts": "2.15.0",
     "rehype-react": "8.0.0",
     "remark-gfm": "4.0.1",
