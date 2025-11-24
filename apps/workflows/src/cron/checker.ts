@@ -219,7 +219,7 @@ const createCronTask = async ({
           }
         : undefined,
       retry: row.retry || 3,
-      followRedirects: row.followRedirects || true,
+      followRedirects: row.followRedirects === null ? true : row.followRedirects,
     };
   }
   if (row.jobType === "tcp") {
