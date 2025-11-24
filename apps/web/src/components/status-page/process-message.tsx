@@ -9,6 +9,7 @@ export function ProcessMessage({ value }: { value: string }) {
   return unified()
     .use(remarkParse)
     .use(remarkRehype)
+    // @ts-expect-error
     .use(rehypeReact, {
       createElement,
       Fragment,
