@@ -77,7 +77,8 @@ export default async function middleware(req: NextRequest) {
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
         const url = new URL(
-          `https://${_page.customDomain
+          `https://${
+            _page.customDomain
           }/protected?redirect=${encodeURIComponent(redirect)}`,
         );
         console.log("redirect to /protected", url.toString());
@@ -85,7 +86,8 @@ export default async function middleware(req: NextRequest) {
       }
 
       const url = new URL(
-        `${origin}${type === "pathname" ? `/${prefix}` : ""
+        `${origin}${
+          type === "pathname" ? `/${prefix}` : ""
         }/protected?redirect=${encodeURIComponent(pathname)}`,
       );
       return NextResponse.redirect(url);
@@ -102,7 +104,8 @@ export default async function middleware(req: NextRequest) {
 
       return NextResponse.redirect(
         new URL(
-          `${req.nextUrl.origin}${redirect ?? type === "pathname" ? `/${prefix}` : "/"
+          `${req.nextUrl.origin}${
+            redirect ?? type === "pathname" ? `/${prefix}` : "/"
           }`,
         ),
       );
@@ -119,7 +122,11 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  console.log({ customDomain: _page.customDomain, host, expectedHost: `${_page.slug}.stpg.dev` })
+  console.log({
+    customDomain: _page.customDomain,
+    host,
+    expectedHost: `${_page.slug}.stpg.dev`,
+  });
   if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
     if (pathnames.length > 2 && !subdomain) {
       const pathname = pathnames.slice(2).join("/");
@@ -149,15 +156,13 @@ export default async function middleware(req: NextRequest) {
       console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
       return NextResponse.rewrite(rewriteUrl);
-
-
     }
     const rewriteUrl = new URL(`/${_page.slug}`, req.url);
     console.log({ rewriteUrl });
     rewriteUrl.search = url.search;
     return NextResponse.rewrite(rewriteUrl);
   }
-  if (host?.includes("openstatus.dev")){
+  if (host?.includes("openstatus.dev")) {
     const rewriteUrl = new URL(`/${prefix}${url.pathname}`, req.url);
     // Preserve search params from original request
     rewriteUrl.search = url.search;
@@ -189,7 +194,14 @@ export const getValidSubdomain = (host?: string | null) => {
   }
 
   // In case the host is a custom domain
-  if (host && !(host?.includes("stpg.dev") || host?.includes("openstatus.dev") || host?.endsWith(".vercel.app"))) {
+  if (
+    host &&
+    !(
+      host?.includes("stpg.dev") ||
+      host?.includes("openstatus.dev") ||
+      host?.endsWith(".vercel.app")
+    )
+  ) {
     subdomain = host;
   }
   return subdomain;
