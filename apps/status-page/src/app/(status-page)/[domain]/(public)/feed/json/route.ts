@@ -1,5 +1,4 @@
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { Tracker } from "@openstatus/tracker";
 import { notFound, unauthorized } from "next/navigation";
 
 const _STATUS_LABELS = {
@@ -14,32 +13,33 @@ export const revalidate = 60;
 
 export async function GET(
   _request: Request,
-  props: { params: Promise<{ domain: string }> },
+  props: { params: Promise<{ domain: string }> }
 ) {
   try {
     const queryClient = getQueryClient();
     const { domain } = await props.params;
 
-    const page = await queryClient.fetchQuery(
-      trpc.page.getPageBySlug.queryOptions({ slug: domain }),
+    const _page = await queryClient.fetchQuery(
+      trpc.page.getPageBySlug.queryOptions({ slug: domain })
     );
-    if (!page) return notFound();
 
-    if (page.passwordProtected) {
+    if (!_page) return notFound();
+
+    if (_page.passwordProtected) {
       const url = new URL(_request.url);
       const password = url.searchParams.get("pw");
-      console.log({ url, page, password });
-      if (password !== page.password) return unauthorized();
+      console.log({ url, _page, password });
+      if (password !== _page.password) return unauthorized();
     }
 
-    const tracker = new Tracker({
-      incidents: page.incidents,
-      statusReports: page.statusReports,
-      maintenances: page.maintenances,
-    });
+    const page = await queryClient.fetchQuery(
+      trpc.statusPage.get.queryOptions({ slug: domain })
+    );
+
+    if (!page) return notFound();
 
     const res = {
-      status: tracker.currentStatus,
+      status: page.status,
       updatedAt: new Date(),
       monitors: page.monitors.map((monitor) => ({
         id: monitor.id,
@@ -53,12 +53,16 @@ export async function GET(
         from: maintenance.from,
         to: maintenance.to,
         updatedAt: maintenance.updatedAt,
+        monitors: maintenance.maintenancesToMonitors.map(
+          (item) => item.monitor.id
+        ),
       })),
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
         title: report.title,
         updateAt: report.updatedAt,
         status: report.status,
+        monitors: report.monitorsToStatusReports.map((item) => item.monitor.id),
         statusReportUpdates: report.statusReportUpdates.map((update) => ({
           id: update.id,
           status: update.status,
