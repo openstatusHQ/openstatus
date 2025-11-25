@@ -17,7 +17,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
-type StatusUpdateType = "email" | "rss" | "ssh";
+type StatusUpdateType = "email" | "rss" | "ssh" | "json";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
@@ -31,7 +31,7 @@ interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
 
 export function StatusUpdates({
   className,
-  types = ["rss", "ssh"],
+  types = ["rss", "ssh", "json"],
   page,
   onSubscribe,
   ...props
@@ -62,6 +62,9 @@ export function StatusUpdates({
             ) : null}
             {types.includes("rss") ? (
               <TabsTrigger value="rss">RSS</TabsTrigger>
+            ) : null}
+            {types.includes("json") ? (
+              <TabsTrigger value="json">JSON</TabsTrigger>
             ) : null}
             {types.includes("ssh") ? (
               <TabsTrigger value="ssh">SSH</TabsTrigger>
@@ -115,6 +118,19 @@ export function StatusUpdates({
                 }`}
               />
             </div>
+          </TabsContent>
+          <TabsContent value="json" className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 px-2 pb-2">
+              <p className="text-sm">Get the JSON updates</p>
+              <CopyInputButton
+                className="w-full"
+                id="json"
+                value={`${baseUrl}/feed/json${
+                  page?.passwordProtected ? `?pw=${page?.password}` : ""
+                }`}
+              />
+            </div>
+
           </TabsContent>
           <TabsContent value="ssh" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">

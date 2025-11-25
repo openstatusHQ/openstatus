@@ -14,11 +14,11 @@ export const revalidate = 60;
 
 export async function GET(
   _request: Request,
-  props: { params: Promise<{ domain: string; type: string }> },
+  props: { params: Promise<{ domain: string }> },
 ) {
   try {
     const queryClient = getQueryClient();
-    const { domain, type } = await props.params;
+    const { domain } = await props.params;
 
     const page = await queryClient.fetchQuery(
       trpc.page.getPageBySlug.queryOptions({ slug: domain }),
@@ -56,13 +56,13 @@ export async function GET(
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
         title: report.title,
-        updatedAt: report.updatedAt,
-        createdAt: report.createdAt,
+        updateAt: report.updatedAt,
         statusReportUpdates: report.statusReportUpdates.map((update) => ({
           id: update.id,
           status: update.status,
           message: update.message,
-          createdAt: update.createdAt,
+          date: update.date,
+          updatedAt: update.updatedAt,
         })),
       })),
     };
