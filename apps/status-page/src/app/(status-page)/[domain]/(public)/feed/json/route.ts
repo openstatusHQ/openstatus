@@ -39,11 +39,14 @@ export async function GET(
     if (!page) return notFound();
 
     const res = {
+      title: page.title,
+      description: page.description,
       status: page.status,
       updatedAt: new Date(),
       monitors: page.monitors.map((monitor) => ({
         id: monitor.id,
         name: monitor.name,
+        description: monitor.description,
         status: monitor.status,
       })),
       maintenances: page.maintenances.map((maintenance) => ({
