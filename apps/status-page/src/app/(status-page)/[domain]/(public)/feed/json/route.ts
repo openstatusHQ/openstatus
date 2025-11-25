@@ -57,6 +57,7 @@ export async function GET(
         id: report.id,
         title: report.title,
         updateAt: report.updatedAt,
+        status: report.status,
         statusReportUpdates: report.statusReportUpdates.map((update) => ({
           id: update.id,
           status: update.status,
