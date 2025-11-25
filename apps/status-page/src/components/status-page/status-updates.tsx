@@ -130,7 +130,6 @@ export function StatusUpdates({
                 }`}
               />
             </div>
-
           </TabsContent>
           <TabsContent value="ssh" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">

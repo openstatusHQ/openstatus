@@ -83,7 +83,9 @@ export function Header(props: React.ComponentProps<"header">) {
   );
 
   const types = (
-    page?.workspacePlan === "free" ? ["rss", "ssh","json"] : ["email", "rss","json", "ssh"]
+    page?.workspacePlan === "free"
+      ? ["rss", "ssh", "json"]
+      : ["email", "rss", "json", "ssh"]
   ) satisfies ("email" | "rss" | "ssh" | "json")[];
 
   return (
