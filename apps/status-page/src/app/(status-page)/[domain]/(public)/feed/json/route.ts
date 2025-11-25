@@ -53,18 +53,18 @@ export async function GET(
         from: maintenance.from,
         to: maintenance.to,
       })),
-        statusReports: page.statusReports.map((report) => ({
-          id: report.id,
-          title: report.title,
-          updatedAt: report.updatedAt,
-          createdAt: report.createdAt,
-          statusReportUpdates: report.statusReportUpdates.map((update) => ({
-            id: update.id,
-            status: update.status,
-            message: update.message,
-            createdAt: update.createdAt,
-          })),
+      statusReports: page.statusReports.map((report) => ({
+        id: report.id,
+        title: report.title,
+        updatedAt: report.updatedAt,
+        createdAt: report.createdAt,
+        statusReportUpdates: report.statusReportUpdates.map((update) => ({
+          id: update.id,
+          status: update.status,
+          message: update.message,
+          createdAt: update.createdAt,
         })),
+      })),
     };
 
     return new Response(JSON.stringify(res), {
