@@ -9,6 +9,9 @@
     "format:fix": "pnpm biome check --fix --unsafe .",
     "lint:fix": "pnpm biome lint --write --unsafe .",
     "lint:turbo": "turbo run lint",
+    "lint:oxc": "oxlint .",
+    "lint:oxc-type": "oxlint . --type-aware",
+    "format:oxc": "oxfmt --check",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dev:status-page": "turbo run dev --filter='./apps/status-page' --filter='./packages/db'",
     "dev:dashboard": "turbo run dev --filter='./apps/dashboard' --filter='./packages/db'",
@@ -21,13 +24,24 @@
     "@turbo/gen": "1.13.3",
     "@types/node": "20.8.0",
     "knip": "5.16.0",
+    "oxfmt": "^0.15.0",
+    "oxlint": "1.30.0",
+    "oxlint-tsgolint": "0.8.2",
     "turbo": "2.3.2",
     "typescript": "5.7.2"
   },
   "packageManager": "pnpm@10.12.4",
   "pnpm": {
-    "onlyBuiltDependencies": ["@sentry/cli", "@swc/core", "sharp"]
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "@swc/core",
+      "sharp"
+    ]
   },
   "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
+  "workspaces": [
+    "apps/*",
+    "packages/**/*",
+    "packages/config/*"
+  ]
 }
