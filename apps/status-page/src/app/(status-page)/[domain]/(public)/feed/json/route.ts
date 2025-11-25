@@ -13,14 +13,14 @@ export const revalidate = 60;
 
 export async function GET(
   _request: Request,
-  props: { params: Promise<{ domain: string }> }
+  props: { params: Promise<{ domain: string }> },
 ) {
   try {
     const queryClient = getQueryClient();
     const { domain } = await props.params;
 
     const _page = await queryClient.fetchQuery(
-      trpc.page.getPageBySlug.queryOptions({ slug: domain })
+      trpc.page.getPageBySlug.queryOptions({ slug: domain }),
     );
 
     if (!_page) return notFound();
@@ -33,7 +33,7 @@ export async function GET(
     }
 
     const page = await queryClient.fetchQuery(
-      trpc.statusPage.get.queryOptions({ slug: domain })
+      trpc.statusPage.get.queryOptions({ slug: domain }),
     );
 
     if (!page) return notFound();
@@ -54,7 +54,7 @@ export async function GET(
         to: maintenance.to,
         updatedAt: maintenance.updatedAt,
         monitors: maintenance.maintenancesToMonitors.map(
-          (item) => item.monitor.id
+          (item) => item.monitor.id,
         ),
       })),
       statusReports: page.statusReports.map((report) => ({
