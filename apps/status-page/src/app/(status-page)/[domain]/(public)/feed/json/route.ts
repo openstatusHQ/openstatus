@@ -46,12 +46,13 @@ export async function GET(
         name: monitor.name,
         status: monitor.status,
       })),
-      maintenance: page.maintenances.map((maintenance) => ({
+      maintenances: page.maintenances.map((maintenance) => ({
         id: maintenance.id,
         name: maintenance.title,
         message: maintenance.message,
         from: maintenance.from,
         to: maintenance.to,
+        updatedAt: maintenance.updatedAt,
       })),
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
