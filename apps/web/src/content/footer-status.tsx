@@ -1,6 +1,6 @@
 import { getStatus } from "@openstatus/react";
 import Link from "next/link";
-import { cn } from "@openstatus/ui";
+import { cn } from "@/lib/utils";
 
 export async function FooterStatus() {
   const status = await getStatus("status");
