@@ -32,7 +32,7 @@ const resourcesFooterSection = {
     },
     {
       label: "External Status",
-      href: "/landing/external-status",
+      href: "/landing/status",
     },
     {
       label: "OSS Friends",

@@ -41,12 +41,13 @@
   --color-card-foreground: hsl(var(--card-foreground));
 
   --color-status-operational: hsl(var(--status-operational));
-
   --color-status-degraded: hsl(var(--status-degraded));
-
   --color-status-down: hsl(var(--status-down));
-
   --color-status-monitoring: hsl(var(--status-monitoring));
+
+  --color-success: hsl(var(--status-operational));
+  --color-warning: hsl(var(--status-degraded));
+  --color-info: hsl(var(--status-monitoring));
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -162,11 +163,6 @@
     --sh-jsxliterals: #6266d1;
     --sh-property: #e25a1c;
     --sh-entity: #e25a1c;
-
-    --color-success: var(--status-operational);
-    --color-warning: var(--status-degraded);
-    --color-info: var(--status-monitoring);
-
     --color-sh-class: var(--sh-class);
     --color-sh-identifier: var(--sh-identifier);
     --color-sh-sign: var(--sh-sign);
