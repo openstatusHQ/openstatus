@@ -4,7 +4,7 @@ import { db, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { createProtectedCookieKey } from "./lib/protected";
 
-export default async function middleware(req: NextRequest) {
+export default async function _proxy1(req: NextRequest) {
   const url = req.nextUrl.clone();
   const response = NextResponse.next();
   const cookies = req.cookies;
