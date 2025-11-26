@@ -70,7 +70,7 @@ export function Article({ post }: { post: Post }) {
               <span className="font-mono">{post.readingTime}</span>
               <span className="text-muted-foreground/70">&bull;</span>
               <Badge variant="outline" className="font-normal capitalize">
-                {post.tag}
+                {post.category}
               </Badge>
             </div>
           </div>

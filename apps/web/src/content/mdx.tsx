@@ -323,6 +323,14 @@ export const components = {
   Details, // Capital D for JSX usage with props
   details: Details, // lowercase for HTML tag replacement
   LatencyChartTable, // display table with latency metrics for a list of regions
+
+  // TODO: refactor the metric cards on the blog posts to use the new components
+  MetricsCard: () => null,
+  SimpleChart: () => null,
+  ImageWithCaption: () => null,
+  Tweet: () => null,
+  PricingSlider: () => null,
+  Callout: () => null,
 };
 
 export function CustomMDX(props: MDXRemoteProps) {

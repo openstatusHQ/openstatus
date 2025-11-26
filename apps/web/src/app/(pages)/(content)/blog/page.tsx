@@ -51,7 +51,7 @@ export default async function Post(props: {
     )
     .filter((post) => {
       if (!category) return true;
-      return post.tag === category;
+      return post.category === category;
     })
     .slice(
       currentPageIndex * ITEMS_PER_PAGE,
