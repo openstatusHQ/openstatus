@@ -152,6 +152,30 @@
     --status-operational: 131 39% 51%; /* Grass 10 */
     --status-down: 11 82% 59%; /* Tomato 10 */
     --status-monitoring: 210 100% 62%; /* Blue 10 */
+
+    --sh-class: #2d5e9d;
+    --sh-identifier: #354150;
+    --sh-sign: #8996a3;
+    --sh-string: #007f7a;
+    --sh-keyword: #e02518;
+    --sh-comment: #a19595;
+    --sh-jsxliterals: #6266d1;
+    --sh-property: #e25a1c;
+    --sh-entity: #e25a1c;
+
+    --color-success: var(--status-operational);
+    --color-warning: var(--status-degraded);
+    --color-info: var(--status-monitoring);
+
+    --color-sh-class: var(--sh-class);
+    --color-sh-identifier: var(--sh-identifier);
+    --color-sh-sign: var(--sh-sign);
+    --color-sh-string: var(--sh-string);
+    --color-sh-keyword: var(--sh-keyword);
+    --color-sh-comment: var(--sh-comment);
+    --color-sh-jsxliterals: var(--sh-jsxliterals);
+    --color-sh-property: var(--sh-property);
+    --color-sh-entity: var(--sh-entity);
   }
 
   .dark {
@@ -197,6 +221,10 @@
     --status-down: 11 82% 59%; /* Tomato 10 */
     --status-monitoring: 210 100% 62%; /* Blue 10 */
 
+    --sh-class: #4c97f8;
+    --sh-identifier: white;
+    --sh-keyword: #f47067;
+    --sh-string: #0fa295;
   }
 }
 

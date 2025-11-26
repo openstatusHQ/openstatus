@@ -31,7 +31,8 @@ function parseFrontmatter(fileContent: string) {
   const validatedMetadata = metadataSchema.safeParse(metadata);
 
   if (!validatedMetadata.success) {
-    throw new Error(`Invalid metadata in ${fileContent}`);
+    console.error(validatedMetadata.error);
+    throw new Error(`Invalid metadata ${fileContent}`);
   }
 
   return { metadata: validatedMetadata.data, content };
@@ -66,14 +67,12 @@ function getMDXDataFromFile(filePath: string) {
 export type MDXData = ReturnType<typeof getMDXDataFromFile>;
 
 export function getBlogPosts(): MDXData[] {
-  return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "blog")
-  );
+  return getMDXDataFromDir(path.join(process.cwd(), "src", "content", "posts"));
 }
 
 export function getChangelogPosts(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "changelog")
+    path.join(process.cwd(), "src", "content", "changelog")
   );
 }
 

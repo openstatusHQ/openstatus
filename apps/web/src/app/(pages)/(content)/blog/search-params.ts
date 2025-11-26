@@ -12,7 +12,7 @@ export const ITEMS_PER_PAGE = 10;
 export function getMaxPageIndex(category?: string | null) {
   let filteredPosts = allPosts;
   if (category) {
-    filteredPosts = allPosts.filter((post) => post.tag === category);
+    filteredPosts = allPosts.filter((post) => post.category === category);
   }
   return Math.max(0, Math.ceil(filteredPosts.length / ITEMS_PER_PAGE) - 1);
 }
@@ -30,7 +30,7 @@ const parseAsPageIndex = createParser({
 
 export const searchParamsParsers = {
   pageIndex: parseAsPageIndex.withDefault(0),
-  category: parseAsStringEnum(allPosts.map((post) => post.tag)),
+  category: parseAsStringEnum(allPosts.map((post) => post.category)),
 };
 
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

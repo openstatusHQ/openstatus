@@ -98,7 +98,7 @@ export function ContentListItemTitle({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      className={cn("text-foreground tracking-tight", className)}
+      className={cn("text-foreground tracking-tight truncate", className)}
       {...props}
     >
       {children}
@@ -125,7 +125,10 @@ export function ContentListItemDate({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      className={cn("text-muted-foreground tabular-nums", className)}
+      className={cn(
+        "text-muted-foreground tabular-nums text-nowrap",
+        className
+      )}
       {...props}
     >
       {children}

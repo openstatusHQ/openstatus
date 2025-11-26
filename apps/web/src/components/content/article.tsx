@@ -7,6 +7,28 @@ import { Avatar, AvatarFallback, AvatarImage, Badge } from "@openstatus/ui";
 import { Mdx } from "@/components/content/mdx";
 import { formatDate } from "@/lib/utils";
 
+function getAuthor(post: Post) {
+  if (post.author.name.includes("Maximilian")) {
+    return {
+      name: "Maximilian Kaske",
+      url: "https://mxkaske.dev",
+      image: "h/assets/authors/max.png",
+    };
+  }
+  if (post.author.name.includes("Thibault")) {
+    return {
+      name: "Thibault Le Ouay Ducasse",
+      url: "https://thibaultleouay.dev",
+      image: "h/assets/authors/thibault.jpeg",
+    };
+  }
+  return {
+    name: "openstatus",
+    url: "https://openstatus.dev",
+    image: "https://www.openstatus.dev/assets/logos/OpenStatus-Logo.svg",
+  };
+}
+
 export function Article({ post }: { post: Post }) {
   const getNameInitials = (name: string) => {
     const individualNames = name.split(" ");
@@ -14,6 +36,8 @@ export function Article({ post }: { post: Post }) {
       individualNames[0][0] + individualNames[individualNames.length - 1][0]
     );
   };
+
+  const author = getAuthor(post);
 
   return (
     <article className="relative mx-auto flex max-w-prose flex-col gap-8">
@@ -29,16 +53,16 @@ export function Article({ post }: { post: Post }) {
         </div>
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage src={post.author.avatar} />
-            <AvatarFallback>{getNameInitials(post.author.name)}</AvatarFallback>
+            <AvatarImage src={author.image} />
+            <AvatarFallback>{getNameInitials(author.name)}</AvatarFallback>
           </Avatar>
           <div className="font-light text-muted-foreground text-sm">
             <Link
-              href={post.author.url ?? "#"}
+              href={author.url ?? "#"}
               target="_blank"
               className="cursor-pointer font-medium text-foreground hover:underline"
             >
-              {post.author.name}
+              {author.name}
             </Link>
             <div className="flex flex-wrap items-center gap-1.5">
               <time className="font-mono">{formatDate(post.publishedAt)}</time>

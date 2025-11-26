@@ -12,7 +12,10 @@ export function BlogCategory() {
       <span>{" | "}</span>
       {categories.map((category, index) => (
         <Fragment key={category}>
-          <Link href={`/landing/blog/category/${category.toLowerCase()}`}>
+          <Link
+            href={`/landing/blog/category/${category.toLowerCase()}`}
+            className="capitalize"
+          >
             {category}
           </Link>
           {index < categories.length - 1 ? <span>{" | "}</span> : null}

@@ -11,7 +11,7 @@ import { allPosts } from "content-collections";
 import { useQueryStates } from "nuqs";
 import { searchParamsParsers } from "../search-params";
 
-const categories = new Set(allPosts.map((post) => post.tag));
+const categories = new Set(allPosts.map((post) => post.category));
 
 export function CategorySelect() {
   const [{ category }, setSearchParams] = useQueryStates(searchParamsParsers, {
