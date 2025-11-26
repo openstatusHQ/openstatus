@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import StatusPlay from "./_components/status-play";
+import { env } from "@/env";
 
 export const metadata: Metadata = {
   title: "Status Page Preview",
@@ -15,8 +16,7 @@ export const revalidate = 600;
 
 export default async function PlayPage() {
   const hasValidApiKey =
-    process.env.TINY_BIRD_API_KEY &&
-    process.env.TINY_BIRD_API_KEY !== "tiny-bird-api-key";
+    env.TINY_BIRD_API_KEY && env.TINY_BIRD_API_KEY !== "tiny-bird-api-key";
 
   if (!hasValidApiKey) {
     return <div>Preview requires valid API configuration</div>;
