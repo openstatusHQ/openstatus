@@ -59,14 +59,14 @@ export const monitor = sqliteTable("monitor", {
   retry: integer("retry").default(3),
 
   followRedirects: integer("follow_redirects", { mode: "boolean" }).default(
-    true
+    true,
   ),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
@@ -97,19 +97,19 @@ export const monitorsToPages = sqliteTable(
       .notNull()
       .references(() => page.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
     order: integer("order").default(0),
 
     monitorGroupId: integer("monitor_group_id").references(
       () => monitorGroup.id,
-      { onDelete: "cascade" }
+      { onDelete: "cascade" },
     ),
     groupOrder: integer("group_order").default(0),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.monitorId, t.pageId] }),
-  })
+  }),
 );
 
 export const monitorsToPagesRelation = relations(
@@ -127,5 +127,5 @@ export const monitorsToPagesRelation = relations(
       fields: [monitorsToPages.monitorGroupId],
       references: [monitorGroup.id],
     }),
-  })
+  }),
 );

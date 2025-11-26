@@ -1,6 +1,6 @@
+import { env } from "@/env";
 import type { Metadata } from "next";
 import StatusPlay from "./_components/status-play";
-import { env } from "@/env";
 
 export const metadata: Metadata = {
   title: "Status Page Preview",

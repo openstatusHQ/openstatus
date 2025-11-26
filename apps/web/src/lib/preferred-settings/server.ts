@@ -12,4 +12,6 @@ export async function getPreferredSettings() {
   return settings.data;
 }
 
-export type PreferredSettings = Awaited<ReturnType<typeof getPreferredSettings>>;
+export type PreferredSettings = Awaited<
+  ReturnType<typeof getPreferredSettings>
+>;

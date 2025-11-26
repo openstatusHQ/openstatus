@@ -49,17 +49,17 @@ export const incidentTable = sqliteTable(
     autoResolved: integer("auto_resolved", { mode: "boolean" }).default(false),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
   },
   (table) => {
     return {
       unique: unique().on(table.monitorId, table.startedAt),
     };
-  }
+  },
 );
 
 /**
@@ -118,5 +118,5 @@ export const incidentRelations = new Proxy(
       }
       return Reflect.getOwnPropertyDescriptor(_incidentRelations, prop);
     },
-  }
+  },
 );
