@@ -194,6 +194,7 @@ export const config = {
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
   ],
+
   unstable_allowDynamic: [
     // use a glob to allow anything in the function-bind 3rd party module
     // "**/packages/analytics/src/**",
@@ -209,5 +210,4 @@ export const config = {
     // "**/node_modules/.pnpm/**/function-bind/**",
     // "../../packages/analytics/src/index.ts",
   ],
-  runtime: "nodejs",
 };

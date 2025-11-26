@@ -41,7 +41,7 @@ export default async function Page(props: {
   const params = await props.params;
   const id = params.id;
   const search = searchParamsCache.parse(searchParams);
-  const preferredSettings = getPreferredSettings();
+  const preferredSettings = await getPreferredSettings();
 
   const monitor = await api.monitor.getPublicMonitorById.query({
     id: Number(id),
