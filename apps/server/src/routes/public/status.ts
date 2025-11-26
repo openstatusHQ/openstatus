@@ -157,7 +157,6 @@ async function getStatusPageData(pageId: number) {
   ]);
 
   return {
-    // monitorData,
     pageStatusReportData,
     monitorStatusReportData,
     maintenanceData,
