@@ -268,8 +268,8 @@
 /* Typography */
 
 ::selection {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
 }
 
 .prose {
