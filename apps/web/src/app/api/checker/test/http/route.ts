@@ -7,7 +7,7 @@ import { checkRegion } from "@/components/ping-response-analysis/utils";
 import { httpPayloadSchema } from "@openstatus/utils";
 import { isAnInvalidTestUrl } from "../../utils";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const preferredRegion = "auto";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
