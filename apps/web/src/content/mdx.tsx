@@ -1,14 +1,14 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { Button } from "@openstatus/ui";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
+import Link from "next/link";
 import React from "react";
 import { highlight } from "sugar-high";
-import { Button } from "@openstatus/ui";
-import { cn } from "@/lib/utils";
 import { CopyButton } from "./copy-button";
-import { LatencyChartTable } from "./latency-chart-table";
 import { ImageZoom } from "./image-zoom";
+import { LatencyChartTable } from "./latency-chart-table";
 
 function Table({
   data,
@@ -83,7 +83,7 @@ function Grid({
         colsClass[cols],
         topBorderClass[cols],
         leftBorderClass[cols],
-        className
+        className,
       )}
     >
       {children}
@@ -110,7 +110,7 @@ function CustomLink(props: React.ComponentProps<"a">) {
 }
 
 function ButtonLink(
-  props: React.ComponentProps<typeof Button> & { href: string }
+  props: React.ComponentProps<typeof Button> & { href: string },
 ) {
   return (
     <Button
@@ -133,6 +133,7 @@ function Code({ children, className, ...props }: React.ComponentProps<"code">) {
     const codeHTML = highlight(children?.toString() ?? "");
     return (
       <code
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{ __html: codeHTML }}
         className={className}
         {...props}
@@ -204,7 +205,7 @@ function createHeading(level: number) {
           className: "anchor",
         }),
       ],
-      children
+      children,
     );
   };
 
@@ -238,11 +239,12 @@ function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
       <figure>
         <ImageZoom
           backdropClassName={cn(
-            '[&_[data-rmiz-modal-overlay="visible"]]:bg-background/80'
+            '[&_[data-rmiz-modal-overlay="visible"]]:bg-background/80',
           )}
           zoomMargin={16}
         >
-          <img className={className} {...props} />
+          {/* biome-ignore lint/a11y/useAltText: <explanation> */}
+          <img className={className} alt={alt ?? "image"} {...props} />
         </ImageZoom>
         <figcaption>{alt}</figcaption>
       </figure>
@@ -277,7 +279,7 @@ function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
     <figure>
       <ImageZoom
         backdropClassName={cn(
-          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80'
+          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
         )}
         zoomMargin={16}
       >
@@ -290,7 +292,7 @@ function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
       </ImageZoom>
       <ImageZoom
         backdropClassName={cn(
-          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80'
+          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
         )}
         zoomMargin={16}
       >

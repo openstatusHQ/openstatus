@@ -1,10 +1,10 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import type * as React from "react";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 export function ThemeToggle({
   className,
@@ -47,13 +47,22 @@ export function ThemeToggle({
       )}
       {...props}
     >
-      <button data-active={theme === "light"} onClick={() => setTheme("light")}>
+      <button
+        type="button"
+        data-active={theme === "light"}
+        onClick={() => setTheme("light")}
+      >
         [light]
       </button>
-      <button data-active={theme === "dark"} onClick={() => setTheme("dark")}>
+      <button
+        type="button"
+        data-active={theme === "dark"}
+        onClick={() => setTheme("dark")}
+      >
         [dark]
       </button>
       <button
+        type="button"
         data-active={theme === "system"}
         onClick={() => setTheme("system")}
       >

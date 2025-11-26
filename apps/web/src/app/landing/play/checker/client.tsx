@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { cn } from "@/lib/utils";
+import { type Region, regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
 import {
@@ -10,9 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui";
-import { regionDict, type Region } from "@openstatus/regions";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { createContext, useContext, useState } from "react";
 
 type Values = { region: string; latency: number; status: number };
 
@@ -78,7 +78,7 @@ export function Form() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         <div className="col-span-1">
           <Select name="method" defaultValue="GET">
             <SelectTrigger className="h-auto! w-full rounded-none p-4 text-base">
@@ -155,7 +155,7 @@ export function ResultTable() {
                         "size-4",
                         STATUS_CODES[
                           value.status.toString()[0] as keyof typeof STATUS_CODES
-                        ]
+                        ],
                       )}
                     />
                   </td>

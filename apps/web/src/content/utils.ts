@@ -72,19 +72,19 @@ export function getBlogPosts(): MDXData[] {
 
 export function getChangelogPosts(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "changelog")
+    path.join(process.cwd(), "src", "content", "changelog"),
   );
 }
 
 export function getProductPages(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "product")
+    path.join(process.cwd(), "src", "content", "pages", "product"),
   );
 }
 
 export function getUnrelatedPages(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "unrelated")
+    path.join(process.cwd(), "src", "content", "pages", "unrelated"),
   );
 }
 
@@ -96,8 +96,8 @@ export function getUnrelatedPage(slug: string): MDXData {
       "content",
       "pages",
       "unrelated",
-      `${slug}.mdx`
-    )
+      `${slug}.mdx`,
+    ),
   );
 }
 
@@ -107,25 +107,25 @@ export function getMainPages(): MDXData[] {
 
 export function getComparePages(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "compare")
+    path.join(process.cwd(), "src", "content", "pages", "compare"),
   );
 }
 
 export function getHomePage(): MDXData {
   return getMDXDataFromFile(
-    path.join(process.cwd(), "src", "content", "pages", "home.mdx")
+    path.join(process.cwd(), "src", "content", "pages", "home.mdx"),
   );
 }
 
 export function getToolsPages(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "tools")
+    path.join(process.cwd(), "src", "content", "pages", "tools"),
   );
 }
 
 export function getToolsPage(slug: string): MDXData {
   return getMDXDataFromFile(
-    path.join(process.cwd(), "src", "content", "pages", "tools", `${slug}.mdx`)
+    path.join(process.cwd(), "src", "content", "pages", "tools", `${slug}.mdx`),
   );
 }
 

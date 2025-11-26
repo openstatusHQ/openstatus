@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getChangelogPosts } from "@/content/utils";
+import { notFound } from "next/navigation";
 
 const baseUrl = "http://localhost:3000";
 
@@ -74,6 +74,7 @@ export default async function Changelog({
       <script
         type="application/ld+json"
         suppressHydrationWarning
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",

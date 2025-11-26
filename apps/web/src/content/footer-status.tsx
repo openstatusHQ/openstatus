@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils";
 import { getStatus } from "@openstatus/react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 export async function FooterStatus() {
   const status = await getStatus("status");
@@ -9,7 +9,7 @@ export async function FooterStatus() {
       href="https://status.openstatus.dev"
       className={cn(
         "flex w-full items-center gap-2 p-4 hover:bg-muted",
-        STATUS[status.status].color
+        STATUS[status.status].color,
       )}
     >
       {STATUS[status.status].label}

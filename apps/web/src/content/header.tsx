@@ -1,17 +1,17 @@
-import Link from "next/link";
+import { headerLinks } from "@/data/content";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@openstatus/ui";
-import { headerLinks } from "@/data/content";
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@openstatus/ui";
+import Link from "next/link";
 
 export function Header() {
   return (
@@ -27,14 +27,14 @@ export function Header() {
               className="rounded-full border border-border dark:border-foreground"
             />
             <span className="hidden sm:block">openstatus</span>
-            <div className="absolute bottom-0 right-0.5 group-hover:block hidden">
+            <div className="absolute right-0.5 bottom-0 hidden group-hover:block">
               <span className="text-[10px] text-muted-foreground/50">
                 [right click]
               </span>
             </div>
           </Link>
         </ContextMenuTrigger>
-        <ContextMenuContent className="rounded-none min-w-[var(--radix-dropdown-menu-trigger-width)]">
+        <ContextMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-none">
           <ContextMenuItem className="rounded-none px-2 py-3 font-mono" asChild>
             {/* FIXME: use relative path */}
             <a
@@ -59,7 +59,7 @@ export function Header() {
           <DropdownMenuTrigger className="group flex items-center gap-1 data-[state=open]:bg-muted">
             <span className="w-full truncate text-left">{section.label}</span>
             <span
-              className="text-muted-foreground relative top-[1px] text-[10px] shrink-0 origin-center transition duration-300 group-data-[state=open]:rotate-180 group-data-[state=open]:text-foreground group-hover:text-foreground"
+              className="relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground group-data-[state=open]:rotate-180 group-data-[state=open]:text-foreground"
               aria-hidden="true"
             >
               ▲
@@ -67,7 +67,7 @@ export function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
-            className="rounded-none min-w-[var(--radix-dropdown-menu-trigger-width)]"
+            className="min-w-[var(--radix-dropdown-menu-trigger-width)] rounded-none"
             alignOffset={0}
             sideOffset={0}
           >

@@ -3,7 +3,7 @@ import {
   getProductPages,
   getToolsPages,
 } from "@/content/utils";
-import { Region } from "@openstatus/regions";
+import type { Region } from "@openstatus/regions";
 
 const products = getProductPages();
 

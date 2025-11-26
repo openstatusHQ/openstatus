@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
 import {
   Dialog,
@@ -12,8 +13,7 @@ import {
 } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
-import { regionDict } from "@openstatus/regions";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const STATUS_CODES = {
   "1": "text-muted-foreground",
@@ -103,7 +103,7 @@ export function Table() {
                   region.flag,
                   region.continent,
                 ].some((value) =>
-                  value?.toLowerCase().includes(input.toLowerCase())
+                  value?.toLowerCase().includes(input.toLowerCase()),
                 );
               })
               .sort((a, b) => {
@@ -143,7 +143,7 @@ export function Table() {
                           className={cn(
                             STATUS_CODES[
                               status.toString()[0] as keyof typeof STATUS_CODES
-                            ]
+                            ],
                           )}
                         >
                           {status}
@@ -181,7 +181,7 @@ export function Table() {
                       </tr>
                     </HeadersDialog>
                   );
-                }
+                },
               )}
           </tbody>
         </table>
@@ -201,7 +201,7 @@ function TableSort({
       variant="ghost"
       className={cn(
         "h-auto! w-full rounded-none p-4 text-base md:text-base",
-        className
+        className,
       )}
       {...props}
     >
@@ -210,10 +210,10 @@ function TableSort({
         <span
           aria-hidden="true"
           className={cn(
-            "text-[8px] shrink-0",
+            "shrink-0 text-[8px]",
             direction === "asc"
               ? "text-accent-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           ▲
@@ -221,10 +221,10 @@ function TableSort({
         <span
           aria-hidden="true"
           className={cn(
-            "text-[8px] shrink-0",
+            "shrink-0 text-[8px]",
             direction === "desc"
               ? "text-accent-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           ▼

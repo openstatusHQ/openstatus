@@ -1,11 +1,11 @@
 import { components } from "@/content/mdx";
+import { z } from "zod";
 import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
-import { z } from "zod";
 
 const OSSFriendSchema = z.object({
   href: z.string(),

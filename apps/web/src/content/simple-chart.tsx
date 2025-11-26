@@ -1,13 +1,13 @@
 "use client";
 
-import { Line, LineChart, XAxis } from "recharts";
+import { cn } from "@/lib/utils";
 import type { ChartConfig } from "@openstatus/ui";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui";
-import { cn } from "@/lib/utils";
+import { Line, LineChart, XAxis } from "recharts";
 
 const chartConfig = {
   latency: {

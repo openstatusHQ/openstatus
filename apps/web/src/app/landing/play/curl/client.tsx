@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@openstatus/ui";
 import { Checkbox } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 import { Textarea } from "@openstatus/ui";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { Fragment, useState } from "react";
 
 type Values = {
   url: string;
@@ -111,7 +111,7 @@ export function Form() {
                     setValue((v) => ({
                       ...v,
                       headers: v.headers.map((h, i) =>
-                        i === index ? { ...h, key: e.target.value } : h
+                        i === index ? { ...h, key: e.target.value } : h,
                       ),
                     }))
                   }
@@ -124,7 +124,7 @@ export function Form() {
                     setValue((v) => ({
                       ...v,
                       headers: v.headers.map((h, i) =>
-                        i === index ? { ...h, value: e.target.value } : h
+                        i === index ? { ...h, value: e.target.value } : h,
                       ),
                     }))
                   }

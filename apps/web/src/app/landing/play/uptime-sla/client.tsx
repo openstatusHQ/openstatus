@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
 import {
@@ -9,6 +8,7 @@ import {
   Tabs as TabsPrimitive,
   TabsTrigger,
 } from "@openstatus/ui";
+import { useState } from "react";
 
 const periods = ["days", "weeks", "months", "years"] as const;
 
@@ -57,7 +57,7 @@ function parseDowntimeToSeconds(downtime: string): number {
 // Calculate uptime percentage from downtime seconds and period
 function calculateUptimePercentage(
   downtimeSeconds: number,
-  periodSeconds: number
+  periodSeconds: number,
 ): number {
   if (downtimeSeconds >= periodSeconds) return 0;
   const uptimeSeconds = periodSeconds - downtimeSeconds;
@@ -196,7 +196,7 @@ export function Calculation() {
             const periodSeconds = periodsInSeconds[period];
             const uptimePercentage = calculateUptimePercentage(
               downtimeSeconds,
-              periodSeconds
+              periodSeconds,
             );
 
             return (

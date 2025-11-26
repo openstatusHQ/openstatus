@@ -22,7 +22,7 @@ export function LatencyChartTable({
   caption = "A list of all the selected regions.",
 }: LatencyChartTableProps) {
   const data = JSON.parse(
-    fs.readFileSync(`${process.cwd()}/public${staticFile}`, "utf8")
+    fs.readFileSync(`${process.cwd()}/public${staticFile}`, "utf8"),
   ) as LatencyChartTableData;
   const { regions, data: chartData, metricsByRegion } = data;
 

@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { formatDate, type MDXData } from "@/content/utils";
+import { type MDXData, formatDate } from "@/content/utils";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function ContentList({
   data,
@@ -65,7 +65,7 @@ export function ContentListItem({
     <div
       className={cn(
         "flex w-full flex-col space-x-0 md:flex-row md:space-x-2",
-        className
+        className,
       )}
       {...props}
     >
@@ -98,7 +98,7 @@ export function ContentListItemTitle({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      className={cn("text-foreground tracking-tight truncate", className)}
+      className={cn("truncate text-foreground tracking-tight", className)}
       {...props}
     >
       {children}
@@ -126,8 +126,8 @@ export function ContentListItemDate({
   return (
     <span
       className={cn(
-        "text-muted-foreground tabular-nums text-nowrap",
-        className
+        "text-nowrap text-muted-foreground tabular-nums",
+        className,
       )}
       {...props}
     >

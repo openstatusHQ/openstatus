@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
+import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
   const pages = getMainPages();

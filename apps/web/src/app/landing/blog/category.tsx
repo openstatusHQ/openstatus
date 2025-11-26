@@ -1,6 +1,6 @@
+import { getBlogPosts } from "@/content/utils";
 import Link from "next/link";
 import { Fragment } from "react";
-import { getBlogPosts } from "@/content/utils";
 
 const allBlogs = getBlogPosts();
 const categories = [...new Set(allBlogs.map((blog) => blog.metadata.category))];

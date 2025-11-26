@@ -1,15 +1,15 @@
+import {
+  type AtlassianDescriptionEnum,
+  externalStatusArray,
+} from "@/app/(pages)/status/utils";
 import { components } from "@/content/mdx";
+import { env } from "@/env";
 import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
-import { env } from "@/env";
-import {
-  type AtlassianDescriptionEnum,
-  externalStatusArray,
-} from "@/app/(pages)/status/utils";
 
 export default async function Page() {
   const res = await fetch(env.EXTERNAL_API_URL);

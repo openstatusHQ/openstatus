@@ -1,5 +1,5 @@
-import NextLink from "next/link";
 import { cn } from "@/lib/utils";
+import NextLink from "next/link";
 
 // TODO: we could add cva variants for the link
 
