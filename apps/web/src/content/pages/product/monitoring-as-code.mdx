@@ -1,0 +1,64 @@
+---
+title: "Monitoring as Code"
+publishedAt: "2025-11-10"
+author: "Maximilian Kaske"
+description: "Openstatus gives you the possibility to store your monitoring as code."
+category: "Product"
+---
+
+## What are the benefits of monitoring as code?
+
+When you set your monitoring from an external providers. You can set and forget it easily, with monitoring as code your monitoring lives in your git repository. All your team knows about it.
+
+**Version controlling** the changes helps you keep track changes over time, review the monitors or roll back to previous configs.
+
+## Why choose openstatus for uptime monitoring as code?
+
+### YAML + CLI
+
+We use `YAML` to define your monitoring configuration. `YAML` is a human friendly data serialization standard that can be used in conjunction with all programming languages and is often used to write configuration files.
+
+```yaml
+# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+uptime-monitor:
+  name: "Graphql"
+  description: "GitHub GraphQL API"
+  frequency: "10m"
+  active: true
+  regions:
+    - iad
+    - ams
+    - syd
+    - jnb
+    - gru
+  retry: 3
+  kind: http
+  request:
+    url: https://api.github.com/graphql
+    method: POST
+    headers:
+      User-Agent: OpenStatus
+      Authorization: Bearer YOUR_TOKEN_HERE
+    body: |
+      {
+        "query": "query { viewer { login }}"
+      }
+```
+
+Once set, apply your changes via [CLI](https://docs.openstatus.dev/tutorial/get-started-with-openstatus-cli/):
+
+```bash
+openstatus monitors apply
+```
+
+Check our [GitHub repository](https://github.com/openstatusHQ/cli-template) to see the `YAML` templates of how to monitor **MCP**, **GraphQL**,... endpoints.
+
+### Terraform Provider
+
+You can define monitors as **Terraform resources**, integrate with your existing IaC setup, and let Terraform handle the state management.
+
+Check out the [Terraform Provider](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest) on the Terraform Registry.
+
+### Team Collaboration
+
+We are not limiting our paid plans to any number of members. Let everyone in your team update your monitors and check the responses in the dashboard. Read more [about api monitoring](/landing/api-monitoring).

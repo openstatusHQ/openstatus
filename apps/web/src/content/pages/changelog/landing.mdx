@@ -1,0 +1,135 @@
+---
+title: "Showcase your uptime with a status page"
+publishedAt: "2025-11-10"
+author: "Maximilian Kaske"
+description: "Proactively monitor your API and website worldwide to detect and resolve performance issues and downtime, ensuring your users are never impacted."
+category: "Product"
+---
+
+## Used by awesome folks
+
+<Grid cols={4}>
+  {[
+    "Cal.com",
+    "Tigris",
+    "Documenso",
+    "Superwall",
+    "Polar",
+    "Midday",
+    "OpenPanel",
+    "Probo",
+    "Hanko",
+    "...",
+  ].map((company, index) => (
+    <a key={index} href="/">
+      {company}
+    </a>
+  ))}
+</Grid>
+
+## Monitoring
+
+<Grid cols={3}>
+  <div>
+  
+**Latency Monitoring**
+
+Monitor the latency of your endpoints from all over the world. We support all the continents.
+
+[Read more](/)
+
+  </div>
+  <div>
+
+**Monitor Anything**
+
+API, DNS, domain, SSL, SMTP, ping, webpage... We can monitor it all.
+
+[Read more](/)
+
+  </div>
+    <div>
+
+**Monitor Anywhere**
+
+With our **Private Locations** deploy our probes on your personal cloud.
+
+[Read more](/)
+
+  </div>
+    <div>
+
+**Notifications**
+
+Choose from different providers and get notified whenever a monitor is degraded/down/recovered.
+
+[Read more](/)
+
+  </div>
+  <div>
+
+**OpenTelemetry**
+
+Export your synthetic monitoring metrics to your observability stack.
+
+[Read more](/)
+
+  </div>
+</Grid>
+
+## Status Pages
+
+<Grid cols={3}>
+  <div>
+  
+**Themes**
+
+Make it match your brand by contributing your own theme to the community.
+
+[Read more](/)
+
+  </div>
+  <div>
+
+**Custom Domain**
+
+Switch status page, while keeping the same domain.
+
+[Read more](/)
+
+  </div>
+  <div>
+
+**Subscriptions**
+
+Let your users subscribe to your status page, to automatically receive updates about the status of your services.
+
+[Read more](/)
+
+  </div>
+</Grid>
+
+## Monitoring as Code
+
+Apply changes to your monitors directly from the terminal.
+
+```bash
+$ openstatus monitors apply
+```
+
+Use version control to keep track of all your changes.
+
+```yaml
+"openstat.us":
+  active: true
+  frequency: 1m
+  kind: http
+  name: openstat.us
+  regions:
+    - ams
+    - iad
+    - syd
+  request:
+    method: GET
+    url: https://openstat.us
+```

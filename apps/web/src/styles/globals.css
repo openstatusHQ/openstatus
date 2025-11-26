@@ -240,3 +240,211 @@
     display: none;
   }
 }
+
+/* Typography */
+
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.prose {
+  @apply text-foreground/80;
+}
+
+.prose .anchor {
+  @apply absolute invisible no-underline;
+
+  margin-left: -1em;
+  padding-right: 0.5em;
+  width: 80%;
+  max-width: 700px;
+  cursor: pointer;
+}
+
+.anchor:hover {
+  @apply visible;
+}
+
+.prose a {
+  @apply text-foreground underline transition-all decoration-muted-foreground/50 underline-offset-2 decoration-2 hover:decoration-muted-foreground;
+}
+
+.prose .anchor:after {
+  @apply text-muted-foreground;
+  content: '#';
+}
+
+.prose *:hover > .anchor {
+  @apply visible;
+}
+
+.prose pre {
+  @apply relative bg-muted overflow-x-auto border border-border py-2.5 px-3.5 text-sm;
+}
+
+.prose code {
+  @apply px-1 py-0.5 bg-muted;
+}
+
+.prose pre code {
+  @apply p-0;
+  border: initial;
+  line-height: 1.5;
+}
+
+.prose code span {
+  @apply font-medium;
+}
+
+.prose img {
+  /* Don't apply styles to next/image */
+  @apply m-0;
+}
+
+.prose p {
+  @apply my-4 leading-7;
+}
+
+.prose h1 {
+  @apply text-3xl text-foreground font-medium tracking-tight my-4 relative;
+}
+
+
+.prose h2 {
+  @apply text-2xl text-foreground font-medium tracking-tight my-4 relative;
+}
+
+.prose h3 {
+  @apply text-xl text-foreground font-medium tracking-tight my-4 relative;
+}
+
+.prose h4 {
+  @apply text-lg text-foreground font-medium tracking-tight my-4 relative;
+}
+
+.prose hr {
+  @apply my-4 border-border;
+}
+
+.prose strong {
+  @apply text-foreground font-semibold;
+}
+
+.prose blockquote {
+  @apply border-l-2 border-foreground/50 pl-4;
+}
+
+.prose blockquote p::before {
+  content: '"';
+  @apply text-muted-foreground;
+}
+
+.prose blockquote p::after {
+  content: '"';
+  @apply text-muted-foreground;
+}
+
+.prose figure {
+  @apply my-4;
+}
+
+.prose figure img {
+  @apply aspect-video object-cover border border-border;
+}
+
+.prose figure figcaption {
+  @apply text-sm text-muted-foreground not-empty:mt-1;
+}
+
+.prose em {
+  @apply text-foreground italic;
+}
+
+.prose ul {
+  list-style-type: "- ";
+  @apply pl-4 list-outside marker:text-muted-foreground;
+}
+
+.prose ol {
+  /* NOTE: maybe replace by default pl and list-inside */
+  @apply pl-4 list-outside list-decimal marker:text-muted-foreground;
+}
+
+.prose li {
+  @apply leading-7;
+}
+
+.prose details {
+  @apply border border-border p-4 my-4;
+}
+
+.prose details p:last-child {
+  @apply mb-0;
+}
+
+.prose details summary {
+  @apply cursor-pointer font-medium text-foreground select-none;
+}
+
+.prose details summary:hover {
+  @apply bg-muted;
+}
+
+.prose details summary::marker {
+  @apply mr-1;
+}
+
+.prose details[open] summary {
+  @apply mb-2;
+}
+
+.prose form {
+  @apply my-4;
+}
+
+.prose form label {
+  @apply text-foreground font-medium;
+}
+
+/* Wrapper for scrollable tables */
+.prose .table-wrapper {
+  @apply w-full overflow-x-auto my-4;
+}
+
+.prose table {
+  @apply w-full border-collapse border border-border text-foreground;
+}
+
+.prose table th {
+  @apply font-medium bg-muted/50 p-4 text-left border border-border;
+}
+
+.prose table td {
+  @apply font-normal p-4 border border-border;
+}
+
+.prose table caption {
+  @apply text-muted-foreground text-sm caption-bottom mt-4;
+}
+
+pre::-webkit-scrollbar {
+  display: none;
+}
+
+pre {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Remove Safari input shadow on mobile */
+input[type='text'],
+input[type='email'] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.title {
+  text-wrap: balance;
+}

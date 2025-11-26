@@ -1,0 +1,242 @@
+import { components } from "@/content/mdx";
+import {
+  ContentBoxDescription,
+  ContentBoxLink,
+  ContentBoxTitle,
+  ContentBoxUrl,
+} from "../content-box";
+
+export default function Page() {
+  return (
+    <section className="prose dark:prose-invert max-w-none">
+      <h1>OSS Friends</h1>
+      <components.Grid cols={2}>
+        {OSS_FRIENDS.data.map((friend) => (
+          <ContentBoxLink key={friend.href} href={friend.href}>
+            <ContentBoxTitle>{friend.name}</ContentBoxTitle>
+            <ContentBoxDescription>{friend.description}</ContentBoxDescription>
+            <ContentBoxUrl url={friend.href} />
+          </ContentBoxLink>
+        ))}
+      </components.Grid>
+    </section>
+  );
+}
+
+const OSS_FRIENDS = {
+  data: [
+    {
+      name: "Activepieces",
+      description:
+        "Activepieces is an open source, no-code, AI-first business automation tool. Alternative to Zapier, Make and Workato.",
+      href: "https://activepieces.com",
+    },
+    {
+      name: "Appsmith",
+      description: "Build custom software on top of your data.",
+      href: "https://www.appsmith.com",
+    },
+    {
+      name: "Aptabase",
+      description:
+        "Analytics for Apps, open source, simple and privacy-friendly. SDKs for Swift, React Native, Electron, Flutter and many others.",
+      href: "https://aptabase.com",
+    },
+    {
+      name: "Argos",
+      description:
+        "Argos provides the developer tools to debug tests and detect visual regressions.",
+      href: "https://argos-ci.com",
+    },
+    {
+      name: "Bifrost",
+      description:
+        "Fastest LLM gateway with adaptive load balancer, cluster mode, guardrails, 1000+ models support & <100 µs overhead at 5k RPS.",
+      href: "https://www.getmaxim.ai/bifrost",
+    },
+    {
+      name: "Cal.com",
+      description:
+        "Cal.com is a scheduling tool that helps you schedule meetings without the back-and-forth emails.",
+      href: "https://cal.com",
+    },
+    {
+      name: "Cap",
+      description:
+        "Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share securely in seconds.",
+      href: "https://cap.so",
+    },
+    {
+      name: "ClassroomIO.com",
+      description:
+        "ClassroomIO is a no-code tool that allows you build and scale your own teaching platform with ease.",
+      href: "https://www.classroomio.com",
+    },
+    {
+      name: "Documenso",
+      description:
+        "The Open-Source DocuSign Alternative. We aim to earn your trust by enabling you to self-host the platform and examine its inner workings.",
+      href: "https://documenso.com",
+    },
+    {
+      name: "Formbricks",
+      description:
+        "Open source survey software and Experience Management Platform. Understand your customers, keep full control over your data.",
+      href: "https://formbricks.com",
+    },
+    {
+      name: "Ghostfolio",
+      description:
+        "Ghostfolio is a privacy-first, open source dashboard for your personal finances. Designed to simplify asset tracking and empower informed investment decisions.",
+      href: "https://ghostfol.io",
+    },
+    {
+      name: "Hanko",
+      description:
+        "Open-source authentication and user management for the passkey era. Integrated in minutes, for web and mobile apps.",
+      href: "https://www.hanko.io",
+    },
+    {
+      name: "Hook0",
+      description:
+        "Open-Source Webhooks-as-a-service (WaaS) that makes it easy for developers to send webhooks.",
+      href: "https://www.hook0.com/",
+    },
+    {
+      name: "Inbox Zero",
+      description:
+        "Inbox Zero makes it easy to clean up your inbox and reach inbox zero fast. It provides bulk newsletter unsubscribe, cold email blocking, email analytics, and AI automations.",
+      href: "https://getinboxzero.com",
+    },
+    {
+      name: "KeepHQ",
+      description:
+        "Keep is an open-source AIOps (AI for IT operations) platform",
+      href: "https://www.keephq.dev",
+    },
+    {
+      name: "Langfuse",
+      description:
+        "Open source LLM engineering platform. Debug, analyze and iterate together.",
+      href: "https://langfuse.com",
+    },
+    {
+      name: "Mockoon",
+      description:
+        "Mockoon is the easiest and quickest way to design and run mock REST APIs.",
+      href: "https://mockoon.com",
+    },
+    {
+      name: "Novu",
+      description:
+        "The open-source notification infrastructure for developers. Simple components and APIs for managing all communication channels in one place.",
+      href: "https://novu.co",
+    },
+    {
+      name: "OpenBB",
+      description:
+        "Democratizing investment research through an open source financial ecosystem. The OpenBB Terminal allows everyone to perform investment research, from everywhere.",
+      href: "https://openbb.co",
+    },
+    {
+      name: "OpenStatus",
+      description:
+        "Open-source monitoring platform with beautiful status pages",
+      href: "https://www.openstatus.dev",
+    },
+    {
+      name: "Papermark",
+      description:
+        "Open-Source Docsend Alternative to securely share documents with real-time analytics.",
+      href: "https://www.papermark.com/",
+    },
+    {
+      name: "Portkey AI",
+      description:
+        "AI Gateway with integrated Guardrails. Route to 250+ LLMs and 50+ Guardrails with 1-fast API. Supports caching, retries, and edge deployment for low latency.",
+      href: "https://www.portkey.ai/",
+    },
+    {
+      name: "Prisma",
+      description:
+        "Simplify working with databases. Build, optimize, and grow your app easily with an intuitive data model, type-safety, automated migrations, connection pooling, caching, and real-time db subscriptions.",
+      href: "https://www.prisma.io",
+    },
+    {
+      name: "Requestly",
+      description:
+        "Makes frontend development cycle 10x faster with API Client, Mock Server, Intercept & Modify HTTP Requests and Session Replays.",
+      href: "https://requestly.com",
+    },
+    {
+      name: "Rivet",
+      description:
+        "Open-source solution to deploy, scale, and operate your multiplayer game.",
+      href: "https://rivet.gg",
+    },
+    {
+      name: "Shelf.nu",
+      description:
+        "Open Source Asset and Equipment tracking software that lets you create QR asset labels, manage and overview your assets across locations.",
+      href: "https://www.shelf.nu/",
+    },
+    {
+      name: "Sniffnet",
+      description:
+        "Sniffnet is a network monitoring tool to help you easily keep track of your Internet traffic.",
+      href: "https://www.sniffnet.net",
+    },
+    {
+      name: "Tiledesk",
+      description:
+        "The innovative open-source framework for developing LLM-enabled chatbots, Tiledesk empowers developers to create advanced, conversational AI agents.",
+      href: "https://tiledesk.com",
+    },
+    {
+      name: "Tolgee",
+      description: "Software localization from A to Z made really easy.",
+      href: "https://tolgee.io",
+    },
+    {
+      name: "Trigger.dev",
+      description:
+        "Create long-running Jobs directly in your codebase with features like API integrations, webhooks, scheduling and delays.",
+      href: "https://trigger.dev",
+    },
+    {
+      name: "Typebot",
+      description:
+        "Typebot gives you powerful blocks to create unique chat experiences. Embed them anywhere on your apps and start collecting results like magic.",
+      href: "https://typebot.io",
+    },
+    {
+      name: "Twenty",
+      description:
+        "A modern CRM offering the flexibility of open-source, advanced features and sleek design.",
+      href: "https://twenty.com",
+    },
+    {
+      name: "Unkey",
+      description:
+        "An API authentication and authorization platform for scaling user facing APIs. Create, verify, and manage low latency API keys in seconds.",
+      href: "https://unkey.dev",
+    },
+    {
+      name: "Voltagent",
+      description:
+        "Open Source TypeScript framework for building AI agents with enterprise-grade capabilities and seamless integrations.",
+      href: "https://voltagent.dev/",
+    },
+    {
+      name: "Webiny",
+      description:
+        "Open-source enterprise-grade serverless CMS. Own your data. Scale effortlessly. Customize everything.",
+      href: "https://www.webiny.com",
+    },
+    {
+      name: "Webstudio",
+      description: "Webstudio is an open source alternative to Webflow",
+      href: "https://webstudio.is",
+    },
+  ],
+};

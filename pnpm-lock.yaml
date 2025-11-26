@@ -937,6 +937,9 @@ importers:
       next-auth:
         specifier: 5.0.0-beta.29
         version: 5.0.0-beta.29(next@16.0.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
+      next-mdx-remote:
+        specifier: 5.0.0
+        version: 5.0.0(@types/react@19.2.2)(react@19.2.0)
       next-plausible:
         specifier: 3.12.4
         version: 3.12.4(next@16.0.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -961,6 +964,9 @@ importers:
       react-hook-form:
         specifier: 7.66.1
         version: 7.66.1(react@19.2.0)
+      react-medium-image-zoom:
+        specifier: 5.4.0
+        version: 5.4.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react-tweet:
         specifier: 3.2.1
         version: 3.2.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1000,6 +1006,9 @@ importers:
       stripe:
         specifier: 13.8.0
         version: 13.8.0
+      sugar-high:
+        specifier: 0.9.5
+        version: 0.9.5
       superjson:
         specifier: 2.2.2
         version: 2.2.2
@@ -2693,6 +2702,7 @@ packages:
   '@ericcornelissen/bash-parser@0.5.2':
     resolution: {integrity: sha512-4pIMTa1nEFfMXitv7oaNEWOdM+zpOZavesa5GaiWTgda6Zk32CFGxjUp/iIaN0PwgUW1yTq/fztSjbpE8SLGZQ==}
     engines: {node: '>=4'}
+    deprecated: Support for this package will stop 2025-12-31
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
@@ -3929,6 +3939,12 @@ packages:
 
   '@mdx-js/mdx@3.1.1':
     resolution: {integrity: sha512-f6ZO2ifpwAQIpzGWaBQT2TXxPv6z3RBzQKpVftEWN78Vl/YweF1uwussDx8ECAXVtr3Rs89fKyG9YlzUs9DyGQ==}
+
+  '@mdx-js/react@3.1.1':
+    resolution: {integrity: sha512-f++rKLQgUVYDAtECQ6fn/is15GkEH9+nZPM3MS0RcxVqoTfawHvDlSCH7JbMhAM6uJ32v3eXLvLmLvjGu7PTQw==}
+    peerDependencies:
+      '@types/react': '>=16'
+      react: '>=16'
 
   '@modelcontextprotocol/sdk@1.23.0':
     resolution: {integrity: sha512-MCGd4K9aZKvuSqdoBkdMvZNcYXCkZRYVs/Gh92mdV5IHbctX9H9uIvd4X93+9g8tBbXv08sxc/QHXTzf8y65bA==}
@@ -6974,6 +6990,7 @@ packages:
   '@upstash/kafka@1.3.3':
     resolution: {integrity: sha512-CIr657FZuK+IMuwcxkj3oCB6xKO+LMlHd4BL4J/Lwbpj6+5YHO+5ZcpdMIQhbcemthJcRtE0gDUfZEnrfb3Rjg==}
     engines: {node: '>=10'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@upstash/qstash@2.6.2':
     resolution: {integrity: sha512-aB/1yqMJTRyOt7Go2Db1ZIVnmTPpsc2KGY5jpLVcegNtjksaPTJF6fmITxos5HVvsQhS8IB3gvF/+gQfRQlPLQ==}
@@ -9727,6 +9744,12 @@ packages:
       nodemailer:
         optional: true
 
+  next-mdx-remote@5.0.0:
+    resolution: {integrity: sha512-RNNbqRpK9/dcIFZs/esQhuLA8jANqlH694yqoDBK8hkVdJUndzzGmnPHa2nyi90N4Z9VmzuSWNRpr5ItT3M7xQ==}
+    engines: {node: '>=14', npm: '>=7'}
+    peerDependencies:
+      react: '>=16'
+
   next-plausible@3.12.4:
     resolution: {integrity: sha512-cD3+ixJxf8yBYvsideTxqli3fvrB7R4BXcvsNJz8Sm2X1QN039WfiXjCyNWkub4h5++rRs6fHhchUMnOuJokcg==}
     peerDependencies:
@@ -10367,6 +10390,12 @@ packages:
 
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
+
+  react-medium-image-zoom@5.4.0:
+    resolution: {integrity: sha512-BsE+EnFVQzFIlyuuQrZ9iTwyKpKkqdFZV1ImEQN573QPqGrIUuNni7aF+sZwDcxlsuOMayCr6oO/PZR/yJnbRg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-promise-suspense@0.3.4:
     resolution: {integrity: sha512-I42jl7L3Ze6kZaq+7zXWSunBa3b1on5yfvUW6Eo/3fFOj6dZ5Bqmcd264nJbTK/gn1HjjILAjSwnZbV4RpSaNQ==}
@@ -11075,6 +11104,9 @@ packages:
     engines: {node: '>=16 || 14 >=14.17'}
     hasBin: true
 
+  sugar-high@0.9.5:
+    resolution: {integrity: sha512-eirwp9p7QcMg6EFCD6zrGh4H30uFx2YtfiMJUavagceP6/YUUjLeiQmis7QuwqKB3nXrWXlLaRumCqOd9AKpSA==}
+
   summary@2.1.0:
     resolution: {integrity: sha512-nMIjMrd5Z2nuB2RZCKJfFMjgS3fygbeyGk9PxPPaJR1RIcyN9yn4A63Isovzm3ZtQuEkLBVgMdPup8UeLH7aQw==}
 
@@ -11461,6 +11493,9 @@ packages:
   unist-util-remove-position@5.0.0:
     resolution: {integrity: sha512-Hp5Kh3wLxv0PHj9m2yZhhLt58KzPtEYKQQ4yxfYFEO7EvHwzyDYnduhHnY1mDxoqr7VUwVuHXk9RXKIiYS1N8Q==}
 
+  unist-util-remove@3.1.1:
+    resolution: {integrity: sha512-kfCqZK5YVY5yEa89tvpl7KnBBHu2c6CzMkqHUrlOqaRgGOMp0sMvwWOVrbAtj03KhovQB7i96Gda72v/EFE0vw==}
+
   unist-util-remove@4.0.0:
     resolution: {integrity: sha512-b4gokeGId57UVRX/eVKej5gXqGlc9+trkORhFJpu9raqZkZhU0zm8Doi05+HaiBsMEIJowL+2WtQ5ItjsngPXg==}
 
@@ -11668,6 +11703,9 @@ packages:
 
   vfile-location@5.0.3:
     resolution: {integrity: sha512-5yXvWDEgqeiYiBe1lbxYF7UMAIm/IcopxMHrMQDq3nvKcjPKIhZklUKL+AE7J7uApI4kwe2snsK+eI6UTj9EHg==}
+
+  vfile-matter@5.0.1:
+    resolution: {integrity: sha512-o6roP82AiX0XfkyTHyRCMXgHfltUNlXSEqCIS80f+mbAyiQBE2fxtDVMtseyytGx75sihiJFo/zR6r/4LTs2Cw==}
 
   vfile-message@3.1.4:
     resolution: {integrity: sha512-fa0Z6P8HUrQN4BZaX05SIVXic+7kE3b05PWAtPuYP9QLHsLKYR7/AlLW3NtOrpXRLeawpDLMsVkmk5DG0NXgWw==}
@@ -14295,6 +14333,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@mdx-js/react@3.1.1(@types/react@19.2.2)(react@19.2.0)':
+    dependencies:
+      '@types/mdx': 2.0.13
+      '@types/react': 19.2.2
+      react: 19.2.0
+
   '@modelcontextprotocol/sdk@1.23.0(zod@3.25.76)':
     dependencies:
       ajv: 8.17.1
@@ -16508,7 +16552,7 @@ snapshots:
       json5: 2.2.3
       log-symbols: 4.1.0
       module-punycode: punycode@2.3.1
-      next: 15.5.2(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.2.0))(react@19.0.0)
+      next: 15.5.2(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       node-html-parser: 7.0.1
       ora: 5.4.1
       pretty-bytes: 6.1.1
@@ -21350,6 +21394,19 @@ snapshots:
       next: 16.0.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       react: 19.2.0
 
+  next-mdx-remote@5.0.0(@types/react@19.2.2)(react@19.2.0):
+    dependencies:
+      '@babel/code-frame': 7.27.1
+      '@mdx-js/mdx': 3.1.1
+      '@mdx-js/react': 3.1.1(@types/react@19.2.2)(react@19.2.0)
+      react: 19.2.0
+      unist-util-remove: 3.1.1
+      vfile: 6.0.3
+      vfile-matter: 5.0.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - supports-color
+
   next-plausible@3.12.4(next@16.0.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
     dependencies:
       next: 16.0.4(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -21367,7 +21424,7 @@ snapshots:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
-  next@15.5.2(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.2.0))(react@19.0.0):
+  next@15.5.2(@babel/core@7.26.10)(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
       '@next/env': 15.5.2
       '@swc/helpers': 0.5.15
@@ -22077,6 +22134,11 @@ snapshots:
   react-is@16.13.1: {}
 
   react-is@18.3.1: {}
+
+  react-medium-image-zoom@5.4.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      react: 19.2.0
+      react-dom: 19.2.0(react@19.2.0)
 
   react-promise-suspense@0.3.4:
     dependencies:
@@ -23152,6 +23214,8 @@ snapshots:
       tinyglobby: 0.2.15
       ts-interface-checker: 0.1.13
 
+  sugar-high@0.9.5: {}
+
   summary@2.1.0: {}
 
   superjson@2.2.2:
@@ -23626,6 +23690,12 @@ snapshots:
       '@types/unist': 3.0.3
       unist-util-visit: 5.0.0
 
+  unist-util-remove@3.1.1:
+    dependencies:
+      '@types/unist': 2.0.11
+      unist-util-is: 5.2.1
+      unist-util-visit-parents: 5.1.3
+
   unist-util-remove@4.0.0:
     dependencies:
       '@types/unist': 3.0.3
@@ -23786,6 +23856,11 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
       vfile: 6.0.3
+
+  vfile-matter@5.0.1:
+    dependencies:
+      vfile: 6.0.3
+      yaml: 2.8.1
 
   vfile-message@3.1.4:
     dependencies:

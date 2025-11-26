@@ -1,0 +1,86 @@
+---
+title: "API Monitoring"
+publishedAt: "2025-11-10"
+author: "openstatus"
+description: "Openstatus allows your to monitor your API from multiple regions around the world. "
+category: "Product"
+---
+
+## Why monitor your API from an external providers?
+
+Internally you might already have a Grafana, or Signoz deployed. They are working great to monitor your internal metrics, but they are not able to monitor from an external point of view.
+
+With openstatus you can monitor your API from multiple regions around the world, and be sure that your customers are able to reach your API.
+
+<Grid>
+<div>
+
+**Monitoring Dashboard**
+
+<Image src="/assets/landing/dashboard.png" alt="dashboard monitor charts" />
+
+</div>
+<div>
+
+**Response Logs**
+
+<Image src="/assets/landing/dashboard-logs.png" alt="dashboard monitor logs" />
+
+</div>
+</Grid>
+
+## Why choose openstatus for API monitoring?
+
+### Assertions
+
+Validating your response can be important. You can do **status code**, **header** or **body text** assertions. Read more [in the docs](https://docs.openstatus.dev/reference/http-monitor/#assertions).
+
+### Thresholds
+
+You can set a **degraded at** and **timeout** threshold whenever required. We will send you a notification whenever the responses exceed the thresholds.
+
+### Open Telemetry
+
+When needed, you can export to your **OTLP endpoint** the metrics for every request we do. Access the data and set yourself an **alert channel** in Grafana, Honeycomb etc.. Read more [in our guide](https://docs.openstatus.dev/guides/how-to-export-metrics-to-otlp-endpoint/).
+
+### Private locations
+
+You can **deploy our probes** on your own VPC, [Cloudflare Containers](https://docs.openstatus.dev/guides/how-to-deploy-probes-cloudflare-containers/) and more. It is **8.5MB small** and fits even on a [Raspberry Pi 3](/blog) with ease. Read more [in the docs](https://docs.openstatus.dev/tutorial/how-to-create-private-location/).
+
+### CLI
+
+You can manage or trigger your monitors via CLI. We provide a simple [GitHub Action](https://github.com/marketplace/actions/openstatus-synthetics-ci) to run it in your **CI/CD**.
+
+```
++------------------------------------------------------------------------------------------+
+| dwightschrute@computer ~ > openstatus                                                    |
+|                                                                                          |
+| NAME:                                                                                    |
+| OpenStatus - This is OpenStatus Command Line Interface                                   |
+|                                                                                          |
+| USAGE:                                                                                   |
+| OpenStatus [global options] [command [command options]] [arguments...]                   |
+|                                                                                          |
+| VERSION:                                                                                 |
+| v0.0.7                                                                                   |
+|                                                                                          |
+| COMMANDS:                                                                                |
+| monitors  Manage your monitors                                                           |
+| run, r    Run your synthetics tests defined in your configuration file                   |
+| whoami, w Get your current workspace Information                                         |
+| help, h   Shows a list of commands or help for one command                               |
+|                                                                                          |
+| GLOBAL OPTIONS:                                                                          |
+| --help, -h    show help                                                                  |
+| --version, -v print the version                                                          |
+|                                                                                          |
++------------------------------------------------------------------------------------------+
+```
+
+---
+
+Check your website's latency
+
+<ButtonLink href="/landing/play/checker">Global Speed Checker</ButtonLink>
+
+---
