@@ -1,5 +1,6 @@
 const { withContentCollections } = require("@content-collections/next");
 const { withSentryConfig } = require("@sentry/nextjs");
+import type { NextConfig } from 'next'
 
 // REMINDER: avoid Clickjacking attacks by setting the X-Frame-Options header
 const securityHeaders = [
@@ -10,7 +11,7 @@ const securityHeaders = [
 ];
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig:NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   outputFileTracingIncludes: {
@@ -18,6 +19,10 @@ const nextConfig = {
       "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
       "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
     ],
+  },
+  experimental: {
+    turbopackScopeHoisting:false,
+    // serverMinification:false,
   },
   serverExternalPackages: ["@google-cloud/tasks"],
   expireTime: 180, // 3 minutes
