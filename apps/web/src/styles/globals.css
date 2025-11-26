@@ -308,7 +308,7 @@
 }
 
 .prose code {
-  @apply px-1 py-0.5 bg-muted;
+  @apply px-1 py-0.5 bg-muted text-muted-foreground;
 }
 
 .prose pre code {
