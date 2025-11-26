@@ -14,6 +14,14 @@ export const metadata: Metadata = {
 export const revalidate = 600;
 
 export default async function PlayPage() {
+  const hasValidApiKey =
+    process.env.TINY_BIRD_API_KEY &&
+    process.env.TINY_BIRD_API_KEY !== "tiny-bird-api-key";
+
+  if (!hasValidApiKey) {
+    return <div>Preview requires valid API configuration</div>;
+  }
+
   return (
     <div className="w-full">
       <StatusPlay />
