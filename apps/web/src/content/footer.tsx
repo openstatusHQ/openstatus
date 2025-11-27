@@ -1,8 +1,8 @@
 import { Link } from "@/content/link";
 import { ThemeToggle } from "@/content/theme-toggle";
 import { footerLinks } from "@/data/content";
-import { FooterStatus } from "./footer-status";
 import { Suspense } from "react";
+import { FooterStatus } from "./footer-status";
 
 export function Footer() {
   return (
