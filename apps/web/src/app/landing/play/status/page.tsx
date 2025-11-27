@@ -15,7 +15,7 @@ import {
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
-} from "../content-box";
+} from "../../content-box";
 
 const TITLE = "External Status";
 const DESCRIPTION =
