@@ -2,7 +2,7 @@ import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
 import type { Metadata } from "next";
 import type { Organization, Product, WebPage, WithContext } from "schema-dts";
-import { getPageMetadata } from "../shared-metadata";
+import { defaultMetadata } from "../shared-metadata";
 import { getJsonLDOrganization, getJsonLDProduct } from "../shared-metadata";
 
 const jsonLdProduct: WithContext<Product> = getJsonLDProduct();
@@ -19,10 +19,7 @@ const jsonLDWebpage: WithContext<WebPage> = {
   headline: "Showcase your uptime with a status page",
 };
 
-export function generateMetadata(): Metadata {
-  const homePage = getHomePage();
-  return getPageMetadata(homePage);
-}
+export const generateMetadata: Metadata = defaultMetadata;
 
 export default function Page() {
   const homePage = getHomePage();
@@ -50,9 +47,7 @@ export default function Page() {
         }}
       />
       <h1>{homePage.metadata.title}</h1>
-      <p className="text-lg text-muted-foreground">
-        {homePage.metadata.description}
-      </p>
+      <p className="text-lg">{homePage.metadata.description}</p>
       <CustomMDX source={homePage.content} />
     </div>
   );

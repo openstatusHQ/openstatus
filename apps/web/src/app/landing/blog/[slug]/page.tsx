@@ -2,6 +2,7 @@ import { getJsonLDBlogPosting, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getBlogPosts } from "@/content/utils";
 import type { Metadata } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { BlogPosting, WithContext } from "schema-dts";
 
@@ -58,6 +59,16 @@ export default async function Blog({
         {formatDate(post.metadata.publishedAt)} | by {post.metadata.author} | [
         {post.metadata.category}]
       </p>
+      {post.metadata.image ? (
+        <div className="relative aspect-video w-full overflow-hidden border border-border">
+          <Image
+            src={post.metadata.image}
+            alt={post.metadata.title}
+            fill
+            className="object-contain"
+          />
+        </div>
+      ) : null}
       <CustomMDX source={post.content} />
     </section>
   );

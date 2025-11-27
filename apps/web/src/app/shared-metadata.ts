@@ -19,15 +19,6 @@ export const OG_DESCRIPTION =
 export const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
-export const defaultMetadata: Metadata = {
-  title: {
-    template: `%s | ${TITLE}`,
-    default: TITLE,
-  },
-  description: DESCRIPTION,
-  metadataBase: new URL("https://www.openstatus.dev"),
-};
-
 export const twitterMetadata: Metadata["twitter"] = {
   title: TITLE,
   description: DESCRIPTION,
@@ -40,6 +31,17 @@ export const ogMetadata: Metadata["openGraph"] = {
   description: DESCRIPTION,
   type: "website",
   images: ["/api/og"],
+};
+
+export const defaultMetadata: Metadata = {
+  title: {
+    template: `%s | ${TITLE}`,
+    default: TITLE,
+  },
+  description: DESCRIPTION,
+  metadataBase: new URL("https://www.openstatus.dev"),
+  twitter: twitterMetadata,
+  openGraph: ogMetadata,
 };
 
 export const getPageMetadata = (page: MDXData): Metadata => {
