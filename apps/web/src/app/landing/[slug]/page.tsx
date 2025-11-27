@@ -2,7 +2,8 @@ import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getPageMetadata } from "@/app/shared-metadata";
+import { getJsonLDWebPage, getPageMetadata } from "@/app/shared-metadata";
+import { WebPage, WithContext } from "schema-dts";
 
 export async function generateMetadata({
   params,
@@ -40,8 +41,17 @@ export default async function Page({
     notFound();
   }
 
+  const jsonLDWebPage: WithContext<WebPage> = getJsonLDWebPage(page);
+
   return (
     <section className="prose dark:prose-invert max-w-none">
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDWebPage).replace(/</g, "\\u003c"),
+        }}
+      />
       <h1>{page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
       <CustomMDX source={page.content} />

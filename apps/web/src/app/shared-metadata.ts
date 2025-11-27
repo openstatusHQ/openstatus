@@ -1,5 +1,13 @@
-import { MDXData } from "@/content/utils";
+import type { MDXData } from "@/content/utils";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Metadata } from "next";
+import type {
+  BlogPosting,
+  Organization,
+  Product,
+  WebPage,
+  WithContext,
+} from "schema-dts";
 
 export const TITLE = "openstatus";
 export const DESCRIPTION =
@@ -8,7 +16,8 @@ export const DESCRIPTION =
 export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";
 
-export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const defaultMetadata: Metadata = {
   title: {
@@ -65,5 +74,88 @@ export const getPageMetadata = (page: MDXData): Metadata => {
       description,
       images: [ogImage],
     },
+  };
+};
+
+export const getJsonLDWebPage = (page: MDXData): WithContext<WebPage> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: `${page.metadata.title} | openstatus`,
+    headline: page.metadata.description,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": "https://www.openstatus.dev",
+    },
+  };
+};
+
+export const getJsonLDBlogPosting = (
+  post: MDXData
+): WithContext<BlogPosting> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.metadata.title,
+    datePublished: post.metadata.publishedAt.toISOString(),
+    dateModified: post.metadata.publishedAt.toISOString(),
+    description: post.metadata.description,
+    image: post.metadata.image
+      ? `${BASE_URL}${post.metadata.image}`
+      : `/api/og?title=${encodeURIComponent(
+          post.metadata.title
+        )}&description=${encodeURIComponent(
+          post.metadata.description
+        )}&category=${encodeURIComponent(post.metadata.category)}`,
+    url: `${BASE_URL}/blog/${post.slug}`,
+    author: {
+      "@type": "Person",
+      name: post.metadata.author,
+    },
+  };
+};
+
+export const getJsonLDOrganization = (): WithContext<Organization> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "openstatus",
+    url: "https://openstatus.dev",
+    logo: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
+    sameAs: [
+      "https://github.com/openstatushq",
+      "https://linkedin.com/company/openstatus",
+      "https://bsky.app/profile/openstatus.dev",
+      "https://x.com/openstatushq",
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "Support",
+        email: "ping@openstatus.dev",
+      },
+    ],
+  };
+};
+
+export const getJsonLDProduct = (): WithContext<Product> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "openstatus",
+    description:
+      "Open-source uptime and synthetic monitoring with status pages.",
+    brand: {
+      "@type": "Brand",
+      name: "openstatus",
+      logo: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
+    },
+    offers: Object.entries(allPlans).map(([_, value]) => ({
+      "@type": "Offer",
+      price: value.price.USD,
+      name: value.title,
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+    })),
   };
 };

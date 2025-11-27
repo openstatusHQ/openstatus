@@ -1,8 +1,13 @@
-import { BASE_URL, getPageMetadata } from "@/app/shared-metadata";
+import {
+  BASE_URL,
+  getJsonLDBlogPosting,
+  getPageMetadata,
+} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getBlogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { BlogPosting, WithContext } from "schema-dts";
 
 export async function generateStaticParams() {
   const posts = getBlogPosts();
@@ -40,6 +45,8 @@ export default async function Blog({
     notFound();
   }
 
+  const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(post);
+
   return (
     <section className="prose dark:prose-invert max-w-none">
       <script
@@ -47,26 +54,7 @@ export default async function Blog({
         suppressHydrationWarning
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: post.metadata.title,
-            datePublished: post.metadata.publishedAt,
-            dateModified: post.metadata.publishedAt,
-            description: post.metadata.description,
-            image: post.metadata.image
-              ? `${BASE_URL}${post.metadata.image}`
-              : `/api/og?title=${encodeURIComponent(
-                  post.metadata.title
-                )}&description=${encodeURIComponent(
-                  post.metadata.description
-                )}&category=${encodeURIComponent(post.metadata.category)}`,
-            url: `${BASE_URL}/blog/${post.slug}`,
-            author: {
-              "@type": "Person",
-              name: "Maximilian Kaske",
-            },
-          }),
+          __html: JSON.stringify(jsonLDBlog).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{post.metadata.title}</h1>
