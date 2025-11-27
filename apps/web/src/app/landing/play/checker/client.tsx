@@ -1,19 +1,12 @@
 "use client";
 
-import {
-  IconCloudProvider,
-  IconCloudProviderTooltip,
-} from "@/components/icon-cloud-provider";
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
   is32CharHex,
   regionCheckerSchema,
 } from "@/components/ping-response-analysis/utils";
 import { cn, notEmpty } from "@/lib/utils";
-import {
-  AVAILABLE_REGIONS,
-  type Region,
-  regionDict,
-} from "@openstatus/regions";
+import { type Region, regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
 import {
@@ -62,7 +55,7 @@ export function CheckerProvider({
 
   // Helper function to update both local state and URL
   const updateId: React.Dispatch<React.SetStateAction<string | null>> = (
-    newId
+    newId,
   ) => {
     const value = typeof newId === "function" ? newId(id) : newId;
     setId(value);
@@ -263,7 +256,7 @@ export function ResultTable() {
                         "size-4",
                         STATUS_CODES[
                           value.status.toString()[0] as keyof typeof STATUS_CODES
-                        ]
+                        ],
                       )}
                     />
                   </td>

@@ -1,4 +1,6 @@
+import { mockCheckAllRegions } from "@/app/(pages)/(content)/play/checker/api/mock";
 import { getPageMetadata } from "@/app/shared-metadata";
+import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import type { Metadata } from "next";
@@ -9,8 +11,6 @@ import {
   ResponseStatus,
   ResultTable,
 } from "./client";
-import { mockCheckAllRegions } from "@/app/(pages)/(content)/play/checker/api/mock";
-import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { searchParamsCache } from "./search-params";
 
 export function generateMetadata(): Metadata {

@@ -2,8 +2,8 @@
 
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
-  getTimingPhases,
   type CachedRegionChecker,
+  getTimingPhases,
 } from "@/components/ping-response-analysis/utils";
 import { cn } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
@@ -149,7 +149,7 @@ export function Table({ data }: TableProps) {
                         className={cn(
                           STATUS_CODES[
                             check.status.toString()[0] as keyof typeof STATUS_CODES
-                          ]
+                          ],
                         )}
                       >
                         {check.status}
@@ -207,7 +207,7 @@ function TableSort({
       variant="ghost"
       className={cn(
         "h-auto! w-full rounded-none p-4 text-base md:text-base",
-        className
+        className,
       )}
       {...props}
     >
@@ -219,7 +219,7 @@ function TableSort({
             "shrink-0 text-[9px]",
             direction === "asc"
               ? "text-accent-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           ▲
@@ -230,7 +230,7 @@ function TableSort({
             "shrink-0 text-[9px]",
             direction === "desc"
               ? "text-accent-foreground"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           ▼

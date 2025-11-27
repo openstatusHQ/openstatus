@@ -1,5 +1,5 @@
-import { getPageMetadata } from "@/app/shared-metadata";
 import { mockCheckAllRegions } from "@/app/(pages)/(content)/play/checker/api/mock";
+import { getPageMetadata } from "@/app/shared-metadata";
 import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
