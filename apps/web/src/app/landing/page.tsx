@@ -19,7 +19,7 @@ const jsonLDWebpage: WithContext<WebPage> = {
   headline: "Showcase your uptime with a status page",
 };
 
-export const generateMetadata: Metadata = defaultMetadata;
+export const metadata: Metadata = defaultMetadata;
 
 export default function Page() {
   const homePage = getHomePage();
