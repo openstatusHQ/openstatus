@@ -1,7 +1,19 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { type Region, regionDict } from "@openstatus/regions";
+import {
+  IconCloudProvider,
+  IconCloudProviderTooltip,
+} from "@/components/icon-cloud-provider";
+import {
+  is32CharHex,
+  regionCheckerSchema,
+} from "@/components/ping-response-analysis/utils";
+import { cn, notEmpty } from "@/lib/utils";
+import {
+  AVAILABLE_REGIONS,
+  type Region,
+  regionDict,
+} from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
 import {
@@ -12,24 +24,53 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 import Link from "next/link";
-import { createContext, useContext, useState } from "react";
+import { useQueryStates } from "nuqs";
+import { createContext, useContext, useEffect, useState } from "react";
+import { searchParamsParsers } from "./search-params";
 
 type Values = { region: string; latency: number; status: number };
 
 type CheckerContextType = {
   values: Values[];
   setValues: React.Dispatch<React.SetStateAction<Values[]>>;
+  id: string | null;
+  setId: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const CheckerContext = createContext<CheckerContextType>({
   values: [],
   setValues: () => {},
+  id: null,
+  setId: () => {},
 });
 
-export function CheckerProvider({ children }: { children: React.ReactNode }) {
-  const [values, setValues] = useState<Values[]>([]);
+export function CheckerProvider({
+  children,
+  defaultValues = [],
+}: {
+  children: React.ReactNode;
+  defaultValues?: Values[];
+}) {
+  const [values, setValues] = useState<Values[]>(defaultValues);
+  const [{ id: urlId }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [id, setId] = useState<string | null>(urlId);
+
+  // Sync local ID state with URL search params
+  useEffect(() => {
+    setId(urlId);
+  }, [urlId]);
+
+  // Helper function to update both local state and URL
+  const updateId: React.Dispatch<React.SetStateAction<string | null>> = (
+    newId
+  ) => {
+    const value = typeof newId === "function" ? newId(id) : newId;
+    setId(value);
+    setSearchParams({ id: value });
+  };
+
   return (
-    <CheckerContext.Provider value={{ values, setValues }}>
+    <CheckerContext.Provider value={{ values, setValues, id, setId: updateId }}>
       {children}
     </CheckerContext.Provider>
   );
@@ -43,44 +84,106 @@ export function useCheckerContext() {
   return context;
 }
 
-export function Form() {
-  const { setValues } = useCheckerContext();
+export function Form({
+  defaultMethod = "GET",
+  defaultUrl = "",
+}: {
+  defaultMethod?: string;
+  defaultUrl?: string;
+}) {
+  const { setValues, setId } = useCheckerContext();
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const url = formData.get("url") as string;
     const method = formData.get("method") as string;
 
-    console.log(url, method);
+    // Validate URL
+    try {
+      new URL(url);
+    } catch {
+      // Invalid URL, could add error handling here
+      return;
+    }
 
+    // Reset values and ID
     setValues([]);
+    setId(null); // This will also clear the URL param
 
-    const r = Object.values(regionDict).map((region) => {
-      const latency = Math.random() * 1000;
-      const status = Math.random() < 0.9 ? 200 : 500;
-      return { region: region, latency, status };
-    });
-
-    r.forEach((value) => {
-      setTimeout(() => {
-        setValues((prev) => [
-          ...prev,
-          {
-            region: value.region.code,
-            latency: value.latency,
-            status: value.status,
+    async function fetchAndReadStream() {
+      try {
+        const response = await fetch("/play/checker/api", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        ]);
-      }, value.latency);
-    });
+          body: JSON.stringify({ url, method }),
+        });
+
+        const reader = response?.body?.getReader();
+        if (!reader) return;
+
+        const decoder = new TextDecoder();
+        let done = false;
+
+        while (!done) {
+          const { value, done: streamDone } = await reader.read();
+          done = streamDone;
+          if (value) {
+            const decoded = decoder.decode(value, { stream: true });
+            if (!decoded) continue;
+
+            const array = decoded.split("\n").filter(Boolean);
+
+            const results = array
+              .map((item) => {
+                try {
+                  // Store the ID if it's a 32-char hex string
+                  if (is32CharHex(item)) {
+                    setId(item);
+                    return null;
+                  }
+
+                  const parsed = JSON.parse(item);
+                  const validation = regionCheckerSchema.safeParse(parsed);
+                  if (!validation.success) return null;
+
+                  const check = validation.data;
+                  // Only process successful checks
+                  if (check.state === "success") {
+                    return {
+                      region: check.region,
+                      latency: check.latency,
+                      status: check.status,
+                    };
+                  }
+                  return null;
+                } catch {
+                  return null;
+                }
+              })
+              .filter(notEmpty);
+
+            if (results.length > 0) {
+              setValues((prev) => [...prev, ...results]);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Could add error handling/toast here
+      }
+    }
+
+    await fetchAndReadStream();
   }
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         <div className="col-span-1">
-          <Select name="method" defaultValue="GET">
+          <Select name="method" defaultValue={defaultMethod}>
             <SelectTrigger className="h-auto! w-full rounded-none p-4 text-base">
               <SelectValue />
             </SelectTrigger>
@@ -102,6 +205,7 @@ export function Form() {
             name="url"
             placeholder="https://openstatus.dev"
             className="h-auto! rounded-none p-4 text-base md:text-base"
+            defaultValue={defaultUrl}
           />
         </div>
         <div className="col-span-3 sm:col-span-1">
@@ -127,6 +231,7 @@ export function ResultTable() {
         <thead>
           <tr>
             <th className="w-12" />
+            <th className="w-12" />
             <th>Region</th>
             <th className="text-right!">Latency</th>
           </tr>
@@ -136,6 +241,9 @@ export function ResultTable() {
             <tr>
               <td>
                 <div className="size-4 bg-muted-foreground" />
+              </td>
+              <td>
+                <br />
               </td>
               <td>
                 <br />
@@ -155,8 +263,14 @@ export function ResultTable() {
                         "size-4",
                         STATUS_CODES[
                           value.status.toString()[0] as keyof typeof STATUS_CODES
-                        ],
+                        ]
                       )}
+                    />
+                  </td>
+                  <td>
+                    <IconCloudProvider
+                      provider={regionConfig.provider}
+                      className="size-4"
                     />
                   </td>
                   <td>
@@ -203,9 +317,10 @@ export function ResponseStatus() {
 }
 
 export function DetailsButtonLink() {
-  const { values } = useCheckerContext();
+  const { values, id } = useCheckerContext();
 
-  if (values.length !== Object.keys(regionDict).length) {
+  // Only show button if we have all regions and an ID
+  if (!id || values.length === 0) {
     return null;
   }
   return (
@@ -215,7 +330,7 @@ export function DetailsButtonLink() {
       asChild
     >
       <Link
-        href="/landing/play/checker/1"
+        href={`/landing/play/checker/${id}`}
         className="no-underline! text-background!"
       >
         Response details

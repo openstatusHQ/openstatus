@@ -1,17 +1,15 @@
 import { getPageMetadata } from "@/app/shared-metadata";
+import { mockCheckAllRegions } from "@/app/(pages)/(content)/play/checker/api/mock";
+import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Table } from "./client";
 
 export function generateMetadata(): Metadata {
   const page = getToolsPage("checker-slug");
   return getPageMetadata(page);
-}
-
-// just random to have one
-export async function generateStaticParams() {
-  return [{ slug: "1" }];
 }
 
 export default async function Page({
@@ -21,12 +19,19 @@ export default async function Page({
 }) {
   const { slug } = await params;
   const page = getToolsPage("checker-slug");
-  console.log({ slug });
+
+  const data =
+    process.env.NODE_ENV === "development"
+      ? await mockCheckAllRegions()
+      : await getCheckerDataById(slug);
+
+  if (!data) redirect("/landing/play/checker");
+
   return (
     <section className="prose dark:prose-invert max-w-none">
       <h1>{page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
-      <Table />
+      <Table data={data} />
       <CustomMDX source={page.content} />
     </section>
   );
