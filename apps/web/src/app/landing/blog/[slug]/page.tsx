@@ -1,13 +1,9 @@
-import {
-  BASE_URL,
-  getJsonLDBlogPosting,
-  getPageMetadata,
-} from "@/app/shared-metadata";
+import { getJsonLDBlogPosting, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getBlogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { BlogPosting, WithContext } from "schema-dts";
+import type { BlogPosting, WithContext } from "schema-dts";
 
 export async function generateStaticParams() {
   const posts = getBlogPosts();

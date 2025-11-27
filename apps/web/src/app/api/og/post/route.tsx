@@ -7,10 +7,10 @@ import {
   DEFAULT_URL,
   SIZE,
   calSemiBold,
+  commitMonoBold,
+  commitMonoRegular,
   interLight,
   interRegular,
-  commitMonoRegular,
-  commitMonoBold,
 } from "../utils";
 
 export const runtime = "edge";
@@ -42,18 +42,16 @@ export async function GET(req: Request) {
     : undefined;
 
   return new ImageResponse(
-    (
-      <BasicLayout title={title} description={description}>
-        {image ? (
-          <img
-            alt=""
-            style={{ objectFit: "cover", height: 330 }} // h-80 = 320px
-            tw="flex w-full"
-            src={new URL(image, DEFAULT_URL).toString()}
-          />
-        ) : null}
-      </BasicLayout>
-    ),
+    <BasicLayout title={title} description={description}>
+      {image ? (
+        <img
+          alt=""
+          style={{ objectFit: "cover", height: 330 }} // h-80 = 320px
+          tw="flex w-full"
+          src={new URL(image, DEFAULT_URL).toString()}
+        />
+      ) : null}
+    </BasicLayout>,
     {
       ...SIZE,
       fonts: [
@@ -88,6 +86,6 @@ export async function GET(req: Request) {
           weight: 700,
         },
       ],
-    }
+    },
   );
 }

@@ -1,4 +1,10 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { components } from "@/content/mdx";
+import type { Metadata } from "next";
 import { z } from "zod";
 import {
   ContentBoxDescription,
@@ -6,12 +12,6 @@ import {
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "OSS Friends";
 const DESCRIPTION = "List of all our awesome open source friends.";

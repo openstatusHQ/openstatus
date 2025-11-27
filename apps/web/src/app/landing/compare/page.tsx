@@ -1,17 +1,17 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { components } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
+import type { Metadata } from "next";
 import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "Compare Alternatives";
 const DESCRIPTION = "Compare OpenStatus with other tools.";

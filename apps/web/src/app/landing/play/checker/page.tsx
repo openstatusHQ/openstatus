@@ -1,5 +1,7 @@
+import { getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
+import type { Metadata } from "next";
 import {
   CheckerProvider,
   DetailsButtonLink,
@@ -7,8 +9,6 @@ import {
   ResponseStatus,
   ResultTable,
 } from "./client";
-import { getPageMetadata } from "@/app/shared-metadata";
-import type { Metadata } from "next";
 
 export function generateMetadata(): Metadata {
   const page = getToolsPage("checker");

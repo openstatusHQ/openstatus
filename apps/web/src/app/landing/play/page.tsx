@@ -1,16 +1,16 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { components } from "@/content/mdx";
+import type { Metadata } from "next";
 import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "Playground (Tools)";
 const DESCRIPTION = "Playground for tools and services related to OpenStatus.";

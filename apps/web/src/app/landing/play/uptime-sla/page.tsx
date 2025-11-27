@@ -1,8 +1,8 @@
+import { getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
-import { Calculation } from "./client";
 import type { Metadata } from "next";
-import { getPageMetadata } from "@/app/shared-metadata";
+import { Calculation } from "./client";
 
 export function generateMetadata(): Metadata {
   const page = getToolsPage("uptime-sla");

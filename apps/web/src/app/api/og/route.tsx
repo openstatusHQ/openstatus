@@ -5,11 +5,11 @@ import { OG_DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import {
   SIZE,
   calSemiBold,
+  commitMonoBold,
+  commitMonoRegular,
   interLight,
   interMedium,
   interRegular,
-  commitMonoRegular,
-  commitMonoBold,
 } from "./utils";
 
 export const runtime = "edge";
@@ -50,23 +50,21 @@ export async function GET(req: Request) {
     (searchParams.has("category") && searchParams.get("category")) || CATEGORY;
 
   return new ImageResponse(
-    (
-      <div tw="relative flex flex-col items-start justify-start w-full h-full bg-gray-100">
-        <div
-          tw="flex flex-col h-full p-8 w-full"
-          style={{ fontFamily: "Commit Mono" }}
-        >
-          <div tw="flex flex-col justify-end flex-1 mb-8">
-            <p tw="text-xl text-left">[{category.toLowerCase()}]</p>
-            <h1 tw="text-6xl text-black line-clamp-2 text-left">{title}</h1>
-            <p tw="text-4xl text-slate-700 line-clamp-2 text-left">
-              {description}
-            </p>
-          </div>
-          <p tw="font-medium text-xl text-slate-500 text-left">{footer}</p>
+    <div tw="relative flex flex-col items-start justify-start w-full h-full bg-gray-100">
+      <div
+        tw="flex flex-col h-full p-8 w-full"
+        style={{ fontFamily: "Commit Mono" }}
+      >
+        <div tw="flex flex-col justify-end flex-1 mb-8">
+          <p tw="text-xl text-left">[{category.toLowerCase()}]</p>
+          <h1 tw="text-6xl text-black line-clamp-2 text-left">{title}</h1>
+          <p tw="text-4xl text-slate-700 line-clamp-2 text-left">
+            {description}
+          </p>
         </div>
+        <p tw="font-medium text-xl text-slate-500 text-left">{footer}</p>
       </div>
-    ),
+    </div>,
     {
       ...SIZE,
       fonts: [
@@ -107,6 +105,6 @@ export async function GET(req: Request) {
           weight: 700,
         },
       ],
-    }
+    },
   );
 }

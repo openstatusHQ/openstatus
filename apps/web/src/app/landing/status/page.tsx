@@ -2,20 +2,20 @@ import {
   type AtlassianDescriptionEnum,
   externalStatusArray,
 } from "@/app/(pages)/status/utils";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { components } from "@/content/mdx";
 import { env } from "@/env";
+import type { Metadata } from "next";
 import {
   ContentBoxDescription,
   ContentBoxLink,
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "External Status";
 const DESCRIPTION =

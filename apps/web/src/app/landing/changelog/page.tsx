@@ -1,9 +1,9 @@
-import { getChangelogPosts } from "@/content/utils";
-import Link from "next/link";
-import { ContentList } from "../content-list";
 import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
 import { twitterMetadata } from "@/app/shared-metadata";
+import { getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ContentList } from "../content-list";
 
 const TITLE = "Changelog";
 const DESCRIPTION = "All the latest changes and updates to OpenStatus.";

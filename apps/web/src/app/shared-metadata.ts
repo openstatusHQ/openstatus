@@ -48,9 +48,9 @@ export const getPageMetadata = (page: MDXData): Metadata => {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(
-    title
+    title,
   )}&description=${encodeURIComponent(
-    description
+    description,
   )}&category=${encodeURIComponent(category)}`;
 
   return {
@@ -91,7 +91,7 @@ export const getJsonLDWebPage = (page: MDXData): WithContext<WebPage> => {
 };
 
 export const getJsonLDBlogPosting = (
-  post: MDXData
+  post: MDXData,
 ): WithContext<BlogPosting> => {
   return {
     "@context": "https://schema.org",
@@ -103,9 +103,9 @@ export const getJsonLDBlogPosting = (
     image: post.metadata.image
       ? `${BASE_URL}${post.metadata.image}`
       : `/api/og?title=${encodeURIComponent(
-          post.metadata.title
+          post.metadata.title,
         )}&description=${encodeURIComponent(
-          post.metadata.description
+          post.metadata.description,
         )}&category=${encodeURIComponent(post.metadata.category)}`,
     url: `${BASE_URL}/blog/${post.slug}`,
     author: {

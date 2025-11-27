@@ -1,10 +1,10 @@
+import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
+import { twitterMetadata } from "@/app/shared-metadata";
 import { getBlogPosts } from "@/content/utils";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ContentList } from "../content-list";
 import { BlogCategory } from "./category";
-import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
-import { twitterMetadata } from "@/app/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "Blog";
 const DESCRIPTION = "All the latest articles and news from OpenStatus.";

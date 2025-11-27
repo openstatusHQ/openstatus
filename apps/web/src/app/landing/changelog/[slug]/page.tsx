@@ -59,9 +59,9 @@ export default async function Changelog({
             image: post.metadata.image
               ? `${baseUrl}${post.metadata.image}`
               : `/api/og?title=${encodeURIComponent(
-                  post.metadata.title
+                  post.metadata.title,
                 )}&description=${encodeURIComponent(
-                  post.metadata.description
+                  post.metadata.description,
                 )}&category=${encodeURIComponent(post.metadata.category)}`,
             url: `${baseUrl}/changelog/${post.slug}`,
             author: {

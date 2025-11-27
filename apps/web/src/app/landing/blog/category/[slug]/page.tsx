@@ -46,7 +46,7 @@ export default async function BlogCategoryPage({
 }) {
   const { slug } = await params;
   const allBlogs = getBlogPosts().filter(
-    (post) => post.metadata.category.toLowerCase() === slug.toLowerCase()
+    (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
   return (

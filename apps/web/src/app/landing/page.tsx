@@ -1,9 +1,9 @@
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
-import { getPageMetadata } from "../shared-metadata";
-import { getJsonLDProduct, getJsonLDOrganization } from "../shared-metadata";
 import type { Metadata } from "next";
 import type { Organization, Product, WebPage, WithContext } from "schema-dts";
+import { getPageMetadata } from "../shared-metadata";
+import { getJsonLDOrganization, getJsonLDProduct } from "../shared-metadata";
 
 const jsonLdProduct: WithContext<Product> = getJsonLDProduct();
 

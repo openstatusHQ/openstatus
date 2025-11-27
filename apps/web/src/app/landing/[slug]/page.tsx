@@ -1,9 +1,9 @@
+import { getJsonLDWebPage, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getJsonLDWebPage, getPageMetadata } from "@/app/shared-metadata";
-import { WebPage, WithContext } from "schema-dts";
+import { notFound } from "next/navigation";
+import type { WebPage, WithContext } from "schema-dts";
 
 export async function generateMetadata({
   params,
