@@ -9,7 +9,7 @@ export async function FooterStatus() {
       href="https://status.openstatus.dev"
       className={cn(
         "flex w-full items-center gap-2 p-4 hover:bg-muted",
-        STATUS[status.status].color,
+        STATUS[status.status].color
       )}
     >
       {STATUS[status.status].label}
@@ -32,3 +32,11 @@ const STATUS = {
   Awaited<ReturnType<typeof getStatus>>["status"],
   { color: string; label: string }
 >;
+
+export function FooterStatusFallback() {
+  return (
+    <div className="flex w-full items-center gap-2 p-4 hover:bg-muted">
+      Loading...
+    </div>
+  );
+}

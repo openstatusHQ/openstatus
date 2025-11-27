@@ -1,6 +1,8 @@
 import { Link } from "@/content/link";
 import { ThemeToggle } from "@/content/theme-toggle";
 import { footerLinks } from "@/data/content";
+import { FooterStatus } from "./footer-status";
+import { Suspense } from "react";
 
 export function Footer() {
   return (
@@ -29,12 +31,9 @@ export function Footer() {
           Powered by <Link href="https://openstatus.dev">openstatus</Link>.
         </p>
         <div>
-          <Link
-            href="https://status.openstatus.dev"
-            className="flex w-full items-center gap-2 p-4 text-success hover:bg-muted"
-          >
-            Operational
-          </Link>
+          <Suspense fallback="Loading...">
+            <FooterStatus />
+          </Suspense>
         </div>
         <div className="sm:col-span-2 md:col-span-1">
           <ThemeToggle className="rounded-none" />
