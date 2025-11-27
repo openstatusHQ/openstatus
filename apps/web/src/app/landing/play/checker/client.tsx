@@ -18,7 +18,13 @@ import {
 } from "@openstatus/ui";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
 import { searchParamsParsers } from "./search-params";
 
 type Values = { region: string; latency: number; status: number };
@@ -85,8 +91,9 @@ export function Form({
   defaultUrl?: string;
 }) {
   const { setValues, setId } = useCheckerContext();
+  const [isPending, startTransition] = useTransition();
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const url = formData.get("url") as string;
@@ -104,72 +111,74 @@ export function Form({
     setValues([]);
     setId(null); // This will also clear the URL param
 
-    async function fetchAndReadStream() {
-      try {
-        const response = await fetch("/play/checker/api", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ url, method }),
-        });
+    startTransition(async () => {
+      async function fetchAndReadStream() {
+        try {
+          const response = await fetch("/play/checker/api", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url, method }),
+          });
 
-        const reader = response?.body?.getReader();
-        if (!reader) return;
+          const reader = response?.body?.getReader();
+          if (!reader) return;
 
-        const decoder = new TextDecoder();
-        let done = false;
+          const decoder = new TextDecoder();
+          let done = false;
 
-        while (!done) {
-          const { value, done: streamDone } = await reader.read();
-          done = streamDone;
-          if (value) {
-            const decoded = decoder.decode(value, { stream: true });
-            if (!decoded) continue;
+          while (!done) {
+            const { value, done: streamDone } = await reader.read();
+            done = streamDone;
+            if (value) {
+              const decoded = decoder.decode(value, { stream: true });
+              if (!decoded) continue;
 
-            const array = decoded.split("\n").filter(Boolean);
+              const array = decoded.split("\n").filter(Boolean);
 
-            const results = array
-              .map((item) => {
-                try {
-                  // Store the ID if it's a 32-char hex string
-                  if (is32CharHex(item)) {
-                    setId(item);
+              const results = array
+                .map((item) => {
+                  try {
+                    // Store the ID if it's a 32-char hex string
+                    if (is32CharHex(item)) {
+                      setId(item);
+                      return null;
+                    }
+
+                    const parsed = JSON.parse(item);
+                    const validation = regionCheckerSchema.safeParse(parsed);
+                    if (!validation.success) return null;
+
+                    const check = validation.data;
+                    // Only process successful checks
+                    if (check.state === "success") {
+                      return {
+                        region: check.region,
+                        latency: check.latency,
+                        status: check.status,
+                      };
+                    }
+                    return null;
+                  } catch {
                     return null;
                   }
+                })
+                .filter(notEmpty);
 
-                  const parsed = JSON.parse(item);
-                  const validation = regionCheckerSchema.safeParse(parsed);
-                  if (!validation.success) return null;
-
-                  const check = validation.data;
-                  // Only process successful checks
-                  if (check.state === "success") {
-                    return {
-                      region: check.region,
-                      latency: check.latency,
-                      status: check.status,
-                    };
-                  }
-                  return null;
-                } catch {
-                  return null;
-                }
-              })
-              .filter(notEmpty);
-
-            if (results.length > 0) {
-              setValues((prev) => [...prev, ...results]);
+              if (results.length > 0) {
+                setValues((prev) => [...prev, ...results]);
+              }
             }
           }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          // Could add error handling/toast here
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        // Could add error handling/toast here
       }
-    }
 
-    await fetchAndReadStream();
+      await fetchAndReadStream();
+    });
   }
 
   return (
@@ -206,8 +215,9 @@ export function Form({
             type="submit"
             variant="default"
             className="h-full w-full rounded-none p-4 text-base"
+            disabled={isPending}
           >
-            Submit
+            {isPending ? "Submitting..." : "Submit"}
           </Button>
         </div>
         {/* TOOD: add button to details */}
@@ -233,10 +243,13 @@ export function ResultTable() {
           {values.length === 0 ? (
             <tr>
               <td>
-                <div className="size-4 bg-muted-foreground" />
+                <IconCloudProvider
+                  provider="globe"
+                  className="size-4 text-muted-foreground"
+                />
               </td>
               <td>
-                <br />
+                <div className="size-4 bg-muted-foreground" />
               </td>
               <td>
                 <br />
@@ -251,6 +264,12 @@ export function ResultTable() {
               return (
                 <tr key={value.region}>
                   <td>
+                    <IconCloudProvider
+                      provider={regionConfig.provider}
+                      className="size-4"
+                    />
+                  </td>
+                  <td>
                     <div
                       className={cn(
                         "size-4",
@@ -258,12 +277,6 @@ export function ResultTable() {
                           value.status.toString()[0] as keyof typeof STATUS_CODES
                         ],
                       )}
-                    />
-                  </td>
-                  <td>
-                    <IconCloudProvider
-                      provider={regionConfig.provider}
-                      className="size-4"
                     />
                   </td>
                   <td>
