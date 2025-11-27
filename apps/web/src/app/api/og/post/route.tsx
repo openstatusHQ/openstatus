@@ -9,14 +9,26 @@ import {
   calSemiBold,
   interLight,
   interRegular,
+  commitMonoRegular,
+  commitMonoBold,
 } from "../utils";
 
 export const runtime = "edge";
 
 export async function GET(req: Request) {
-  const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
-    [interRegular, interLight, calSemiBold],
-  );
+  const [
+    interRegularData,
+    interLightData,
+    calSemiBoldData,
+    commitMonoRegularData,
+    commitMonoBoldData,
+  ] = await Promise.all([
+    interRegular,
+    interLight,
+    calSemiBold,
+    commitMonoRegular,
+    commitMonoBold,
+  ]);
 
   const { searchParams } = new URL(req.url);
 
@@ -30,16 +42,18 @@ export async function GET(req: Request) {
     : undefined;
 
   return new ImageResponse(
-    <BasicLayout title={title} description={description}>
-      {image ? (
-        <img
-          alt=""
-          style={{ objectFit: "cover", height: 330 }} // h-80 = 320px
-          tw="flex w-full"
-          src={new URL(image, DEFAULT_URL).toString()}
-        />
-      ) : null}
-    </BasicLayout>,
+    (
+      <BasicLayout title={title} description={description}>
+        {image ? (
+          <img
+            alt=""
+            style={{ objectFit: "cover", height: 330 }} // h-80 = 320px
+            tw="flex w-full"
+            src={new URL(image, DEFAULT_URL).toString()}
+          />
+        ) : null}
+      </BasicLayout>
+    ),
     {
       ...SIZE,
       fonts: [
@@ -61,7 +75,19 @@ export async function GET(req: Request) {
           style: "normal",
           weight: 600,
         },
+        {
+          name: "Commit Mono",
+          data: commitMonoRegularData,
+          style: "normal",
+          weight: 400,
+        },
+        {
+          name: "Commit Mono",
+          data: commitMonoBoldData,
+          style: "normal",
+          weight: 700,
+        },
       ],
-    },
+    }
   );
 }

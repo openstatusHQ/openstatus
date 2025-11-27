@@ -5,6 +5,32 @@ import {
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
+import type { Metadata } from "next";
+
+const TITLE = "Playground (Tools)";
+const DESCRIPTION = "Playground for tools and services related to OpenStatus.";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    ...ogMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
+  },
+};
 
 export default function Page() {
   return (

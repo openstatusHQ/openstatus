@@ -1,3 +1,4 @@
+import { MDXData } from "@/content/utils";
 import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
@@ -6,6 +7,8 @@ export const DESCRIPTION =
 
 export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";
+
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const defaultMetadata: Metadata = {
   title: {
@@ -28,4 +31,39 @@ export const ogMetadata: Metadata["openGraph"] = {
   description: DESCRIPTION,
   type: "website",
   images: ["/api/og"],
+};
+
+export const getPageMetadata = (page: MDXData): Metadata => {
+  const { slug, metadata } = page;
+  const { title, description, category, publishedAt } = metadata;
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(
+    title
+  )}&description=${encodeURIComponent(
+    description
+  )}&category=${encodeURIComponent(category)}`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      publishedTime: publishedAt.toISOString(),
+      url: `${baseUrl}/changelog/${slug}`,
+      images: [
+        {
+          url: ogImage,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
 };

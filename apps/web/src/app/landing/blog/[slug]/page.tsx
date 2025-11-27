@@ -1,8 +1,8 @@
+import { BASE_URL, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getBlogPosts } from "@/content/utils";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-const baseUrl = "http://localhost:3000";
 
 export async function generateStaticParams() {
   const posts = getBlogPosts();
@@ -16,45 +16,16 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata | undefined> {
   const { slug } = await params;
   const post = getBlogPosts().find((post) => post.slug === slug);
   if (!post) {
     return;
   }
 
-  const {
-    title,
-    publishedAt: publishedTime,
-    description,
-    image,
-  } = post.metadata;
-  const ogImage = image
-    ? image
-    : `${baseUrl}/og?title=${encodeURIComponent(title)}`;
+  const metadata = getPageMetadata(post);
 
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "article",
-      publishedTime,
-      url: `${baseUrl}/blog/${post.slug}`,
-      images: [
-        {
-          url: ogImage,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
+  return metadata;
 }
 
 export default async function Blog({
@@ -84,9 +55,13 @@ export default async function Blog({
             dateModified: post.metadata.publishedAt,
             description: post.metadata.description,
             image: post.metadata.image
-              ? `${baseUrl}${post.metadata.image}`
-              : `/og?title=${encodeURIComponent(post.metadata.title)}`,
-            url: `${baseUrl}/blog/${post.slug}`,
+              ? `${BASE_URL}${post.metadata.image}`
+              : `/api/og?title=${encodeURIComponent(
+                  post.metadata.title
+                )}&description=${encodeURIComponent(
+                  post.metadata.description
+                )}&category=${encodeURIComponent(post.metadata.category)}`,
+            url: `${BASE_URL}/blog/${post.slug}`,
             author: {
               "@type": "Person",
               name: "Maximilian Kaske",

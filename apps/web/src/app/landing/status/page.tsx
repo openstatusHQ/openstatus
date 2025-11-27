@@ -10,6 +10,33 @@ import {
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
+import type { Metadata } from "next";
+
+const TITLE = "External Status";
+const DESCRIPTION =
+  "Easily check if your external providers is working properly";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    ...ogMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
+  },
+};
 
 export default async function Page() {
   const res = await fetch(env.EXTERNAL_API_URL);

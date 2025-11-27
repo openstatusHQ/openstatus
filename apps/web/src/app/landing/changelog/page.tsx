@@ -1,6 +1,29 @@
 import { getChangelogPosts } from "@/content/utils";
 import Link from "next/link";
 import { ContentList } from "../content-list";
+import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
+import { twitterMetadata } from "@/app/shared-metadata";
+import type { Metadata } from "next";
+
+const TITLE = "Changelog";
+const DESCRIPTION = "All the latest changes and updates to OpenStatus.";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    ...ogMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
+  },
+};
 
 export default function ChangelogListPage() {
   const allChangelogs = getChangelogPosts();

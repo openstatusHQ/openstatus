@@ -7,6 +7,13 @@ import {
   ResponseStatus,
   ResultTable,
 } from "./client";
+import { getPageMetadata } from "@/app/shared-metadata";
+import type { Metadata } from "next";
+
+export function generateMetadata(): Metadata {
+  const page = getToolsPage("checker");
+  return getPageMetadata(page);
+}
 
 export default function Page() {
   const page = getToolsPage("checker");

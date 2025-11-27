@@ -22,3 +22,11 @@ export const interLight = fetch(
 export const calSemiBold = fetch(
   new URL("../../../public/fonts/CalSans-SemiBold.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
+
+export const commitMonoRegular = fetch(
+  new URL("../../../public/fonts/CommitMono-400-Regular.otf", import.meta.url),
+).then((res) => res.arrayBuffer());
+
+export const commitMonoBold = fetch(
+  new URL("../../../public/fonts/CommitMono-700-Regular.otf", import.meta.url),
+).then((res) => res.arrayBuffer());

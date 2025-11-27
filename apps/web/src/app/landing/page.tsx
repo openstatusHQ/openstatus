@@ -1,5 +1,12 @@
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
+import { getPageMetadata } from "../shared-metadata";
+import type { Metadata } from "next";
+
+export function generateMetadata(): Metadata {
+  const homePage = getHomePage();
+  return getPageMetadata(homePage);
+}
 
 export default function Page() {
   const homePage = getHomePage();

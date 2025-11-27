@@ -1,5 +1,7 @@
+import { getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getChangelogPosts } from "@/content/utils";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 const baseUrl = "http://localhost:3000";
@@ -16,45 +18,16 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata | undefined> {
   const { slug } = await params;
   const post = getChangelogPosts().find((post) => post.slug === slug);
   if (!post) {
     return;
   }
 
-  const {
-    title,
-    publishedAt: publishedTime,
-    description,
-    image,
-  } = post.metadata;
-  const ogImage = image
-    ? image
-    : `${baseUrl}/og?title=${encodeURIComponent(title)}`;
+  const metadata = getPageMetadata(post);
 
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "article",
-      publishedTime,
-      url: `${baseUrl}/changelog/${post.slug}`,
-      images: [
-        {
-          url: ogImage,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
+  return metadata;
 }
 
 export default async function Changelog({
@@ -85,7 +58,11 @@ export default async function Changelog({
             description: post.metadata.description,
             image: post.metadata.image
               ? `${baseUrl}${post.metadata.image}`
-              : `/og?title=${encodeURIComponent(post.metadata.title)}`,
+              : `/api/og?title=${encodeURIComponent(
+                  post.metadata.title
+                )}&description=${encodeURIComponent(
+                  post.metadata.description
+                )}&category=${encodeURIComponent(post.metadata.category)}`,
             url: `${baseUrl}/changelog/${post.slug}`,
             author: {
               "@type": "Person",

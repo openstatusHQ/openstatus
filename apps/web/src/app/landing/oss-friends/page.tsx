@@ -6,6 +6,32 @@ import {
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
+import type { Metadata } from "next";
+
+const TITLE = "OSS Friends";
+const DESCRIPTION = "List of all our awesome open source friends.";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    ...ogMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: TITLE,
+    description: DESCRIPTION,
+    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
+  },
+};
 
 const OSSFriendSchema = z.object({
   href: z.string(),
