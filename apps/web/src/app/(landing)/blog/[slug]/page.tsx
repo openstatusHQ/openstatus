@@ -1,6 +1,7 @@
 import { getJsonLDBlogPosting, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getBlogPosts } from "@/content/utils";
+import { getAuthor } from "@/data/author";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -56,8 +57,8 @@ export default async function Blog({
       />
       <h1>{post.metadata.title}</h1>
       <p className="flex items-center gap-2.5 divide-x divide-border text-muted-foreground">
-        {formatDate(post.metadata.publishedAt)} | by {post.metadata.author} | [
-        {post.metadata.category}]
+        {formatDate(post.metadata.publishedAt)} | by{" "}
+        <Author author={post.metadata.author} /> | [{post.metadata.category}]
       </p>
       {post.metadata.image ? (
         <div className="relative aspect-video w-full overflow-hidden border border-border">
@@ -71,5 +72,23 @@ export default async function Blog({
       ) : null}
       <CustomMDX source={post.content} />
     </section>
+  );
+}
+
+function Author({ author }: { author: string }) {
+  const authorData = getAuthor(author);
+  if (typeof authorData === "string") {
+    return author;
+  }
+
+  return (
+    <a
+      href={authorData.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="no-underline!"
+    >
+      {authorData.name}
+    </a>
   );
 }
