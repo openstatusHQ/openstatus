@@ -1,8 +1,4 @@
 import {
-  type AtlassianDescriptionEnum,
-  externalStatusArray,
-} from "@/app/(pages)/status/utils";
-import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
@@ -16,6 +12,7 @@ import {
   ContentBoxTitle,
   ContentBoxUrl,
 } from "../content-box";
+import { type AtlassianDescriptionEnum, externalStatusArray } from "./utils";
 
 const TITLE = "External Status";
 const DESCRIPTION =
