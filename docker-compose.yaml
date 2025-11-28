@@ -1,59 +1,139 @@
+networks:
+    openstatus:
+        driver: bridge
+        name: openstatus
+
+volumes:
+    libsql-data:
+        name: openstatus-libsql-data
+    workflows-data:
+        name: openstatus-workflows-data
+
 services:
-    internal-server:
+    # External services
+    libsql:
+        container_name: openstatus-libsql
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        networks:
+            - openstatus
+        ports:
+            - "8080:8080"
+            - "5001:5001"
+        volumes:
+            - libsql-data:/var/lib/sqld
+        environment:
+            - SQLD_NODE=primary
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        restart: unless-stopped
+
+    tinybird-local:
+        container_name: openstatus-tinybird
+        image: tinybirdco/tinybird-local:latest
+        platform: linux/amd64
+        networks:
+            - openstatus
+        ports:
+            - "7181:7181"
+        environment:
+            - COMPATIBILITY_MODE=1
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:7181/health"]
+            interval: 15s
+            timeout: 5s
+            retries: 5
+            start_period: 20s
+        restart: unless-stopped
+
+    # Internal Services
+    workflows:
+        container_name: openstatus-workflows
         build:
-         context: .
-         dockerfile: apps/workflows/Dockerfile
+            context: .
+            dockerfile: apps/workflows/Dockerfile
+        image: openstatus/workflows:latest
+        networks:
+            - openstatus
+        ports:
+            - "3000:3000"
+        volumes:
+            - workflows-data:/app/data
+        env_file:
+            - .env.docker
         environment:
             - DATABASE_URL=http://libsql:8080
-            - DATABASE_AUTH_TOKEN="basic:token"
-            - RESEND_API_KEY=test
-            - UPSTASH_REDIS_REST_URL=test
-            - UPSTASH_REDIS_REST_TOKEN=test
-            - NODE_ENV=production
-            - GCP_PROJECT_ID=test
-        extra_hosts:
-          - "host.docker.internal:host-gateway"
+            - PORT=3000
+        depends_on:
+            libsql:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        restart: unless-stopped
 
-        ports:
-            - 3000:3000
-        volumes:
-            - type: bind
-              source: ./data
-              target: /app/data
-        image: workflows-test
-        command: .
-    libsql:
-        image: ghcr.io/tursodatabase/libsql-server:latest
-        ports:
-          - 8080:8080
-          - 5001:5001
-    api:
+    server:
+        container_name: openstatus-server
         build:
-         context: .
-         dockerfile: apps/server/Dockerfile
+            context: .
+            dockerfile: apps/server/Dockerfile
+        image: openstatus/server:latest
+        networks:
+            - openstatus
         ports:
-            - 3001:3000
-        image: server
+            - "3001:3000"
+        env_file:
+            - .env.docker
         environment:
-            - DATABASE_URL=http://libsql-1:8080
-            - DATABASE_AUTH_TOKEN="basic:token"
-            - UPSTASH_REDIS_REST_URL=test
-            - UPSTASH_REDIS_REST_TOKEN=test
-            - NODE_ENV=production
-            - NEXT_PUBLIC_OPENPANEL_CLIENT_ID=test
-            - OPENPANEL_CLIENT_SECRET=test
-            - RESEND_API_KEY=test
-        command: .
-    # dashboard:
-    #     build:
-    #      context: .
-    #      dockerfile: apps/dashboard/Dockerfile
-    #     ports:
-    #         - 3002:3000
-    #     image: dashboard
-    #     environment:
-    #         - API_URL=http://host.docker.internal:3001
-    #         - NEXT_PUBLIC_OPENPANEL_CLIENT_ID=test
-    #         - OPENPANEL_CLIENT_SECRET=test
-    #         - NODE_ENV=production
-    #     command: .
+            - DATABASE_URL=http://libsql:8080
+            - PORT=3000
+        depends_on:
+            libsql:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+        restart: unless-stopped
+
+    private-location:
+        container_name: openstatus-private-location
+        build:
+            context: apps/private-location
+            dockerfile: Dockerfile
+        image: openstatus/private-location:latest
+        networks:
+            - openstatus
+        ports:
+            - "8081:8080"
+        env_file:
+            - .env.docker
+        environment:
+            - GIN_MODE=release
+            - PORT=8080
+        depends_on:
+            server:
+                condition: service_started
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--no-verbose",
+                    "--tries=1",
+                    "--spider",
+                    "http://localhost:8080/health",
+                ]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 20s
+        restart: unless-stopped

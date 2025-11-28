@@ -29,6 +29,7 @@ type MonitorManager struct {
 	mu        sync.Mutex
 }
 
+// UpdateMonitors fetches the latest monitors and starts/stops jobs as needed
 func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 	res, err := mm.Client.Monitors(ctx, &connect.Request[v1.MonitorsRequest]{})
 	if err != nil {
@@ -99,8 +100,6 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 		}
 
 	}
-
-
 
 	// TCP monitors: start jobs for new monitors
 	for _, m := range res.Msg.TcpMonitors {
@@ -175,7 +174,7 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 					}
 					resp, ingestErr := mm.Client.IngestDNS(ctx.Context, &connect.Request[v1.IngestDNSRequest]{
 						Msg: &v1.IngestDNSRequest{
-							MonitorId:     monitor.Id,
+							MonitorId: monitor.Id,
 
 							// Id:            data.ID,
 							// Uri:           monitor.Uri,
@@ -205,7 +204,6 @@ func (mm *MonitorManager) UpdateMonitors(ctx context.Context) {
 			log.Printf("Started TCP monitoring job for %s (%s)", m.Id, m.Uri)
 		}
 	}
-
 
 	for id := range mm.Scheduler.Tasks() {
 		if _, stillExists := currentIDs[id]; !stillExists {
