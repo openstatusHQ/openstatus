@@ -11,7 +11,7 @@ const productsSection = {
   label: "Products",
   items: products.map((product) => ({
     label: product.metadata.title,
-    href: `/landing/${product.slug}`,
+    href: `/${product.slug}`,
   })),
 };
 
@@ -20,11 +20,11 @@ const resourcesFooterSection = {
   items: [
     {
       label: "Blog",
-      href: "/landing/blog",
+      href: "/blog",
     },
     {
       label: "Pricing",
-      href: "/landing/pricing",
+      href: "/pricing",
     },
     {
       label: "Docs",
@@ -32,11 +32,11 @@ const resourcesFooterSection = {
     },
     {
       label: "External Status",
-      href: "/landing/status",
+      href: "/status",
     },
     {
       label: "OSS Friends",
-      href: "/landing/oss-friends",
+      href: "/oss-friends",
     },
   ],
 };
@@ -46,23 +46,23 @@ const resourcesHeaderSection = {
   items: [
     {
       label: "Blog",
-      href: "/landing/blog",
+      href: "/blog",
     },
     {
       label: "Changelog",
-      href: "/landing/changelog",
+      href: "/changelog",
     },
     {
       label: "Global Speed Checker",
-      href: "/landing/play/checker",
+      href: "/play/checker",
     },
     {
       label: "Compare",
-      href: "/landing/compare",
+      href: "/compare",
     },
     {
       label: "Playground (Tools)",
-      href: "/landing/play",
+      href: "/play",
     },
   ],
 };
@@ -72,11 +72,11 @@ const companySection = {
   items: [
     {
       label: "About",
-      href: "/landing/about",
+      href: "/about",
     },
     {
       label: "Changelog",
-      href: "/landing/changelog",
+      href: "/changelog",
     },
     {
       label: "I'm an LLM",
@@ -84,15 +84,15 @@ const companySection = {
     },
     {
       label: "Terms",
-      href: "/landing/terms",
+      href: "/terms",
     },
     {
       label: "Privacy",
-      href: "/landing/privacy",
+      href: "/privacy",
     },
     {
       label: "Subprocessors",
-      href: "/landing/subprocessors",
+      href: "/subprocessors",
     },
   ],
 };
@@ -101,7 +101,7 @@ const compareSection = {
   label: "Compare",
   items: getComparePages().map((page) => ({
     label: page.metadata.title,
-    href: `/landing/compare/${page.slug}`,
+    href: `/compare/${page.slug}`,
   })),
 };
 
@@ -112,7 +112,7 @@ const toolsSection = {
       .filter((page) => page.slug !== "checker-slug")
       .map((page) => ({
         label: page.metadata.title,
-        href: `/landing/play/${page.slug}`,
+        href: `/play/${page.slug}`,
       })),
     {
       label: "Theme Explorer",
@@ -166,7 +166,7 @@ export const playSection = {
       .filter((page) => page.slug !== "checker-slug")
       .map((page) => ({
         label: page.metadata.title,
-        href: `/landing/play/${page.slug}`,
+        href: `/play/${page.slug}`,
       })),
     {
       label: "Theme Explorer",

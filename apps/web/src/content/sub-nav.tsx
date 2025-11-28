@@ -8,11 +8,7 @@ import { CopyButton } from "./copy-button";
 
 export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
   const pathname = usePathname();
-  const segments = pathname
-    .replace("/landing", "")
-    .split("/")
-    .filter(Boolean)
-    .slice(0, -1);
+  const segments = pathname.split("/").filter(Boolean).slice(0, -1);
 
   return (
     <div
@@ -22,7 +18,7 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
       <div className="prose px-4 text-muted-foreground">
         {segments.map((segment, index) => (
           <Fragment key={segment}>
-            <Link href={`/landing/${segments.slice(0, index + 1).join("/")}`}>
+            <Link href={`/${segments.slice(0, index + 1).join("/")}`}>
               {segment}
             </Link>
             {index < segments.length - 1 ? <span>{" | "}</span> : null}

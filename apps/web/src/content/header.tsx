@@ -18,7 +18,7 @@ export function Header() {
     <header className="grid grid-cols-3 gap-px border border-border bg-border lg:grid-cols-6 [&>*]:bg-background [&>*]:px-4 [&>*]:py-4 [&>*]:hover:bg-muted">
       <ContextMenu>
         <ContextMenuTrigger className="group" asChild>
-          <Link href="/landing" className="relative flex items-center gap-2">
+          <Link href="" className="relative flex items-center gap-2">
             <img
               src="/assets/landing/openstatus-logo.svg"
               alt="openstatus"
@@ -83,7 +83,7 @@ export function Header() {
           </DropdownMenuContent>
         </DropdownMenu>
       ))}
-      <Link href="/landing/pricing" className="truncate">
+      <Link href="/pricing" className="truncate">
         Pricing
       </Link>
       <Link href="https://docs.openstatus.dev" className="truncate">

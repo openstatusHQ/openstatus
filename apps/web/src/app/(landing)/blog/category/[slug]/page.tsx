@@ -1,5 +1,5 @@
-import { BlogCategory } from "@/app/landing/blog/category";
-import { ContentList } from "@/app/landing/content-list";
+import { BlogCategory } from "@/app/(landing)/blog/category";
+import { ContentList } from "@/app/(landing)/content-list";
 import {
   defaultMetadata,
   ogMetadata,
