@@ -25,6 +25,10 @@ export const Monitor = async ({
   showValues?: boolean;
   totalDays?: number;
 }) => {
+  if (monitor.jobType === "dns") {
+    return <div>DNS is not supported yet in legacy status page</div>;
+  }
+
   const res = await prepareStatusByPeriod(
     "45d",
     monitor.jobType as "http" | "tcp",
