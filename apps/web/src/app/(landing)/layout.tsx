@@ -21,11 +21,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg rounded-none!",
             description: "group-[.toast]:text-muted-foreground",
             actionButton:
-              "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+              "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground rounded-none!",
             cancelButton:
               "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
             closeButton: "group-[.toast]:text-muted-foreground",
           },
+        }}
+        icons={{
+          success: null,
+          error: null,
+          warning: null,
+          info: null,
+          loading: null,
         }}
       />
     </ThemeProvider>

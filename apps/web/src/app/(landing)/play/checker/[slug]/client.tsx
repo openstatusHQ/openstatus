@@ -59,6 +59,7 @@ export function Table({ data }: TableProps) {
         regionInfo.location,
         regionInfo.flag,
         regionInfo.continent,
+        regionInfo.provider,
       ].some((value) => value?.toLowerCase().includes(input.toLowerCase()));
     })
     .sort((a, b) => {
@@ -78,7 +79,7 @@ export function Table({ data }: TableProps) {
       <Input
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Search by region, flag, location code, or continent"
+        placeholder="Search by region, flag, location code, cloud provider or continent"
         className="h-auto! rounded-none p-4 text-base md:text-base"
       />
       <div className="table-wrapper">
@@ -190,6 +191,10 @@ export function Table({ data }: TableProps) {
               })
             )}
           </tbody>
+          <caption>
+            Results of your check ({filteredAndSorted.length} / {checks.length}{" "}
+            regions)
+          </caption>
         </table>
       </div>
     </div>

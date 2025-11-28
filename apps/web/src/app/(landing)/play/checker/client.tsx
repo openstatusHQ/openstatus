@@ -9,7 +9,11 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import { toast } from "@/lib/toast";
 import { cn, notEmpty } from "@/lib/utils";
-import { type Region, regionDict } from "@openstatus/regions";
+import {
+  AVAILABLE_REGIONS,
+  type Region,
+  regionDict,
+} from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
 import { Input } from "@openstatus/ui";
 import {
@@ -161,6 +165,7 @@ export function Form({
                           label: "Details",
                           onClick: () => router.push(`/play/checker/${item}`),
                         },
+                        duration: 4000,
                       });
                       return null;
                     }
@@ -325,7 +330,10 @@ export function ResultTable() {
             })
           )}
         </tbody>
-        <caption>Results of your check</caption>
+        <caption>
+          Results of your check ({values.length} / {AVAILABLE_REGIONS.length}{" "}
+          regions)
+        </caption>
       </table>
     </div>
   );
