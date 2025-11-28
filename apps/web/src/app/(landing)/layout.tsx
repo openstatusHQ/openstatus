@@ -15,7 +15,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
       <Toaster
         toastOptions={{
-          duration: 100000,
           classNames: {
             toast:
               "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg rounded-none!",
