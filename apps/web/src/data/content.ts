@@ -142,11 +142,11 @@ const communitySection = {
     },
     {
       label: "X",
-      href: "https://openstatus.dev/x",
+      href: "https://openstatus.dev/twitter",
     },
     {
       label: "BlueSky",
-      href: "https://openstatus.dev/bluesky",
+      href: "https://openstatus.dev/bsky",
     },
     {
       label: "YouTube",
