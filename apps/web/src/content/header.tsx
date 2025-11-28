@@ -18,7 +18,7 @@ export function Header() {
     <header className="grid grid-cols-3 gap-px border border-border bg-border lg:grid-cols-6 [&>*]:bg-background [&>*]:px-4 [&>*]:py-4 [&>*]:hover:bg-muted">
       <ContextMenu>
         <ContextMenuTrigger className="group" asChild>
-          <Link href="" className="relative flex items-center gap-2">
+          <Link href="/" className="relative flex items-center gap-2">
             <img
               src="/assets/landing/openstatus-logo.svg"
               alt="openstatus"
