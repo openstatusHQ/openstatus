@@ -13,7 +13,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 px-4 py-4">{children}</main>
         <Footer />
       </div>
-      <Toaster richColors expand />
+      <Toaster
+        toastOptions={{
+          duration: 100000,
+          classNames: {
+            toast:
+              "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg rounded-none!",
+            description: "group-[.toast]:text-muted-foreground",
+            actionButton:
+              "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+            cancelButton:
+              "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            closeButton: "group-[.toast]:text-muted-foreground",
+          },
+        }}
+      />
     </ThemeProvider>
   );
 }

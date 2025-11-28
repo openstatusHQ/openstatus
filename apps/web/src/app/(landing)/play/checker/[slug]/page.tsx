@@ -1,4 +1,3 @@
-import { mockCheckAllRegions } from "@/app/(pages)/(content)/play/checker/api/mock";
 import { getPageMetadata } from "@/app/shared-metadata";
 import {
   getCheckerDataById,
@@ -9,6 +8,7 @@ import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { mockCheckAllRegions } from "../api/mock";
 import { Table } from "./client";
 
 function formatDate(date: Date) {
@@ -86,7 +86,7 @@ export default async function Page({
       ? await mockCheckAllRegions()
       : await getCheckerDataById(slug);
 
-  if (!data) redirect("/landing/play/checker");
+  if (!data) redirect("/play/checker");
 
   return (
     <section className="prose dark:prose-invert max-w-none">

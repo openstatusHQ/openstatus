@@ -3,8 +3,11 @@
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
   is32CharHex,
+  latencyFormatter,
   regionCheckerSchema,
+  regionFormatter,
 } from "@/components/ping-response-analysis/utils";
+import { toast } from "@/lib/toast";
 import { cn, notEmpty } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
@@ -17,6 +20,7 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import {
   createContext,
@@ -92,6 +96,7 @@ export function Form({
 }) {
   const { setValues, setId } = useCheckerContext();
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,6 +109,7 @@ export function Form({
       new URL(url);
     } catch {
       // Invalid URL, could add error handling here
+      toast.error("Invalid URL");
       return;
     }
 
@@ -114,6 +120,11 @@ export function Form({
     startTransition(async () => {
       async function fetchAndReadStream() {
         try {
+          const toastId = toast.loading("Loading data from regions...", {
+            duration: Number.POSITIVE_INFINITY,
+            closeButton: false,
+          });
+
           const response = await fetch("/play/checker/api", {
             method: "POST",
             headers: {
@@ -143,6 +154,14 @@ export function Form({
                     // Store the ID if it's a 32-char hex string
                     if (is32CharHex(item)) {
                       setId(item);
+                      toast.success("Data is available!", {
+                        id: toastId,
+                        description: "Learn about the response details.",
+                        action: {
+                          label: "Details",
+                          onClick: () => router.push(`/play/checker/${item}`),
+                        },
+                      });
                       return null;
                     }
 
@@ -168,6 +187,15 @@ export function Form({
 
               if (results.length > 0) {
                 setValues((prev) => [...prev, ...results]);
+                toast.loading(
+                  `Checking ${regionFormatter(
+                    results[0].region,
+                    "long",
+                  )} (${latencyFormatter(results[0].latency)})`,
+                  {
+                    id: toastId,
+                  },
+                );
               }
             }
           }
@@ -208,6 +236,7 @@ export function Form({
             placeholder="https://openstatus.dev"
             className="h-auto! rounded-none p-4 text-base md:text-base"
             defaultValue={defaultUrl}
+            required
           />
         </div>
         <div className="col-span-3 sm:col-span-1">
@@ -336,7 +365,7 @@ export function DetailsButtonLink() {
       asChild
     >
       <Link
-        href={`/landing/play/checker/${id}`}
+        href={`/play/checker/${id}`}
         className="no-underline! text-background!"
       >
         Response details

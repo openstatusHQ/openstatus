@@ -41,7 +41,7 @@ export default function Page() {
           <ContentBoxLink key={tool.href} href={tool.href}>
             <ContentBoxTitle>{tool.label}</ContentBoxTitle>
             <ContentBoxDescription>{tool.description}</ContentBoxDescription>
-            <ContentBoxUrl url={tool.href.replace("/landing", "")} />
+            <ContentBoxUrl url={tool.href} />
           </ContentBoxLink>
         ))}
       </components.Grid>
@@ -53,17 +53,17 @@ const PLAY = [
   {
     label: "Global Speed Checker",
     description: "Test the latency of your website worldwide",
-    href: "/landing/play/checker",
+    href: "/play/checker",
   },
   {
     label: "cURL Builder",
     description: "Curl your website",
-    href: "/landing/play/curl",
+    href: "/play/curl",
   },
   {
     label: "Uptime SLA Calculator",
     description: "Calculate downtime duration or uptime percentage",
-    href: "/landing/play/uptime-sla",
+    href: "/play/uptime-sla",
   },
   {
     label: "Theme Explorer",

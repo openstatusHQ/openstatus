@@ -8,12 +8,12 @@ const categories = [...new Set(allBlogs.map((blog) => blog.metadata.category))];
 export function BlogCategory() {
   return (
     <p>
-      <Link href="/landing/blog">All</Link>
+      <Link href="/blog">All</Link>
       <span>{" | "}</span>
       {categories.map((category, index) => (
         <Fragment key={category}>
           <Link
-            href={`/landing/blog/category/${category.toLowerCase()}`}
+            href={`/blog/category/${category.toLowerCase()}`}
             className="capitalize"
           >
             {category}

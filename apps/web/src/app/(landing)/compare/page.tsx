@@ -39,10 +39,7 @@ export default function Page() {
       <h1>Compare openstatus with uptime and status page solutions</h1>
       <components.Grid cols={2}>
         {getComparePages().map((page) => (
-          <ContentBoxLink
-            key={page.slug}
-            href={`/landing/compare/${page.slug}`}
-          >
+          <ContentBoxLink key={page.slug} href={`/compare/${page.slug}`}>
             <ContentBoxTitle>{page.metadata.title}</ContentBoxTitle>
             <ContentBoxDescription>
               {page.metadata.description}
