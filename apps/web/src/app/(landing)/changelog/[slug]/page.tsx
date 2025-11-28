@@ -67,7 +67,7 @@ export default async function Changelog({
             url: `${baseUrl}/changelog/${post.slug}`,
             author: {
               "@type": "Person",
-              name: "Maximilian Kaske",
+              name: post.metadata.author,
             },
           }),
         }}
