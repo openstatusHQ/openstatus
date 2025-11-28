@@ -53,6 +53,16 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/legal/terms",
+        destination: "/terms",
+        permanent: true,
+      },
+      {
+        source: "/legal/privacy",
+        destination: "/privacy",
+        permanent: true,
+      },
+      {
         source: "/features/monitoring",
         destination: "/uptime-monitoring",
         permanent: true,
