@@ -4,6 +4,8 @@ import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
   type CachedRegionChecker,
   getTimingPhases,
+  regionFormatter,
+  timestampFormatter,
 } from "@/components/ping-response-analysis/utils";
 import { cn } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
@@ -129,10 +131,7 @@ export function Table({ data }: TableProps) {
                 const { dns, connection, tls, ttfb } = check.timingPhases;
 
                 return (
-                  <HeadersDialog
-                    key={check.region}
-                    headers={check.headers || {}}
-                  >
+                  <InfoDialog key={check.region} check={check}>
                     <tr className="hover:bg-muted/50">
                       <td>
                         <IconCloudProvider
@@ -186,7 +185,7 @@ export function Table({ data }: TableProps) {
                         ms
                       </td>
                     </tr>
-                  </HeadersDialog>
+                  </InfoDialog>
                 );
               })
             )}
@@ -245,24 +244,65 @@ function TableSort({
   );
 }
 
-function HeadersDialog({
-  headers,
+function InfoDialog({
+  check,
   children,
 }: {
-  headers: Record<string, string>;
+  check: CachedRegionChecker["checks"][number];
   children: React.ReactNode;
 }) {
+  const headers = check.headers || {};
+  const regionInfo = regionDict[check.region];
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-none! font-mono sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>Headers</DialogTitle>
-          <DialogDescription className="text-base">
-            Response headers sent by the server.
+          <DialogTitle>Response Details</DialogTitle>
+          <DialogDescription>
+            Basic informations like header and latency about the response.
           </DialogDescription>
         </DialogHeader>
-        <div className="min-w-0">
+        <div className="min-w-0 prose dark:prose-invert max-w-none">
+          <table>
+            <tbody>
+              <tr>
+                <td>Region</td>
+                <td>
+                  {regionFormatter(check.region, "long")}, {regionInfo.provider}{" "}
+                  <IconCloudProvider
+                    provider={regionInfo.provider}
+                    className="size-4 inline"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>Timestamp</td>
+                <td>{timestampFormatter(check.timestamp)}</td>
+              </tr>
+              <tr>
+                <td>Status</td>
+                <td
+                  className={cn(
+                    STATUS_CODES[
+                      check.status.toString()[0] as keyof typeof STATUS_CODES
+                    ],
+                  )}
+                >
+                  {check.status}
+                </td>
+              </tr>
+              <tr>
+                <td>Latency</td>
+                <td>
+                  {Intl.NumberFormat("en-US", {
+                    maximumFractionDigits: 0,
+                  }).format(check.latency)}
+                  ms
+                </td>
+              </tr>
+            </tbody>
+          </table>
           <Tabs defaultValue="raw">
             <TabsList className="h-auto w-full rounded-none">
               <TabsTrigger
@@ -278,10 +318,7 @@ function HeadersDialog({
                 Table
               </TabsTrigger>
             </TabsList>
-            <TabsContent
-              value="table"
-              className="min-w-0 overflow-x-auto prose dark:prose-invert max-w-none"
-            >
+            <TabsContent value="table" className="min-w-0 overflow-x-auto">
               <div className="min-w-0">
                 <table className="my-0!">
                   <thead>
@@ -301,12 +338,9 @@ function HeadersDialog({
                 </table>
               </div>
             </TabsContent>
-            <TabsContent
-              value="raw"
-              className="min-w-0 overflow-x-auto prose dark:prose-invert max-w-none"
-            >
+            <TabsContent value="raw" className="min-w-0 overflow-x-auto">
               {/* NOTE: we can make it a readOnly textarea*/}
-              <pre className="whitespace-pre-wrap break-words">
+              <pre className="whitespace-pre-wrap break-words my-0!">
                 {Object.entries(headers).map(([key, value]) => (
                   <code key={key} className="block break-words">
                     {key}: {value}
