@@ -57,8 +57,16 @@ export async function GET(req: Request) {
       >
         <div tw="flex flex-col justify-end flex-1 mb-8">
           <p tw="text-xl text-left">[{category.toLowerCase()}]</p>
-          <h1 tw="text-6xl text-black line-clamp-2 text-left">{title}</h1>
-          <p tw="text-4xl text-slate-700 line-clamp-2 text-left">
+          <h1
+            tw="text-6xl text-black text-left"
+            style={{ lineClamp: 2, display: "block" }}
+          >
+            {title}
+          </h1>
+          <p
+            tw="text-4xl text-slate-700 text-left"
+            style={{ lineClamp: 2, display: "block" }}
+          >
             {description}
           </p>
         </div>
