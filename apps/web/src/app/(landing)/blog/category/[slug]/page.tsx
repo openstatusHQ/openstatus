@@ -53,7 +53,7 @@ export default async function BlogCategoryPage({
     <div className="prose dark:prose-invert max-w-none">
       <h1 className="capitalize">Blog | {slug}</h1>
       <BlogCategory />
-      <ContentList data={allBlogs} prefix="/landing/blog" />
+      <ContentList data={allBlogs} prefix="/blog" />
     </div>
   );
 }

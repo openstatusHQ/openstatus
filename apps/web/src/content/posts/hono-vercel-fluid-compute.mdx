@@ -99,17 +99,50 @@ These are our metrics for both cold and warm deployments from the last 24 hours.
 
 #### Warm
 
-<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
- <MetricsCard title="failing" value={0} suffix="#" variant="negative" />
-  <MetricsCard title="total pings" value={47520} suffix="#" variant="info" />
-  <div className="hidden md:col-span-2 md:block" />
-  <MetricsCard title="p50" value={171} suffix="ms" />
-  <MetricsCard title="p75" value={275} suffix="ms" />
-  <MetricsCard title="p90" value={343} suffix="ms" />
-  <MetricsCard title="p95" value={417} suffix="ms" />
-  <MetricsCard title="p99" value={524} suffix="ms" />
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
 </div>
+<div>
+
+**0**# FAILING
+
+</div>
+<div>
+
+**47,520**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**171**ms P50
+
+</div>
+<div>
+
+**275**ms P75
+
+</div>
+<div>
+
+**343**ms P90
+
+</div>
+<div>
+
+**417**ms P95
+
+</div>
+<div>
+
+**524**ms P99
+
+</div>
+</Grid>
 
 <div className="mt-4">
   <SimpleChart
@@ -120,18 +153,50 @@ These are our metrics for both cold and warm deployments from the last 24 hours.
 
 #### Cold
 
+<Grid cols={5}>
+<div>
 
-<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
- <MetricsCard title="failing" value={0} suffix="#" variant="negative" />
-  <MetricsCard title="total pings" value={792} suffix="#" variant="info" />
-  <div className="hidden md:col-span-2 md:block" />
-  <MetricsCard title="p50" value={212} suffix="ms" />
-  <MetricsCard title="p75" value={333} suffix="ms" />
-  <MetricsCard title="p90" value={439} suffix="ms" />
-  <MetricsCard title="p95" value={529} suffix="ms" />
-  <MetricsCard title="p99" value={639} suffix="ms" />
+**100**% UPTIME
+
 </div>
+<div>
+
+**0**# FAILING
+
+</div>
+<div>
+
+**792**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**212**ms P50
+
+</div>
+<div>
+
+**333**ms P75
+
+</div>
+<div>
+
+**439**ms P90
+
+</div>
+<div>
+
+**529**ms P95
+
+</div>
+<div>
+
+**639**ms P99
+
+</div>
+</Grid>
 
 
 <div className="mt-4">

@@ -38,7 +38,7 @@ export default function BlogListPage() {
           RSS feed
         </Link>
       </p>
-      <ContentList data={allBlogs} prefix="/landing/blog" withCategory />
+      <ContentList data={allBlogs} prefix="/blog" withCategory />
     </div>
   );
 }

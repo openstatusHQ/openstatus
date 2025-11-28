@@ -5,6 +5,7 @@ import { Button } from "@openstatus/ui";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
 import Link from "next/link";
 import React from "react";
+import { Tweet, type TweetProps } from "react-tweet";
 import { highlight } from "sugar-high";
 import { CopyButton } from "./copy-button";
 import { ImageZoom } from "./image-zoom";
@@ -324,15 +325,14 @@ export const components = {
   Grid,
   Details, // Capital D for JSX usage with props
   details: Details, // lowercase for HTML tag replacement
-  LatencyChartTable, // display table with latency metrics for a list of regions
-
-  // TODO: refactor the metric cards on the blog posts to use the new components
-  MetricsCard: () => null,
-  SimpleChart: () => null,
-  ImageWithCaption: () => null,
-  Tweet: () => null,
-  PricingSlider: () => null,
-  Callout: () => null,
+  SimpleChart: LatencyChartTable,
+  Tweet: (props: TweetProps) => {
+    return (
+      <div data-theme="light" className="not-prose [&>div]:mx-auto">
+        <Tweet {...props} />
+      </div>
+    );
+  },
 };
 
 export function CustomMDX(props: MDXRemoteProps) {

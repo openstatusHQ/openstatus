@@ -12,7 +12,7 @@ import { Line, LineChart, XAxis } from "recharts";
 const chartConfig = {
   latency: {
     label: "Latency",
-    color: "var(--success)",
+    color: "var(--color-success)",
   },
 } as ChartConfig;
 
@@ -25,7 +25,7 @@ export function SimpleChart({ data, className }: SimpleChartProps) {
   return (
     <ChartContainer
       config={chartConfig}
-      className={cn("h-20 w-full", className)}
+      className={cn("h-12 w-full", className)}
     >
       <LineChart
         accessibilityLayer

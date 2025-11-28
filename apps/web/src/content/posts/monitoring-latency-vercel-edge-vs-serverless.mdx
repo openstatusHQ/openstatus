@@ -70,17 +70,50 @@ hit the Vercel cache.
 
 ### Warm - `/api/ping/warm`
 
-<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
-  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
-  <MetricsCard title="total pings" value={12090} suffix="#" variant="info" />
-  <div className="hidden md:col-span-2 md:block" />
-  <MetricsCard title="p50" value={246} suffix="ms" />
-  <MetricsCard title="p75" value={305} suffix="ms" />
-  <MetricsCard title="p90" value={442} suffix="ms" />
-  <MetricsCard title="p95" value={563} suffix="ms" />
-  <MetricsCard title="p99" value={855} suffix="ms" />
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
 </div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**12,090**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**246**ms P50
+
+</div>
+<div>
+
+**305**ms P75
+
+</div>
+<div>
+
+**442**ms P90
+
+</div>
+<div>
+
+**563**ms P95
+
+</div>
+<div>
+
+**855**ms P99
+
+</div>
+</Grid>
 
 <div className="mt-4">
   <SimpleChart
@@ -93,17 +126,50 @@ We are pinging this functions every 5 minutes to keep it warm.
 
 ### Cold - `/api/ping/cold`
 
-<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
-  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
-  <MetricsCard title="total pings" value={2010} suffix="#" variant="info" />
-  <div className="hidden md:col-span-2 md:block" />
-  <MetricsCard title="p50" value={859} suffix="ms" />
-  <MetricsCard title="p75" value={933} suffix="ms" />
-  <MetricsCard title="p90" value={1004} suffix="ms" />
-  <MetricsCard title="p95" value={1046} suffix="ms" />
-  <MetricsCard title="p99" value={1156} suffix="ms" />
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
 </div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**2,010**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**859**ms P50
+
+</div>
+<div>
+
+**933**ms P75
+
+</div>
+<div>
+
+**1,004**ms P90
+
+</div>
+<div>
+
+**1,046**ms P95
+
+</div>
+<div>
+
+**1,156**ms P99
+
+</div>
+</Grid>
 
 <div className="mt-4">
   <SimpleChart
@@ -117,17 +183,50 @@ scaled down.
 
 ### Cold Roulette - `/api/ping`
 
-<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
-  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
-  <MetricsCard title="total pings" value={6036} suffix="#" variant="info" />
-  <div className="hidden md:col-span-2 md:block" />
-  <MetricsCard title="p50" value={305} suffix="ms" />
-  <MetricsCard title="p75" value={791} suffix="ms" />
-  <MetricsCard title="p90" value={914} suffix="ms" />
-  <MetricsCard title="p95" value={972} suffix="ms" />
-  <MetricsCard title="p99" value={1086} suffix="ms" />
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
 </div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**6,036**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**305**ms P50
+
+</div>
+<div>
+
+**791**ms P75
+
+</div>
+<div>
+
+**914**ms P90
+
+</div>
+<div>
+
+**972**ms P95
+
+</div>
+<div>
+
+**1,086**ms P99
+
+</div>
+</Grid>
 
 <div className="mt-4">
   <SimpleChart
@@ -159,17 +258,50 @@ the request is processed in a datacenter near the user.
 
 ### Edge - `/api/ping/edge`
 
-<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
-  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
-  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
-  <MetricsCard title="total pings" value={6042} suffix="#" variant="info" />
-  <div className="hidden md:col-span-2 md:block" />
-  <MetricsCard title="p50" value={106} suffix="ms" />
-  <MetricsCard title="p75" value={124} suffix="ms" />
-  <MetricsCard title="p90" value={152} suffix="ms" />
-  <MetricsCard title="p95" value={178} suffix="ms" />
-  <MetricsCard title="p99" value={328} suffix="ms" />
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
 </div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**6,042**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**106**ms P50
+
+</div>
+<div>
+
+**124**ms P75
+
+</div>
+<div>
+
+**152**ms P90
+
+</div>
+<div>
+
+**178**ms P95
+
+</div>
+<div>
+
+**328**ms P99
+
+</div>
+</Grid>
 
 <div className="mt-4">
   <SimpleChart
@@ -182,11 +314,16 @@ We are pinging this functions every 10 minutes.
 
 ## Conclusion
 
-| Runtime               | p50 | p95   | p99   |
-| --------------------- | --- | ----- | ----- |
-| Serverless Cold Start | 859 | 1,046 | 1,156 |
-| Serverless Warm       | 246 | 563   | 855   |
-| Edge                  | 106 | 178   | 328   |
+<Table
+  data={{
+    headers: ["Runtime", "p50", "p95", "p99"],
+    rows: [
+      ["Serverless Cold Start", "859ms", "1,046ms", "1,156ms"],
+      ["Serverless Warm", "246ms", "563ms", "855ms"],
+      ["Edge", "106ms", "178ms", "328ms"],
+    ],
+  }}
+/>
 
 Globablly Edge functions are approximately 9 times faster than Serverless
 functions during cold starts, but only 2 times faster when the function is warm.

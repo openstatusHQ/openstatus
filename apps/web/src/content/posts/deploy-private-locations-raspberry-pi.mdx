@@ -13,10 +13,9 @@ Since **2016**, I've been using the Pi for **AirPlay** to connect to my receiver
 
 Time to revive it!
 
-<ImageWithCaption
+<Image
   src="/assets/posts/deploy-private-locations-raspberry-pi/raspberry-pi-receiver.jpg"
-  alt="bare metal raspberrypi on a receiver"
-  caption="My bare metal Raspberry Pi on top of the receiver I use for AirPlay"
+  alt="My bare metal Raspberry Pi on top of the receiver I use for AirPlay"
 />
 
 ---
@@ -66,10 +65,9 @@ $ cat /etc/os-release
 
 I'm running the OS on a **16GB micro SD** card. The Pi has **1GB of RAM**, which is perfectly enough for this use case.
 
-<ImageWithCaption
+<Image
   src="/assets/posts/deploy-private-locations-raspberry-pi/raspberry-htop.png"
-  alt="htop stats"
-  caption="Statistics from htop command"
+  alt="Statistics from htop command"
 />
 
 
@@ -97,10 +95,9 @@ $ sudo docker pull ghcr.io/openstatushq/private-location:latest
 
 If you have access to Private Locations in the **Dashboard**, create one - it'll will provide you a `token` to use as an environment variables:
 
-<ImageWithCaption
+<Image
   src="/assets/posts/deploy-private-locations-raspberry-pi/dashboard-create-private-location.png"
-  alt="dashboard create private location form"
-  caption="Create a private location"
+  alt="Create a private location"
 />
 
 
@@ -164,10 +161,9 @@ Every few minutes (`last_seen_at`), the agent refreshes its internal database to
 The responses of the pings are sent to our ingest endpoint for storage and aggregation.
 
 
-<ImageWithCaption
+<Image
   src="/assets/posts/deploy-private-locations-raspberry-pi/dashboard-response-logs.png"
-  alt="response logs in the openstatus dashboard"
-  caption="Access your logs within the openstatus Dashboard."
+  alt="Access your logs within the openstatus Dashboard."
 />
 
 

@@ -39,7 +39,7 @@ export default function ChangelogListPage() {
           RSS feed
         </Link>
       </p>
-      <ContentList data={allChangelogs} prefix="/landing/changelog" />
+      <ContentList data={allChangelogs} prefix="/changelog" />
     </div>
   );
 }

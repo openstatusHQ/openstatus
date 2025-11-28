@@ -20,10 +20,9 @@ The status-page is now a standalone app, fully separated from our main web proje
 
 From day one, we’ve built with [shadcn/ui](https://ui.shadcn.com), and we’re sticking to it: same `CSS` variables, same philosophy. And luckily, it makes it easy to change themes!
 
-<ImageWithCaption
+<Image
   src="/assets/posts/introducing-status-page-theme-explorer/theme-explorer-supabase.png"
   alt="Supabase Theme"
-  caption="Supabase Theme"
 />
 
 We’ve now extended those variables with custom ones for states like _maintenance_, _success_, and _degraded_, among others.
@@ -61,10 +60,9 @@ There’s more configuration.
 
 We’ve heard from teams who wanted to **manually update their status page without connecting any synthetic monitors**. While we still believe _monitoring + transparency go hand in hand_, we don’t want to exclude users who just want to share updates directly.
 
-<ImageWithCaption
+<Image
   src="/assets/posts/introducing-status-page-theme-explorer/dashboard-status-page-redesign.png"
   alt="Status Page Dashboard Settings"
-  caption="Status Page Dashboard Settings"
 />
 
 With the new _“manual”_ type, you can only share status reports you are creating, regardless of the derived synthetic monitoring values.
