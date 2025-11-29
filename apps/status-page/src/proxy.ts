@@ -44,7 +44,7 @@ export default async function _proxy1(req: NextRequest) {
 
   console.log({ pathname: url.pathname, type, prefix, subdomain });
 
-  if (url.pathname === "/" && type !== "hostname") {
+  if (url.pathname === "/" && type !== "hostname" && subdomain !== null) {
     return response;
   }
 

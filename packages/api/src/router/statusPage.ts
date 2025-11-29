@@ -107,7 +107,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitors = _page.monitorsToPages
         // NOTE: we cannot nested `where` in drizzle to filter active monitors
-        .filter((m) => !m.monitor.deletedAt)
+        .filter((m) => !m.monitor.deletedAt && m.monitor.active)
         .map((m) => {
           const events = getEvents({
             maintenances: _page.maintenances,
@@ -388,7 +388,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const monitors = _page.monitorsToPages.filter(
-        (m) => !m.monitor.deletedAt,
+        (m) => !m.monitor.deletedAt && m.monitor.active,
       );
 
       if (monitors.length !== opts.input.monitorIds.length) return null;
@@ -754,7 +754,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const _monitor = _page.monitorsToPages.find(
-        (m) => m.monitorId === opts.input.id,
+        (m) => m.monitorId === opts.input.id && m.monitor.active,
       )?.monitor;
 
       if (!_monitor) return null;
