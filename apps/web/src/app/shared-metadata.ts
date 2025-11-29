@@ -19,7 +19,8 @@ export const OG_DESCRIPTION =
 export const BASE_URL =
   process.env.VERCEL_ENV === "production"
     ? "https://www.openstatus.dev"
-    : process.env.NEXT_PUBLIC_VERCEL_URL || "http://localhost:3000";
+    : `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` ||
+      "http://localhost:3000";
 
 export const twitterMetadata: Metadata["twitter"] = {
   title: TITLE,
