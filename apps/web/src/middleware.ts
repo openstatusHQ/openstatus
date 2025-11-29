@@ -21,6 +21,7 @@ export const getValidSubdomain = (host?: string | null) => {
   // we should improve here for custom vercel deploy page
   if (host?.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
+    if (candidate === "v1") return null;
     if (candidate && !candidate.includes("www")) {
       // Valid candidate
       subdomain = candidate;
