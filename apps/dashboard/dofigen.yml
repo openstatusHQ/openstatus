@@ -1,0 +1,66 @@
+builders:
+  # Stage 1: Next.js build with Node.js
+  builder:
+    fromImage: node:24-slim
+    workdir: /app
+    copy:
+      - . /app/
+    env:
+      NODE_ENV: production
+      PNPM_HOME: /pnpm
+      PATH: $PNPM_HOME:$PATH
+      # Build-time environment variables from .env.docker
+      DATABASE_URL: http://libsql:8080
+      DATABASE_AUTH_TOKEN: test
+      RESEND_API_KEY: test
+      UPSTASH_REDIS_REST_URL: test
+      UPSTASH_REDIS_REST_TOKEN: test
+      STRIPE_SECRET_KEY: test
+      PROJECT_ID_VERCEL: test
+      TEAM_ID_VERCEL: test
+      VERCEL_AUTH_BEARER_TOKEN: test
+      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+      OPENPANEL_CLIENT_SECRET: test
+      TINY_BIRD_API_KEY: test
+      CRON_SECRET: test
+      UNKEY_TOKEN: test
+      UNKEY_API_ID: test
+      AUTH_SECRET: change-me-to-a-random-secret-at-least-32-characters-long
+      NEXT_PUBLIC_URL: http://localhost:3002
+    run:
+      - corepack enable
+      - pnpm install --frozen-lockfile
+      - pnpm run --filter=@openstatus/dashboard build
+
+# Runtime
+fromImage: node:24-slim
+workdir: /app/apps/dashboard
+
+copy:
+  # Copy Next.js standalone output
+  - fromBuilder: builder
+    source: /app/apps/dashboard/.next/standalone/apps/dashboard/
+    target: ./
+    chmod: "555"
+  # Copy static assets
+  - fromBuilder: builder
+    source: /app/apps/dashboard/.next/static/
+    target: ./.next/static/
+  # Copy public directory
+  - fromBuilder: builder
+    source: /app/apps/dashboard/public/
+    target: ./public/
+
+expose: "3000"
+user: 1000:1000
+
+healthcheck:
+  interval: 30s
+  timeout: 10s
+  start: 45s
+  retries: 3
+  cmd: curl -f http://localhost:3000/api/health || exit 1
+
+cmd:
+  - node
+  - server.js

@@ -137,3 +137,58 @@ services:
             retries: 3
             start_period: 20s
         restart: unless-stopped
+
+    dashboard:
+        container_name: openstatus-dashboard
+        build:
+            context: .
+            dockerfile: apps/dashboard/Dockerfile
+        image: openstatus/dashboard:latest
+        networks:
+            - openstatus
+        ports:
+            - "3002:3000"
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+            - EXTERNAL_API_URL=http://server:3000
+            - PORT=3000
+        depends_on:
+            libsql:
+                condition: service_healthy
+            server:
+                condition: service_started
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 45s
+        restart: unless-stopped
+
+    status-page:
+        container_name: openstatus-status-page
+        build:
+            context: .
+            dockerfile: apps/status-page/Dockerfile
+        image: openstatus/status-page:latest
+        networks:
+            - openstatus
+        ports:
+            - "3003:3000"
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+            - PORT=3000
+        depends_on:
+            libsql:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 45s
+        restart: unless-stopped

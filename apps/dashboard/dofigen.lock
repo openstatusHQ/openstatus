@@ -1,0 +1,151 @@
+effective: |
+  builders:
+    builder:
+      fromImage:
+        path: node
+        digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+      label:
+        org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+      workdir: /app
+      env:
+        UPSTASH_REDIS_REST_TOKEN: test
+        AUTH_SECRET: change-me-to-a-random-secret-at-least-32-characters-long
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        RESEND_API_KEY: test
+        DATABASE_URL: http://libsql:8080
+        UPSTASH_REDIS_REST_URL: test
+        PNPM_HOME: /pnpm
+        UNKEY_API_ID: test
+        TEAM_ID_VERCEL: test
+        PATH: $PNPM_HOME:$PATH
+        UNKEY_TOKEN: test
+        STRIPE_SECRET_KEY: test
+        DATABASE_AUTH_TOKEN: test
+        NEXT_PUBLIC_URL: http://localhost:3002
+        VERCEL_AUTH_BEARER_TOKEN: test
+        PROJECT_ID_VERCEL: test
+        NODE_ENV: production
+        TINY_BIRD_API_KEY: test
+        CRON_SECRET: test
+        OPENPANEL_CLIENT_SECRET: test
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - corepack enable
+      - pnpm install --frozen-lockfile
+      - pnpm run --filter=@openstatus/dashboard build
+  fromImage:
+    path: node
+    digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+  label:
+    org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+    org.opencontainers.image.base.name: docker.io/node:24-slim
+    io.dofigen.version: 2.4.1
+  user:
+    user: '1000'
+    group: '1000'
+  workdir: /app/apps/dashboard
+  copy:
+  - fromBuilder: builder
+    paths:
+    - /app/apps/dashboard/.next/standalone/apps/dashboard/
+    target: ./
+    chmod: '555'
+  - fromBuilder: builder
+    paths:
+    - /app/apps/dashboard/.next/static/
+    target: ./.next/static/
+  - fromBuilder: builder
+    paths:
+    - /app/apps/dashboard/public/
+    target: ./public/
+  cmd:
+  - node
+  - server.js
+  expose:
+  - port: 3000
+  healthcheck:
+    cmd: curl -f http://localhost:3000/api/health || exit 1
+    interval: 30s
+    timeout: 10s
+    start: 45s
+    retries: 3
+images:
+  docker.io:
+    library:
+      node:
+        24-slim:
+          digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+resources:
+  dofigen.yml:
+    hash: a58e1ec65bdef48b9f49310a08b08c6191d7983c069db781ccaee5fffd41a62c
+    content: |
+      builders:
+        # Stage 1: Next.js build with Node.js
+        builder:
+          fromImage: node:24-slim
+          workdir: /app
+          copy:
+            - . /app/
+          env:
+            NODE_ENV: production
+            PNPM_HOME: /pnpm
+            PATH: $PNPM_HOME:$PATH
+            # Build-time environment variables from .env.docker
+            DATABASE_URL: http://libsql:8080
+            DATABASE_AUTH_TOKEN: test
+            RESEND_API_KEY: test
+            UPSTASH_REDIS_REST_URL: test
+            UPSTASH_REDIS_REST_TOKEN: test
+            STRIPE_SECRET_KEY: test
+            PROJECT_ID_VERCEL: test
+            TEAM_ID_VERCEL: test
+            VERCEL_AUTH_BEARER_TOKEN: test
+            NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+            OPENPANEL_CLIENT_SECRET: test
+            TINY_BIRD_API_KEY: test
+            CRON_SECRET: test
+            UNKEY_TOKEN: test
+            UNKEY_API_ID: test
+            AUTH_SECRET: change-me-to-a-random-secret-at-least-32-characters-long
+            NEXT_PUBLIC_URL: http://localhost:3002
+          run:
+            - corepack enable
+            - pnpm install --frozen-lockfile
+            - pnpm run --filter=@openstatus/dashboard build
+
+      # Stage 3: Production runtime
+      fromImage: node:24-slim
+      workdir: /app/apps/dashboard
+
+      copy:
+        # Copy Next.js standalone output
+        - fromBuilder: builder
+          source: /app/apps/dashboard/.next/standalone/apps/dashboard/
+          target: ./
+          chmod: "555"
+        # Copy static assets
+        - fromBuilder: builder
+          source: /app/apps/dashboard/.next/static/
+          target: ./.next/static/
+        # Copy public directory
+        - fromBuilder: builder
+          source: /app/apps/dashboard/public/
+          target: ./public/
+
+      expose: "3000"
+      user: 1000:1000
+
+      healthcheck:
+        interval: 30s
+        timeout: 10s
+        start: 45s
+        retries: 3
+        cmd: curl -f http://localhost:3000/api/health || exit 1
+
+      cmd:
+        - node
+        - server.js

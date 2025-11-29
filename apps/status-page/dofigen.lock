@@ -1,0 +1,127 @@
+effective: |
+  builders:
+    builder:
+      fromImage:
+        path: node
+        digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+      label:
+        org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+        org.opencontainers.image.base.name: docker.io/node:24-slim
+      workdir: /app
+      env:
+        OPENPANEL_CLIENT_SECRET: test
+        DATABASE_URL: http://libsql:8080
+        PATH: $PNPM_HOME:$PATH
+        TINY_BIRD_API_KEY: test
+        DATABASE_AUTH_TOKEN: test
+        PNPM_HOME: /pnpm
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - corepack enable
+      - pnpm install --frozen-lockfile
+      - pnpm run --filter=@openstatus/status-page build
+  fromImage:
+    path: node
+    digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+  label:
+    io.dofigen.version: 2.4.1
+    org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+    org.opencontainers.image.base.name: docker.io/node:24-slim
+  user:
+    user: '1000'
+    group: '1000'
+  workdir: /app/apps/status-page
+  copy:
+  - fromBuilder: builder
+    paths:
+    - /app/apps/status-page/.next/standalone/apps/status-page/
+    target: ./
+    chmod: '555'
+  - fromBuilder: builder
+    paths:
+    - /app/apps/status-page/.next/static/
+    target: ./.next/static/
+  - fromBuilder: builder
+    paths:
+    - /app/apps/status-page/public/
+    target: ./public/
+  cmd:
+  - node
+  - server.js
+  expose:
+  - port: 3000
+  healthcheck:
+    cmd: curl -f http://localhost:3000/api/health || exit 1
+    interval: 30s
+    timeout: 10s
+    start: 45s
+    retries: 3
+images:
+  docker.io:
+    library:
+      node:
+        24-slim:
+          digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+resources:
+  dofigen.yml:
+    hash: 9602757f761b2c4ae7d51540d4f1210987b6c46c4db54108f1b90f309cf1dbc6
+    content: |
+      builders:
+        # Stage 1: Next.js build with Node.js
+        builder:
+          fromImage: node:24-slim
+          workdir: /app
+          copy:
+            - . /app/
+          env:
+            NODE_ENV: production
+            PNPM_HOME: /pnpm
+            PATH: $PNPM_HOME:$PATH
+            # Build-time environment variables from .env.docker
+            DATABASE_URL: http://libsql:8080
+            DATABASE_AUTH_TOKEN: test
+            TINY_BIRD_API_KEY: test
+            NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+            OPENPANEL_CLIENT_SECRET: test
+          run:
+            - corepack enable
+            - pnpm install --frozen-lockfile
+            - pnpm run --filter=@openstatus/status-page build
+
+      # Stage 2: Production runtime
+      fromImage: node:24-slim
+      workdir: /app/apps/status-page
+
+      copy:
+        # Copy Next.js standalone output
+        - fromBuilder: builder
+          source: /app/apps/status-page/.next/standalone/apps/status-page/
+          target: ./
+          chmod: "555"
+        # Copy static assets
+        - fromBuilder: builder
+          source: /app/apps/status-page/.next/static/
+          target: ./.next/static/
+        # Copy public directory
+        - fromBuilder: builder
+          source: /app/apps/status-page/public/
+          target: ./public/
+
+      expose: "3000"
+      user: 1000:1000
+
+      healthcheck:
+        interval: 30s
+        timeout: 10s
+        start: 45s
+        retries: 3
+        cmd: curl -f http://localhost:3000/api/health || exit 1
+
+      cmd:
+        - node
+        - server.js
