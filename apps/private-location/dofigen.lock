@@ -1,0 +1,123 @@
+effective: |
+  builders:
+    builder:
+      fromImage:
+        path: golang
+        digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+      label:
+        org.opencontainers.image.stage: builder
+        org.opencontainers.image.base.name: docker.io/golang:1.25-alpine
+        org.opencontainers.image.base.digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+      workdir: /go/src/app
+      arg:
+        TARGETOS: ''
+        TARGETARCH: ''
+      env:
+        CGO_ENABLED: '0'
+        TZ: UTC
+      copy:
+      - paths:
+        - .
+        target: .
+      run:
+      - apk add --no-cache tzdata
+      - go mod download
+      - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+  label:
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Private Location
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.description: Private location orchestrator for OpenStatus
+    io.dofigen.version: 2.4.1
+  user:
+    user: '1000'
+    group: '1000'
+  workdir: /opt/bin
+  env:
+    TZ: UTC
+    USER: '1000'
+    GIN_MODE: release
+  copy:
+  - fromBuilder: builder
+    paths:
+    - /etc/ssl/certs/ca-certificates.crt
+    target: /etc/ssl/certs/
+  - fromBuilder: builder
+    paths:
+    - /usr/share/zoneinfo
+    target: /usr/share/zoneinfo
+  - fromBuilder: builder
+    paths:
+    - /go/src/app/private-location
+    target: /opt/bin/private-location
+  cmd:
+  - /opt/bin/private-location
+  expose:
+  - port: 8080
+images:
+  docker.io:
+    library:
+      golang:
+        1.25-alpine:
+          digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+resources:
+  dofigen.yml:
+    hash: 436f85f8b1da4bdcf4884af1153832f7dfe7f986fdc0799a8afbfe3ddc19e1fb
+    content: |
+      builders:
+        # Stage 1: Build Go binary
+        builder:
+          fromImage: golang:1.25-alpine
+          platform: $BUILDPLATFORM
+          label:
+            org.opencontainers.image.stage: builder
+          workdir: /go/src/app
+          # Build arguments for cross-compilation
+          args:
+            TARGETOS: ""
+            TARGETARCH: ""
+          env:
+            TZ: UTC
+            CGO_ENABLED: "0"
+          copy:
+            # Copy source code
+            - . .
+          run:
+            - apk add --no-cache tzdata
+            - go mod download
+            # Build optimized binary
+            # -trimpath: Remove file system paths from binary
+            # -ldflags "-s -w": Strip debug info and symbol table
+            - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+
+      # Stage 2: Production runtime
+      label:
+        org.opencontainers.image.title: OpenStatus Private Location
+        org.opencontainers.image.description: Private location orchestrator for OpenStatus
+        org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+        org.opencontainers.image.vendor: OpenStatus
+        org.opencontainers.image.authors: OpenStatus Team
+      workdir: /opt/bin
+
+      copy:
+        - fromBuilder: builder
+          source: /etc/ssl/certs/ca-certificates.crt
+          target: /etc/ssl/certs/
+        - fromBuilder: builder
+          source: /usr/share/zoneinfo
+          target: /usr/share/zoneinfo
+        - fromBuilder: builder
+          source: /go/src/app/private-location
+          target: /opt/bin/private-location
+
+      env:
+        TZ: UTC
+        USER: "1000"
+        GIN_MODE: release
+
+      user: 1000:1000
+      expose: "8080"
+
+      cmd:
+        - /opt/bin/private-location

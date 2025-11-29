@@ -88,7 +88,7 @@ builders:
         target: /app/package.json
     run: bun install
 
-# Final Runtime Stage
+# Runtime
 fromImage: debian:bullseye-slim
 workdir: /app/
 

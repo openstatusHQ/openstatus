@@ -52,7 +52,7 @@ builders:
         target: /app/node_modules
     run: bun build --compile --sourcemap src/index.ts --outfile=app
 
-# Final Runtime Stage
+# Runtime
 fromImage: debian:bullseye-slim
 
 # Metadata labels
