@@ -2,12 +2,12 @@ export const author = {
   "Maximilian Kaske": {
     name: "Maximilian Kaske",
     url: "https://x.com/mxkaske",
-    image: "https://www.openstatus.dev/assets/authors/max.png",
+    image: "/assets/authors/max.png",
   },
   "Thibault Le Ouay Ducasse": {
     name: "Thibault Le Ouay Ducasse",
     url: "https://bsky.app/profile/thibaultleouay.dev",
-    image: "https://www.openstatus.dev/assets/authors/thibault.jpeg",
+    image: "/assets/authors/thibault.jpeg",
   },
 } as const;
 
