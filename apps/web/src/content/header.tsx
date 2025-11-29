@@ -38,7 +38,7 @@ export function Header() {
           <ContextMenuItem className="rounded-none px-2 py-3 font-mono" asChild>
             {/* FIXME: use relative path */}
             <a
-              href="https://openstatus.dev/assets/landing/logos/OpenStatus.svg"
+              href="https://openstatus.dev/assets/logos/OpenStatus.svg"
               download="openstatus.svg"
             >
               Download Name SVG
@@ -46,7 +46,7 @@ export function Header() {
           </ContextMenuItem>
           <ContextMenuItem className="rounded-none px-2 py-3 font-mono" asChild>
             <a
-              href="https://openstatus.dev/assets/landing/logos/OpenStatus-Logo.svg"
+              href="https://openstatus.dev/assets/logos/OpenStatus-Logo.svg"
               download="openstatus-logo.svg"
             >
               Download Logo SVG
