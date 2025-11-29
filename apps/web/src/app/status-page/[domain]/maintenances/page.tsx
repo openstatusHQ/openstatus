@@ -1,5 +1,0 @@
-import { redirect } from "next/navigation";
-
-export default async function Page() {
-  redirect("./events?filter=maintenances");
-}
