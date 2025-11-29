@@ -38,6 +38,10 @@ const resourcesFooterSection = {
       label: "OSS Friends",
       href: "/oss-friends",
     },
+    {
+      label: "Marketing V1",
+      href: "https://v1.openstatus.dev",
+    },
   ],
 };
 
