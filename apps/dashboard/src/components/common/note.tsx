@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 
 const noteVariants = cva(
-  "flex items-center gap-2 rounded-md border px-3 py-2 [&>svg]:size-4 [&>svg]:text-current [&>svg]:shrink-0",
+  "flex items-center gap-2 rounded-xl border px-3 py-2 [&>svg]:size-4 [&>svg]:text-current [&>svg]:shrink-0",
   {
     variants: {
       variant: {

@@ -18,9 +18,9 @@ import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-
 import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
+  Cog,
   Mail,
   MessageCircle,
-  Pencil,
   Trash2,
   Webhook,
 } from "lucide-react";
@@ -28,8 +28,8 @@ import {
 export const actions = [
   {
     id: "edit",
-    label: "Edit",
-    icon: Pencil,
+    label: "Settings",
+    icon: Cog,
     variant: "default" as const,
   },
   {

@@ -776,32 +776,9 @@ export const pageRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         forceTheme: z.enum(["light", "dark", "system"]),
-      }),
-    )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(page.workspaceId, opts.ctx.workspace.id),
-        eq(page.id, opts.input.id),
-      ];
-
-      await opts.ctx.db
-        .update(page)
-        .set({ forceTheme: opts.input.forceTheme, updatedAt: new Date() })
-        .where(and(...whereConditions))
-        .run();
-    }),
-
-  updatePageConfiguration: protectedProcedure
-    .meta({ track: Events.UpdatePage })
-    .input(
-      z.object({
-        id: z.number(),
-        configuration: z
-          .record(z.string(), z.string().or(z.boolean()).optional())
-          .nullish(),
-        legacyPage: z.boolean(),
-        homepageUrl: z.string().nullish(),
-        contactUrl: z.string().nullish(),
+        configuration: z.object({
+          theme: z.string(),
+        }),
       }),
     )
     .mutation(async (opts) => {
@@ -821,29 +798,98 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      const currentConfiguration =
+        (typeof _page.configuration === "object" &&
+          _page.configuration !== null &&
+          _page.configuration) ||
+        {};
+      const updatedConfiguration = {
+        ...currentConfiguration,
+        theme: opts.input.configuration.theme,
+      };
+
       await opts.ctx.db
         .update(page)
         .set({
-          configuration: opts.input.configuration,
-          legacyPage: opts.input.legacyPage,
+          forceTheme: opts.input.forceTheme,
+          configuration: updatedConfiguration,
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateLinks: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        homepageUrl: z.string().nullish(),
+        contactUrl: z.string().nullish(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      await opts.ctx.db
+        .update(page)
+        .set({
           homepageUrl: opts.input.homepageUrl,
           contactUrl: opts.input.contactUrl,
           updatedAt: new Date(),
         })
         .where(and(...whereConditions))
         .run();
+    }),
 
-      if (opts.input.legacyPage) {
-        await redis.del(`page:${_page.slug}`);
-        if (_page.customDomain) {
-          await redis.del(`page:${_page.customDomain}`);
-        }
-      } else {
-        await redis.set(`page:${_page.slug}`, 1);
-        if (_page.customDomain) {
-          await redis.set(`page:${_page.customDomain}`, 1);
-        }
+  updatePageConfiguration: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(
+      z.object({
+        id: z.number(),
+        configuration: z
+          .record(z.string(), z.string().or(z.boolean()).optional())
+          .nullish(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_page) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
       }
+
+      const currentConfiguration =
+        (typeof _page.configuration === "object" &&
+          _page.configuration !== null &&
+          _page.configuration) ||
+        {};
+      const updatedConfiguration = {
+        ...currentConfiguration,
+        ...opts.input.configuration,
+      };
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          configuration: updatedConfiguration,
+          updatedAt: new Date(),
+        })
+        .where(and(...whereConditions))
+        .run();
     }),
 
   updateMonitors: protectedProcedure

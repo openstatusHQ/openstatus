@@ -1,6 +1,7 @@
 import { useTransition } from "react";
 import { z } from "zod";
 
+import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -12,13 +13,27 @@ import {
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -26,14 +41,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { THEME_KEYS } from "@openstatus/theme-store";
+import { THEMES } from "@openstatus/theme-store";
+import type { ThemeKey } from "@openstatus/theme-store";
 import { isTRPCClientError } from "@trpc/client";
-import { Laptop, Moon, Sun } from "lucide-react";
+import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const schema = z.object({
   forceTheme: z.enum(["light", "dark", "system"]),
+  configuration: z.object({
+    theme: z.string(),
+  }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -92,7 +115,7 @@ export function FormAppearance({
               name="forceTheme"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="sr-only">Theme</FormLabel>
+                  <FormLabel>Mode</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -124,18 +147,101 @@ export function FormAppearance({
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                  <FormDescription>
+                    Override the user&apos;s preference.
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="configuration.theme"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Style</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          id="community-theme"
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground",
+                          )}
+                        >
+                          <span className="truncate">
+                            {THEMES[field.value as ThemeKey]?.name ||
+                              "Select a theme"}
+                          </span>
+                          <ChevronsUpDown className="opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search themes..."
+                          className="h-9"
+                        />
+                        <CommandList>
+                          <CommandEmpty>No themes found.</CommandEmpty>
+                          <CommandGroup>
+                            {THEME_KEYS.map((theme) => {
+                              const { name, author } = THEMES[theme];
+                              return (
+                                <CommandItem
+                                  value={theme}
+                                  key={theme}
+                                  keywords={[theme, name, author.name]}
+                                  onSelect={(v) => field.onChange(v)}
+                                >
+                                  <span className="truncate">{name}</span>
+                                  <span className="truncate font-commit-mono text-muted-foreground text-xs">
+                                    by {author.name}
+                                  </span>
+                                  <Check
+                                    className={cn(
+                                      "ml-auto",
+                                      theme === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                </CommandItem>
+                              );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                  <FormDescription>Choose a theme to apply.</FormDescription>
                 </FormItem>
               )}
             />
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Your user will still be able to change the theme via the theme
+              Your user will still be able to change the mode via the theme
               toggle.
             </FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Submitting..." : "Submit"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="ghost" asChild>
+                <Link
+                  href="https://themes.openstatus.dev"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  View Theme Explorer <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
           </FormCardFooter>
         </FormCard>
       </form>

@@ -265,6 +265,7 @@ export function FormMonitorUpdate() {
         }}
       />
       <FormDangerZone
+        title={monitor.name}
         onSubmit={async () => {
           await deleteMonitorMutation.mutateAsync({ id: Number.parseInt(id) });
         }}
