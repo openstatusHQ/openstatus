@@ -31,7 +31,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
         headers: {
           "x-trpc-source": "server",
         },
-        async fetch(url, options) {
+        fetch: (async (url, options) => {
           const cookieStore = await cookies();
           return fetch(url, {
             ...options,
@@ -41,7 +41,7 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
               cookie: cookieStore.toString(),
             },
           });
-        },
+        }) as typeof fetch,
       }),
     ],
   }),
@@ -59,7 +59,7 @@ export function HydrateClient(props: { children: React.ReactNode }) {
 
 // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
 export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
-  queryOptions: T,
+  queryOptions: T
 ) {
   const queryClient = getQueryClient();
 
@@ -73,7 +73,7 @@ export function prefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
 
 // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
 export function batchPrefetch<T extends ReturnType<TRPCQueryOptions<any>>>(
-  queryOptionsArray: T[],
+  queryOptionsArray: T[]
 ) {
   const queryClient = getQueryClient();
 
