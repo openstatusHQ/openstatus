@@ -21,7 +21,9 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
             <Link href={`/${segments.slice(0, index + 1).join("/")}`}>
               {segment}
             </Link>
-            {index < segments.length - 1 ? <span>{" | "}</span> : null}
+            {index < segments.length - 1 ? (
+              <span className="text-muted-foreground">{" | "}</span>
+            ) : null}
           </Fragment>
         ))}
       </div>

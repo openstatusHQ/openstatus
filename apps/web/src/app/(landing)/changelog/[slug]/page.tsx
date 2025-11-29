@@ -4,6 +4,7 @@ import { formatDate, getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { ContentPagination } from "../../content-pagination";
 
 const baseUrl = "http://localhost:3000";
 
@@ -37,7 +38,14 @@ export default async function Changelog({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getChangelogPosts().find((post) => post.slug === slug);
+  const posts = getChangelogPosts().sort(
+    (a, b) =>
+      b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+  );
+  const postIndex = posts.findIndex((post) => post.slug === slug);
+  const post = posts[postIndex];
+  const previousPost = posts[postIndex - 1];
+  const nextPost = posts[postIndex + 1];
 
   if (!post) {
     notFound();
@@ -88,6 +96,11 @@ export default async function Changelog({
         </div>
       ) : null}
       <CustomMDX source={post.content} />
+      <ContentPagination
+        previousPost={previousPost}
+        nextPost={nextPost}
+        prefix="/changelog"
+      />
     </section>
   );
 }

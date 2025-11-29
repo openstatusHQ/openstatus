@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { BlogPosting, WithContext } from "schema-dts";
+import { ContentPagination } from "../../content-pagination";
 
 export async function generateStaticParams() {
   const posts = getBlogPosts();
@@ -37,7 +38,14 @@ export default async function Blog({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getBlogPosts().find((post) => post.slug === slug);
+  const posts = getBlogPosts().sort(
+    (a, b) =>
+      b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+  );
+  const postIndex = posts.findIndex((post) => post.slug === slug);
+  const post = posts[postIndex];
+  const previousPost = posts[postIndex - 1];
+  const nextPost = posts[postIndex + 1];
 
   if (!post) {
     notFound();
@@ -71,6 +79,11 @@ export default async function Blog({
         </div>
       ) : null}
       <CustomMDX source={post.content} />
+      <ContentPagination
+        previousPost={previousPost}
+        nextPost={nextPost}
+        prefix="/blog"
+      />
     </section>
   );
 }

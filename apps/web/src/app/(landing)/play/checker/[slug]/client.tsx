@@ -216,7 +216,7 @@ function TableSort({
       {...props}
     >
       {children}
-      <span className="flex flex-col ml-2">
+      <span className="ml-2 flex flex-col">
         <span
           aria-hidden="true"
           className={cn(
@@ -263,7 +263,7 @@ function InfoDialog({
             Basic informations like header and latency about the response.
           </DialogDescription>
         </DialogHeader>
-        <div className="min-w-0 prose dark:prose-invert max-w-none">
+        <div className="prose dark:prose-invert min-w-0 max-w-none">
           <table>
             <tbody>
               <tr>
@@ -272,7 +272,7 @@ function InfoDialog({
                   {regionFormatter(check.region, "long")}, {regionInfo.provider}{" "}
                   <IconCloudProvider
                     provider={regionInfo.provider}
-                    className="size-4 inline"
+                    className="inline size-4"
                   />
                 </td>
               </tr>
@@ -331,7 +331,7 @@ function InfoDialog({
                     {Object.entries(headers).map(([key, value]) => (
                       <tr key={key}>
                         <td className="whitespace-nowrap font-medium">{key}</td>
-                        <td className="break-words max-w-md">{value}</td>
+                        <td className="max-w-md break-words">{value}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -340,7 +340,7 @@ function InfoDialog({
             </TabsContent>
             <TabsContent value="raw" className="min-w-0 overflow-x-auto">
               {/* NOTE: we can make it a readOnly textarea*/}
-              <pre className="whitespace-pre-wrap break-words my-0!">
+              <pre className="my-0! whitespace-pre-wrap break-words">
                 {Object.entries(headers).map(([key, value]) => (
                   <code key={key} className="block break-words">
                     {key}: {value}

@@ -3,6 +3,7 @@ import { twitterMetadata } from "@/app/shared-metadata";
 import { getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
 const TITLE = "Changelog";
@@ -30,6 +31,7 @@ export default function ChangelogListPage() {
   return (
     <div className="prose dark:prose-invert max-w-none">
       <h1>Changelog</h1>
+      <ContentCategory data={allChangelogs} prefix="/changelog" />
       <p>
         Get the{" "}
         <Link
@@ -39,7 +41,7 @@ export default function ChangelogListPage() {
           RSS feed
         </Link>
       </p>
-      <ContentList data={allChangelogs} prefix="/changelog" />
+      <ContentList data={allChangelogs} prefix="/changelog" withCategory />
     </div>
   );
 }

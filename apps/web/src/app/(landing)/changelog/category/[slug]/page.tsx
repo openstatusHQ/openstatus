@@ -5,11 +5,11 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { getBlogPosts } from "@/content/utils";
+import { getBlogPosts, getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 
-const TITLE = "Blog Category";
-const DESCRIPTION = "All the latest articles and news from OpenStatus.";
+const TITLE = "Changelog Category";
+const DESCRIPTION = "All the latest changes and updates to OpenStatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -39,22 +39,23 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function BlogCategoryPage({
+export default async function ChangelogCategoryPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const allBlogs = getBlogPosts();
-  const filteredBlogs = allBlogs.filter(
-    (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
+  const allChangelogs = getChangelogPosts();
+  const filteredChangelogs = allChangelogs.filter(
+    (changelog) =>
+      changelog.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
   return (
     <div className="prose dark:prose-invert max-w-none">
-      <h1 className="capitalize">Blog | {slug}</h1>
-      <ContentCategory data={allBlogs} prefix="/blog" />
-      <ContentList data={filteredBlogs} prefix="/blog" />
+      <h1 className="capitalize">Changelog | {slug}</h1>
+      <ContentCategory data={allChangelogs} prefix="/changelog" />
+      <ContentList data={filteredChangelogs} prefix="/changelog" />
     </div>
   );
 }
