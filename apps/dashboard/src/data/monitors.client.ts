@@ -1,9 +1,9 @@
 import {
+  Cog,
   Copy,
   CopyPlus,
   Globe,
   Network,
-  Pencil,
   Server,
   Trash2,
 } from "lucide-react";
@@ -29,8 +29,8 @@ export const monitorTypes = [
 export const actions = [
   {
     id: "edit",
-    label: "Edit",
-    icon: Pencil,
+    label: "Settings",
+    icon: Cog,
     variant: "default" as const,
   },
   {

@@ -61,18 +61,17 @@ export function FormAlertDialog({
       <AlertDialogTrigger asChild>
         {children ?? (
           <Button variant="destructive" size="sm">
-            Revoke
+            Delete
           </Button>
         )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you sure about revoking `{title}`?
+            Are you sure about delete `{title}`?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently revoke the API
-            key.
+            This action cannot be undone. This will permanently delete the item.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <form id="form-alert-dialog" className="space-y-0.5">

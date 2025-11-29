@@ -10,6 +10,7 @@ import { FormConfiguration } from "./form-configuration";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
+import { FormLinks } from "./form-links";
 import { FormMonitors } from "./form-monitors";
 import { FormPasswordProtection } from "./form-password-protection";
 
@@ -81,6 +82,12 @@ export function FormStatusPageUpdate() {
     }),
   );
 
+  const updateLinksMutation = useMutation(
+    trpc.page.updateLinks.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
   if (!statusPage || !monitors || !workspace) return null;
 
   const configLink = `https://${
@@ -92,8 +99,15 @@ export function FormStatusPageUpdate() {
       <Note color="info">
         <Info />
         <p className="text-sm">
-          We've released a new version of the status page.{" "}
-          <Link href="#redesign">Go to the section</Link> below to enable it.
+          We've enabled the new version of the status page. Read more about the{" "}
+          <Link
+            href="https://docs.openstatus.dev/tutorial/how-to-configure-status-page/"
+            rel="noreferrer"
+            target="_blank"
+          >
+            configuration
+          </Link>
+          .
         </p>
       </Note>
       <FormGeneral
@@ -162,41 +176,50 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
+      <FormLinks
+        defaultValues={{
+          homepageUrl: statusPage.homepageUrl ?? "",
+          contactUrl: statusPage.contactUrl ?? "",
+        }}
+        onSubmit={async (values) => {
+          await updateLinksMutation.mutateAsync({
+            id: Number.parseInt(id),
+            homepageUrl: values.homepageUrl ?? undefined,
+            contactUrl: values.contactUrl ?? undefined,
+          });
+        }}
+      />
       <FormAppearance
         defaultValues={{
           forceTheme: statusPage.forceTheme ?? "system",
+          configuration: {
+            theme: statusPage.configuration?.theme ?? "default",
+          },
         }}
         onSubmit={async (values) => {
           await updatePageAppearanceMutation.mutateAsync({
             id: Number.parseInt(id),
             forceTheme: values.forceTheme,
+            configuration: values.configuration,
           });
         }}
       />
       <FormConfiguration
         defaultValues={{
-          new: !statusPage.legacyPage,
           configuration: statusPage.configuration ?? {},
-          homepageUrl: statusPage.homepageUrl ?? "",
-          contactUrl: statusPage.contactUrl ?? "",
         }}
         onSubmit={async (values) => {
           await updatePageConfigurationMutation.mutateAsync({
             id: Number.parseInt(id),
-            configuration: values.new
-              ? {
-                  uptime:
-                    typeof values.configuration.uptime === "boolean"
-                      ? values.configuration.uptime
-                      : values.configuration.uptime === "true",
-                  value: values.configuration.value ?? "duration",
-                  type: values.configuration.type ?? "absolute",
-                  theme: values.configuration.theme ?? "default",
-                }
-              : undefined,
-            legacyPage: !values.new,
-            homepageUrl: values.homepageUrl ?? undefined,
-            contactUrl: values.contactUrl ?? undefined,
+            configuration: {
+              uptime:
+                typeof values.configuration.uptime === "boolean"
+                  ? values.configuration.uptime
+                  : values.configuration.uptime === "true",
+              value: values.configuration.value ?? "duration",
+              type: values.configuration.type ?? "absolute",
+              theme: values.configuration.theme ?? undefined,
+            },
           });
         }}
         configLink={configLink}
@@ -216,6 +239,7 @@ export function FormStatusPageUpdate() {
         }}
       />
       <FormDangerZone
+        title={statusPage.title}
         onSubmit={async () => {
           await deleteStatusPageMutation.mutateAsync({
             id: Number.parseInt(id),
