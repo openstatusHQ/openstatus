@@ -17,12 +17,9 @@ export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";
 
 export const BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-const METADATA_BASE =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://www.openstatus.dev";
+  process.env.VERCEL_ENV === "production"
+    ? "https://www.openstatus.dev"
+    : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
 export const twitterMetadata: Metadata["twitter"] = {
   title: TITLE,
@@ -44,7 +41,7 @@ export const defaultMetadata: Metadata = {
     default: TITLE,
   },
   description: DESCRIPTION,
-  metadataBase: new URL(METADATA_BASE),
+  metadataBase: new URL(BASE_URL),
   twitter: twitterMetadata,
   openGraph: ogMetadata,
 };
