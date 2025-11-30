@@ -27,9 +27,14 @@ export function Footer() {
         ))}
       </div>
       <div className="grid gap-px border border-border border-t-0 bg-border sm:grid-cols-2 md:grid-cols-3 [&>*]:bg-background">
-        <p className="p-4 text-muted-foreground">
-          Powered by <Link href="https://openstatus.dev">openstatus</Link>.
-        </p>
+        <div>
+          <Link
+            href="/cal"
+            className="flex w-full items-center gap-2 p-4 hover:bg-muted"
+          >
+            Book a call
+          </Link>
+        </div>
         <div>
           <Suspense fallback="Loading...">
             <FooterStatus />
