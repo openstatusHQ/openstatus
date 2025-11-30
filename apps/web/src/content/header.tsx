@@ -21,7 +21,7 @@ export function Header() {
           <Link href="/" className="relative flex items-center gap-2">
             <img
               src="/assets/landing/openstatus-logo.svg"
-              alt="openstatus"
+              alt="openstatus logo"
               width={20}
               height={20}
               className="rounded-full border border-border dark:border-foreground"
