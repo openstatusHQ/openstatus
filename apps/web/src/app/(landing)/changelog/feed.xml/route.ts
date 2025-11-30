@@ -1,4 +1,6 @@
+import { getChangelogPosts } from "@/content/utils";
 import { Feed } from "feed";
+import { getAuthor } from "src/data/author";
 
 export async function GET() {
   const feed = new Feed({
@@ -26,22 +28,25 @@ export async function GET() {
   allChangelogs
     .sort(
       (a, b) =>
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+        new Date(b.metadata.publishedAt).getTime() -
+        new Date(a.metadata.publishedAt).getTime(),
     )
     .map((post) => {
-      feed.addItem({
-        id: `https://www.openstatus.dev/changelog/${post.slug}`,
-        title: post.title,
-        description: post.description,
-        link: `https://www.openstatus.dev/changelog/${post.slug}`,
+      const author = getAuthor(post.metadata.author);
+      return feed.addItem({
+        id: `https://www.openstatus.dev/blog/${post.slug}`,
+        title: post.metadata.title,
+        description: post.metadata.description,
+        link: `https://www.openstatus.dev/blog/${post.slug}`,
         author: [
-          {
-            name: "OpenStatus Team",
-            email: "ping@openstatus.dev",
-            link: "https://openstatus.dev",
-          },
+          typeof author === "string"
+            ? { name: author }
+            : {
+                name: author.name,
+                link: author.url,
+              },
         ],
-        date: post.publishedAt,
+        date: post.metadata.publishedAt,
       });
     });
   return new Response(feed.rss2(), {
