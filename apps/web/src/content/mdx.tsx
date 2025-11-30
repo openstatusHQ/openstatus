@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
+import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
@@ -232,8 +233,11 @@ function Details({
   );
 }
 
-function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
-  const { src, alt, ...rest } = props;
+function CustomImage({
+  className,
+  ...props
+}: React.ComponentProps<typeof Image>) {
+  const { src, alt, width, height, ...rest } = props;
 
   if (!src || typeof src !== "string") {
     return (
@@ -244,8 +248,16 @@ function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
           )}
           zoomMargin={16}
         >
-          {/* biome-ignore lint/a11y/useAltText: <explanation> */}
-          <img className={className} alt={alt ?? "image"} {...props} />
+          <Image
+            className={className}
+            src={src}
+            alt={alt ?? "image"}
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: "100%", height: "auto" }}
+            {...rest}
+          />
         </ImageZoom>
         <figcaption>{alt}</figcaption>
       </figure>
@@ -284,10 +296,14 @@ function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
         )}
         zoomMargin={16}
       >
-        <img
+        <Image
           {...rest}
           src={src}
-          alt={alt}
+          alt={alt ?? ""}
+          width={0}
+          height={0}
+          sizes="100vw"
+          style={{ width: "100%", height: "auto" }}
           className={cn("block dark:hidden", className)}
         />
       </ImageZoom>
@@ -297,10 +313,14 @@ function CustomImage({ className, ...props }: React.ComponentProps<"img">) {
         )}
         zoomMargin={16}
       >
-        <img
+        <Image
           {...rest}
           src={useDarkImage ? darkSrc : src}
-          alt={alt}
+          alt={alt ?? ""}
+          width={0}
+          height={0}
+          sizes="100vw"
+          style={{ width: "100%", height: "auto" }}
           className={cn("hidden dark:block", className)}
         />
       </ImageZoom>
