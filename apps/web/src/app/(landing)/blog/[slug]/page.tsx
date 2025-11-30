@@ -95,12 +95,7 @@ function Author({ author }: { author: string }) {
   }
 
   return (
-    <a
-      href={authorData.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="no-underline!"
-    >
+    <a href={authorData.url} target="_blank" rel="noopener noreferrer">
       {authorData.name}
     </a>
   );
