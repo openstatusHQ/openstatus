@@ -3,7 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "content-collections": ["./.content-collections/generated"],
       "@/*": ["./src/*"]
     },
     "plugins": [{ "name": "next" }],
