@@ -11,7 +11,7 @@ import type {
 
 export const TITLE = "openstatus";
 export const DESCRIPTION =
-  "Monitor your API and website globally. Showcase your reliability with a public status page. Get started for free with our open-source uptime and synthetic monitoring platform!";
+  "Monitor your services globally and showcase your uptime with a status page. Get started for free with our open-source status page with uptime monitoring solution.";
 
 export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";
