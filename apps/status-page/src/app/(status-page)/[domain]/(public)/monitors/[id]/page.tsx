@@ -56,9 +56,10 @@ export default function Page() {
   const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const trpc = useTRPC();
   const { id, domain } = useParams<{ id: string; domain: string }>();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
+  const { data: page } = useQuery({
+    ...trpc.statusPage.get.queryOptions({ slug: domain }),
+    throwOnError: false,
+  });
 
   const tempMonitor = useMemo(() => {
     return page?.monitors.find((monitor) => monitor.id === Number(id));

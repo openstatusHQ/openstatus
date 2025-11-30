@@ -22,12 +22,14 @@ import { useParams } from "next/navigation";
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
-  const { data: monitors, isLoading } = useQuery(
-    trpc.statusPage.getMonitors.queryOptions({ slug: domain }),
-  );
+  const { data: page } = useQuery({
+    ...trpc.statusPage.get.queryOptions({ slug: domain }),
+    throwOnError: false,
+  });
+  const { data: monitors, isLoading } = useQuery({
+    ...trpc.statusPage.getMonitors.queryOptions({ slug: domain }),
+    throwOnError: false,
+  });
 
   if (!page) return null;
 

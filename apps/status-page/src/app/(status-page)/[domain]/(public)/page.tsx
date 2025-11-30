@@ -38,11 +38,23 @@ export default function Page() {
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
-  const { data: pageInitial } = useQuery(
+  const { data: pageInitial, error } = useQuery(
     trpc.statusPage.get.queryOptions({
       slug: domain,
     }),
   );
+
+  // Handle case where page doesn't exist or query fails
+  if (error || (!pageInitial && domain)) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-12">
+        <h2 className="text-2xl font-semibold">Status Page Not Found</h2>
+        <p className="text-muted-foreground">
+          The status page "{domain}" does not exist.
+        </p>
+      </div>
+    );
+  }
 
   const hasCustomConfig = pageInitial?.configuration
     ? pageInitial.configuration.type !== barType ||
