@@ -1,0 +1,168 @@
+effective: |
+  ignore:
+  - node_modules
+  - /apps/docs
+  - /apps/screenshot-service
+  - /apps/web
+  - /apps/dashboard
+  - /apps/workflows
+  - /packages/api
+  - /packages/integrations/vercel
+  builders:
+    pnpm:
+      fromImage:
+        path: node
+        digest: sha256:d943bf20249f8b92eff6f605362df2ee9cf2d6ce2ea771a8886e126ec8714f08
+      label:
+        org.opencontainers.image.base.digest: sha256:d943bf20249f8b92eff6f605362df2ee9cf2d6ce2ea771a8886e126ec8714f08
+        org.opencontainers.image.base.name: docker.io/node:22-slim
+      workdir: /app/
+      env:
+        PNPM_HOME: /pnpm
+        PATH: $PNPM_HOME:$PATH
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - corepack enable
+    install:
+      fromBuilder: pnpm
+      workdir: /app/apps/status-page
+      copy:
+      - fromBuilder: pnpm
+        paths:
+        - /app/
+        target: /app/
+      run:
+      - pnpm install --frozen-lockfile
+      cache:
+      - target: /pnpm/store
+  fromBuilder: pnpm
+  label:
+    io.dofigen.version: 2.5.0
+  workdir: /app/apps/status-page
+  copy:
+  - fromBuilder: install
+    paths:
+    - /app/
+    target: /app/
+  cmd:
+  - pnpm
+  - run
+  - dev
+  expose:
+  - port: 3000
+images:
+  docker.io:
+    library:
+      node:
+        22-slim:
+          digest: sha256:d943bf20249f8b92eff6f605362df2ee9cf2d6ce2ea771a8886e126ec8714f08
+resources:
+  dofigen.yml:
+    hash: fa636656a86811e9a5a304ec5b9ada3e939081687c80d714916c272da9e88bfe
+    content: |
+      ignore:
+        - node_modules
+        - /apps/docs
+        - /apps/screenshot-service
+        - /apps/web
+        - /apps/dashboard
+        - /apps/workflows
+        - /packages/api
+        - /packages/integrations/vercel
+      builders:
+        pnpm:
+          fromImage: node:22-slim
+          workdir: /app/
+          # Copy project
+          copy:
+            - . /app/
+          # bind:
+          #   - bunfig.toml
+          #   - package.json
+          #   - apps/status-page/package.json
+          #   - packages/analytics/package.json
+          #   - packages/db/package.json
+          #   - packages/emails/package.json
+          #   - packages/error/package.json
+          #   - packages/regions/package.json
+          #   - packages/tinybird/package.json
+          #   - packages/tracker/package.json
+          #   - packages/upstash/package.json
+          #   - packages/utils/package.json
+          #   - packages/tsconfig/package.json
+          #   - packages/assertions/package.json
+          #   - packages/regions/package.json
+
+          env:
+              PNPM_HOME: /pnpm
+              PATH: $PNPM_HOME:$PATH
+          run:
+           - corepack enable
+
+        install:
+          fromBuilder: pnpm
+          workdir: /app/apps/status-page
+          cache:
+             - /pnpm/store
+          copy:
+            - fromBuilder: pnpm
+              source: /app/
+              target: /app/
+          # Install dependencies
+          run:
+            - pnpm install --frozen-lockfile
+
+        # build:
+        #   fromBuilder: pnpm
+        #   workdir: /app/apps/status-page
+        #   copy:
+        #     - fromBuilder: install
+        #       source: /app/
+        #       target: /app/
+        #   cache:
+        #     - /pnpm/store
+
+        #     #  Should set env to production here
+        #   # Compile the TypeScript application
+        #   env:
+        #     NODE_ENV: production
+        #     OPENPANEL_CLIENT_SECRET: dummy
+        #     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: dummy
+        #     DATABASE_URL: http://host.docker.internal:8081
+        #     DATABASE_AUTH_TOKEN: dummy
+        #     RESEND_API_KEY: dummy
+        #     UPSTASH_REDIS_REST_URL: dummy
+        #     UPSTASH_REDIS_REST_TOKEN: dummy
+        #     STRIPE_SECRET_KEY: "test"
+        #     PROJECT_ID_VERCEL: "test"
+        #     TEAM_ID_VERCEL: "test"
+        #     VERCEL_AUTH_BEARER_TOKEN: "test"
+        #     TINY_BIRD_API_KEY: test
+        #     CRON_SECRET: test
+        #     UNKEY_TOKEN: test
+        #     UNKEY_API_ID: test
+        #   run: pnpm run build
+        #   depens_on:
+        #     - install
+
+      fromBuilder: pnpm
+      copy:
+        # - fromBuilder: install
+        #   source: /app/
+        #   target: /app/
+        - fromBuilder: install
+          source: /app/
+          target: /app/
+        # - fromBuilder: install
+        #   source: /app/node_modules/apps/status-page/node_modules/
+        #   target: /app/node_modules/apps/status-page/node_modules/
+          # chmod: "555"
+      expose: 3000
+      workdir: /app/apps/status-page
+      cmd:
+        - pnpm
+        - run
+        - dev
