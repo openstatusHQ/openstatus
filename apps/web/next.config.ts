@@ -1,4 +1,3 @@
-const { withContentCollections } = require("@content-collections/next");
 const { withSentryConfig } = require("@sentry/nextjs");
 import type { NextConfig } from "next";
 
@@ -52,6 +51,16 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/legal/terms",
+        destination: "/terms",
+        permanent: true,
+      },
+      {
+        source: "/legal/privacy",
+        destination: "/privacy",
+        permanent: true,
+      },
       {
         source: "/features/monitoring",
         destination: "/uptime-monitoring",
@@ -213,7 +222,7 @@ const nextConfig: NextConfig = {
 };
 
 module.exports = withSentryConfig(
-  async () => await withContentCollections(nextConfig),
+  nextConfig,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options

@@ -7,6 +7,8 @@ import {
   DEFAULT_URL,
   SIZE,
   calSemiBold,
+  commitMonoBold,
+  commitMonoRegular,
   interLight,
   interRegular,
 } from "../utils";
@@ -14,9 +16,19 @@ import {
 export const runtime = "edge";
 
 export async function GET(req: Request) {
-  const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
-    [interRegular, interLight, calSemiBold],
-  );
+  const [
+    interRegularData,
+    interLightData,
+    calSemiBoldData,
+    commitMonoRegularData,
+    commitMonoBoldData,
+  ] = await Promise.all([
+    interRegular,
+    interLight,
+    calSemiBold,
+    commitMonoRegular,
+    commitMonoBold,
+  ]);
 
   const { searchParams } = new URL(req.url);
 
@@ -60,6 +72,18 @@ export async function GET(req: Request) {
           data: calSemiBoldData,
           style: "normal",
           weight: 600,
+        },
+        {
+          name: "Commit Mono",
+          data: commitMonoRegularData,
+          style: "normal",
+          weight: 400,
+        },
+        {
+          name: "Commit Mono",
+          data: commitMonoBoldData,
+          style: "normal",
+          weight: 700,
         },
       ],
     },

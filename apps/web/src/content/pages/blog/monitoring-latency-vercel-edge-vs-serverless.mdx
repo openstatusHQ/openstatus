@@ -1,0 +1,336 @@
+---
+title: "Monitoring latency: Vercel Serverless Function vs Vercel Edge Function"
+description: ""
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2024-03-14"
+image: "/assets/posts/monitoring-vercel/serverless-vs-edge.png"
+category: "education"
+---
+
+In our previous
+[article](/blog/monitoring-latency-cf-workers-fly-koyeb-raylway-render),
+we compared the latency of various cloud providers but did not include Vercel.
+This article will compare the latency of Vercel Serverless Function with Vercel
+Edge Function.
+
+We will test a basic Next.js application with the app router. Below is the code
+for the routes:
+
+```ts
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+export const maxDuration = 25; // to trick and not using the same function as the other ping route
+
+export async function GET() {
+  return NextResponse.json({ ping: "pong" }, { status: 200 });
+}
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  return NextResponse.json({ ping: body }, { status: 200 });
+}
+```
+
+We have 4 routes, 3 using the NodeJS runtime and one is using Edge runtime.
+
+- `/api/ping` is using the NodeJS runtime
+- `/api/ping/warm` is using the NodeJS runtime
+- `/api/ping/cold` is using the NodeJS runtime
+- `/api/ping/edge` is using the Edge runtime
+
+Each route have a different `maxDuration`, it's a trick to avoid bundling the
+functions in the same physical functions.
+
+Here is the repository of the
+[application](https://github.com/openstatusHQ/openstatus-next-latency).
+
+## Vercel Serverless Function - NodeJS runtime
+
+They are using the NodeJS 18 runtime. We have access to all the nodejs API. Our
+function are deployed in a single location: iad1 - Washington, D.C., USA.
+
+Upgrading to Node.js 20 could enhance cold start performance, but it's still in
+beta.
+
+We analyzed the header of each request and observe that all requests are
+processed in a data center near our location before being routed to our
+serverless location.
+
+- `ams` -> `fra1` -> `iad1`
+- `gru` -> `gru1` -> `iad1`
+- `hkg` -> `hkg1` -> `iad1`
+- `iad` -> `iad1` -> `iad1`
+- `jnb` -> `cpt1` -> `iad1`
+- `syd` -> `syd1` -> `iad1`
+
+We never encountered a request routed to a different data center, and we never
+hit the Vercel cache.
+
+### Warm - `/api/ping/warm`
+
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
+</div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**12,090**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**246**ms P50
+
+</div>
+<div>
+
+**305**ms P75
+
+</div>
+<div>
+
+**442**ms P90
+
+</div>
+<div>
+
+**563**ms P95
+
+</div>
+<div>
+
+**855**ms P99
+
+</div>
+</Grid>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-vercel/vercel-warm.json"
+    caption="Vercel warm p50 latency between 10. Mar and 13. Mar 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 5 minutes to keep it warm.
+
+### Cold - `/api/ping/cold`
+
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
+</div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**2,010**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**859**ms P50
+
+</div>
+<div>
+
+**933**ms P75
+
+</div>
+<div>
+
+**1,004**ms P90
+
+</div>
+<div>
+
+**1,046**ms P95
+
+</div>
+<div>
+
+**1,156**ms P99
+
+</div>
+</Grid>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-vercel/vercel-cold.json"
+    caption="Vercel cold p50 latency between 10. Mar and 13. Mar 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 30 minutes to ensure the functions will be
+scaled down.
+
+### Cold Roulette - `/api/ping`
+
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
+</div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**6,036**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**305**ms P50
+
+</div>
+<div>
+
+**791**ms P75
+
+</div>
+<div>
+
+**914**ms P90
+
+</div>
+<div>
+
+**972**ms P95
+
+</div>
+<div>
+
+**1,086**ms P99
+
+</div>
+</Grid>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-vercel/vercel-roulette.json"
+    caption="Vercel roulette p50 latency between 10. Mar and 13. Mar 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 10 minutes. It's an inflection point where
+we never know if the function will be warm or cold.
+
+## Vercel Edge Function
+
+Vercel Edge Functions is using the Edge Runtime. They are deployed globally and
+executed in a datacenter close to the user.
+
+They have limitations compared to the NodeJs runtime, but they have a faster
+cold start.
+
+We analyzed the request header and found that the `X-Vercel-Id` header indicates
+the request is processed in a datacenter near the user.
+
+- `ams` -> `fra1`
+- `gru` -> `gru1`
+- `hkg` -> `hkg1`
+- `iad` -> `iad1`
+- `jnb` -> `cpt1`
+- `syd` -> `syd1`
+
+### Edge - `/api/ping/edge`
+
+<Grid cols={5}>
+<div>
+
+**100**% UPTIME
+
+</div>
+<div>
+
+**0**# FAILS
+
+</div>
+<div>
+
+**6,042**# PINGS
+
+</div>
+<div className="hidden md:block"></div>
+<div className="hidden md:block"></div>
+<div>
+
+**106**ms P50
+
+</div>
+<div>
+
+**124**ms P75
+
+</div>
+<div>
+
+**152**ms P90
+
+</div>
+<div>
+
+**178**ms P95
+
+</div>
+<div>
+
+**328**ms P99
+
+</div>
+</Grid>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-vercel/vercel-edge.json"
+    caption="Vercel edge p50 latency between 10. Mar and 13. Mar 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 10 minutes.
+
+## Conclusion
+
+<Table
+  data={{
+    headers: ["Runtime", "p50", "p95", "p99"],
+    rows: [
+      ["Serverless Cold Start", "859ms", "1,046ms", "1,156ms"],
+      ["Serverless Warm", "246ms", "563ms", "855ms"],
+      ["Edge", "106ms", "178ms", "328ms"],
+    ],
+  }}
+/>
+
+Globablly Edge functions are approximately 9 times faster than Serverless
+functions during cold starts, but only 2 times faster when the function is warm.
+
+Edge functions have similar latency regardless of the user's location. If you
+value your users and have a worldwide audience, you should consider Edge
+Functions.
+
+Create an account on [OpenStatus](/app/sign-up) to
+monitor your API and get notified when your latency increases.
