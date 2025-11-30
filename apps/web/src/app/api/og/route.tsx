@@ -2,15 +2,7 @@
 import { ImageResponse } from "next/og";
 
 import { OG_DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import {
-  SIZE,
-  calSemiBold,
-  commitMonoBold,
-  commitMonoRegular,
-  interLight,
-  interMedium,
-  interRegular,
-} from "./utils";
+import { SIZE } from "./utils";
 
 export const runtime = "edge";
 
@@ -18,21 +10,9 @@ const FOOTER = "openstatus.dev";
 const CATEGORY = "product";
 
 export async function GET(req: Request) {
-  const [
-    interRegularData,
-    interLightData,
-    calSemiBoldData,
-    interMediumData,
-    commitMonoRegularData,
-    commitMonoBoldData,
-  ] = await Promise.all([
-    interRegular,
-    interLight,
-    calSemiBold,
-    interMedium,
-    commitMonoRegular,
-    commitMonoBold,
-  ]);
+  const fontMono = await fetch(
+    new URL("../../../public/fonts/RobotoMono-Regular.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
 
   const { searchParams } = new URL(req.url);
 
@@ -53,7 +33,7 @@ export async function GET(req: Request) {
     <div tw="relative flex flex-col items-start justify-start w-full h-full bg-gray-100">
       <div
         tw="flex flex-col h-full p-8 w-full"
-        style={{ fontFamily: "Commit Mono" }}
+        style={{ fontFamily: "Font Mono" }}
       >
         <div tw="flex flex-col justify-end flex-1 mb-8">
           <p tw="text-xl text-left">[{category.toLowerCase()}]</p>
@@ -77,40 +57,10 @@ export async function GET(req: Request) {
       ...SIZE,
       fonts: [
         {
-          name: "Inter",
-          data: interMediumData,
-          style: "normal",
-          weight: 500,
-        },
-        {
-          name: "Inter",
-          data: interRegularData,
+          name: "Font Mono",
+          data: fontMono,
           style: "normal",
           weight: 400,
-        },
-        {
-          name: "Inter",
-          data: interLightData,
-          style: "normal",
-          weight: 300,
-        },
-        {
-          name: "Cal",
-          data: calSemiBoldData,
-          style: "normal",
-          weight: 600,
-        },
-        {
-          name: "Commit Mono",
-          data: commitMonoRegularData,
-          style: "normal",
-          weight: 400,
-        },
-        {
-          name: "Commit Mono",
-          data: commitMonoBoldData,
-          style: "normal",
-          weight: 700,
         },
       ],
     },
