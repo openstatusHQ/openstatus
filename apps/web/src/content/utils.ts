@@ -67,12 +67,14 @@ function getMDXDataFromFile(filePath: string) {
 export type MDXData = ReturnType<typeof getMDXDataFromFile>;
 
 export function getBlogPosts(): MDXData[] {
-  return getMDXDataFromDir(path.join(process.cwd(), "src", "content", "posts"));
+  return getMDXDataFromDir(
+    path.join(process.cwd(), "src", "content", "pages", "blog"),
+  );
 }
 
 export function getChangelogPosts(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "changelog"),
+    path.join(process.cwd(), "src", "content", "pages", "changelog"),
   );
 }
 

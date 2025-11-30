@@ -91,7 +91,7 @@ export function Header() {
       </Link>
       <Link
         href="https://app.openstatus.dev/login"
-        className="truncate text-info bg-muted!"
+        className="truncate text-info"
       >
         Dashboard
       </Link>
