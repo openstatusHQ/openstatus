@@ -10,8 +10,14 @@ const FOOTER = "openstatus.dev";
 const CATEGORY = "product";
 
 export async function GET(req: Request) {
-  const fontMono = await fetch(
+  const fontMonoRegular = await fetch(
     new URL("../../../public/fonts/RobotoMono-Regular.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
+  const fontMonoMedium = await fetch(
+    new URL("../../../public/fonts/RobotoMono-Medium.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
+  const fontMonoBold = await fetch(
+    new URL("../../../public/fonts/RobotoMono-Bold.ttf", import.meta.url),
   ).then((res) => res.arrayBuffer());
 
   const { searchParams } = new URL(req.url);
@@ -38,7 +44,7 @@ export async function GET(req: Request) {
         <div tw="flex flex-col justify-end flex-1 mb-8">
           <p tw="text-xl text-left">[{category.toLowerCase()}]</p>
           <h1
-            tw="text-6xl text-black text-left"
+            tw="text-6xl text-black text-left font-medium"
             style={{ lineClamp: 2, display: "block" }}
           >
             {title}
@@ -58,9 +64,21 @@ export async function GET(req: Request) {
       fonts: [
         {
           name: "Font Mono",
-          data: fontMono,
+          data: fontMonoRegular,
           style: "normal",
           weight: 400,
+        },
+        {
+          name: "Font Mono",
+          data: fontMonoMedium,
+          style: "normal",
+          weight: 500,
+        },
+        {
+          name: "Font Mono",
+          data: fontMonoBold,
+          style: "normal",
+          weight: 700,
         },
       ],
     },
