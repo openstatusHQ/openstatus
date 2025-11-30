@@ -6,8 +6,6 @@ networks:
 volumes:
     libsql-data:
         name: openstatus-libsql-data
-    workflows-data:
-        name: openstatus-workflows-data
 
 services:
     # External services
@@ -24,7 +22,7 @@ services:
         environment:
             - SQLD_NODE=primary
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+            test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:8080\",Timeout=>1) ? 0 : 1);'"]
             interval: 10s
             timeout: 5s
             retries: 5
@@ -42,7 +40,7 @@ services:
         environment:
             - COMPATIBILITY_MODE=1
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:7181/health"]
+            test: ["CMD", "curl", "-f", "http://localhost:7181/"]
             interval: 15s
             timeout: 5s
             retries: 5
@@ -60,8 +58,6 @@ services:
             - openstatus
         ports:
             - "3000:3000"
-        volumes:
-            - workflows-data:/app/data
         env_file:
             - .env.docker
         environment:
@@ -71,7 +67,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+            test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:3000\",Timeout=>1) ? 0 : 1);'"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -97,7 +93,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+            test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:3000\",Timeout=>1) ? 0 : 1);'"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -123,19 +119,11 @@ services:
             server:
                 condition: service_started
         healthcheck:
-            test:
-                [
-                    "CMD",
-                    "wget",
-                    "--no-verbose",
-                    "--tries=1",
-                    "--spider",
-                    "http://localhost:8080/health",
-                ]
+            test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
             interval: 15s
             timeout: 10s
             retries: 3
-            start_period: 20s
+            start_period: 30s
         restart: unless-stopped
 
     dashboard:
@@ -152,15 +140,16 @@ services:
             - .env.docker
         environment:
             - DATABASE_URL=http://libsql:8080
-            - EXTERNAL_API_URL=http://server:3000
             - PORT=3000
+            - HOSTNAME=0.0.0.0
+            - AUTH_TRUST_HOST=true
         depends_on:
             libsql:
                 condition: service_healthy
             server:
                 condition: service_started
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+            test: ["CMD-SHELL", "node -e \"require('http').get('http://0.0.0.0:3000/', (r) => process.exit([200,307].includes(r.statusCode) ? 0 : 1)).on('error', () => process.exit(1))\""]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -182,11 +171,15 @@ services:
         environment:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
+            - HOSTNAME=0.0.0.0
+            - AUTH_TRUST_HOST=true
         depends_on:
             libsql:
                 condition: service_healthy
+            server:
+                condition: service_started
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+            test: ["CMD-SHELL", "node -e \"require('http').get('http://0.0.0.0:3000/', (r) => process.exit([200,307].includes(r.statusCode) ? 0 : 1)).on('error', () => process.exit(1))\""]
             interval: 15s
             timeout: 10s
             retries: 3

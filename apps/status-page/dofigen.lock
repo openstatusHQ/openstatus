@@ -10,13 +10,13 @@ effective: |
       workdir: /app
       env:
         OPENPANEL_CLIENT_SECRET: test
-        DATABASE_URL: http://libsql:8080
-        PATH: $PNPM_HOME:$PATH
         TINY_BIRD_API_KEY: test
-        DATABASE_AUTH_TOKEN: test
-        PNPM_HOME: /pnpm
-        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        DATABASE_URL: http://libsql:8080
         NODE_ENV: production
+        PNPM_HOME: /pnpm
+        PATH: $PNPM_HOME:$PATH
+        DATABASE_AUTH_TOKEN: test
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
       copy:
       - paths:
         - .
@@ -29,9 +29,9 @@ effective: |
     path: node
     digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
   label:
-    io.dofigen.version: 2.4.1
     org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
     org.opencontainers.image.base.name: docker.io/node:24-slim
+    io.dofigen.version: 2.4.1
   user:
     user: '1000'
     group: '1000'
@@ -42,6 +42,10 @@ effective: |
     - /app/apps/status-page/.next/standalone/apps/status-page/
     target: ./
     chmod: '555'
+  - fromBuilder: builder
+    paths:
+    - /app/node_modules/
+    target: /app/node_modules/
   - fromBuilder: builder
     paths:
     - /app/apps/status-page/.next/static/
@@ -69,7 +73,7 @@ images:
           digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
 resources:
   dofigen.yml:
-    hash: 9602757f761b2c4ae7d51540d4f1210987b6c46c4db54108f1b90f309cf1dbc6
+    hash: d3df74b2c1d06c5425203d7f7f7abb701c14d986ebfa9e6fc980d5b3064d5d15
     content: |
       builders:
         # Stage 1: Next.js build with Node.js
@@ -93,7 +97,7 @@ resources:
             - pnpm install --frozen-lockfile
             - pnpm run --filter=@openstatus/status-page build
 
-      # Stage 2: Production runtime
+      # Runtime
       fromImage: node:24-slim
       workdir: /app/apps/status-page
 
@@ -103,6 +107,10 @@ resources:
           source: /app/apps/status-page/.next/standalone/apps/status-page/
           target: ./
           chmod: "555"
+        # Copy root node_modules (required for pnpm symlinks)
+        - fromBuilder: builder
+          source: /app/node_modules/
+          target: /app/node_modules/
         # Copy static assets
         - fromBuilder: builder
           source: /app/apps/status-page/.next/static/

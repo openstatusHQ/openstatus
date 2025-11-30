@@ -9,18 +9,18 @@ LABEL \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 ENV \
     OPENPANEL_CLIENT_SECRET="test" \
-    DATABASE_URL="http://libsql:8080" \
-    PATH="$PNPM_HOME:$PATH" \
     TINY_BIRD_API_KEY="test" \
-    DATABASE_AUTH_TOKEN="test" \
+    DATABASE_URL="http://libsql:8080" \
+    NODE_ENV="production" \
     PNPM_HOME="/pnpm" \
-    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
-    NODE_ENV="production"
+    PATH="$PNPM_HOME:$PATH" \
+    DATABASE_AUTH_TOKEN="test" \
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test"
 WORKDIR /app
 COPY \
     --link \
     "." "/app/"
-RUN <<EOF
+RUN --mount=type=cache,target=/pnpm/store <<EOF
 corepack enable
 pnpm install --frozen-lockfile
 pnpm run --filter=@openstatus/status-page build
@@ -39,6 +39,11 @@ COPY \
     --chmod=555 \
     --link \
     "/app/apps/status-page/.next/standalone/apps/status-page/" "./"
+COPY \
+    --from=builder \
+    --chown=1000:1000 \
+    --link \
+    "/app/node_modules/" "/app/node_modules/"
 COPY \
     --from=builder \
     --chown=1000:1000 \

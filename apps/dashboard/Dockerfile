@@ -8,31 +8,31 @@ LABEL \
     org.opencontainers.image.base.digest="sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2" \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 ENV \
-    UPSTASH_REDIS_REST_TOKEN="test" \
-    AUTH_SECRET="change-me-to-a-random-secret-at-least-32-characters-long" \
-    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
-    RESEND_API_KEY="test" \
-    DATABASE_URL="http://libsql:8080" \
-    UPSTASH_REDIS_REST_URL="test" \
-    PNPM_HOME="/pnpm" \
-    UNKEY_API_ID="test" \
-    TEAM_ID_VERCEL="test" \
-    PATH="$PNPM_HOME:$PATH" \
-    UNKEY_TOKEN="test" \
     STRIPE_SECRET_KEY="test" \
-    DATABASE_AUTH_TOKEN="test" \
-    NEXT_PUBLIC_URL="http://localhost:3002" \
-    VERCEL_AUTH_BEARER_TOKEN="test" \
-    PROJECT_ID_VERCEL="test" \
+    PATH="$PNPM_HOME:$PATH" \
+    OPENPANEL_CLIENT_SECRET="test" \
     NODE_ENV="production" \
+    TEAM_ID_VERCEL="test" \
+    RESEND_API_KEY="test" \
+    VERCEL_AUTH_BEARER_TOKEN="test" \
     TINY_BIRD_API_KEY="test" \
+    PNPM_HOME="/pnpm" \
+    AUTH_SECRET="change-me-to-a-random-secret-at-least-32-characters-long" \
+    UNKEY_TOKEN="test" \
+    UPSTASH_REDIS_REST_URL="test" \
+    DATABASE_AUTH_TOKEN="test" \
+    DATABASE_URL="http://libsql:8080" \
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
+    PROJECT_ID_VERCEL="test" \
+    UNKEY_API_ID="test" \
+    NEXT_PUBLIC_URL="http://localhost:3002" \
     CRON_SECRET="test" \
-    OPENPANEL_CLIENT_SECRET="test"
+    UPSTASH_REDIS_REST_TOKEN="test"
 WORKDIR /app
 COPY \
     --link \
     "." "/app/"
-RUN <<EOF
+RUN --mount=type=cache,target=/pnpm/store <<EOF
 corepack enable
 pnpm install --frozen-lockfile
 pnpm run --filter=@openstatus/dashboard build
@@ -51,6 +51,11 @@ COPY \
     --chmod=555 \
     --link \
     "/app/apps/dashboard/.next/standalone/apps/dashboard/" "./"
+COPY \
+    --from=builder \
+    --chown=1000:1000 \
+    --link \
+    "/app/node_modules/" "/app/node_modules/"
 COPY \
     --from=builder \
     --chown=1000:1000 \

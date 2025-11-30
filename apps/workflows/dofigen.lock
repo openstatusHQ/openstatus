@@ -12,30 +12,46 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    libsql:
+    a-ca-certs:
       fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        path: debian
+        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
       label:
-        org.opencontainers.image.stage: libsql
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      workdir: /app/
-      copy:
-      - fromBuilder: docker
-        paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
+        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.stage: ca-certs
       run:
-      - bun install
-    install:
+      - apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+    d-build:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
+        org.opencontainers.image.stage: build
         org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: c-install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - mkdir -p /app/data
+      - bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+    c-install:
+      fromImage:
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+        org.opencontainers.image.stage: install
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       workdir: /app/
       run:
       - bun install --production --frozen-lockfile --verbose
@@ -82,14 +98,30 @@ effective: |
         source: packages/upstash/package.json
       - target: packages/theme-store/package.json
         source: packages/theme-store/package.json
-    docker:
+    e-libsql:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.stage: docker
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.stage: libsql
+      workdir: /app/
+      copy:
+      - fromBuilder: b-docker
+        paths:
+        - /app/apps/build-docker/package.json
+        target: /app/package.json
+      run:
+      - bun install
+    b-docker:
+      fromImage:
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
         org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+        org.opencontainers.image.stage: docker
       workdir: /app/apps/workflows
       copy:
       - paths:
@@ -97,68 +129,41 @@ effective: |
         target: /app/
       run:
       - bun run src/build-docker.ts
-    ca-certs:
-      fromImage:
-        path: debian
-        digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
-      label:
-        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-        org.opencontainers.image.stage: ca-certs
-        org.opencontainers.image.base.digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
-      run:
-      - apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
   fromImage:
     path: debian
-    digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
+    digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
-    io.dofigen.version: 2.5.1
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    org.opencontainers.image.base.digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    io.dofigen.version: 2.4.1
+    org.opencontainers.image.title: OpenStatus Workflows
   user:
     user: '1000'
     group: '1000'
   workdir: /app/
   copy:
-  - fromBuilder: build
+  - fromBuilder: d-build
     paths:
     - /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: '555'
-  - fromBuilder: libsql
+  - fromBuilder: d-build
+    paths:
+    - /app/data
+    target: /app/data
+  - fromBuilder: e-libsql
     paths:
     - /app/node_modules
     target: /app/packages/db/node_modules
-  - fromBuilder: libsql
+  - fromBuilder: e-libsql
     paths:
     - /app/node_modules
     target: /app/node_modules
-  - fromBuilder: ca-certs
+  - fromBuilder: a-ca-certs
     paths:
     - /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
@@ -174,15 +179,162 @@ effective: |
     retries: 3
 images:
   docker.io:
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     oven:
       bun:
         1.3.0:
           digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b
 resources:
   dofigen.yml:
-    hash: aadfda126c49a8894f301c8fdc198d2a17f5c709f886f326a9544cc24da19a75
-    content: "# Files to exclude from Docker context\nignore:\n  - node_modules\n  - /apps/docs\n  - /apps/screenshot-service\n  - /apps/server\n  - /apps/web\n  - /apps/dashboard\n  - /apps/status-page\n  - /packages/analytics\n  - /packages/api\n  - /packages/error\n  - /packages/tracker\n\nbuilders:\n  # Stage 1: CA Certificates\n  ca-certs:\n    fromImage: debian:bullseye-slim\n    labels:\n      org.opencontainers.image.stage: ca-certs\n    run: apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*\n\n  # Stage 2: Install production dependencies\n  install:\n    fromImage: oven/bun:1.3.0\n    workdir: /app/\n    labels:\n      org.opencontainers.image.stage: install\n    bind:\n      - bunfig.toml\n      - package.json\n      - apps/workflows/package.json\n      - packages/assertions/package.json\n      - packages/db/package.json\n      - packages/emails/package.json\n      - packages/notifications/discord/package.json\n      - packages/notifications/email/package.json\n      - packages/notifications/ntfy/package.json\n      - packages/notifications/opsgenie/package.json\n      - packages/notifications/pagerduty/package.json\n      - packages/notifications/slack/package.json\n      - packages/notifications/twillio-sms/package.json\n      - packages/notifications/webhook/package.json\n      - packages/regions/package.json\n      - packages/utils/package.json\n      - packages/tsconfig/package.json\n      - packages/tinybird/package.json\n      - packages/upstash/package.json\n      - packages/theme-store/package.json\n    run: bun install --production --frozen-lockfile --verbose\n    cache:\n      - /root/.bun/install/cache\n\n  # Stage 3: Build application (compile to binary)\n  build:\n    fromImage: oven/bun:1.3.0\n    workdir: /app/apps/workflows\n    labels:\n      org.opencontainers.image.stage: build\n    env:\n      NODE_ENV: production\n    copy:\n      - . /app/\n      - fromBuilder: install\n        source: /app/node_modules\n        target: /app/node_modules\n    run: bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql\n\n  # Stage 4: Docker-specific build artifacts\n  docker:\n    fromImage: oven/bun:1.3.0\n    workdir: /app/apps/workflows\n    labels:\n      org.opencontainers.image.stage: docker\n    copy:\n      - . /app/\n    run: bun run src/build-docker.ts\n\n  # Stage 5: LibSQL dependencies\n  libsql:\n    fromImage: oven/bun:1.3.0\n    workdir: /app/\n    labels:\n      org.opencontainers.image.stage: libsql\n    copy:\n      - fromBuilder: docker\n        source: /app/apps/build-docker/package.json\n        target: /app/package.json\n    run: bun install\n\n# Final Runtime Stage\nfromImage: debian:bullseye-slim\nworkdir: /app/\n\n# Metadata labels\nlabels:\n  org.opencontainers.image.title: OpenStatus Workflows\n  org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus\n  org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus\n  org.opencontainers.image.vendor: OpenStatus\n  org.opencontainers.image.authors: OpenStatus Team\n\n# Copy artifacts from build stages\ncopy:\n  - fromBuilder: build\n    source: /app/apps/workflows/app\n    target: /app/apps/workflows/\n    chmod: \"555\"\n  - fromBuilder: libsql\n    source: /app/node_modules\n    target: /app/packages/db/node_modules\n  - fromBuilder: libsql\n    source: /app/node_modules\n    target: /app/node_modules\n  - fromBuilder: ca-certs\n    source: /etc/ssl/certs/ca-certificates.crt\n    target: /etc/ssl/certs/\n  \n# Security: run as non-root user\nuser: \"1000:1000\"\n\n# Expose port\nexpose: \"3000\"\n\n# Health check\nhealthcheck:\n  interval: 30s\n  timeout: 10s\n  start: 30s\n  retries: 3\n  cmd: curl -f http://localhost:3000/health || exit 1\n\n# Start application\nentrypoint: /app/apps/workflows/app\n"
+    hash: 1fadb130936597ac3125cf17dbcf984120a717fabb27eadb0265d9f457130760
+    content: |
+      # IMPORTANT: Stages are prefixed with letters (a-, b-, c-, d-, e-) to work around dofigen issue #429
+      # (https://github.com/lenra-io/dofigen/issues/429) where stages are generated in random order.
+      # The letter prefixes ensure alphabetical ordering matches the required dependency order.
+
+      # Files to exclude from Docker context
+      ignore:
+        - node_modules
+        - /apps/docs
+        - /apps/screenshot-service
+        - /apps/server
+        - /apps/web
+        - /apps/dashboard
+        - /apps/status-page
+        - /packages/analytics
+        - /packages/api
+        - /packages/error
+        - /packages/tracker
+
+      builders:
+        # Stage 1: CA Certificates
+        a-ca-certs:
+          fromImage: debian:bullseye-slim
+          labels:
+            org.opencontainers.image.stage: ca-certs
+          run: apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+
+        # Stage 2: Docker-specific build artifacts (no dependencies)
+        b-docker:
+          fromImage: oven/bun:1.3.0
+          workdir: /app/apps/workflows
+          labels:
+            org.opencontainers.image.stage: docker
+          copy:
+            - . /app/
+          run: bun run src/build-docker.ts
+
+        # Stage 3: Install production dependencies
+        c-install:
+          fromImage: oven/bun:1.3.0
+          workdir: /app/
+          labels:
+            org.opencontainers.image.stage: install
+          bind:
+            - bunfig.toml
+            - package.json
+            - apps/workflows/package.json
+            - packages/assertions/package.json
+            - packages/db/package.json
+            - packages/emails/package.json
+            - packages/notifications/discord/package.json
+            - packages/notifications/email/package.json
+            - packages/notifications/ntfy/package.json
+            - packages/notifications/opsgenie/package.json
+            - packages/notifications/pagerduty/package.json
+            - packages/notifications/slack/package.json
+            - packages/notifications/twillio-sms/package.json
+            - packages/notifications/webhook/package.json
+            - packages/regions/package.json
+            - packages/utils/package.json
+            - packages/tsconfig/package.json
+            - packages/tinybird/package.json
+            - packages/upstash/package.json
+            - packages/theme-store/package.json
+          run: bun install --production --frozen-lockfile --verbose
+          cache:
+            - /root/.bun/install/cache
+
+        # Stage 4: Build application (compile to binary) - depends on install
+        d-build:
+          fromImage: oven/bun:1.3.0
+          workdir: /app/apps/workflows
+          labels:
+            org.opencontainers.image.stage: build
+          env:
+            NODE_ENV: production
+          copy:
+            - . /app/
+            - fromBuilder: c-install
+              source: /app/node_modules
+              target: /app/node_modules
+          run:
+            - mkdir -p /app/data
+            - bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+
+        # Stage 5: LibSQL dependencies - depends on docker
+        e-libsql:
+          fromImage: oven/bun:1.3.0
+          workdir: /app/
+          labels:
+            org.opencontainers.image.stage: libsql
+          copy:
+            - fromBuilder: b-docker
+              source: /app/apps/build-docker/package.json
+              target: /app/package.json
+          run: bun install
+
+      # Runtime
+      fromImage: debian:bullseye-slim
+      workdir: /app/
+
+      # Metadata labels
+      labels:
+        org.opencontainers.image.title: OpenStatus Workflows
+        org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+        org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+        org.opencontainers.image.vendor: OpenStatus
+        org.opencontainers.image.authors: OpenStatus Team
+
+      # Copy artifacts from build stages
+      copy:
+        - fromBuilder: d-build
+          source: /app/apps/workflows/app
+          target: /app/apps/workflows/
+          chmod: "555"
+        - fromBuilder: d-build
+          source: /app/data
+          target: /app/data
+        - fromBuilder: e-libsql
+          source: /app/node_modules
+          target: /app/packages/db/node_modules
+        - fromBuilder: e-libsql
+          source: /app/node_modules
+          target: /app/node_modules
+        - fromBuilder: a-ca-certs
+          source: /etc/ssl/certs/ca-certificates.crt
+          target: /etc/ssl/certs/
+
+      # Security: run as non-root user
+      # IMPORTANT: After running `dofigen gen`, you MUST manually move the `RUN mkdir` command
+      # in the Dockerfile to BEFORE the `USER 1000:1000` line. Dofigen issue #430
+      # (https://github.com/lenra-io/dofigen/issues/430) causes USER to be generated before RUN,
+      # which fails because the non-root user cannot create directories.
+      user: "1000:1000"
+
+      # Expose port
+      expose: "3000"
+
+      # Health check
+      healthcheck:
+        interval: 30s
+        timeout: 10s
+        start: 30s
+        retries: 3
+        cmd: curl -f http://localhost:3000/health || exit 1
+
+      # Start application
+      entrypoint: /app/apps/workflows/app

@@ -9,26 +9,26 @@ effective: |
         org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app
       env:
-        UPSTASH_REDIS_REST_TOKEN: test
-        AUTH_SECRET: change-me-to-a-random-secret-at-least-32-characters-long
-        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
-        RESEND_API_KEY: test
-        DATABASE_URL: http://libsql:8080
-        UPSTASH_REDIS_REST_URL: test
-        PNPM_HOME: /pnpm
-        UNKEY_API_ID: test
-        TEAM_ID_VERCEL: test
-        PATH: $PNPM_HOME:$PATH
-        UNKEY_TOKEN: test
         STRIPE_SECRET_KEY: test
-        DATABASE_AUTH_TOKEN: test
-        NEXT_PUBLIC_URL: http://localhost:3002
-        VERCEL_AUTH_BEARER_TOKEN: test
-        PROJECT_ID_VERCEL: test
-        NODE_ENV: production
-        TINY_BIRD_API_KEY: test
-        CRON_SECRET: test
+        PATH: $PNPM_HOME:$PATH
         OPENPANEL_CLIENT_SECRET: test
+        NODE_ENV: production
+        TEAM_ID_VERCEL: test
+        RESEND_API_KEY: test
+        VERCEL_AUTH_BEARER_TOKEN: test
+        TINY_BIRD_API_KEY: test
+        PNPM_HOME: /pnpm
+        AUTH_SECRET: change-me-to-a-random-secret-at-least-32-characters-long
+        UNKEY_TOKEN: test
+        UPSTASH_REDIS_REST_URL: test
+        DATABASE_AUTH_TOKEN: test
+        DATABASE_URL: http://libsql:8080
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        PROJECT_ID_VERCEL: test
+        UNKEY_API_ID: test
+        NEXT_PUBLIC_URL: http://localhost:3002
+        CRON_SECRET: test
+        UPSTASH_REDIS_REST_TOKEN: test
       copy:
       - paths:
         - .
@@ -42,8 +42,8 @@ effective: |
     digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
   label:
     org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
-    org.opencontainers.image.base.name: docker.io/node:24-slim
     io.dofigen.version: 2.4.1
+    org.opencontainers.image.base.name: docker.io/node:24-slim
   user:
     user: '1000'
     group: '1000'
@@ -54,6 +54,10 @@ effective: |
     - /app/apps/dashboard/.next/standalone/apps/dashboard/
     target: ./
     chmod: '555'
+  - fromBuilder: builder
+    paths:
+    - /app/node_modules/
+    target: /app/node_modules/
   - fromBuilder: builder
     paths:
     - /app/apps/dashboard/.next/static/
@@ -81,7 +85,7 @@ images:
           digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
 resources:
   dofigen.yml:
-    hash: a58e1ec65bdef48b9f49310a08b08c6191d7983c069db781ccaee5fffd41a62c
+    hash: 98f1d5ea776b037d51d3ebc49fe558f29110fc46fbd469302b259c343838bae1
     content: |
       builders:
         # Stage 1: Next.js build with Node.js
@@ -117,7 +121,7 @@ resources:
             - pnpm install --frozen-lockfile
             - pnpm run --filter=@openstatus/dashboard build
 
-      # Stage 3: Production runtime
+      # Runtime
       fromImage: node:24-slim
       workdir: /app/apps/dashboard
 
@@ -127,6 +131,10 @@ resources:
           source: /app/apps/dashboard/.next/standalone/apps/dashboard/
           target: ./
           chmod: "555"
+        # Copy root node_modules (required for pnpm symlinks)
+        - fromBuilder: builder
+          source: /app/node_modules/
+          target: /app/node_modules/
         # Copy static assets
         - fromBuilder: builder
           source: /app/apps/dashboard/.next/static/

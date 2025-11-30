@@ -25,6 +25,7 @@ builders:
       - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
 
 # Runtime
+fromImage: alpine:3.21
 label:
   org.opencontainers.image.title: OpenStatus Private Location
   org.opencontainers.image.description: Private location orchestrator for OpenStatus
@@ -51,6 +52,13 @@ env:
 
 user: 1000:1000
 expose: "8080"
+
+healthcheck:
+  interval: 15s
+  timeout: 10s
+  start: 30s
+  retries: 3
+  cmd: wget --spider -q http://localhost:8080/health || exit 1
 
 cmd:
   - /opt/bin/private-location

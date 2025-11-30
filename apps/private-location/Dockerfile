@@ -11,8 +11,8 @@ LABEL \
     org.opencontainers.image.base.name="docker.io/golang:1.25-alpine" \
     org.opencontainers.image.stage="builder"
 ENV \
-    CGO_ENABLED="0" \
-    TZ="UTC"
+    TZ="UTC" \
+    CGO_ENABLED="0"
 WORKDIR /go/src/app
 COPY \
     --link \
@@ -24,18 +24,20 @@ GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o pri
 EOF
 
 # runtime
-FROM scratch AS runtime
+FROM alpine@sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b AS runtime
 LABEL \
     io.dofigen.version="2.4.1" \
     org.opencontainers.image.authors="OpenStatus Team" \
+    org.opencontainers.image.base.digest="sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b" \
+    org.opencontainers.image.base.name="docker.io/alpine:3.21" \
     org.opencontainers.image.description="Private location orchestrator for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
     org.opencontainers.image.title="OpenStatus Private Location" \
     org.opencontainers.image.vendor="OpenStatus"
 ENV \
-    TZ="UTC" \
+    GIN_MODE="release" \
     USER="1000" \
-    GIN_MODE="release"
+    TZ="UTC"
 WORKDIR /opt/bin
 COPY \
     --from=builder \
@@ -54,4 +56,10 @@ COPY \
     "/go/src/app/private-location" "/opt/bin/private-location"
 USER 1000:1000
 EXPOSE 8080
+HEALTHCHECK \
+    --interval=15s \
+    --timeout=10s \
+    --start-period=30s \
+    --retries=3 \
+    CMD wget --spider -q http://localhost:8080/health || exit 1
 CMD ["/opt/bin/private-location"]

@@ -42,6 +42,10 @@ copy:
     source: /app/apps/dashboard/.next/standalone/apps/dashboard/
     target: ./
     chmod: "555"
+  # Copy root node_modules (required for pnpm symlinks)
+  - fromBuilder: builder
+    source: /app/node_modules/
+    target: /app/node_modules/
   # Copy static assets
   - fromBuilder: builder
     source: /app/apps/dashboard/.next/static/

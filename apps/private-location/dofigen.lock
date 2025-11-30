@@ -5,16 +5,16 @@ effective: |
         path: golang
         digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
       label:
-        org.opencontainers.image.stage: builder
-        org.opencontainers.image.base.name: docker.io/golang:1.25-alpine
         org.opencontainers.image.base.digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+        org.opencontainers.image.base.name: docker.io/golang:1.25-alpine
+        org.opencontainers.image.stage: builder
       workdir: /go/src/app
       arg:
         TARGETOS: ''
         TARGETARCH: ''
       env:
-        CGO_ENABLED: '0'
         TZ: UTC
+        CGO_ENABLED: '0'
       copy:
       - paths:
         - .
@@ -23,21 +23,26 @@ effective: |
       - apk add --no-cache tzdata
       - go mod download
       - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+  fromImage:
+    path: alpine
+    digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
   label:
-    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.title: OpenStatus Private Location
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.name: docker.io/alpine:3.21
+    org.opencontainers.image.base.digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.description: Private location orchestrator for OpenStatus
     io.dofigen.version: 2.4.1
+    org.opencontainers.image.description: Private location orchestrator for OpenStatus
+    org.opencontainers.image.title: OpenStatus Private Location
   user:
     user: '1000'
     group: '1000'
   workdir: /opt/bin
   env:
-    TZ: UTC
-    USER: '1000'
     GIN_MODE: release
+    USER: '1000'
+    TZ: UTC
   copy:
   - fromBuilder: builder
     paths:
@@ -55,15 +60,24 @@ effective: |
   - /opt/bin/private-location
   expose:
   - port: 8080
+  healthcheck:
+    cmd: wget --spider -q http://localhost:8080/health || exit 1
+    interval: 15s
+    timeout: 10s
+    start: 30s
+    retries: 3
 images:
   docker.io:
     library:
+      alpine:
+        '3.21':
+          digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
       golang:
         1.25-alpine:
           digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
 resources:
   dofigen.yml:
-    hash: 436f85f8b1da4bdcf4884af1153832f7dfe7f986fdc0799a8afbfe3ddc19e1fb
+    hash: dc6ea1ae71964297c2bd2e588ddebeba27d0504009d74de10fcbc29fa52f8a53
     content: |
       builders:
         # Stage 1: Build Go binary
@@ -91,7 +105,8 @@ resources:
             # -ldflags "-s -w": Strip debug info and symbol table
             - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
 
-      # Stage 2: Production runtime
+      # Runtime
+      fromImage: alpine:3.21
       label:
         org.opencontainers.image.title: OpenStatus Private Location
         org.opencontainers.image.description: Private location orchestrator for OpenStatus
@@ -118,6 +133,13 @@ resources:
 
       user: 1000:1000
       expose: "8080"
+
+      healthcheck:
+        interval: 15s
+        timeout: 10s
+        start: 30s
+        retries: 3
+        cmd: wget --spider -q http://localhost:8080/health || exit 1
 
       cmd:
         - /opt/bin/private-location
