@@ -1,4 +1,3 @@
-import { allChangelogs } from "content-collections";
 import { Feed } from "feed";
 
 export async function GET() {
@@ -21,6 +20,8 @@ export async function GET() {
     updated: new Date(),
     ttl: 60,
   });
+
+  const allChangelogs = getChangelogPosts();
 
   allChangelogs
     .sort(
