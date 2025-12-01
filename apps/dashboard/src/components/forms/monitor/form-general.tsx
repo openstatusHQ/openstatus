@@ -597,8 +597,10 @@ export function FormGeneral({
                           variant="outline"
                           type="button"
                           onClick={() => {
+                            const currentAssertions =
+                              form.getValues("assertions");
                             field.onChange([
-                              ...field.value,
+                              ...currentAssertions,
                               {
                                 type: "status",
                                 version: "v1",
@@ -616,8 +618,10 @@ export function FormGeneral({
                           variant="outline"
                           type="button"
                           onClick={() => {
+                            const currentAssertions =
+                              form.getValues("assertions");
                             field.onChange([
-                              ...field.value,
+                              ...currentAssertions,
                               {
                                 type: "header",
                                 version: "v1",
@@ -636,8 +640,10 @@ export function FormGeneral({
                           variant="outline"
                           type="button"
                           onClick={() => {
+                            const currentAssertions =
+                              form.getValues("assertions");
                             field.onChange([
-                              ...field.value,
+                              ...currentAssertions,
                               {
                                 type: "textBody",
                                 version: "v1",
@@ -876,8 +882,10 @@ export function FormGeneral({
                           variant="outline"
                           type="button"
                           onClick={() => {
+                            const currentAssertions =
+                              form.getValues("assertions");
                             field.onChange([
-                              ...field.value,
+                              ...currentAssertions,
                               {
                                 type: "dnsRecord",
                                 version: "v1",
