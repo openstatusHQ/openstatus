@@ -52,7 +52,7 @@ export default async function _proxy1(req: NextRequest) {
     .select()
     .from(page)
     .where(
-      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`,
+      sql`lower(${page.slug}) = ${prefix} OR lower(${page.customDomain}) = ${prefix}`
     )
     .get();
 
@@ -79,7 +79,7 @@ export default async function _proxy1(req: NextRequest) {
         const url = new URL(
           `https://${
             _page.customDomain
-          }/protected?redirect=${encodeURIComponent(redirect)}`,
+          }/protected?redirect=${encodeURIComponent(redirect)}`
         );
         console.log("redirect to /protected", url.toString());
         return NextResponse.redirect(url);
@@ -88,7 +88,7 @@ export default async function _proxy1(req: NextRequest) {
       const url = new URL(
         `${origin}${
           type === "pathname" ? `/${prefix}` : ""
-        }/protected?redirect=${encodeURIComponent(pathname)}`,
+        }/protected?redirect=${encodeURIComponent(pathname)}`
       );
       return NextResponse.redirect(url);
     }
@@ -106,8 +106,8 @@ export default async function _proxy1(req: NextRequest) {
         new URL(
           `${req.nextUrl.origin}${
             redirect ?? type === "pathname" ? `/${prefix}` : "/"
-          }`,
-        ),
+          }`
+        )
       );
     }
   }
@@ -143,7 +143,7 @@ export default async function _proxy1(req: NextRequest) {
 
         const rewriteUrl = new URL(
           `${pathname}`,
-          `https://${_page.slug}.stpg.dev`,
+          `https://${_page.slug}.stpg.dev`
         );
         console.log({ rewriteUrl });
         rewriteUrl.search = url.search;
@@ -151,7 +151,7 @@ export default async function _proxy1(req: NextRequest) {
       }
       const rewriteUrl = new URL(
         `${url.pathname}`,
-        `https://${_page.slug}.stpg.dev`,
+        `https://${_page.slug}.stpg.dev`
       );
       console.log({ rewriteUrl });
       rewriteUrl.search = url.search;
@@ -184,6 +184,12 @@ export const getValidSubdomain = (host?: string | null) => {
     // biome-ignore lint: to fix later
     host = window.location.host;
   }
+
+  // Exclude localhost and IP addresses from being treated as subdomains
+  if (host?.startsWith("localhost") || host?.match(/^\d+\.\d+\.\d+\.\d+/)) {
+    return null;
+  }
+
   // we should improve here for custom vercel deploy page
   if (host?.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
