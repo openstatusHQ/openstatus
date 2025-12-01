@@ -8,13 +8,26 @@ LABEL \
     org.opencontainers.image.base.digest="sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2" \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 ENV \
-    NODE_ENV="production" \
-    PATH="$PNPM_HOME:$PATH" \
-    NEXT_PUBLIC_URL="http://localhost:3002" \
-    DATABASE_URL="http://libsql:8080" \
-    AUTH_SECRET="build-time-placeholder-min-32-chars-long" \
     PNPM_HOME="/pnpm" \
-    NEXT_PUBLIC_OPENPANEL_CLIENT_ID=""
+    PATH="$PNPM_HOME:$PATH" \
+    PROJECT_ID_VERCEL="test" \
+    CRON_SECRET="test" \
+    TEAM_ID_VERCEL="test" \
+    RESEND_API_KEY="test" \
+    TINY_BIRD_API_KEY="test" \
+    VERCEL_AUTH_BEARER_TOKEN="test" \
+    DATABASE_URL="http://libsql:8080" \
+    UPSTASH_REDIS_REST_URL="test" \
+    STRIPE_SECRET_KEY="test" \
+    NEXT_PUBLIC_URL="http://localhost:3002" \
+    UPSTASH_REDIS_REST_TOKEN="test" \
+    AUTH_SECRET="build-time-placeholder-min-32-chars-long" \
+    NODE_ENV="production" \
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
+    UNKEY_TOKEN="test" \
+    DATABASE_AUTH_TOKEN="test" \
+    OPENPANEL_CLIENT_SECRET="test" \
+    UNKEY_API_ID="test"
 WORKDIR /app
 COPY \
     --link \
@@ -22,7 +35,7 @@ COPY \
 RUN <<EOF
 corepack enable
 pnpm install --frozen-lockfile
-pnpm run --filter=@openstatus/dashboard build
+pnpm turbo run build --filter=@openstatus/dashboard
 EOF
 
 # runtime

@@ -10,8 +10,22 @@ builders:
       PNPM_HOME: /pnpm
       PATH: $PNPM_HOME:$PATH
       # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
-      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ""
       DATABASE_URL: http://libsql:8080
+      DATABASE_AUTH_TOKEN: test
+      RESEND_API_KEY: test
+      UPSTASH_REDIS_REST_URL: test
+      UPSTASH_REDIS_REST_TOKEN: test
+      TINY_BIRD_API_KEY: test
+      STRIPE_SECRET_KEY: test
+      PROJECT_ID_VERCEL: test
+      TEAM_ID_VERCEL: test
+      VERCEL_AUTH_BEARER_TOKEN: test
+      CRON_SECRET: test
+      UNKEY_TOKEN: test
+      UNKEY_API_ID: test
+      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+      OPENPANEL_CLIENT_SECRET: test
+      NEXT_PUBLIC_URL: http://localhost:3003
     run:
       - corepack enable
       - pnpm install --frozen-lockfile

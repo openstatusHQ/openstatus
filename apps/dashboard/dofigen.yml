@@ -10,14 +10,27 @@ builders:
       PNPM_HOME: /pnpm
       PATH: $PNPM_HOME:$PATH
       # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
-      NEXT_PUBLIC_URL: http://localhost:3002
-      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ""
       DATABASE_URL: http://libsql:8080
+      DATABASE_AUTH_TOKEN: test
+      RESEND_API_KEY: test
+      UPSTASH_REDIS_REST_URL: test
+      UPSTASH_REDIS_REST_TOKEN: test
+      STRIPE_SECRET_KEY: test
+      PROJECT_ID_VERCEL: test
+      TEAM_ID_VERCEL: test
+      VERCEL_AUTH_BEARER_TOKEN: test
+      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+      OPENPANEL_CLIENT_SECRET: test
+      TINY_BIRD_API_KEY: test
+      CRON_SECRET: test
+      UNKEY_TOKEN: test
+      UNKEY_API_ID: test
       AUTH_SECRET: build-time-placeholder-min-32-chars-long
+      NEXT_PUBLIC_URL: http://localhost:3002
     run:
       - corepack enable
       - pnpm install --frozen-lockfile
-      - pnpm run --filter=@openstatus/dashboard build
+      - pnpm turbo run build --filter=@openstatus/dashboard
 
 # Runtime stage
 fromImage: node:24-slim

@@ -5,17 +5,30 @@ effective: |
         path: node
         digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
       label:
-        org.opencontainers.image.base.name: docker.io/node:24-slim
         org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+        org.opencontainers.image.base.name: docker.io/node:24-slim
       workdir: /app
       env:
-        NODE_ENV: production
-        PATH: $PNPM_HOME:$PATH
-        NEXT_PUBLIC_URL: http://localhost:3002
-        DATABASE_URL: http://libsql:8080
-        AUTH_SECRET: build-time-placeholder-min-32-chars-long
         PNPM_HOME: /pnpm
-        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ''
+        PATH: $PNPM_HOME:$PATH
+        PROJECT_ID_VERCEL: test
+        CRON_SECRET: test
+        TEAM_ID_VERCEL: test
+        RESEND_API_KEY: test
+        TINY_BIRD_API_KEY: test
+        VERCEL_AUTH_BEARER_TOKEN: test
+        DATABASE_URL: http://libsql:8080
+        UPSTASH_REDIS_REST_URL: test
+        STRIPE_SECRET_KEY: test
+        NEXT_PUBLIC_URL: http://localhost:3002
+        UPSTASH_REDIS_REST_TOKEN: test
+        AUTH_SECRET: build-time-placeholder-min-32-chars-long
+        NODE_ENV: production
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        UNKEY_TOKEN: test
+        DATABASE_AUTH_TOKEN: test
+        OPENPANEL_CLIENT_SECRET: test
+        UNKEY_API_ID: test
       copy:
       - paths:
         - .
@@ -23,14 +36,14 @@ effective: |
       run:
       - corepack enable
       - pnpm install --frozen-lockfile
-      - pnpm run --filter=@openstatus/dashboard build
+      - pnpm turbo run build --filter=@openstatus/dashboard
   fromImage:
     path: node
     digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
   label:
-    io.dofigen.version: 2.5.1
     org.opencontainers.image.base.name: docker.io/node:24-slim
     org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+    io.dofigen.version: 2.5.1
   user:
     user: '1000'
     group: '1000'
@@ -72,7 +85,7 @@ images:
           digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
 resources:
   dofigen.yml:
-    hash: 11e8a7dde4240ac1b1bc11fbfc2cf552103eec78208dcd4c547756191d5af7ad
+    hash: 1e334ce42dd05485512fc747e15d1a729d812cdb9e2b385e08d3919d82b03524
     content: |
       builders:
         # Stage 1: Next.js build with Node.js
@@ -86,14 +99,27 @@ resources:
             PNPM_HOME: /pnpm
             PATH: $PNPM_HOME:$PATH
             # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
-            NEXT_PUBLIC_URL: http://localhost:3002
-            NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ""
             DATABASE_URL: http://libsql:8080
+            DATABASE_AUTH_TOKEN: test
+            RESEND_API_KEY: test
+            UPSTASH_REDIS_REST_URL: test
+            UPSTASH_REDIS_REST_TOKEN: test
+            STRIPE_SECRET_KEY: test
+            PROJECT_ID_VERCEL: test
+            TEAM_ID_VERCEL: test
+            VERCEL_AUTH_BEARER_TOKEN: test
+            NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+            OPENPANEL_CLIENT_SECRET: test
+            TINY_BIRD_API_KEY: test
+            CRON_SECRET: test
+            UNKEY_TOKEN: test
+            UNKEY_API_ID: test
             AUTH_SECRET: build-time-placeholder-min-32-chars-long
+            NEXT_PUBLIC_URL: http://localhost:3002
           run:
             - corepack enable
             - pnpm install --frozen-lockfile
-            - pnpm run --filter=@openstatus/dashboard build
+            - pnpm turbo run build --filter=@openstatus/dashboard
 
       # Runtime stage
       fromImage: node:24-slim

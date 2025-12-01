@@ -9,11 +9,25 @@ effective: |
         org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
       workdir: /app
       env:
-        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ''
-        PATH: $PNPM_HOME:$PATH
-        PNPM_HOME: /pnpm
+        CRON_SECRET: test
+        DATABASE_AUTH_TOKEN: test
+        OPENPANEL_CLIENT_SECRET: test
         DATABASE_URL: http://libsql:8080
+        UNKEY_TOKEN: test
+        RESEND_API_KEY: test
+        NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+        PNPM_HOME: /pnpm
         NODE_ENV: production
+        UNKEY_API_ID: test
+        PATH: $PNPM_HOME:$PATH
+        UPSTASH_REDIS_REST_URL: test
+        PROJECT_ID_VERCEL: test
+        TEAM_ID_VERCEL: test
+        VERCEL_AUTH_BEARER_TOKEN: test
+        NEXT_PUBLIC_URL: http://localhost:3003
+        UPSTASH_REDIS_REST_TOKEN: test
+        TINY_BIRD_API_KEY: test
+        STRIPE_SECRET_KEY: test
       copy:
       - paths:
         - .
@@ -27,8 +41,8 @@ effective: |
     digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
   label:
     org.opencontainers.image.base.name: docker.io/node:24-slim
-    io.dofigen.version: 2.5.1
     org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
+    io.dofigen.version: 2.5.1
   user:
     user: '1000'
     group: '1000'
@@ -70,7 +84,7 @@ images:
           digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
 resources:
   dofigen.yml:
-    hash: c61c2e5b2980d56de4c5c0038ff6b64a9a0db12ad36e85f22bc457c4a024fad2
+    hash: 24631593a10ee4b19551a27a8df1bdac12b91c3e7f5f9c0c83da66ee40b697a5
     content: |
       builders:
         # Stage 1: Next.js build with Node.js
@@ -84,8 +98,22 @@ resources:
             PNPM_HOME: /pnpm
             PATH: $PNPM_HOME:$PATH
             # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
-            NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ""
             DATABASE_URL: http://libsql:8080
+            DATABASE_AUTH_TOKEN: test
+            RESEND_API_KEY: test
+            UPSTASH_REDIS_REST_URL: test
+            UPSTASH_REDIS_REST_TOKEN: test
+            TINY_BIRD_API_KEY: test
+            STRIPE_SECRET_KEY: test
+            PROJECT_ID_VERCEL: test
+            TEAM_ID_VERCEL: test
+            VERCEL_AUTH_BEARER_TOKEN: test
+            CRON_SECRET: test
+            UNKEY_TOKEN: test
+            UNKEY_API_ID: test
+            NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+            OPENPANEL_CLIENT_SECRET: test
+            NEXT_PUBLIC_URL: http://localhost:3003
           run:
             - corepack enable
             - pnpm install --frozen-lockfile
