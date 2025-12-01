@@ -1,0 +1,117 @@
+---
+title: "Openstatus 2025 Year in Review: Lessons Learned and What’s Next"
+description: "Embrace OpenTelemetry, improve developer experience, and support community editions."
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2025-12-1"
+image: "/assets/posts/vision-2025/vision-2025.png"
+category: "company"
+---
+
+As we close out 2025, it’s the perfect time to pause, reflect, and share where we are heading. It has been a year of shipping, learning, and making hard decisions about the future of OpenStatus.
+
+Before we dive into our roadmap for 2026, let’s look at what we accomplished together this year.
+
+## 2025 Retrospective
+
+### A Year of Shipping
+
+If you look back at our 2025 roadmap, our goal was clear: focus on synthetic monitoring, status pages, alerting, and self-hosting.
+
+Here are some of the highlights from the past 12 months:
+- **DNS Monitor:** We added the ability to track DNS records giving you visibility into the fundamental plumbing of your connectivity.
+-  **Multi-Cloud Deployment:** We enabled monitoring from different cloud providers to help you visualize how network routing affects your latency globally.
+-  **Private location**:  We launched the ability to monitor internal services from within your own infrastructure.
+- **Theme Builder:**  We gave you complete control over the look and feel of your status pages to fully match your brand identity.
+- **New Status Page:** A A completely redesigned, faster, and accessible public face for your uptime.
+- **New Dashboard:** A cleaner UI designed to visualize your data without the noise.
+- **New Marketing Page:** A fresh style and clearer positioning.
+
+
+**A Note on Architecture:** 
+We also spent significant time under the hood. We’ve decoupled our applications, making the platform faster to build and easier for the community to contribute to. This refactor was on our wishlist for over a year, and we are thrilled to see it finally come to life.
+
+
+### Staying bootstrap 
+
+Transparency is one of our core values. In the spirit of that transparency: **In 2025, we went through an acquisition process.**
+
+The offer was strong, and the acquiring team was fantastic. It would have been a "good exit." However, as we moved through the due diligence, we realized something profound: **we aren't done yet**
+
+We felt that selling now would leave too much value on the table, not just financially, but in terms of the product vision we want to deliver to the OpenStatus community. We still have the strength, motivation, and resources to push OpenStatus further on our own terms.
+
+We chose to stay independent. We chose to keep building.
+
+
+### The first openstatus retreat 
+
+2025 wasn't just about code; it was about us. We held our very first team retreat. We looked for a location that was equidistant for us, easy to access, and emphatically _not_ Paris.
+
+We chose **Munich**.
+
+We spent the week in Kochel am See, eating Kaiserschmarrn, riding e-bikes, and drinking Bavarian beer. It was a vital reminder that while we build software, the human connection is what keeps the momentum alive.
+
+
+## Lessons learned: Let's go "Status Page First" 
+
+Building a SaaS is a constant loop of shipping and listening. In 2025, thanks to the help of Alex and Emily shaping our perspective, we learned two massive lessons about our market fit.
+
+We used to try to be "mild"—trying to look approachable for everyone. But the reality is: **our users are engineers.** We need to own that niche.
+
+### The Enterprise Dilemma
+
+We realized that trying to be an "all-in-one" uptime monitoring solution for Enterprise is the wrong play.
+- **The Reality:** Enterprises already have established monitoring stacks (Datadog, Prometheus, etc.).
+- **The Friction:** They generally _don't_ want a status page tightly coupled to raw monitoring data. There are internal politics involved in declaring incidents; they need a curated status report, not a raw feed of 500 errors.
+- **The Fit**: Paradoxically, we are often "too cheap" for Enterprise, and our complex multi-cloud monitoring is overkill for anyone not doing $1B in revenue.
+
+### The Solo-Dev/Hobbyist  Pattern
+
+On the other end of the spectrum, solo developers love our bundled uptime monitoring, status page and the fact that we are open source. However, while usage in this segment is high, it rarely converts to sustainable revenue.
+
+### The Aha! Moment 
+
+By analyzing our user journey, we found a distinct pattern: 
+
+> Users search for a Status Page → They see it's Open Source → They stay for the bundled Uptime Monitoring.
+
+The entry point isn't the monitoring; **it's the Status Page.**
+
+
+## The Plan for 2026: Doubling Down on the Status Page 
+
+We’ve spent the last year listening, learning, and watching how you handle downtime. If there is one universal truth we’ve uncovered, it’s this: 
+
+**Context switching is the enemy of incident resolution.**
+
+When your database locks up or your API starts returning 500s, the last thing you want to do is tab out of your terminal, to log into a separate dashboard just to update a status page. It breaks your flow when you need it most.
+
+#### **Our Goal for 2026** 
+
+Based on these learnings, we are setting an ambitious goal for 2026: **To build the absolute best tooling for Status Pages on the market.**
+
+But how do we define "best"?
+
+To us, the best tool is the one that gets out of your way. It’s a tool that lives inside your existing workflow. We believe you should be able to manage the communication of an incident from the exact same place you are fixing it.
+
+#### **The Philosophy: "Stripe for Incidents"** 
+
+We realized that every engineering team has a unique DNA. A three-person startup handles fires differently than a 50-person scale-up. Because of this, we are moving away from the "one-size-fits-all" approach.
+
+Instead of imposing a rigid workflow on you, we want to provide the **primitives** that allow you to build your own.
+
+We aim to become the **"Stripe for Incidents"** an infrastructure platform that is so flexible and developer-friendly that you can build your ideal incident management process right on top of us.
+
+#### **The Roadmap: API-First and ChatOps** 
+
+To make this a reality, our 2026 roadmap is focused on meeting you where you work:
+
+- **Deep ChatOps Integration:** We are building robust **Slack and Discord apps**. You should be able to declare an incident, update a component, and notify customers without ever leaving your team's chat channel.
+    
+- **API-First Expansion:** We are drastically improving our API. We want you to be able to script updates, automate status changes via webhooks from your monitoring tools, and integrate us deeply into your CI/CD or observability stack.
+    
+
+**Focusing on the Builders** We believe our product currently shines brightest for **small teams and startups**. In 2026, we are doubling down on you. We want to give you the lean, powerful tools you need to maintain trust with your users without the enterprise bloat.
+
+**Looking Ahead: Moving Upstream** Status pages are just the beginning. Currently, we help you communicate _during_ the fire. As our tooling matures, we plan to move "upstream" in your workflow.
+
+Once our status page tooling is perfected, we will expand toward full **Incident Management**. We want to bridge the gap between _detecting_ the problem and _communicating_ it, eventually helping you manage the entire lifecycle of an incident.
