@@ -20,7 +20,7 @@ COPY \
 RUN <<EOF
 corepack enable
 pnpm install --frozen-lockfile
-pnpm run --filter=@openstatus/status-page build
+pnpm turbo run build --filter=@openstatus/status-page
 EOF
 
 # runtime

@@ -5,15 +5,15 @@ effective: |
         path: node
         digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
       label:
-        org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
         org.opencontainers.image.base.name: docker.io/node:24-slim
+        org.opencontainers.image.base.digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
       workdir: /app
       env:
         NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ''
+        PATH: $PNPM_HOME:$PATH
         PNPM_HOME: /pnpm
         DATABASE_URL: http://libsql:8080
         NODE_ENV: production
-        PATH: $PNPM_HOME:$PATH
       copy:
       - paths:
         - .
@@ -21,7 +21,7 @@ effective: |
       run:
       - corepack enable
       - pnpm install --frozen-lockfile
-      - pnpm run --filter=@openstatus/status-page build
+      - pnpm turbo run build --filter=@openstatus/status-page
   fromImage:
     path: node
     digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
@@ -70,7 +70,7 @@ images:
           digest: sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2
 resources:
   dofigen.yml:
-    hash: 032b55fce7774bc66f49f14811b527245cb7bab19e91fab83e368e1dc5b2a324
+    hash: c61c2e5b2980d56de4c5c0038ff6b64a9a0db12ad36e85f22bc457c4a024fad2
     content: |
       builders:
         # Stage 1: Next.js build with Node.js
@@ -89,7 +89,7 @@ resources:
           run:
             - corepack enable
             - pnpm install --frozen-lockfile
-            - pnpm run --filter=@openstatus/status-page build
+            - pnpm turbo run build --filter=@openstatus/status-page
 
       # Runtime stage
       fromImage: node:24-slim

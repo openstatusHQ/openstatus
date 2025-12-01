@@ -15,7 +15,7 @@ builders:
     run:
       - corepack enable
       - pnpm install --frozen-lockfile
-      - pnpm run --filter=@openstatus/status-page build
+      - pnpm turbo run build --filter=@openstatus/status-page
 
 # Runtime stage
 fromImage: node:24-slim
