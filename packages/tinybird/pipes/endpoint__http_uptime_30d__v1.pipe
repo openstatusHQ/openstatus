@@ -1,5 +1,3 @@
-VERSION 1
-
 TAGS "http"
 
 NODE endpoint
@@ -14,8 +12,10 @@ SQL >
     FROM mv__http_uptime_30d__v1
     WHERE
         monitorId = {{ String(monitorId, '1', required=True) }}
-        {% if fromDate %} AND time >= toDateTime({{ String(fromDate) }}) {% end %}
-        {% if toDate %} AND time <= toDateTime({{ String(toDate) }}) {% end %}
+        {% if fromDate %} AND time >= parseDateTimeBestEffortOrNull({{ String(fromDate) }}) {% end %}
+        {% if toDate %} AND time <= parseDateTimeBestEffortOrNull({{ String(toDate) }}) {% end %}
         {% if regions %} AND region IN {{ Array(regions, 'String', 'ams,fra') }} {% end %}
     GROUP BY interval
     ORDER BY interval DESC
+
+

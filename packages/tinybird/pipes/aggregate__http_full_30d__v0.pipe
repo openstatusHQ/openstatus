@@ -1,9 +1,8 @@
-VERSION 0
 DESCRIPTION >
 	Stores all the data from the http_response table for the last 30 days, mainly used for accessing the data details.
 
 
-TAGS tcp, full
+TAGS "http, full"
 
 NODE aggregate
 SQL >
@@ -11,7 +10,9 @@ SQL >
     SELECT
         toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
         *
-    FROM tcp_response__v0
+    FROM ping_response__v8
 
 TYPE materialized
-DATASOURCE mv__tcp_full_30d__v0
+DATASOURCE mv__http_full_30d__v0
+
+

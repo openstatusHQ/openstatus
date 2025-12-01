@@ -1,4 +1,3 @@
-VERSION 8
 
 SCHEMA >
     `latency` Int64 `json:$.latency`,
@@ -16,7 +15,10 @@ SCHEMA >
     `assertions` Nullable(String) `json:$.assertions`,
     `body` Nullable(String) `json:$.body`,
     `trigger` Nullable(String) `json:$.trigger`,
+    `id` Nullable(String) `json:$.id`,
+    `requestStatus` Nullable(String) `json:$.requestStatus`,
+    `method` String `json:$.method`
 
 ENGINE "MergeTree"
-ENGINE_SORTING_KEY "monitorId, cronTimestamp"
 ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(cronTimestamp))"
+ENGINE_SORTING_KEY "monitorId, cronTimestamp"
