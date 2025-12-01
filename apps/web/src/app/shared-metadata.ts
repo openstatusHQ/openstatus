@@ -51,8 +51,7 @@ export const getPageMetadata = (page: MDXData): Metadata => {
   const { slug, metadata } = page;
   const { title, description, category, publishedAt } = metadata;
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-  const ogImage = `${baseUrl}/api/og?title=${encodeURIComponent(
+  const ogImage = `${BASE_URL}/api/og?title=${encodeURIComponent(
     title,
   )}&description=${encodeURIComponent(
     description,
@@ -66,7 +65,7 @@ export const getPageMetadata = (page: MDXData): Metadata => {
       description,
       type: "article",
       publishedTime: publishedAt.toISOString(),
-      url: `${baseUrl}/changelog/${slug}`,
+      url: `${BASE_URL}/changelog/${slug}`,
       images: [
         {
           url: ogImage,
