@@ -6,7 +6,7 @@ SQL >
 
     %
     SELECT time as day, countMerge(count) as count, countMerge(ok) as ok
-    FROM mv__http_status_45d
+    FROM mv__http_status_45d__v0
     WHERE
         monitorId = {{ String(monitorId, '4') }}
     GROUP BY day
@@ -17,5 +17,3 @@ SQL >
         TO toStartOfDay(
             date_sub(DAY, 45, now())
         ) STEP INTERVAL -1 DAY
-
-

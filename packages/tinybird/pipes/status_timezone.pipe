@@ -14,7 +14,7 @@ SQL >
         toStartOfDay(with_timezone) as start_of_day,
         -- latency,
         statusCode
-    FROM ping_response__v7
+    FROM ping_response__v8
     {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     WHERE monitorId = {{ String(monitorId, '1') }}
         -- by default, we only query the last 45 days
@@ -45,5 +45,3 @@ SQL >
         TO toStartOfDay(
             toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/London') }})
         ) STEP INTERVAL -1 DAY
-
-

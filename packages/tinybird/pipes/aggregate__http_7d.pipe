@@ -20,9 +20,3 @@ SQL >
 
 TYPE materialized
 DATASOURCE mv__http_7d__v0
-ENGINE "MergeTree"
-ENGINE_PARTITION_KEY "toYYYYMM(time)"
-ENGINE_SORTING_KEY "monitorId, time"
-ENGINE_TTL "time + toIntervalDay(7)"
-
-
