@@ -1,7 +1,3 @@
-# NOTE: Stages are prefixed with letters (a-, b-, c-, d-, e-) to work around dofigen issue #429
-# (https://github.com/lenra-io/dofigen/issues/429) where stages are generated in random order.
-# The letter prefixes ensure alphabetical ordering matches the required dependency order.
-
 # Files to exclude from Docker context
 ignore:
   - node_modules
@@ -18,14 +14,14 @@ ignore:
 
 builders:
   # Stage 1: CA Certificates
-  a-ca-certs:
+  ca-certs:
     fromImage: debian:bullseye-slim
     labels:
       org.opencontainers.image.stage: ca-certs
     run: apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
   # Stage 2: Docker-specific build artifacts (no dependencies)
-  b-docker:
+  docker:
     fromImage: oven/bun:1.3.0
     workdir: /app/apps/workflows
     labels:
@@ -35,7 +31,7 @@ builders:
     run: bun run src/build-docker.ts
 
   # Stage 3: Install production dependencies
-  c-install:
+  install:
     fromImage: oven/bun:1.3.0
     workdir: /app/
     labels:
@@ -65,8 +61,8 @@ builders:
     cache:
       - /root/.bun/install/cache
 
-  # Stage 4: Build application (compile to binary) - depends on install
-  d-build:
+  # Stage 4: Build application (compile to binary)
+  build:
     fromImage: oven/bun:1.3.0
     workdir: /app/apps/workflows
     labels:
@@ -75,21 +71,21 @@ builders:
       NODE_ENV: production
     copy:
       - . /app/
-      - fromBuilder: c-install
+      - fromBuilder: install
         source: /app/node_modules
         target: /app/node_modules
     run:
       - mkdir -p /app/data
       - bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
-  # Stage 5: LibSQL dependencies - depends on docker
-  e-libsql:
+  # Stage 5: LibSQL dependencies
+  libsql:
     fromImage: oven/bun:1.3.0
     workdir: /app/
     labels:
       org.opencontainers.image.stage: libsql
     copy:
-      - fromBuilder: b-docker
+      - fromBuilder: docker
         source: /app/apps/build-docker/package.json
         target: /app/package.json
     run: bun install
@@ -108,20 +104,20 @@ labels:
 
 # Copy artifacts from build stages
 copy:
-  - fromBuilder: d-build
+  - fromBuilder: build
     source: /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: "555"
-  - fromBuilder: d-build
+  - fromBuilder: build
     source: /app/data
     target: /app/data
-  - fromBuilder: e-libsql
+  - fromBuilder: libsql
     source: /app/node_modules
     target: /app/packages/db/node_modules
-  - fromBuilder: e-libsql
+  - fromBuilder: libsql
     source: /app/node_modules
     target: /app/node_modules
-  - fromBuilder: a-ca-certs
+  - fromBuilder: ca-certs
     source: /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
 

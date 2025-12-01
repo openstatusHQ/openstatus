@@ -6,7 +6,7 @@ builders:
     label:
       org.opencontainers.image.stage: builder
     workdir: /go/src/app
-    # Build arguments for cross-compilation
+    # Build-time arguments (overwritten by .env.docker at runtime)
     args:
       TARGETOS: ""
       TARGETARCH: ""
@@ -24,8 +24,10 @@ builders:
       # -ldflags "-s -w": Strip debug info and symbol table
       - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
 
-# Runtime
+# Runtime stage
 fromImage: alpine:3.21
+
+# Metadata labels
 label:
   org.opencontainers.image.title: OpenStatus Private Location
   org.opencontainers.image.description: Private location orchestrator for OpenStatus
@@ -34,6 +36,7 @@ label:
   org.opencontainers.image.authors: OpenStatus Team
 workdir: /opt/bin
 
+# Copy artifacts from builder
 copy:
   - fromBuilder: builder
     source: /etc/ssl/certs/ca-certificates.crt
@@ -50,9 +53,13 @@ env:
   USER: "1000"
   GIN_MODE: release
 
-user: 1000:1000
+# Security: run as non-root user
+user: "1000:1000"
+
+# Expose port
 expose: "8080"
 
+# Health check
 healthcheck:
   interval: 15s
   timeout: 10s
@@ -60,5 +67,6 @@ healthcheck:
   retries: 3
   cmd: wget --spider -q http://localhost:8080/health || exit 1
 
+# Start application
 cmd:
   - /opt/bin/private-location

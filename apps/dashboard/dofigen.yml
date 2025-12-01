@@ -9,33 +9,21 @@ builders:
       NODE_ENV: production
       PNPM_HOME: /pnpm
       PATH: $PNPM_HOME:$PATH
-      # Build-time environment variables from .env.docker
-      DATABASE_URL: http://libsql:8080
-      DATABASE_AUTH_TOKEN: test
-      RESEND_API_KEY: test
-      UPSTASH_REDIS_REST_URL: test
-      UPSTASH_REDIS_REST_TOKEN: test
-      STRIPE_SECRET_KEY: test
-      PROJECT_ID_VERCEL: test
-      TEAM_ID_VERCEL: test
-      VERCEL_AUTH_BEARER_TOKEN: test
-      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
-      OPENPANEL_CLIENT_SECRET: test
-      TINY_BIRD_API_KEY: test
-      CRON_SECRET: test
-      UNKEY_TOKEN: test
-      UNKEY_API_ID: test
-      AUTH_SECRET: change-me-to-a-random-secret-at-least-32-characters-long
+      # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
       NEXT_PUBLIC_URL: http://localhost:3002
+      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: ""
+      DATABASE_URL: http://libsql:8080
+      AUTH_SECRET: build-time-placeholder-min-32-chars-long
     run:
       - corepack enable
       - pnpm install --frozen-lockfile
       - pnpm run --filter=@openstatus/dashboard build
 
-# Runtime
+# Runtime stage
 fromImage: node:24-slim
 workdir: /app/apps/dashboard
 
+# Copy artifacts from builder
 copy:
   # Copy Next.js standalone output
   - fromBuilder: builder
@@ -55,9 +43,13 @@ copy:
     source: /app/apps/dashboard/public/
     target: ./public/
 
-expose: "3000"
-user: 1000:1000
+# Security: run as non-root user
+user: "1000:1000"
 
+# Expose port
+expose: "3000"
+
+# Health check
 healthcheck:
   interval: 30s
   timeout: 10s
@@ -65,6 +57,7 @@ healthcheck:
   retries: 3
   cmd: curl -f http://localhost:3000/api/health || exit 1
 
+# Start application
 cmd:
   - node
   - server.js
