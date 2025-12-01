@@ -10,8 +10,11 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { env } from "@/env";
 import { TRPCReactQueryProvider } from "@/trpc/rq-client";
+import PlausibleProvider from "next-plausible";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -44,9 +47,13 @@ export default function RootLayout({
           // biome-ignore lint/nursery/useSortedClasses: <explanation>
         } ${calSans.variable}`}
       >
-        <NuqsAdapter>
-          <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
-        </NuqsAdapter>
+        <PlausibleProvider domain="openstatus.dev">
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <NuqsAdapter>
+              <TRPCReactQueryProvider>{children}</TRPCReactQueryProvider>
+            </NuqsAdapter>
+          </ThemeProvider>
+        </PlausibleProvider>
         {env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
           <OpenPanelComponent
             clientId={env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
@@ -55,6 +62,27 @@ export default function RootLayout({
             trackAttributes
           />
         )}
+        <Toaster
+          toastOptions={{
+            classNames: {
+              toast:
+                "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg rounded-none!",
+              description: "group-[.toast]:text-muted-foreground",
+              actionButton:
+                "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground rounded-none!",
+              cancelButton:
+                "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+              closeButton: "group-[.toast]:text-muted-foreground",
+            },
+          }}
+          icons={{
+            success: null,
+            error: null,
+            warning: null,
+            info: null,
+            loading: null,
+          }}
+        />
       </body>
     </html>
   );
