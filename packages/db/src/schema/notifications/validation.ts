@@ -12,15 +12,15 @@ export const selectNotificationSchema = createSelectSchema(notification).extend(
       .preprocess((val) => {
         return String(val);
       }, z.string())
-      .default("{}"),
+      .prefault("{}"),
   },
 );
 
 // we need to extend, otherwise data can be `null` or `undefined` - default is not
 export const insertNotificationSchema = createInsertSchema(notification).extend(
   {
-    data: z.string().default("{}"),
-    monitors: z.array(z.number()).optional().default([]),
+    data: z.string().prefault("{}"),
+    monitors: z.array(z.number()).optional().prefault([]),
   },
 );
 
@@ -38,8 +38,8 @@ export const urlSchema = z.string().url();
 
 export const ntfyDataSchema = z.object({
   ntfy: z.object({
-    topic: z.string().default(""),
-    serverUrl: z.string().default("https://ntfy.sh"),
+    topic: z.string().prefault(""),
+    serverUrl: z.string().prefault("https://ntfy.sh"),
     token: z.string().optional(),
   }),
 });

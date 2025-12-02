@@ -41,19 +41,19 @@ const headersToArraySchema = z.preprocess(
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
-  periodicity: monitorPeriodicitySchema.default("10m"),
-  status: monitorStatusSchema.default("active"),
-  jobType: monitorJobTypesSchema.default("http"),
+  periodicity: monitorPeriodicitySchema.prefault("10m"),
+  status: monitorStatusSchema.prefault("active"),
+  jobType: monitorJobTypesSchema.prefault("http"),
   timeout: z.number().prefault(45),
   followRedirects: z.boolean().prefault(true),
   retry: z.number().prefault(3),
-  regions: regionsToArraySchema.default([]),
+  regions: regionsToArraySchema.prefault([]),
 }).extend({
-  headers: headersToArraySchema.default([]),
-  otelHeaders: headersToArraySchema.default([]),
-  body: bodyToStringSchema.default(""),
+  headers: headersToArraySchema.prefault([]),
+  otelHeaders: headersToArraySchema.prefault([]),
+  body: bodyToStringSchema.prefault(""),
   // for tcp monitors the method is not needed
-  method: monitorMethodsSchema.default("GET"),
+  method: monitorMethodsSchema.prefault("GET"),
 });
 
 const headersSchema = z
@@ -65,13 +65,13 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
     .string()
     .min(1, "Name must be at least 1 character long")
     .max(255, "Name must be at most 255 characters long"),
-  periodicity: monitorPeriodicitySchema.default("10m"),
-  status: monitorStatusSchema.default("active"),
+  periodicity: monitorPeriodicitySchema.prefault("10m"),
+  status: monitorStatusSchema.prefault("active"),
   regions: z.array(monitorRegionSchema).prefault([]).optional(),
-  headers: headersSchema.default([]),
-  otelHeaders: headersSchema.default([]),
+  headers: headersSchema.prefault([]),
+  otelHeaders: headersSchema.prefault([]),
 }).extend({
-  method: monitorMethodsSchema.default("GET"),
+  method: monitorMethodsSchema.prefault("GET"),
   notifications: z.array(z.number()).optional().prefault([]),
   pages: z.array(z.number()).optional().prefault([]),
   body: z.string().prefault("").optional(),
