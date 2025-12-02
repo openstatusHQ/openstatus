@@ -43,7 +43,6 @@ export const PageSchema = z
         example: "status.acme.com",
       }),
     icon: z
-      .string()
       .url()
       .or(z.literal(""))
       .transform((val) => (val ? val : undefined))
@@ -52,7 +51,7 @@ export const PageSchema = z
         description: "The icon of the page",
         example: "https://example.com/icon.png",
       }),
-    passwordProtected: z.boolean().optional().default(false).openapi({
+    passwordProtected: z.boolean().optional().prefault(false).openapi({
       description:
         "Make the page password protected. Used with the 'passwordProtected' property.",
       example: true,
@@ -61,7 +60,7 @@ export const PageSchema = z
       description: "Your password to protect the page from the public",
       example: "hidden-password",
     }),
-    showMonitorValues: z.boolean().optional().nullish().default(true).openapi({
+    showMonitorValues: z.boolean().optional().nullish().prefault(true).openapi({
       description:
         "Displays the total and failed request numbers for each monitor",
       example: true,
