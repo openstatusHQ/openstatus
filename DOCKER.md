@@ -103,6 +103,14 @@ This creates:
 - Test user (`ping@openstatus.dev`)
 - Sample incidents and maintenance windows
 
+## Tinybird Setup (Optional)
+
+Tinybird is used for analytics and monitoring metrics. The application will work without it, but analytics features will be unavailable.
+
+If you want to enable analytics, you can:
+1. Use Tinybird Cloud and configure `TINY_BIRD_API_KEY` in `.env.docker`
+2. Manually configure Tinybird Local (requires additional setup beyond this guide)
+
 ## Configuration
 
 ### Required Environment Variables
