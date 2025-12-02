@@ -12,24 +12,29 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    ca-certs:
-      fromImage:
-        path: debian
-        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-      label:
-        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-        org.opencontainers.image.stage: ca-certs
-      run:
-      - apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
-    install:
+    docker:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.stage: docker
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
+    install:
+      fromImage:
+        path: oven/bun
+        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+      label:
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
+        org.opencontainers.image.stage: install
       workdir: /app/
       run:
       - bun install --production --frozen-lockfile --verbose
@@ -76,29 +81,30 @@ effective: |
         source: packages/upstash/package.json
       - target: packages/theme-store/package.json
         source: packages/theme-store/package.json
-    docker:
+    libsql:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-        org.opencontainers.image.stage: docker
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
-      workdir: /app/apps/workflows
+        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        org.opencontainers.image.stage: libsql
+      workdir: /app/
       copy:
-      - paths:
-        - .
-        target: /app/
+      - fromBuilder: docker
+        paths:
+        - /app/apps/build-docker/package.json
+        target: /app/package.json
       run:
-      - bun run src/build-docker.ts
+      - bun install
     build:
       fromImage:
         path: oven/bun
         digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
       label:
         org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
         org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -113,34 +119,28 @@ effective: |
       run:
       - mkdir -p /app/data
       - bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
-    libsql:
+    ca-certs:
       fromImage:
-        path: oven/bun
-        digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
+        path: debian
+        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
       label:
-        org.opencontainers.image.stage: libsql
-        org.opencontainers.image.base.digest: sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.0
-      workdir: /app/
-      copy:
-      - fromBuilder: docker
-        paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+        org.opencontainers.image.stage: ca-certs
       run:
-      - bun install
+      - apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
   fromImage:
     path: debian
     digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus Workflows
-    io.dofigen.version: 2.5.1
     org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    io.dofigen.version: 2.5.1
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.title: OpenStatus Workflows
   user:
     user: '1000'
     group: '1000'
@@ -167,12 +167,17 @@ effective: |
     paths:
     - /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
+  root:
+    run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl
+    - rm -rf /var/lib/apt/lists/*
   entrypoint:
   - /app/apps/workflows/app
   expose:
   - port: 3000
   healthcheck:
-    cmd: curl -f http://localhost:3000/health || exit 1
+    cmd: curl -f http://localhost:3000/ping || exit 1
     interval: 30s
     timeout: 10s
     start: 30s
@@ -189,7 +194,7 @@ images:
           digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
 resources:
   dofigen.yml:
-    hash: 5a910ed3b05e7ba45e64835d8a9201955ec4167996088e62b50fedd604b9d8d8
+    hash: 03fc957fcdf06a755fb53e29b2362ddc4e2f8773e4820bd9fd27f49d16139675
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -314,6 +319,13 @@ resources:
           source: /etc/ssl/certs/ca-certificates.crt
           target: /etc/ssl/certs/
 
+      # Install curl for health checks
+      root:
+        run:
+          - apt-get update
+          - apt-get install -y --no-install-recommends curl
+          - rm -rf /var/lib/apt/lists/*
+
       # Security: run as non-root user
       user: "1000:1000"
 
@@ -326,7 +338,7 @@ resources:
         timeout: 10s
         start: 30s
         retries: 3
-        cmd: curl -f http://localhost:3000/health || exit 1
+        cmd: curl -f http://localhost:3000/ping || exit 1
 
       # Start application
       entrypoint: /app/apps/workflows/app

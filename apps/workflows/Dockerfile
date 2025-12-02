@@ -124,6 +124,12 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
+USER 0:0
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends curl
+rm -rf /var/lib/apt/lists/*
+EOF
 USER 1000:1000
 EXPOSE 3000
 HEALTHCHECK \
@@ -131,5 +137,5 @@ HEALTHCHECK \
     --timeout=10s \
     --start-period=30s \
     --retries=3 \
-    CMD curl -f http://localhost:3000/health || exit 1
+    CMD curl -f http://localhost:3000/ping || exit 1
 ENTRYPOINT ["/app/apps/workflows/app"]

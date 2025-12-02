@@ -121,6 +121,13 @@ copy:
     source: /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
 
+# Install curl for health checks
+root:
+  run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl
+    - rm -rf /var/lib/apt/lists/*
+
 # Security: run as non-root user
 user: "1000:1000"
 
@@ -133,7 +140,7 @@ healthcheck:
   timeout: 10s
   start: 30s
   retries: 3
-  cmd: curl -f http://localhost:3000/health || exit 1
+  cmd: curl -f http://localhost:3000/ping || exit 1
 
 # Start application
 entrypoint: /app/apps/workflows/app

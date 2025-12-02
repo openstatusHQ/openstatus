@@ -8,26 +8,26 @@ LABEL \
     org.opencontainers.image.base.digest="sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2" \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 ENV \
-    PNPM_HOME="/pnpm" \
-    PATH="$PNPM_HOME:$PATH" \
-    PROJECT_ID_VERCEL="test" \
-    CRON_SECRET="test" \
-    TEAM_ID_VERCEL="test" \
-    RESEND_API_KEY="test" \
-    TINY_BIRD_API_KEY="test" \
-    VERCEL_AUTH_BEARER_TOKEN="test" \
-    DATABASE_URL="http://libsql:8080" \
-    UPSTASH_REDIS_REST_URL="test" \
-    STRIPE_SECRET_KEY="test" \
-    NEXT_PUBLIC_URL="http://localhost:3002" \
-    UPSTASH_REDIS_REST_TOKEN="test" \
-    AUTH_SECRET="build-time-placeholder-min-32-chars-long" \
-    NODE_ENV="production" \
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
-    UNKEY_TOKEN="test" \
+    TINY_BIRD_API_KEY="test" \
     DATABASE_AUTH_TOKEN="test" \
+    PNPM_HOME="/pnpm" \
+    VERCEL_AUTH_BEARER_TOKEN="test" \
     OPENPANEL_CLIENT_SECRET="test" \
-    UNKEY_API_ID="test"
+    RESEND_API_KEY="test" \
+    AUTH_SECRET="build-time-placeholder-min-32-chars-long" \
+    STRIPE_SECRET_KEY="test" \
+    TEAM_ID_VERCEL="test" \
+    CRON_SECRET="test" \
+    PATH="$PNPM_HOME:$PATH" \
+    UPSTASH_REDIS_REST_TOKEN="test" \
+    UNKEY_API_ID="test" \
+    DATABASE_URL="http://libsql:8080" \
+    NEXT_PUBLIC_URL="http://localhost:3002" \
+    NODE_ENV="production" \
+    UPSTASH_REDIS_REST_URL="test" \
+    UNKEY_TOKEN="test" \
+    PROJECT_ID_VERCEL="test"
 WORKDIR /app
 COPY \
     --link \
@@ -66,6 +66,12 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/app/apps/dashboard/public/" "./public/"
+USER 0:0
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends curl
+rm -rf /var/lib/apt/lists/*
+EOF
 USER 1000:1000
 EXPOSE 3000
 HEALTHCHECK \
@@ -73,5 +79,5 @@ HEALTHCHECK \
     --timeout=10s \
     --start-period=45s \
     --retries=3 \
-    CMD curl -f http://localhost:3000/api/health || exit 1
+    CMD curl -f http://localhost:3000/ || exit 1
 CMD ["node", "server.js"]

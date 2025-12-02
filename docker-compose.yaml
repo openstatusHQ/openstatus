@@ -67,7 +67,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:3000\",Timeout=>1) ? 0 : 1);'"]
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -93,7 +93,7 @@ services:
             libsql:
                 condition: service_healthy
         healthcheck:
-            test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:3000\",Timeout=>1) ? 0 : 1);'"]
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/ping || exit 1"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -149,7 +149,7 @@ services:
             server:
                 condition: service_started
         healthcheck:
-            test: ["CMD-SHELL", "node -e \"require('http').get('http://0.0.0.0:3000/', (r) => process.exit([200,307].includes(r.statusCode) ? 0 : 1)).on('error', () => process.exit(1))\""]
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -179,7 +179,7 @@ services:
             server:
                 condition: service_started
         healthcheck:
-            test: ["CMD-SHELL", "node -e \"require('http').get('http://0.0.0.0:3000/', (r) => process.exit([200,307].includes(r.statusCode) ? 0 : 1)).on('error', () => process.exit(1))\""]
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
             interval: 15s
             timeout: 10s
             retries: 3
