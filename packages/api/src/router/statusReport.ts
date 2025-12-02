@@ -275,7 +275,7 @@ export const statusReportRouter = createTRPCRouter({
   getStatusReportByWorkspace: protectedProcedure.query(async (opts) => {
     // FIXME: can we get rid of that?
     const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
-      status: statusReportStatusSchema.default("investigating"), // TODO: remove!
+      status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
       monitorsToStatusReports: z
         .array(
           z.object({

@@ -62,11 +62,11 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
       monitor: selectMonitorSchema,
     }),
   ),
-  maintenances: selectMaintenanceSchema.array().default([]),
+  maintenances: selectMaintenanceSchema.array().prefault([]),
   statusReports: selectStatusReportSchema
     .extend({ statusReportUpdates: selectStatusReportUpdateSchema.array() })
     .array()
-    .default([]),
+    .prefault([]),
 });
 
 export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
@@ -77,7 +77,7 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
     maintenances: z.array(selectMaintenancePageSchema).prefault([]),
     workspacePlan: workspacePlanSchema
       .nullable()
-      .default("free")
+      .prefault("free")
       .transform((val) => val ?? "free"),
   })
   .omit({
@@ -115,7 +115,7 @@ const trackersSchema = z
   .prefault([]);
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
-  monitorGroups: selectMonitorGroupSchema.array().default([]),
+  monitorGroups: selectMonitorGroupSchema.array().prefault([]),
   // TODO: include status of the monitor
   monitors: selectPublicMonitorWithStatusSchema.array(),
   trackers: trackersSchema,
@@ -149,7 +149,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   status: z.enum(["success", "degraded", "error", "info"]).prefault("success"),
   workspacePlan: workspacePlanSchema
     .nullable()
-    .default("free")
+    .prefault("free")
     .transform((val) => val ?? "free"),
 });
 

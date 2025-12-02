@@ -23,7 +23,7 @@ const customDomainSchema = z
   .or(z.enum([""]));
 
 export const insertPageSchema = createInsertSchema(page, {
-  customDomain: customDomainSchema.default(""),
+  customDomain: customDomainSchema.prefault(""),
   icon: z.string().optional(),
   slug: slugSchema,
 }).extend({
