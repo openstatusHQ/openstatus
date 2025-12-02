@@ -43,32 +43,32 @@ const baseEventPayloadSchema = z.object({
 
 export const triggerEventPayloadSchema = baseEventPayloadSchema.extend(
   z.object({
-        event_action: z.literal("trigger"),
-        payload: z.object({
-          summary: z.string(),
-          source: z.string(),
-          severity: severitySchema,
-          timestamp: z.string().optional(),
-          component: z.string().optional(),
-          group: z.string().optional(),
-          class: z.string().optional(),
-          custom_details: z.any().optional(),
-        }),
-        images: z.array(imageSchema).optional(),
-        links: z.array(linkSchema).optional(),
-      }).shape
+    event_action: z.literal("trigger"),
+    payload: z.object({
+      summary: z.string(),
+      source: z.string(),
+      severity: severitySchema,
+      timestamp: z.string().optional(),
+      component: z.string().optional(),
+      group: z.string().optional(),
+      class: z.string().optional(),
+      custom_details: z.any().optional(),
+    }),
+    images: z.array(imageSchema).optional(),
+    links: z.array(linkSchema).optional(),
+  }).shape,
 );
 
 export const acknowledgeEventPayloadSchema = baseEventPayloadSchema.extend(
   z.object({
-        event_action: z.literal("acknowledge"),
-      }).shape
+    event_action: z.literal("acknowledge"),
+  }).shape,
 );
 
 export const resolveEventPayloadSchema = baseEventPayloadSchema.extend(
   z.object({
-        event_action: z.literal("resolve"),
-      }).shape
+    event_action: z.literal("resolve"),
+  }).shape,
 );
 
 export const eventPayloadV2Schema = z.discriminatedUnion("event_action", [
