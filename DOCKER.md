@@ -167,6 +167,12 @@ docker-compose down -v
 
 ### Authentication
 
+**Magic Link**:
+
+Set `SELF_HOST=true` in `.env.docker` to enable email-based magic link authentication. This allows users to sign in without configuring OAuth providers.
+
+**OAuth Providers**:
+
 Configure GitHub/Google OAuth credentials in `.env.docker` and set up callback URLs:
   - GitHub: `http://localhost:3002/api/auth/callback/github`
   - Google: `http://localhost:3002/api/auth/callback/google`
