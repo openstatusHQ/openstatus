@@ -13,10 +13,10 @@ vim .env.docker
 
 # 3. Build and start services
 export DOCKER_BUILDKIT=1
-docker-compose up -d
+docker compose up -d
 
 # 4. Check service health
-docker-compose ps
+docker compose ps
 
 # 5. Run database migrations (required)
 cd packages/db
@@ -34,10 +34,10 @@ open http://localhost:3003  # Status Pages
 
 ```bash
 # Remove stopped containers
-docker-compose down
+docker compose down
 
 # Remove volumes
-docker-compose down -v
+docker compose down -v
 
 # Clean build cache
 docker builder prune
@@ -99,9 +99,33 @@ pnpm seed
 
 This creates:
 - 3 workspaces (`love-openstatus`, `test2`, `test3`)
-- Sample monitors and status pages
-- Test user (`ping@openstatus.dev`)
-- Sample incidents and maintenance windows
+- 5 sample monitors and 1 status page
+- Test user account: `ping@openstatus.dev`
+- Sample incidents, status reports, and maintenance windows
+
+**Accessing Seeded Data:**
+
+To view the seeded data in the dashboard, you must log in using the seeded test email:
+
+1. Navigate to http://localhost:3002/login
+2. Use magic link authentication with email: `ping@openstatus.dev`
+3. Check your console/logs for the magic link
+4. After logging in, you'll be in the `love-openstatus` workspace with all seeded data
+
+**If you use a different email address**, the system will create a new empty workspace for you. To access seeded data with a different account:
+
+1. Add your user to the seeded workspace using SQL:
+   ```bash
+   # First, find your user_id
+   curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+     -d '{"statements":["SELECT id, email FROM user"]}'
+
+   # Then add association (replace USER_ID with your id)
+   curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+     -d '{"statements":["INSERT INTO users_to_workspaces (user_id, workspace_id, role) VALUES (USER_ID, 1, '\''owner'\'')"]}'
+   ```
+
+2. Switch to the `love-openstatus` workspace using the workspace switcher in the dashboard sidebar
 
 ## Tinybird Setup (Optional)
 
@@ -156,19 +180,19 @@ See [.env.docker.example](.env.docker.example) for complete list.
 
 ```bash
 # View logs
-docker-compose logs -f [service-name]
+docker compose logs -f [service-name]
 
 # Restart service
-docker-compose restart [service-name]
+docker compose restart [service-name]
 
 # Rebuild after code changes
-docker-compose up -d --build [service-name]
+docker compose up -d --build [service-name]
 
 # Stop all services
-docker-compose down
+docker compose down
 
 # Reset database (removes all data)
-docker-compose down -v
+docker compose down -v
 # After resetting, re-run migrations:
 # cd packages/db && pnpm migrate
 ```
@@ -233,7 +257,7 @@ All services have automated health checks:
 
 ```bash
 # View health status
-docker-compose ps
+docker compose ps
 
 # Inspect specific service
 docker inspect openstatus-dashboard --format='{{.State.Health.Status}}'

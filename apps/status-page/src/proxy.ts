@@ -186,7 +186,7 @@ export const getValidSubdomain = (host?: string | null) => {
   }
 
   // Exclude localhost and IP addresses from being treated as subdomains
-  if (host?.startsWith("localhost") || host?.match(/^\d+\.\d+\.\d+\.\d+/)) {
+  if (host?.match(/^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/)) {
     return null;
   }
 

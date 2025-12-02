@@ -75,4 +75,4 @@ const sentryConfig = {
   disableLogger: true,
 };
 
-module.exports = withSentryConfig(nextConfig, sentryConfig);
+export default withSentryConfig(nextConfig, sentryConfig);
