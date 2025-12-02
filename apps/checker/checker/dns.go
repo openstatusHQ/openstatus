@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -113,6 +114,10 @@ func lookupMX(domain string) ([]string) {
 func lookupNS(domain string) ([]string, error) {
 
 	hosts := []string{}
+	isSubdomain := isSubdomain(domain)
+	if isSubdomain {
+		return hosts, nil
+	}
 	nsRecords, err := net.LookupNS(domain)
 	if err != nil {
 		return nil, err
@@ -135,4 +140,13 @@ func lookupTXT(domain string) ([]string) {
 		records = append(records, txt)
 	}
 	return records
+}
+
+
+func isSubdomain(domain string) bool {
+	parent := strings.Split(domain, ".")
+	if len(parent) < 3 {
+		return false
+	}
+	return true
 }
