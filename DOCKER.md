@@ -18,7 +18,14 @@ docker-compose up -d
 # 4. Check service health
 docker-compose ps
 
-# 5. Access the application
+# 5. Run database migrations (required)
+cd packages/db
+pnpm migrate
+
+# 6. Seed database with test data (optional)
+pnpm seed
+
+# 7. Access the application
 open http://localhost:3002  # Dashboard
 open http://localhost:3003  # Status Pages
 ```
@@ -71,6 +78,30 @@ docker builder prune
         │  (Database) │
         └─────────────┘
 ```
+
+## Database Setup
+
+The LibSQL container starts with an empty database. You must run migrations before using the application:
+
+```bash
+cd packages/db
+pnpm migrate
+```
+
+### Seeding Test Data (Optional)
+
+For development, you can populate the database with sample data:
+
+```bash
+cd packages/db
+pnpm seed
+```
+
+This creates:
+- 3 workspaces (`love-openstatus`, `test2`, `test3`)
+- Sample monitors and status pages
+- Test user (`ping@openstatus.dev`)
+- Sample incidents and maintenance windows
 
 ## Configuration
 
@@ -128,8 +159,10 @@ docker-compose up -d --build [service-name]
 # Stop all services
 docker-compose down
 
-# Reset database
+# Reset database (removes all data)
 docker-compose down -v
+# After resetting, re-run migrations:
+# cd packages/db && pnpm migrate
 ```
 
 ### Authentication
