@@ -17,7 +17,7 @@ export const insertMaintenanceSchema = createInsertSchema(maintenance)
   // REMINDER: validate that `from` date is before `to` date
   .refine((data) => data.from < data.to, {
     path: ["to"],
-    message: "End date cannot be earlier than start date.",
+    error: "End date cannot be earlier than start date.",
   });
 
 export const selectMaintenanceSchema = createSelectSchema(maintenance).extend({
