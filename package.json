@@ -14,8 +14,7 @@
     "dev:dashboard": "turbo run dev --filter='./apps/dashboard' --filter='./packages/db'",
     "dx": "turbo run dx",
     "tsc": "tsc",
-    "test": "turbo run test",
-    "zod-migrate": "zod-v3-to-v4"
+    "test": "turbo run test"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
@@ -23,8 +22,7 @@
     "@types/node": "20.8.0",
     "knip": "5.16.0",
     "turbo": "2.3.2",
-    "typescript": "5.7.2",
-    "zod-v3-to-v4": "^1.7.1"
+    "typescript": "5.7.2"
   },
   "packageManager": "pnpm@10.12.4",
   "pnpm": {

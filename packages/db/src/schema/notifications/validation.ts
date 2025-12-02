@@ -33,8 +33,8 @@ const phoneRegex = new RegExp(
 );
 
 export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
-export const emailSchema = z.string().email();
-export const urlSchema = z.string().url();
+export const emailSchema = z.email();
+export const urlSchema = z.url();
 
 export const ntfyDataSchema = z.object({
   ntfy: z.object({
@@ -45,7 +45,7 @@ export const ntfyDataSchema = z.object({
 });
 export const webhookDataSchema = z.object({
   webhook: z.object({
-    endpoint: z.string().url(),
+    endpoint: z.url(),
     headers: z
       .array(z.object({ key: z.string(), value: z.string() }))
       .optional(),
@@ -81,53 +81,53 @@ export const NotificationDataSchema = z.union([
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
   "provider",
   [
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("discord"),
         data: discordDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("email"),
         data: emailDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("ntfy"),
         data: ntfyDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("pagerduty"),
         data: pagerdutyDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("opsgenie"),
         data: opsgenieDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("sms"),
         data: phoneDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("slack"),
         data: slackDataSchema,
-      }),
+      }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("webhook"),
         data: webhookDataSchema,
-      }),
+      }).shape,
     ),
   ],
 );
