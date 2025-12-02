@@ -22,10 +22,16 @@ docker compose ps
 cd packages/db
 pnpm migrate
 
-# 6. Seed database with test data (optional)
+# 6. Deploy Tinybird local
+cd packages/tinybird
+tb --local deploy 
+
+# 7. Seed database with test data (optional)
+cd packages/db
 pnpm seed
 
-# 7. Access the application
+
+# 8. Access the application
 open http://localhost:3002  # Dashboard
 open http://localhost:3003  # Status Pages
 ```
