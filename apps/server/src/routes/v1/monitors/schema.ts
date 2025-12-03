@@ -90,13 +90,15 @@ export const ParamsSchema = z.object({
     }),
 });
 
+const PeriodicityEnumHonoSchema = z.enum([...monitorPeriodicitySchema.options]);
+
 export const MonitorSchema = z
   .object({
     id: z.number().openapi({
       example: 123,
       description: "The id of the monitor",
     }),
-    periodicity: monitorPeriodicitySchema.openapi({
+    periodicity: PeriodicityEnumHonoSchema.openapi({
       example: "1m",
       description: "How often the monitor should run",
     }),
