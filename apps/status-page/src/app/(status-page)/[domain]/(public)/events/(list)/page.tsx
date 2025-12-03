@@ -28,7 +28,6 @@ export default function Page() {
   const trpc = useTRPC();
   const { data: page } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
-    throwOnError: false,
   });
 
   if (!page) return null;

@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
 export default function Page() {
@@ -46,14 +46,7 @@ export default function Page() {
 
   // Handle case where page doesn't exist or query fails
   if (error || (!pageInitial && domain)) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12">
-        <h2 className="text-2xl font-semibold">Status Page Not Found</h2>
-        <p className="text-muted-foreground">
-          The status page "{domain}" does not exist.
-        </p>
-      </div>
-    );
+    notFound();
   }
 
   const hasCustomConfig = pageInitial?.configuration
