@@ -26,9 +26,9 @@ export default function Page() {
   const [{ tab }, setSearchParams] = useQueryStates(searchParamsParsers);
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
-  const { data: page } = useQuery({
-    ...trpc.statusPage.get.queryOptions({ slug: domain }),
-  });
+  const { data: page } = useQuery(
+    trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
 
   if (!page) return null;
 

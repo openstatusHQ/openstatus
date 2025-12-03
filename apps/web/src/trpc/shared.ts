@@ -6,7 +6,7 @@ import superjson from "superjson";
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
-  if (process.env.VERCEL_URL) return process.env.VERCEL_URL; // Vercel
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // Vercel
   return "http://localhost:3000"; // Local dev
 };
 

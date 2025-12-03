@@ -7,7 +7,7 @@ import superjson from "superjson";
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
   // Note: dashboard has its own tRPC API routes
-  if (process.env.VERCEL_URL) return process.env.VERCEL_URL; // Vercel
+  if (process.env.VERCEL_URL) return "https://app.openstatus.dev"; // Vercel
   return "http://localhost:3000"; // Local dev and Docker (internal calls)
 };
 

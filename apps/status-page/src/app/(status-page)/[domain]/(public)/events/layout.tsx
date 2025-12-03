@@ -18,10 +18,9 @@ export default function EventLayout({
 }) {
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
-  const { data: page } = useQuery({
-    ...trpc.statusPage.get.queryOptions({ slug: domain }),
-    throwOnError: false,
-  });
+  const { data: page } = useQuery(
+    trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
 
   if (!page) return null;
 

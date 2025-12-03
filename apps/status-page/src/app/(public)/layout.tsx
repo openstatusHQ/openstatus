@@ -44,7 +44,7 @@ export default async function Layout({
               </p>
             </footer>
           </SidebarInset>
-          <Suspense fallback={null}>
+          <Suspense>
             <ThemeSidebar />
           </Suspense>
         </SidebarProvider>
