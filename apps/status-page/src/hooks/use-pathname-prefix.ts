@@ -10,8 +10,6 @@ export function usePathnamePrefix() {
   const { domain } = useParams<{ domain: string }>();
   const { data: page } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
-    // Don't throw errors, just return null
-    throwOnError: false,
   });
   const [prefix, setPrefix] = useState("");
 

@@ -16,8 +16,6 @@ export function Footer(props: React.ComponentProps<"footer">) {
   const trpc = useTRPC();
   const { data: page, dataUpdatedAt } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
-    // Don't throw errors, just return null
-    throwOnError: false,
   });
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 

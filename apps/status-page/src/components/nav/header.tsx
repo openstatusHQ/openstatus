@@ -55,8 +55,6 @@ export function Header(props: React.ComponentProps<"header">) {
   const { domain } = useParams<{ domain: string }>();
   const { data: page } = useQuery({
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
-    // Don't throw errors, just return null
-    throwOnError: false,
   });
 
   const sendPageSubscriptionMutation = useMutation(
