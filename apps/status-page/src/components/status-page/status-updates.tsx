@@ -60,6 +60,9 @@ export function StatusUpdates({
             {types.includes("email") ? (
               <TabsTrigger value="email">Email</TabsTrigger>
             ) : null}
+            {types.includes("slack") ? (
+              <TabsTrigger value="slack">Slack</TabsTrigger>
+            ) : null}
             {types.includes("rss") ? (
               <TabsTrigger value="rss">RSS</TabsTrigger>
             ) : null}
@@ -68,9 +71,6 @@ export function StatusUpdates({
             ) : null}
             {types.includes("ssh") ? (
               <TabsTrigger value="ssh">SSH</TabsTrigger>
-            ) : null}
-            {types.includes("slack") ? (
-              <TabsTrigger value="slack">Slack</TabsTrigger>
             ) : null}
           </TabsList>
           <TabsContent value="email" className="flex flex-col gap-2">
