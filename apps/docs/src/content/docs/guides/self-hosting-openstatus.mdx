@@ -2,6 +2,10 @@
 title: How to self host openstatus
 description: Learn how to self host openstatus in your own infra.
 ---
+import { Image } from 'astro:assets';
+
+import localOpenstatus from '../../../assets/guides/self-hosting-openstatus/local-openstatus.png';
+
 
 If you want to self host openstatus, we provide a [docker-compose](https://www.github.com/) file to get you started quickly.
 
@@ -84,6 +88,12 @@ tb --local open
 
 13. Create monitors and start monitoring your services!
 
+
+  <Image
+    src={localOpenstatus}
+    alt="Openstatus running locally"
+  />
+  
 
 ## Our services Services
 
