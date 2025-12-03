@@ -34,10 +34,10 @@ export async function GET() {
     .map((post) => {
       const author = getAuthor(post.metadata.author);
       return feed.addItem({
-        id: `https://www.openstatus.dev/blog/${post.slug}`,
+        id: `https://www.openstatus.dev/changelog/${post.slug}`,
         title: post.metadata.title,
         description: post.metadata.description,
-        link: `https://www.openstatus.dev/blog/${post.slug}`,
+        link: `https://www.openstatus.dev/changelog/${post.slug}`,
         author: [
           typeof author === "string"
             ? { name: author }
@@ -46,6 +46,7 @@ export async function GET() {
                 link: author.url,
               },
         ],
+        image: post.metadata.image,
         date: post.metadata.publishedAt,
       });
     });
