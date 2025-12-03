@@ -3,7 +3,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone", // optimize outputs for standalone environments
+  ...(process.env.SELF_HOST === "true" && { output: "standalone" }),
   experimental: {
     authInterrupts: true,
   },
