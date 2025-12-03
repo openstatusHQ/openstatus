@@ -138,6 +138,10 @@ export default defineConfig({
               label: "How to deploy probes on Cloudflare Containers ",
               slug: "guides/how-to-deploy-probes-cloudflare-containers",
             },
+            {
+              label: "How to self-host openstatus",
+              slug: "guides/self-hosting-openstatus",
+            }
           ],
         },
         {
