@@ -156,6 +156,10 @@ export default defineConfig({
               },
             },
             {
+              label: "DNS Monitor",
+              slug: "reference/http-monitor",
+            },
+            {
               label: "HTTP Monitor",
               slug: "reference/http-monitor",
             },
