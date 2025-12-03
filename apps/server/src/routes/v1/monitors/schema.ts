@@ -109,37 +109,34 @@ export const MonitorSchema = z
     regions: z
       .preprocess(
         (val) => {
-          let regions: Array<unknown> = [];
-          if (!val) return regions;
+          let parsedRegions: Array<unknown> = [];
+          if (!val) return parsedRegions;
           if (Array.isArray(val)) {
-            regions = val;
+            parsedRegions = val;
           }
           if (String(val).length > 0) {
-            regions = String(val).split(",");
+            parsedRegions = String(val).split(",");
           }
-
+          return parsedRegions;
+        },
+        z.array(z.enum(monitorRegions)),
+      )
+      .superRefine((regions, ctx) => {
           const deprecatedRegions = regions.filter((r) => {
             return !AVAILABLE_REGIONS.includes(
               r as (typeof AVAILABLE_REGIONS)[number],
             );
           });
-
           if (deprecatedRegions.length > 0) {
-            throw new ZodError([
-              {
+          ctx.addIssue({
                 code: "custom",
                 path: ["regions"],
                 message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
                   ", ",
                 )}`,
-              },
-            ]);
+          });
           }
-
-          return regions;
-        },
-        z.array(z.enum(monitorRegions)),
-      )
+      })
       .prefault([])
       .openapi({
         example: ["ams"],
