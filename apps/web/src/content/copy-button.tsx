@@ -19,7 +19,7 @@ export function CopyButton({
       onClick={() => copy(copyText, { withToast: true })}
       {...props}
     >
-      {isCopied ? "[copied]" : "[copy]"}
+      {isCopied ? "[link copied]" : "[copy link]"}
     </Button>
   );
 }
