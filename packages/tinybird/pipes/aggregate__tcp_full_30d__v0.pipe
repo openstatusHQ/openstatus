@@ -1,0 +1,16 @@
+DESCRIPTION >
+	Stores all the data from the http_response table for the last 30 days, mainly used for accessing the data details.
+
+
+TAGS "tcp, full"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(tcp_response__v0.cronTimestamp)) AS time,
+        *
+    FROM tcp_response__v0
+
+TYPE materialized
+DATASOURCE mv__tcp_full_30d__v0

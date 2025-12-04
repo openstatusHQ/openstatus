@@ -1,0 +1,153 @@
+effective: |
+  builders:
+    builder:
+      fromImage:
+        path: golang
+        digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+      label:
+        org.opencontainers.image.base.name: docker.io/golang:1.25-alpine
+        org.opencontainers.image.stage: builder
+        org.opencontainers.image.base.digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+      workdir: /go/src/app
+      arg:
+        TARGETOS: ''
+        TARGETARCH: ''
+      env:
+        CGO_ENABLED: '0'
+        TZ: UTC
+      copy:
+      - paths:
+        - .
+        target: .
+      run:
+      - apk add --no-cache tzdata
+      - go mod download
+      - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+  fromImage:
+    path: alpine
+    digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+  label:
+    org.opencontainers.image.description: Private location orchestrator for OpenStatus
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.title: OpenStatus Private Location
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+    io.dofigen.version: 2.5.1
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.name: docker.io/alpine:3.21
+  user:
+    user: '1000'
+    group: '1000'
+  workdir: /opt/bin
+  env:
+    GIN_MODE: release
+    TZ: UTC
+    USER: '1000'
+  copy:
+  - fromBuilder: builder
+    paths:
+    - /etc/ssl/certs/ca-certificates.crt
+    target: /etc/ssl/certs/
+  - fromBuilder: builder
+    paths:
+    - /usr/share/zoneinfo
+    target: /usr/share/zoneinfo
+  - fromBuilder: builder
+    paths:
+    - /go/src/app/private-location
+    target: /opt/bin/private-location
+  cmd:
+  - /opt/bin/private-location
+  expose:
+  - port: 8080
+  healthcheck:
+    cmd: wget --spider -q http://localhost:8080/health || exit 1
+    interval: 15s
+    timeout: 10s
+    start: 30s
+    retries: 3
+images:
+  docker.io:
+    library:
+      golang:
+        1.25-alpine:
+          digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+      alpine:
+        '3.21':
+          digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+resources:
+  dofigen.yml:
+    hash: 515b6b2ef60b8f0ea954fce96aed5dc7aadf75ceefa6c9ea56f514ac14e7422b
+    content: |
+      builders:
+        # Stage 1: Build Go binary
+        builder:
+          fromImage: golang:1.25-alpine
+          platform: $BUILDPLATFORM
+          label:
+            org.opencontainers.image.stage: builder
+          workdir: /go/src/app
+          # Build-time arguments (overwritten by .env.docker at runtime)
+          args:
+            TARGETOS: ""
+            TARGETARCH: ""
+          env:
+            TZ: UTC
+            CGO_ENABLED: "0"
+          copy:
+            # Copy source code
+            - . .
+          run:
+            - apk add --no-cache tzdata
+            - go mod download
+            # Build optimized binary
+            # -trimpath: Remove file system paths from binary
+            # -ldflags "-s -w": Strip debug info and symbol table
+            - GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -o private-location ./cmd/server
+
+      # Runtime stage
+      fromImage: alpine:3.21
+
+      # Metadata labels
+      label:
+        org.opencontainers.image.title: OpenStatus Private Location
+        org.opencontainers.image.description: Private location orchestrator for OpenStatus
+        org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+        org.opencontainers.image.vendor: OpenStatus
+        org.opencontainers.image.authors: OpenStatus Team
+      workdir: /opt/bin
+
+      # Copy artifacts from builder
+      copy:
+        - fromBuilder: builder
+          source: /etc/ssl/certs/ca-certificates.crt
+          target: /etc/ssl/certs/
+        - fromBuilder: builder
+          source: /usr/share/zoneinfo
+          target: /usr/share/zoneinfo
+        - fromBuilder: builder
+          source: /go/src/app/private-location
+          target: /opt/bin/private-location
+
+      env:
+        TZ: UTC
+        USER: "1000"
+        GIN_MODE: release
+
+      # Security: run as non-root user
+      user: "1000:1000"
+
+      # Expose port
+      expose: "8080"
+
+      # Health check
+      healthcheck:
+        interval: 15s
+        timeout: 10s
+        start: 30s
+        retries: 3
+        cmd: wget --spider -q http://localhost:8080/health || exit 1
+
+      # Start application
+      cmd:
+        - /opt/bin/private-location

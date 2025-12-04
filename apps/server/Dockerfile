@@ -6,7 +6,8 @@
 FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS install
 LABEL \
     org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3"
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
+    org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
     --mount=type=bind,target=bunfig.toml,source=bunfig.toml \
@@ -23,16 +24,16 @@ RUN \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
-    --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
     --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
-    bun install --production  --frozen-lockfile --verbose
+    bun install --production --frozen-lockfile --verbose
 
 # build
 FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS build
 LABEL \
     org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3"
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
+    org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
 COPY \
@@ -45,17 +46,34 @@ COPY \
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b AS runtime
+FROM debian@sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b AS runtime
 LABEL \
     io.dofigen.version="2.5.1" \
-    org.opencontainers.image.base.digest="sha256:52927eff8153b563244f98cdc802ba97918afcdf67f9e4867cbf1f7afb3d147b" \
-    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
+    org.opencontainers.image.authors="OpenStatus Team" \
+    org.opencontainers.image.base.digest="sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b" \
+    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
+    org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
+    org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
+    org.opencontainers.image.title="OpenStatus Server" \
+    org.opencontainers.image.vendor="OpenStatus"
 COPY \
     --from=build \
     --chown=1000:1000 \
     --chmod=555 \
     --link \
     "/app/apps/server/app" "/bin/"
+USER 0:0
+RUN <<EOF
+apt-get update
+apt-get install -y --no-install-recommends curl
+rm -rf /var/lib/apt/lists/*
+EOF
 USER 1000:1000
 EXPOSE 3000
+HEALTHCHECK \
+    --interval=30s \
+    --timeout=10s \
+    --start-period=30s \
+    --retries=3 \
+    CMD curl -f http://localhost:3000/ping || exit 1
 ENTRYPOINT ["/bin/app"]

@@ -22,6 +22,4 @@ SQL >
         monitorId
 
 TYPE materialized
-DATASOURCE mv_http_status_14d__v0
-
-
+DATASOURCE mv__http_status_14d__v0

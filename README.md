@@ -79,6 +79,24 @@ Made with [Contrib.rocks](https://contrib.rocks)
 
 ## Getting Started 🚀
 
+### With Docker (Recommended)
+
+The fastest way to get started for both development and self-hosting:
+
+```sh
+# 1. Copy environment file
+cp .env.docker.example .env.docker
+
+# 2. Start all services
+docker compose up -d
+
+# 3. Access the application
+open http://localhost:3002  # Dashboard
+open http://localhost:3003  # Status Pages
+```
+
+📖 **Full guide**: [DOCKER.md](DOCKER.md) | **Production deployment**: [DOCKER_PRODUCTION.md](DOCKER_PRODUCTION.md)
+
 ### With Devbox
 
 You can use [Devbox](https://www.jetify.com/devbox/) and get started with the following commands:
@@ -92,16 +110,16 @@ You can use [Devbox](https://www.jetify.com/devbox/) and get started with the fo
     devbox services up
     ```
 
-Alternatively, follow the instructions below.
+### Manual Setup
 
-### Requirements
+#### Requirements
 
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
 - [pnpm](https://pnpm.io/) >= 8.6.2
 - [Bun](https://bun.sh/)
 - [Turso CLI](https://docs.turso.tech/quickstart)
 
-### Setup
+#### Setup
 
 1. Clone the repository
 

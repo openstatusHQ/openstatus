@@ -16,7 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // debug: true,
   adapter,
   providers:
-    process.env.NODE_ENV === "development"
+    process.env.NODE_ENV === "development" || process.env.SELF_HOST === "true"
       ? [GitHubProvider, GoogleProvider, ResendProvider]
       : [GitHubProvider, GoogleProvider],
   callbacks: {

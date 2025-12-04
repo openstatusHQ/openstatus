@@ -53,9 +53,9 @@ function useNav() {
 export function Header(props: React.ComponentProps<"header">) {
   const trpc = useTRPC();
   const { domain } = useParams<{ domain: string }>();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
+  const { data: page } = useQuery({
+    ...trpc.statusPage.get.queryOptions({ slug: domain }),
+  });
 
   const sendPageSubscriptionMutation = useMutation(
     trpc.emailRouter.sendPageSubscription.mutationOptions({}),

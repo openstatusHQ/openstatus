@@ -19,9 +19,14 @@ export class OSTinybird {
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
-      this.tb = new Client({ token });
+      // Use local Tinybird container if available (Docker/self-hosted)
+      // https://www.tinybird.co/docs/api-reference
+      const tinybirdUrl = process.env.TINYBIRD_URL || "https://api.tinybird.co";
+      this.tb = new Client({
+        token,
+        baseUrl: tinybirdUrl,
+      });
     }
-    // this.tb = new Client({ token });
   }
 
   public get homeStats() {

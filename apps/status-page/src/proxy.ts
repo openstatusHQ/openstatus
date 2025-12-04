@@ -184,6 +184,14 @@ export const getValidSubdomain = (host?: string | null) => {
     // biome-ignore lint: to fix later
     host = window.location.host;
   }
+
+  // Exclude localhost and IP addresses from being treated as subdomains
+  if (
+    host?.match(/^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/)
+  ) {
+    return null;
+  }
+
   // we should improve here for custom vercel deploy page
   if (host?.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];

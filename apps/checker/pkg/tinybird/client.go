@@ -7,11 +7,19 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/rs/zerolog/log"
 )
 
-const baseURL = "https://api.tinybird.co/v0/events"
+func getBaseURL() string {
+	// Use local Tinybird container if available (Docker/self-hosted)
+	// https://www.tinybird.co/docs/api-reference
+	if tinybirdURL := os.Getenv("TINYBIRD_URL"); tinybirdURL != "" {
+		return tinybirdURL + "/v0/events"
+	}
+	return "https://api.tinybird.co/v0/events"
+}
 
 type Client interface {
 	SendEvent(ctx context.Context, event any, dataSourceName string) error
@@ -20,17 +28,19 @@ type Client interface {
 type client struct {
 	httpClient *http.Client
 	apiKey     string
+	baseURL    string
 }
 
 func NewClient(httpClient *http.Client, apiKey string) Client {
 	return client{
 		httpClient: httpClient,
 		apiKey:     apiKey,
+		baseURL:    getBaseURL(),
 	}
 }
 
 func (c client) SendEvent(ctx context.Context, event any, dataSourceName string) error {
-	requestURL, err := url.Parse(baseURL)
+	requestURL, err := url.Parse(c.baseURL)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("unable to parse url")
 		return fmt.Errorf("unable to parse url: %w", err)

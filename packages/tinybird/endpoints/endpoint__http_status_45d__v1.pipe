@@ -1,0 +1,20 @@
+TAGS "http"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT
+        time as day,
+        monitorId,
+        countMerge(count) as count,
+        countMerge(success) as ok,
+        countMerge(error) as error,
+        countMerge(degraded) as degraded
+    FROM mv__http_status_45d__v1
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '1,666') }}
+    GROUP BY day, monitorId
+    ORDER BY day DESC
+
+
+TYPE ENDPOINT
