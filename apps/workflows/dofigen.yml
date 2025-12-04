@@ -1,4 +1,3 @@
-# Files to exclude from Docker context
 ignore:
   - node_modules
   - /apps/docs
@@ -11,26 +10,7 @@ ignore:
   - /packages/api
   - /packages/error
   - /packages/tracker
-
 builders:
-  # Stage 1: CA Certificates
-  ca-certs:
-    fromImage: debian:bullseye-slim
-    labels:
-      org.opencontainers.image.stage: ca-certs
-    run: apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
-
-  # Stage 2: Docker-specific build artifacts (no dependencies)
-  docker:
-    fromImage: oven/bun:1.3.3
-    workdir: /app/apps/workflows
-    labels:
-      org.opencontainers.image.stage: docker
-    copy:
-      - . /app/
-    run: bun run src/build-docker.ts
-
-  # Stage 3: Install production dependencies
   install:
     fromImage: oven/bun:1.3.3
     workdir: /app/
@@ -57,7 +37,8 @@ builders:
       - packages/tinybird/package.json
       - packages/upstash/package.json
       - packages/theme-store/package.json
-    run: bun install --production --frozen-lockfile --verbose
+    # Install dependencies
+    run: bun install --production  --frozen-lockfile --verbose
     cache:
       - /root/.bun/install/cache
 
@@ -67,8 +48,6 @@ builders:
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: build
-    env:
-      NODE_ENV: production
     copy:
       - . /app/
       - fromBuilder: install
@@ -76,21 +55,30 @@ builders:
         target: /app/node_modules
       #  Should set env to production here
     # Compile the TypeScript application
+    env:
+      NODE_ENV: production
     run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
-  # Stage 5: LibSQL dependencies
+  docker:
+    fromImage: oven/bun:1.3.3
+    workdir: /app/apps/workflows
+    copy:
+     - . /app/
+    run: bun run src/build-docker.ts
+
   libsql:
     fromImage: oven/bun:1.3.3
     workdir: /app/
-    labels:
-      org.opencontainers.image.stage: libsql
     copy:
       - fromBuilder: docker
         source: /app/apps/build-docker/package.json
         target: /app/package.json
     run: bun install
 
-# Runtime
+  ca-certs:
+    fromImage: debian:bullseye-slim
+    run: apt update && apt install -y ca-certificates && update-ca-certificates
+
 fromImage: debian:bullseye-slim
 workdir: /app/
 
@@ -108,9 +96,6 @@ copy:
     source: /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: "555"
-  - fromBuilder: build
-    source: /app/data
-    target: /app/data
   - fromBuilder: libsql
     source: /app/node_modules
     target: /app/packages/db/node_modules
@@ -120,27 +105,5 @@ copy:
   - fromBuilder: ca-certs
     source: /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
-
-# Install curl for health checks
-root:
-  run:
-    - apt-get update
-    - apt-get install -y --no-install-recommends curl
-    - rm -rf /var/lib/apt/lists/*
-
-# Security: run as non-root user
-user: "1000:1000"
-
-# Expose port
-expose: "3000"
-
-# Health check
-healthcheck:
-  interval: 30s
-  timeout: 10s
-  start: 30s
-  retries: 3
-  cmd: curl -f http://localhost:3000/ping || exit 1
-
-# Start application
+expose: 3000
 entrypoint: /app/apps/workflows/app
