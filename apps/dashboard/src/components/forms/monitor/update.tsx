@@ -3,6 +3,7 @@
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { deserialize } from "@openstatus/assertions";
+import type { NotificationProvider } from "@openstatus/db/src/schema";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { FormDangerZone } from "./form-danger-zone";
@@ -206,7 +207,13 @@ export function FormMonitorUpdate() {
         }}
       />
       <FormNotifiers
-        notifiers={notifications}
+        notifiers={
+          notifications as {
+            id: number;
+            name: string;
+            provider: NotificationProvider;
+          }[]
+        }
         defaultValues={{
           notifiers: monitor.notifications.map(({ id }) => id),
         }}

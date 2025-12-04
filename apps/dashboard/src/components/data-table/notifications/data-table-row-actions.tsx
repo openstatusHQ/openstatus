@@ -1,6 +1,7 @@
 "use client";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import type { FormValues } from "@/components/forms/notifications/form";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
@@ -57,10 +58,10 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
         }}
       />
       <FormSheetNotifier
-        provider={props.row.original.provider}
+        provider={props.row.original.provider as FormValues["provider"]}
         defaultValues={{
           name: props.row.original.name,
-          provider: props.row.original.provider,
+          provider: props.row.original.provider as FormValues["provider"],
           // TBD: parse it?
           data: JSON.parse(props.row.original.data ?? "{}"),
           monitors: props.row.original.monitors.map((m) => m.id),

@@ -99,7 +99,11 @@ export function Sidebar() {
         {
           label: "Notifications",
           items: monitor.notifications.flatMap((notification) => {
-            const arr = [];
+            const arr: {
+              label: string;
+              value: React.ReactNode;
+              isNested?: boolean;
+            }[] = [];
             arr.push({
               label: "Name",
               value: (
@@ -112,7 +116,7 @@ export function Sidebar() {
             });
             arr.push({
               label: "Type",
-              value: notification.provider,
+              value: String(notification.provider),
               isNested: true,
             });
             arr.push({
