@@ -32,10 +32,10 @@ import { z } from "zod";
 // TODO: add headers
 
 const schema = z.object({
-  endpoint: z.string().url("Please enter a valid URL"),
+  endpoint: z.url("Please enter a valid URL"),
   headers: z
     .array(z.object({ key: z.string(), value: z.string() }))
-    .default([]),
+    .prefault([]),
 });
 
 type FormValues = z.infer<typeof schema>;

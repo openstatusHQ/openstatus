@@ -20,7 +20,7 @@
     "@t3-oss/env-core": "0.7.1",
     "drizzle-orm": "0.44.4",
     "drizzle-zod": "0.5.1",
-    "zod": "3.25.76"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

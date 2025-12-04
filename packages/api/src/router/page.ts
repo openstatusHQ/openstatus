@@ -502,14 +502,14 @@ export const pageRouter = createTRPCRouter({
           monitors: z
             .array(
               selectMonitorSchema.extend({
-                order: z.number().default(0),
-                groupOrder: z.number().default(0),
+                order: z.number().prefault(0),
+                groupOrder: z.number().prefault(0),
                 groupId: z.number().nullable(),
               }),
             )
-            .default([]),
-          monitorGroups: z.array(selectMonitorGroupSchema).default([]),
-          maintenances: z.array(selectMaintenanceSchema).default([]),
+            .prefault([]),
+          monitorGroups: z.array(selectMonitorGroupSchema).prefault([]),
+          maintenances: z.array(selectMaintenanceSchema).prefault([]),
         })
         .parse({
           ...data,

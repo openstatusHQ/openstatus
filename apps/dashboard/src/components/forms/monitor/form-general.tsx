@@ -78,7 +78,7 @@ const schema = z.object({
       value: z.string(),
     }),
   ),
-  active: z.boolean().optional().default(true),
+  active: z.boolean().optional().prefault(true),
   assertions: z.array(
     z.discriminatedUnion("type", [
       statusAssertion,
@@ -89,8 +89,8 @@ const schema = z.object({
     ]),
   ),
   body: z.string().optional(),
-  skipCheck: z.boolean().optional().default(false),
-  saveCheck: z.boolean().optional().default(false),
+  skipCheck: z.boolean().optional().prefault(false),
+  saveCheck: z.boolean().optional().prefault(false),
 });
 
 type FormValues = z.infer<typeof schema>;
