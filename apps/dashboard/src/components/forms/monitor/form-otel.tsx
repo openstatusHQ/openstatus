@@ -38,7 +38,8 @@ const schema = z.object({
     .prefault([]),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormInput = z.input<typeof schema>;
+type FormOutput = z.output<typeof schema>;
 
 export function FormOtel({
   locked,
@@ -47,21 +48,21 @@ export function FormOtel({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   locked?: boolean;
-  defaultValues?: FormValues;
-  onSubmit: (values: FormValues) => Promise<void>;
+  defaultValues?: FormInput;
+  onSubmit: (values: FormOutput) => Promise<void>;
 }) {
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { endpoint: "", headers: [] },
   });
   const [isPending, startTransition] = useTransition();
 
-  function submitAction(values: FormValues) {
+  function submitAction(values: FormInput) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values);
+        const promise = onSubmit(values as FormOutput);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",
@@ -110,7 +111,7 @@ export function FormOtel({
               render={({ field }) => (
                 <FormItem className="col-span-full">
                   <FormLabel>Request Headers</FormLabel>
-                  {field.value.map((header, index) => (
+                  {field.value?.map((header, index) => (
                     <div key={index} className="grid gap-2 sm:grid-cols-5">
                       <Input
                         placeholder="Key"
@@ -118,7 +119,7 @@ export function FormOtel({
                         value={header.key}
                         disabled={locked}
                         onChange={(e) => {
-                          const newHeaders = [...field.value];
+                          const newHeaders = [...(field.value ?? [])];
                           newHeaders[index] = {
                             ...newHeaders[index],
                             key: e.target.value,
@@ -132,7 +133,7 @@ export function FormOtel({
                         value={header.value}
                         disabled={locked}
                         onChange={(e) => {
-                          const newHeaders = [...field.value];
+                          const newHeaders = [...(field.value ?? [])];
                           newHeaders[index] = {
                             ...newHeaders[index],
                             value: e.target.value,
@@ -144,7 +145,7 @@ export function FormOtel({
                         size="icon"
                         variant="ghost"
                         onClick={() => {
-                          const newHeaders = field.value.filter(
+                          const newHeaders = field.value?.filter(
                             (_, i) => i !== index,
                           );
                           field.onChange(newHeaders);
@@ -162,7 +163,7 @@ export function FormOtel({
                       disabled={locked}
                       onClick={() => {
                         field.onChange([
-                          ...field.value,
+                          ...(field.value ?? []),
                           { key: "", value: "" },
                         ]);
                       }}
