@@ -1,0 +1,109 @@
+---
+title: How to self host openstatus
+description: Learn how to self host openstatus in your own infra.
+---
+import { Image } from 'astro:assets';
+
+import localOpenstatus from '../../../assets/guides/self-hosting-openstatus/local-openstatus.png';
+
+
+If you want to self host openstatus, we provide a [docker-compose](https://www.github.com/) file to get you started quickly.
+
+
+## Known limitations
+
+- It only works with private locations. You have to deploy our probes to the cloud provider of your choice.
+
+## Get started
+
+1. Clone the repository
+
+```bash
+git clone 
+```
+
+2. Copy the `.env.example` file to `.env` and modify the environment variables as needed.
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+3. Build the containers
+```
+export DOCKER_BUILDKIT=1
+docker compose up -d
+```
+
+4. Migrate the database
+
+```bash
+cd packages/db
+pnpm migrate
+```
+
+5. Create Tinybird datasources, pipes and endpoints
+
+```bash
+cd packages/tinybird
+tb --local deploy 
+```
+
+7. Access Tinybird local UI and get your TOKEN
+
+```bash
+tb --local open
+```
+
+8. Update the `.env.docker` file with your Tinybird TOKEN
+
+9. Connect to your OpenStatus instance and create a new workspace.
+
+10. Update your newly created workspace with the following limits:
+
+```json
+{
+  "monitors": 100,
+  "periodicity": ["30s", "1m", "5m", "10m", "30m", "1h"],
+  "multi-region": true,
+  "data-retention": "24 months",
+  "status-pages": 20,
+  "maintenance": true,
+  "status-subscribers": true,
+  "custom-domain": true,
+  "password-protection": true,
+  "white-label": true,
+  "notifications": true,
+  "sms": true,
+  "pagerduty": true,
+  "notification-channels": 50,
+  "members": "Unlimited",
+  "audit-log": true,
+  "private-locations": true
+}
+```
+
+11. Create a new private location in the dashboard.
+
+12. Deploy the private location to your cloud provider of choice with they API key
+
+13. Create monitors and start monitoring your services!
+
+
+  <Image
+    src={localOpenstatus}
+    alt="Openstatus running locally"
+  />
+  
+
+## Our services Services
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| workflows | 3000 | Background jobs |
+| server | 3001 | API backend (tRPC) |
+| dashboard | 3002 | Admin interface |
+| status-page | 3003 | Public status pages |
+| private-location | 8081 | Monitoring agent |
+| libsql | 8080 | Database (HTTP) |
+| libsql | 5001 | Database (gRPC) |
+| tinybird-local | 7181 | Analytics |
