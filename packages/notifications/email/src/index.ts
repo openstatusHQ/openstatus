@@ -30,7 +30,6 @@ if (!globalThis.__REACT_EMAIL_PATCHED__) {
   globalThis.__REACT_EMAIL_PATCHED__ = true;
 }
 
-
 export const sendAlert = async ({
   monitor,
   notification,
