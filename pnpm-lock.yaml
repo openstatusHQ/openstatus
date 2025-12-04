@@ -429,8 +429,8 @@ importers:
         specifier: 1.2.0
         version: 1.2.0(hono@4.5.3)
       '@hono/zod-openapi':
-        specifier: 0.15.1
-        version: 0.15.1(hono@4.5.3)(zod@4.1.13)
+        specifier: 1.1.5
+        version: 1.1.5(hono@4.5.3)(zod@4.1.13)
       '@hono/zod-validator':
         specifier: 0.2.2
         version: 0.2.2(hono@4.5.3)(zod@4.1.13)
@@ -1279,8 +1279,8 @@ importers:
         specifier: 0.44.4
         version: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(bun-types@1.3.3)
       drizzle-zod:
-        specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(bun-types@1.3.3))(zod@4.1.13)
+        specifier: 0.8.3
+        version: 0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(bun-types@1.3.3))(zod@4.1.13)
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1999,10 +1999,10 @@ packages:
   '@apm-js-collab/tracing-hooks@0.3.1':
     resolution: {integrity: sha512-Vu1CbmPURlN5fTboVuKMoJjbO5qcq9fA5YXpskx3dXe/zTBvjODFoerw+69rVBlRLrJpwPqSDqEuJDEKIrTldw==}
 
-  '@asteasolutions/zod-to-openapi@7.3.4':
-    resolution: {integrity: sha512-/2rThQ5zPi9OzVwes6U7lK1+Yvug0iXu25olp7S0XsYmOqnyMfxH7gdSQjn/+DSOHRg7wnotwGJSyL+fBKdnEA==}
+  '@asteasolutions/zod-to-openapi@8.1.0':
+    resolution: {integrity: sha512-tQFxVs05J/6QXXqIzj6rTRk3nj1HFs4pe+uThwE95jL5II2JfpVXkK+CqkO7aT0Do5AYqO6LDrKpleLUFXgY+g==}
     peerDependencies:
-      zod: ^3.20.2
+      zod: ^4.0.0
 
   '@astro-community/astro-embed-twitter@0.5.9':
     resolution: {integrity: sha512-bTIP/2LB3iEzlZ58L7dFyLJuWLeFDXgzZUQZKlWIfsXiKYqKIfLTQ01U10sh9UiHpm1M+4kOVPpue5LbUpJXHw==}
@@ -3222,12 +3222,12 @@ packages:
     peerDependencies:
       hono: '>=3.*'
 
-  '@hono/zod-openapi@0.15.1':
-    resolution: {integrity: sha512-2Un3D5xD1j4tIvUwzQ/XkB6xwrEA0Ne23TRjB8UVw0PgUWzsB3xiB8Hl/y2ZEMfcIfrA15/ga4P6Bkct8uYaLg==}
+  '@hono/zod-openapi@1.1.5':
+    resolution: {integrity: sha512-EAnY6ad4yt/MUKHx716BEGGOXSl5d0/FOLozOYB/pmSEFq07qrzefKFtBEMAgd3hlpJXjH+4lwgTtlAo+BGBgQ==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       hono: '>=4.3.6'
-      zod: 3.*
+      zod: ^4.0.0
 
   '@hono/zod-validator@0.2.1':
     resolution: {integrity: sha512-HFoxln7Q6JsE64qz2WBS28SD33UB2alp3aRKmcWnNLDzEL1BLsWfbdX6e1HIiUprHYTIXf5y7ax8eYidKUwyaA==}
@@ -3240,6 +3240,12 @@ packages:
     peerDependencies:
       hono: '>=3.9.0'
       zod: ^3.19.1
+
+  '@hono/zod-validator@0.7.5':
+    resolution: {integrity: sha512-n4l4hutkfYU07PzRUHBOVzUEn38VSfrh+UVE5d0w4lyfWDOEhzxIupqo5iakRiJL44c3vTuFJBvcmUl8b9agIA==}
+    peerDependencies:
+      hono: '>=3.9.0'
+      zod: ^3.25.0 || ^4.0.0
 
   '@hookform/devtools@4.4.0':
     resolution: {integrity: sha512-Mtlic+uigoYBPXlfvPBfiYYUZuyMrD3pTjDpVIhL6eCZTvQkHsKBSKeZCvXWUZr8fqrkzDg27N+ZuazLKq6Vmg==}
@@ -7883,11 +7889,11 @@ packages:
       sqlite3:
         optional: true
 
-  drizzle-zod@0.5.1:
-    resolution: {integrity: sha512-C/8bvzUH/zSnVfwdSibOgFjLhtDtbKYmkbPbUCq46QZyZCH6kODIMSOgZ8R7rVjoI+tCj3k06MRJMDqsIeoS4A==}
+  drizzle-zod@0.8.3:
+    resolution: {integrity: sha512-66yVOuvGhKJnTdiqj1/Xaaz9/qzOdRJADpDa68enqS6g3t0kpNkwNYjUuaeXgZfO/UWuIM9HIhSlJ6C5ZraMww==}
     peerDependencies:
-      drizzle-orm: '>=0.23.13'
-      zod: '*'
+      drizzle-orm: '>=0.36.0'
+      zod: ^3.25.0 || ^4.0.0
 
   dset@3.1.4:
     resolution: {integrity: sha512-2QF/g9/zTaPDc3BjNcVTGoBbXBgYfMTTceLaYcFJ/W9kggFUkhxD/hMEeuLKbugyef9SqAx8cpgwlIP/jinUTA==}
@@ -11870,7 +11876,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@asteasolutions/zod-to-openapi@7.3.4(zod@4.1.13)':
+  '@asteasolutions/zod-to-openapi@8.1.0(zod@4.1.13)':
     dependencies:
       openapi3-ts: 4.5.0
       zod: 4.1.13
@@ -13447,11 +13453,12 @@ snapshots:
       hono: 4.5.3
       toucan-js: 4.1.1
 
-  '@hono/zod-openapi@0.15.1(hono@4.5.3)(zod@4.1.13)':
+  '@hono/zod-openapi@1.1.5(hono@4.5.3)(zod@4.1.13)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 7.3.4(zod@4.1.13)
-      '@hono/zod-validator': 0.2.2(hono@4.5.3)(zod@4.1.13)
+      '@asteasolutions/zod-to-openapi': 8.1.0(zod@4.1.13)
+      '@hono/zod-validator': 0.7.5(hono@4.5.3)(zod@4.1.13)
       hono: 4.5.3
+      openapi3-ts: 4.5.0
       zod: 4.1.13
 
   '@hono/zod-validator@0.2.1(hono@4.5.3)(zod@4.1.13)':
@@ -13460,6 +13467,11 @@ snapshots:
       zod: 4.1.13
 
   '@hono/zod-validator@0.2.2(hono@4.5.3)(zod@4.1.13)':
+    dependencies:
+      hono: 4.5.3
+      zod: 4.1.13
+
+  '@hono/zod-validator@0.7.5(hono@4.5.3)(zod@4.1.13)':
     dependencies:
       hono: 4.5.3
       zod: 4.1.13
@@ -18678,7 +18690,7 @@ snapshots:
       '@types/pg': 8.15.5
       bun-types: 1.3.3
 
-  drizzle-zod@0.5.1(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(bun-types@1.3.3))(zod@4.1.13):
+  drizzle-zod@0.8.3(drizzle-orm@0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(bun-types@1.3.3))(zod@4.1.13):
     dependencies:
       drizzle-orm: 0.44.4(@libsql/client@0.15.15)(@opentelemetry/api@1.9.0)(@types/pg@8.15.5)(bun-types@1.3.3)
       zod: 4.1.13
