@@ -9,6 +9,28 @@ import { EmailClient } from "@openstatus/emails/src/client";
 import { regionDict } from "@openstatus/regions";
 import { env } from "../env";
 
+import ReactDOMServer from "react-dom/server";
+
+// @ts-expect-error
+if (!globalThis.__REACT_EMAIL_PATCHED__) {
+  const original = require;
+  // @ts-expect-error
+  globalThis.require = (id) => {
+    const mod = original(id);
+    if (id.includes("@react-email/render")) {
+      return {
+        ...mod,
+        render: (el: React.ReactElement) =>
+          ReactDOMServer.renderToStaticMarkup(el),
+      };
+    }
+    return mod;
+  };
+  // @ts-expect-error
+  globalThis.__REACT_EMAIL_PATCHED__ = true;
+}
+
+
 export const sendAlert = async ({
   monitor,
   notification,
