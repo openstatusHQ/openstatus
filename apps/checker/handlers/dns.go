@@ -135,7 +135,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 			log.Ctx(ctx).Debug().Msgf("evaluating %d dns assertions", len(req.RawAssertions))
 			isSuccessful, err = EvaluateDNSAssertions(req.RawAssertions, response)
 			if err != nil {
-				return nil, backoff.Permanent(err)
+				return response, backoff.Permanent(err)
 			}
 		}
 		if !isSuccessful && called < retry {
@@ -150,7 +150,9 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 	data.Latency = latency
-	data.Records = FormatDNSResult(result)
+	if result != nil {
+		data.Records = FormatDNSResult(result)
+	}
 
 	if len(req.RawAssertions) > 0 {
 		if j, err := json.Marshal(req.RawAssertions); err == nil {
@@ -330,6 +332,7 @@ func FormatDNSResult(result *checker.DnsResponse) map[string][]string {
 	mx := make([]string, 0)
 	ns := make([]string, 0)
 	txt := make([]string, 0)
+
 	for _, v := range result.A {
 		a = append(a, v)
 	}
