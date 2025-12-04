@@ -6,16 +6,14 @@
 FROM debian@sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b AS ca-certs
 LABEL \
     org.opencontainers.image.base.digest="sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b" \
-    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
-    org.opencontainers.image.stage="ca-certs"
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+    org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
+RUN apt update && apt install -y ca-certificates && update-ca-certificates
 
 # docker
 FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS docker
 LABEL \
     org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
-    org.opencontainers.image.stage="docker"
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3"
 WORKDIR /app/apps/workflows
 COPY \
     --link \
@@ -51,7 +49,7 @@ RUN \
     --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
     --mount=type=bind,target=packages/theme-store/package.json,source=packages/theme-store/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
-    bun install --production --frozen-lockfile --verbose
+    bun install --production  --frozen-lockfile --verbose
 
 # build
 FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS build
@@ -74,8 +72,7 @@ RUN bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --ou
 FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS libsql
 LABEL \
     org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
-    org.opencontainers.image.stage="libsql"
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3"
 WORKDIR /app/
 COPY \
     --from=docker \
@@ -102,11 +99,6 @@ COPY \
     --link \
     "/app/apps/workflows/app" "/app/apps/workflows/"
 COPY \
-    --from=build \
-    --chown=1000:1000 \
-    --link \
-    "/app/data" "/app/data"
-COPY \
     --from=libsql \
     --chown=1000:1000 \
     --link \
@@ -121,18 +113,6 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
-USER 0:0
-RUN <<EOF
-apt-get update
-apt-get install -y --no-install-recommends curl
-rm -rf /var/lib/apt/lists/*
-EOF
 USER 1000:1000
 EXPOSE 3000
-HEALTHCHECK \
-    --interval=30s \
-    --timeout=10s \
-    --start-period=30s \
-    --retries=3 \
-    CMD curl -f http://localhost:3000/ping || exit 1
 ENTRYPOINT ["/app/apps/workflows/app"]
