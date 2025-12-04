@@ -116,7 +116,7 @@ export function NavStatusPages() {
             const actions = getActions({
               edit: () => router.push(`/status-pages/${item.id}/edit`),
               "copy-id": () => {
-                navigator.clipboard.writeText("ID");
+                navigator.clipboard.writeText(item.id.toString());
                 toast.success("Status Page ID copied to clipboard");
               },
             });
