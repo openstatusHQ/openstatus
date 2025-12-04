@@ -542,7 +542,7 @@ export function FormGeneral({
                                   <Input
                                     placeholder="Header key"
                                     className="w-full"
-                                    {...field}
+                                    {...(field as React.ComponentProps<"input">)}
                                   />
                                   <FormMessage />
                                 </FormItem>
@@ -766,7 +766,7 @@ export function FormGeneral({
                             render={({ field }) => (
                               <FormItem>
                                 <Select
-                                  value={field.value}
+                                  value={field.value as string}
                                   onValueChange={field.onChange}
                                 >
                                   <SelectTrigger
@@ -827,7 +827,7 @@ export function FormGeneral({
                                   <Input
                                     placeholder="Header key"
                                     className="w-full"
-                                    {...field}
+                                    {...(field as React.ComponentProps<"input">)}
                                   />
                                   <FormMessage />
                                 </FormItem>

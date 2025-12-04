@@ -191,7 +191,8 @@ export function FormStatusPageUpdate() {
       />
       <FormAppearance
         defaultValues={{
-          forceTheme: statusPage.forceTheme ?? "system",
+          forceTheme:
+            (statusPage.forceTheme as "dark" | "light" | "system") ?? "system",
           configuration: {
             theme: statusPage.configuration?.theme ?? "default",
           },
