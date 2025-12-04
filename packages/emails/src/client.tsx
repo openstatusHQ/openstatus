@@ -3,7 +3,6 @@
 import { render } from "@react-email/render";
 import { Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
-import MonitorAlertEmail from "../emails/monitor-alert";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
@@ -11,6 +10,7 @@ import StatusReportEmail from "../emails/status-report";
 import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
+import { monitorAlertEmail } from "../hotfix/monitor-alert";
 
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
@@ -164,7 +164,8 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<MonitorAlertEmail {...req} />);
+      // const html = await render(<MonitorAlertEmail {...req} />);
+      const html = monitorAlertEmail(req);
       const result = await this.client.emails.send({
         from: "OpenStatus <notifications@notifications.openstatus.dev>",
         subject: `${req.name}: ${req.type.toUpperCase()}`,
