@@ -40,7 +40,9 @@ export const sendAlert = async ({
       body: JSON.stringify(body),
       headers: notificationData.webhook.headers
         ? transformHeaders(notificationData.webhook.headers)
-        : undefined,
+        : {
+            "Content-Type": "application/json",
+          },
     });
   } catch (err) {
     console.log(err);
@@ -84,7 +86,9 @@ export const sendRecovery = async ({
       body: JSON.stringify(body),
       headers: notificationData.webhook.headers
         ? transformHeaders(notificationData.webhook.headers)
-        : undefined,
+        : {
+            "Content-Type": "application/json",
+          },
     });
   } catch (err) {
     console.log(err);
@@ -126,7 +130,9 @@ export const sendDegraded = async ({
       body: JSON.stringify(body),
       headers: notificationData.webhook.headers
         ? transformHeaders(notificationData.webhook.headers)
-        : undefined,
+        : {
+            "Content-Type": "application/json",
+          },
     });
   } catch (err) {
     console.log(err);
@@ -156,7 +162,11 @@ export const sendTest = async ({
     const response = await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: headers ? transformHeaders(headers) : undefined,
+      headers: headers
+        ? transformHeaders(headers)
+        : {
+            "Content-Type": "application/json",
+          },
     });
     if (!response.ok) {
       throw new Error("Failed to send test");
