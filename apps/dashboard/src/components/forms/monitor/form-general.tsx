@@ -93,7 +93,10 @@ const schema = z.object({
   saveCheck: z.boolean().optional().prefault(false),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormInput = z.input<typeof schema>;
+type FormOutput = z.output<typeof schema>;
+
+// type FormValues = z.infer<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
@@ -101,12 +104,12 @@ export function FormGeneral({
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormValues;
-  onSubmit: (values: FormValues) => Promise<void>;
+  defaultValues?: FormInput;
+  onSubmit: (values: FormOutput) => Promise<void>;
   disabled?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       active: true,
@@ -136,7 +139,7 @@ export function FormGeneral({
     }
   }, [watchType, defaultValues, form]);
 
-  function submitAction(values: FormValues) {
+  function submitAction(values: FormInput) {
     console.log("submitAction", values);
     if (isPending || disabled) return;
 
@@ -189,7 +192,7 @@ export function FormGeneral({
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values);
+        const promise = onSubmit(values as FormOutput);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",
