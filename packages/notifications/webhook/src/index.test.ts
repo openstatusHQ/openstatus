@@ -29,7 +29,7 @@ describe("Webhook sendTest", () => {
       expect.objectContaining({
         method: "post",
         body: expect.any(String),
-        headers: undefined,
+        headers: { "Content-Type": "application/json" },
       }),
     );
 
