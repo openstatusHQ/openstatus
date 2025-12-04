@@ -7,12 +7,12 @@ import { Image } from 'astro:assets';
 import localOpenstatus from '../../../assets/guides/self-hosting-openstatus/local-openstatus.png';
 
 
-If you want to self host openstatus, we provide a [docker-compose](https://www.github.com/) file to get you started quickly.
+If you want to self host openstatus, we provide a [docker-compose](https://github.com/openstatusHQ/openstatus/blob/2aa970b7fc2afaca5e3ec584beda69c1f69ca34d/docker-compose.yaml) file to get you started quickly.
 
 
 ## Known limitations
 
-- It only works with private locations. You have to deploy our probes to the cloud provider of your choice.
+- It only works with private locations. You have to deploy our probes to the cloud provider of your choice. 
 
 ## Get started
 
@@ -84,7 +84,9 @@ tb --local open
 
 11. Create a new private location in the dashboard.
 
-12. Deploy the private location to your cloud provider of choice with they API key
+12. Deploy the private location to your cloud provider of choice with your location api key `OPENSTATUS_KEY`, and  `OPENSTATUS_INGEST_URL` . 
+
+The docker image of the private location is `ghcr.io/openstatushq/private-location:latest`
 
 13. Create monitors and start monitoring your services!
 
