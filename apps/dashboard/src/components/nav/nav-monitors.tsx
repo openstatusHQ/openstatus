@@ -132,7 +132,7 @@ export function NavMonitors() {
             const actions = getActions({
               edit: () => router.push(`/monitors/${item.id}/edit`),
               "copy-id": () => {
-                navigator.clipboard.writeText("ID");
+                navigator.clipboard.writeText(item.id.toString());
                 toast.success("Monitor ID copied to clipboard");
               },
               clone: () => {
