@@ -22,7 +22,7 @@ builders:
 
   # Stage 2: Docker-specific build artifacts (no dependencies)
   docker:
-    fromImage: oven/bun:1.3.0
+    fromImage: oven/bun:1.3.3
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: docker
@@ -32,7 +32,7 @@ builders:
 
   # Stage 3: Install production dependencies
   install:
-    fromImage: oven/bun:1.3.0
+    fromImage: oven/bun:1.3.3
     workdir: /app/
     labels:
       org.opencontainers.image.stage: install
@@ -63,7 +63,7 @@ builders:
 
   # Stage 4: Build application (compile to binary)
   build:
-    fromImage: oven/bun:1.3.0
+    fromImage: oven/bun:1.3.3
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: build
@@ -74,13 +74,13 @@ builders:
       - fromBuilder: install
         source: /app/node_modules
         target: /app/node_modules
-    run:
-      - mkdir -p /app/data
-      - bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+      #  Should set env to production here
+    # Compile the TypeScript application
+    run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
   # Stage 5: LibSQL dependencies
   libsql:
-    fromImage: oven/bun:1.3.0
+    fromImage: oven/bun:1.3.3
     workdir: /app/
     labels:
       org.opencontainers.image.stage: libsql

@@ -46,6 +46,7 @@ export async function GET() {
                 link: author.url,
               },
         ],
+        image: post.metadata.image,
         date: post.metadata.publishedAt,
       });
     });

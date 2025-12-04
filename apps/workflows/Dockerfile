@@ -11,10 +11,10 @@ LABEL \
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && update-ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # docker
-FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS docker
+FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS docker
 LABEL \
-    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.0" \
+    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
     org.opencontainers.image.stage="docker"
 WORKDIR /app/apps/workflows
 COPY \
@@ -23,10 +23,10 @@ COPY \
 RUN bun run src/build-docker.ts
 
 # install
-FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS install
+FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.0" \
+    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
@@ -54,10 +54,10 @@ RUN \
     bun install --production --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS build
+FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.0" \
+    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/workflows
@@ -68,16 +68,13 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
-RUN <<EOF
-mkdir -p /app/data
-bun build --compile --target bun --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
-EOF
+RUN bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
 
 # libsql
-FROM oven/bun@sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025 AS libsql
+FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS libsql
 LABEL \
-    org.opencontainers.image.base.digest="sha256:00cccad6e9c66bbacc250851f689168606aaea551ac473e908bbcf00a5645025" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.0" \
+    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
     org.opencontainers.image.stage="libsql"
 WORKDIR /app/
 COPY \
