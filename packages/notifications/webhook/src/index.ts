@@ -153,14 +153,17 @@ export const sendTest = async ({
     latency: 1337,
   });
   try {
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
       headers: headers ? transformHeaders(headers) : undefined,
     });
+    if (!response.ok) {
+      throw new Error("Failed to send test");
+    }
+    return true;
   } catch (err) {
     console.log(err);
-    return false;
+    throw new Error("Failed to send test");
   }
-  return true;
 };
