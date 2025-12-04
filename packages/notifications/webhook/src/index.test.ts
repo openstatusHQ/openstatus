@@ -30,7 +30,7 @@ describe("Webhook sendTest", () => {
         method: "post",
         body: expect.any(String),
         headers: undefined,
-      })
+      }),
     );
 
     const callArgs = fetchMock.mock.calls[0];
@@ -69,7 +69,7 @@ describe("Webhook sendTest", () => {
           Authorization: "Bearer token123",
           "Content-Type": "application/json",
         },
-      })
+      }),
     );
   });
 
