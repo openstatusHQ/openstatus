@@ -128,7 +128,7 @@ export const allPlans: Record<
       members: "Unlimited",
       "audit-log": true,
       regions: [...AVAILABLE_REGIONS],
-      "private-locations": false,
+      "private-locations": true,
     },
   },
 };
