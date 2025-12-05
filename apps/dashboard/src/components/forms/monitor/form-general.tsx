@@ -78,7 +78,7 @@ const schema = z.object({
       value: z.string(),
     }),
   ),
-  active: z.boolean().optional().default(true),
+  active: z.boolean().optional().prefault(true),
   assertions: z.array(
     z.discriminatedUnion("type", [
       statusAssertion,
@@ -89,11 +89,14 @@ const schema = z.object({
     ]),
   ),
   body: z.string().optional(),
-  skipCheck: z.boolean().optional().default(false),
-  saveCheck: z.boolean().optional().default(false),
+  skipCheck: z.boolean().optional().prefault(false),
+  saveCheck: z.boolean().optional().prefault(false),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormInput = z.input<typeof schema>;
+type FormOutput = z.output<typeof schema>;
+
+// type FormValues = z.infer<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
@@ -101,12 +104,12 @@ export function FormGeneral({
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormValues;
-  onSubmit: (values: FormValues) => Promise<void>;
+  defaultValues?: FormInput;
+  onSubmit: (values: FormOutput) => Promise<void>;
   disabled?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       active: true,
@@ -136,7 +139,7 @@ export function FormGeneral({
     }
   }, [watchType, defaultValues, form]);
 
-  function submitAction(values: FormValues) {
+  function submitAction(values: FormInput) {
     console.log("submitAction", values);
     if (isPending || disabled) return;
 
@@ -189,7 +192,7 @@ export function FormGeneral({
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values);
+        const promise = onSubmit(values as FormOutput);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",
@@ -542,7 +545,7 @@ export function FormGeneral({
                                   <Input
                                     placeholder="Header key"
                                     className="w-full"
-                                    {...field}
+                                    {...(field as React.ComponentProps<"input">)}
                                   />
                                   <FormMessage />
                                 </FormItem>
@@ -766,7 +769,7 @@ export function FormGeneral({
                             render={({ field }) => (
                               <FormItem>
                                 <Select
-                                  value={field.value}
+                                  value={field.value as string}
                                   onValueChange={field.onChange}
                                 >
                                   <SelectTrigger
@@ -827,7 +830,7 @@ export function FormGeneral({
                                   <Input
                                     placeholder="Header key"
                                     className="w-full"
-                                    {...field}
+                                    {...(field as React.ComponentProps<"input">)}
                                   />
                                   <FormMessage />
                                 </FormItem>

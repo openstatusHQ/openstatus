@@ -100,11 +100,11 @@ export const timingSchema = z.object({
 });
 
 export const checkerSchema = z.object({
-  type: z.literal("http").default("http"),
-  state: z.literal("success").default("success"),
+  type: z.literal("http").prefault("http"),
+  state: z.literal("success").prefault("success"),
   status: z.number(),
   latency: z.number(),
-  headers: z.record(z.string()),
+  headers: z.record(z.string(), z.string()),
   timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),
@@ -113,18 +113,18 @@ export const checkerSchema = z.object({
 export const cachedCheckerSchema = z.object({
   url: z.string(),
   timestamp: z.number(),
-  method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
+  method: z.enum(["GET", "POST", "PUT", "DELETE"]).prefault("GET"),
   checks: checkerSchema.extend({ region: monitorRegionSchema }).array(),
 });
 
 const errorRequest = z.object({
   message: z.string(),
-  state: z.literal("error").default("error"),
+  state: z.literal("error").prefault("error"),
 });
 
 export const regionCheckerSchema = checkerSchema.extend({
   region: monitorRegionSchema,
-  state: z.literal("success").default("success"),
+  state: z.literal("success").prefault("success"),
 });
 
 export const regionCheckerSchemaResponse = regionCheckerSchema.or(
