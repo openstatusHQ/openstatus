@@ -275,7 +275,7 @@ export const notificationRouter = createTRPCRouter({
         id: z.number(),
         name: z.string(),
         data: z.record(
-          z.string(),
+          z.enum(notificationProvider),
           z.string().or(z.record(z.string(), z.string())),
         ),
         monitors: z.array(z.number()),
@@ -298,6 +298,15 @@ export const notificationRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You don't have access to all the monitors.",
+        });
+      }
+
+      const _data = NotificationDataSchema.safeParse(opts.input.data);
+
+      if (!_data.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: SchemaError.fromZod(_data.error, opts.input).message,
         });
       }
 
