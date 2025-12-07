@@ -107,6 +107,9 @@ importers:
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack
+      '@openstatus/notification-telegram':
+        specifier: workspace:*
+        version: link:../../packages/notifications/telegram
       '@openstatus/notification-webhook':
         specifier: workspace:*
         version: link:../../packages/notifications/webhook
@@ -1165,6 +1168,9 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../error
+      '@openstatus/notification-telegram':
+        specifier: workspace:*
+        version: link:../notifications/telegram
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions
@@ -1567,6 +1573,25 @@ importers:
       bun-types:
         specifier: 1.3.1
         version: 1.3.1(@types/react@19.2.2)
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+
+  packages/notifications/telegram:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
       typescript:
         specifier: 5.7.2
         version: 5.7.2

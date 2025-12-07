@@ -13,6 +13,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
+    "@openstatus/notification-telegram": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",

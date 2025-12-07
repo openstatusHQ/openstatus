@@ -63,7 +63,11 @@ export function FormSheetNotifier({
                         data:
                           typeof defaultValues?.data === "string"
                             ? defaultValues?.data
-                            : defaultValues?.data?.[provider],
+                            : defaultValues?.data &&
+                                typeof defaultValues.data === "object" &&
+                                provider in defaultValues.data
+                              ? defaultValues.data[provider]
+                              : defaultValues?.data,
                       }
                     : undefined
                 }

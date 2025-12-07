@@ -1,0 +1,14 @@
+{
+  "name": "@openstatus/notification-telegram",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@openstatus/db": "workspace:*",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2"
+  }
+}
