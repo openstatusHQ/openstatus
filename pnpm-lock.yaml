@@ -1085,6 +1085,9 @@ importers:
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack
+      '@openstatus/notification-telegram':
+        specifier: workspace:*
+        version: link:../../packages/notifications/telegram
       '@openstatus/notification-twillio-sms':
         specifier: workspace:*
         version: link:../../packages/notifications/twillio-sms
