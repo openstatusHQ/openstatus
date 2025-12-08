@@ -36,12 +36,6 @@ import { z } from "zod";
 import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useTRPC } from "@/lib/trpc/client";
 import {
   formatRegionCode,
@@ -311,65 +305,22 @@ export function FormSchedulingRegions({
                                                 }
                                               }}
                                             />
-                                            {deprecated ? (
-                                              <TooltipProvider>
-                                                <Tooltip>
-                                                  <TooltipTrigger
-                                                    disabled={!deprecated}
-                                                    asChild
-                                                  >
-                                                    <FormLabel
-                                                      htmlFor={region.code}
-                                                      className={cn(
-                                                        "w-full truncate font-mono font-normal text-sm",
-                                                      )}
-                                                    >
-                                                      <span className="text-nowrap text-destructive">
-                                                        {formatRegionCode(
-                                                          region.code,
-                                                        )}{" "}
-                                                        {region.flag}
-                                                      </span>
-                                                      <span className="truncate font-normal text-xs leading-[inherit] line-through decoration-foreground/70">
-                                                        {region.location}
-                                                      </span>
-                                                      <IconCloudProviderTooltip
-                                                        provider={
-                                                          region.provider
-                                                        }
-                                                        className="size-3"
-                                                      />
-                                                    </FormLabel>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                    <p>
-                                                      This region is deprecated
-                                                      and will be removed in the
-                                                      future.
-                                                    </p>
-                                                  </TooltipContent>
-                                                </Tooltip>
-                                              </TooltipProvider>
-                                            ) : (
-                                              <FormLabel
-                                                htmlFor={region.code}
-                                                className="w-full truncate font-mono font-normal text-sm"
-                                              >
-                                                <span className="text-nowrap">
-                                                  {formatRegionCode(
-                                                    region.code,
-                                                  )}{" "}
-                                                  {region.flag}
-                                                </span>
-                                                <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
-                                                  {region.location}
-                                                </span>
-                                                <IconCloudProviderTooltip
-                                                  provider={region.provider}
-                                                  className="size-3"
-                                                />
-                                              </FormLabel>
-                                            )}
+                                            <FormLabel
+                                              htmlFor={region.code}
+                                              className="w-full truncate font-mono font-normal text-sm"
+                                            >
+                                              <span className="text-nowrap">
+                                                {formatRegionCode(region.code)}{" "}
+                                                {region.flag}
+                                              </span>
+                                              <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                                {region.location}
+                                              </span>
+                                              <IconCloudProviderTooltip
+                                                provider={region.provider}
+                                                className="size-3"
+                                              />
+                                            </FormLabel>
                                           </FormItem>
                                         );
                                       }}
@@ -386,21 +337,6 @@ export function FormSchedulingRegions({
                 </FormItem>
               )}
             />
-            <Note color="info">
-              <Info />
-              <div>
-                Unfortunately,{" "}
-                <span className="font-medium text-destructive">
-                  red regions are deprecated
-                </span>{" "}
-                and will be removed in the future. We are routing traffic to the
-                nearest regions. To compensate for the loss, we have added{" "}
-                <span className="font-medium">
-                  new regions from Koyeb and Railway
-                </span>
-                .
-              </div>
-            </Note>
           </FormCardContent>
           <FormCardSeparator />
           <FormCardContent className="grid gap-4">
