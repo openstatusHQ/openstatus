@@ -284,6 +284,7 @@ export const notificationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      console.log(opts.input);
       const whereCondition: SQL[] = [
         eq(notification.id, opts.input.id),
         eq(notification.workspaceId, opts.ctx.workspace.id),

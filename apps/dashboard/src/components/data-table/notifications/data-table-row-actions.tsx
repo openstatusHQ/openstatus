@@ -73,7 +73,10 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
             data:
               typeof values.data === "string"
                 ? { [values.provider]: values.data }
-                : values.data,
+                : typeof values.data === "object" &&
+                    !(values.provider in values.data)
+                  ? { [values.provider]: values.data }
+                  : values.data,
             monitors: values.monitors,
           });
         }}
