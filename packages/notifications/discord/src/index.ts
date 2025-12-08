@@ -1,6 +1,7 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import { discordDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { DataSchema } from "./schema";
+
 const postToWebhook = async (content: string, webhookUrl: string) => {
   await fetch(webhookUrl, {
     method: "POST",
@@ -32,13 +33,21 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = DataSchema.parse(JSON.parse(notification.data));
+  const notificationData = discordDataSchema.parse(
+    JSON.parse(notification.data),
+  );
   const { discord: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
   try {
     await postToWebhook(
-      `**🚨 Alert [${name}](<${monitor.url}>)**\nStatus Code: ${statusCode || "_empty_"}\nMessage: ${message || "_empty_"}\nCron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
+      `**🚨 Alert [${name}](<${monitor.url}>)**\nStatus Code: ${
+        statusCode || "_empty_"
+      }\nMessage: ${
+        message || "_empty_"
+      }\nCron Timestamp: ${cronTimestamp} (${new Date(
+        cronTimestamp,
+      ).toISOString()})\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
       webhookUrl,
     );
   } catch (err) {
@@ -66,7 +75,9 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = DataSchema.parse(JSON.parse(notification.data));
+  const notificationData = discordDataSchema.parse(
+    JSON.parse(notification.data),
+  );
   const { discord: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -100,7 +111,9 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = DataSchema.parse(JSON.parse(notification.data));
+  const notificationData = discordDataSchema.parse(
+    JSON.parse(notification.data),
+  );
   const { discord: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 

@@ -1,7 +1,7 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import { telegramDataSchema } from "@openstatus/db/src/schema";
 
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { TelegramSchema } from "./schema";
 
 export const sendAlert = async ({
   monitor,
@@ -20,7 +20,9 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = TelegramSchema.parse(JSON.parse(notification.data));
+  const notificationData = telegramDataSchema.parse(
+    JSON.parse(notification.data),
+  );
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is down with ${
@@ -57,7 +59,9 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = TelegramSchema.parse(JSON.parse(notification.data));
+  const notificationData = telegramDataSchema.parse(
+    JSON.parse(notification.data),
+  );
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is up again`;
@@ -89,7 +93,9 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = TelegramSchema.parse(JSON.parse(notification.data));
+  const notificationData = telegramDataSchema.parse(
+    JSON.parse(notification.data),
+  );
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is degraded `;
