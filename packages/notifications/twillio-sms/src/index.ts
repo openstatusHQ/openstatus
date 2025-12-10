@@ -72,9 +72,7 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
-  );
+  const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = new FormData();
@@ -118,9 +116,7 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
-  );
+  const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = new FormData();
