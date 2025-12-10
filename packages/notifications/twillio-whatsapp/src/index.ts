@@ -23,14 +23,13 @@ export const sendAlert = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  const contentVariables = JSON.stringify({url:monitor.url})
+  const contentVariables = JSON.stringify({ url: monitor.url });
 
   const body = new FormData();
   body.set("To", `whatsapp:${notificationData.whatsapp}`);
   body.set("From", "whatsapp:+14807252613");
-  body.set('ContentSid',"HX8282106bfaecb7939e69f9c5564babe5")
-  body.set("ContentVariables",contentVariables)
-
+  body.set("ContentSid", "HX8282106bfaecb7939e69f9c5564babe5");
+  body.set("ContentVariables", contentVariables);
 
   try {
     await fetch(
@@ -73,13 +72,13 @@ export const sendRecovery = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  const contentVariables = JSON.stringify({url:monitor.url})
+  const contentVariables = JSON.stringify({ url: monitor.url });
 
   const body = new FormData();
   body.set("To", `whatsapp:${notificationData.whatsapp}`);
   body.set("From", "whatsapp:+14807252613");
-  body.set('ContentSid',"HX8fdeb4201bed18ac8838b3c0135bbf28")
-  body.set("ContentVariables",contentVariables)
+  body.set("ContentSid", "HX8fdeb4201bed18ac8838b3c0135bbf28");
+  body.set("ContentVariables", contentVariables);
 
   try {
     await fetch(
@@ -120,13 +119,13 @@ export const sendDegraded = async ({
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
-  const contentVariables = JSON.stringify({url:monitor.url})
+  const contentVariables = JSON.stringify({ url: monitor.url });
 
   const body = new FormData();
   body.set("To", `whatsapp:${notificationData.whatsapp}`);
   body.set("From", "whatsapp:+14807252613");
-  body.set('ContentSid',"HX35589f2e7ac8b8be63f4bd62a60e435f")
-  body.set("ContentVariables",contentVariables)
+  body.set("ContentSid", "HX35589f2e7ac8b8be63f4bd62a60e435f");
+  body.set("ContentVariables", contentVariables);
 
   try {
     await fetch(
@@ -147,14 +146,13 @@ export const sendDegraded = async ({
   }
 };
 
-export const sendTest = async({phoneNumber}: {phoneNumber:string}) => {
-
-  const contentVariables = JSON.stringify({url:"https://openstat.us"})
+export const sendTest = async ({ phoneNumber }: { phoneNumber: string }) => {
+  const contentVariables = JSON.stringify({ url: "https://openstat.us" });
   const body = new FormData();
   body.set("To", `whatsapp:${phoneNumber}`);
-  body.set('ContentSid',"HX8282106bfaecb7939e69f9c5564babe5")
+  body.set("ContentSid", "HX8282106bfaecb7939e69f9c5564babe5");
   body.set("From", "whatsapp:+14807252613");
-  body.set("ContentVariables",contentVariables)
+  body.set("ContentVariables", contentVariables);
 
   try {
     await fetch(

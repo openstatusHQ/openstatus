@@ -8,5 +8,5 @@ export const notificationProvider = [
   "sms",
   "telegram",
   "webhook",
-  "whatsapp"
+  "whatsapp",
 ] as const;

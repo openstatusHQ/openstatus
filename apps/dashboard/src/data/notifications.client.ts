@@ -18,7 +18,7 @@ import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie"
 import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
 import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
 import { sendTest as sendTestTelegram } from "@openstatus/notification-telegram";
-import {sendTest as sendWhatsAppTest} from '@openstatus/notification-twillio-whatsapp'
+import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
 import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
@@ -117,9 +117,9 @@ export const config = {
   whatsapp: {
     icon: MessageCircle,
     label: "WhatsApp",
-    form:FormWhatsApp,
+    form: FormWhatsApp,
     sendTest: sendWhatsAppTest,
-  }
+  },
 };
 
 export type NotifierProvider = keyof typeof config;
