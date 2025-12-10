@@ -62,6 +62,9 @@ export const opsgenieDataSchema = z.object({
     region: z.enum(["us", "eu"]),
   }),
 });
+export const telegramDataSchema = z.object({
+  telegram: z.object({ chatId: z.string() }),
+});
 
 export const NotificationDataSchema = z.union([
   emailDataSchema,
@@ -72,6 +75,7 @@ export const NotificationDataSchema = z.union([
   opsgenieDataSchema,
   ntfyDataSchema,
   webhookDataSchema,
+  telegramDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(

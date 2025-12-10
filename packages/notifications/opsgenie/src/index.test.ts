@@ -1,18 +1,12 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import {
-  sendAlert,
-  sendDegraded,
-  sendRecovery,
-  sendTestSlackMessage,
-} from "./index";
+import { sendAlert, sendDegraded, sendTest } from "./index";
 
-describe("Slack Notifications", () => {
+describe("OpsGenie Notifications", () => {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {
-    // @ts-expect-error
     fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
@@ -36,20 +30,25 @@ describe("Slack Notifications", () => {
     region: "us-east-1",
   });
 
-  const createMockNotification = () => ({
+  const createMockNotification = (region: "eu" | "us" = "us") => ({
     id: 1,
-    name: "Slack Notification",
-    provider: "slack",
+    name: "OpsGenie Notification",
+    provider: "opsgenie",
     workspaceId: 1,
     createdAt: new Date(),
     updatedAt: new Date(),
-    data: '{"slack":"https://hooks.slack.com/services/url"}',
+    data: JSON.stringify({
+      opsgenie: {
+        apiKey: "test-api-key-123",
+        region,
+      },
+    }),
   });
 
-  test("Send Alert", async () => {
+  test("Send Alert with US region", async () => {
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
-      createMockNotification(),
+      createMockNotification("us"),
     );
 
     await sendAlert({
@@ -58,62 +57,44 @@ describe("Slack Notifications", () => {
       notification,
       statusCode: 500,
       message: "Something went wrong",
+      incidentId: "incident-123",
       cronTimestamp: Date.now(),
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
-    expect(callArgs[0]).toBe("https://hooks.slack.com/services/url");
+    expect(callArgs[0]).toBe("https://api.opsgenie.com/v2/alerts");
     expect(callArgs[1].method).toBe("POST");
+    expect(callArgs[1].headers["Content-Type"]).toBe("application/json");
+    expect(callArgs[1].headers.Authorization).toBe("GenieKey test-api-key-123");
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks).toBeDefined();
-    expect(body.blocks.length).toBeGreaterThan(0);
-    expect(body.blocks[1].text.text).toContain("🚨 Alert");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
-    expect(body.blocks[1].text.text).toContain("Something went wrong");
+    expect(body.message).toBe("API Health Check is down");
+    expect(body.alias).toBe("monitor-1}-incident-123");
+    expect(body.details.severity).toBe("down");
+    expect(body.details.status).toBe(500);
+    expect(body.details.message).toBe("Something went wrong");
   });
 
-  test("Send Alert without statusCode", async () => {
+  test("Send Alert with EU region", async () => {
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
-      createMockNotification(),
+      createMockNotification("eu"),
     );
 
     await sendAlert({
       // @ts-expect-error
       monitor,
       notification,
-      message: "Connection timeout",
+      statusCode: 500,
+      message: "Error",
+      incidentId: "incident-456",
       cronTimestamp: Date.now(),
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
-    const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("_empty_");
-  });
-
-  test("Send Recovery", async () => {
-    const monitor = createMockMonitor();
-    const notification = selectNotificationSchema.parse(
-      createMockNotification(),
-    );
-
-    await sendRecovery({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 200,
-      message: "Service recovered",
-      cronTimestamp: Date.now(),
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
-    const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("✅ Recovered");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
+    expect(callArgs[0]).toBe("https://api.eu.opsgenie.com/v2/alerts");
   });
 
   test("Send Degraded", async () => {
@@ -128,42 +109,15 @@ describe("Slack Notifications", () => {
       notification,
       statusCode: 503,
       message: "Service degraded",
+      incidentId: "incident-789",
       cronTimestamp: Date.now(),
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("⚠️ Degraded");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
-  });
-
-  test("Send Test Slack Message", async () => {
-    const webhookUrl = "https://hooks.slack.com/services/test/url";
-
-    const result = await sendTestSlackMessage(webhookUrl);
-
-    expect(result).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const callArgs = fetchMock.mock.calls[0];
-    expect(callArgs[0]).toBe(webhookUrl);
-
-    const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("🧪 Test");
-    expect(body.blocks[1].text.text).toContain("OpenStatus");
-  });
-
-  test("Send Test Slack Message returns false on error", async () => {
-    fetchMock.mockImplementation(() =>
-      Promise.reject(new Error("Network error")),
-    );
-
-    const result = await sendTestSlackMessage(
-      "https://hooks.slack.com/services/test/url",
-    );
-
-    expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(body.details.severity).toBe("degraded");
+    expect(body.message).toBe("API Health Check is down");
   });
 
   test("Handle fetch error gracefully", async () => {
@@ -183,9 +137,24 @@ describe("Slack Notifications", () => {
       notification,
       statusCode: 500,
       message: "Error",
+      incidentId: "incident-123",
       cronTimestamp: Date.now(),
     });
 
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("Send Test returns false on error", async () => {
+    fetchMock.mockImplementation(() =>
+      Promise.reject(new Error("Network error")),
+    );
+
+    const result = await sendTest({
+      apiKey: "test-api-key",
+      region: "us",
+    });
+
+    expect(result).toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

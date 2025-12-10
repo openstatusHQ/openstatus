@@ -1,5 +1,5 @@
 {
-  "name": "@openstatus/notification-discord",
+  "name": "@openstatus/notification-telegram",
   "version": "1.0.0",
   "main": "src/index.ts",
   "dependencies": {

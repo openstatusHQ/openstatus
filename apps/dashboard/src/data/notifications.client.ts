@@ -5,8 +5,9 @@ import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
 import { FormSlack } from "@/components/forms/notifications/form-slack";
 import { FormSms } from "@/components/forms/notifications/form-sms";
+import { FormTelegram } from "@/components/forms/notifications/form-telegram";
 import { FormWebhook } from "@/components/forms/notifications/form-webhook";
-import { DiscordIcon } from "@openstatus/icons";
+import { DiscordIcon, TelegramIcon } from "@openstatus/icons";
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
@@ -15,6 +16,7 @@ import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
 import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
 import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
 import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
+import { sendTest as sendTestTelegram } from "@openstatus/notification-telegram";
 import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
@@ -103,6 +105,12 @@ export const config = {
     label: "Ntfy",
     form: FormNtfy,
     sendTest: sendTestNtfy,
+  },
+  telegram: {
+    icon: TelegramIcon,
+    label: "Telegram",
+    form: FormTelegram,
+    sendTest: sendTestTelegram,
   },
 };
 

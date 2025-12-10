@@ -3,6 +3,7 @@ import type {
   Notification,
   NotificationProvider,
 } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,
@@ -19,29 +20,30 @@ import {
   sendRecovery as sendNtfyRecovery,
 } from "@openstatus/notification-ntfy";
 import {
-  sendAlert as sendSlackAlert,
-  sendDegraded as sendSlackDegraded,
-  sendRecovery as sendSlackRecovery,
-} from "@openstatus/notification-slack";
-import {
-  sendAlert as sendSmsAlert,
-  sendDegraded as sendSmsDegraded,
-  sendRecovery as sendSmsRecovery,
-} from "@openstatus/notification-twillio-sms";
-
+  sendAlert as sendOpsGenieAlert,
+  sendDegraded as sendOpsGenieDegraded,
+  sendRecovery as sendOpsGenieRecovery,
+} from "@openstatus/notification-opsgenie";
 import {
   sendDegraded as sendPagerDutyDegraded,
   sendRecovery as sendPagerDutyRecovery,
   sendAlert as sendPagerdutyAlert,
 } from "@openstatus/notification-pagerduty";
-
-import type { Region } from "@openstatus/db/src/schema/constants";
 import {
-  sendAlert as sendOpsGenieAlert,
-  sendDegraded as sendOpsGenieDegraded,
-  sendRecovery as sendOpsGenieRecovery,
-} from "@openstatus/notification-opsgenie";
-
+  sendAlert as sendSlackAlert,
+  sendDegraded as sendSlackDegraded,
+  sendRecovery as sendSlackRecovery,
+} from "@openstatus/notification-slack";
+import {
+  sendAlert as sendTelegramAlert,
+  sendDegraded as sendTelegramDegraded,
+  sendRecovery as sendTelegramRecovery,
+} from "@openstatus/notification-telegram";
+import {
+  sendAlert as sendSmsAlert,
+  sendDegraded as sendSmsDegraded,
+  sendRecovery as sendSmsRecovery,
+} from "@openstatus/notification-twillio-sms";
 import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,
@@ -114,5 +116,10 @@ export const providerToFunction = {
     sendAlert: sendWebhookAlert,
     sendRecovery: sendWebhookRecovery,
     sendDegraded: sendWebhookDegraded,
+  },
+  telegram: {
+    sendAlert: sendTelegramAlert,
+    sendRecovery: sendTelegramRecovery,
+    sendDegraded: sendTelegramDegraded,
   },
 } satisfies Record<NotificationProvider, Notif>;

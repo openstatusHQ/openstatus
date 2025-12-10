@@ -19,6 +19,7 @@
     "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
+    "@openstatus/notification-telegram": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/regions": "workspace:*",

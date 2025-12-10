@@ -12,14 +12,35 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
     install:
       fromImage:
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
         org.opencontainers.image.stage: install
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/
       run:
       - bun install --production  --frozen-lockfile --verbose
@@ -50,6 +71,8 @@ effective: |
         source: packages/notifications/pagerduty/package.json
       - target: packages/notifications/slack/package.json
         source: packages/notifications/slack/package.json
+      - target: packages/notifications/telegram/package.json
+        source: packages/notifications/telegram/package.json
       - target: packages/notifications/twillio-sms/package.json
         source: packages/notifications/twillio-sms/package.json
       - target: packages/notifications/webhook/package.json
@@ -71,8 +94,8 @@ effective: |
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/apps/workflows
       copy:
       - paths:
@@ -85,8 +108,8 @@ effective: |
         path: debian
         digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
       label:
-        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
         org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
       run:
       - apt update && apt install -y ca-certificates && update-ca-certificates
     libsql:
@@ -94,8 +117,8 @@ effective: |
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/
       copy:
       - fromBuilder: docker
@@ -104,39 +127,18 @@ effective: |
         target: /app/package.json
       run:
       - bun install
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-        org.opencontainers.image.stage: build
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
   fromImage:
     path: debian
     digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
-    io.dofigen.version: 2.5.1
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-    org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    io.dofigen.version: 2.5.1
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -162,17 +164,17 @@ effective: |
   - port: 3000
 images:
   docker.io:
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     oven:
       bun:
         1.3.3:
           digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
 resources:
   dofigen.yml:
-    hash: 3544a43f3fd756222397a837650af396178e9fde624ba9b1b32bc1943324cc02
+    hash: 297382ef47be04c67f610380fadff8e2b9333ab28594ff6e0512b75a23d4c3b0
     content: |
       ignore:
         - node_modules
@@ -205,6 +207,7 @@ resources:
             - packages/notifications/opsgenie/package.json
             - packages/notifications/pagerduty/package.json
             - packages/notifications/slack/package.json
+            - packages/notifications/telegram/package.json
             - packages/notifications/twillio-sms/package.json
             - packages/notifications/webhook/package.json
             - packages/regions/package.json

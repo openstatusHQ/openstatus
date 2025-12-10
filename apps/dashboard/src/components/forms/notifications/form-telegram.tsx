@@ -20,9 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { config } from "@/data/notifications.client";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -31,18 +32,20 @@ import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),
-  provider: z.literal("discord"),
-  data: z.string(),
+  provider: z.literal("telegram"),
+  data: z.object({
+    chatId: z.string(),
+  }),
   monitors: z.array(z.number()),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-export function FormDiscord({
+export function FormTelegram({
+  monitors,
   defaultValues,
   onSubmit,
   className,
-  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
@@ -53,13 +56,19 @@ export function FormDiscord({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
-      provider: "discord",
-      data: "",
+      provider: "telegram",
+      data: {
+        chatId: "",
+      },
       monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
+  const trpc = useTRPC();
+  const sendTestMutation = useMutation(
+    trpc.notification.sendTest.mutationOptions(),
+  );
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
@@ -96,7 +105,12 @@ export function FormDiscord({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(data);
+        const promise = sendTestMutation.mutateAsync({
+          provider,
+          data: {
+            telegram: { chatId: data.chatId },
+          },
+        });
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
@@ -140,24 +154,23 @@ export function FormDiscord({
           />
           <FormField
             control={form.control}
-            name="data"
+            name="data.chatId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Webhook URL</FormLabel>
+                <FormLabel>Telegram Chat ID</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://example.com/webhook" {...field} />
+                  <Input placeholder="1234567890" {...field} />
                 </FormControl>
                 <FormMessage />
                 <FormDescription>
-                  Enter the webhook URL to your Discord channel.{" "}
+                  Enter the Telegram chat ID to send notifications to.{" "}
                   <Link
-                    href="https://docs.openstatus.dev/reference/notification/#discord"
+                    href="https://docs.openstatus.dev/reference/notification/#telegram"
                     rel="noreferrer"
                     target="_blank"
                   >
-                    Read more
+                    Learn more
                   </Link>
-                  .
                 </FormDescription>
               </FormItem>
             )}
