@@ -2,6 +2,9 @@
   "name": "@openstatus/notification-opsgenie",
   "version": "0.0.0",
   "main": "src/index.ts",
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
