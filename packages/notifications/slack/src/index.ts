@@ -1,6 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import { slackDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { DataSchema } from "./schema";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
@@ -33,7 +33,7 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = DataSchema.parse(JSON.parse(notification.data));
+  const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -94,7 +94,7 @@ export const sendRecovery = async ({
   region?: Region;
   latency?: number;
 }) => {
-  const notificationData = DataSchema.parse(JSON.parse(notification.data));
+  const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -147,7 +147,7 @@ export const sendDegraded = async ({
   region?: Region;
   latency?: number;
 }) => {
-  const notificationData = DataSchema.parse(JSON.parse(notification.data));
+  const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 

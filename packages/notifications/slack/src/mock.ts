@@ -27,6 +27,10 @@ const monitor: Monitor = {
   status: "active",
   method: "GET",
   deletedAt: null,
+  otelEndpoint: null,
+  otelHeaders: [],
+  retry: null,
+  followRedirects: null,
 };
 
 const notification: Notification = {

@@ -1,13 +1,7 @@
+import { webhookDataSchema } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-export const WebhookSchema = z.object({
-  webhook: z.object({
-    endpoint: z.string().url(),
-    headers: z
-      .array(z.object({ key: z.string(), value: z.string() }))
-      .optional(),
-  }),
-});
+export const WebhookSchema = webhookDataSchema;
 
 export const PayloadSchema = z.object({
   monitor: z.object({

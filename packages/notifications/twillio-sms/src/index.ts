@@ -1,8 +1,8 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+import { phoneDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { env } from "./env";
-import { SmsConfigurationSchema } from "./schema/config";
 
 export const sendAlert = async ({
   monitor,
@@ -21,9 +21,7 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
-  );
+  const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = new FormData();
@@ -74,9 +72,7 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
-  );
+  const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = new FormData();
@@ -120,9 +116,7 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
-  );
+  const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = new FormData();
