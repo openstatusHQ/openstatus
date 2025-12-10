@@ -8,25 +8,27 @@ LABEL \
     org.opencontainers.image.base.digest="sha256:0afb7822fac7bf9d7c1bf3b6e6c496dee6b2b64d8dfa365501a3c68e8eba94b2" \
     org.opencontainers.image.base.name="docker.io/node:24-slim"
 ENV \
-    VERCEL_AUTH_BEARER_TOKEN="test" \
-    STRIPE_SECRET_KEY="test" \
-    UPSTASH_REDIS_REST_TOKEN="test" \
-    DATABASE_AUTH_TOKEN="test" \
-    RESEND_API_KEY="test" \
-    CRON_SECRET="test" \
-    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
-    NEXT_PUBLIC_URL="http://localhost:3003" \
-    OPENPANEL_CLIENT_SECRET="test" \
-    DATABASE_URL="http://libsql:8080" \
-    UNKEY_API_ID="test" \
-    NODE_ENV="production" \
-    UPSTASH_REDIS_REST_URL="test" \
-    UNKEY_TOKEN="test" \
-    TINY_BIRD_API_KEY="test" \
     PATH="$PNPM_HOME:$PATH" \
-    PNPM_HOME="/pnpm" \
+    CRON_SECRET="test" \
+    RESEND_API_KEY="test" \
+    STRIPE_SECRET_KEY="test" \
+    TINY_BIRD_API_KEY="test" \
+    TEAM_ID_VERCEL="test" \
     PROJECT_ID_VERCEL="test" \
-    TEAM_ID_VERCEL="test"
+    SELF_HOST="true" \
+    NODE_ENV="production" \
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID="test" \
+    OPENPANEL_CLIENT_SECRET="test" \
+    NEXT_PUBLIC_URL="http://localhost:3002" \
+    UNKEY_TOKEN="test" \
+    RANDOM_YOLO="YOLO" \
+    UPSTASH_REDIS_REST_TOKEN="test" \
+    UNKEY_API_ID="test" \
+    DATABASE_URL="http://libsql:8080" \
+    UPSTASH_REDIS_REST_URL="test" \
+    VERCEL_AUTH_BEARER_TOKEN="test" \
+    PNPM_HOME="/pnpm" \
+    DATABASE_AUTH_TOKEN="test"
 WORKDIR /app
 COPY \
     --link \

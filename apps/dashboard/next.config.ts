@@ -2,7 +2,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  ...(process.env.SELF_HOST === "true" && { output: "standalone" }),
+  output: process.env.SELF_HOST === "true" ?  "standalone" : undefined,
   images: {
     remotePatterns: [
       new URL("https://openstatus.dev/**"),

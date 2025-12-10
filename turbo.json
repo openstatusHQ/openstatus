@@ -23,7 +23,8 @@
         "OPENPANEL_CLIENT_SECRET",
         "NEXT_PUBLIC_OPENPANEL_CLIENT_ID",
         "AUTH_SECRET",
-        "CRON_SECRET"
+        "CRON_SECRET",
+        "SELF_HOST"
       ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },

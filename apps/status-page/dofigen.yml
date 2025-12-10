@@ -26,6 +26,8 @@ builders:
       TINY_BIRD_API_KEY: test
       CRON_SECRET: test
       STRIPE_SECRET_KEY: test
+      SELF_HOST: "true"
+
     run:
       - corepack enable
       - pnpm install --frozen-lockfile

@@ -1,0 +1,12 @@
+name: server
+services:
+    server:
+        build:
+         context: ../..
+         dockerfile: apps/status-page/Dockerfile
+        ports:
+            - 3000:3000
+        image: status-page
+        env_file:
+            - ../../.env.docker
+        command: .
