@@ -7,6 +7,7 @@ import { FormSlack } from "@/components/forms/notifications/form-slack";
 import { FormSms } from "@/components/forms/notifications/form-sms";
 import { FormTelegram } from "@/components/forms/notifications/form-telegram";
 import { FormWebhook } from "@/components/forms/notifications/form-webhook";
+import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
 import { DiscordIcon, TelegramIcon } from "@openstatus/icons";
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
@@ -17,6 +18,7 @@ import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie"
 import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
 import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
 import { sendTest as sendTestTelegram } from "@openstatus/notification-telegram";
+import {sendTest as sendWhatsAppTest} from '@openstatus/notification-twillio-whatsapp'
 import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
@@ -112,6 +114,12 @@ export const config = {
     form: FormTelegram,
     sendTest: sendTestTelegram,
   },
+  whatsapp: {
+    icon: MessageCircle,
+    label: "WhatsApp",
+    form:FormWhatsApp,
+    sendTest: sendWhatsAppTest,
+  }
 };
 
 export type NotifierProvider = keyof typeof config;
