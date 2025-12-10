@@ -3,7 +3,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  ...(process.env.SELF_HOST === "true" && { output: "standalone" }),
+  output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
   experimental: {
     authInterrupts: true,
   },

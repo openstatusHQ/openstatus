@@ -27,6 +27,7 @@ builders:
       CRON_SECRET: test
       STRIPE_SECRET_KEY: test
       AUTH_SECRET: build-time-placeholder-min-32-chars-long
+      SELF_HOST: "true"
     run:
       - corepack enable
       - pnpm install --frozen-lockfile

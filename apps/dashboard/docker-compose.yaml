@@ -1,0 +1,12 @@
+name: server
+services:
+    server:
+        build:
+         context: ../..
+         dockerfile: apps/dashboard/Dockerfile
+        ports:
+            - 3000:3000
+        image: dashboard
+        env_file:
+            - ../../.env.docker
+        command: .
