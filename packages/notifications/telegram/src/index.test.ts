@@ -185,7 +185,7 @@ describe("Telegram Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  test("sendMessage returns undefined when TELEGRAM_BOT_TOKEN is not set", async () => {
+  test("fetch not called when TELEGRAM_BOT_TOKEN is not set", async () => {
     process.env.TELEGRAM_BOT_TOKEN = undefined;
 
     const monitor = createMockMonitor();

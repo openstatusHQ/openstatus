@@ -2,6 +2,9 @@
   "name": "@openstatus/notification-ntfy",
   "version": "1.0.0",
   "main": "src/index.ts",
+  "scripts": {
+    "test": "bun test"
+  },
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "zod": "3.25.76"

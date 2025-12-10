@@ -1,10 +1,10 @@
 {
   "name": "@openstatus/notification-pagerduty",
   "version": "0.0.0",
+  "main": "src/index.ts",
   "scripts": {
     "test": "bun test"
   },
-  "main": "src/index.ts",
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
