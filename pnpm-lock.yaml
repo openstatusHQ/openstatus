@@ -1094,6 +1094,9 @@ importers:
       '@openstatus/notification-twillio-sms':
         specifier: workspace:*
         version: link:../../packages/notifications/twillio-sms
+      '@openstatus/notification-twillio-whatsapp':
+        specifier: workspace:*
+        version: link:../../packages/notifications/twillio-whatsapp
       '@openstatus/notification-webhook':
         specifier: workspace:*
         version: link:../../packages/notifications/webhook

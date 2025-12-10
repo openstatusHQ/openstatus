@@ -53,6 +53,7 @@ export const allPlans: Record<
       "audit-log": false,
       regions: [...FREE_FLY_REGIONS],
       "private-locations": false,
+      whatsapp: false,
     },
   },
   starter: {
@@ -91,6 +92,7 @@ export const allPlans: Record<
       "audit-log": false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": false,
+      whatsapp: true,
     },
   },
   team: {
@@ -129,6 +131,7 @@ export const allPlans: Record<
       "audit-log": true,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": true,
+      whatsapp: true,
     },
   },
 };
