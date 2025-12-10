@@ -219,6 +219,7 @@ export function Client() {
                       ? [{ monitorId: createMonitorMutation.data.id, order: 0 }]
                       : [],
                     workspaceId: workspace.id,
+                    legacyPage: false,
                   });
                 }}
               />
