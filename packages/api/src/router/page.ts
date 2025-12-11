@@ -32,15 +32,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
-import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 if (process.env.NODE_ENV === "test") {
   require("../test/preload");
 }
-
-const _redis = Redis.fromEnv();
 
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
