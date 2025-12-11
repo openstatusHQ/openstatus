@@ -70,7 +70,7 @@ export function DataTable() {
               <div className="flex justify-end">
                 <QuickActions
                   deleteAction={{
-                    title: "Invitation",
+                    title: item.email,
                     submitAction: async () =>
                       deleteInvitationMutation.mutateAsync({ id: item.id }),
                   }}
