@@ -227,7 +227,7 @@ export const statusReportRouter = createTRPCRouter({
     .query(async (opts) => {
       const selectPublicStatusReportSchemaWithRelation =
         selectStatusReportSchema.extend({
-          status: statusReportStatusSchema.default("investigating"), // TODO: remove!
+          status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
           monitorsToStatusReports: z
             .array(
               z.object({
@@ -236,9 +236,9 @@ export const statusReportRouter = createTRPCRouter({
                 monitor: selectMonitorSchema,
               }),
             )
-            .default([]),
+            .prefault([]),
           statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-          date: z.date().default(new Date()),
+          date: z.date().prefault(new Date()),
         });
 
       const data = await opts.ctx.db.query.statusReport.findFirst({
@@ -284,7 +284,7 @@ export const statusReportRouter = createTRPCRouter({
             monitor: selectMonitorSchema,
           }),
         )
-        .default([]),
+        .prefault([]),
       statusReportUpdates: z.array(selectStatusReportUpdateSchema),
     });
 
@@ -308,7 +308,7 @@ export const statusReportRouter = createTRPCRouter({
     .query(async (opts) => {
       // FIXME: can we get rid of that?
       const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
-        status: statusReportStatusSchema.default("investigating"), // TODO: remove!
+        status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
         monitorsToStatusReports: z
           .array(
             z.object({
@@ -317,7 +317,7 @@ export const statusReportRouter = createTRPCRouter({
               monitor: selectMonitorSchema,
             }),
           )
-          .default([]),
+          .prefault([]),
         statusReportUpdates: z.array(selectStatusReportUpdateSchema),
       });
 
@@ -412,8 +412,8 @@ export const statusReportRouter = createTRPCRouter({
 
       return selectStatusReportSchema
         .extend({
-          updates: z.array(selectStatusReportUpdateSchema).default([]),
-          monitors: z.array(selectMonitorSchema).default([]),
+          updates: z.array(selectStatusReportUpdateSchema).prefault([]),
+          monitors: z.array(selectMonitorSchema).prefault([]),
           page: selectPageSchema,
         })
         .array()

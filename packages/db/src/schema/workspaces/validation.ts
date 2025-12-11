@@ -23,14 +23,14 @@ export const selectWorkspaceSchema = createSelectSchema(workspace)
     plan: z
       .enum(workspacePlans)
       .nullable()
-      .default("free")
+      .prefault("free")
       .transform((val) => val ?? "free"),
     // REMINDER: workspace usage
     usage: z
       .object({
-        monitors: z.number().default(0),
-        notifications: z.number().default(0),
-        pages: z.number().default(0),
+        monitors: z.number().prefault(0),
+        notifications: z.number().prefault(0),
+        pages: z.number().prefault(0),
         // checks: z.number().default(0),
       })
       .nullish(),

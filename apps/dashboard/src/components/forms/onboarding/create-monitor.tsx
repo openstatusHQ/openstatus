@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const schema = z.object({
-  url: z.string().url(),
+  url: z.url(),
 });
 
 export type FormValues = z.infer<typeof schema>;
