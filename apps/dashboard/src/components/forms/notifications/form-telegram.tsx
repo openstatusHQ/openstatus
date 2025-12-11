@@ -109,7 +109,7 @@ export function FormTelegram({
           provider,
           data: {
             telegram: { chatId: data.chatId },
-          },
+          } as unknown as Record<string, string>,
         });
         toast.promise(promise, {
           loading: "Sending test...",

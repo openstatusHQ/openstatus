@@ -71,7 +71,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           await updateNotifierMutation.mutateAsync({
             id: props.row.original.id,
             name: values.name,
-            data: { [values.provider]: values.data },
+            data: { [values.provider]: values.data } as Record<string, string>,
             monitors: values.monitors,
           });
         }}
