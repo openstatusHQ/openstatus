@@ -1,11 +1,12 @@
 export const notificationProvider = [
-  "email",
   "discord",
+  "email",
   "ntfy",
   "pagerduty",
   "opsgenie",
   "slack",
   "sms",
-  "webhook",
   "telegram",
+  "webhook",
+  "whatsapp",
 ] as const;

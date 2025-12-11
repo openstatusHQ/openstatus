@@ -45,6 +45,11 @@ import {
   sendRecovery as sendSmsRecovery,
 } from "@openstatus/notification-twillio-sms";
 import {
+  sendAlert as sendWhatsappAlert,
+  sendDegraded as sendWhatsappDegraded,
+  sendRecovery as sendWhatsappRecovery,
+} from "@openstatus/notification-twillio-whatsapp";
+import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,
   sendRecovery as sendWebhookRecovery,
@@ -116,6 +121,11 @@ export const providerToFunction = {
     sendAlert: sendWebhookAlert,
     sendRecovery: sendWebhookRecovery,
     sendDegraded: sendWebhookDegraded,
+  },
+  whatsapp: {
+    sendAlert: sendWhatsappAlert,
+    sendRecovery: sendWhatsappRecovery,
+    sendDegraded: sendWhatsappDegraded,
   },
   telegram: {
     sendAlert: sendTelegramAlert,

@@ -21,6 +21,7 @@
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-telegram": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",
+    "@openstatus/notification-twillio-whatsapp": "workspace:*",
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",

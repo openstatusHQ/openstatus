@@ -79,7 +79,7 @@ export const notificationsToMonitorsRelation = relations(
   }),
 );
 
-export const notificationRelations = relations(
+export const notificatiwehonRelations = relations(
   notification,
   ({ one, many }) => ({
     workspace: one(workspace, {
