@@ -66,7 +66,7 @@
     "feed": "4.2.2",
     "lucide-react": "0.525.0",
     "nanoid": "5.0.7",
-    "next": "16.0.7",
+    "next": "16.0.9",
     "next-auth": "5.0.0-beta.29",
     "next-mdx-remote": "5.0.0",
     "next-plausible": "3.12.4",
