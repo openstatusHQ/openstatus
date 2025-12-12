@@ -47,8 +47,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Delete",
-          confirmationValue: "delete private location",
+          confirmationValue: props.row.original.name ?? "private location",
           submitAction: async () => {
             await deletePrivateLocationMutation.mutateAsync({
               id: props.row.original.id,

@@ -42,8 +42,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Monitor",
-          confirmationValue: "delete monitor",
+          confirmationValue: row.original.name ?? "monitor",
           submitAction: async () => {
             await deleteMonitorMutation.mutateAsync({
               id: row.original.id,
