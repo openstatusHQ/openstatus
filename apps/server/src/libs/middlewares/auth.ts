@@ -35,10 +35,19 @@ export async function authMiddleware(
     });
   }
 
+  const ownerId = Number.parseInt(result.ownerId);
+
+  if (Number.isNaN(ownerId)) {
+    throw new OpenStatusApiError({
+      code: "UNAUTHORIZED",
+      message: "API Key is Not a Number",
+    });
+  }
+
   const _workspace = await db
     .select()
     .from(workspace)
-    .where(eq(workspace.id, Number.parseInt(result.ownerId)))
+    .where(eq(workspace.id, ownerId))
     .get();
 
   if (!_workspace) {
@@ -77,9 +86,10 @@ async function validateKey(key: string): Promise<{
       const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
       const res = await keysVerifyKey(unkey, { key });
       if (!res.ok) {
+        console.error("Unkey Error", res.error?.message);
         return {
           result: { valid: false, ownerId: undefined },
-          error: { message: res.error?.message ?? "Invalid API verification" },
+          error: { message: "Invalid API verification" },
         };
       }
       return {
