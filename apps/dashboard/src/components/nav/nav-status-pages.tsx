@@ -160,8 +160,7 @@ export function NavStatusPages() {
                 <QuickActions
                   actions={actions}
                   deleteAction={{
-                    title: item.title,
-                    confirmationValue: "delete status page",
+                    confirmationValue: item.title ?? "status page",
                     submitAction: async () => {
                       await deleteStatusPage.mutateAsync({ id: item.id });
                       if (pathname.includes(`/status-pages/${item.id}`)) {
