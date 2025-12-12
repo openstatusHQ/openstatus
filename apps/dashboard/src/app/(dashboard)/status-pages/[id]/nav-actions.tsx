@@ -72,7 +72,7 @@ export function NavActions() {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Status Page",
+          title: statusPage.title,
           confirmationValue: "delete status page",
           submitAction: async () => {
             await deleteStatusPageMutation.mutateAsync({

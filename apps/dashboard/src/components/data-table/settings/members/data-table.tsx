@@ -52,7 +52,7 @@ export function DataTable() {
               <div className="flex justify-end">
                 <QuickActions
                   deleteAction={{
-                    title: "Member",
+                    title: item.user?.email ?? "",
                     confirmationValue: "delete member",
                     // FIXME: when deleting myself, throws an error, should have been caught by the toast.error
                     submitAction: async () =>

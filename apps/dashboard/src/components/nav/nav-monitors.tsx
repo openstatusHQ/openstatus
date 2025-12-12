@@ -188,7 +188,7 @@ export function NavMonitors() {
                 <QuickActions
                   actions={actions}
                   deleteAction={{
-                    title: "Monitor",
+                    title: item.name,
                     confirmationValue: "delete monitor",
                     submitAction: async () => {
                       await deleteMonitorMutation.mutateAsync({

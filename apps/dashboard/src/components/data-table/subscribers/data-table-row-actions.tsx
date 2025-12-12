@@ -30,7 +30,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     <QuickActions
       actions={[]}
       deleteAction={{
-        title: "Subscribers",
+        title: row.original.email,
         submitAction: async () => {
           await deleteAction.mutateAsync({
             id: row.original.id,

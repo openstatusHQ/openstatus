@@ -109,7 +109,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Incident",
+          title: row.original.title,
           confirmationValue: "delete incident",
           submitAction: async () => {
             await deleteIncidentMutation.mutateAsync({
