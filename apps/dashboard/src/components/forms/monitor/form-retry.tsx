@@ -32,20 +32,25 @@ const RETRY_MAX = 10;
 export const RETRY_DEFAULT = 3;
 
 const schema = z.object({
-  retry: z.coerce.number().min(RETRY_MIN).max(RETRY_MAX).default(RETRY_DEFAULT),
+  retry: z.coerce
+    .number()
+    .min(RETRY_MIN)
+    .max(RETRY_MAX)
+    .prefault(RETRY_DEFAULT),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormInput = z.input<typeof schema>;
+type FormOutput = z.output<typeof schema>;
 
 export function FormRetry({
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormValues;
-  onSubmit: (values: FormValues) => Promise<void>;
+  defaultValues?: FormInput;
+  onSubmit: (values: FormOutput) => Promise<void>;
 }) {
-  const form = useForm<FormValues>({
+  const form = useForm<FormInput>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       retry: RETRY_DEFAULT,
@@ -53,12 +58,12 @@ export function FormRetry({
   });
   const [isPending, startTransition] = useTransition();
 
-  function submitAction(values: FormValues) {
+  function submitAction(values: FormInput) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values);
+        const promise = onSubmit(values as FormOutput);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",
@@ -94,7 +99,7 @@ export function FormRetry({
                       max={RETRY_MAX}
                       step={1}
                       type="number"
-                      {...field}
+                      {...(field as React.ComponentProps<"input">)}
                     />
                   </FormControl>
                   <FormMessage />

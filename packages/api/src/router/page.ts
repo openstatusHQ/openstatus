@@ -32,15 +32,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
-import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 if (process.env.NODE_ENV === "test") {
   require("../test/preload");
 }
-
-const _redis = Redis.fromEnv();
 
 // Helper functions to reuse Vercel API logic
 async function addDomainToVercel(domain: string) {
@@ -502,14 +499,14 @@ export const pageRouter = createTRPCRouter({
           monitors: z
             .array(
               selectMonitorSchema.extend({
-                order: z.number().default(0),
-                groupOrder: z.number().default(0),
+                order: z.number().prefault(0),
+                groupOrder: z.number().prefault(0),
                 groupId: z.number().nullable(),
               }),
             )
-            .default([]),
-          monitorGroups: z.array(selectMonitorGroupSchema).default([]),
-          maintenances: z.array(selectMaintenanceSchema).default([]),
+            .prefault([]),
+          monitorGroups: z.array(selectMonitorGroupSchema).prefault([]),
+          maintenances: z.array(selectMaintenanceSchema).prefault([]),
         })
         .parse({
           ...data,

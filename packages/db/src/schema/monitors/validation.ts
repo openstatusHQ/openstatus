@@ -37,23 +37,23 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).prefault([]),
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
-  periodicity: monitorPeriodicitySchema.default("10m"),
-  status: monitorStatusSchema.default("active"),
-  jobType: monitorJobTypesSchema.default("http"),
-  timeout: z.number().default(45),
-  followRedirects: z.boolean().default(true),
-  retry: z.number().default(3),
-  regions: regionsToArraySchema.default([]),
+  periodicity: monitorPeriodicitySchema.prefault("10m"),
+  status: monitorStatusSchema.prefault("active"),
+  jobType: monitorJobTypesSchema.prefault("http"),
+  timeout: z.number().prefault(45),
+  followRedirects: z.boolean().prefault(true),
+  retry: z.number().prefault(3),
+  regions: regionsToArraySchema.prefault([]),
 }).extend({
-  headers: headersToArraySchema.default([]),
-  otelHeaders: headersToArraySchema.default([]),
-  body: bodyToStringSchema.default(""),
+  headers: headersToArraySchema.prefault([]),
+  otelHeaders: headersToArraySchema.prefault([]),
+  body: bodyToStringSchema.prefault(""),
   // for tcp monitors the method is not needed
-  method: monitorMethodsSchema.default("GET"),
+  method: monitorMethodsSchema.prefault("GET"),
 });
 
 const headersSchema = z
@@ -65,21 +65,21 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
     .string()
     .min(1, "Name must be at least 1 character long")
     .max(255, "Name must be at most 255 characters long"),
-  periodicity: monitorPeriodicitySchema.default("10m"),
-  status: monitorStatusSchema.default("active"),
-  regions: z.array(monitorRegionSchema).default([]).optional(),
-  headers: headersSchema.default([]),
-  otelHeaders: headersSchema.default([]),
+  periodicity: monitorPeriodicitySchema.prefault("10m"),
+  status: monitorStatusSchema.prefault("active"),
+  regions: z.array(monitorRegionSchema).prefault([]).optional(),
+  headers: headersSchema.prefault([]),
+  otelHeaders: headersSchema.prefault([]),
 }).extend({
-  method: monitorMethodsSchema.default("GET"),
-  notifications: z.array(z.number()).optional().default([]),
-  pages: z.array(z.number()).optional().default([]),
-  body: z.string().default("").optional(),
-  tags: z.array(z.number()).optional().default([]),
+  method: monitorMethodsSchema.prefault("GET"),
+  notifications: z.array(z.number()).optional().prefault([]),
+  pages: z.array(z.number()).optional().prefault([]),
+  body: z.string().prefault("").optional(),
+  tags: z.array(z.number()).optional().prefault([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
-  timeout: z.coerce.number().gte(0).lte(60000).default(45000),
+  timeout: z.coerce.number().gte(0).lte(60000).prefault(45000),
   degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
 });
 

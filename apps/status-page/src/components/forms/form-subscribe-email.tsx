@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 
 type FormValues = z.infer<typeof schema>;
