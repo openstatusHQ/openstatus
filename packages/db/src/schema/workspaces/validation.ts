@@ -15,10 +15,34 @@ export const workspaceRoleSchema = z.enum(workspaceRole);
 export const selectWorkspaceSchema = createSelectSchema(workspace)
   .extend({
     limits: z.string().transform((val) => {
-      const parsed = JSON.parse(val);
-      const result = limitsSchema.partial().safeParse(parsed);
-      if (result.error) return {};
-      return result.data;
+      try {
+        const parsed = JSON.parse(val);
+
+        // Only validate properties that are actually present in the parsed object
+        // This avoids triggering .prefault() for missing properties
+        const validated: Record<string, unknown> = {};
+        const limitsShape = limitsSchema.shape;
+
+        for (const key in parsed) {
+          if (key in limitsShape) {
+            // Validate only the properties that exist in the parsed object
+            const propertySchema = limitsShape[key as keyof typeof limitsShape];
+            const result = propertySchema.safeParse(parsed[key]);
+            if (result.success) {
+              validated[key] = result.data;
+            } else {
+              console.warn(`Invalid value for limits.${key}:`, result.error);
+              // Skip invalid properties instead of failing entirely
+            }
+          }
+          // Unknown properties are ignored
+        }
+
+        return validated;
+      } catch (error) {
+        console.error("Error parsing limits:", error);
+        return {};
+      }
     }),
     plan: z
       .enum(workspacePlans)

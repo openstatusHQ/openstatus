@@ -1141,7 +1141,7 @@ export const monitorRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         timeout: z.number(),
-        degradedAfter: z.number().optional(),
+        degradedAfter: z.number().nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
