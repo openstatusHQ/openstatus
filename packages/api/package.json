@@ -26,7 +26,7 @@
     "date-fns": "2.30.0",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
-    "next": "16.0.9",
+    "next": "16.0.10",
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "2.2.2",
