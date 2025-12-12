@@ -1,5 +1,5 @@
-import { UnkeyCore } from "@unkey/api/src/core";
-import { keysVerifyKey } from "@unkey/api/src/funcs/keysVerifyKey";
+import { UnkeyCore } from "@unkey/api/core";
+import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
 
 import { env } from "@/env";
@@ -19,17 +19,16 @@ export async function authMiddleware(
       message: "Missing 'x-openstatus-key' header",
     });
 
-  const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
-  const res = await keysVerifyKey(unkey, { key });
+  const { error, result } = await validateKey(key);
 
-  if (!res.ok) {
+  if (error) {
     throw new OpenStatusApiError({
-      code: "INTERNAL_SERVER_ERROR",
-      message: res.error?.message ?? "Invalid API verification",
+      code: "UNAUTHORIZED",
+      message: error.message,
     });
   }
 
-  if (!res.value.data.valid || !res.value.data.identity?.externalId) {
+  if (!result.valid || !result.ownerId) {
     throw new OpenStatusApiError({
       code: "UNAUTHORIZED",
       message: "Invalid API Key",
@@ -39,9 +38,7 @@ export async function authMiddleware(
   const _workspace = await db
     .select()
     .from(workspace)
-    .where(
-      eq(workspace.id, Number.parseInt(res.value.data.identity.externalId)),
-    )
+    .where(eq(workspace.id, Number.parseInt(result.ownerId)))
     .get();
 
   if (!_workspace) {
