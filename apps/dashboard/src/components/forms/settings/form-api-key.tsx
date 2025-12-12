@@ -128,8 +128,7 @@ export function FormApiKey() {
           </Button>
         ) : (
           <FormAlertDialog
-            title="API Key"
-            confirmationValue="delete api key"
+            confirmationValue="API Key"
             submitAction={async () => {
               await revokeApiKeyMutation.mutateAsync({
                 keyId: apiKey.id,

@@ -40,8 +40,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     <QuickActions
       actions={actions}
       deleteAction={{
-        title: row.original.title,
-        confirmationValue: "delete status page",
+        confirmationValue: row.original.title ?? "status page",
         submitAction: async () => {
           await deleteStatusPageMutation.mutateAsync({
             id: row.original.id,

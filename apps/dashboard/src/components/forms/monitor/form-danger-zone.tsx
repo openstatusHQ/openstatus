@@ -23,11 +23,7 @@ export function FormDangerZone({
         <FormCardDescription>This action cannot be undone.</FormCardDescription>
       </FormCardHeader>
       <FormCardFooter variant="destructive" className="justify-end">
-        <FormAlertDialog
-          title={title}
-          confirmationValue="delete monitor"
-          submitAction={onSubmit}
-        />
+        <FormAlertDialog confirmationValue={title} submitAction={onSubmit} />
       </FormCardFooter>
     </FormCard>
   );

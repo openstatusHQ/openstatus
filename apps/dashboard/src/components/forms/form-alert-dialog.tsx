@@ -13,25 +13,26 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { isTRPCClientError } from "@trpc/client";
+import { Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface FormAlertDialogProps {
-  title: string;
   confirmationValue: string;
   submitAction: () => Promise<void>;
   children?: React.ReactNode;
 }
 
 export function FormAlertDialog({
-  title,
   confirmationValue,
   submitAction,
   children,
 }: FormAlertDialogProps) {
   const [value, setValue] = useState("");
   const [isPending, startTransition] = useTransition();
+  const { copy, isCopied } = useCopyToClipboard();
   const [open, setOpen] = useState(false);
 
   const handleDelete = async () => {
@@ -68,17 +69,26 @@ export function FormAlertDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you sure about delete `{title}`?
+            Are you sure about delete `{confirmationValue}`?
           </AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the item.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <form id="form-alert-dialog" className="space-y-0.5">
-          <p className="text-muted-foreground text-xs">
-            Please write &apos;
-            <span className="font-semibold">{confirmationValue}</span>
-            &apos; to confirm
+        <form id="form-alert-dialog" className="space-y-1.5">
+          <p className="text-muted-foreground text-sm">
+            Type{" "}
+            <Button
+              variant="secondary"
+              size="sm"
+              type="button"
+              className="font-normal [&_svg]:size-3"
+              onClick={() => copy(confirmationValue, { withToast: false })}
+            >
+              {confirmationValue}
+              {isCopied ? <Check /> : <Copy />}
+            </Button>{" "}
+            to confirm
           </p>
           <Input value={value} onChange={(e) => setValue(e.target.value)} />
         </form>

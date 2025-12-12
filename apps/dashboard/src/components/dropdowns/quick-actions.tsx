@@ -3,7 +3,13 @@
 import type * as React from "react";
 import { useState, useTransition } from "react";
 
-import { type LucideIcon, MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  type LucideIcon,
+  MoreHorizontal,
+  Trash2,
+} from "lucide-react";
 
 import {
   AlertDialog,
@@ -27,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { isTRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
@@ -42,11 +49,10 @@ interface QuickActionsProps extends React.ComponentProps<typeof Button> {
     onClick?: () => Promise<void> | void;
   }[];
   deleteAction?: {
-    title: string;
     /**
-     * If set, an input field will require the user input to validate deletion
+     * The value that must be typed to confirm deletion. Also used in the dialog title.
      */
-    confirmationValue?: string;
+    confirmationValue: string;
     submitAction?: () => Promise<void>;
   };
 }
@@ -63,6 +69,7 @@ export function QuickActions({
   const [value, setValue] = useState("");
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const { copy, isCopied } = useCopyToClipboard();
 
   const handleDelete = async () => {
     startTransition(async () => {
@@ -147,25 +154,36 @@ export function QuickActions({
       >
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you sure about deleting `{deleteAction?.title}`?
+            Are you sure about deleting `{deleteAction?.confirmationValue}`?
           </AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently remove the entry
             from the database.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {deleteAction?.confirmationValue ? (
-          <form id="form-alert-dialog" className="space-y-0.5">
-            <p className="text-muted-foreground text-xs">
-              Please write &apos;
-              <span className="font-semibold">
-                {deleteAction?.confirmationValue}
-              </span>
-              &apos; to confirm
+        {deleteAction?.confirmationValue && (
+          <form id="form-alert-dialog" className="space-y-1.5">
+            <p className="text-muted-foreground text-sm">
+              Type{" "}
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                className="font-normal [&_svg]:size-3"
+                onClick={() =>
+                  copy(deleteAction.confirmationValue || "", {
+                    withToast: false,
+                  })
+                }
+              >
+                {deleteAction.confirmationValue}
+                {isCopied ? <Check /> : <Copy />}
+              </Button>{" "}
+              to confirm
             </p>
             <Input value={value} onChange={(e) => setValue(e.target.value)} />
           </form>
-        ) : null}
+        )}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={(e) => e.stopPropagation()}>
             Cancel

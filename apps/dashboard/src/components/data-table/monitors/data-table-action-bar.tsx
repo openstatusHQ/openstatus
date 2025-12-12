@@ -2,7 +2,7 @@
 
 import { SelectTrigger } from "@radix-ui/react-select";
 import type { Table } from "@tanstack/react-table";
-import { CheckCircle2, Trash2 } from "lucide-react";
+import { Check, CheckCircle2, Copy, Trash2 } from "lucide-react";
 import * as React from "react";
 
 import {
@@ -34,7 +34,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 
@@ -53,6 +55,7 @@ export function MonitorDataTableActionBar({
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const [value, setValue] = React.useState("");
+  const { copy, isCopied } = useCopyToClipboard();
   const rows = table.getFilteredSelectedRowModel().rows;
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -82,8 +85,8 @@ export function MonitorDataTableActionBar({
   );
 
   const confirmationValue = React.useMemo(
-    () => `delete monitor${rows.length === 1 ? "" : "s"}`,
-    [rows.length],
+    () => rows.map((row) => row.original.name).join(", "),
+    [rows],
   );
 
   const handleDelete = async () => {
@@ -183,11 +186,20 @@ export function MonitorDataTableActionBar({
                 selected monitor(s) from the database.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <form id="form-alert-dialog" className="space-y-0.5">
-              <p className="text-muted-foreground text-xs">
-                Please write &apos;
-                <span className="font-semibold">{confirmationValue}</span>
-                &apos; to confirm
+            <form id="form-alert-dialog" className="space-y-1.5">
+              <p className="text-muted-foreground text-sm">
+                Type{" "}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  className="font-normal [&_svg]:size-3"
+                  onClick={() => copy(confirmationValue, { withToast: false })}
+                >
+                  {confirmationValue}
+                  {isCopied ? <Check /> : <Copy />}
+                </Button>{" "}
+                to confirm
               </p>
               <Input value={value} onChange={(e) => setValue(e.target.value)} />
             </form>
