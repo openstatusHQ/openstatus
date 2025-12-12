@@ -51,8 +51,8 @@ export function FormApiKey() {
   const createApiKeyMutation = useMutation(
     trpc.apiKey.create.mutationOptions({
       onSuccess: (data) => {
-        if (data.result) {
-          setResult(data.result);
+        if (data) {
+          setResult(data);
         } else {
           throw new Error("Failed to create API key");
         }
@@ -131,7 +131,7 @@ export function FormApiKey() {
             confirmationValue="API Key"
             submitAction={async () => {
               await revokeApiKeyMutation.mutateAsync({
-                keyId: apiKey.id,
+                keyId: apiKey.keyId,
               });
             }}
           />
