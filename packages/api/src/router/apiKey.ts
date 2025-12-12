@@ -49,7 +49,7 @@ export const apiKeyRouter = createTRPCRouter({
         });
       }
 
-      return res.value;
+      return res.value.data;
     }),
 
   revoke: protectedProcedure
@@ -85,6 +85,6 @@ export const apiKeyRouter = createTRPCRouter({
       });
     }
 
-    return res.value;
+    return res.value.data[0];
   }),
 });
