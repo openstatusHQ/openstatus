@@ -218,6 +218,9 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 11.4.4
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.2))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.7.2))(typescript@5.7.2))(@trpc/server@11.4.4(typescript@5.7.2))(react-dom@19.2.2(react@19.2.2))(react@19.2.2)(typescript@5.7.2)
+      '@unkey/api':
+        specifier: 2.2.0
+        version: 2.2.0
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -477,8 +480,8 @@ importers:
         specifier: 0.7.1
         version: 0.7.1(typescript@5.7.2)(zod@3.25.76)
       '@unkey/api':
-        specifier: 0.26.1
-        version: 0.26.1
+        specifier: 2.2.0
+        version: 2.2.0
       '@upstash/qstash':
         specifier: 2.6.2
         version: 2.6.2
@@ -895,9 +898,6 @@ importers:
       '@trpc/server':
         specifier: 11.4.4
         version: 11.4.4(typescript@5.7.2)
-      '@unkey/api':
-        specifier: 0.26.1
-        version: 0.26.1
       '@upstash/qstash':
         specifier: 2.6.2
         version: 2.6.2
@@ -1196,8 +1196,8 @@ importers:
         specifier: 11.4.4
         version: 11.4.4(typescript@5.7.2)
       '@unkey/api':
-        specifier: 0.26.1
-        version: 0.26.1
+        specifier: 2.2.0
+        version: 2.2.0
       '@vercel/blob':
         specifier: 0.23.3
         version: 0.23.3
@@ -6822,14 +6822,8 @@ packages:
   '@unhead/schema@1.11.20':
     resolution: {integrity: sha512-0zWykKAaJdm+/Y7yi/Yds20PrUK7XabLe9c3IRcjnwYmSWY6z0Cr19VIs3ozCj8P+GhR+/TI2mwtGlueCEYouA==}
 
-  '@unkey/api@0.26.1':
-    resolution: {integrity: sha512-WSYOeZjGbFkO9yA4UsNS6NjprUF9OAYIlBHN/7iRUaFBq+PL502Qe10xNwiwoppYhW6PnrCFobW92vrkjHTcjA==}
-
-  '@unkey/error@0.2.0':
-    resolution: {integrity: sha512-DFGb4A7SrusZPP0FYuRIF0CO+Gi4etLUAEJ6EKc+TKYmscL0nEJ2Pr38FyX9MvjI4Wx5l35Wc9KsBjMm9Ybh7w==}
-
-  '@unkey/rbac@0.3.1':
-    resolution: {integrity: sha512-Hj+52XRIlBBl3/qOUq9K71Fwy3PWExBQOpOClVYHdrcmbgqNL6L4EdW/BzliLhqPCdwZTPVSJTnZ3Hw4ZYixsQ==}
+  '@unkey/api@2.2.0':
+    resolution: {integrity: sha512-XoFWPbZnyos04u+qQTAT+lHymRTNidMK64QywZaWNKbJmorPDd/jZlyKZvL+LNxxBlFXcHOHFtPHPk90wWmcvg==}
 
   '@upstash/core-analytics@0.0.6':
     resolution: {integrity: sha512-cpPSR0XJAJs4Ddz9nq3tINlPS5aLfWVCqhhtHnXt4p7qr5+/Znlt1Es736poB/9rnl1hAHrOsOvVj46NEXcVqA==}
@@ -17581,17 +17575,8 @@ snapshots:
       hookable: 5.5.3
       zhead: 2.2.4
 
-  '@unkey/api@0.26.1':
+  '@unkey/api@2.2.0':
     dependencies:
-      '@unkey/rbac': 0.3.1
-
-  '@unkey/error@0.2.0':
-    dependencies:
-      zod: 3.25.76
-
-  '@unkey/rbac@0.3.1':
-    dependencies:
-      '@unkey/error': 0.2.0
       zod: 3.25.76
 
   '@upstash/core-analytics@0.0.6':

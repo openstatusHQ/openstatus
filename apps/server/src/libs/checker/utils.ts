@@ -33,6 +33,8 @@ export function getCheckerPayload(
               headers: transformHeaders(monitor.otelHeaders),
             }
           : undefined,
+        retry: monitor.retry ?? 0,
+        followRedirects: monitor.followRedirects ?? false,
       };
     case "tcp":
       return {
@@ -51,6 +53,8 @@ export function getCheckerPayload(
               headers: transformHeaders(monitor.otelHeaders),
             }
           : undefined,
+        retry: monitor.retry ?? 0,
+        followRedirects: monitor.followRedirects ?? false,
       };
     default:
       throw new OpenStatusApiError({
