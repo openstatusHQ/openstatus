@@ -55,6 +55,9 @@ export async function setupAnalytics(props: IdentifyProps) {
       const { name, ...rest } = opts;
       return op.track(name, rest);
     },
+    revenue: (amount: number) => {
+      return op.revenue(amount);
+    },
   };
 }
 
@@ -68,6 +71,12 @@ async function noop() {
     ): Promise<unknown> => {
       return new Promise((resolve) => {
         console.log(`>>> Track Noop Event: ${opts.name}`);
+        resolve(null);
+      });
+    },
+    revenue: (amount: number) => {
+      return new Promise((resolve) => {
+        console.log(`>>> Track Revenue  amount: ${amount}`);
         resolve(null);
       });
     },
