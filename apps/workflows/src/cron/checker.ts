@@ -2,7 +2,7 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { z } from "zod";
 
-import { and, eq, db, gte, lte, notInArray } from "@openstatus/db";
+import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
