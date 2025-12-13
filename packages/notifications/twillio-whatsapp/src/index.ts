@@ -150,7 +150,7 @@ export const sendTest = async ({ phoneNumber }: { phoneNumber: string }) => {
   const contentVariables = JSON.stringify({ url: "https://openstat.us" });
   const body = new FormData();
   body.set("To", `whatsapp:${phoneNumber}`);
-  body.set("ContentSid", "HX8282106bfaecb7939e69f9c5564babe5");
+  body.set("ContentSid", "HX36ac9074ebda4376c7d6ddd1690b5291");
   body.set("From", "whatsapp:+14807252613");
   body.set("ContentVariables", contentVariables);
 
