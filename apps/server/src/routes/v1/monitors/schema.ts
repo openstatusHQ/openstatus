@@ -151,12 +151,12 @@ export const MonitorSchema = z
       example: "documenso-web",
       description: "The name of the monitor",
     }),
-    externalName: z.string().optional().openapi({
+    externalName: z.string().nullish().openapi({
       example: "Documenso",
       description:
         "The external name of the monitor, used to display on the status page or in the external notifications",
     }),
-    description: z.string().optional().openapi({
+    description: z.string().nullish().openapi({
       example: "Documenso website",
       description: "The description of your monitor",
     }),
