@@ -93,10 +93,7 @@ const schema = z.object({
   saveCheck: z.boolean().optional().prefault(false),
 });
 
-type FormInput = z.input<typeof schema>;
-type FormOutput = z.output<typeof schema>;
-
-// type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
@@ -104,12 +101,12 @@ export function FormGeneral({
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormInput;
-  onSubmit: (values: FormOutput) => Promise<void>;
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
-  const form = useForm<FormInput>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       active: true,
@@ -139,7 +136,7 @@ export function FormGeneral({
     }
   }, [watchType, defaultValues, form]);
 
-  function submitAction(values: FormInput) {
+  function submitAction(values: FormValues) {
     console.log("submitAction", values);
     if (isPending || disabled) return;
 
@@ -192,7 +189,7 @@ export function FormGeneral({
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values as FormOutput);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",
@@ -545,7 +542,8 @@ export function FormGeneral({
                                   <Input
                                     placeholder="Header key"
                                     className="w-full"
-                                    {...(field as React.ComponentProps<"input">)}
+                                    {...field}
+                                    value={field.value as string}
                                   />
                                   <FormMessage />
                                 </FormItem>
@@ -830,7 +828,8 @@ export function FormGeneral({
                                   <Input
                                     placeholder="Header key"
                                     className="w-full"
-                                    {...(field as React.ComponentProps<"input">)}
+                                    {...field}
+                                    value={field.value as string}
                                   />
                                   <FormMessage />
                                 </FormItem>

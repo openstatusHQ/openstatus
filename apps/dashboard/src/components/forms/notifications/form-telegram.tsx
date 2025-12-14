@@ -109,12 +109,15 @@ export function FormTelegram({
           provider,
           data: {
             telegram: { chatId: data.chatId },
-          } as unknown as Record<string, string>,
+          },
         });
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
           error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
             if (error instanceof Error) {
               return error.message;
             }

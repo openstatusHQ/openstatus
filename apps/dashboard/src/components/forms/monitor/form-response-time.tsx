@@ -30,22 +30,21 @@ const DEGRADED = 30_000;
 const TIMEOUT = 45_000;
 
 const schema = z.object({
-  degradedAfter: z.coerce.number().optional(),
-  timeout: z.coerce.number(),
+  degradedAfter: z.coerce.number<number>().optional(),
+  timeout: z.coerce.number<number>(),
 });
 
-type FormInput = z.input<typeof schema>;
-type FormOutput = z.output<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormResponseTime({
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormInput;
-  onSubmit: (values: FormOutput) => Promise<void>;
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
-  const form = useForm<FormInput>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       degradedAfter: DEGRADED,
@@ -54,12 +53,12 @@ export function FormResponseTime({
   });
   const [isPending, startTransition] = useTransition();
 
-  function submitAction(values: FormInput) {
+  function submitAction(values: FormValues) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values as FormOutput);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: () => "Saved",
@@ -90,11 +89,7 @@ export function FormResponseTime({
                 <FormItem className="self-start">
                   <FormLabel>Degraded (in ms.)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="30000"
-                      type="number"
-                      {...(field as React.ComponentProps<"input">)}
-                    />
+                    <Input placeholder="30000" type="number" {...field} />
                   </FormControl>
                   <FormDescription>
                     Time after which the endpoint is considered degraded.
@@ -110,11 +105,7 @@ export function FormResponseTime({
                 <FormItem className="self-start">
                   <FormLabel>Timeout (in ms.)</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="45000"
-                      type="number"
-                      {...(field as React.ComponentProps<"input">)}
-                    />
+                    <Input placeholder="45000" type="number" {...field} />
                   </FormControl>
                   <FormDescription>
                     Max. time allowed for request to complete.

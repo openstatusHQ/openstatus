@@ -29,21 +29,20 @@ import { z } from "zod";
 export const FOLLOW_REDIRECTS_DEFAULT = true;
 
 const schema = z.object({
-  followRedirects: z.boolean().default(true),
+  followRedirects: z.boolean().prefault(true),
 });
 
-type FormInput = z.input<typeof schema>;
-type FormOutput = z.output<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormFollowRedirect({
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormInput;
-  onSubmit: (values: FormOutput) => Promise<void>;
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
-  const form = useForm<FormInput>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       followRedirects: FOLLOW_REDIRECTS_DEFAULT,
@@ -51,12 +50,12 @@ export function FormFollowRedirect({
   });
   const [isPending, startTransition] = useTransition();
 
-  function submitAction(values: FormInput) {
+  function submitAction(values: FormValues) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values as FormOutput);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",

@@ -38,8 +38,7 @@ const schema = z.object({
     .prefault([]),
 });
 
-type FormInput = z.input<typeof schema>;
-type FormOutput = z.output<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormOtel({
   locked,
@@ -48,21 +47,21 @@ export function FormOtel({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   locked?: boolean;
-  defaultValues?: FormInput;
-  onSubmit: (values: FormOutput) => Promise<void>;
+  defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
-  const form = useForm<FormInput>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? { endpoint: "", headers: [] },
   });
   const [isPending, startTransition] = useTransition();
 
-  function submitAction(values: FormInput) {
+  function submitAction(values: FormValues) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
-        const promise = onSubmit(values as FormOutput);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: "Saved",
