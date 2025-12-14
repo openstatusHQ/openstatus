@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -70,8 +71,13 @@ export function FormWhatsApp({
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {

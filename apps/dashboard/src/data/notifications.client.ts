@@ -8,7 +8,7 @@ import { FormSms } from "@/components/forms/notifications/form-sms";
 import { FormTelegram } from "@/components/forms/notifications/form-telegram";
 import { FormWebhook } from "@/components/forms/notifications/form-webhook";
 import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
-import { DiscordIcon, TelegramIcon } from "@openstatus/icons";
+import { DiscordIcon, TelegramIcon, WhatsappIcon } from "@openstatus/icons";
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
@@ -115,7 +115,7 @@ export const config = {
     sendTest: sendTestTelegram,
   },
   whatsapp: {
-    icon: MessageCircle,
+    icon: WhatsappIcon,
     label: "WhatsApp",
     form: FormWhatsApp,
     sendTest: sendWhatsAppTest,
