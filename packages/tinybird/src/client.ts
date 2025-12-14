@@ -588,7 +588,7 @@ export class OSTinybird {
           .number()
           .prefault(0)
           .transform((val) => val !== 0),
-        region: z.enum(monitorRegions).or(z.string()),
+        region: z.enum(monitorRegions),
         timestamp: z.int().optional(),
         message: z.string().nullable().optional(),
         timing: timingSchema,
