@@ -37,8 +37,8 @@ import { z } from "zod";
 // TODO: add custom name for monitor, shown on status page, requires db migration
 
 const schema = z.object({
-  // name: z.string().optional(),
   description: z.string().optional(),
+  externalName: z.string().optional(),
   statusPages: z.array(z.number()),
 });
 
@@ -57,8 +57,8 @@ export function FormStatusPages({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      // name: "",
       description: "",
+      externalName: "",
       statusPages: [],
     },
   });
@@ -95,27 +95,29 @@ export function FormStatusPages({
           <FormCardHeader>
             <FormCardTitle>Status Pages</FormCardTitle>
             <FormCardDescription>
-              Add status pages to your monitor.
+              Add status pages to your monitor and configure the external name
+              and description to be shown on the status page.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent className="grid gap-4 sm:grid-cols-3">
-            {/* <FormField
+            <FormField
               control={form.control}
-              name="name"
+              name="externalName"
               render={({ field }) => (
                 <FormItem className="sm:col-span-2">
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>External Name</FormLabel>
                   <FormControl>
                     <Input placeholder="OpenStatus API" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Name on the status page. If not provided, monitor&apos;s
-                    name will be used.
+                    External name on the status page, the feed or subscribers
+                    notifications. If not provided, monitor&apos;s name will be
+                    used.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
-            /> */}
+            />
             <FormField
               control={form.control}
               name="description"

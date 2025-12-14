@@ -7,8 +7,10 @@ import {
   page,
   pageConfigurationSchema,
   pageSubscriber,
+  selectMaintenancePageSchema,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
+  selectStatusReportPageSchema,
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
@@ -345,7 +347,7 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_maintenance) return null;
 
-      return _maintenance;
+      return selectMaintenancePageSchema.parse(_maintenance);
     }),
 
   getUptime: publicProcedure
@@ -561,7 +563,7 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_report) return null;
 
-      return _report;
+      return selectStatusReportPageSchema.parse(_report);
     }),
 
   getNoopReport: publicProcedure.query(async () => {

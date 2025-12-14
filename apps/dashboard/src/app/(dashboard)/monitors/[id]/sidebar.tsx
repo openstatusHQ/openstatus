@@ -32,6 +32,10 @@ export function Sidebar() {
           label: "Overview",
           items: [
             {
+              label: "External Name",
+              value: monitor.externalName ?? monitor.name,
+            },
+            {
               label: "Status",
               // FIXME: dynamic
               value: <span className="text-success">Normal</span>,
