@@ -1,4 +1,5 @@
-import { verifyKey } from "@unkey/api";
+import { UnkeyCore } from "@unkey/api/core";
+import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
 
 import { env } from "@/env";
@@ -22,21 +23,31 @@ export async function authMiddleware(
 
   if (error) {
     throw new OpenStatusApiError({
-      code: "INTERNAL_SERVER_ERROR",
+      code: "UNAUTHORIZED",
       message: error.message,
     });
   }
-  if (!result?.valid || !result?.ownerId) {
+
+  if (!result.valid || !result.ownerId) {
     throw new OpenStatusApiError({
       code: "UNAUTHORIZED",
       message: "Invalid API Key",
     });
   }
 
+  const ownerId = Number.parseInt(result.ownerId);
+
+  if (Number.isNaN(ownerId)) {
+    throw new OpenStatusApiError({
+      code: "UNAUTHORIZED",
+      message: "API Key is Not a Number",
+    });
+  }
+
   const _workspace = await db
     .select()
     .from(workspace)
-    .where(eq(workspace.id, Number.parseInt(result.ownerId)))
+    .where(eq(workspace.id, ownerId))
     .get();
 
   if (!_workspace) {
@@ -72,10 +83,21 @@ async function validateKey(key: string): Promise<{
      * > We cannot use `os_` as a prefix for our own keys.
      */
     if (key.startsWith("os_")) {
-      const { result, error } = await verifyKey(key);
+      const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
+      const res = await keysVerifyKey(unkey, { key });
+      if (!res.ok) {
+        console.error("Unkey Error", res.error?.message);
+        return {
+          result: { valid: false, ownerId: undefined },
+          error: { message: "Invalid API verification" },
+        };
+      }
       return {
-        result: { valid: result?.valid ?? false, ownerId: result?.ownerId },
-        error: error ? { message: error.message } : undefined,
+        result: {
+          valid: res.value.data.valid,
+          ownerId: res.value.data.identity?.externalId,
+        },
+        error: undefined,
       };
     }
     // Special bypass for our workspace

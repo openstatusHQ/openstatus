@@ -108,9 +108,7 @@ api.doc("/openapi", {
 api.get(
   "/",
   Scalar({
-    spec: {
-      url: "/v1/openapi",
-    },
+    url: "/v1/openapi",
     servers: [
       {
         url: "https://api.openstatus.dev/v1",
