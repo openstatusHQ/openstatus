@@ -164,19 +164,21 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	// Status update logic
 	switch {
-	case !isSuccessful && req.Status != "error":
+	case !isSuccessful:
 		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "error",
-			Region:        h.Region,
-			Message:       err.Error(),
-			CronTimestamp: req.CronTimestamp,
-			Latency:       latency,
-		})
 		data.RequestStatus = "error"
 		data.Error = 1
 		data.ErrorMessage = err.Error()
+		if req.Status != "error" {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "error",
+				Region:        h.Region,
+				Message:       err.Error(),
+				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
+			})
+		}
 	case isSuccessful && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded":
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -233,7 +235,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-
 	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
@@ -245,7 +246,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	workspaceId , _ := strconv.Atoi(req.WorkspaceID)
+	workspaceId, _ := strconv.Atoi(req.WorkspaceID)
 
 	statusMap := map[string]string{
 		"active":   "success",
@@ -366,7 +367,7 @@ func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.Dn
 			return false, fmt.Errorf("unable to parse assertion: %w", err)
 		}
 		var isSuccessfull bool
-		switch assert.Record {
+		switch assert.Key {
 		case request.RecordA:
 			isSuccessfull = assert.RecordEvaluate(response.A)
 		case request.RecordAAAA:
@@ -380,7 +381,7 @@ func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.Dn
 		case request.RecordTXT:
 			isSuccessfull = assert.RecordEvaluate(response.TXT)
 		default:
-			return false, fmt.Errorf("unknown record type in assertion: %s", assert.Record)
+			return false, fmt.Errorf("unknown record type in assertion: %s", assert.Key)
 		}
 		if !isSuccessfull {
 			return false, nil
