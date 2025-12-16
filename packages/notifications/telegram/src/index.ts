@@ -36,7 +36,7 @@ export const sendAlert = async ({
     });
   } catch (err) {
     console.log(err);
-    // Do something
+    throw err;
   }
 };
 

@@ -71,6 +71,7 @@ Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
     );
   } catch (err) {
     console.log(err);
+    throw err;
     // Do something
   }
 };
