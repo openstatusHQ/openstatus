@@ -117,25 +117,20 @@ export const triggerNotifications = async ({
     switch (notifType) {
       case "alert":
         const alertResult = Effect.tryPromise({
-            try: () =>
-              providerToFunction[notif.notification.provider].sendAlert({
-                monitor,
-                notification: selectNotificationSchema.parse(
-                  notif.notification,
-                ),
-                statusCode,
-                message,
-                incidentId,
-                cronTimestamp,
-                region,
-                latency,
-              }),
-            catch: (_unknown) => new Error("Failed"),
-          }).pipe(
-            Effect.retry({ times: 3 })
-          );
+          try: () =>
+            providerToFunction[notif.notification.provider].sendAlert({
+              monitor,
+              notification: selectNotificationSchema.parse(notif.notification),
+              statusCode,
+              message,
+              incidentId,
+              cronTimestamp,
+              region,
+              latency,
+            }),
+          catch: (_unknown) => new Error("Failed"),
+        }).pipe(Effect.retry({ times: 3 }));
         Effect.runSync(alertResult);
-
 
         break;
       case "recovery":
