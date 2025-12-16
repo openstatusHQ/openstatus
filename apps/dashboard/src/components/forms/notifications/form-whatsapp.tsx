@@ -15,11 +15,15 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -57,6 +61,11 @@ export function FormWhatsApp({
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
+  const trpc = useTRPC();
+
+  const sendTestMutation = useMutation(
+    trpc.notification.sendTest.mutationOptions(),
+  );
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
@@ -77,6 +86,36 @@ export function FormWhatsApp({
               return error.message;
             }
             return "Failed to save";
+          },
+        });
+        await promise;
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
+  function testAction() {
+    if (isPending) return;
+
+    startTransition(async () => {
+      try {
+        const provider = form.getValues("provider");
+        const data = form.getValues("data");
+        const promise = sendTestMutation.mutateAsync({
+          provider,
+          data: {
+            whatsapp: data,
+          },
+        });
+        toast.promise(promise, {
+          loading: "Sending test...",
+          success: "Test sent",
+          error: (error) => {
+            if (error instanceof Error) {
+              return error.message;
+            }
+            return "Failed to send test";
           },
         });
         await promise;
@@ -126,6 +165,16 @@ export function FormWhatsApp({
               </FormItem>
             )}
           />
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={testAction}
+            >
+              Send Test
+            </Button>
+          </div>
         </FormCardContent>
         <FormCardSeparator />
         <FormCardContent>

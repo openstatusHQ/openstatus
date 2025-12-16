@@ -1180,6 +1180,9 @@ importers:
       '@openstatus/notification-telegram':
         specifier: workspace:*
         version: link:../notifications/telegram
+      '@openstatus/notification-twillio-whatsapp':
+        specifier: workspace:*
+        version: link:../notifications/twillio-whatsapp
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions

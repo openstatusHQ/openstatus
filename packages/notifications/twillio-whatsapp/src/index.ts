@@ -154,6 +154,7 @@ export const sendTest = async ({ phoneNumber }: { phoneNumber: string }) => {
   body.set("From", "whatsapp:+14807252613");
   body.set("ContentVariables", contentVariables);
 
+  console.log("send data");
   try {
     await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
