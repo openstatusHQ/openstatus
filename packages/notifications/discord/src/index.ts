@@ -58,7 +58,6 @@ export const sendAlert = async ({
   } catch (err) {
     console.error(err);
     throw err;
-    // Do something
   }
 };
 
@@ -92,9 +91,10 @@ export const sendRecovery = async ({
       `**✅ Recovered [${name}](<${monitor.url}>)**\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
       webhookUrl,
     );
+
   } catch (err) {
     console.error(err);
-    // Do something
+    throw err;
   }
 };
 
@@ -130,7 +130,7 @@ export const sendDegraded = async ({
     );
   } catch (err) {
     console.error(err);
-    // Do something
+    throw err;
   }
 };
 

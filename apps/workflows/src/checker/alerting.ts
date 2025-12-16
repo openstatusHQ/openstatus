@@ -8,7 +8,7 @@ import {
 
 import { getLogger } from "@logtape/logtape";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { Effect } from "effect";
+import { Effect, Schedule } from "effect";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
@@ -129,8 +129,8 @@ export const triggerNotifications = async ({
               latency,
             }),
           catch: (_unknown) => new Error("Failed"),
-        }).pipe(Effect.retry({ times: 3 }));
-        Effect.runSync(alertResult);
+        }).pipe(Effect.retry({ times: 3, schedule: Schedule.exponential("1000 millis") }));
+        Effect.runPromise(alertResult);
 
         break;
       case "recovery":
