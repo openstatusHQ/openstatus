@@ -116,6 +116,12 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
+USER 0:0
+RUN <<EOF
+apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+mkdir -p /app/data
+chown -R 1000:1000 /app/data
+EOF
 USER 1000:1000
 EXPOSE 3000
 ENTRYPOINT ["/app/apps/workflows/app"]

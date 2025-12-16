@@ -48,6 +48,25 @@ services:
         restart: unless-stopped
 
     # Internal Services
+    migrate:
+        container_name: openstatus-migrate
+        build:
+            context: .
+            dockerfile: apps/workflows/Dockerfile
+            target: build
+        image: openstatus/migrate:latest
+        networks:
+            - openstatus
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+        depends_on:
+            libsql:
+                condition: service_healthy
+        command: sh -c "cd /app/packages/db && bun src/migrate.mts"
+        restart: "no"
+
     workflows:
         container_name: openstatus-workflows
         build:
@@ -64,6 +83,8 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
+            migrate:
+                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
         healthcheck:
@@ -90,6 +111,8 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
+            migrate:
+                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
         healthcheck:
@@ -146,6 +169,8 @@ services:
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
         depends_on:
+            migrate:
+                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
             server:
@@ -176,6 +201,8 @@ services:
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
         depends_on:
+            migrate:
+                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
             server:

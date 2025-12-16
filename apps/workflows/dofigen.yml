@@ -93,6 +93,13 @@ labels:
   org.opencontainers.image.vendor: OpenStatus
   org.opencontainers.image.authors: OpenStatus Team
 
+# Create data directory and install curl as root before switching to user 1000
+root:
+  run:
+    - apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+    - mkdir -p /app/data
+    - chown -R 1000:1000 /app/data
+
 # Copy artifacts from build stages
 copy:
   - fromBuilder: build

@@ -12,23 +12,14 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    ca-certs:
-      fromImage:
-        path: debian
-        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-      label:
-        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-      run:
-      - apt update && apt install -y ca-certificates && update-ca-certificates
     install:
       fromImage:
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.stage: install
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/
       run:
       - bun install --production  --frozen-lockfile --verbose
@@ -96,27 +87,13 @@ effective: |
         target: /app/package.json
       run:
       - bun install
-    docker:
-      fromImage:
-        path: oven/bun
-        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      workdir: /app/apps/workflows
-      copy:
-      - paths:
-        - .
-        target: /app/
-      run:
-      - bun run src/build-docker.ts
     build:
       fromImage:
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.stage: build
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
       workdir: /app/apps/workflows
       env:
@@ -131,18 +108,41 @@ effective: |
         target: /app/node_modules
       run:
       - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+    docker:
+      fromImage:
+        path: oven/bun
+        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
+    ca-certs:
+      fromImage:
+        path: debian
+        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+      label:
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+      run:
+      - apt update && apt install -y ca-certificates && update-ca-certificates
   fromImage:
     path: debian
     digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
     io.dofigen.version: 2.6.0
-    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.title: OpenStatus Workflows
+    org.opencontainers.image.authors: OpenStatus Team
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -162,6 +162,11 @@ effective: |
     paths:
     - /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
+  root:
+    run:
+    - apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+    - mkdir -p /app/data
+    - chown -R 1000:1000 /app/data
   entrypoint:
   - /app/apps/workflows/app
   expose:
@@ -178,7 +183,7 @@ images:
           digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
 resources:
   dofigen.yml:
-    hash: 2e5154caff216dd012001bfb09b4c3d811dc7cbd437cd325f6de9c311b2e771e
+    hash: 982e75d0e77c45f731874aab1e5e33c0d78e3dc60edac347f5f614f1af96026f
     content: |
       ignore:
         - node_modules
@@ -274,6 +279,13 @@ resources:
         org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
+
+      # Create data directory and install curl as root before switching to user 1000
+      root:
+        run:
+          - apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+          - mkdir -p /app/data
+          - chown -R 1000:1000 /app/data
 
       # Copy artifacts from build stages
       copy:
