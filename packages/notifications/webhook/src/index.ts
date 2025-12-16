@@ -35,7 +35,7 @@ export const sendAlert = async ({
   });
 
   try {
-    await fetch(notificationData.webhook.endpoint, {
+    const res = await fetch(notificationData.webhook.endpoint, {
       method: "post",
       body: JSON.stringify(body),
       headers: notificationData.webhook.headers
@@ -44,6 +44,11 @@ export const sendAlert = async ({
             "Content-Type": "application/json",
           },
     });
+    if (!res.ok) {
+      throw new Error(
+        `Failed to send webhook notification: ${res.statusText}`,
+      );
+    }
   } catch (err) {
     console.log(err);
     throw err;

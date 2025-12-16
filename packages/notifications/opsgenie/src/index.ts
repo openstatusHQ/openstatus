@@ -38,7 +38,7 @@ export const sendAlert = async ({
       ? "https://api.eu.opsgenie.com/v2/alerts"
       : "https://api.opsgenie.com/v2/alerts";
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       body: JSON.stringify(event),
       headers: {
@@ -46,6 +46,9 @@ export const sendAlert = async ({
         Authorization: `GenieKey ${opsgenie.apiKey}`,
       },
     });
+    if(!res.ok) {
+      throw new Error(`Failed to send OpsGenie alert: ${res.status} ${res.statusText}`);
+    }
   } catch (err) {
     console.log(err);
     throw err;

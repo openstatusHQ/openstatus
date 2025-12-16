@@ -32,7 +32,7 @@ export const sendAlert = async ({
   body.set("ContentVariables", contentVariables);
 
   try {
-    await fetch(
+    const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
       {
         method: "post",
@@ -44,6 +44,9 @@ export const sendAlert = async ({
         },
       },
     );
+    if (!res.ok) {
+      throw new Error(`Failed to send WhatsApp message: ${res.statusText}`);
+    }
   } catch (err) {
     console.log(err);
     throw err;
