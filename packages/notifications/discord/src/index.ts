@@ -91,7 +91,6 @@ export const sendRecovery = async ({
       `**✅ Recovered [${name}](<${monitor.url}>)**\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
       webhookUrl,
     );
-
   } catch (err) {
     console.error(err);
     throw err;

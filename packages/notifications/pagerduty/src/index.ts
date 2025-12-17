@@ -53,14 +53,14 @@ export const sendAlert = async ({
           },
         },
       });
-     const res =  await fetch("https://events.pagerduty.com/v2/enqueue", {
+      const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
         method: "POST",
         body: JSON.stringify(event),
       });
-     if(!res.ok) {
+      if (!res.ok) {
         console.log(`Failed to send alert notification: ${res.statusText}`);
-        throw new Error('Failed to send alert notification')
-     }
+        throw new Error("Failed to send alert notification");
+      }
     }
   } catch (err) {
     console.log(err);
@@ -116,7 +116,7 @@ export const sendDegraded = async ({
       });
       if (!res.ok) {
         console.log(`Failed to send degraded notification: ${res.statusText}`);
-        throw new Error()
+        throw new Error();
       }
     }
   } catch (err) {

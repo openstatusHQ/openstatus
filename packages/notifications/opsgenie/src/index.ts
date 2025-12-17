@@ -46,8 +46,10 @@ export const sendAlert = async ({
         Authorization: `GenieKey ${opsgenie.apiKey}`,
       },
     });
-    if(!res.ok) {
-      throw new Error(`Failed to send OpsGenie alert: ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      throw new Error(
+        `Failed to send OpsGenie alert: ${res.status} ${res.statusText}`,
+      );
     }
   } catch (err) {
     console.log(err);

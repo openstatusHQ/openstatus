@@ -81,16 +81,18 @@ export const sendRecovery = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
   try {
-   const res = await fetch(url, {
+    const res = await fetch(url, {
       method: "post",
       body,
       headers: {
         ...authorization,
       },
     });
-   if (!res.ok) {
-    throw new Error(`Failed to send recovery notification: ${res.statusText}`);
-   }
+    if (!res.ok) {
+      throw new Error(
+        `Failed to send recovery notification: ${res.statusText}`,
+      );
+    }
   } catch (err) {
     console.log(err);
     // Do something
