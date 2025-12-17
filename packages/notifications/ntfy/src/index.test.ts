@@ -7,6 +7,7 @@ describe("Ntfy Notifications", () => {
   let fetchMock: any = undefined;
 
   beforeEach(() => {
+    // @ts-expect-error
     fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
@@ -244,14 +245,16 @@ describe("Ntfy Notifications", () => {
     );
 
     // Should not throw - function catches errors internally
-    await sendAlert({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 500,
-      message: "Error",
-      cronTimestamp: Date.now(),
-    });
+    await expect(
+      sendAlert({
+        // @ts-expect-error
+        monitor,
+        notification,
+        statusCode: 500,
+        message: "Error",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

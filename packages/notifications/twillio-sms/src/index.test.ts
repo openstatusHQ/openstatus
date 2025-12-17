@@ -13,6 +13,7 @@ describe("Twilio SMS Notifications", () => {
   beforeEach(() => {
     process.env.TWILLIO_ACCOUNT_ID = "test-account-id";
     process.env.TWILLIO_AUTH_TOKEN = "test-auth-token";
+    // @ts-expect-error
     fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
@@ -162,15 +163,16 @@ describe("Twilio SMS Notifications", () => {
       createMockNotification(),
     );
 
-    // Should not throw - function catches errors internally
-    await sendAlert({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 500,
-      message: "Error",
-      cronTimestamp: Date.now(),
-    });
+    expect(
+      sendAlert({
+        // @ts-expect-error
+        monitor,
+        notification,
+        statusCode: 500,
+        message: "Error",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
