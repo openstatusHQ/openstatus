@@ -128,6 +128,7 @@ export const triggerNotifications = async ({
               region,
               latency,
             }),
+
           catch: (_unknown) => new Error(`Failed sending notification via ${notif.notification.provider} for monitor ${monitorId}`),
         }).pipe(
           Effect.retry({

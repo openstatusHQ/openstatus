@@ -38,6 +38,7 @@ export const sendAlert = async ({
       ? "https://api.eu.opsgenie.com/v2/alerts"
       : "https://api.opsgenie.com/v2/alerts";
 
+
   const res = await fetch(url, {
     method: "POST",
     body: JSON.stringify(event),

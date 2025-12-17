@@ -77,6 +77,7 @@ export const sendRecovery = async ({
   const url = notificationData.ntfy.serverUrl
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
+
   const res = await fetch(url, {
     method: "post",
     body,
