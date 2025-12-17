@@ -25,7 +25,7 @@
     "starlight-llms-txt": "0.5.1",
     "starlight-showcases": "0.3.0",
     "starlight-sidebar-topics": "0.6.0",
-    "tailwindcss": "4.1.8",
+    "tailwindcss": "4.1.11",
     "unplugin-icons": "22.1.0"
   },
   "devDependencies": {
