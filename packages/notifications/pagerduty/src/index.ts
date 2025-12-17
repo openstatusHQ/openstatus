@@ -34,7 +34,7 @@ export const sendAlert = async ({
 
   const { name } = monitor;
 
-  for await (const integrationKey of notificationData.integration_keys) {
+  for (const integrationKey of notificationData.integration_keys) {
     // biome-ignore lint/correctness/noUnusedVariables: <explanation>
     const { integration_key, type } = integrationKey;
     const event = triggerEventPayloadSchema.parse({

@@ -123,9 +123,9 @@ export function NavFeedback() {
   }, [open, feedbackMutation]);
 
   useEffect(() => {
-    const down = (e: KeyboardEvent) => {
+    const down = async (e: KeyboardEvent) => {
       if (open && (e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        form.handleSubmit(onSubmit)();
+        await form.handleSubmit(onSubmit)();
       }
 
       const target = e.target as HTMLElement;
