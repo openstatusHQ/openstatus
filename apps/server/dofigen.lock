@@ -28,6 +28,8 @@ effective: |
         source: bunfig.toml
       - target: package.json
         source: package.json
+      - target: patches
+        source: patches
       - target: apps/server/package.json
         source: apps/server/package.json
       - target: packages/analytics/package.json
@@ -59,8 +61,8 @@ effective: |
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
         org.opencontainers.image.stage: build
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
         org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/apps/server
       env:
@@ -79,14 +81,14 @@ effective: |
     path: debian
     digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus Server
-    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
-    io.dofigen.version: 2.5.1
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+    org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
+    org.opencontainers.image.title: OpenStatus Server
+    io.dofigen.version: 2.6.0
+    org.opencontainers.image.authors: OpenStatus Team
   user:
     user: '1000'
     group: '1000'
@@ -113,17 +115,17 @@ effective: |
     retries: 3
 images:
   docker.io:
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     oven:
       bun:
         1.3.3:
           digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
 resources:
   dofigen.yml:
-    hash: f2069730c7b0f5e8be704cbfc3ae77ac031f05b2a3b916bcbe758f7955edfa5e
+    hash: 792c6663065e391b2fc4c3dfc18eedc3c7777b3244674f74651bba79f9ea05cb
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -147,6 +149,7 @@ resources:
           bind:
             - bunfig.toml
             - package.json
+            - patches
             - apps/server/package.json
             - packages/analytics/package.json
             - packages/db/package.json
