@@ -12,11 +12,11 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@react-email/components": "0.5.7",
-    "@react-email/render": "1.4.0",
+    "@react-email/components": "1.0.1",
+    "@react-email/render": "2.0.0",
     "@t3-oss/env-core": "0.7.1",
     "react-dom": "19.2.2",
-    "resend": "4.0.1",
+    "resend": "6.6.0",
     "zod": "3.25.76"
   },
   "devDependencies": {
