@@ -4,14 +4,12 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
-  try {
-    await fetch(webhookUrl, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  } catch (e) {
-    console.log(e);
-    throw e;
+  const res = await fetch(webhookUrl, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send Slack notification: ${res.statusText}`);
   }
 };
 
@@ -37,43 +35,37 @@ export const sendAlert = async ({
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
-  try {
-    await postToWebhook(
-      {
-        blocks: [
-          {
-            type: "divider",
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `
+  await postToWebhook(
+    {
+      blocks: [
+        {
+          type: "divider",
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `
 *🚨 Alert <${monitor.url}|${name}>*\n\n
 Status Code: ${statusCode || "_empty_"}\n
 Message: ${message || "_empty_"}\n
 Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
 `,
+          },
+        },
+        {
+          type: "context",
+          elements: [
+            {
+              type: "mrkdwn",
+              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
             },
-          },
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-              },
-            ],
-          },
-        ],
-      },
-      webhookUrl,
-    );
-  } catch (err) {
-    console.log(err);
-    throw err;
-    // Do something
-  }
+          ],
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };
 
 export const sendRecovery = async ({
@@ -99,37 +91,32 @@ export const sendRecovery = async ({
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
-  try {
-    await postToWebhook(
-      {
-        blocks: [
-          {
-            type: "divider",
+  await postToWebhook(
+    {
+      blocks: [
+        {
+          type: "divider",
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*✅ Recovered <${monitor.url}/|${name}>*`,
           },
-          {
-            type: "section",
-            text: {
+        },
+        {
+          type: "context",
+          elements: [
+            {
               type: "mrkdwn",
-              text: `*✅ Recovered <${monitor.url}/|${name}>*`,
+              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
             },
-          },
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-              },
-            ],
-          },
-        ],
-      },
-      webhookUrl,
-    );
-  } catch (err) {
-    console.log(err);
-    // Do something
-  }
+          ],
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };
 
 export const sendDegraded = async ({
@@ -152,37 +139,32 @@ export const sendDegraded = async ({
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
-  try {
-    await postToWebhook(
-      {
-        blocks: [
-          {
-            type: "divider",
+  await postToWebhook(
+    {
+      blocks: [
+        {
+          type: "divider",
+        },
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: `*⚠️ Degraded <${monitor.url}/|${name}>*`,
           },
-          {
-            type: "section",
-            text: {
+        },
+        {
+          type: "context",
+          elements: [
+            {
               type: "mrkdwn",
-              text: `*⚠️ Degraded <${monitor.url}/|${name}>*`,
+              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
             },
-          },
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-              },
-            ],
-          },
-        ],
-      },
-      webhookUrl,
-    );
-  } catch (err) {
-    console.log(err);
-    // Do something
-  }
+          ],
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };
 
 export const sendTestSlackMessage = async (webhookUrl: string) => {

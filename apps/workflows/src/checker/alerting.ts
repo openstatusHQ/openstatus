@@ -129,7 +129,12 @@ export const triggerNotifications = async ({
               latency,
             }),
           catch: (_unknown) => new Error("Failed"),
-        }).pipe(Effect.retry({ times: 3, schedule: Schedule.exponential("1000 millis") }));
+        }).pipe(
+          Effect.retry({
+            times: 3,
+            schedule: Schedule.exponential("1000 millis"),
+          }),
+        );
         Effect.runPromise(alertResult);
 
         break;

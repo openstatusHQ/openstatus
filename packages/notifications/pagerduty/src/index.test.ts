@@ -190,16 +190,16 @@ describe("PagerDuty Notifications", () => {
       createMockNotification(),
     );
 
-    // Should not throw - function catches errors internally
-    await sendAlert({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 500,
-      message: "Error",
-      incidentId: "incident-123",
-      cronTimestamp: Date.now(),
-    });
+    expect(
+      sendAlert({
+        // @ts-expect-error
+        monitor,
+        notification,
+        statusCode: 500,
+        message: "Error",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

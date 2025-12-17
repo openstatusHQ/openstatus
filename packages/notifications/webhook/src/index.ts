@@ -34,25 +34,17 @@ export const sendAlert = async ({
     errorMessage: message,
   });
 
-  try {
-    const res = await fetch(notificationData.webhook.endpoint, {
-      method: "post",
-      body: JSON.stringify(body),
-      headers: notificationData.webhook.headers
-        ? transformHeaders(notificationData.webhook.headers)
-        : {
-            "Content-Type": "application/json",
-          },
-    });
-    if (!res.ok) {
-      throw new Error(
-        `Failed to send webhook notification: ${res.statusText}`,
-      );
-    }
-  } catch (err) {
-    console.log(err);
-    throw err;
-    // Do something
+  const res = await fetch(notificationData.webhook.endpoint, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: notificationData.webhook.headers
+      ? transformHeaders(notificationData.webhook.headers)
+      : {
+          "Content-Type": "application/json",
+        },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send webhook notification: ${res.statusText}`);
   }
 };
 
@@ -86,19 +78,17 @@ export const sendRecovery = async ({
     errorMessage: message,
   });
   const url = notificationData.webhook.endpoint;
-  try {
-    await fetch(url, {
-      method: "post",
-      body: JSON.stringify(body),
-      headers: notificationData.webhook.headers
-        ? transformHeaders(notificationData.webhook.headers)
-        : {
-            "Content-Type": "application/json",
-          },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(url, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: notificationData.webhook.headers
+      ? transformHeaders(notificationData.webhook.headers)
+      : {
+          "Content-Type": "application/json",
+        },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send SMS: ${res.statusText}`);
   }
 };
 
@@ -130,19 +120,17 @@ export const sendDegraded = async ({
     errorMessage: message,
   });
 
-  try {
-    await fetch(notificationData.webhook.endpoint, {
-      method: "post",
-      body: JSON.stringify(body),
-      headers: notificationData.webhook.headers
-        ? transformHeaders(notificationData.webhook.headers)
-        : {
-            "Content-Type": "application/json",
-          },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(notificationData.webhook.endpoint, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: notificationData.webhook.headers
+      ? transformHeaders(notificationData.webhook.headers)
+      : {
+          "Content-Type": "application/json",
+        },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send SMS: ${res.statusText}`);
   }
 };
 
