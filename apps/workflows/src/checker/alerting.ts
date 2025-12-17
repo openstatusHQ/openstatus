@@ -128,38 +128,58 @@ export const triggerNotifications = async ({
               region,
               latency,
             }),
-          catch: (_unknown) => new Error("Failed"),
+          catch: (_unknown) => new Error(`Failed sending notification via ${notif.notification.provider} for monitor ${monitorId}`),
         }).pipe(
           Effect.retry({
             times: 3,
             schedule: Schedule.exponential("1000 millis"),
           }),
         );
-        Effect.runPromise(alertResult);
-
+        await Effect.runPromise(alertResult).catch(console.error);
         break;
       case "recovery":
-        await providerToFunction[notif.notification.provider].sendRecovery({
-          monitor,
-          notification: selectNotificationSchema.parse(notif.notification),
-          statusCode,
-          message,
-          incidentId,
-          cronTimestamp,
-          region,
-          latency,
-        });
+        const recoveryResult = Effect.tryPromise({
+          try: () =>
+            providerToFunction[notif.notification.provider].sendRecovery({
+              monitor,
+              notification: selectNotificationSchema.parse(notif.notification),
+              statusCode,
+              message,
+              incidentId,
+              cronTimestamp,
+              region,
+              latency,
+            }),
+            catch: (_unknown) => new Error(`Failed sending notification via ${notif.notification.provider} for monitor ${monitorId}`),
+        }).pipe(
+          Effect.retry({
+            times: 3,
+            schedule: Schedule.exponential("1000 millis"),
+          }),
+        );
+        await Effect.runPromise(recoveryResult).catch(console.error);
         break;
       case "degraded":
-        await providerToFunction[notif.notification.provider].sendDegraded({
-          monitor,
-          notification: selectNotificationSchema.parse(notif.notification),
-          statusCode,
-          message,
-          cronTimestamp,
-          region,
-          latency,
-        });
+        const degradedResult = Effect.tryPromise({
+          try: () =>
+            providerToFunction[notif.notification.provider].sendDegraded({
+              monitor,
+              notification: selectNotificationSchema.parse(notif.notification),
+              statusCode,
+              message,
+              incidentId,
+              cronTimestamp,
+              region,
+              latency,
+            }),
+            catch: (_unknown) => new Error(`Failed sending notification via ${notif.notification.provider} for monitor ${monitorId}`),
+        }).pipe(
+          Effect.retry({
+            times: 3,
+            schedule: Schedule.exponential("1000 millis"),
+          }),
+        );
+        await Effect.runPromise(degradedResult).catch(console.error);
         break;
     }
     // ALPHA
@@ -174,7 +194,6 @@ export const triggerNotifications = async ({
         notificationId: notif.notification.id,
       },
     });
-    //
   }
 };
 
