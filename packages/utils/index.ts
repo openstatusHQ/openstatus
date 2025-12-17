@@ -13,17 +13,17 @@ export const httpPayloadSchema = z.object({
   cronTimestamp: z.number(),
   status: z.enum(monitorStatus),
   assertions: z.array(base).nullable(),
-  timeout: z.number().default(45000),
+  timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
+  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.record(z.string()),
+      headers: z.record(z.string(), z.string()),
     })
     .optional(),
-  retry: z.number().default(3),
-  followRedirects: z.boolean().default(true),
+  retry: z.number().prefault(3),
+  followRedirects: z.boolean().prefault(true),
 });
 
 export type HttpPayload = z.infer<typeof httpPayloadSchema>;
@@ -35,16 +35,16 @@ export const tpcPayloadSchema = z.object({
   monitorId: z.string(),
   assertions: z.array(base).nullable(),
   cronTimestamp: z.number(),
-  timeout: z.number().default(45000),
+  timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
+  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.record(z.string()),
+      headers: z.record(z.string(), z.string()),
     })
     .optional(),
-  retry: z.number().default(3),
+  retry: z.number().prefault(3),
 });
 
 export type TcpPayload = z.infer<typeof tpcPayloadSchema>;
@@ -56,16 +56,16 @@ export const DNSPayloadSchema = z.object({
   monitorId: z.string(),
   assertions: z.array(base).nullable(),
   cronTimestamp: z.number(),
-  timeout: z.number().default(45000),
+  timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
-  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
+  trigger: z.enum(["cron", "api"]).optional().nullable().prefault("cron"),
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.record(z.string()),
+      headers: z.record(z.string(), z.string()),
     })
     .optional(),
-  retry: z.number().default(3),
+  retry: z.number().prefault(3),
 });
 
 export type DNSPayload = z.infer<typeof DNSPayloadSchema>;
