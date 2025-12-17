@@ -29,5 +29,5 @@
     "onlyBuiltDependencies": ["@sentry/cli", "@swc/core", "sharp"]
   },
   "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
+  "workspaces": ["apps/*", "packages/**/*"]
 }

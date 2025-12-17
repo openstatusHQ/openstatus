@@ -20,7 +20,7 @@
     "@dnd-kit/utilities": "3.2.2",
     "@hookform/devtools": "4.4.0",
     "@hookform/resolvers": "4.1.3",
-    "@libsql/client": "0.15.14",
+    "@libsql/client": "0.15.15",
     "@openpanel/nextjs": "1.0.8",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
@@ -65,7 +65,7 @@
     "@radix-ui/react-switch": "1.2.5",
     "@radix-ui/react-tabs": "1.1.12",
     "@radix-ui/react-tooltip": "1.2.7",
-    "@sentry/nextjs": "10.22.0",
+    "@sentry/nextjs": "10.31.0",
     "@stripe/stripe-js": "2.1.6",
     "@tanstack/react-query": "5.81.5",
     "@tanstack/react-table": "8.21.3",
@@ -102,14 +102,14 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "4.1.8",
+    "@tailwindcss/postcss": "4.1.11",
     "@tailwindcss/typography": "0.5.10",
     "@types/dom-speech-recognition": "0.0.6",
     "@types/node": "24.0.8",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "shadcn": "2.7.0",
-    "tailwindcss": "4.1.8",
+    "tailwindcss": "4.1.11",
     "tw-animate-css": "1.3.4",
     "typescript": "5.9.3"
   }
