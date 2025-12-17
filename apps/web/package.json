@@ -68,14 +68,14 @@
     "next": "16.0.10",
     "next-auth": "5.0.0-beta.29",
     "next-mdx-remote": "5.0.0",
-    "next-plausible": "3.12.4",
+    "next-plausible": "3.12.5",
     "next-themes": "0.4.6",
-    "nuqs": "2.4.3",
+    "nuqs": "2.8.5",
     "random-word-slugs": "0.1.7",
     "react": "19.2.2",
     "react-day-picker": "8.10.1",
     "react-dom": "19.2.2",
-    "react-hook-form": "7.66.1",
+    "react-hook-form": "7.68.0",
     "react-medium-image-zoom": "5.4.0",
     "react-tweet": "3.2.1",
     "reading-time": "1.5.0",
@@ -101,7 +101,7 @@
     "rehype-autolink-headings": "7.1.0",
     "rehype-slug": "5.1.0",
     "tailwindcss": "4.1.8",
-    "typescript": "5.7.2",
+    "typescript": "5.9.3",
     "unified": "11.0.5"
   }
 }
