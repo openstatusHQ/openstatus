@@ -29,15 +29,10 @@ export const sendAlert = async ({
     statusCode ? `status code ${statusCode}` : `error: ${message}`
   }`;
 
-  try {
-    await sendMessage({
-      chatId: notificationData.telegram.chatId,
-      message: body,
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
-  }
+  await sendMessage({
+    chatId: notificationData.telegram.chatId,
+    message: body,
+  });
 };
 
 export const sendRecovery = async ({
@@ -65,15 +60,10 @@ export const sendRecovery = async ({
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is up again`;
-  try {
-    await sendMessage({
-      chatId: notificationData.telegram.chatId,
-      message: body,
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
-  }
+  await sendMessage({
+    chatId: notificationData.telegram.chatId,
+    message: body,
+  });
 };
 
 export const sendDegraded = async ({
@@ -100,15 +90,10 @@ export const sendDegraded = async ({
 
   const body = `Your monitor ${name} / ${monitor.url} is degraded `;
 
-  try {
-    await sendMessage({
-      chatId: notificationData.telegram.chatId,
-      message: body,
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
-  }
+  await sendMessage({
+    chatId: notificationData.telegram.chatId,
+    message: body,
+  });
 };
 
 export const sendTest = async ({ chatId }: { chatId: string }) => {
@@ -134,7 +119,11 @@ export async function sendMessage({
   if (!process.env.TELEGRAM_BOT_TOKEN) {
     throw new Error("TELEGRAM_BOT_TOKEN is not set");
   }
-  return fetch(
+  const res = await fetch(
     `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${message}`,
   );
+  if (!res.ok) {
+    throw new Error(`Failed to send telegram message: ${res.statusText}`);
+  }
+  return res;
 }
