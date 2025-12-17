@@ -106,7 +106,6 @@ export const monitorRouter = createTRPCRouter({
         regions,
         headers,
         notifications,
-        id,
         pages,
         tags,
         statusAssertions,

@@ -237,7 +237,7 @@ function CustomImage({
   className,
   ...props
 }: React.ComponentProps<typeof Image>) {
-  const { src, alt, width, height, ...rest } = props;
+  const { src, alt, ...rest } = props;
 
   if (!src || typeof src !== "string") {
     return (
@@ -362,7 +362,7 @@ export function CustomMDX(props: MDXRemoteProps) {
       components={
         {
           ...components,
-          ...(props.components || {}),
+          ...props.components,
         } as MDXRemoteProps["components"]
       }
     />
