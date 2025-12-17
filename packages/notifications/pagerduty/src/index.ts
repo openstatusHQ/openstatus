@@ -50,7 +50,6 @@ export const sendAlert = async ({
           statusCode,
           message,
         },
-
       },
     });
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
@@ -60,7 +59,6 @@ export const sendAlert = async ({
     if (!res.ok) {
       console.log(`Failed to send alert notification: ${res.statusText}`);
       throw new Error("Failed to send alert notification");
-
     }
   }
 };
@@ -105,7 +103,6 @@ export const sendDegraded = async ({
       },
     });
 
-
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
@@ -113,7 +110,6 @@ export const sendDegraded = async ({
     if (!res.ok) {
       console.log(`Failed to send alert notification: ${res.statusText}`);
       throw new Error("Failed to send alert notification");
-
     }
   }
 };

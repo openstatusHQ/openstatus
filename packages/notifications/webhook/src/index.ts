@@ -45,7 +45,6 @@ export const sendAlert = async ({
   });
   if (!res.ok) {
     throw new Error(`Failed to send webhook notification: ${res.statusText}`);
-
   }
 };
 
