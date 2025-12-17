@@ -161,6 +161,5 @@ describe("Discord Notifications", () => {
         cronTimestamp: Date.now(),
       }),
     ).rejects.toThrow();
-
   });
 });
