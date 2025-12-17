@@ -46,7 +46,9 @@ export async function GET() {
                 link: author.url,
               },
         ],
-        image: post.metadata.image,
+        image: post.metadata.image
+          ? `https://www.openstatus.dev/changelog/${post.metadata.image}`
+          : undefined,
         date: post.metadata.publishedAt,
       });
     });
