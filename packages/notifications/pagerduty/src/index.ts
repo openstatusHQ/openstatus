@@ -35,8 +35,7 @@ export const sendAlert = async ({
   const { name } = monitor;
 
   for (const integrationKey of notificationData.integration_keys) {
-    // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-    const { integration_key, type } = integrationKey;
+    const { integration_key } = integrationKey;
     const event = triggerEventPayloadSchema.parse({
       routing_key: integration_key,
       dedup_key: `${monitor.id}}-${incidentId}`,
@@ -83,9 +82,8 @@ export const sendDegraded = async ({
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
   const { name } = monitor;
 
-  for await (const integrationKey of notificationData.integration_keys) {
-    // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-    const { integration_key, type } = integrationKey;
+  for (const integrationKey of notificationData.integration_keys) {
+    const { integration_key } = integrationKey;
 
     const event = triggerEventPayloadSchema.parse({
       routing_key: integration_key,
@@ -117,10 +115,6 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
   incidentId,
 }: {
   monitor: Monitor;
@@ -136,7 +130,7 @@ export const sendRecovery = async ({
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
 
-  for await (const integrationKey of notificationData.integration_keys) {
+  for (const integrationKey of notificationData.integration_keys) {
     const event = resolveEventPayloadSchema.parse({
       routing_key: integrationKey.integration_key,
       dedup_key: `${monitor.id}}-${incidentId}`,
