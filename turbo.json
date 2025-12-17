@@ -20,7 +20,11 @@
         "UNKEY_API_ID",
         "UPSTASH_REDIS_REST_URL",
         "UPSTASH_REDIS_REST_TOKEN",
-        "EXTERNAL_API_URL"
+        "OPENPANEL_CLIENT_SECRET",
+        "NEXT_PUBLIC_OPENPANEL_CLIENT_ID",
+        "AUTH_SECRET",
+        "CRON_SECRET",
+        "SELF_HOST"
       ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },

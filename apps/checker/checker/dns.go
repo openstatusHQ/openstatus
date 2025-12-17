@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -21,15 +22,21 @@ type DnsResponse struct {
 func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 	logger:= log.Ctx(ctx).With().Str("monitor", host).Logger()
 
-	A, err := lookupA(host)
+	ips, err := net.LookupIP(host)
 	if err != nil {
-		logger.Error().Err(err).Msg("DNS A record lookup failed")
-		return nil, fmt.Errorf("failed to lookup A record: %w", err)
+		logger.Error().Err(err).Msg("DNS IP lookup failed")
+		return nil, fmt.Errorf("failed to lookup IPs: %w", err)
 	}
-	AAAA, err := lookupAAAA(host)
-	if err != nil {
-		logger.Error().Err(err).Msg("DNS AAAA record lookup failed")
-		return nil, fmt.Errorf("failed to lookup AAAA record: %w", err)
+
+	A := []string{}
+	AAAA := []string{}
+
+	for _, ip := range ips {
+		if ip.To4() != nil {
+			A = append(A, ip.String())
+		} else {
+			AAAA = append(AAAA, ip.String())
+		}
 	}
 	CNAME,err := lookupCNAME(host)
 	if err != nil {
@@ -58,37 +65,7 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 	return response, nil
 }
 
-func lookupA(domain string) ([]string, error) {
 
-	A := []string{}
-	ips, err := net.LookupIP(domain)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, ip := range ips {
-		if ip.To4() != nil {
-			A = append(A, ip.String())
-		}
-	}
-	return A, nil
-}
-
-func lookupAAAA(domain string) ([]string, error) {
-	AAAA := []string{}
-	ips, err := net.LookupIP(domain)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, ip := range ips {
-		if ip.To16() != nil && ip.To4() == nil {
-
-			AAAA = append(AAAA, ip.String())
-		}
-	}
-	return AAAA, nil
-}
 
 func lookupCNAME(domain string) (string, error) {
 	cname, err := net.LookupCNAME(domain)
@@ -113,6 +90,10 @@ func lookupMX(domain string) ([]string) {
 func lookupNS(domain string) ([]string, error) {
 
 	hosts := []string{}
+	isSubdomain := isSubdomain(domain)
+	if isSubdomain {
+		return hosts, nil
+	}
 	nsRecords, err := net.LookupNS(domain)
 	if err != nil {
 		return nil, err
@@ -135,4 +116,13 @@ func lookupTXT(domain string) ([]string) {
 		records = append(records, txt)
 	}
 	return records
+}
+
+
+func isSubdomain(domain string) bool {
+	parent := strings.Split(domain, ".")
+	if len(parent) < 3 {
+		return false
+	}
+	return true
 }

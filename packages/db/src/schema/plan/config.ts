@@ -27,6 +27,7 @@ export const allPlans: Record<
       INR: 0,
     },
     limits: {
+      version: undefined,
       monitors: 1,
       "synthetic-checks": 30,
       periodicity: ["10m", "30m", "1h"],
@@ -53,6 +54,7 @@ export const allPlans: Record<
       "audit-log": false,
       regions: [...FREE_FLY_REGIONS],
       "private-locations": false,
+      whatsapp: false,
     },
   },
   starter: {
@@ -65,6 +67,7 @@ export const allPlans: Record<
       INR: 3000,
     },
     limits: {
+      version: undefined,
       monitors: 20,
       "synthetic-checks": 100,
       periodicity: ["1m", "5m", "10m", "30m", "1h"],
@@ -91,6 +94,7 @@ export const allPlans: Record<
       "audit-log": false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": false,
+      whatsapp: true,
     },
   },
   team: {
@@ -103,6 +107,7 @@ export const allPlans: Record<
       INR: 10000,
     },
     limits: {
+      version: undefined,
       monitors: 50,
       "synthetic-checks": 300,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
@@ -128,7 +133,8 @@ export const allPlans: Record<
       members: "Unlimited",
       "audit-log": true,
       regions: [...AVAILABLE_REGIONS],
-      "private-locations": false,
+      "private-locations": true,
+      whatsapp: true,
     },
   },
 };

@@ -23,10 +23,10 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@react-email/preview-server": "4.3.1",
+    "@react-email/preview-server": "5.0.8",
     "@types/node": "22.10.2",
     "@types/react": "19.2.2",
-    "react": "19.2.0",
-    "typescript": "5.7.2"
+    "react": "19.2.2",
+    "typescript": "5.9.3"
   }
 }

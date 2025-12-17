@@ -1,9 +1,9 @@
 {
   "extends": "@openstatus/tsconfig/nextjs.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "content-collections": ["./.content-collections/generated"],
       "@/*": ["./src/*"]
     },
     "plugins": [{ "name": "next" }],

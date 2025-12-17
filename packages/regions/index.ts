@@ -498,6 +498,9 @@ export const groupByContinent = Object.entries(regionDict).reduce<
   Record<Continent, RegionInfo[]>
 >(
   (acc, [_key, value]) => {
+    if (value.deprecated) {
+      return acc;
+    }
     Object.assign(acc, {
       [value.continent]: [...acc[value.continent], value],
     });

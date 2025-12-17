@@ -34,17 +34,17 @@ export const sendAlert = async ({
     errorMessage: message,
   });
 
-  try {
-    await fetch(notificationData.webhook.endpoint, {
-      method: "post",
-      body: JSON.stringify(body),
-      headers: notificationData.webhook.headers
-        ? transformHeaders(notificationData.webhook.headers)
-        : undefined,
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(notificationData.webhook.endpoint, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: notificationData.webhook.headers
+      ? transformHeaders(notificationData.webhook.headers)
+      : {
+          "Content-Type": "application/json",
+        },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send webhook notification: ${res.statusText}`);
   }
 };
 
@@ -78,17 +78,17 @@ export const sendRecovery = async ({
     errorMessage: message,
   });
   const url = notificationData.webhook.endpoint;
-  try {
-    await fetch(url, {
-      method: "post",
-      body: JSON.stringify(body),
-      headers: notificationData.webhook.headers
-        ? transformHeaders(notificationData.webhook.headers)
-        : undefined,
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(url, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: notificationData.webhook.headers
+      ? transformHeaders(notificationData.webhook.headers)
+      : {
+          "Content-Type": "application/json",
+        },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send SMS: ${res.statusText}`);
   }
 };
 
@@ -120,17 +120,17 @@ export const sendDegraded = async ({
     errorMessage: message,
   });
 
-  try {
-    await fetch(notificationData.webhook.endpoint, {
-      method: "post",
-      body: JSON.stringify(body),
-      headers: notificationData.webhook.headers
-        ? transformHeaders(notificationData.webhook.headers)
-        : undefined,
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(notificationData.webhook.endpoint, {
+    method: "post",
+    body: JSON.stringify(body),
+    headers: notificationData.webhook.headers
+      ? transformHeaders(notificationData.webhook.headers)
+      : {
+          "Content-Type": "application/json",
+        },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send SMS: ${res.statusText}`);
   }
 };
 
@@ -153,14 +153,21 @@ export const sendTest = async ({
     latency: 1337,
   });
   try {
-    await fetch(url, {
+    const response = await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: headers ? transformHeaders(headers) : undefined,
+      headers: headers
+        ? transformHeaders(headers)
+        : {
+            "Content-Type": "application/json",
+          },
     });
+    if (!response.ok) {
+      throw new Error("Failed to send test");
+    }
+    return true;
   } catch (err) {
     console.log(err);
-    return false;
+    throw new Error("Failed to send test");
   }
-  return true;
 };

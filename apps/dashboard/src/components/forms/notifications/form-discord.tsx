@@ -163,7 +163,12 @@ export function FormDiscord({
             )}
           />
           <div>
-            <Button variant="outline" size="sm" onClick={testAction}>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={testAction}
+            >
               Send Test
             </Button>
           </div>

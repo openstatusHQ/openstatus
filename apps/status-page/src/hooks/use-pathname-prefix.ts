@@ -8,9 +8,9 @@ import { useEffect, useState } from "react";
 export function usePathnamePrefix() {
   const trpc = useTRPC();
   const { domain } = useParams<{ domain: string }>();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
+  const { data: page } = useQuery({
+    ...trpc.statusPage.get.queryOptions({ slug: domain }),
+  });
   const [prefix, setPrefix] = useState("");
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export function usePathnamePrefix() {
       ) {
         setPrefix("");
       } else {
-        setPrefix(pathnames[1]);
+        setPrefix(pathnames[1] || "");
       }
     }
   }, [page?.customDomain]);

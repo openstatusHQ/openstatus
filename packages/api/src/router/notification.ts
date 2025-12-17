@@ -11,10 +11,14 @@ import {
   notificationsToMonitors,
   selectMonitorSchema,
   selectNotificationSchema,
+  telegramDataSchema,
+  whatsappDataSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
+import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
+import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
@@ -275,13 +279,14 @@ export const notificationRouter = createTRPCRouter({
         id: z.number(),
         name: z.string(),
         data: z.record(
-          z.string(),
+          z.enum(notificationProvider),
           z.string().or(z.record(z.string(), z.string())),
         ),
         monitors: z.array(z.number()),
       }),
     )
     .mutation(async (opts) => {
+      console.log(opts.input);
       const whereCondition: SQL[] = [
         eq(notification.id, opts.input.id),
         eq(notification.workspaceId, opts.ctx.workspace.id),
@@ -301,6 +306,15 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
+      const _data = NotificationDataSchema.safeParse(opts.input.data);
+
+      if (!_data.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: SchemaError.fromZod(_data.error, opts.input).message,
+        });
+      }
+
       db.transaction(async (tx) => {
         await tx
           .update(notification)
@@ -317,12 +331,14 @@ export const notificationRouter = createTRPCRouter({
             and(eq(notificationsToMonitors.notificationId, opts.input.id)),
           );
 
-        await tx.insert(notificationsToMonitors).values(
-          opts.input.monitors.map((monitorId) => ({
-            notificationId: opts.input.id,
-            monitorId,
-          })),
-        );
+        if (opts.input.monitors.length) {
+          await tx.insert(notificationsToMonitors).values(
+            opts.input.monitors.map((monitorId) => ({
+              notificationId: opts.input.id,
+              monitorId,
+            })),
+          );
+        }
       });
     }),
 
@@ -435,5 +451,49 @@ export const notificationRouter = createTRPCRouter({
           ),
         )
         .run();
+    }),
+
+  sendTest: protectedProcedure
+    .input(
+      z.object({
+        provider: z.enum(notificationProvider),
+        data: z.record(
+          z.enum(notificationProvider),
+          z.record(z.string(), z.string()).or(z.string()),
+        ),
+      }),
+    )
+    .mutation(async (opts) => {
+      if (opts.input.provider === "telegram") {
+        const _data = telegramDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+        await sendTelegramTest({
+          chatId: _data.data.telegram.chatId,
+        });
+
+        return;
+      }
+      if (opts.input.provider === "whatsapp") {
+        const _data = whatsappDataSchema.safeParse(opts.input.data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+        await sendWhatsAppTest({ phoneNumber: _data.data.whatsapp });
+
+        return;
+      }
+
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid provider",
+      });
     }),
 });

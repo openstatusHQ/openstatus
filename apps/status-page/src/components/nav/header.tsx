@@ -53,9 +53,9 @@ function useNav() {
 export function Header(props: React.ComponentProps<"header">) {
   const trpc = useTRPC();
   const { domain } = useParams<{ domain: string }>();
-  const { data: page } = useQuery(
-    trpc.statusPage.get.queryOptions({ slug: domain }),
-  );
+  const { data: page } = useQuery({
+    ...trpc.statusPage.get.queryOptions({ slug: domain }),
+  });
 
   const sendPageSubscriptionMutation = useMutation(
     trpc.emailRouter.sendPageSubscription.mutationOptions({}),
@@ -83,8 +83,10 @@ export function Header(props: React.ComponentProps<"header">) {
   );
 
   const types = (
-    page?.workspacePlan === "free" ? ["rss", "ssh"] : ["email", "rss", "ssh"]
-  ) satisfies ("email" | "rss" | "ssh")[];
+    page?.workspacePlan === "free"
+      ? ["slack", "rss", "json"]
+      : ["email", "slack", "rss", "json"]
+  ) satisfies ("email" | "rss" | "ssh" | "json" | "slack")[];
 
   return (
     <header {...props}>

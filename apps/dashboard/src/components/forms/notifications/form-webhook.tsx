@@ -98,24 +98,12 @@ export function FormWebhook({
     startTransition(async () => {
       try {
         const provider = form.getValues("provider");
-        const data = form.getValues("data");
-        const promise = config[provider].sendTest(
-          data as unknown as {
-            url: string;
-            headers?: { key: string; value: string }[];
-          },
-        );
-        toast.promise(promise, {
+        const data = form.getValues("data.endpoint");
+        toast.promise(config[provider].sendTest({ url: data }), {
           loading: "Sending test...",
           success: "Test sent",
-          error: (error) => {
-            if (error instanceof Error) {
-              return error.message;
-            }
-            return "Failed to send test";
-          },
+          error: "Failed to send test",
         });
-        await promise;
       } catch (error) {
         console.error(error);
       }

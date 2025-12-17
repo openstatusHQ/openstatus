@@ -1,7 +1,7 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+import { ntfyDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { NtfySchema } from "./schema";
 
 export const sendAlert = async ({
   monitor,
@@ -20,7 +20,7 @@ export const sendAlert = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = NtfySchema.parse(JSON.parse(notification.data));
+  const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is down with ${
@@ -35,17 +35,15 @@ export const sendAlert = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  try {
-    await fetch(url, {
-      method: "post",
-      body,
-      headers: {
-        ...authorization,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(url, {
+    method: "post",
+    body,
+    headers: {
+      ...authorization,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send alert notification: ${res.statusText}`);
   }
 };
 
@@ -68,7 +66,7 @@ export const sendRecovery = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = NtfySchema.parse(JSON.parse(notification.data));
+  const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is up again`;
@@ -79,17 +77,16 @@ export const sendRecovery = async ({
   const url = notificationData.ntfy.serverUrl
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
-  try {
-    await fetch(url, {
-      method: "post",
-      body,
-      headers: {
-        ...authorization,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+
+  const res = await fetch(url, {
+    method: "post",
+    body,
+    headers: {
+      ...authorization,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send recovery notification: ${res.statusText}`);
   }
 };
 
@@ -110,7 +107,7 @@ export const sendDegraded = async ({
   latency?: number;
   region?: Region;
 }) => {
-  const notificationData = NtfySchema.parse(JSON.parse(notification.data));
+  const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is degraded `;
@@ -123,17 +120,15 @@ export const sendDegraded = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  try {
-    await fetch(url, {
-      method: "post",
-      body,
-      headers: {
-        ...authorization,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+  const res = await fetch(url, {
+    method: "post",
+    body,
+    headers: {
+      ...authorization,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to send degraded notification: ${res.statusText}`);
   }
 };
 

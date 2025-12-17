@@ -31,7 +31,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const actions = getActions({
     edit: () => router.push(`/monitors/${row.original.id}/edit`),
     "copy-id": () => {
-      navigator.clipboard.writeText("ID");
+      navigator.clipboard.writeText(row.original.id.toString());
       toast.success("Monitor ID copied to clipboard");
     },
     // export: () => setOpenDialog(true),
@@ -42,8 +42,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Monitor",
-          confirmationValue: "delete monitor",
+          confirmationValue: row.original.name ?? "monitor",
           submitAction: async () => {
             await deleteMonitorMutation.mutateAsync({
               id: row.original.id,

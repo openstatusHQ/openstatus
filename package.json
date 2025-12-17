@@ -22,18 +22,21 @@
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
     "@turbo/gen": "1.13.3",
-    "@types/node": "20.8.0",
-    "knip": "5.16.0",
-    "oxfmt": "^0.15.0",
+    "oxfmt": "0.18.0",
     "oxlint": "1.30.0",
-    "oxlint-tsgolint": "0.8.2",
-    "turbo": "2.3.2",
-    "typescript": "5.7.2"
+    "oxlint-tsgolint": "0.9.1",
+    "@types/node": "24.0.8",
+    "knip": "5.75.1",
+    "turbo": "2.6.3",
+    "typescript": "5.9.3"
   },
-  "packageManager": "pnpm@10.12.4",
+  "packageManager": "pnpm@10.26.0",
   "pnpm": {
-    "onlyBuiltDependencies": ["@sentry/cli", "@swc/core", "sharp"]
+    "onlyBuiltDependencies": ["@sentry/cli", "@swc/core", "sharp"],
+    "overrides": {
+      "@react-email/preview-server": "npm:next@16.0.10"
+    }
   },
   "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*", "packages/config/*"]
+  "workspaces": ["apps/*", "packages/**/*"]
 }

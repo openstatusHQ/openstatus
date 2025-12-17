@@ -2,26 +2,23 @@
 import { ImageResponse } from "next/og";
 
 import { OG_DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import { Background } from "./_components/background";
-import {
-  DEFAULT_URL,
-  SIZE,
-  calSemiBold,
-  interLight,
-  interMedium,
-  interRegular,
-} from "./utils";
+import { SIZE } from "./utils";
 
 export const runtime = "edge";
 
-// const TITLE = "A better way to monitor your services.";
-// const DESCRIPTION = "Reduce alert fatigue by triggering only relevant alerts when your services experience downtime.";
-const IMAGE = "assets/og/dashboard.png";
 const FOOTER = "openstatus.dev";
+const CATEGORY = "product";
 
 export async function GET(req: Request) {
-  const [interRegularData, interLightData, calSemiBoldData, interMediumData] =
-    await Promise.all([interRegular, interLight, calSemiBold, interMedium]);
+  const fontMonoRegular = await fetch(
+    new URL("../../../public/fonts/RobotoMono-Regular.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
+  const fontMonoMedium = await fetch(
+    new URL("../../../public/fonts/RobotoMono-Medium.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
+  const fontMonoBold = await fetch(
+    new URL("../../../public/fonts/RobotoMono-Bold.ttf", import.meta.url),
+  ).then((res) => res.arrayBuffer());
 
   const { searchParams } = new URL(req.url);
 
@@ -32,79 +29,56 @@ export async function GET(req: Request) {
     (searchParams.has("description") && searchParams.get("description")) ||
     OG_DESCRIPTION;
 
-  const image =
-    (searchParams.has("image") && searchParams.get("image")) || IMAGE;
-
   const footer =
     (searchParams.has("footer") && searchParams.get("footer")) || FOOTER;
 
+  const category =
+    (searchParams.has("category") && searchParams.get("category")) || CATEGORY;
+
   return new ImageResponse(
-    <Background tw="justify-start items-start">
+    <div tw="relative flex flex-col items-start justify-start w-full h-full bg-gray-100">
       <div
-        style={{ clipPath: "polygon(90% 0%, 200% 0%, 200% 200%, -30% 200%)" }}
-        tw="flex absolute h-full w-full bg-slate-200"
+        tw="flex flex-col h-full p-8 w-full"
+        style={{ fontFamily: "Font Mono" }}
       >
-        <img
-          alt=""
-          style={{ objectFit: "cover" }}
-          tw="flex w-full h-full"
-          src={new URL(image, DEFAULT_URL).toString()}
-        />
-      </div>
-      {/* adds a border to the mask element */}
-      <div
-        style={{
-          clipPath: "polygon(90% 0%, 170% 0%, -30% 200%, -29% 200%)",
-          // from-slate-100 to-slate-300
-          backgroundImage: "linear-gradient(to bottom left, #f1f5f9, #cbd5e1)",
-        }}
-        tw="flex absolute h-full w-full" // bg-slate-200
-      />
-      <div tw="flex flex-col justify-between h-full flex-1 py-24 px-24">
-        <div tw="flex flex-col h-full flex-1 justify-center">
+        <div tw="flex flex-col justify-end flex-1 mb-8">
+          <p tw="text-xl text-left">[{category.toLowerCase()}]</p>
           <h1
-            style={{ fontFamily: "Cal", width: 700 }}
-            tw="text-6xl text-black"
+            tw="text-6xl text-black text-left font-medium"
+            style={{ lineClamp: 2, display: "block" }}
           >
             {title}
           </h1>
-          <p style={{ width: 580 }} tw="text-4xl text-slate-700">
+          <p
+            tw="text-4xl text-slate-700 text-left"
+            style={{ lineClamp: 2, display: "block" }}
+          >
             {description}
           </p>
         </div>
-        <div tw="flex w-full">
-          <p style={{ width: 450 }} tw="font-medium text-xl">
-            {footer}
-          </p>
-        </div>
+        <p tw="font-medium text-xl text-slate-500 text-left">{footer}</p>
       </div>
-    </Background>,
+    </div>,
     {
       ...SIZE,
       fonts: [
         {
-          name: "Inter",
-          data: interMediumData,
-          style: "normal",
-          weight: 500,
-        },
-        {
-          name: "Inter",
-          data: interRegularData,
+          name: "Font Mono",
+          data: fontMonoRegular,
           style: "normal",
           weight: 400,
         },
         {
-          name: "Inter",
-          data: interLightData,
+          name: "Font Mono",
+          data: fontMonoMedium,
           style: "normal",
-          weight: 300,
+          weight: 500,
         },
         {
-          name: "Cal",
-          data: calSemiBoldData,
+          name: "Font Mono",
+          data: fontMonoBold,
           style: "normal",
-          weight: 600,
+          weight: 700,
         },
       ],
     },

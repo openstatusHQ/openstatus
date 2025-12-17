@@ -15,11 +15,9 @@ SQL >
         workspaceId,
         timing,
         cronTimestamp
-    FROM mv__http_full_30d
+    FROM mv__http_full_30d__v0
     where
-         cronTimestamp = {{ String(timestamp, '1729871694536') }} and 
+         cronTimestamp = {{ String(timestamp, '1729871694536') }} and
          monitorId = {{ String(monitorId, '2260') }}
         and url = {{ String(url , 'https://www.openstatus.dev/api/ping/edge') }}
         order by cronTimestamp desc
-
-

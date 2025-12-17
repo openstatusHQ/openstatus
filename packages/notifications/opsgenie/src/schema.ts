@@ -1,11 +1,7 @@
+import { opsgenieDataSchema } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
-export const OpsGenieSchema = z.object({
-  opsgenie: z.object({
-    apiKey: z.string(),
-    region: z.enum(["eu", "us"]),
-  }),
-});
+export const OpsGenieSchema = opsgenieDataSchema;
 
 export const OpsGeniePayloadAlert = z.object({
   message: z.string(),

@@ -31,6 +31,8 @@ const schema = z.object({
     "opsgenie",
     "pagerduty",
     "ntfy",
+    "telegram",
+    "whatsapp",
   ]),
   data: z.record(z.string(), z.string()).or(z.string()),
   monitors: z.array(z.number()),

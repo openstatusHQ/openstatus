@@ -1,0 +1,40 @@
+---
+title: "Private Locations"
+publishedAt: "2025-11-10"
+author: "Thibault Le Ouay Ducasse"
+description: "Openstatus allows your to monitor your service from your own network."
+category: "Product"
+---
+
+Sometimes the services you want to monitor are not accessible from the outside, you want to be able to monitor from your own network.
+
+## Why private locations are important?
+
+Private locations let you monitor internal or restricted services that aren’t reachable from the public internet. They run checks from inside your own network or infrastructure, giving you visibility into systems behind firewalls, or VPCs.
+
+## Why choose openstatus for private locations?
+
+### Deploy everywhere
+
+Simply **deploy our probes** to your favorite **cloud provider**, your own **server** or on your own **virtual private cloud** (VPC).
+
+The docker image is only **8.5MB** small and should easily fit on your infrastructure whether ARM64 or AMD64. We don't provide browser checks and can keep it this small.
+
+- [Cloudflare Containers](https://docs.openstatus.dev/guides/how-to-deploy-probes-cloudflare-containers/)
+- [Raspberry Pi](/blog/deploy-private-locations-raspberry-pi)
+
+### Docker Container
+
+```bash
+docker pull ghcr.io/openstatushq/private-location:latest
+```
+
+Run the docker container. It will start **listening to the changes** of your monitors every few minutes and run the **scheduler** for each frequency defined.
+
+```bash
+docker run -d \
+  --name openstatus-private-location \
+  --restart=always \
+  -e OPENSTATUS_KEY=$OPENSTATUS_KEY \
+  ghcr.io/openstatushq/private-location:latest
+```

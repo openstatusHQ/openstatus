@@ -71,7 +71,7 @@ export function FormWorkspace({
           <FormCardHeader>
             <FormCardTitle>Workspace</FormCardTitle>
             <FormCardDescription>
-              Manay your workspace name.
+              Manage your workspace name.
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>

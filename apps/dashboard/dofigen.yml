@@ -1,0 +1,84 @@
+builders:
+  # Stage 1: Next.js build with Node.js
+  builder:
+    fromImage: node:24-slim
+    workdir: /app
+    copy:
+      - . /app/
+    env:
+      NODE_ENV: production
+      PNPM_HOME: /pnpm
+      PATH: $PNPM_HOME:$PATH
+      # Build-time environment variables (placeholder values, overwritten by .env.docker at runtime)
+      DATABASE_URL: http://libsql:8080
+      DATABASE_AUTH_TOKEN: test
+      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: test
+      NEXT_PUBLIC_URL: http://localhost:3002
+      TEAM_ID_VERCEL: test
+      PROJECT_ID_VERCEL: test
+      VERCEL_AUTH_BEARER_TOKEN: test
+      OPENPANEL_CLIENT_SECRET: test
+      RESEND_API_KEY: test
+      UPSTASH_REDIS_REST_URL: test
+      UPSTASH_REDIS_REST_TOKEN: test
+      UNKEY_TOKEN: test
+      UNKEY_API_ID: test
+      TINY_BIRD_API_KEY: test
+      CRON_SECRET: test
+      STRIPE_SECRET_KEY: test
+      AUTH_SECRET: build-time-placeholder-min-32-chars-long
+      SELF_HOST: "true"
+    run:
+      - corepack enable
+      - pnpm install --frozen-lockfile
+      - pnpm turbo run build --filter=@openstatus/dashboard
+
+# Runtime stage
+fromImage: node:24-slim
+workdir: /app/apps/dashboard
+
+# Copy artifacts from builder
+copy:
+  # Copy Next.js standalone output
+  - fromBuilder: builder
+    source: /app/apps/dashboard/.next/standalone/apps/dashboard/
+    target: ./
+    chmod: "555"
+  # Copy root node_modules (required for pnpm symlinks)
+  - fromBuilder: builder
+    source: /app/node_modules/
+    target: /app/node_modules/
+  # Copy static assets
+  - fromBuilder: builder
+    source: /app/apps/dashboard/.next/static/
+    target: ./.next/static/
+  # Copy public directory
+  - fromBuilder: builder
+    source: /app/apps/dashboard/public/
+    target: ./public/
+
+# Install curl for health checks
+root:
+  run:
+    - apt-get update
+    - apt-get install -y --no-install-recommends curl
+    - rm -rf /var/lib/apt/lists/*
+
+# Security: run as non-root user
+user: "1000:1000"
+
+# Expose port
+expose: "3000"
+
+# Health check
+healthcheck:
+  interval: 30s
+  timeout: 10s
+  start: 45s
+  retries: 3
+  cmd: curl -f http://localhost:3000/ || exit 1
+
+# Start application
+cmd:
+  - node
+  - server.js

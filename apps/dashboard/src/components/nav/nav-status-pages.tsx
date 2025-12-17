@@ -116,7 +116,7 @@ export function NavStatusPages() {
             const actions = getActions({
               edit: () => router.push(`/status-pages/${item.id}/edit`),
               "copy-id": () => {
-                navigator.clipboard.writeText("ID");
+                navigator.clipboard.writeText(item.id.toString());
                 toast.success("Status Page ID copied to clipboard");
               },
             });
@@ -160,8 +160,7 @@ export function NavStatusPages() {
                 <QuickActions
                   actions={actions}
                   deleteAction={{
-                    title: "Status Page",
-                    confirmationValue: "delete status page",
+                    confirmationValue: item.title ?? "status page",
                     submitAction: async () => {
                       await deleteStatusPage.mutateAsync({ id: item.id });
                       if (pathname.includes(`/status-pages/${item.id}`)) {

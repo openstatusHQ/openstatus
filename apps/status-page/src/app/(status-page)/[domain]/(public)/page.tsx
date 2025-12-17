@@ -28,7 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
 export default function Page() {
@@ -38,11 +38,16 @@ export default function Page() {
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
-  const { data: pageInitial } = useQuery(
+  const { data: pageInitial, error } = useQuery(
     trpc.statusPage.get.queryOptions({
       slug: domain,
     }),
   );
+
+  // Handle case where page doesn't exist or query fails
+  if (error || (!pageInitial && domain)) {
+    notFound();
+  }
 
   const hasCustomConfig = pageInitial?.configuration
     ? pageInitial.configuration.type !== barType ||

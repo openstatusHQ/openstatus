@@ -41,6 +41,13 @@ import {
 
 // NOTE: this router is used on status pages only - do not confuse with the page router which is used in the dashboard for the config
 
+/**
+ * Right now, we do not allow workspaces to have a custom lookback period.
+ * If we decide to allow this in the future, we should move this to the database.
+ */
+const WORKSPACES =
+  process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -107,7 +114,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitors = _page.monitorsToPages
         // NOTE: we cannot nested `where` in drizzle to filter active monitors
-        .filter((m) => !m.monitor.deletedAt)
+        .filter((m) => !m.monitor.deletedAt && m.monitor.active)
         .map((m) => {
           const events = getEvents({
             maintenances: _page.maintenances,
@@ -388,7 +395,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const monitors = _page.monitorsToPages.filter(
-        (m) => !m.monitor.deletedAt,
+        (m) => !m.monitor.deletedAt && m.monitor.active,
       );
 
       if (monitors.length !== opts.input.monitorIds.length) return null;
@@ -455,6 +462,10 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
+      const lookbackPeriod = WORKSPACES.includes(_page.workspaceId ?? 0)
+        ? 30
+        : 45;
+
       return monitors.map((m) => {
         const monitorId = m.monitor.id.toString();
         const events = getEvents({
@@ -466,8 +477,12 @@ export const statusPageRouter = createTRPCRouter({
         const rawData = statusDataByMonitorId.get(monitorId) || [];
         const filledData =
           process.env.NOOP_UPTIME === "true"
-            ? fillStatusDataFor45DaysNoop({ errorDays: [], degradedDays: [] })
-            : fillStatusDataFor45Days(rawData, monitorId);
+            ? fillStatusDataFor45DaysNoop({
+                errorDays: [],
+                degradedDays: [],
+                lookbackPeriod,
+              })
+            : fillStatusDataFor45Days(rawData, monitorId, lookbackPeriod);
         const processedData = setDataByType({
           events,
           data: filledData,
@@ -754,7 +769,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!_page) return null;
 
       const _monitor = _page.monitorsToPages.find(
-        (m) => m.monitorId === opts.input.id,
+        (m) => m.monitorId === opts.input.id && m.monitor.active,
       )?.monitor;
 
       if (!_monitor) return null;

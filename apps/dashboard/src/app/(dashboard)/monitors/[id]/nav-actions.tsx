@@ -68,7 +68,7 @@ export function NavActions() {
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
     "copy-id": () => {
-      navigator.clipboard.writeText("ID");
+      navigator.clipboard.writeText(id);
       toast.success("Monitor ID copied to clipboard");
     },
     clone: () => {
@@ -168,7 +168,7 @@ export function NavActions() {
           </span>
         ) : monitor.status === "error" ? (
           <span className="relative ml-1.5 inline-flex">
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-error" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-destructive" />
           </span>
         ) : (
           <span className="relative ml-1.5 inline-flex">
@@ -195,8 +195,7 @@ export function NavActions() {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Monitor",
-          confirmationValue: "delete monitor",
+          confirmationValue: monitor.name ?? "monitor",
           submitAction: async () => {
             await deleteMonitorMutation.mutateAsync({
               id: Number.parseInt(id),

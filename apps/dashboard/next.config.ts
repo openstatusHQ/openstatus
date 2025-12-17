@@ -1,8 +1,8 @@
-const { withSentryConfig } = require("@sentry/nextjs");
-
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
   images: {
     remotePatterns: [
       new URL("https://openstatus.dev/**"),
@@ -16,33 +16,24 @@ const nextConfig: NextConfig = {
   },
 };
 
-module.exports = withSentryConfig(
-  nextConfig,
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
+// For detailed options, refer to the official documentation:
+// - Webpack plugin options: https://github.com/getsentry/sentry-webpack-plugin#options
+// - Next.js Sentry setup guide: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+const sentryConfig = {
+  // Prevent log output unless running in a CI environment (helps reduce noise in logs)
+  silent: !process.env.CI,
+  org: "openstatus",
+  project: "openstatus",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
 
-    // Only print logs for uploading source maps in CI
-    // Set to `true` to suppress logs
-    silent: !process.env.CI,
+  // Upload a larger set of source maps for improved stack trace accuracy (increases build time)
+  widenClientFileUpload: true,
 
-    org: "openstatus",
-    project: "openstatus",
-  },
-  {
-    // For all available options, see:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+  // If set to true, transpiles Sentry SDK to be compatible with IE11 (increases bundle size)
+  transpileClientSDK: false,
 
-    // Pass the auth token
-    authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Tree-shake Sentry logger statements to reduce bundle size
+  disableLogger: true,
+};
 
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
-
-    // Transpiles SDK to be compatible with IE11 (increases bundle size)
-    transpileClientSDK: false,
-
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    disableLogger: true,
-  },
-);
+export default withSentryConfig(nextConfig, sentryConfig);

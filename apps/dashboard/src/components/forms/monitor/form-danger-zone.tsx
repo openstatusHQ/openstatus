@@ -11,8 +11,10 @@ import {
 
 export function FormDangerZone({
   onSubmit,
+  title,
 }: {
   onSubmit: () => Promise<void>;
+  title: string;
 }) {
   return (
     <FormCard variant="destructive">
@@ -21,11 +23,7 @@ export function FormDangerZone({
         <FormCardDescription>This action cannot be undone.</FormCardDescription>
       </FormCardHeader>
       <FormCardFooter variant="destructive" className="justify-end">
-        <FormAlertDialog
-          title="OpenStatus API"
-          confirmationValue="delete monitor"
-          submitAction={onSubmit}
-        />
+        <FormAlertDialog confirmationValue={title} submitAction={onSubmit} />
       </FormCardFooter>
     </FormCard>
   );

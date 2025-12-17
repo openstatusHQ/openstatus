@@ -43,7 +43,7 @@ export function NavActions() {
   const actions = getActions({
     edit: () => router.push(`/status-pages/${id}/edit`),
     "copy-id": () => {
-      navigator.clipboard.writeText("ID");
+      navigator.clipboard.writeText(id);
       toast.success("Status Page ID copied to clipboard");
     },
   });
@@ -58,7 +58,9 @@ export function NavActions() {
           <TooltipTrigger asChild>
             <Button variant="ghost" size="sm" className="group h-7 w-7" asChild>
               <a
-                href={`https://${statusPage.customDomain || `${statusPage.slug}.openstatus.dev`}`}
+                href={`https://${
+                  statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
+                }`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -72,8 +74,7 @@ export function NavActions() {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Status Page",
-          confirmationValue: "delete status page",
+          confirmationValue: statusPage.title ?? "status page",
           submitAction: async () => {
             await deleteStatusPageMutation.mutateAsync({
               id: Number.parseInt(id),

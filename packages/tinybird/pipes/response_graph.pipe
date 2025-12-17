@@ -16,7 +16,7 @@ SQL >
         round(quantile(0.9)(latency)) as p90Latency,
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency
-    FROM ping_response__v7
+    FROM ping_response__v8
     WHERE
         monitorId = {{ String(monitorId, '1') }}
         {% if defined(url) %} AND url = {{ String(url) }} {% end %}
@@ -24,5 +24,3 @@ SQL >
         {% if defined(toDate) %} AND timestamp <= {{ Int64(toDate) }} {% end %}
     GROUP BY h, region
     ORDER BY h DESC
-
-

@@ -17,6 +17,7 @@ type StatusData = {
 export function fillStatusDataFor45Days(
   data: Array<StatusData>,
   monitorId: string,
+  lookbackPeriod = 45,
 ): Array<StatusData> {
   const result = [];
   const dataByDay = new Map();
@@ -29,7 +30,7 @@ export function fillStatusDataFor45Days(
 
   // Generate all 45 days from today backwards
   const now = new Date();
-  for (let i = 0; i < 45; i++) {
+  for (let i = 0; i < lookbackPeriod; i++) {
     const date = new Date(now);
     date.setUTCDate(date.getUTCDate() - i);
     date.setUTCHours(0, 0, 0, 0); // Set to start of day in UTC
@@ -66,9 +67,11 @@ export function fillStatusDataFor45Days(
 export function fillStatusDataFor45DaysNoop({
   errorDays,
   degradedDays,
+  lookbackPeriod = 45,
 }: {
   errorDays: number[];
   degradedDays: number[];
+  lookbackPeriod?: number;
 }): Array<StatusData> {
   const issueDays = [...errorDays, ...degradedDays];
   const data: StatusData[] = Array.from({ length: 45 }, (_, i) => {
@@ -81,7 +84,7 @@ export function fillStatusDataFor45DaysNoop({
       monitorId: "1",
     };
   });
-  return fillStatusDataFor45Days(data, "1");
+  return fillStatusDataFor45Days(data, "1", lookbackPeriod);
 }
 
 type Event = {

@@ -62,16 +62,25 @@ export const opsgenieDataSchema = z.object({
     region: z.enum(["us", "eu"]),
   }),
 });
+export const telegramDataSchema = z.object({
+  telegram: z.object({ chatId: z.string() }),
+});
+
+export const whatsappDataSchema = z.object({
+  whatsapp: phoneSchema,
+});
 
 export const NotificationDataSchema = z.union([
-  emailDataSchema,
-  phoneDataSchema,
-  slackDataSchema,
   discordDataSchema,
-  pagerdutyDataSchema,
-  opsgenieDataSchema,
+  emailDataSchema,
   ntfyDataSchema,
+  opsgenieDataSchema,
+  pagerdutyDataSchema,
+  phoneDataSchema,
+  telegramDataSchema,
+  slackDataSchema,
   webhookDataSchema,
+  whatsappDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
@@ -123,6 +132,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("webhook"),
         data: webhookDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("whatsapp"),
+        data: whatsappDataSchema,
       }),
     ),
   ],

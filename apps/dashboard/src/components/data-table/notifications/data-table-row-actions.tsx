@@ -47,8 +47,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
       <QuickActions
         actions={actions}
         deleteAction={{
-          title: "Delete",
-          confirmationValue: "delete notifier",
+          confirmationValue: props.row.original.name ?? "notifier",
           submitAction: async () => {
             await deleteNotifierMutation.mutateAsync({
               id: props.row.original.id,
@@ -70,10 +69,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           await updateNotifierMutation.mutateAsync({
             id: props.row.original.id,
             name: values.name,
-            data:
-              typeof values.data === "string"
-                ? { [values.provider]: values.data }
-                : values.data,
+            data: { [values.provider]: values.data },
             monitors: values.monitors,
           });
         }}

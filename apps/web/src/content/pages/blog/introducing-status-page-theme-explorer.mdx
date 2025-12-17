@@ -1,0 +1,80 @@
+---
+title: "Introducing: The Status Page Theme Explorer"
+description: "Customize and build your own status page experience."
+author: "Maximilian Kaske"
+publishedAt: "2025-10-28"
+image: "/assets/posts/introducing-status-page-theme-explorer/palette.png"
+category: "education"
+---
+
+Who uses status pages the most? _Mainly Developers_. And to match their nerdiness, we’re adding more font-mono into the game. We’ve collaborated with [@aliszu](https://x.com/aliszu) to rebuilt our status page experience from the ground up and are providing you with more flexibility and control.
+
+A status page should feel at home with your brand - without requiring constant maintenance. It should also let you decide exactly how much data you want to share and at what level of detail.
+The status-page is now a standalone app, fully separated from our main web project - continuing the great split after the [dashboard extraction](/blog/new-dashboard-we-are-so-back).
+
+**TL;DR**: create your own theme on [themes.openstatus.dev](https://themes.openstatus.dev/?t=supabase&b=true) + more page configuration
+
+---
+
+### Theme Explorer
+
+From day one, we’ve built with [shadcn/ui](https://ui.shadcn.com), and we’re sticking to it: same `CSS` variables, same philosophy. And luckily, it makes it easy to change themes!
+
+<Image
+  src="/assets/posts/introducing-status-page-theme-explorer/theme-explorer-supabase.png"
+  alt="Supabase Theme"
+/>
+
+We’ve now extended those variables with custom ones for states like _maintenance_, _success_, and _degraded_, among others.
+
+We’re starting with four themes:
+- our new default openstatus (Squared) theme,
+- a legacy rounded theme close to the current one,
+- a [Supabase](https://supabase.com) theme, and
+- a GitHub high-contrast theme.
+
+And here’s the fun part: **you can contribute your own themes**. 
+
+Go to [themes.openstatus.dev](https://themes.openstatus.dev), open the **Theme Builder** by toggling the sidebar (e.g. `cmd + b`) and play around with different styles.
+
+Once you’re happy with your setup:
+- Copy the configuration to your clipboard.
+- Create a new theme file with that config.
+- Append its ID to the `THEMES_LIST`.
+- Open a PR to contribute it!
+
+
+We have a comprehensive [README](https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store) with more context.
+
+We’ve also updated the local seed setup — making it easier to get started and preview your theme right away at http://localhost:3000/status.
+
+> Note, that we won’t accept every submission. We want to keep themes high-quality and recognizable - no random or off-brand experiments (sorry Santa 🎅).
+
+To try the new experience on your own status page, **opt in to the redesign (beta)** ([Tutorial > How to configure a status page](https://docs.openstatus.dev/tutorial/how-to-configure-status-page/)) and select your preferred theme. Newly created pages will automatically opt in to the new theme.
+
+---
+
+### Shared Values Configuration
+
+There’s more configuration. 
+
+We’ve heard from teams who wanted to **manually update their status page without connecting any synthetic monitors**. While we still believe _monitoring + transparency go hand in hand_, we don’t want to exclude users who just want to share updates directly.
+
+<Image
+  src="/assets/posts/introducing-status-page-theme-explorer/dashboard-status-page-redesign.png"
+  alt="Status Page Dashboard Settings"
+/>
+
+With the new _“manual”_ type, you can only share status reports you are creating, regardless of the derived synthetic monitoring values.
+
+All metrics, including uptime, will refer to your shared (manual) data.
+To understand the underlying concept, check out our docs:
+[Concepts > Status Values and Uptime Calculation](https://docs.openstatus.dev/concept/uptime-calculation-and-values/) - where we explain how these values are derived, including details about the default _“absolute”_ type (which takes duration and request values to aggregate the uptime data).
+
+---
+
+We’re not done yet. Next up: _grouped monitors_, _white-labeling support_, and _private themes_ - all coming to the new status page configuration soon.
+
+> Expect all status pages to be fully migrated to the new version early next year.
+
+If you’re already using openstatus - or planning to - and feel a status page feature is missing, we’d love to hear from you. Contact us via [ping@openstatus.dev](mailto:ping@openstatus.dev) or by joining [Discord](https://openstatus.dev/discord).

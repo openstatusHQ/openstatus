@@ -34,7 +34,7 @@ const installs = [
     description: (
       <>
         Create an API key in your workspace{" "}
-        <Link href="/settings/workspace">settings.</Link>
+        <Link href="/settings/general">settings.</Link>
       </>
     ),
     command: {

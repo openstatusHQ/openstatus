@@ -36,7 +36,7 @@ type StringTargetType struct {
 type RecordTarget struct {
 	Comparator request.RecordComparator `json:"compare"`
 	Target     string                   `json:"target"`
-	Record     request.Record           `json:"record"`
+	Key        request.Record           `json:"key"`
 }
 
 func (target StringTargetType) StringEvaluate(s string) bool {

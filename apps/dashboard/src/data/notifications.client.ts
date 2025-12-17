@@ -5,8 +5,10 @@ import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
 import { FormSlack } from "@/components/forms/notifications/form-slack";
 import { FormSms } from "@/components/forms/notifications/form-sms";
+import { FormTelegram } from "@/components/forms/notifications/form-telegram";
 import { FormWebhook } from "@/components/forms/notifications/form-webhook";
-import { DiscordIcon } from "@openstatus/icons";
+import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
+import { DiscordIcon, TelegramIcon, WhatsappIcon } from "@openstatus/icons";
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
@@ -15,12 +17,14 @@ import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
 import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
 import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
 import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
+import { sendTest as sendTestTelegram } from "@openstatus/notification-telegram";
+import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
 import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
 import {
   BellIcon,
+  Cog,
   Mail,
   MessageCircle,
-  Pencil,
   Trash2,
   Webhook,
 } from "lucide-react";
@@ -28,8 +32,8 @@ import {
 export const actions = [
   {
     id: "edit",
-    label: "Edit",
-    icon: Pencil,
+    label: "Settings",
+    icon: Cog,
     variant: "default" as const,
   },
   {
@@ -103,6 +107,18 @@ export const config = {
     label: "Ntfy",
     form: FormNtfy,
     sendTest: sendTestNtfy,
+  },
+  telegram: {
+    icon: TelegramIcon,
+    label: "Telegram",
+    form: FormTelegram,
+    sendTest: sendTestTelegram,
+  },
+  whatsapp: {
+    icon: WhatsappIcon,
+    label: "WhatsApp",
+    form: FormWhatsApp,
+    sendTest: sendWhatsAppTest,
   },
 };
 

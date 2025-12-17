@@ -2,6 +2,7 @@
   "extends": "@openstatus/tsconfig/nextjs.json",
   "include": ["src", "*.ts"],
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "types": ["bun-types"]
   }
 }

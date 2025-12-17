@@ -1,10 +1,10 @@
-import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { Cog, Eye, Plus, Trash2 } from "lucide-react";
 
 export const actions = [
   {
     id: "edit",
-    label: "Edit",
-    icon: Pencil,
+    label: "Settings",
+    icon: Cog,
     variant: "default" as const,
   },
   {

@@ -13,9 +13,9 @@
     "@types/luxon": "3.4.2",
     "@types/node": "22.10.2",
     "@types/react": "19.2.2",
-    "@types/react-dom": "19.1.9",
+    "@types/react-dom": "19.2.2",
     "tailwindcss": "4.1.8",
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "@dnd-kit/core": "6.3.1",
@@ -51,10 +51,10 @@
     "date-fns": "2.30.0",
     "lucide-react": "0.525.0",
     "luxon": "3.5.0",
-    "next": "15.5.5",
-    "react": "19.2.0",
+    "next": "16.0.10",
+    "react": "19.2.2",
     "react-day-picker": "8.10.1",
-    "react-hook-form": "7.66.1",
+    "react-hook-form": "7.68.0",
     "recharts": "2.15.0",
     "tailwind-merge": "2.5.5",
     "tailwindcss-animate": "1.0.7",

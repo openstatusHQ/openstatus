@@ -135,7 +135,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 			log.Ctx(ctx).Debug().Msgf("evaluating %d dns assertions", len(req.RawAssertions))
 			isSuccessful, err = EvaluateDNSAssertions(req.RawAssertions, response)
 			if err != nil {
-				return nil, backoff.Permanent(err)
+				return response, backoff.Permanent(err)
 			}
 		}
 		if !isSuccessful && called < retry {
@@ -150,7 +150,9 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
 	data.Latency = latency
-	data.Records = FormatDNSResult(result)
+	if result != nil {
+		data.Records = FormatDNSResult(result)
+	}
 
 	if len(req.RawAssertions) > 0 {
 		if j, err := json.Marshal(req.RawAssertions); err == nil {
@@ -162,19 +164,21 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	// Status update logic
 	switch {
-	case !isSuccessful && req.Status != "error":
+	case !isSuccessful:
 		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
-		checker.UpdateStatus(ctx, checker.UpdateData{
-			MonitorId:     req.MonitorID,
-			Status:        "error",
-			Region:        h.Region,
-			Message:       err.Error(),
-			CronTimestamp: req.CronTimestamp,
-			Latency:       latency,
-		})
 		data.RequestStatus = "error"
 		data.Error = 1
 		data.ErrorMessage = err.Error()
+		if req.Status != "error" {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "error",
+				Region:        h.Region,
+				Message:       err.Error(),
+				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
+			})
+		}
 	case isSuccessful && req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded":
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -231,7 +235,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-
 	retry := defaultRetry
 	if req.Retry != 0 {
 		retry = int(req.Retry)
@@ -243,7 +246,7 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	workspaceId , _ := strconv.Atoi(req.WorkspaceID)
+	workspaceId, _ := strconv.Atoi(req.WorkspaceID)
 
 	statusMap := map[string]string{
 		"active":   "success",
@@ -330,6 +333,7 @@ func FormatDNSResult(result *checker.DnsResponse) map[string][]string {
 	mx := make([]string, 0)
 	ns := make([]string, 0)
 	txt := make([]string, 0)
+
 	for _, v := range result.A {
 		a = append(a, v)
 	}
@@ -363,7 +367,7 @@ func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.Dn
 			return false, fmt.Errorf("unable to parse assertion: %w", err)
 		}
 		var isSuccessfull bool
-		switch assert.Record {
+		switch assert.Key {
 		case request.RecordA:
 			isSuccessfull = assert.RecordEvaluate(response.A)
 		case request.RecordAAAA:
@@ -377,7 +381,7 @@ func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.Dn
 		case request.RecordTXT:
 			isSuccessfull = assert.RecordEvaluate(response.TXT)
 		default:
-			return false, fmt.Errorf("unknown record type in assertion: %s", assert.Record)
+			return false, fmt.Errorf("unknown record type in assertion: %s", assert.Key)
 		}
 		if !isSuccessfull {
 			return false, nil

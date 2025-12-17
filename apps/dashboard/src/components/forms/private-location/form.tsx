@@ -123,7 +123,6 @@ export function FormPrivateLocation({
           <FormField
             control={form.control}
             name="token"
-            disabled
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Token</FormLabel>

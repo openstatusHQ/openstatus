@@ -17,7 +17,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
-type StatusUpdateType = "email" | "rss" | "ssh";
+type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
@@ -31,7 +31,7 @@ interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
 
 export function StatusUpdates({
   className,
-  types = ["rss", "ssh"],
+  types = ["rss", "ssh", "json", "slack"],
   page,
   onSubscribe,
   ...props
@@ -60,8 +60,14 @@ export function StatusUpdates({
             {types.includes("email") ? (
               <TabsTrigger value="email">Email</TabsTrigger>
             ) : null}
+            {types.includes("slack") ? (
+              <TabsTrigger value="slack">Slack</TabsTrigger>
+            ) : null}
             {types.includes("rss") ? (
               <TabsTrigger value="rss">RSS</TabsTrigger>
+            ) : null}
+            {types.includes("json") ? (
+              <TabsTrigger value="json">JSON</TabsTrigger>
             ) : null}
             {types.includes("ssh") ? (
               <TabsTrigger value="ssh">SSH</TabsTrigger>
@@ -116,6 +122,18 @@ export function StatusUpdates({
               />
             </div>
           </TabsContent>
+          <TabsContent value="json" className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 px-2 pb-2">
+              <p className="text-sm">Get the JSON updates</p>
+              <CopyInputButton
+                className="w-full"
+                id="json"
+                value={`${baseUrl}/feed/json${
+                  page?.passwordProtected ? `?pw=${page?.password}` : ""
+                }`}
+              />
+            </div>
+          </TabsContent>
           <TabsContent value="ssh" className="flex flex-col gap-2">
             <div className="flex flex-col gap-2 px-2 pb-2">
               <p className="text-sm">Get status via SSH</p>
@@ -123,6 +141,21 @@ export function StatusUpdates({
                 className="w-full"
                 id="ssh"
                 value={`ssh ${page?.slug}@ssh.openstatus.dev`}
+              />
+            </div>
+          </TabsContent>
+          <TabsContent value="slack" className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 px-2 pb-2">
+              <p className="text-sm">
+                For status updates in Slack, paste the text below into any
+                channel.
+              </p>
+              <CopyInputButton
+                className="w-full"
+                id="slack"
+                value={`/feed subscribe ${baseUrl}/feed/rss${
+                  page?.passwordProtected ? `?pw=${page?.password}` : ""
+                }`}
               />
             </div>
           </TabsContent>
