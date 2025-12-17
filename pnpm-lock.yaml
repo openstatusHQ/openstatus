@@ -110,6 +110,9 @@ importers:
       '@openstatus/notification-telegram':
         specifier: workspace:*
         version: link:../../packages/notifications/telegram
+      '@openstatus/notification-twillio-whatsapp':
+        specifier: workspace:*
+        version: link:../../packages/notifications/twillio-whatsapp
       '@openstatus/notification-webhook':
         specifier: workspace:*
         version: link:../../packages/notifications/webhook
@@ -1091,6 +1094,9 @@ importers:
       '@openstatus/notification-twillio-sms':
         specifier: workspace:*
         version: link:../../packages/notifications/twillio-sms
+      '@openstatus/notification-twillio-whatsapp':
+        specifier: workspace:*
+        version: link:../../packages/notifications/twillio-whatsapp
       '@openstatus/notification-webhook':
         specifier: workspace:*
         version: link:../../packages/notifications/webhook
@@ -1174,6 +1180,9 @@ importers:
       '@openstatus/notification-telegram':
         specifier: workspace:*
         version: link:../notifications/telegram
+      '@openstatus/notification-twillio-whatsapp':
+        specifier: workspace:*
+        version: link:../notifications/twillio-whatsapp
       '@openstatus/regions':
         specifier: workspace:*
         version: link:../regions
@@ -1625,6 +1634,37 @@ importers:
       zod:
         specifier: 4.1.13
         version: 4.1.13
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      '@types/validator':
+        specifier: 13.12.0
+        version: 13.12.0
+      bun-types:
+        specifier: 1.3.1
+        version: 1.3.1(@types/react@19.2.2)
+      typescript:
+        specifier: 5.7.2
+        version: 5.7.2
+
+  packages/notifications/twillio-whatsapp:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@t3-oss/env-core':
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.7.2)(zod@3.25.76)
+      validator:
+        specifier: 13.12.0
+        version: 13.12.0
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -2705,7 +2745,6 @@ packages:
   '@ericcornelissen/bash-parser@0.5.2':
     resolution: {integrity: sha512-4pIMTa1nEFfMXitv7oaNEWOdM+zpOZavesa5GaiWTgda6Zk32CFGxjUp/iIaN0PwgUW1yTq/fztSjbpE8SLGZQ==}
     engines: {node: '>=4'}
-    deprecated: Support for this package will stop 2025-12-31
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
@@ -6836,7 +6875,6 @@ packages:
   '@upstash/kafka@1.3.3':
     resolution: {integrity: sha512-CIr657FZuK+IMuwcxkj3oCB6xKO+LMlHd4BL4J/Lwbpj6+5YHO+5ZcpdMIQhbcemthJcRtE0gDUfZEnrfb3Rjg==}
     engines: {node: '>=10'}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@upstash/qstash@2.6.2':
     resolution: {integrity: sha512-aB/1yqMJTRyOt7Go2Db1ZIVnmTPpsc2KGY5jpLVcegNtjksaPTJF6fmITxos5HVvsQhS8IB3gvF/+gQfRQlPLQ==}

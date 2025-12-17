@@ -109,7 +109,6 @@ func TestHandler_HTTPCheckerHandler(t *testing.T) {
 	})
 }
 
-
 func TestEvaluateAssertions_raw(t *testing.T) {
 	// Helper to marshal assertion
 	marshal := func(a any) json.RawMessage {
@@ -133,8 +132,8 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		target := struct {
 			request.Assertion
 			Comparator request.StringComparator `json:"compare"`
-			Key string `json:"key"`
-			Target string `json:"target"`
+			Key        string                   `json:"key"`
+			Target     string                   `json:"target"`
 		}{
 			assertion,
 			request.StringContains,
@@ -156,8 +155,8 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		target := struct {
 			request.Assertion
 			Comparator request.StringComparator `json:"compare"`
-			Key string `json:"key"`
-			Target string `json:"target"`
+			Key        string                   `json:"key"`
+			Target     string                   `json:"target"`
 		}{
 			assertion,
 			request.StringContains,
@@ -180,7 +179,7 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		target := struct {
 			request.Assertion
 			Comparator request.StringComparator `json:"compare"`
-			Target string `json:"target"`
+			Target     string                   `json:"target"`
 		}{
 			assertion,
 			request.StringEquals,
@@ -190,7 +189,6 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		raw := []json.RawMessage{rawMsg}
 		data := handlers.PingData{Body: "ok"}
 		res := checker.Response{Status: 200}
-
 
 		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
 		assert.False(t, ok)
@@ -203,7 +201,7 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		target := struct {
 			request.Assertion
 			Comparator request.StringComparator `json:"compare"`
-			Target string `json:"target"`
+			Target     string                   `json:"target"`
 		}{
 			assertion,
 			request.StringEquals,
@@ -213,7 +211,6 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		raw := []json.RawMessage{rawMsg}
 		data := handlers.PingData{Body: "success"}
 		res := checker.Response{Status: 200}
-
 
 		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
 		assert.True(t, ok)
@@ -225,7 +222,7 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		target := struct {
 			request.Assertion
 			Comparator request.NumberComparator `json:"compare"`
-			Target int64 `json:"target"`
+			Target     int64                    `json:"target"`
 		}{
 			assertion,
 			request.NumberEquals,
@@ -235,7 +232,6 @@ func TestEvaluateAssertions_raw(t *testing.T) {
 		raw := []json.RawMessage{rawMsg}
 		data := handlers.PingData{}
 		res := checker.Response{Status: 200}
-
 
 		ok, err := handlers.EvaluateHTTPAssertions(raw, data, res)
 		assert.True(t, ok)

@@ -21,8 +21,6 @@ type DNSResult struct {
 	TXT   []string
 }
 
-
-
 func TestFormatDNSResult(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -105,7 +103,6 @@ func TestFormatDNSResult(t *testing.T) {
 	}
 }
 
-
 func TestEvaluateDNSAssertions(t *testing.T) {
 	type args struct {
 		rawAssertions []json.RawMessage
@@ -121,7 +118,7 @@ func TestEvaluateDNSAssertions(t *testing.T) {
 			name: "A record matches",
 			args: args{
 				rawAssertions: []json.RawMessage{
-					json.RawMessage(`{"record":"A","compare":"eq","target":"1.2.3.4"}`),
+					json.RawMessage(`{"key":"A","compare":"eq","target":"1.2.3.4"}`),
 				},
 				response: &checker.DnsResponse{
 					A: []string{"1.2.3.4", "5.6.7.8"},
@@ -134,7 +131,7 @@ func TestEvaluateDNSAssertions(t *testing.T) {
 			name: "CNAME does not match",
 			args: args{
 				rawAssertions: []json.RawMessage{
-					json.RawMessage(`{"record":"CNAME","compare":"eq","target":"not-example.com"}`),
+					json.RawMessage(`{"key":"CNAME","compare":"eq","target":"not-example.com"}`),
 				},
 				response: &checker.DnsResponse{
 					CNAME: "example.com",
@@ -144,10 +141,23 @@ func TestEvaluateDNSAssertions(t *testing.T) {
 			wantErr:     false,
 		},
 		{
+			name: "CNAME Contains",
+			args: args{
+				rawAssertions: []json.RawMessage{
+					json.RawMessage(`{"version":"v1","type":"dnsRecord","key":"CNAME","compare":"contains","target":"openstatus.dev"}`),
+				},
+				response: &checker.DnsResponse{
+					CNAME: "openstatus.dev.",
+				},
+			},
+			wantSuccess: true,
+			wantErr:     false,
+		},
+		{
 			name: "Unknown record type",
 			args: args{
 				rawAssertions: []json.RawMessage{
-					json.RawMessage(`{"record":"FOO","compare":"eq","target":"bar"}`),
+					json.RawMessage(`{"key":"FOO","compare":"eq","target":"bar"}`),
 				},
 				response: &checker.DnsResponse{},
 			},

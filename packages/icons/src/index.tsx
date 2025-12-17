@@ -8,3 +8,4 @@ export * from "./fly";
 export * from "./railway";
 export * from "./koyeb";
 export * from "./telegram";
+export * from "./whatsapp";

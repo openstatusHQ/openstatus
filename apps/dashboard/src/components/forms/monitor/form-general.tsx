@@ -42,6 +42,11 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -272,31 +277,37 @@ export function FormGeneral({
                         { value: "dns", icon: Server, label: "DNS" },
                       ].map((type) => {
                         return (
-                          <FormItem
-                            key={type.value}
-                            className={cn(
-                              "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
-                              defaultValues &&
-                                defaultValues.type !== type.value &&
-                                "pointer-events-none opacity-50",
-                            )}
-                          >
-                            <FormControl>
-                              <RadioGroupItem
-                                value={type.value}
-                                className="sr-only"
-                                disabled={!!defaultValues?.type}
-                              />
-                            </FormControl>
-                            <type.icon
-                              className="shrink-0 text-muted-foreground"
-                              size={16}
-                              aria-hidden="true"
-                            />
-                            <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
-                              {type.label}
-                            </FormLabel>
-                          </FormItem>
+                          <Tooltip key={type.value}>
+                            <TooltipTrigger asChild>
+                              <FormItem
+                                className={cn(
+                                  "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+                                  defaultValues &&
+                                    defaultValues.type !== type.value &&
+                                    "pointer-events-none opacity-50",
+                                )}
+                              >
+                                <FormControl>
+                                  <RadioGroupItem
+                                    value={type.value}
+                                    className="sr-only"
+                                    disabled={!!defaultValues?.type}
+                                  />
+                                </FormControl>
+                                <type.icon
+                                  className="shrink-0 text-muted-foreground"
+                                  size={16}
+                                  aria-hidden="true"
+                                />
+                                <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                                  {type.label}
+                                </FormLabel>
+                              </FormItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Monitor type cannot be changed after creation.
+                            </TooltipContent>
+                          </Tooltip>
                         );
                       })}
                       <div
@@ -943,10 +954,8 @@ export function FormGeneral({
                 failed. Do you want to save the monitor anyway?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="rounded-md border border-destructive/20 bg-destructive/10 p-2">
-              <p className="whitespace-pre-wrap font-mono text-destructive text-sm">
-                {error}
-              </p>
+            <div className="max-h-48 overflow-auto whitespace-pre rounded-md border border-destructive/20 bg-destructive/10 p-2">
+              <p className="font-mono text-destructive text-sm">{error}</p>
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel type="button">Cancel</AlertDialogCancel>

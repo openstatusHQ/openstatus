@@ -168,7 +168,7 @@ export function NavActions() {
           </span>
         ) : monitor.status === "error" ? (
           <span className="relative ml-1.5 inline-flex">
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-error" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-destructive" />
           </span>
         ) : (
           <span className="relative ml-1.5 inline-flex">

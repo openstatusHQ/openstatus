@@ -36,12 +36,15 @@ export const limitsSchema = z.object({
   /**
    * Notification limits
    */
+
   notifications: z.boolean().prefault(true),
   pagerduty: z.boolean().prefault(false),
   opsgenie: z.boolean().prefault(false),
+  whatsapp: z.boolean().prefault(false),
   sms: z.boolean().prefault(false),
   "sms-limit": z.number().prefault(0),
   "notification-channels": z.number().prefault(1),
+
   /**
    * Collaboration limits
    */
