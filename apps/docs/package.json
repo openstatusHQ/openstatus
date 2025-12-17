@@ -30,6 +30,6 @@
   },
   "devDependencies": {
     "@iconify-json/lucide": "1.2.26",
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   }
 }
