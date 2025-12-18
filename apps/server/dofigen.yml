@@ -20,7 +20,6 @@ builders:
     bind:
       - bunfig.toml
       - package.json
-      - patches
       - apps/server/package.json
       - packages/analytics/package.json
       - packages/db/package.json

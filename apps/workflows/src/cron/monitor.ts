@@ -13,10 +13,10 @@ import {
 } from "@openstatus/db";
 import { session, user } from "@openstatus/db/src/schema";
 import {
-  MonitorDeactivationEmail,
-  MonitorPausedEmail,
+  monitorDeactivationEmail,
+  monitorPausedEmail,
 } from "@openstatus/emails";
-import { sendWithRender } from "@openstatus/emails/src/send";
+import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
@@ -194,16 +194,19 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   // TODO: Send email
 
   if (user.email) {
-    await sendWithRender({
-      to: [user.email],
-      subject: "Your OpenStatus monitors will be paused soon",
-      from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-      reply_to: "thibault@openstatus.dev",
 
-      react: MonitorDeactivationEmail({
-        deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
-      }),
-    });
+    await sendBatchEmailHtml([
+      {
+        to: user.email,
+        subject: "Your OpenStatus monitors will be paused in 14 days",
+        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+        reply_to: "thibault@openstatus.dev",
+        html: monitorDeactivationEmail({
+          date: new Date(new Date().setDate(new Date().getDate() + 14)).toDateString(),
+        }),
+      },
+    ]);
+
 
     await CreateTask({
       parent,
@@ -231,16 +234,17 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
-    await sendWithRender({
-      to: [user.email],
-      subject: "Your OpenStatus monitors will be paused in 3 days",
-      from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-      reply_to: "thibault@openstatus.dev",
-
-      react: MonitorDeactivationEmail({
-        deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
-      }),
-    });
+    await sendBatchEmailHtml([
+      {
+        to: user.email,
+        subject: "Your OpenStatus monitors will be paused in 3 days",
+        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+        reply_to: "thibault@openstatus.dev",
+        html: monitorDeactivationEmail({
+          date: new Date(new Date().setDate(new Date().getDate() + 3)).toDateString(),
+        }),
+      },
+    ]);
   }
 
   // Send second email
@@ -303,13 +307,18 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
   // Remove user for workflow
 
   if (currentUser.email) {
-    await sendWithRender({
-      to: [currentUser.email],
-      subject: "Your monitors have been paused",
-      from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-      reply_to: "thibault@openstatus.dev",
-      react: MonitorPausedEmail(),
-    });
+
+    await sendBatchEmailHtml([
+      {
+        to: currentUser.email,
+        subject: "Your monitors have been paused",
+        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+        reply_to: "thibault@openstatus.dev",
+        html: monitorPausedEmail(),
+      },
+    ]);
+
+
   }
   await redis.srem("workflow:users", userId);
 }
