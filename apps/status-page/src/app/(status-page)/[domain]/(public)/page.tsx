@@ -38,11 +38,12 @@ export default function Page() {
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
-  const { data: pageInitial, error } = useQuery(
-    trpc.statusPage.get.queryOptions({
+  const { data: pageInitial, error } = useQuery({
+    ...trpc.statusPage.get.queryOptions({
       slug: domain,
     }),
-  );
+    enabled: !!domain,
+  });
 
   // Handle case where page doesn't exist or query fails
   if (error || (!pageInitial && domain)) {
@@ -61,7 +62,7 @@ export default function Page() {
       cardType,
       barType,
     }),
-    enabled: hasCustomConfig,
+    enabled: !!domain && hasCustomConfig,
   });
 
   // NOTE: we can prefetch that to avoid loading state
