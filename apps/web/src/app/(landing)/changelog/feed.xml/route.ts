@@ -47,7 +47,7 @@ export async function GET() {
               },
         ],
         image: post.metadata.image
-          ? `https://www.openstatus.dev/changelog/${post.metadata.image}`
+          ? `https://www.openstatus.dev${post.metadata.image}`
           : undefined,
         date: post.metadata.publishedAt,
       });
