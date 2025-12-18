@@ -41,7 +41,7 @@ export default function Page() {
   const { data: pageInitial, error } = useQuery(
     trpc.statusPage.get.queryOptions({
       slug: domain,
-    })
+    }),
   );
 
   // Handle case where page doesn't exist or query fails
@@ -118,7 +118,7 @@ export default function Page() {
                       key={`${e.type}-${e.id}`}
                       className={cn(
                         i === 0 && "rounded-tl-lg",
-                        i === events.length - 1 && "rounded-tr-lg"
+                        i === events.length - 1 && "rounded-tr-lg",
                       )}
                     >
                       {e.name}
@@ -129,7 +129,7 @@ export default function Page() {
               {events.map((e) => {
                 if (e.type === "report") {
                   const report = page.statusReports.find(
-                    (report) => report.id === e.id
+                    (report) => report.id === e.id,
                   );
                   if (!report) return null;
                   return (
@@ -150,7 +150,7 @@ export default function Page() {
                 }
                 if (e.type === "maintenance") {
                   const maintenance = page.maintenances.find(
-                    (maintenance) => maintenance.id === e.id
+                    (maintenance) => maintenance.id === e.id,
                   );
                   if (!maintenance) return null;
                   return (
@@ -239,13 +239,13 @@ export default function Page() {
             statusReports={page.statusReports
               .filter((report) =>
                 page.lastEvents.some(
-                  (event) => event.id === report.id && event.type === "report"
-                )
+                  (event) => event.id === report.id && event.type === "report",
+                ),
               )
               .map((report) => ({
                 ...report,
                 affected: report.monitorsToStatusReports.map(
-                  (monitor) => monitor.monitor.name
+                  (monitor) => monitor.monitor.name,
                 ),
                 updates: report.statusReportUpdates,
               }))}
@@ -253,13 +253,13 @@ export default function Page() {
               .filter((maintenance) =>
                 page.lastEvents.some(
                   (event) =>
-                    event.id === maintenance.id && event.type === "maintenance"
-                )
+                    event.id === maintenance.id && event.type === "maintenance",
+                ),
               )
               .map((maintenance) => ({
                 ...maintenance,
                 affected: maintenance.maintenancesToMonitors.map(
-                  (monitor) => monitor.monitor.name
+                  (monitor) => monitor.monitor.name,
                 ),
               }))}
           />
