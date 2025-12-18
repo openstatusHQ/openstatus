@@ -19,7 +19,7 @@ docker compose up -d
 docker compose ps
 
 # 5. (Optional) Seed database with test data
-docker compose run --rm migrate sh -c "cd /app/packages/db && bun src/seed.mts"
+docker compose run --rm seed
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -86,16 +86,15 @@ docker builder prune
 
 Migrations run **automatically** when you start the stack with `docker compose up -d`.
 
-The `migrate` service runs once on startup. All other services wait for migrations to complete successfully before starting.
-
 **Verifying migrations:**
 ```bash
-# Check migration logs
-docker compose logs migrate
+# Check workflows logs for migration output
+docker compose logs workflows | grep -A 5 "Running database migrations"
 
 # Should show:
-# openstatus-migrate  | Running migrations
-# openstatus-migrate  | Migrated successfully
+# openstatus-workflows  | Running database migrations...
+# openstatus-workflows  | Migrated successfully
+# openstatus-workflows  | Starting workflows service...
 ```
 
 **Manual migration:**
@@ -103,11 +102,11 @@ docker compose logs migrate
 If you need to re-run migrations or troubleshoot:
 
 ```bash
-# Run migrations again
-docker compose run --rm migrate
+# Run migrations using workflows container
+docker compose exec workflows sh -c "cd /app/packages/db && bun src/migrate.mts"
 
-# Or start just the migrate service
-docker compose up migrate
+# Or restart workflows to trigger migrations again
+docker compose restart workflows
 ```
 
 ### Seeding Test Data (Optional)
@@ -117,7 +116,7 @@ docker compose up migrate
 After migrations complete, seed the database with sample data:
 
 ```bash
-docker compose run --rm migrate sh -c "cd /app/packages/db && bun src/seed.mts"
+docker compose run --rm seed
 ```
 
 This creates:
@@ -128,11 +127,11 @@ This creates:
 
 **Verifying seeded data:**
 ```bash
-# Check that data was seeded
-docker compose run --rm migrate sh -c "cd /app/packages/db && bun -e 'import { db } from \"./src/db\"; const pages = await db.run(\"SELECT COUNT(*) as count FROM page\"); const monitors = await db.run(\"SELECT COUNT(*) as count FROM monitor\"); console.log(\"Pages:\", pages.rows[0].count, \"Monitors:\", monitors.rows[0].count);'"
+# Check table counts via libsql HTTP API
+curl -s http://localhost:8080/ -H "Content-Type: application/json" \
+  -d '{"statements":["SELECT COUNT(*) FROM page"]}' | jq -r '.[0].results.rows[0][0]'
 
-# Should show:
-# Pages: 1 Monitors: 5
+# Should output: 1
 ```
 
 **Accessing Seeded Data:**

@@ -6392,6 +6392,7 @@ packages:
   '@upstash/kafka@1.3.3':
     resolution: {integrity: sha512-CIr657FZuK+IMuwcxkj3oCB6xKO+LMlHd4BL4J/Lwbpj6+5YHO+5ZcpdMIQhbcemthJcRtE0gDUfZEnrfb3Rjg==}
     engines: {node: '>=10'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@upstash/qstash@2.6.2':
     resolution: {integrity: sha512-aB/1yqMJTRyOt7Go2Db1ZIVnmTPpsc2KGY5jpLVcegNtjksaPTJF6fmITxos5HVvsQhS8IB3gvF/+gQfRQlPLQ==}

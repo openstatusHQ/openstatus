@@ -22,7 +22,11 @@ services:
         environment:
             - SQLD_NODE=primary
         healthcheck:
-            test: ["CMD-SHELL", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:8080\",Timeout=>1) ? 0 : 1);'"]
+            test:
+                [
+                    "CMD-SHELL",
+                    'perl -e ''use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>"127.0.0.1:8080",Timeout=>1) ? 0 : 1);''',
+                ]
             interval: 10s
             timeout: 5s
             retries: 5
@@ -48,13 +52,16 @@ services:
         restart: unless-stopped
 
     # Internal Services
-    migrate:
-        container_name: openstatus-migrate
+
+    # Seed service (optional) - run after workflow service completes migrations
+    # Run manually with: docker compose run --rm seed
+    seed:
+        container_name: openstatus-seed
         build:
             context: .
             dockerfile: apps/workflows/Dockerfile
             target: build
-        image: openstatus/migrate:latest
+        image: openstatus/seed:latest
         networks:
             - openstatus
         env_file:
@@ -62,10 +69,11 @@ services:
         environment:
             - DATABASE_URL=http://libsql:8080
         depends_on:
-            libsql:
+            workflows:
                 condition: service_healthy
-        command: sh -c "cd /app/packages/db && bun src/migrate.mts"
-        restart: "no"
+        command: sh -c "cd /app/packages/db && bun src/seed.mts"
+        profiles:
+            - tools
 
     workflows:
         container_name: openstatus-workflows
@@ -83,8 +91,6 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
-            migrate:
-                condition: service_completed_successfully
             libsql:
                 condition: service_healthy
         healthcheck:
@@ -111,8 +117,8 @@ services:
             - DATABASE_URL=http://libsql:8080
             - PORT=3000
         depends_on:
-            migrate:
-                condition: service_completed_successfully
+            workflows:
+                condition: service_healthy
             libsql:
                 condition: service_healthy
         healthcheck:
@@ -142,9 +148,16 @@ services:
             - PORT=8080
         depends_on:
             server:
-                condition: service_started
+                condition: service_healthy
         healthcheck:
-            test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--spider",
+                    "-q",
+                    "http://localhost:8080/health",
+                ]
             interval: 15s
             timeout: 10s
             retries: 3
@@ -169,12 +182,12 @@ services:
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
         depends_on:
-            migrate:
-                condition: service_completed_successfully
+            workflows:
+                condition: service_healthy
             libsql:
                 condition: service_healthy
             server:
-                condition: service_started
+                condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
             interval: 15s
@@ -201,12 +214,12 @@ services:
             - HOSTNAME=0.0.0.0
             - AUTH_TRUST_HOST=true
         depends_on:
-            migrate:
-                condition: service_completed_successfully
+            workflows:
+                condition: service_healthy
             libsql:
                 condition: service_healthy
             server:
-                condition: service_started
+                condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
             interval: 15s
