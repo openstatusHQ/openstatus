@@ -98,6 +98,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-google-chat':
+        specifier: workspace:*
+        version: link:../../packages/notifications/google-chat
       '@openstatus/notification-ntfy':
         specifier: workspace:*
         version: link:../../packages/notifications/ntfy
@@ -1079,6 +1082,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-google-chat':
+        specifier: workspace:*
+        version: link:../../packages/notifications/google-chat
       '@openstatus/notification-ntfy':
         specifier: workspace:*
         version: link:../../packages/notifications/ntfy
@@ -1183,6 +1189,9 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../error
+      '@openstatus/notification-google-chat':
+        specifier: workspace:*
+        version: link:../notifications/google-chat
       '@openstatus/notification-telegram':
         specifier: workspace:*
         version: link:../notifications/telegram
@@ -1479,6 +1488,28 @@ importers:
       '@types/react-dom':
         specifier: 19.2.2
         version: 19.2.2(@types/react@19.2.2)
+      bun-types:
+        specifier: 1.3.1
+        version: 1.3.1(@types/react@19.2.2)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
+  packages/notifications/google-chat:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      zod:
+        specifier: 3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 24.0.8
+        version: 24.0.8
       bun-types:
         specifier: 1.3.1
         version: 1.3.1(@types/react@19.2.2)
