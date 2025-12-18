@@ -19,7 +19,6 @@ builders:
     bind:
       - bunfig.toml
       - package.json
-      - patches
       - apps/workflows/package.json
       - packages/assertions/package.json
       - packages/db/package.json
