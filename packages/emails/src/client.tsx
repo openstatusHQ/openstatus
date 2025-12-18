@@ -2,15 +2,15 @@
 
 import { render } from "@react-email/render";
 import { Resend } from "resend";
-import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
-import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PageSubscriptionEmail from "../emails/page-subscription";
 import StatusReportEmail from "../emails/status-report";
 import type { StatusReportProps } from "../emails/status-report";
-import TeamInvitationEmail from "../emails/team-invitation";
 import type { TeamInvitationProps } from "../emails/team-invitation";
-import { monitorAlertEmail } from "../hotfix/monitor-alert";
+import { renderFollowUpEmail } from "../raw/followup";
+import { renderMonitorAlertEmail } from "../raw/monitor-alert";
+import { renderTeamInvitationEmail } from "../raw/team-invitation";
 
 // split an array into chunks of a given size.
 function chunk<T>(array: T[], size: number): T[][] {
@@ -35,7 +35,7 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<FollowUpEmail />);
+      const html = renderFollowUpEmail();
       const result = await this.client.emails.send({
         from: "Thibault Le Ouay Ducasse <welcome@openstatus.dev>",
         replyTo: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
@@ -61,7 +61,7 @@ export class EmailClient {
       return;
     }
 
-    const html = await render(<FollowUpEmail />);
+    const html = renderFollowUpEmail();
     const result = await this.client.batch.send(
       req.to.map((subscriber) => ({
         from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
@@ -134,7 +134,7 @@ export class EmailClient {
     }
 
     try {
-      const html = await render(<TeamInvitationEmail {...req} />);
+      const html = renderTeamInvitationEmail(req);
       const result = await this.client.emails.send({
         from: `${
           req.workspaceName ?? "OpenStatus"
@@ -164,8 +164,7 @@ export class EmailClient {
     }
 
     try {
-      // const html = await render(<MonitorAlertEmail {...req} />);
-      const html = monitorAlertEmail(req);
+      const html = renderMonitorAlertEmail(req);
       const result = await this.client.emails.send({
         from: "OpenStatus <notifications@notifications.openstatus.dev>",
         subject: `${req.name}: ${req.type.toUpperCase()}`,
