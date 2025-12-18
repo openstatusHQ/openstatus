@@ -55,6 +55,7 @@ export const emailDataSchema = z.object({ email: emailSchema });
 export const phoneDataSchema = z.object({ sms: phoneSchema });
 export const slackDataSchema = z.object({ slack: urlSchema });
 export const discordDataSchema = z.object({ discord: urlSchema });
+export const googleChatDataSchema = z.object({ "google-chat": urlSchema });
 export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
 export const opsgenieDataSchema = z.object({
   opsgenie: z.object({
@@ -96,6 +97,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("email"),
         data: emailDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("google-chat"),
+        data: googleChatDataSchema,
       }),
     ),
     insertNotificationSchema.merge(

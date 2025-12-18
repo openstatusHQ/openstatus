@@ -15,6 +15,11 @@ import {
   sendRecovery as sendEmailRecovery,
 } from "@openstatus/notification-emails";
 import {
+  sendAlert as sendGoogleChatAlert,
+  sendDegraded as sendGoogleChatDegraded,
+  sendRecovery as sendGoogleChatRecovery,
+} from "@openstatus/notification-google-chat";
+import {
   sendAlert as sendNtfyAlert,
   sendDegraded as sendNtfyDegraded,
   sendRecovery as sendNtfyRecovery,
@@ -91,6 +96,11 @@ export const providerToFunction = {
     sendAlert: sendEmailAlert,
     sendRecovery: sendEmailRecovery,
     sendDegraded: sendEmailDegraded,
+  },
+  "google-chat": {
+    sendAlert: sendGoogleChatAlert,
+    sendRecovery: sendGoogleChatRecovery,
+    sendDegraded: sendGoogleChatDegraded,
   },
   ntfy: {
     sendAlert: sendNtfyAlert,

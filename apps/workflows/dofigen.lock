@@ -12,23 +12,14 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    ca-certs:
-      fromImage:
-        path: debian
-        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-      label:
-        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-      run:
-      - apt update && apt install -y ca-certificates && update-ca-certificates
     install:
       fromImage:
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.stage: install
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/
       run:
       - bun install --production  --frozen-lockfile --verbose
@@ -53,6 +44,8 @@ effective: |
         source: packages/notifications/discord/package.json
       - target: packages/notifications/email/package.json
         source: packages/notifications/email/package.json
+      - target: packages/notifications/google-chat/package.json
+        source: packages/notifications/google-chat/package.json
       - target: packages/notifications/ntfy/package.json
         source: packages/notifications/ntfy/package.json
       - target: packages/notifications/opsgenie/package.json
@@ -81,13 +74,36 @@ effective: |
         source: packages/upstash/package.json
       - target: packages/theme-store/package.json
         source: packages/theme-store/package.json
-    libsql:
+    docker:
       fromImage:
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
         org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
+    ca-certs:
+      fromImage:
+        path: debian
+        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+      label:
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+      run:
+      - apt update && apt install -y ca-certificates && update-ca-certificates
+    libsql:
+      fromImage:
+        path: oven/bun
+        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       workdir: /app/
       copy:
       - fromBuilder: docker
@@ -96,28 +112,14 @@ effective: |
         target: /app/package.json
       run:
       - bun install
-    docker:
-      fromImage:
-        path: oven/bun
-        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      workdir: /app/apps/workflows
-      copy:
-      - paths:
-        - .
-        target: /app/
-      run:
-      - bun run src/build-docker.ts
     build:
       fromImage:
         path: oven/bun
         digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
       label:
         org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-        org.opencontainers.image.stage: build
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.stage: build
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -136,13 +138,13 @@ effective: |
     digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
     io.dofigen.version: 2.6.0
-    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
-    org.opencontainers.image.title: OpenStatus Workflows
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.title: OpenStatus Workflows
+    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -178,7 +180,7 @@ images:
           digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
 resources:
   dofigen.yml:
-    hash: 2e5154caff216dd012001bfb09b4c3d811dc7cbd437cd325f6de9c311b2e771e
+    hash: 9ce61c715d024b0735c8ed3fc9ca0974604fdaa3ef82a8694ecfb515814be571
     content: |
       ignore:
         - node_modules
@@ -208,6 +210,7 @@ resources:
             - packages/emails/package.json
             - packages/notifications/discord/package.json
             - packages/notifications/email/package.json
+            - packages/notifications/google-chat/package.json
             - packages/notifications/ntfy/package.json
             - packages/notifications/opsgenie/package.json
             - packages/notifications/pagerduty/package.json

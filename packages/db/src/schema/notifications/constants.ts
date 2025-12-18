@@ -1,6 +1,7 @@
 export const notificationProvider = [
   "discord",
   "email",
+  "google-chat",
   "ntfy",
   "pagerduty",
   "opsgenie",
