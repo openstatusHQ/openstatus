@@ -82,6 +82,7 @@ export const NotificationDataSchema = z.union([
   slackDataSchema,
   webhookDataSchema,
   whatsappDataSchema,
+  googleChatDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
