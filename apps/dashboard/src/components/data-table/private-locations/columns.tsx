@@ -3,6 +3,7 @@
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -38,13 +39,11 @@ export const columns: ColumnDef<PrivateLocation>[] = [
       const value = row.getValue("monitors");
       if (Array.isArray(value) && value.length > 0 && "name" in value[0]) {
         return (
-          <div className="flex flex-wrap gap-1 cursor-pointer">
+          <div className="flex cursor-pointer flex-wrap gap-1">
             {value.map((m) => (
-              <TableCellBadge
-                key={m.id}
-                value={m.name}
-                link={`/monitors/${m.id}`}
-              />
+              <Link href={`/monitors/${m.id}`} key={m.id}>
+                <TableCellBadge value={m.name} />
+              </Link>
             ))}
           </div>
         );

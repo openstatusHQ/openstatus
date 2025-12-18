@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
@@ -92,13 +93,11 @@ export const columns: ColumnDef<StatusReport>[] = [
       const value = row.getValue("monitors");
       if (Array.isArray(value) && value.length > 0 && "name" in value[0]) {
         return (
-          <div className="flex flex-wrap gap-1 cursor-pointer">
+          <div className="flex cursor-pointer flex-wrap gap-1">
             {value.map((m) => (
-              <TableCellBadge
-                key={m.id}
-                value={m.name}
-                link={`/monitors/${m.id}`}
-              />
+              <Link href={`/monitors/${m.id}`} key={m.id}>
+                <TableCellBadge value={m.name} />
+              </Link>
             ))}
           </div>
         );

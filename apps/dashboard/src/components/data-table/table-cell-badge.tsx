@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "../ui/badge";
 import {
@@ -13,11 +12,10 @@ export function TableCellBadge({
   value,
   className,
   ...props
-}: React.ComponentProps<typeof Badge> & { value: unknown; link: string }) {
+}: React.ComponentProps<typeof Badge> & { value: unknown }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [isTruncated, setIsTruncated] = useState(false);
   const [open, setOpen] = useState(false);
-  const router = useRouter();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -40,12 +38,6 @@ export function TableCellBadge({
         {isTruncated ? (
           <Tooltip open={open} onOpenChange={setOpen}>
             <TooltipTrigger
-              onClick={(event) => {
-                event.preventDefault();
-                if (props.link) {
-                  router.push(props.link);
-                }
-              }}
               onPointerDown={(event) => event.preventDefault()}
               asChild
             >
