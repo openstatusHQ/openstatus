@@ -64,8 +64,6 @@ export default function Page() {
     enabled: hasCustomConfig,
   });
 
-  console.log({ pageInitial });
-
   // NOTE: we can prefetch that to avoid loading state
   const { data: uptimeData, isLoading } = useQuery({
     ...trpc.statusPage.getUptime.queryOptions({
