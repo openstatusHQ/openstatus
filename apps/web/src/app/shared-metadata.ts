@@ -17,10 +17,9 @@ export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";
 
 export const BASE_URL =
-  process.env.VERCEL_ENV === "production"
+  process.env.NODE_ENV === "production"
     ? "https://www.openstatus.dev"
-    : `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` ||
-      "http://localhost:3000";
+    : "http://localhost:3000";
 
 export const twitterMetadata: Metadata["twitter"] = {
   title: TITLE,
