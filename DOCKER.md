@@ -19,7 +19,10 @@ docker compose up -d
 docker compose ps
 
 # 5. (Optional) Seed database with test data
-docker compose run --rm seed
+docker run --rm --network openstatus \
+  -e DATABASE_URL=http://libsql:8080 \
+  $(docker build -q -f apps/workflows/Dockerfile --target build .) \
+  sh -c "cd /app/packages/db && bun src/seed.mts"
 
 # 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
@@ -116,7 +119,10 @@ docker compose restart workflows
 After migrations complete, seed the database with sample data:
 
 ```bash
-docker compose run --rm seed
+docker run --rm --network openstatus \
+  -e DATABASE_URL=http://libsql:8080 \
+  $(docker build -q -f apps/workflows/Dockerfile --target build .) \
+  sh -c "cd /app/packages/db && bun src/seed.mts"
 ```
 
 This creates:

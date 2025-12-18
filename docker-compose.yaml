@@ -52,29 +52,6 @@ services:
         restart: unless-stopped
 
     # Internal Services
-
-    # Seed service (optional) - run after workflow service completes migrations
-    # Run manually with: docker compose run --rm seed
-    seed:
-        container_name: openstatus-seed
-        build:
-            context: .
-            dockerfile: apps/workflows/Dockerfile
-            target: build
-        image: openstatus/seed:latest
-        networks:
-            - openstatus
-        env_file:
-            - .env.docker
-        environment:
-            - DATABASE_URL=http://libsql:8080
-        depends_on:
-            workflows:
-                condition: service_healthy
-        command: sh -c "cd /app/packages/db && bun src/seed.mts"
-        profiles:
-            - tools
-
     workflows:
         container_name: openstatus-workflows
         build:
