@@ -134,7 +134,7 @@ export const sendTest = async (webhookUrl: string) => {
   if (!webhookUrl) {
     return false;
   }
-  console.log(webhookUrl)
+  console.log(webhookUrl);
   try {
     await postToWebhook(
       "*🧪 Test <https://www.openstatus.dev/|OpenStatus>*\nIf you can read this, your Google Chat webhook is functioning correctly!\n> Check your <https://www.openstatus.dev/app/|Dashboard>.\n",
@@ -142,7 +142,7 @@ export const sendTest = async (webhookUrl: string) => {
     );
     return true;
   } catch (_err) {
-    console.log(_err)
+    console.log(_err);
     return false;
   }
 };

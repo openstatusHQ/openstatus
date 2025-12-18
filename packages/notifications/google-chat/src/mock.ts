@@ -1,10 +1,5 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
-import {
-  sendAlert,
-  sendDegraded,
-  sendRecovery,
-  sendTest,
-} from "./index";
+import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 const monitor: Monitor = {
   id: 1,
@@ -30,7 +25,7 @@ const monitor: Monitor = {
   otelEndpoint: null,
   otelHeaders: [],
   followRedirects: true,
-  retry:3,
+  retry: 3,
 };
 
 const notification: Notification = {

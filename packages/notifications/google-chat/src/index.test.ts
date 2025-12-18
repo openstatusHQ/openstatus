@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
-import {
-  sendAlert,
-  sendDegraded,
-  sendRecovery,
-  sendTest,
-} from "./index";
+import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Google Chat Notifications", () => {
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -70,11 +65,10 @@ describe("Google Chat Notifications", () => {
     expect(callArgs[1].headers["Content-Type"]).toBe("application/json");
 
     const body = JSON.parse(callArgs[1].body);
-    console.log(body)
+    console.log(body);
     expect(body.text).toContain("🚨 Alert");
     expect(body.text).toContain("API Health Check");
     expect(body.text).toContain("Something went wrong");
-
   });
 
   test("Send Recovery", async () => {
@@ -122,7 +116,7 @@ describe("Google Chat Notifications", () => {
   });
 
   test("Send Test Google Chat Message", async () => {
-    const webhookUrl ="https://google.com/api/webhooks/123456789/abcdefgh";
+    const webhookUrl = "https://google.com/api/webhooks/123456789/abcdefgh";
 
     const result = await sendTest(webhookUrl);
 

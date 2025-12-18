@@ -18,9 +18,9 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
+import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
-import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -495,8 +495,8 @@ export const notificationRouter = createTRPCRouter({
       }
       if (opts.input.provider === "google-chat") {
         const _data = googleChatDataSchema.safeParse(opts.input.data);
-        console.log(opts.input.data)
-        console.log(_data)
+        console.log(opts.input.data);
+        console.log(_data);
         if (!_data.success) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -504,7 +504,7 @@ export const notificationRouter = createTRPCRouter({
           });
         }
         await sendGoogleChatTest(_data.data["google-chat"]);
-        return
+        return;
       }
 
       throw new TRPCError({

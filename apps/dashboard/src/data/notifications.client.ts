@@ -9,7 +9,12 @@ import { FormSms } from "@/components/forms/notifications/form-sms";
 import { FormTelegram } from "@/components/forms/notifications/form-telegram";
 import { FormWebhook } from "@/components/forms/notifications/form-webhook";
 import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
-import { DiscordIcon, GoogleIcon, TelegramIcon, WhatsappIcon } from "@openstatus/icons";
+import {
+  DiscordIcon,
+  GoogleIcon,
+  TelegramIcon,
+  WhatsappIcon,
+} from "@openstatus/icons";
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
@@ -97,7 +102,7 @@ export const config = {
     form: FormOpsGenie,
     sendTest: sendTestOpsGenie,
   },
-  "google-chat":{
+  "google-chat": {
     icon: GoogleIcon,
     label: "Google Chat",
     form: FormGoogleChat,
