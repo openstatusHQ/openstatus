@@ -194,7 +194,6 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   // TODO: Send email
 
   if (user.email) {
-
     await sendBatchEmailHtml([
       {
         to: user.email,
@@ -202,11 +201,12 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
         from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
         reply_to: "thibault@openstatus.dev",
         html: monitorDeactivationEmail({
-          date: new Date(new Date().setDate(new Date().getDate() + 14)).toDateString(),
+          date: new Date(
+            new Date().setDate(new Date().getDate() + 14),
+          ).toDateString(),
         }),
       },
     ]);
-
 
     await CreateTask({
       parent,
@@ -241,7 +241,9 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
         from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
         reply_to: "thibault@openstatus.dev",
         html: monitorDeactivationEmail({
-          date: new Date(new Date().setDate(new Date().getDate() + 3)).toDateString(),
+          date: new Date(
+            new Date().setDate(new Date().getDate() + 3),
+          ).toDateString(),
         }),
       },
     ]);
@@ -307,7 +309,6 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
   // Remove user for workflow
 
   if (currentUser.email) {
-
     await sendBatchEmailHtml([
       {
         to: currentUser.email,
@@ -317,8 +318,6 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
         html: monitorPausedEmail(),
       },
     ]);
-
-
   }
   await redis.srem("workflow:users", userId);
 }
