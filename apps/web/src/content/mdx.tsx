@@ -228,7 +228,10 @@ function Details({
   return (
     <details open={open}>
       <summary>{summary}</summary>
-      {children}
+      {React.isValidElement(children)
+        ? // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          React.cloneElement(children, { hidden: "until-found" } as any)
+        : children}
     </details>
   );
 }
