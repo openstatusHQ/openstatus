@@ -214,7 +214,8 @@ export default function Page() {
                   key={`group-${tracker.groupId}`}
                   title={tracker.groupName}
                   status={tracker.status}
-                  defaultOpen={firstGroupIndex === index}
+                  // NOTE: we only want to open the first group if it is the first one
+                  defaultOpen={firstGroupIndex === index && index === 0}
                 >
                   {tracker.monitors.map((monitor) => {
                     const { data, uptime } =
