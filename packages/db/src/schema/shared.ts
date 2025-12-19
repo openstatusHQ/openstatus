@@ -114,35 +114,22 @@ const trackersSchema = z
   )
   .default([]);
 
+export const statusPageEventSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  from: z.date(),
+  to: z.date().nullable(),
+  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+  type: z.enum(["maintenance", "incident", "report"]),
+});
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   monitorGroups: selectMonitorGroupSchema.array().default([]),
   // TODO: include status of the monitor
   monitors: selectPublicMonitorWithStatusSchema.array(),
   trackers: trackersSchema,
-  lastEvents: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      from: z.date(),
-      to: z.date().nullable(),
-      status: z
-        .enum(["success", "degraded", "error", "info"])
-        .default("success"),
-      type: z.enum(["maintenance", "incident", "report"]),
-    }),
-  ),
-  openEvents: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      from: z.date(),
-      to: z.date().nullable(),
-      status: z
-        .enum(["success", "degraded", "error", "info"])
-        .default("success"),
-      type: z.enum(["maintenance", "incident", "report"]),
-    }),
-  ),
+  lastEvents: z.array(statusPageEventSchema),
+  openEvents: z.array(statusPageEventSchema),
   statusReports: z.array(selectStatusReportPageSchema),
   incidents: z.array(selectIncidentSchema),
   maintenances: z.array(selectMaintenancePageSchema),

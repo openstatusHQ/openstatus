@@ -38,11 +38,12 @@ export default function Page() {
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
-  const { data: pageInitial, error } = useQuery(
-    trpc.statusPage.get.queryOptions({
+  const { data: pageInitial, error } = useQuery({
+    ...trpc.statusPage.get.queryOptions({
       slug: domain,
     }),
-  );
+    enabled: !!domain,
+  });
 
   // Handle case where page doesn't exist or query fails
   if (error || (!pageInitial && domain)) {
@@ -61,19 +62,20 @@ export default function Page() {
       cardType,
       barType,
     }),
-    enabled: hasCustomConfig,
+    enabled: !!domain && hasCustomConfig,
   });
 
   // NOTE: we can prefetch that to avoid loading state
-  const { data: uptimeData, isLoading } = useQuery(
-    trpc.statusPage.getUptime.queryOptions({
+  const { data: uptimeData, isLoading } = useQuery({
+    ...trpc.statusPage.getUptime.queryOptions({
       slug: domain,
       monitorIds:
         pageInitial?.monitors?.map((monitor) => monitor.id.toString()) || [],
       cardType,
       barType,
     }),
-  );
+    enabled: !!pageInitial && pageInitial.monitors.length > 0,
+  });
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
