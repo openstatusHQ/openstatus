@@ -49,7 +49,7 @@ const WORKSPACES =
   process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
 // TODO: use db column `allowed_domains` instead of this static constant
-const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev", "nomos.energy"];
+const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev"];
 const PROTECTED_SLUG = "hello";
 
 export const statusPageRouter = createTRPCRouter({

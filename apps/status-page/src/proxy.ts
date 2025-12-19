@@ -8,7 +8,7 @@ import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 
 // TODO: use db column `allowed_domains` instead of this static constant
-const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev", "nomos.energy"];
+const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev"];
 const PROTECTED_SLUG = "hello";
 
 export default auth(async (req) => {

@@ -10,7 +10,7 @@ import { ResendProvider } from "./providers";
 export type { DefaultSession };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  // debug: process.env.NODE_ENV === "development",
+  debug: process.env.NODE_ENV === "development",
   adapter,
   providers: [ResendProvider],
   callbacks: {
@@ -34,5 +34,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return params.session;
     },
   },
-  // basePath is handled dynamically in the route handler based on domain/subdomain
 });
