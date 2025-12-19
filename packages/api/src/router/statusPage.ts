@@ -48,6 +48,10 @@ import {
 const WORKSPACES =
   process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
+// TODO: use db column `allowed_domains` instead of this static constant
+const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev", "nomos.energy"];
+const PROTECTED_SLUG = "hello";
+
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -894,6 +898,37 @@ export const statusPageRouter = createTRPCRouter({
         .get();
 
       return _pageSubscriber.id;
+    }),
+
+  validateEmailDomain: publicProcedure
+    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug", "email"] })
+    .input(z.object({ slug: z.string().toLowerCase(), email: z.string() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+      });
+
+      if (!_page || _page.slug !== PROTECTED_SLUG) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
+      if (!ALLOWED_DOMAINS.includes(opts.input.email.split("@")[1])) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid email domain",
+        });
+      }
+
+      return {
+        email: opts.input.email,
+        slug: opts.input.slug,
+        page: _page,
+      };
     }),
 
   verifyEmail: publicProcedure

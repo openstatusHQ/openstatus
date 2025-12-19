@@ -1,10 +1,17 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+
+import { auth } from "./lib/auth/index";
 
 import { db, sql } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
+import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 
-export default async function _proxy1(req: NextRequest) {
+// TODO: use db column `allowed_domains` instead of this static constant
+const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev", "nomos.energy"];
+const PROTECTED_SLUG = "hello";
+
+export default auth(async (req) => {
   const url = req.nextUrl.clone();
   const response = NextResponse.next();
   const cookies = req.cookies;
@@ -112,6 +119,33 @@ export default async function _proxy1(req: NextRequest) {
     }
   }
 
+  // NOTE: if _page.allowedDomains
+  if (_page.slug === PROTECTED_SLUG) {
+    const { origin, pathname } = req.nextUrl;
+    const email = req.auth?.user?.email;
+    const emailDomain = email?.split("@")[1];
+    console.log({ email, pathname, auth: req.auth });
+    if (
+      !pathname.endsWith("/auth") &&
+      (!emailDomain || !ALLOWED_DOMAINS.includes(emailDomain))
+    ) {
+      const url = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/auth`,
+      );
+      return NextResponse.redirect(url);
+    }
+    if (
+      pathname.endsWith("/auth") &&
+      emailDomain &&
+      ALLOWED_DOMAINS.includes(emailDomain)
+    ) {
+      const url = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
+      );
+      return NextResponse.redirect(url);
+    }
+  }
+
   const proxy = req.headers.get("x-proxy");
   console.log({ proxy });
 
@@ -169,48 +203,10 @@ export default async function _proxy1(req: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
   return response;
-}
+});
 
 export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
-};
-
-export const getValidSubdomain = (host?: string | null) => {
-  let subdomain: string | null = null;
-  if (!host && typeof window !== "undefined") {
-    // On client side, get the host from window
-    // biome-ignore lint: to fix later
-    host = window.location.host;
-  }
-
-  // Exclude localhost and IP addresses from being treated as subdomains
-  if (
-    host?.match(/^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/)
-  ) {
-    return null;
-  }
-
-  // we should improve here for custom vercel deploy page
-  if (host?.includes(".") && !host.includes(".vercel.app")) {
-    const candidate = host.split(".")[0];
-    if (candidate && !candidate.includes("www")) {
-      // Valid candidate
-      subdomain = candidate;
-    }
-  }
-
-  // In case the host is a custom domain
-  if (
-    host &&
-    !(
-      host?.includes("stpg.dev") ||
-      host?.includes("openstatus.dev") ||
-      host?.endsWith(".vercel.app")
-    )
-  ) {
-    subdomain = host;
-  }
-  return subdomain;
 };
