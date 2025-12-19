@@ -58,7 +58,7 @@ export function StatusTrackerGroup({
         className={cn(
           "flex flex-col gap-3 border-border/50 border-t px-3 py-2",
           "overflow-hidden",
-          // REMINDER: otherwise, if defaultOpen is true, the animation will be triggered and we have a layout shit
+          // REMINDER: otherwise, if defaultOpen is true, the animation will be triggered and we have a layout shift
           "data-[animate=true]:data-[state=closed]:animate-collapsible-up data-[animate=true]:data-[state=open]:animate-collapsible-down",
         )}
       >

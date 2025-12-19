@@ -33,7 +33,7 @@ export function Sidebar() {
           items: [
             {
               label: "External Name",
-              value: monitor.externalName ?? monitor.name,
+              value: monitor.externalName || monitor.name,
             },
             {
               label: "Status",

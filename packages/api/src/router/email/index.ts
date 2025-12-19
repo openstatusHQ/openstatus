@@ -121,7 +121,7 @@ export const emailRouter = createTRPCRouter({
           message: _maintenance.message,
           date: new Date(_maintenance.from).toISOString(),
           monitors: _maintenance.maintenancesToMonitors.map(
-            (i) => i.monitor.externalName ?? i.monitor.name,
+            (i) => i.monitor.externalName || i.monitor.name,
           ),
         });
       }

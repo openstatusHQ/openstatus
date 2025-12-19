@@ -34,8 +34,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// TODO: add custom name for monitor, shown on status page, requires db migration
-
 const schema = z.object({
   description: z.string().optional(),
   externalName: z.string().optional(),
