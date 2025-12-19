@@ -142,7 +142,9 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
           status: "maintenance",
           message: _maintenance.message,
           date: _maintenance.from.toISOString(),
-          monitors: _page.monitorsToPages.map((i) => i.monitor.name),
+          monitors: _page.monitorsToPages.map(
+            (i) => i.monitor.externalName || i.monitor.name,
+          ),
         });
       }
     }

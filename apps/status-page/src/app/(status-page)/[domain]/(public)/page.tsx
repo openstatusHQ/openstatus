@@ -96,6 +96,11 @@ export default function Page() {
   // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
   const page = pageWithCustomConfiguration ?? pageInitial;
 
+  const firstGroupIndex = useMemo(
+    () => page.trackers.findIndex((tracker) => tracker.type === "group"),
+    [page.trackers],
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <Status variant={page.status}>
@@ -188,7 +193,7 @@ export default function Page() {
         {/* NOTE: check what gap feels right */}
         {page.trackers.length > 0 ? (
           <StatusContent className="gap-5">
-            {page.trackers.map((tracker) => {
+            {page.trackers.map((tracker, index) => {
               if (tracker.type === "monitor") {
                 const monitor = tracker.monitor;
                 const { data, uptime } =
@@ -211,6 +216,8 @@ export default function Page() {
                   key={`group-${tracker.groupId}`}
                   title={tracker.groupName}
                   status={tracker.status}
+                  // NOTE: we only want to open the first group if it is the first one
+                  defaultOpen={firstGroupIndex === index && index === 0}
                 >
                   {tracker.monitors.map((monitor) => {
                     const { data, uptime } =
