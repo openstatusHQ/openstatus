@@ -13,7 +13,9 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",
+    "@openstatus/notification-google-chat": "workspace:*",
     "@openstatus/notification-telegram": "workspace:*",
+    "@openstatus/notification-twillio-whatsapp": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
@@ -37,7 +39,7 @@
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "bun-types": "1.0.8",
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   },
   "keywords": [],
   "author": "",

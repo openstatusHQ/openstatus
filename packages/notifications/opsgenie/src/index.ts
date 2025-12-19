@@ -37,18 +37,19 @@ export const sendAlert = async ({
     opsgenie.region === "eu"
       ? "https://api.eu.opsgenie.com/v2/alerts"
       : "https://api.opsgenie.com/v2/alerts";
-  try {
-    await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(event),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `GenieKey ${opsgenie.apiKey}`,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
+
+  const res = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify(event),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `GenieKey ${opsgenie.apiKey}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Failed to send OpsGenie alert: ${res.status} ${res.statusText}`,
+    );
   }
 };
 
@@ -86,20 +87,18 @@ export const sendDegraded = async ({
     opsgenie.region === "eu"
       ? "https://api.eu.opsgenie.com/v2/alerts"
       : "https://api.opsgenie.com/v2/alerts";
-  try {
-    await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(event),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `GenieKey ${opsgenie.apiKey}`,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-    // Do something
-
-    // Do something
+  const res = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify(event),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `GenieKey ${opsgenie.apiKey}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(
+      `Failed to send OpsGenie degraded alert: ${res.status} ${res.statusText}`,
+    );
   }
 };
 

@@ -14,6 +14,8 @@ import {
 } from "../content-box";
 import { type AtlassianDescriptionEnum, externalStatusArray } from "./utils";
 
+export const dynamic = "force-dynamic";
+
 const TITLE = "External Status";
 const DESCRIPTION =
   "Easily check if your external providers is working properly";

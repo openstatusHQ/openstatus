@@ -15,6 +15,11 @@ import {
   sendRecovery as sendEmailRecovery,
 } from "@openstatus/notification-emails";
 import {
+  sendAlert as sendGoogleChatAlert,
+  sendDegraded as sendGoogleChatDegraded,
+  sendRecovery as sendGoogleChatRecovery,
+} from "@openstatus/notification-google-chat";
+import {
   sendAlert as sendNtfyAlert,
   sendDegraded as sendNtfyDegraded,
   sendRecovery as sendNtfyRecovery,
@@ -44,6 +49,11 @@ import {
   sendDegraded as sendSmsDegraded,
   sendRecovery as sendSmsRecovery,
 } from "@openstatus/notification-twillio-sms";
+import {
+  sendAlert as sendWhatsappAlert,
+  sendDegraded as sendWhatsappDegraded,
+  sendRecovery as sendWhatsappRecovery,
+} from "@openstatus/notification-twillio-whatsapp";
 import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,
@@ -87,6 +97,11 @@ export const providerToFunction = {
     sendRecovery: sendEmailRecovery,
     sendDegraded: sendEmailDegraded,
   },
+  "google-chat": {
+    sendAlert: sendGoogleChatAlert,
+    sendRecovery: sendGoogleChatRecovery,
+    sendDegraded: sendGoogleChatDegraded,
+  },
   ntfy: {
     sendAlert: sendNtfyAlert,
     sendRecovery: sendNtfyRecovery,
@@ -116,6 +131,11 @@ export const providerToFunction = {
     sendAlert: sendWebhookAlert,
     sendRecovery: sendWebhookRecovery,
     sendDegraded: sendWebhookDegraded,
+  },
+  whatsapp: {
+    sendAlert: sendWhatsappAlert,
+    sendRecovery: sendWhatsappRecovery,
+    sendDegraded: sendWhatsappDegraded,
   },
   telegram: {
     sendAlert: sendTelegramAlert,

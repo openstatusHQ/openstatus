@@ -19,6 +19,7 @@ export type EmailHtml = {
   subject: string;
   to: string;
   from: string;
+  reply_to?: string;
 };
 export const sendEmail = async (email: Emails) => {
   if (process.env.NODE_ENV !== "production") return;

@@ -7,6 +7,7 @@ describe("OpsGenie Notifications", () => {
   let fetchMock: any = undefined;
 
   beforeEach(() => {
+    // @ts-expect-error
     fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
@@ -130,16 +131,16 @@ describe("OpsGenie Notifications", () => {
       createMockNotification(),
     );
 
-    // Should not throw - function catches errors internally
-    await sendAlert({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 500,
-      message: "Error",
-      incidentId: "incident-123",
-      cronTimestamp: Date.now(),
-    });
+    expect(
+      sendAlert({
+        // @ts-expect-error
+        monitor,
+        notification,
+        statusCode: 500,
+        message: "Error",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

@@ -95,7 +95,7 @@ open http://localhost:3002  # Dashboard
 open http://localhost:3003  # Status Pages
 ```
 
-📖 **Full guide**: [DOCKER.md](DOCKER.md) | **Production deployment**: [DOCKER_PRODUCTION.md](DOCKER_PRODUCTION.md)
+📖 **Full guide**: [DOCKER.md](DOCKER.md)
 
 ### With Devbox
 

@@ -55,6 +55,7 @@ export const emailDataSchema = z.object({ email: emailSchema });
 export const phoneDataSchema = z.object({ sms: phoneSchema });
 export const slackDataSchema = z.object({ slack: urlSchema });
 export const discordDataSchema = z.object({ discord: urlSchema });
+export const googleChatDataSchema = z.object({ "google-chat": urlSchema });
 export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
 export const opsgenieDataSchema = z.object({
   opsgenie: z.object({
@@ -66,16 +67,22 @@ export const telegramDataSchema = z.object({
   telegram: z.object({ chatId: z.string() }),
 });
 
+export const whatsappDataSchema = z.object({
+  whatsapp: phoneSchema,
+});
+
 export const NotificationDataSchema = z.union([
-  emailDataSchema,
-  phoneDataSchema,
-  slackDataSchema,
   discordDataSchema,
-  pagerdutyDataSchema,
-  opsgenieDataSchema,
+  emailDataSchema,
   ntfyDataSchema,
-  webhookDataSchema,
+  opsgenieDataSchema,
+  pagerdutyDataSchema,
+  phoneDataSchema,
   telegramDataSchema,
+  slackDataSchema,
+  webhookDataSchema,
+  whatsappDataSchema,
+  googleChatDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
@@ -91,6 +98,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("email"),
         data: emailDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("google-chat"),
+        data: googleChatDataSchema,
       }),
     ),
     insertNotificationSchema.merge(
@@ -127,6 +140,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("webhook"),
         data: webhookDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("whatsapp"),
+        data: whatsappDataSchema,
       }),
     ),
   ],
