@@ -47,39 +47,17 @@ type ConfigSection = {
 const CONFIG: ConfigSection[] = [
   {
     type: "group",
-    heading: "Products",
-    items: [
-      {
-        type: "item",
-        label: "Status Page",
-        href: "/status-page",
-      },
-      {
-        type: "item",
-        label: "Uptime Monitoring",
-        href: "/uptime-monitoring",
-      },
-      {
-        type: "item",
-        label: "Monitoring as Code",
-        href: "/monitoring-as-code",
-      },
-      {
-        type: "item",
-        label: "Private Locations",
-        href: "/private-locations",
-      },
-      {
-        type: "item",
-        label: "API Monitoring",
-        href: "/api-monitoring",
-      },
-    ],
-  },
-  {
-    type: "group",
     heading: "Resources",
     items: [
+      {
+        type: "group",
+        heading: "Product",
+        page: "product",
+        query: {
+          q: "search",
+          p: "page",
+        },
+      },
       {
         type: "item",
         label: "Pricing",
@@ -132,12 +110,6 @@ const CONFIG: ConfigSection[] = [
           p: "page",
         },
       },
-    ],
-  },
-  {
-    type: "group",
-    heading: "Company",
-    items: [
       {
         type: "item",
         label: "About",
@@ -145,6 +117,7 @@ const CONFIG: ConfigSection[] = [
       },
     ],
   },
+
   {
     type: "group",
     heading: "Community",

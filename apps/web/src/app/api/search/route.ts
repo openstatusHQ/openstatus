@@ -3,12 +3,13 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getProductPages,
   getToolsPages,
 } from "@/content/utils";
 import { z } from "zod";
 
 const SearchSchema = z.object({
-  p: z.enum(["blog", "changelog", "tools", "compare"]),
+  p: z.enum(["blog", "changelog", "tools", "compare", "product"]),
   q: z.string().nullish(),
 });
 
@@ -54,6 +55,8 @@ function search(params: SearchParams) {
     results = getToolsPages().filter((tool) => tool.slug !== "checker-slug");
   } else if (p === "compare") {
     results = getComparePages();
+  } else if (p === "product") {
+    results = getProductPages();
   }
 
   const searchMap = new Map<
