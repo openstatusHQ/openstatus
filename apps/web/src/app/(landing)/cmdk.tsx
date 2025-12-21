@@ -18,15 +18,33 @@ import {
   DialogContent,
   DialogTitle,
 } from "@openstatus/ui";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-// TODO: create config
+type ConfigItem = {
+  type: "item";
+  label: string;
+  href: string;
+  shortcut?: string;
+};
 
-// First search: static from the groups
-// Second search: dynamic from the API
+type ConfigGroup = {
+  type: "group";
+  heading: string;
+  page: string;
+  query: {
+    q: string;
+    p: string;
+  };
+};
+
+type ConfigSection = {
+  type: "group";
+  heading: string;
+  items: (ConfigItem | ConfigGroup)[];
+};
 
 // TODO: missing shortcuts
-const CONFIG = [
+const CONFIG: ConfigSection[] = [
   {
     type: "group",
     heading: "Resources",
@@ -48,7 +66,6 @@ const CONFIG = [
         query: {
           q: "search",
           p: "page",
-          // c: "category",
         },
       },
       {
@@ -58,13 +75,13 @@ const CONFIG = [
         query: {
           q: "search",
           p: "page",
-          // c: "category",
         },
       },
       {
         type: "item",
         label: "Global Speed Checker",
         href: "/play/checker",
+        shortcut: "⌘G",
       },
       {
         type: "group",
@@ -73,7 +90,6 @@ const CONFIG = [
         query: {
           q: "search",
           p: "page",
-          // c: "category",
         },
       },
       {
@@ -83,7 +99,6 @@ const CONFIG = [
         query: {
           q: "search",
           p: "page",
-          // c: "category",
         },
       },
     ],
@@ -96,77 +111,25 @@ const CONFIG = [
         type: "item",
         label: "Monitoring as Code",
         href: "/monitoring-as-code",
+        shortcut: "⌘C",
       },
       {
         type: "item",
         label: "Private Locations",
         href: "/private-locations",
+        shortcut: "⌘L",
       },
       {
         type: "item",
         label: "Status Page",
         href: "/status-page",
+        shortcut: "⌘S",
       },
       {
         type: "item",
         label: "Uptime Monitoring",
         href: "/uptime-monitoring",
-      },
-    ],
-  },
-  {
-    type: "group",
-    heading: "Categories",
-    items: [
-      {
-        type: "item",
-        label: "Monitoring",
-        href: "/monitoring",
-      },
-      {
-        type: "item",
-        label: "Company",
-        href: "/company",
-      },
-      {
-        type: "item",
-        label: "Engineering",
-        href: "/engineering",
-      },
-      {
-        type: "item",
-        label: "Education",
-        href: "/education",
-      },
-      {
-        type: "item",
-        label: "Incidents",
-        href: "/incidents",
-      },
-      {
-        type: "item",
-        label: "Cli",
-        href: "/cli",
-      },
-      {
-        type: "item",
-        label: "Tools",
-        href: "/tools",
-      },
-      {
-        type: "item",
-        label: "Notifications",
-        href: "/notifications",
-      },
-      {
-        type: "item",
-        label: "Integrations",
-        href: "/integrations",
-      },
-      {
-        type: "item",
-        label: "Statuspage",
-        href: "/statuspage",
+        shortcut: "⌘U",
       },
     ],
   },
@@ -209,7 +172,6 @@ const CONFIG = [
 ];
 
 export function CmdK() {
-  //
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
@@ -218,6 +180,7 @@ export function CmdK() {
   const [items, setItems] = React.useState<MDXData[]>([]);
   const [loading, setLoading] = React.useState(false);
   const debouncedSearch = useDebounce(search, 300);
+  const router = useRouter();
 
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
 
@@ -229,15 +192,44 @@ export function CmdK() {
         e.preventDefault();
         setOpen((open) => !open);
       }
+
+      // Handle shortcuts when dialog is open
+      if (open && (e.metaKey || e.ctrlKey)) {
+        const key = e.key.toLowerCase();
+
+        // Find matching shortcut in CONFIG
+        for (const section of CONFIG) {
+          for (const item of section.items) {
+            if (item.type === "item" && item.shortcut) {
+              const shortcutKey = item.shortcut.replace("⌘", "").toLowerCase();
+              if (key === shortcutKey) {
+                e.preventDefault();
+                router.push(item.href);
+                setOpen(false);
+                return;
+              }
+            }
+          }
+        }
+      }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [open, router]);
 
   React.useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  //   NOTE: If we reset, we should add a setTimeout for the animation to hide the dialog
+  //   React.useEffect(() => {
+  //     if (!open && items.length > 0) {
+  //       setItems([]);
+  //       setSearch("");
+  //       setPages([]);
+  //     }
+  //   }, [open]);
 
   // TODO: add debounce search
   // TODO: replace "t" with "p" (p for page)
@@ -245,7 +237,7 @@ export function CmdK() {
   React.useEffect(() => {
     if (!page) return;
     setLoading(true);
-    fetch(`/api/search?t=${page}&q=${debouncedSearch}`)
+    fetch(`/api/search?p=${page}&q=${debouncedSearch}`)
       .then((res) => res.json())
       .then((data) => setItems(data))
       .finally(() => setLoading(false));
@@ -300,45 +292,18 @@ export function CmdK() {
                 <CommandLoading>Searching...</CommandLoading>
               ) : null}
               {!page ? (
-                <Home setPages={setPages} resetSearch={resetSearch} />
+                <Home
+                  setPages={setPages}
+                  resetSearch={resetSearch}
+                  setOpen={setOpen}
+                />
               ) : null}
               {items.length > 0 ? (
-                <CommandGroup>
-                  {items.map((item) => {
-                    // Highlight search term match in the title, case-insensitive
-                    const title = item.metadata.title.replace(
-                      new RegExp(
-                        search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-                        "i",
-                      ),
-                      (match) => `<mark>${match}</mark>`,
-                    );
-                    const html = item.content.replace(
-                      new RegExp(
-                        search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-                        "i",
-                      ),
-                      (match) => `<mark>${match}</mark>`,
-                    );
-
-                    return (
-                      <CommandItem key={item.slug} asChild>
-                        <Link href={`/${item.slug}`} className="min-w-0 grid">
-                          <span
-                            className="truncate block"
-                            dangerouslySetInnerHTML={{ __html: title }}
-                          />
-                          {item.content && search ? (
-                            <span
-                              className="block text-muted-foreground text-xs truncate"
-                              dangerouslySetInnerHTML={{ __html: html }}
-                            />
-                          ) : null}
-                        </Link>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
+                <SearchResults
+                  items={items}
+                  search={search}
+                  setOpen={setOpen}
+                />
               ) : null}
             </CommandList>
           </Command>
@@ -351,130 +316,106 @@ export function CmdK() {
 function Home({
   setPages,
   resetSearch,
+  setOpen,
 }: {
   setPages: React.Dispatch<React.SetStateAction<string[]>>;
   resetSearch: () => void;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
+  const router = useRouter();
+
   return (
     <>
-      <CommandGroup heading="Resources">
-        <CommandItem asChild>
-          <Link href="/pricing">Pricing</Link>
-        </CommandItem>
-        <CommandItem asChild>
-          <Link href="/docs">Docs</Link>
-        </CommandItem>
-        <CommandItem
-          onSelect={() => {
-            setPages((pages) => [...pages, "blog"]);
-            resetSearch();
-          }}
-        >
-          <span>Blog</span>
-        </CommandItem>
-        <CommandItem
-          onSelect={() => {
-            setPages((pages) => [...pages, "changelog"]);
-            resetSearch();
-          }}
-        >
-          <span>Changelog</span>
-        </CommandItem>
-        <CommandItem asChild>
-          <Link href="/play/checker">Global Speed Checker</Link>
-        </CommandItem>
-        <CommandItem
-          onSelect={() => {
-            setPages((pages) => [...pages, "tools"]);
-            resetSearch();
-          }}
-        >
-          <span>Playground (Tools)</span>
-        </CommandItem>
-        <CommandItem
-          onSelect={() => {
-            setPages((pages) => [...pages, "compare"]);
-            resetSearch();
-          }}
-        >
-          <span>Compare (Alternatives)</span>
-        </CommandItem>
-      </CommandGroup>
-      <CommandSeparator />
-      <CommandGroup heading="Products">
-        <CommandItem>
-          <span>Monitoring as Code</span>
-          <CommandShortcut>⌘P</CommandShortcut>
-        </CommandItem>
-        <CommandItem>
-          <span>Private Locations</span>
-          <CommandShortcut>⌘B</CommandShortcut>
-        </CommandItem>
-        <CommandItem>
-          <span>Status Page</span>
-          <CommandShortcut>⌘S</CommandShortcut>
-        </CommandItem>
-        <CommandItem>
-          <span>Uptime Monitoring</span>
-          <CommandShortcut>⌘S</CommandShortcut>
-        </CommandItem>
-      </CommandGroup>
-      <CommandSeparator />
-      {/* TODO: automatically generate categories from the pages */}
-      <CommandGroup heading="Categories">
-        <CommandItem keywords={["category", "monitoring"]}>
-          <span>Monitoring</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "company"]}>
-          <span>Company</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "engineering"]}>
-          <span>Engineering</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "education"]}>
-          <span>Education</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "incidents"]}>
-          <span>Incidents</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "cli"]}>
-          <span>Cli</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "tools"]}>
-          <span>Tools</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "notifications"]}>
-          <span>Notifications</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "integrations"]}>
-          <span>Integrations</span>
-        </CommandItem>
-        <CommandItem keywords={["category", "statuspage"]}>
-          <span>Statuspage</span>
-        </CommandItem>
-      </CommandGroup>
-      <CommandSeparator />
-      {/* TODO: extract community */}
-      <CommandGroup heading="Community">
-        <CommandItem keywords={["community", "discord"]}>
-          <span>Discord</span>
-        </CommandItem>
-        <CommandItem keywords={["community", "github"]}>
-          <span>GitHub</span>
-        </CommandItem>
-        <CommandItem keywords={["community", "x"]}>
-          <span>X</span>
-        </CommandItem>
-        <CommandItem keywords={["community", "bluesky"]}>
-          <span>BlueSky</span>
-        </CommandItem>
-        <CommandItem keywords={["community", "youtube"]}>
-          <span>YouTube</span>
-        </CommandItem>
-        <CommandItem keywords={["community", "linkedin"]}>
-          <span>LinkedIn</span>
-        </CommandItem>
-      </CommandGroup>
+      {CONFIG.map((group, groupIndex) => (
+        <React.Fragment key={group.heading}>
+          {groupIndex > 0 && <CommandSeparator />}
+          <CommandGroup heading={group.heading}>
+            {group.items.map((item) => {
+              if (item.type === "item") {
+                return (
+                  <CommandItem
+                    key={item.label}
+                    onSelect={() => {
+                      router.push(item.href);
+                      setOpen(false);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    {item.shortcut && (
+                      <CommandShortcut>{item.shortcut}</CommandShortcut>
+                    )}
+                  </CommandItem>
+                );
+              }
+              if (item.type === "group") {
+                return (
+                  <CommandItem
+                    key={item.heading}
+                    onSelect={() => {
+                      setPages((pages) => [...pages, item.page]);
+                      resetSearch();
+                    }}
+                  >
+                    <span>{item.heading}</span>
+                  </CommandItem>
+                );
+              }
+              return null;
+            })}
+          </CommandGroup>
+        </React.Fragment>
+      ))}
     </>
+  );
+}
+
+function SearchResults({
+  items,
+  search,
+  setOpen,
+}: {
+  items: MDXData[];
+  search: string;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const router = useRouter();
+
+  return (
+    <CommandGroup>
+      {items.map((item) => {
+        // Highlight search term match in the title, case-insensitive
+        const title = item.metadata.title.replace(
+          new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
+          (match) => `<mark>${match}</mark>`,
+        );
+        const html = item.content.replace(
+          new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
+          (match) => `<mark>${match}</mark>`,
+        );
+
+        return (
+          <CommandItem
+            key={item.slug}
+            onSelect={() => {
+              router.push(item.href);
+              setOpen(false);
+            }}
+          >
+            <div className="min-w-0 grid">
+              <span
+                className="truncate block"
+                dangerouslySetInnerHTML={{ __html: title }}
+              />
+              {item.content && search ? (
+                <span
+                  className="block text-muted-foreground text-xs truncate"
+                  dangerouslySetInnerHTML={{ __html: html }}
+                />
+              ) : null}
+            </div>
+          </CommandItem>
+        );
+      })}
+    </CommandGroup>
   );
 }

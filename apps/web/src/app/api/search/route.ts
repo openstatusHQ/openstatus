@@ -1,19 +1,15 @@
 import {
   type MDXData,
   getBlogPosts,
-  getCategories,
   getChangelogPosts,
   getComparePages,
   getToolsPages,
 } from "@/content/utils";
 import { z } from "zod";
 
-const categories = getCategories();
-
 const SearchSchema = z.object({
-  t: z.enum(["blog", "changelog", "tools", "compare"]),
+  p: z.enum(["blog", "changelog", "tools", "compare"]),
   q: z.string().nullish(),
-  c: z.enum([""]).nullish(),
 });
 
 export type SearchParams = z.infer<typeof SearchSchema>;
@@ -21,11 +17,11 @@ export type SearchParams = z.infer<typeof SearchSchema>;
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q");
-  const type = searchParams.get("t");
+  const page = searchParams.get("p");
   const category = searchParams.get("c");
 
   const params = SearchSchema.safeParse({
-    t: type,
+    p: page,
     q: query,
     c: category,
   });
@@ -47,16 +43,16 @@ export async function GET(request: Request) {
 }
 
 function search(params: SearchParams) {
-  const { t, q, c } = params;
+  const { p, q, c } = params;
   let results: MDXData[] = [];
 
-  if (t === "blog") {
+  if (p === "blog") {
     results = getBlogPosts();
-  } else if (t === "changelog") {
+  } else if (p === "changelog") {
     results = getChangelogPosts();
-  } else if (t === "tools") {
+  } else if (p === "tools") {
     results = getToolsPages().filter((tool) => tool.slug !== "checker-slug");
-  } else if (t === "compare") {
+  } else if (p === "compare") {
     results = getComparePages();
   }
 

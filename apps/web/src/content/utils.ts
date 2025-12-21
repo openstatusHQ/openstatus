@@ -47,21 +47,22 @@ function readMDXFile(filePath: string) {
   return parseFrontmatter(rawContent);
 }
 
-function getMDXDataFromDir(dir: string) {
+function getMDXDataFromDir(dir: string, prefix = "") {
   const mdxFiles = getMDXFiles(dir);
   return mdxFiles.map((file) => {
-    return getMDXDataFromFile(path.join(dir, file));
+    return getMDXDataFromFile(path.join(dir, file), prefix);
   });
 }
 
-function getMDXDataFromFile(filePath: string) {
+function getMDXDataFromFile(filePath: string, prefix = "") {
   const { metadata, content } = readMDXFile(filePath);
   const slug = path.basename(filePath, path.extname(filePath));
+  const href = prefix ? `${prefix}/${slug}` : `/${slug}`;
   return {
     metadata,
     slug,
     content,
-    // TODO: add href?
+    href,
   };
 }
 
@@ -70,24 +71,28 @@ export type MDXData = ReturnType<typeof getMDXDataFromFile>;
 export function getBlogPosts(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "blog"),
+    "/blog",
   );
 }
 
 export function getChangelogPosts(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "changelog"),
+    "/changelog",
   );
 }
 
 export function getProductPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "product"),
+    "",
   );
 }
 
 export function getUnrelatedPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "unrelated"),
+    "",
   );
 }
 
@@ -101,6 +106,7 @@ export function getUnrelatedPage(slug: string): MDXData {
       "unrelated",
       `${slug}.mdx`,
     ),
+    "",
   );
 }
 
@@ -111,24 +117,28 @@ export function getMainPages(): MDXData[] {
 export function getComparePages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "compare"),
+    "/compare",
   );
 }
 
 export function getHomePage(): MDXData {
   return getMDXDataFromFile(
     path.join(process.cwd(), "src", "content", "pages", "home.mdx"),
+    "",
   );
 }
 
 export function getToolsPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "tools"),
+    "/play",
   );
 }
 
 export function getToolsPage(slug: string): MDXData {
   return getMDXDataFromFile(
     path.join(process.cwd(), "src", "content", "pages", "tools", `${slug}.mdx`),
+    "/play",
   );
 }
 
