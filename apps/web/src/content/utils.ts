@@ -61,6 +61,7 @@ function getMDXDataFromFile(filePath: string) {
     metadata,
     slug,
     content,
+    // TODO: add href?
   };
 }
 
@@ -129,6 +130,19 @@ export function getToolsPage(slug: string): MDXData {
   return getMDXDataFromFile(
     path.join(process.cwd(), "src", "content", "pages", "tools", `${slug}.mdx`),
   );
+}
+
+export function getCategories() {
+  return [
+    ...new Set([
+      ...getBlogPosts().map((post) => post.metadata.category),
+      ...getChangelogPosts().map((post) => post.metadata.category),
+      ...getProductPages().map((post) => post.metadata.category),
+      ...getUnrelatedPages().map((post) => post.metadata.category),
+      ...getComparePages().map((post) => post.metadata.category),
+      ...getToolsPages().map((post) => post.metadata.category),
+    ]),
+  ] as const;
 }
 
 export function formatDate(targetDate: Date, includeRelative = false) {

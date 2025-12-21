@@ -1,6 +1,7 @@
 import { Footer } from "@/content/footer";
 import { Header } from "@/content/header";
 import { SubNav } from "@/content/sub-nav";
+import { CmdK } from "./cmdk";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <SubNav />
       <main className="flex-1 px-4 py-4">{children}</main>
       <Footer />
+      <CmdK />
     </div>
   );
 }
