@@ -9,6 +9,7 @@ import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
 import { highlight } from "sugar-high";
 import { CopyButton } from "./copy-button";
+import { HighlightText } from "./highlight-text";
 import { ImageZoom } from "./image-zoom";
 import { LatencyChartTable } from "./latency-chart-table";
 
@@ -360,14 +361,16 @@ export const components = {
 
 export function CustomMDX(props: MDXRemoteProps) {
   return (
-    <MDXRemote
-      {...props}
-      components={
-        {
-          ...components,
-          ...(props.components || {}),
-        } as MDXRemoteProps["components"]
-      }
-    />
+    <HighlightText>
+      <MDXRemote
+        {...props}
+        components={
+          {
+            ...components,
+            ...(props.components || {}),
+          } as MDXRemoteProps["components"]
+        }
+      />
+    </HighlightText>
   );
 }

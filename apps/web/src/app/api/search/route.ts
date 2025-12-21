@@ -3,6 +3,7 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getHomePage,
   getProductPages,
   getToolsPages,
 } from "@/content/utils";
@@ -56,7 +57,11 @@ function search(params: SearchParams) {
   } else if (p === "compare") {
     results = getComparePages();
   } else if (p === "product") {
-    results = getProductPages();
+    const home = getHomePage();
+    // NOTE: we override /home with / for the home.mdx file
+    home.href = "/";
+    home.metadata.title = "Homepage";
+    results = [home, ...getProductPages()];
   }
 
   const searchMap = new Map<
@@ -100,8 +105,6 @@ function search(params: SearchParams) {
           href = `${href}#${headingSlug}`;
         }
       }
-
-      console.log({ href });
 
       const content =
         search?.content || !search?.title
@@ -171,6 +174,7 @@ function getContentSnippet(
 export function simpleStripMdx(input: string) {
   return input
     .replace(/<[^>]+>/g, "") // strip JSX tags
+    .replace(/^#{1,6}\s+/gm, "") // strip markdown heading symbols, keep text
     .replace(/!\[.*?\]\(.*?\)/g, "") // strip images
     .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1") // keep link text
     .replace(/\*\*(.*?)\*\*/g, "$1") // strip bold

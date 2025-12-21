@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@openstatus/ui";
+import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 
 type ConfigItem = {
@@ -29,6 +30,7 @@ type ConfigItem = {
 
 type ConfigGroup = {
   type: "group";
+  label: string;
   heading: string;
   page: string;
   query: {
@@ -51,7 +53,8 @@ const CONFIG: ConfigSection[] = [
     items: [
       {
         type: "group",
-        heading: "Product",
+        label: "Search in Products...",
+        heading: "Products",
         page: "product",
         query: {
           q: "search",
@@ -60,16 +63,17 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "item",
-        label: "Pricing",
+        label: "Go to Pricing",
         href: "/pricing",
       },
       {
         type: "item",
-        label: "Docs",
+        label: "Go to Docs",
         href: "https://docs.openstatus.dev",
       },
       {
         type: "group",
+        label: "Search in Blog...",
         heading: "Blog",
         page: "blog",
         query: {
@@ -79,6 +83,7 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "group",
+        label: "Search in Changelog...",
         heading: "Changelog",
         page: "changelog",
         query: {
@@ -88,12 +93,13 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "item",
-        label: "Global Speed Checker",
+        label: "Go to Global Speed Checker",
         href: "/play/checker",
         shortcut: "⌘G",
       },
       {
         type: "group",
+        label: "Search in Tools...",
         heading: "Tools",
         page: "tools",
         query: {
@@ -103,6 +109,7 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "group",
+        label: "Search in Compare...",
         heading: "Compare",
         page: "compare",
         query: {
@@ -112,7 +119,7 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "item",
-        label: "About",
+        label: "Go to About",
         href: "/about",
       },
     ],
@@ -216,9 +223,6 @@ export function CmdK() {
   //     }
   //   }, [open]);
 
-  // TODO: add debounce search
-  // TODO: replace "t" with "p" (p for page)
-
   React.useEffect(() => {
     if (!page) return;
     setLoading(true);
@@ -229,73 +233,49 @@ export function CmdK() {
   }, [page, debouncedSearch]);
 
   return (
-    <>
-      <p className="text-muted-foreground text-sm">
-        Press{" "}
-        <kbd className="bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
-          <span className="text-xs">⌘</span>K
-        </kbd>
-      </p>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="overflow-hidden p-0 shadow-2xl font-mono rounded-none">
-          <DialogTitle className="sr-only">Search</DialogTitle>
-          <Command
-            onKeyDown={(e) => {
-              if (e.key === "Escape" || (e.key === "Backspace" && !search)) {
-                e.preventDefault();
-                setPages((pages) => pages.slice(0, -1));
-                setItems([]);
-              }
-            }}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">
+        <DialogTitle className="sr-only">Search</DialogTitle>
+        <Command
+          onKeyDown={(e) => {
+            if (e.key === "Escape" || (e.key === "Backspace" && !search)) {
+              e.preventDefault();
+              setPages((pages) => pages.slice(0, -1));
+              setItems([]);
+            }
+          }}
+          className="rounded-none"
+        >
+          <CommandInput
+            placeholder="Type to search…"
             className="rounded-none"
-          >
-            {pages.length > 0 ? (
-              <div className="px-2 pt-1.5">
-                {pages.map((p, index) => {
-                  return (
-                    <React.Fragment key={p}>
-                      <div
-                        cmdk-openstatus-badge=""
-                        className="text-[10px] text-muted-foreground"
-                      >
-                        {p}
-                      </div>
-                      {index < pages.length - 1 ? <span>|</span> : null}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
+            <CommandEmpty>No results found.</CommandEmpty>
+            {loading && !items.length ? (
+              <CommandLoading>Searching...</CommandLoading>
             ) : null}
-            <CommandInput
-              placeholder="Type a command or search..."
-              className="rounded-none"
-              value={search}
-              onValueChange={setSearch}
-            />
-            <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
-              <CommandEmpty>No results found.</CommandEmpty>
-              {loading && !items.length ? (
-                <CommandLoading>Searching...</CommandLoading>
-              ) : null}
-              {!page ? (
-                <Home
-                  setPages={setPages}
-                  resetSearch={resetSearch}
-                  setOpen={setOpen}
-                />
-              ) : null}
-              {items.length > 0 ? (
-                <SearchResults
-                  items={items}
-                  search={search}
-                  setOpen={setOpen}
-                />
-              ) : null}
-            </CommandList>
-          </Command>
-        </DialogContent>
-      </Dialog>
-    </>
+            {!page ? (
+              <Home
+                setPages={setPages}
+                resetSearch={resetSearch}
+                setOpen={setOpen}
+              />
+            ) : null}
+            {items.length > 0 ? (
+              <SearchResults
+                items={items}
+                search={search}
+                setOpen={setOpen}
+                page={page}
+              />
+            ) : null}
+          </CommandList>
+        </Command>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -309,6 +289,7 @@ function Home({
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <>
@@ -336,13 +317,13 @@ function Home({
               if (item.type === "group") {
                 return (
                   <CommandItem
-                    key={item.heading}
+                    key={item.page}
                     onSelect={() => {
                       setPages((pages) => [...pages, item.page]);
                       resetSearch();
                     }}
                   >
-                    <span>{item.heading}</span>
+                    <span>{item.label}</span>
                   </CommandItem>
                 );
               }
@@ -351,6 +332,16 @@ function Home({
           </CommandGroup>
         </React.Fragment>
       ))}
+      <CommandSeparator />
+      <CommandGroup heading="Settings">
+        <CommandItem
+          onSelect={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+        >
+          <span>
+            Switch to {resolvedTheme === "dark" ? "light" : "dark"} theme
+          </span>
+        </CommandItem>
+      </CommandGroup>
     </>
   );
 }
@@ -359,15 +350,21 @@ function SearchResults({
   items,
   search,
   setOpen,
+  page,
 }: {
   items: MDXData[];
   search: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  page: string | null;
 }) {
   const router = useRouter();
 
+  const _page = CONFIG[0].items.find(
+    (item) => item.type === "group" && item.page === page,
+  ) as ConfigGroup | undefined;
+
   return (
-    <CommandGroup>
+    <CommandGroup heading={_page?.heading}>
       {items.map((item) => {
         // Highlight search term match in the title, case-insensitive
         const title = item.metadata.title.replace(
@@ -387,15 +384,15 @@ function SearchResults({
               setOpen(false);
             }}
           >
-            <div className="min-w-0 grid">
+            <div className="grid min-w-0">
               <span
-                className="truncate block"
+                className="block truncate"
                 // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                 dangerouslySetInnerHTML={{ __html: title }}
               />
               {item.content && search ? (
                 <span
-                  className="block text-muted-foreground text-xs truncate"
+                  className="block truncate text-muted-foreground text-xs"
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
