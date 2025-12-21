@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 }
 
 function search(params: SearchParams) {
-  const { p, q, c } = params;
+  const { p, q } = params;
   let results: MDXData[] = [];
 
   if (p === "blog") {
@@ -68,10 +68,6 @@ function search(params: SearchParams) {
     .filter((result) => {
       if (!q) return true;
 
-      if (c) {
-        return result.metadata.category === c;
-      }
-
       const hasSearchTitle = result.metadata.title
         .toLowerCase()
         .includes(q.toLowerCase());
@@ -89,12 +85,30 @@ function search(params: SearchParams) {
     .map((result) => {
       const search = searchMap.get(result.slug);
 
+      // Find the closest heading to the search match and add it as an anchor
+      let href = result.href;
+
+      //   // Add query parameter for highlighting
+      href = `${href}?q=${encodeURIComponent(q || "")}`;
+
+      if (q && search?.content) {
+        const headingSlug = findClosestHeading(result.content, q);
+        if (headingSlug) {
+          href = `${href}#${headingSlug}`;
+        }
+      }
+
+      console.log({ href });
+
+      const content =
+        search?.content || !search?.title
+          ? getContentSnippet(result.content, q)
+          : "";
+
       return {
         ...result,
-        content:
-          search?.content || !search?.title
-            ? getContentSnippet(result.content, q)
-            : "",
+        content,
+        href,
       };
     });
 
@@ -162,4 +176,52 @@ export function simpleStripMdx(input: string) {
     .replace(/[`*>~]/g, "") // strip most formatting
     .replace(/\s+/g, " ") // collapse whitespace
     .trim();
+}
+
+function slugify(str: string) {
+  return str
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/&/g, "-and-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-");
+}
+
+/**
+ * Find the closest heading before the search match and return its slug
+ */
+function findClosestHeading(
+  mdxContent: string,
+  searchQuery: string | null | undefined,
+): string | null {
+  if (!searchQuery) return null;
+
+  const searchLower = searchQuery.toLowerCase();
+  const contentLower = mdxContent.toLowerCase();
+  const matchIndex = contentLower.indexOf(searchLower);
+
+  if (matchIndex === -1) return null;
+
+  // Look for headings before the match (## Heading, ### Heading, etc.)
+  const contentBeforeMatch = mdxContent.slice(0, matchIndex);
+  const headingRegex = /^#{1,6}\s+(.+)$/gm;
+  const headings: { text: string; index: number }[] = [];
+
+  let match: RegExpExecArray | null;
+  while ((match = headingRegex.exec(contentBeforeMatch)) !== null) {
+    headings.push({
+      text: match[1].trim(),
+      index: match.index,
+    });
+  }
+
+  // Return the closest heading (last one before the match)
+  if (headings.length > 0) {
+    const closestHeading = headings[headings.length - 1];
+    return slugify(closestHeading.text);
+  }
+
+  return null;
 }

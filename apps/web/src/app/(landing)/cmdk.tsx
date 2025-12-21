@@ -111,7 +111,7 @@ const CONFIG: ConfigSection[] = [
         type: "item",
         label: "Monitoring as Code",
         href: "/monitoring-as-code",
-        shortcut: "⌘C",
+        shortcut: "⌘M",
       },
       {
         type: "item",
