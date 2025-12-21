@@ -47,6 +47,37 @@ type ConfigSection = {
 const CONFIG: ConfigSection[] = [
   {
     type: "group",
+    heading: "Products",
+    items: [
+      {
+        type: "item",
+        label: "Status Page",
+        href: "/status-page",
+      },
+      {
+        type: "item",
+        label: "Uptime Monitoring",
+        href: "/uptime-monitoring",
+      },
+      {
+        type: "item",
+        label: "Monitoring as Code",
+        href: "/monitoring-as-code",
+      },
+      {
+        type: "item",
+        label: "Private Locations",
+        href: "/private-locations",
+      },
+      {
+        type: "item",
+        label: "API Monitoring",
+        href: "/api-monitoring",
+      },
+    ],
+  },
+  {
+    type: "group",
     heading: "Resources",
     items: [
       {
@@ -105,31 +136,12 @@ const CONFIG: ConfigSection[] = [
   },
   {
     type: "group",
-    heading: "Products",
+    heading: "Company",
     items: [
       {
         type: "item",
-        label: "Monitoring as Code",
-        href: "/monitoring-as-code",
-        shortcut: "⌘M",
-      },
-      {
-        type: "item",
-        label: "Private Locations",
-        href: "/private-locations",
-        shortcut: "⌘L",
-      },
-      {
-        type: "item",
-        label: "Status Page",
-        href: "/status-page",
-        shortcut: "⌘S",
-      },
-      {
-        type: "item",
-        label: "Uptime Monitoring",
-        href: "/uptime-monitoring",
-        shortcut: "⌘U",
+        label: "About",
+        href: "/about",
       },
     ],
   },
@@ -262,6 +274,7 @@ export function CmdK() {
                 setItems([]);
               }
             }}
+            className="rounded-none"
           >
             {pages.length > 0 ? (
               <div className="px-2 pt-1.5">
@@ -404,11 +417,13 @@ function SearchResults({
             <div className="min-w-0 grid">
               <span
                 className="truncate block"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                 dangerouslySetInnerHTML={{ __html: title }}
               />
               {item.content && search ? (
                 <span
                   className="block text-muted-foreground text-xs truncate"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
               ) : null}

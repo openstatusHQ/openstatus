@@ -123,7 +123,7 @@ function getContentSnippet(
   searchQuery: string | null | undefined,
 ): string {
   if (!searchQuery) {
-    return mdxContent.slice(0, 100) + "...";
+    return `${mdxContent.slice(0, 100)}...`;
   }
 
   const content = simpleStripMdx(mdxContent.toLowerCase());
@@ -132,7 +132,7 @@ function getContentSnippet(
 
   if (matchIndex === -1) {
     // No match found, return first 100 chars
-    return content.slice(0, 100) + "...";
+    return `${content.slice(0, 100)}...`;
   }
 
   // Find start of snippet (go back N words)
@@ -159,8 +159,8 @@ function getContentSnippet(
 
   if (!snippet) return snippet;
 
-  if (start > 0) snippet = "..." + snippet;
-  if (end < content.length) snippet = snippet + "...";
+  if (start > 0) snippet = `...${snippet}`;
+  if (end < content.length) snippet = `${snippet}...`;
 
   return snippet;
 }
@@ -209,12 +209,13 @@ function findClosestHeading(
   const headingRegex = /^#{1,6}\s+(.+)$/gm;
   const headings: { text: string; index: number }[] = [];
 
-  let match: RegExpExecArray | null;
-  while ((match = headingRegex.exec(contentBeforeMatch)) !== null) {
+  let match = headingRegex.exec(contentBeforeMatch);
+  while (match !== null) {
     headings.push({
       text: match[1].trim(),
       index: match.index,
     });
+    match = headingRegex.exec(contentBeforeMatch);
   }
 
   // Return the closest heading (last one before the match)
