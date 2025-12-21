@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@openstatus/ui";
+import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 
@@ -169,12 +170,20 @@ export function CmdK() {
   const listRef = React.useRef<HTMLDivElement | null>(null);
   const [search, setSearch] = React.useState("");
   const [pages, setPages] = React.useState<string[]>([]);
-  const [items, setItems] = React.useState<MDXData[]>([]);
-  const [loading, setLoading] = React.useState(false);
   const debouncedSearch = useDebounce(search, 300);
   const router = useRouter();
 
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
+
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ["search", page, debouncedSearch],
+    queryFn: async () => {
+      if (!page) return [];
+      const res = await fetch(`/api/search?p=${page}&q=${debouncedSearch}`);
+      return res.json();
+    },
+    placeholderData: (previousData) => previousData,
+  });
 
   const resetSearch = React.useCallback(() => setSearch(""), []);
 
@@ -223,15 +232,6 @@ export function CmdK() {
   //     }
   //   }, [open]);
 
-  React.useEffect(() => {
-    if (!page) return;
-    setLoading(true);
-    fetch(`/api/search?p=${page}&q=${debouncedSearch}`)
-      .then((res) => res.json())
-      .then((data) => setItems(data))
-      .finally(() => setLoading(false));
-  }, [page, debouncedSearch]);
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">
@@ -241,9 +241,9 @@ export function CmdK() {
             if (e.key === "Escape" || (e.key === "Backspace" && !search)) {
               e.preventDefault();
               setPages((pages) => pages.slice(0, -1));
-              setItems([]);
             }
           }}
+          shouldFilter={!page}
           className="rounded-none"
         >
           <CommandInput
@@ -379,6 +379,7 @@ function SearchResults({
         return (
           <CommandItem
             key={item.slug}
+            keywords={[item.metadata.title, item.content, search]}
             onSelect={() => {
               router.push(item.href);
               setOpen(false);

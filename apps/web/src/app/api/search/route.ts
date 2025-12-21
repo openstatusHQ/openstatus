@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 
 const SearchSchema = z.object({
-  p: z.enum(["blog", "changelog", "tools", "compare", "product"]),
+  p: z.enum(["blog", "changelog", "tools", "compare", "product"]).nullish(),
   q: z.string().nullish(),
 });
 
@@ -32,6 +32,12 @@ export async function GET(request: Request) {
     console.error(params.error);
     return new Response(JSON.stringify({ error: params.error.message }), {
       status: 400,
+    });
+  }
+
+  if (!params.data.p) {
+    return new Response(JSON.stringify([]), {
+      status: 200,
     });
   }
 
