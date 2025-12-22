@@ -361,16 +361,18 @@ export const components = {
 
 export function CustomMDX(props: MDXRemoteProps) {
   return (
-    <HighlightText>
-      <MDXRemote
-        {...props}
-        components={
-          {
-            ...components,
-            ...(props.components || {}),
-          } as MDXRemoteProps["components"]
-        }
-      />
-    </HighlightText>
+    <React.Suspense>
+      <HighlightText>
+        <MDXRemote
+          {...props}
+          components={
+            {
+              ...components,
+              ...(props.components || {}),
+            } as MDXRemoteProps["components"]
+          }
+        />
+      </HighlightText>
+    </React.Suspense>
   );
 }
