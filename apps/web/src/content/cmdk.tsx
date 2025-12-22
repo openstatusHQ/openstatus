@@ -2,8 +2,10 @@
 
 import * as React from "react";
 
+import { Kbd } from "@/components/kbd";
 import type { MDXData } from "@/content/utils";
 import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -123,6 +125,11 @@ const CONFIG: ConfigSection[] = [
         label: "Go to About",
         href: "/about",
       },
+      {
+        type: "item",
+        label: "Book a call",
+        href: "/cal",
+      },
     ],
   },
 
@@ -168,6 +175,7 @@ export function CmdK() {
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const listRef = React.useRef<HTMLDivElement | null>(null);
+  const resetTimerRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
   const [search, setSearch] = React.useState("");
   const [pages, setPages] = React.useState<string[]>([]);
   const debouncedSearch = useDebounce(search, 300);
@@ -223,59 +231,88 @@ export function CmdK() {
     inputRef.current?.focus();
   }, []);
 
-  //   NOTE: If we reset, we should add a setTimeout for the animation to hide the dialog
-  //   React.useEffect(() => {
-  //     if (!open && items.length > 0) {
-  //       setItems([]);
-  //       setSearch("");
-  //       setPages([]);
-  //     }
-  //   }, [open]);
+  // NOTE: Reset search and pages after dialog closes (with delay for animation)
+  // - if within 1 second of closing, the dialog will not reset
+  React.useEffect(() => {
+    const DELAY = 1000;
+
+    if (!open && items.length > 0) {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+      }
+      resetTimerRef.current = setTimeout(() => {
+        setSearch("");
+        setPages([]);
+      }, DELAY);
+    }
+
+    if (open && resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = undefined;
+    }
+
+    return () => {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+      }
+    };
+  }, [open, items.length]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">
-        <DialogTitle className="sr-only">Search</DialogTitle>
-        <Command
-          onKeyDown={(e) => {
-            if (e.key === "Escape" || (e.key === "Backspace" && !search)) {
-              e.preventDefault();
-              setPages((pages) => pages.slice(0, -1));
-            }
-          }}
-          shouldFilter={!page}
-          className="rounded-none"
-        >
-          <CommandInput
-            placeholder="Type to search…"
+    <>
+      <button
+        type="button"
+        className={cn("p-4 hover:bg-muted", open && "bg-muted!")}
+        onClick={() => setOpen(true)}
+      >
+        <span className="sr-only">Press</span>
+        <Kbd variant="outline">⌘K</Kbd>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">
+          <DialogTitle className="sr-only">Search</DialogTitle>
+          <Command
+            onKeyDown={(e) => {
+              // e.key === "Escape" ||
+              if (e.key === "Backspace" && !search) {
+                e.preventDefault();
+                setPages((pages) => pages.slice(0, -1));
+              }
+            }}
+            shouldFilter={!page}
             className="rounded-none"
-            value={search}
-            onValueChange={setSearch}
-          />
-          <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
-            <CommandEmpty>No results found.</CommandEmpty>
-            {loading && !items.length ? (
-              <CommandLoading>Searching...</CommandLoading>
-            ) : null}
-            {!page ? (
-              <Home
-                setPages={setPages}
-                resetSearch={resetSearch}
-                setOpen={setOpen}
-              />
-            ) : null}
-            {items.length > 0 ? (
-              <SearchResults
-                items={items}
-                search={search}
-                setOpen={setOpen}
-                page={page}
-              />
-            ) : null}
-          </CommandList>
-        </Command>
-      </DialogContent>
-    </Dialog>
+          >
+            <CommandInput
+              placeholder="Type to search…"
+              className="rounded-none"
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
+              <CommandEmpty>No results found.</CommandEmpty>
+              {loading && !items.length ? (
+                <CommandLoading>Searching...</CommandLoading>
+              ) : null}
+              {!page ? (
+                <Home
+                  setPages={setPages}
+                  resetSearch={resetSearch}
+                  setOpen={setOpen}
+                />
+              ) : null}
+              {items.length > 0 ? (
+                <SearchResults
+                  items={items}
+                  search={search}
+                  setOpen={setOpen}
+                  page={page}
+                />
+              ) : null}
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
