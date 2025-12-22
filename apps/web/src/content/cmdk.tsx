@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-
-import { Kbd } from "@/components/kbd";
 import type { MDXData } from "@/content/utils";
 import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
@@ -24,6 +21,7 @@ import { Command as CommandPrimitive } from "cmdk";
 import { Loader2, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 type ConfigItem = {
   type: "item";
@@ -264,9 +262,9 @@ export function CmdK() {
         <span>
           Search<span className="text-muted-foreground text-xs">...</span>
         </span>
-        <Kbd variant="outline" className="ml-auto">
-          ⌘K
-        </Kbd>
+        <kbd className="ml-auto bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
+          <span className="text-xs">⌘</span>K
+        </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">
