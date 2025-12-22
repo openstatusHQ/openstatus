@@ -5,7 +5,7 @@ import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 export async function createUser(data: AdapterUser) {
-  const { ...rest } = data;
+  const { id, ...rest } = data;
 
   const newUser = await db
     .insert(user)
