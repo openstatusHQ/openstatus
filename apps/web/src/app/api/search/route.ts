@@ -12,7 +12,9 @@ import sanitizeHtml from "sanitize-html";
 import { z } from "zod";
 
 const SearchSchema = z.object({
-  p: z.enum(["blog", "changelog", "tools", "compare", "product"]).nullish(),
+  p: z
+    .enum(["blog", "changelog", "tools", "compare", "product", "all"])
+    .nullish(),
   q: z.string().nullish(),
 });
 
@@ -22,12 +24,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q");
   const page = searchParams.get("p");
-  const category = searchParams.get("c");
 
   const params = SearchSchema.safeParse({
     p: page,
     q: query,
-    c: category,
   });
 
   if (!params.success) {
@@ -70,6 +70,19 @@ function search(params: SearchParams) {
     home.href = "/";
     home.metadata.title = "Homepage";
     results = [home, ...getProductPages()];
+  } else if (p === "all") {
+    const home = getHomePage();
+    // NOTE: we override /home with / for the home.mdx file
+    home.href = "/";
+    home.metadata.title = "Homepage";
+    results = [
+      ...getBlogPosts(),
+      ...getChangelogPosts(),
+      ...getToolsPages().filter((tool) => tool.slug !== "checker-slug"),
+      ...getComparePages(),
+      ...getProductPages(),
+      home,
+    ];
   }
 
   const searchMap = new Map<

@@ -53,9 +53,9 @@ const CONFIG: ConfigSection[] = [
     items: [
       {
         type: "group",
-        label: "Search in Products...",
-        heading: "Products",
-        page: "product",
+        label: "Search in all pages...",
+        heading: "All pages",
+        page: "all",
       },
       {
         type: "item",
@@ -68,6 +68,18 @@ const CONFIG: ConfigSection[] = [
         href: "https://docs.openstatus.dev",
       },
       {
+        type: "item",
+        label: "Go to Global Speed Checker",
+        href: "/play/checker",
+        shortcut: "⌘G",
+      },
+      {
+        type: "group",
+        label: "Search in Products...",
+        heading: "Products",
+        page: "product",
+      },
+      {
         type: "group",
         label: "Search in Blog...",
         heading: "Blog",
@@ -78,12 +90,6 @@ const CONFIG: ConfigSection[] = [
         label: "Search in Changelog...",
         heading: "Changelog",
         page: "changelog",
-      },
-      {
-        type: "item",
-        label: "Go to Global Speed Checker",
-        href: "/play/checker",
-        shortcut: "⌘G",
       },
       {
         type: "group",
@@ -168,7 +174,13 @@ export function CmdK() {
     queryKey: ["search", page, debouncedSearch],
     queryFn: async () => {
       if (!page) return [];
-      const res = await fetch(`/api/search?p=${page}&q=${debouncedSearch}`);
+      const searchParams = new URLSearchParams();
+      searchParams.set("p", page);
+      if (debouncedSearch) searchParams.set("q", debouncedSearch);
+      const promise = fetch(`/api/search?${searchParams.toString()}`);
+      // NOTE: artificial delay to avoid flickering
+      const delay = new Promise((r) => setTimeout(r, 300));
+      const [res, _] = await Promise.all([promise, delay]);
       return res.json();
     },
     placeholderData: (previousData) => previousData,
@@ -239,14 +251,12 @@ export function CmdK() {
     };
   }, [open, items.length]);
 
-  console.log({ loading, fetching });
-
   return (
     <>
       <button
         type="button"
         className={cn(
-          "flex items-center w-full text-left hover:bg-muted",
+          "flex w-full items-center text-left hover:bg-muted",
           open && "bg-muted!",
         )}
         onClick={() => setOpen(true)}
@@ -277,12 +287,12 @@ export function CmdK() {
               cmdk-input-wrapper=""
             >
               {loading || fetching ? (
-                <Loader2 className="mr-2 h-4 w-4 shrink-0 opacity-50 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
               ) : (
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               )}
               <CommandPrimitive.Input
-                className="placeholder:text-foreground-muted flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden placeholder:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Type to search…"
                 value={search}
                 onValueChange={setSearch}
@@ -401,7 +411,7 @@ function SearchResults({
   ) as ConfigGroup | undefined;
 
   return (
-    <CommandGroup heading={_page?.heading}>
+    <CommandGroup heading={_page?.heading ?? "Search Results"}>
       {items.map((item) => {
         // Highlight search term match in the title, case-insensitive
         const title = item.metadata.title.replace(
