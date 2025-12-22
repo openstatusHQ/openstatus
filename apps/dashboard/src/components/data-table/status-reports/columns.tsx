@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { colors } from "@/data/status-report-updates.client";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
 import { DataTableRowActions } from "./data-table-row-actions";
-
-import type { RouterOutputs } from "@openstatus/api";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
@@ -95,7 +95,9 @@ export const columns: ColumnDef<StatusReport>[] = [
         return (
           <div className="flex flex-wrap gap-1">
             {value.map((m) => (
-              <TableCellBadge key={m.id} value={m.name} />
+              <Link href={`/monitors/${m.id}`} key={m.id}>
+                <TableCellBadge value={m.name} />
+              </Link>
             ))}
           </div>
         );

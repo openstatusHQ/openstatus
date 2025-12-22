@@ -75,7 +75,7 @@ export const emailRouter = createTRPCRouter({
           date: new Date(_statusReportUpdate.date).toISOString(),
           monitors:
             _statusReportUpdate.statusReport.monitorsToStatusReports.map(
-              (i) => i.monitor.name,
+              (i) => i.monitor.externalName || i.monitor.name,
             ),
         });
       }
@@ -121,7 +121,7 @@ export const emailRouter = createTRPCRouter({
           message: _maintenance.message,
           date: new Date(_maintenance.from).toISOString(),
           monitors: _maintenance.maintenancesToMonitors.map(
-            (i) => i.monitor.name,
+            (i) => i.monitor.externalName || i.monitor.name,
           ),
         });
       }

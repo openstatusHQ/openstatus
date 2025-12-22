@@ -32,8 +32,5 @@
     }
   },
   "name": "openstatus",
-  "workspaces": ["apps/*", "packages/**/*"],
-  "patchedDependencies": {
-    "@react-email/render@2.0.0": "patches/@react-email%2Frender@2.0.0.patch"
-  }
+  "workspaces": ["apps/*", "packages/**/*"]
 }

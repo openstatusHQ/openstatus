@@ -13,13 +13,20 @@ import { workspacePlanSchema } from "./workspaces";
 
 // TODO: create a 'public-status' schema with all the different types and validations
 
-export const selectPublicMonitorSchema = selectMonitorSchema.omit({
+// Base schema without transform so it can be extended
+const selectPublicMonitorBaseSchema = selectMonitorSchema.omit({
   body: true,
   headers: true,
   method: true,
   otelEndpoint: true,
   otelHeaders: true,
 });
+
+export const selectPublicMonitorSchema =
+  selectPublicMonitorBaseSchema.transform((data) => ({
+    ...data,
+    name: data.externalName || data.name,
+  }));
 
 export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
   statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
@@ -85,12 +92,17 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
     id: true,
   });
 
-const selectPublicMonitorWithStatusSchema = selectPublicMonitorSchema.extend({
-  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
-  monitorGroupId: z.number().nullable().optional(),
-  order: z.number().default(0).optional(),
-  groupOrder: z.number().default(0).optional(),
-});
+const selectPublicMonitorWithStatusSchema = selectPublicMonitorBaseSchema
+  .extend({
+    status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+    monitorGroupId: z.number().nullable().optional(),
+    order: z.number().default(0).optional(),
+    groupOrder: z.number().default(0).optional(),
+  })
+  .transform((data) => ({
+    ...data,
+    name: data.externalName || data.name,
+  }));
 
 const trackersSchema = z
   .array(
@@ -114,35 +126,22 @@ const trackersSchema = z
   )
   .default([]);
 
+export const statusPageEventSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  from: z.date(),
+  to: z.date().nullable(),
+  status: z.enum(["success", "degraded", "error", "info"]).default("success"),
+  type: z.enum(["maintenance", "incident", "report"]),
+});
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   monitorGroups: selectMonitorGroupSchema.array().default([]),
   // TODO: include status of the monitor
   monitors: selectPublicMonitorWithStatusSchema.array(),
   trackers: trackersSchema,
-  lastEvents: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      from: z.date(),
-      to: z.date().nullable(),
-      status: z
-        .enum(["success", "degraded", "error", "info"])
-        .default("success"),
-      type: z.enum(["maintenance", "incident", "report"]),
-    }),
-  ),
-  openEvents: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      from: z.date(),
-      to: z.date().nullable(),
-      status: z
-        .enum(["success", "degraded", "error", "info"])
-        .default("success"),
-      type: z.enum(["maintenance", "incident", "report"]),
-    }),
-  ),
+  lastEvents: z.array(statusPageEventSchema),
+  openEvents: z.array(statusPageEventSchema),
   statusReports: z.array(selectStatusReportPageSchema),
   incidents: z.array(selectIncidentSchema),
   maintenances: z.array(selectMaintenancePageSchema),

@@ -38,11 +38,12 @@ export default function Page() {
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
-  const { data: pageInitial, error } = useQuery(
-    trpc.statusPage.get.queryOptions({
+  const { data: pageInitial, error } = useQuery({
+    ...trpc.statusPage.get.queryOptions({
       slug: domain,
     }),
-  );
+    enabled: !!domain,
+  });
 
   // Handle case where page doesn't exist or query fails
   if (error || (!pageInitial && domain)) {
@@ -61,19 +62,20 @@ export default function Page() {
       cardType,
       barType,
     }),
-    enabled: hasCustomConfig,
+    enabled: !!domain && hasCustomConfig,
   });
 
   // NOTE: we can prefetch that to avoid loading state
-  const { data: uptimeData, isLoading } = useQuery(
-    trpc.statusPage.getUptime.queryOptions({
+  const { data: uptimeData, isLoading } = useQuery({
+    ...trpc.statusPage.getUptime.queryOptions({
       slug: domain,
       monitorIds:
         pageInitial?.monitors?.map((monitor) => monitor.id.toString()) || [],
       cardType,
       barType,
     }),
-  );
+    enabled: !!pageInitial && pageInitial.monitors.length > 0,
+  });
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
@@ -93,6 +95,11 @@ export default function Page() {
 
   // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
   const page = pageWithCustomConfiguration ?? pageInitial;
+
+  const firstGroupIndex = useMemo(
+    () => page.trackers.findIndex((tracker) => tracker.type === "group"),
+    [page.trackers],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -186,7 +193,7 @@ export default function Page() {
         {/* NOTE: check what gap feels right */}
         {page.trackers.length > 0 ? (
           <StatusContent className="gap-5">
-            {page.trackers.map((tracker) => {
+            {page.trackers.map((tracker, index) => {
               if (tracker.type === "monitor") {
                 const monitor = tracker.monitor;
                 const { data, uptime } =
@@ -209,6 +216,8 @@ export default function Page() {
                   key={`group-${tracker.groupId}`}
                   title={tracker.groupName}
                   status={tracker.status}
+                  // NOTE: we only want to open the first group if it is the first one
+                  defaultOpen={firstGroupIndex === index && index === 0}
                 >
                   {tracker.monitors.map((monitor) => {
                     const { data, uptime } =

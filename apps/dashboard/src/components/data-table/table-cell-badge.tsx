@@ -38,7 +38,6 @@ export function TableCellBadge({
         {isTruncated ? (
           <Tooltip open={open} onOpenChange={setOpen}>
             <TooltipTrigger
-              onClick={(event) => event.preventDefault()}
               onPointerDown={(event) => event.preventDefault()}
               asChild
             >
