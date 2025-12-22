@@ -10,7 +10,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandLoading,
@@ -21,6 +20,8 @@ import {
   DialogTitle,
 } from "@openstatus/ui";
 import { useQuery } from "@tanstack/react-query";
+import { Command as CommandPrimitive } from "cmdk";
+import { Loader2, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 
@@ -36,10 +37,6 @@ type ConfigGroup = {
   label: string;
   heading: string;
   page: string;
-  query: {
-    q: string;
-    p: string;
-  };
 };
 
 type ConfigSection = {
@@ -59,10 +56,6 @@ const CONFIG: ConfigSection[] = [
         label: "Search in Products...",
         heading: "Products",
         page: "product",
-        query: {
-          q: "search",
-          p: "page",
-        },
       },
       {
         type: "item",
@@ -79,20 +72,12 @@ const CONFIG: ConfigSection[] = [
         label: "Search in Blog...",
         heading: "Blog",
         page: "blog",
-        query: {
-          q: "search",
-          p: "page",
-        },
       },
       {
         type: "group",
         label: "Search in Changelog...",
         heading: "Changelog",
         page: "changelog",
-        query: {
-          q: "search",
-          p: "page",
-        },
       },
       {
         type: "item",
@@ -105,20 +90,12 @@ const CONFIG: ConfigSection[] = [
         label: "Search in Tools...",
         heading: "Tools",
         page: "tools",
-        query: {
-          q: "search",
-          p: "page",
-        },
       },
       {
         type: "group",
         label: "Search in Compare...",
         heading: "Compare",
         page: "compare",
-        query: {
-          q: "search",
-          p: "page",
-        },
       },
       {
         type: "item",
@@ -183,7 +160,11 @@ export function CmdK() {
 
   const page = pages.length > 0 ? pages[pages.length - 1] : null;
 
-  const { data: items = [], isLoading: loading } = useQuery({
+  const {
+    data: items = [],
+    isLoading: loading,
+    isFetching: fetching,
+  } = useQuery({
     queryKey: ["search", page, debouncedSearch],
     queryFn: async () => {
       if (!page) return [];
@@ -258,6 +239,8 @@ export function CmdK() {
     };
   }, [open, items.length]);
 
+  console.log({ loading, fetching });
+
   return (
     <>
       <button
@@ -282,12 +265,22 @@ export function CmdK() {
             shouldFilter={!page}
             className="rounded-none"
           >
-            <CommandInput
-              placeholder="Type to search…"
-              className="rounded-none"
-              value={search}
-              onValueChange={setSearch}
-            />
+            <div
+              className="flex items-center border-b px-3"
+              cmdk-input-wrapper=""
+            >
+              {loading || fetching ? (
+                <Loader2 className="mr-2 h-4 w-4 shrink-0 opacity-50 animate-spin" />
+              ) : (
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              )}
+              <CommandPrimitive.Input
+                className="placeholder:text-foreground-muted flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Type to search…"
+                value={search}
+                onValueChange={setSearch}
+              />
+            </div>
             <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
               <CommandEmpty>No results found.</CommandEmpty>
               {loading && !items.length ? (
