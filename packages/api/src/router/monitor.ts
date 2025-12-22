@@ -1201,8 +1201,8 @@ export const monitorRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         statusPages: z.array(z.number()),
-        // TODO: add custom name for monitor, shown on status page, requires db migration
         description: z.string().optional(),
+        externalName: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1221,25 +1221,54 @@ export const monitorRouter = createTRPCRouter({
       }
 
       await ctx.db.transaction(async (tx) => {
-        await tx
-          .delete(monitorsToPages)
-          .where(and(eq(monitorsToPages.monitorId, input.id)));
+        // REMINDER: why do we need to do this complex logic instead of just deleting and inserting?
+        // Because we need to preserve the group information when updating the status pages.
 
-        if (input.statusPages.length > 0) {
+        const existingEntries = await tx.query.monitorsToPages.findMany({
+          where: eq(monitorsToPages.monitorId, input.id),
+        });
+
+        const existingPageIds = new Set(
+          existingEntries.map((entry) => entry.pageId),
+        );
+        const inputPageIds = new Set(input.statusPages);
+
+        const pageIdsToDelete = existingEntries
+          .filter((entry) => !inputPageIds.has(entry.pageId))
+          .map((entry) => entry.pageId);
+
+        const pageIdsToInsert = input.statusPages.filter(
+          (pageId) => !existingPageIds.has(pageId),
+        );
+
+        if (pageIdsToDelete.length > 0) {
+          await tx
+            .delete(monitorsToPages)
+            .where(
+              and(
+                eq(monitorsToPages.monitorId, input.id),
+                inArray(monitorsToPages.pageId, pageIdsToDelete),
+              ),
+            );
+        }
+
+        if (pageIdsToInsert.length > 0) {
           await tx.insert(monitorsToPages).values(
-            input.statusPages.map((pageId) => ({
+            pageIdsToInsert.map((pageId) => ({
               monitorId: input.id,
               pageId,
             })),
           );
         }
 
-        if (input.description) {
-          await tx
-            .update(monitor)
-            .set({ description: input.description, updatedAt: new Date() })
-            .where(and(eq(monitor.id, input.id)));
-        }
+        await tx
+          .update(monitor)
+          .set({
+            description: input.description,
+            externalName: input.externalName,
+            updatedAt: new Date(),
+          })
+          .where(and(eq(monitor.id, input.id)));
       });
     }),
 

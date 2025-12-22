@@ -79,6 +79,7 @@ import { z } from "zod";
 type Monitor = {
   id: number;
   name: string;
+  externalName: string | null;
   url: string;
   active: boolean | null;
 };
@@ -551,7 +552,12 @@ function MonitorRow({ monitor, className, ...props }: MonitorRowProps) {
               className="text-muted-foreground"
             />
           </SortableItemHandle>
-          <span className="truncate text-sm">{monitor.name}</span>
+          <span className="truncate text-sm">
+            {monitor.name}{" "}
+            <span className="text-muted-foreground">
+              {monitor.externalName ? `(${monitor.externalName})` : ""}
+            </span>
+          </span>
         </div>
         <div className="self-center truncate text-muted-foreground text-sm">
           {monitor.url}

@@ -123,7 +123,7 @@ export function registerPostStatusReportUpdate(
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _statusReport.monitorsToStatusReports.map(
-            (i) => i.monitor.name,
+            (i) => i.monitor.externalName || i.monitor.name,
           ),
         });
       }

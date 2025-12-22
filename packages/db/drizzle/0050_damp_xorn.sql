@@ -1,0 +1,1 @@
+ALTER TABLE `monitor` ADD `external_name` text;

@@ -18,8 +18,6 @@ export function monitorAlertEmail(props: MonitorAlertEmailProps) {
     <ul>
       <li>URL: ${props.url || "N/A"}</li>
       <li>Status: ${props.status || "N/A"}</li>
-      <li>Latency: ${props.latency || "N/A"}</li>
-      <li>Region: ${props.region || "N/A"}</li>
       <li>Timestamp: ${props.timestamp || "N/A"}</li>
       <li>Message: ${props.message || "N/A"}</li>
     </ul>

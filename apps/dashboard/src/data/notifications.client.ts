@@ -1,5 +1,6 @@
 import { FormDiscord } from "@/components/forms/notifications/form-discord";
 import { FormEmail } from "@/components/forms/notifications/form-email";
+import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
 import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
 import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
@@ -8,7 +9,12 @@ import { FormSms } from "@/components/forms/notifications/form-sms";
 import { FormTelegram } from "@/components/forms/notifications/form-telegram";
 import { FormWebhook } from "@/components/forms/notifications/form-webhook";
 import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
-import { DiscordIcon, TelegramIcon, WhatsappIcon } from "@openstatus/icons";
+import {
+  DiscordIcon,
+  GoogleIcon,
+  TelegramIcon,
+  WhatsappIcon,
+} from "@openstatus/icons";
 import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
@@ -95,6 +101,12 @@ export const config = {
     label: "OpsGenie",
     form: FormOpsGenie,
     sendTest: sendTestOpsGenie,
+  },
+  "google-chat": {
+    icon: GoogleIcon,
+    label: "Google Chat",
+    form: FormGoogleChat,
+    sendTest: sendTestWebhook,
   },
   pagerduty: {
     icon: PagerDutyIcon,

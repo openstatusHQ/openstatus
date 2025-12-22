@@ -9,6 +9,7 @@ import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
 import { highlight } from "sugar-high";
 import { CopyButton } from "./copy-button";
+import { HighlightText } from "./highlight-text";
 import { ImageZoom } from "./image-zoom";
 import { LatencyChartTable } from "./latency-chart-table";
 
@@ -183,7 +184,7 @@ function Pre({ children, ...props }: React.ComponentProps<"pre">) {
   );
 }
 
-function slugify(str: string) {
+export function slugify(str: string) {
   return str
     .toString()
     .toLowerCase()
@@ -228,7 +229,10 @@ function Details({
   return (
     <details open={open}>
       <summary>{summary}</summary>
-      {children}
+      {React.isValidElement(children)
+        ? // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          React.cloneElement(children, { hidden: "until-found" } as any)
+        : children}
     </details>
   );
 }
@@ -357,14 +361,18 @@ export const components = {
 
 export function CustomMDX(props: MDXRemoteProps) {
   return (
-    <MDXRemote
-      {...props}
-      components={
-        {
-          ...components,
-          ...props.components,
-        } as MDXRemoteProps["components"]
-      }
-    />
+    <React.Suspense>
+      <HighlightText>
+        <MDXRemote
+          {...props}
+          components={
+            {
+              ...components,
+              ...(props.components || {}),
+            } as MDXRemoteProps["components"]
+          }
+        />
+      </HighlightText>
+    </React.Suspense>
   );
 }

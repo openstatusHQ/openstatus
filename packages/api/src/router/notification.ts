@@ -4,6 +4,7 @@ import { z } from "zod";
 import { type SQL, and, count, db, eq, inArray } from "@openstatus/db";
 import {
   NotificationDataSchema,
+  googleChatDataSchema,
   insertNotificationSchema,
   monitor,
   notification,
@@ -17,8 +18,10 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
+import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
@@ -488,6 +491,19 @@ export const notificationRouter = createTRPCRouter({
         }
         await sendWhatsAppTest({ phoneNumber: _data.data.whatsapp });
 
+        return;
+      }
+      if (opts.input.provider === "google-chat") {
+        const _data = googleChatDataSchema.safeParse(opts.input.data);
+        console.log(opts.input.data);
+        console.log(_data);
+        if (!_data.success) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: SchemaError.fromZod(_data.error, opts.input).message,
+          });
+        }
+        await sendGoogleChatTest(_data.data["google-chat"]);
         return;
       }
 
