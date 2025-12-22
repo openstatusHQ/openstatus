@@ -144,6 +144,46 @@ export function getToolsPage(slug: string): MDXData {
   );
 }
 
+export const PAGE_TYPES = [
+  "blog",
+  "changelog",
+  "product",
+  "unrelated",
+  "compare",
+  "tools",
+  "all",
+] as const;
+
+export type PageType = (typeof PAGE_TYPES)[number];
+
+export function getPages(type: PageType) {
+  switch (type) {
+    case "blog":
+      return getBlogPosts();
+    case "changelog":
+      return getChangelogPosts();
+    case "product":
+      return getProductPages();
+    case "unrelated":
+      return getUnrelatedPages();
+    case "compare":
+      return getComparePages();
+    case "tools":
+      return getToolsPages();
+    case "all":
+      return [
+        ...getBlogPosts(),
+        ...getChangelogPosts(),
+        ...getProductPages(),
+        ...getUnrelatedPages(),
+        ...getComparePages(),
+        ...getToolsPages(),
+      ];
+    default:
+      throw new Error(`Unknown page type: ${type}`);
+  }
+}
+
 export function getCategories() {
   return [
     ...new Set([

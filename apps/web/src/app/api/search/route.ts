@@ -1,20 +1,15 @@
 import { slugify } from "@/content/mdx";
 import {
   type MDXData,
-  getBlogPosts,
-  getChangelogPosts,
-  getComparePages,
+  PAGE_TYPES,
   getHomePage,
-  getProductPages,
-  getToolsPages,
+  getPages,
 } from "@/content/utils";
 import sanitizeHtml from "sanitize-html";
 import { z } from "zod";
 
 const SearchSchema = z.object({
-  p: z
-    .enum(["blog", "changelog", "tools", "compare", "product", "all"])
-    .nullish(),
+  p: z.enum(PAGE_TYPES).nullish(),
   q: z.string().nullish(),
 });
 
@@ -56,33 +51,29 @@ function search(params: SearchParams) {
   const { p, q } = params;
   let results: MDXData[] = [];
 
-  if (p === "blog") {
-    results = getBlogPosts();
-  } else if (p === "changelog") {
-    results = getChangelogPosts();
-  } else if (p === "tools") {
-    results = getToolsPages().filter((tool) => tool.slug !== "checker-slug");
-  } else if (p === "compare") {
-    results = getComparePages();
+  if (p === "tools") {
+    results = getPages("tools").filter((tool) => tool.slug !== "checker-slug");
   } else if (p === "product") {
     const home = getHomePage();
     // NOTE: we override /home with / for the home.mdx file
     home.href = "/";
     home.metadata.title = "Homepage";
-    results = [home, ...getProductPages()];
+    results = [home, ...getPages("product")];
   } else if (p === "all") {
     const home = getHomePage();
     // NOTE: we override /home with / for the home.mdx file
     home.href = "/";
     home.metadata.title = "Homepage";
     results = [
-      ...getBlogPosts(),
-      ...getChangelogPosts(),
-      ...getToolsPages().filter((tool) => tool.slug !== "checker-slug"),
-      ...getComparePages(),
-      ...getProductPages(),
+      ...getPages("blog"),
+      ...getPages("changelog"),
+      ...getPages("tools").filter((tool) => tool.slug !== "checker-slug"),
+      ...getPages("compare"),
+      ...getPages("product"),
       home,
     ];
+  } else {
+    if (p) results = getPages(p);
   }
 
   const searchMap = new Map<
