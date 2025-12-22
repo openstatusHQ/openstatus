@@ -188,6 +188,7 @@ export function simpleStripMdx(input: string) {
     .replace(/__(.*?)__/g, "$1") // strip italic
     .replace(/_(.*?)_/g, "$1") // strip underline
     .replace(/[`*>~]/g, "") // strip most formatting
+    .replace(/<\s*\/?\s*script[^>]*>/gi, "") // ensure script tags are fully removed
     .replace(/\s+/g, " ") // collapse whitespace
     .trim();
 }

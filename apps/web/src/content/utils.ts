@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import slugify from "slugify";
 import { z } from "zod";
 
 const metadataSchema = z.object({
@@ -56,7 +57,8 @@ function getMDXDataFromDir(dir: string, prefix = "") {
 
 function getMDXDataFromFile(filePath: string, prefix = "") {
   const { metadata, content } = readMDXFile(filePath);
-  const slug = path.basename(filePath, path.extname(filePath));
+  const slugRaw = path.basename(filePath, path.extname(filePath));
+  const slug = slugify(slugRaw, { lower: true, strict: true });
   const href = prefix ? `${prefix}/${slug}` : `/${slug}`;
   return {
     metadata,
