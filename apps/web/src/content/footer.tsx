@@ -26,14 +26,12 @@ export function Footer() {
         ))}
       </div>
       <div className="grid gap-px border border-border border-t-0 bg-border sm:grid-cols-2 md:grid-cols-3 [&>*]:bg-background">
-        <div>
-          <Link
-            href="/cal"
-            className="flex w-full items-center gap-2 p-4 hover:bg-muted"
-          >
-            Talk to the founders
-          </Link>
-        </div>
+        <Link
+          href="/cal"
+          className="flex w-full items-center gap-2 p-4 hover:bg-muted"
+        >
+          Talk to the founders
+        </Link>
         <div>
           <FooterStatus />
         </div>
