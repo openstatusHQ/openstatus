@@ -245,11 +245,18 @@ export function CmdK() {
     <>
       <button
         type="button"
-        className={cn("p-4 hover:bg-muted", open && "bg-muted!")}
+        className={cn(
+          "flex items-center w-full text-left hover:bg-muted",
+          open && "bg-muted!",
+        )}
         onClick={() => setOpen(true)}
       >
-        <span className="sr-only">Press</span>
-        <Kbd variant="outline">⌘K</Kbd>
+        <span>
+          Search<span className="text-muted-foreground text-xs">...</span>
+        </span>
+        <Kbd variant="outline" className="ml-auto">
+          ⌘K
+        </Kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">

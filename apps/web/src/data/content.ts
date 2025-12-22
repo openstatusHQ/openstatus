@@ -49,6 +49,10 @@ const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
+      label: "Docs",
+      href: "https://docs.openstatus.dev",
+    },
+    {
       label: "Blog",
       href: "/blog",
     },
@@ -63,10 +67,6 @@ const resourcesHeaderSection = {
     {
       label: "Compare",
       href: "/compare",
-    },
-    {
-      label: "Playground (Tools)",
-      href: "/play",
     },
   ],
 };

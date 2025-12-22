@@ -1,7 +1,6 @@
 import { Link } from "@/content/link";
 import { ThemeToggle } from "@/content/theme-toggle";
 import { footerLinks } from "@/data/content";
-import { CmdK } from "./cmdk";
 import { FooterStatus } from "./footer-status";
 
 export function Footer() {
@@ -27,17 +26,12 @@ export function Footer() {
         ))}
       </div>
       <div className="grid gap-px border border-border border-t-0 bg-border sm:grid-cols-2 md:grid-cols-3 [&>*]:bg-background">
-        <div>
-          <div className="flex items-center gap-px bg-border [&>*]:bg-background [&>*]:p-4 [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted">
-            <Link
-              href="/cal"
-              className="w-full items-center gap-2 truncate hover:bg-muted"
-            >
-              Talk to the founders
-            </Link>
-            <CmdK />
-          </div>
-        </div>
+        <Link
+          href="/cal"
+          className="flex w-full items-center gap-2 p-4 hover:bg-muted"
+        >
+          Talk to the founders
+        </Link>
         <div>
           <FooterStatus />
         </div>
