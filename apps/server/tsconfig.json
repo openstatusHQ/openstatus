@@ -8,9 +8,8 @@
     "jsxImportSource": "react",
     "allowJs": true,
     "types": ["bun-types"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

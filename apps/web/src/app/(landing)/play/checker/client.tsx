@@ -68,12 +68,12 @@ export function CheckerProvider({
   }, [urlId]);
 
   // Helper function to update both local state and URL
-  const updateId: React.Dispatch<React.SetStateAction<string | null>> = (
+  const updateId: React.Dispatch<React.SetStateAction<string | null>> = async (
     newId,
   ) => {
     const value = typeof newId === "function" ? newId(id) : newId;
     setId(value);
-    setSearchParams({ id: value });
+    await setSearchParams({ id: value });
   };
 
   return (

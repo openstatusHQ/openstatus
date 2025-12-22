@@ -241,7 +241,7 @@ function CustomImage({
   className,
   ...props
 }: React.ComponentProps<typeof Image>) {
-  const { src, alt, width, height, ...rest } = props;
+  const { src, alt, ...rest } = props;
 
   if (!src || typeof src !== "string") {
     return (

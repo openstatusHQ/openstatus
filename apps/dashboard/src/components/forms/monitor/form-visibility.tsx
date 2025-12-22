@@ -24,7 +24,6 @@ import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock } from "lucide-react";
 import NextLink from "next/link";
-import { useParams } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -53,7 +52,6 @@ export function FormVisibility({
     },
   });
   const [isPending, startTransition] = useTransition();
-  const { id } = useParams<{ id: string }>();
 
   function submitAction(values: FormValues) {
     if (isPending) return;
