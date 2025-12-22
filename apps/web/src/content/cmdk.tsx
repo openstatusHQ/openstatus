@@ -259,7 +259,7 @@ export function CmdK() {
         )}
         onClick={() => setOpen(true)}
       >
-        <span>
+        <span className="truncate">
           Search<span className="text-muted-foreground text-xs">...</span>
         </span>
         <kbd className="ml-auto bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
