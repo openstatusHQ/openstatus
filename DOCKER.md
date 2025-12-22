@@ -11,29 +11,27 @@ cp .env.docker.example .env.docker
 # 2. Configure required variables (see Configuration section)
 vim .env.docker
 
-# 3. Build and start services
+# 3. Build and start services (migrations will run automatically)
 export DOCKER_BUILDKIT=1
 docker compose up -d
 
 # 4. Check service health
 docker compose ps
 
-# 5. Run database migrations (required)
-cd packages/db
-pnpm migrate
+# 5. (Optional) Seed database with test data
+docker run --rm --network openstatus \
+  -e DATABASE_URL=http://libsql:8080 \
+  $(docker build -q -f apps/workflows/Dockerfile --target build .) \
+  sh -c "cd /app/packages/db && bun src/seed.mts"
 
-# 6. Deploy Tinybird local
+# 6. (Optional) Deploy Tinybird local - requires tb CLI
 cd packages/tinybird
-tb --local deploy 
+tb --local deploy
 
-# 7. Seed database with test data (optional)
-cd packages/db
-pnpm seed
-
-
-# 8. Access the application
+# 7. Access the application
 open http://localhost:3002  # Dashboard
-open http://localhost:3003  # Status Pages
+open http://localhost:3003  # Status Page Theme Explorer
+# Note: Status pages are accessed via subdomain/slug (e.g., http://localhost:3003/status)
 ```
 
 ## Cleanup
@@ -87,51 +85,88 @@ docker builder prune
 
 ## Database Setup
 
-The LibSQL container starts with an empty database. You must run migrations before using the application:
+### Automatic Migrations
+
+Migrations run **automatically** when you start the stack with `docker compose up -d`.
+
+**Verifying migrations:**
+```bash
+# Check workflows logs for migration output
+docker compose logs workflows | grep -A 5 "Running database migrations"
+
+# Should show:
+# openstatus-workflows  | Running database migrations...
+# openstatus-workflows  | Migrated successfully
+# openstatus-workflows  | Starting workflows service...
+```
+
+**Manual migration:**
+
+If you need to re-run migrations or troubleshoot:
 
 ```bash
-cd packages/db
-pnpm migrate
+# Run migrations using workflows container
+docker compose exec workflows sh -c "cd /app/packages/db && bun src/migrate.mts"
+
+# Or restart workflows to trigger migrations again
+docker compose restart workflows
 ```
 
 ### Seeding Test Data (Optional)
 
-For development, you can populate the database with sample data:
+**Note:** Migrations run automatically, but seeding does **not**. You must manually seed the database if you want test data.
+
+After migrations complete, seed the database with sample data:
 
 ```bash
-cd packages/db
-pnpm seed
+docker run --rm --network openstatus \
+  -e DATABASE_URL=http://libsql:8080 \
+  $(docker build -q -f apps/workflows/Dockerfile --target build .) \
+  sh -c "cd /app/packages/db && bun src/seed.mts"
 ```
 
 This creates:
 - 3 workspaces (`love-openstatus`, `test2`, `test3`)
-- 5 sample monitors and 1 status page
+- 5 sample monitors and 1 status page with slug `status`
 - Test user account: `ping@openstatus.dev`
 - Sample incidents, status reports, and maintenance windows
 
+**Verifying seeded data:**
+```bash
+# Check table counts via libsql HTTP API
+curl -s http://localhost:8080/ -H "Content-Type: application/json" \
+  -d '{"statements":["SELECT COUNT(*) FROM page"]}' | jq -r '.[0].results.rows[0][0]'
+
+# Should output: 1
+```
+
 **Accessing Seeded Data:**
 
-To view the seeded data in the dashboard, you must log in using the seeded test email:
+After seeding, you can access the test data:
 
+**Dashboard:**
 1. Navigate to http://localhost:3002/login
 2. Use magic link authentication with email: `ping@openstatus.dev`
-3. Check your console/logs for the magic link
-4. After logging in, you'll be in the `love-openstatus` workspace with all seeded data
+3. Check your console/logs for the magic link (with `SELF_HOST=true` in `.env.docker`)
+4. After logging in, you'll see the `love-openstatus` workspace with all seeded monitors and status page
 
-**If you use a different email address**, the system will create a new empty workspace for you. To access seeded data with a different account:
+**Status Page:**
+- The seeded status page has slug `status`
+- Access it via subdomain routing: http://status.localhost:3003
+- Or view theme explorer at: http://localhost:3003
 
-1. Add your user to the seeded workspace using SQL:
-   ```bash
-   # First, find your user_id
-   curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
-     -d '{"statements":["SELECT id, email FROM user"]}'
+**If you use a different email address**, the system will create a new empty workspace for you instead of showing the seeded data. To access seeded data with a different account, you must add your user to the seeded workspace using SQL:
 
-   # Then add association (replace USER_ID with your id)
-   curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
-     -d '{"statements":["INSERT INTO users_to_workspaces (user_id, workspace_id, role) VALUES (USER_ID, 1, '\''owner'\'')"]}'
-   ```
+  ```bash
+  # First, find your user_id
+  curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+    -d '{"statements":["SELECT id, email FROM user"]}'
 
-2. Switch to the `love-openstatus` workspace using the workspace switcher in the dashboard sidebar
+  # Then add association (replace USER_ID with your id)
+  curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+    -d '{"statements":["INSERT INTO users_to_workspaces (user_id, workspace_id, role) VALUES (USER_ID, 1, '\''owner'\'')"]}'
+  ```
+
 
 ## Tinybird Setup (Optional)
 
@@ -199,8 +234,8 @@ docker compose down
 
 # Reset database (removes all data)
 docker compose down -v
-# After resetting, re-run migrations:
-# cd packages/db && pnpm migrate
+docker compose up -d
+# Migrations run automatically on startup
 ```
 
 ### Authentication
