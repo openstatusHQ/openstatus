@@ -8,6 +8,7 @@ import {
   getProductPages,
   getToolsPages,
 } from "@/content/utils";
+import sanitizeHtml from "sanitize-html";
 import { z } from "zod";
 
 const SearchSchema = z.object({
@@ -139,7 +140,7 @@ function getContentSnippet(
     return `${mdxContent.slice(0, 100)}...`;
   }
 
-  const content = simpleStripMdx(mdxContent.toLowerCase());
+  const content = sanitizeContent(mdxContent.toLowerCase());
   const searchLower = searchQuery.toLowerCase();
   const matchIndex = content.indexOf(searchLower);
 
@@ -178,8 +179,8 @@ function getContentSnippet(
   return snippet;
 }
 
-export function simpleStripMdx(input: string) {
-  return input
+export function sanitizeContent(input: string) {
+  return sanitizeHtml(input)
     .replace(/<[^>]+>/g, "") // strip JSX tags
     .replace(/^#{1,6}\s+/gm, "") // strip markdown heading symbols, keep text
     .replace(/!\[.*?\]\(.*?\)/g, "") // strip images
