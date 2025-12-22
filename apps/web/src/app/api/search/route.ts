@@ -204,6 +204,7 @@ export function sanitizeContent(input: string) {
     .replace(/[`*>~]/g, "") // strip most formatting
     .replace(/<\s*\/?\s*script[^>]*>/gi, "") // ensure script tags are fully removed
     .replace(/\s+/g, " ") // collapse whitespace
+    .replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;")) // escape any remaining angle brackets
     .trim();
 }
 
