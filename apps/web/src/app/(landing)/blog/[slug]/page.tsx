@@ -8,6 +8,8 @@ import { notFound } from "next/navigation";
 import type { BlogPosting, WithContext } from "schema-dts";
 import { ContentPagination } from "../../content-pagination";
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const posts = getBlogPosts();
 

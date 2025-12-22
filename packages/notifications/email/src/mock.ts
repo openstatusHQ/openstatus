@@ -22,6 +22,10 @@ const monitor: Monitor = {
   status: "active",
   method: "GET",
   deletedAt: null,
+  otelEndpoint: null,
+  otelHeaders: [],
+  followRedirects: false,
+  retry: 3,
 };
 
 const notification: Notification = {
@@ -37,20 +41,20 @@ const notification: Notification = {
 const cronTimestamp = Date.now();
 
 if (process.env.NODE_ENV === "development") {
-  sendDegraded({
+  await sendDegraded({
     monitor,
     notification,
     cronTimestamp,
   });
 
-  sendAlert({
+  await sendAlert({
     monitor,
     notification,
     statusCode: 500,
     cronTimestamp,
   });
 
-  sendRecovery({
+  await sendRecovery({
     monitor,
     notification,
     cronTimestamp,

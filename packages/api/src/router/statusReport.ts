@@ -496,7 +496,7 @@ export const statusReportRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      opts.ctx.db.transaction(async (tx) => {
+      await opts.ctx.db.transaction(async (tx) => {
         await tx
           .update(statusReport)
           .set({

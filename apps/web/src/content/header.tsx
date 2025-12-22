@@ -12,6 +12,7 @@ import {
   ContextMenuTrigger,
 } from "@openstatus/ui";
 import Link from "next/link";
+import { CmdK } from "./cmdk";
 
 export function Header() {
   return (
@@ -86,9 +87,7 @@ export function Header() {
       <Link href="/pricing" className="truncate">
         Pricing
       </Link>
-      <Link href="https://docs.openstatus.dev" className="truncate">
-        Docs
-      </Link>
+      <CmdK />
       <Link
         href="https://app.openstatus.dev/login"
         className="truncate text-info"

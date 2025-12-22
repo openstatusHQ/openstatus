@@ -318,7 +318,7 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
-      db.transaction(async (tx) => {
+      await db.transaction(async (tx) => {
         await tx
           .update(notification)
           .set({

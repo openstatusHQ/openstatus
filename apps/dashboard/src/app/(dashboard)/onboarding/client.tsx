@@ -97,8 +97,8 @@ export function Client() {
   );
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
-      onSuccess: (data) => {
-        setSearchParams({ step: "2" });
+      onSuccess: async (data) => {
+        await setSearchParams({ step: "2" });
         if (data.active) {
           triggerCheckMutation.mutate({ id: data.id });
         }
@@ -111,8 +111,8 @@ export function Client() {
   );
   const createPageMutation = useMutation(
     trpc.page.create.mutationOptions({
-      onSuccess: () => {
-        setSearchParams({ step: "next" });
+      onSuccess: async () => {
+        await setSearchParams({ step: "next" });
         refetch();
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),

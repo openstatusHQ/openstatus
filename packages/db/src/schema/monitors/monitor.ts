@@ -35,6 +35,7 @@ export const monitor = sqliteTable("monitor", {
   url: text("url", { length: 2048 }).notNull(), // URI
 
   name: text("name", { length: 256 }).default("").notNull(),
+  externalName: text("external_name"),
   description: text("description").default("").notNull(),
 
   headers: text("headers").default(""),

@@ -10,7 +10,7 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const queryClient = await getQueryClient();
+  const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery(
     trpc.maintenance.list.queryOptions({

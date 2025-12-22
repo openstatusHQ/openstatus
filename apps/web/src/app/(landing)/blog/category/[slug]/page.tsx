@@ -28,11 +28,11 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const posts = getBlogPosts();
   const categories = [...new Set(posts.map((post) => post.metadata.category))];
-
-  console.log(categories);
 
   return categories.map((category) => ({
     slug: category.toLowerCase(),
