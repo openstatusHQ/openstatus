@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { WebPage, WithContext } from "schema-dts";
 
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
