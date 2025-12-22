@@ -117,8 +117,10 @@ function search(params: SearchParams) {
       // Find the closest heading to the search match and add it as an anchor
       let href = result.href;
 
-      //   // Add query parameter for highlighting
-      href = `${href}?q=${encodeURIComponent(q || "")}`;
+      // Add query parameter for highlighting
+      if (q) {
+        href = `${href}?q=${encodeURIComponent(q)}`;
+      }
 
       if (q && search?.content) {
         const headingSlug = findClosestHeading(result.content, q);
@@ -202,7 +204,6 @@ export function sanitizeContent(input: string) {
     .replace(/__(.*?)__/g, "$1") // strip italic
     .replace(/_(.*?)_/g, "$1") // strip underline
     .replace(/[`*>~]/g, "") // strip most formatting
-    .replace(/<\s*\/?\s*script[^>]*>/gi, "") // ensure script tags are fully removed
     .replace(/\s+/g, " ") // collapse whitespace
     .replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;")) // escape any remaining angle brackets
     .trim();
