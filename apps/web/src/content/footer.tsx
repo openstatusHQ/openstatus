@@ -1,7 +1,6 @@
 import { Link } from "@/content/link";
 import { ThemeToggle } from "@/content/theme-toggle";
 import { footerLinks } from "@/data/content";
-import { Suspense } from "react";
 import { FooterStatus } from "./footer-status";
 
 export function Footer() {
@@ -36,9 +35,7 @@ export function Footer() {
           </Link>
         </div>
         <div>
-          <Suspense fallback="Loading...">
-            <FooterStatus />
-          </Suspense>
+          <FooterStatus />
         </div>
         <div className="sm:col-span-2 md:col-span-1">
           <ThemeToggle className="rounded-none" />

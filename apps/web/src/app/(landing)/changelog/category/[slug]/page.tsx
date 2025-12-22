@@ -5,7 +5,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { getBlogPosts, getChangelogPosts } from "@/content/utils";
+import { getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 
 const TITLE = "Changelog Category";
@@ -28,11 +28,11 @@ export const metadata: Metadata = {
   },
 };
 
-export async function generateStaticParams() {
-  const posts = getBlogPosts();
-  const categories = [...new Set(posts.map((post) => post.metadata.category))];
+export const dynamicParams = false;
 
-  console.log(categories);
+export async function generateStaticParams() {
+  const posts = getChangelogPosts();
+  const categories = [...new Set(posts.map((post) => post.metadata.category))];
 
   return categories.map((category) => ({
     slug: category.toLowerCase(),

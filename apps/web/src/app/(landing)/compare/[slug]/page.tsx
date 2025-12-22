@@ -4,6 +4,8 @@ import { getComparePages } from "@/content/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
