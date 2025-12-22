@@ -184,7 +184,7 @@ function Pre({ children, ...props }: React.ComponentProps<"pre">) {
   );
 }
 
-function slugify(str: string) {
+export function slugify(str: string) {
   return str
     .toString()
     .toLowerCase()

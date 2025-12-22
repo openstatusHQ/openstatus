@@ -1,3 +1,4 @@
+import { slugify } from "@/content/mdx";
 import {
   type MDXData,
   getBlogPosts,
@@ -189,17 +190,6 @@ export function simpleStripMdx(input: string) {
     .replace(/[`*>~]/g, "") // strip most formatting
     .replace(/\s+/g, " ") // collapse whitespace
     .trim();
-}
-
-function slugify(str: string) {
-  return str
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/&/g, "-and-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-");
 }
 
 /**
