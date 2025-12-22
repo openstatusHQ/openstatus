@@ -57,6 +57,11 @@ const CONFIG: ConfigSection[] = [
       },
       {
         type: "item",
+        label: "Go to Home",
+        href: "/",
+      },
+      {
+        type: "item",
         label: "Go to Pricing",
         href: "/pricing",
       },
@@ -259,10 +264,10 @@ export function CmdK() {
         )}
         onClick={() => setOpen(true)}
       >
-        <span className="truncate">
-          Search<span className="text-muted-foreground text-xs">...</span>
+        <span className="truncate text-muted-foreground">
+          Search<span className="text-xs">...</span>
         </span>
-        <kbd className="ml-auto bg-muted text-muted-foreground pointer-events-none inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
+        <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground opacity-100">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
