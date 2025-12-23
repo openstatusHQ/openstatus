@@ -272,7 +272,7 @@ export function CmdK() {
         </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl">
+        <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl top-[15%] translate-y-0">
           <DialogTitle className="sr-only">Search</DialogTitle>
           <Command
             onKeyDown={(e) => {
@@ -302,9 +302,11 @@ export function CmdK() {
               />
             </div>
             <CommandList ref={listRef} className="[&_[cmdk-item]]:rounded-none">
-              <CommandEmpty>No results found.</CommandEmpty>
-              {loading && !items.length ? (
+              {(loading || fetching) && page && !items.length ? (
                 <CommandLoading>Searching...</CommandLoading>
+              ) : null}
+              {!(loading || fetching) ? (
+                <CommandEmpty>No results found.</CommandEmpty>
               ) : null}
               {!page ? (
                 <Home
