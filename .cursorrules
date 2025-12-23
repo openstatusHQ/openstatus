@@ -1,0 +1,137 @@
+# OpenStatus Cursor Rules
+
+You are working on OpenStatus, an open-source synthetic monitoring platform built as a pnpm monorepo with Turborepo.
+
+## Critical Context
+
+- **Monorepo:** pnpm 10.26.0 + Turborepo 2.6.3
+- **Stack:** Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4.1, Drizzle ORM, Turso DB
+- **Backend:** Hono (Bun), Go services, tRPC (dashboard)
+- **Linter:** Biome 1.8.3 (NOT ESLint/Prettier)
+
+## Core Principles
+
+1. **Be Conservative** - Ask before breaking changes, schema modifications, or infrastructure updates
+2. **Type Safety First** - Use TypeScript, avoid `any`, validate with Zod
+3. **Follow Patterns** - Check existing implementations before creating new patterns
+4. **Use Workspace Packages** - Leverage existing `@openstatus/*` packages
+
+## Coding Standards
+
+### File Naming
+- Components: `PascalCase.tsx`
+- Utilities: `camelCase.ts`
+- Config: `kebab-case.ts`
+
+### React/Next.js
+- Server Components by default
+- "use client" only when necessary (hooks, interactivity)
+- React Hook Form + Zod for forms
+- TanStack Query for client-side state
+- tRPC for type-safe APIs (dashboard)
+
+### Database
+- **ALWAYS use Drizzle ORM** - Never write raw SQL
+- Migrations via `cd packages/db && pnpm generate`
+- Schema location: `packages/db/src/schema/`
+
+### API Development
+- **tRPC** (`packages/api/`) - Dashboard procedures
+- **Hono** (`apps/server/`) - REST with @hono/zod-openapi
+- All inputs validated with Zod schemas
+
+## Commands Reference
+
+```bash
+# Development
+pnpm dev:dashboard    # Main app
+pnpm dev:web         # Marketing site
+pnpm dev:status-page # Status pages
+
+# Quality
+pnpm format          # Biome format + fix
+pnpm lint:fix        # Biome lint + fix
+pnpm tsc             # Type check
+
+# Database
+pnpm dx              # Setup + migrate + seed
+cd packages/db && pnpm generate  # Create migration
+```
+
+## ALLOWED ✅
+
+- Fix bugs, refactor, add features
+- Create components, utilities, hooks, API routes
+- Write tests and improve error handling
+- Add TypeScript types and JSDoc comments
+- Update dependencies (with justification)
+
+## FORBIDDEN ❌
+
+- Database schema changes (ask first)
+- Auth/payment/billing modifications (ask first)
+- Public API contract changes (migration needed)
+- Dockerfile/fly.toml/docker-compose changes (ask first)
+- Committing secrets or disabling security
+- Raw SQL queries (use Drizzle)
+- Manual migrations (use `pnpm generate`)
+- Upgrading major versions (ask first)
+
+## Import Organization (Biome auto-sorts)
+
+1. External dependencies
+2. Workspace packages (`@openstatus/*`)
+3. Relative imports (`./` or `../`)
+
+## Error Handling
+
+```typescript
+// tRPC
+throw new TRPCError({ code: "NOT_FOUND", message: "..." });
+
+// Hono
+throw new HTTPException(400, { message: "..." });
+```
+
+## Component Pattern
+
+```typescript
+import { cn } from "@/lib/utils";
+
+interface Props {
+  title: string;
+  className?: string;
+}
+
+export function Component({ title, className }: Props) {
+  return <div className={cn("base-classes", className)}>{title}</div>;
+}
+```
+
+## Authentication
+
+```typescript
+import { auth } from "@/lib/auth";
+
+// Server Component
+const session = await auth();
+if (!session) redirect("/login");
+
+// API
+if (!session?.user?.id) throw new TRPCError({ code: "UNAUTHORIZED" });
+```
+
+## Performance
+
+- Use React Server Components (Next.js)
+- Upstash Redis for caching
+- Proper Drizzle indexes
+- Dynamic imports for large components
+- Tinybird for analytics queries
+
+---
+
+**Full Documentation:** See `AGENTS.md` for complete guidelines
+
+**Last Updated:** December 2025
+

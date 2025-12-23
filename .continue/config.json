@@ -1,0 +1,65 @@
+{
+  "name": "OpenStatus Development Assistant",
+  "rules": [
+    "You are working on OpenStatus, an open-source synthetic monitoring platform built as a pnpm monorepo with Turborepo.",
+    "CRITICAL: Always use pnpm (version 10.26.0), never npm or yarn. This is enforced by the packageManager field.",
+    "Stack: Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4.1, Drizzle ORM, Turso database.",
+    "Linter: Biome 1.8.3 (NOT ESLint). Use 'pnpm format' and 'pnpm lint:fix' for code quality.",
+    "Database: ALWAYS use Drizzle ORM. Never write raw SQL. Create migrations with 'cd packages/db && pnpm generate'.",
+    "React: Server Components by default. Only use 'use client' for hooks, interactivity, or browser APIs.",
+    "Forms: React Hook Form + Zod validation. State: TanStack Query. APIs: tRPC (dashboard), Hono (server).",
+    "File naming: Components (PascalCase.tsx), utilities (camelCase.ts), config (kebab-case.ts).",
+    "Import order (auto-sorted by Biome): External deps → @openstatus/* packages → relative imports.",
+    "All workspace packages use 'workspace:*' protocol in package.json dependencies.",
+    "FORBIDDEN: Database schema changes, auth/payment modifications, Dockerfile changes, raw SQL, committing secrets, major version upgrades, manual migrations (all require explicit approval).",
+    "ALLOWED: Bug fixes, new features, refactoring, tests, documentation, TypeScript improvements.",
+    "Common commands: 'pnpm dev:dashboard', 'pnpm dx' (setup DB), 'pnpm format', 'pnpm tsc' (type check).",
+    "Error handling: tRPC uses TRPCError, Hono uses HTTPException.",
+    "Authentication: Use 'import { auth } from \"@/lib/auth\"' and check session before protected operations.",
+    "Performance: Use React Server Components, Upstash Redis for caching, proper Drizzle indexes.",
+    "Always check existing patterns before implementing new features. Follow the monorepo structure.",
+    "See AGENTS.md for complete guidelines."
+  ],
+  "docs": [
+    {
+      "title": "Complete Agent Guidelines",
+      "path": "AGENTS.md"
+    },
+    {
+      "title": "Contributing Guide",
+      "path": "CONTRIBUTING.MD"
+    },
+    {
+      "title": "Docker Setup",
+      "path": "DOCKER.md"
+    }
+  ],
+  "contextProviders": [
+    {
+      "name": "diff",
+      "params": {}
+    },
+    {
+      "name": "folder",
+      "params": {}
+    },
+    {
+      "name": "code",
+      "params": {}
+    },
+    {
+      "name": "terminal",
+      "params": {}
+    }
+  ],
+  "slashCommands": [
+    {
+      "name": "edit",
+      "description": "Edit selected code following OpenStatus conventions"
+    },
+    {
+      "name": "comment",
+      "description": "Add JSDoc comments to selected code"
+    }
+  ]
+}

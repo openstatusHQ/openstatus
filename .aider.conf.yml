@@ -1,0 +1,63 @@
+# OpenStatus - Aider Configuration
+# https://aider.chat/docs/config.html
+
+# Model settings
+model: gpt-4-turbo-preview
+edit-format: diff
+
+# Project context
+message: |
+  You are working on OpenStatus, an open-source synthetic monitoring platform.
+  This is a pnpm monorepo (v10.26.0) using Turborepo (v2.6.3).
+  
+  Stack: Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4.1
+  Database: Turso (libSQL) with Drizzle ORM 0.44.4
+  Backend: Hono (Bun), Go services, tRPC
+  Linter: Biome 1.8.3 (NOT ESLint)
+  
+  CRITICAL RULES:
+  - ALWAYS use pnpm (never npm/yarn)
+  - ALWAYS use Drizzle ORM (never raw SQL)
+  - Migrations: cd packages/db && pnpm generate
+  - Server Components by default
+  - React Hook Form + Zod for forms
+  - TypeScript required, avoid 'any'
+  
+  FORBIDDEN without approval:
+  - Database schema changes
+  - Auth/payment modifications
+  - Dockerfile changes
+  - Major version upgrades
+  - Manual migrations
+  
+  See AGENTS.md for complete guidelines.
+
+# Auto commits
+auto-commits: true
+commit-prompt: "Generate conventional commit message following project conventions"
+
+# Files to always include for context
+read:
+  - AGENTS.md
+  - package.json
+  - biome.jsonc
+  - turbo.json
+  - pnpm-workspace.yaml
+
+# Files to ignore
+ignore:
+  - node_modules/
+  - .next/
+  - dist/
+  - .wrangler/
+  - "*.log"
+  - .env
+  - .env.*
+  - "!.env.docker.example"
+
+# Lint command
+lint-cmd: "pnpm format && pnpm lint:fix"
+
+# Test command
+test-cmd: "pnpm tsc && pnpm test"
+

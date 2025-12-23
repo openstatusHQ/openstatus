@@ -1,0 +1,46 @@
+# OpenStatus - Codeium Configuration
+
+## Project Context
+
+OpenStatus: Open-source synthetic monitoring platform
+Architecture: pnpm monorepo + Turborepo
+Stack: Next.js 16, React 19, TypeScript 5.9, Tailwind CSS 4.1, Drizzle ORM, Turso DB
+
+## Critical Rules
+
+1. ALWAYS use pnpm 10.26.0 (never npm/yarn)
+2. ALWAYS use Drizzle ORM (never raw SQL)
+3. ALWAYS use Biome 1.8.3 for linting (not ESLint)
+4. Server Components by default ("use client" only when necessary)
+5. React Hook Form + Zod for all forms
+6. tRPC for dashboard, Hono for server APIs
+7. TypeScript required, avoid 'any'
+
+## File Naming
+- Components: PascalCase.tsx
+- Utilities: camelCase.ts
+- Config: kebab-case.ts
+
+## Database
+- Schema: packages/db/src/schema/
+- Migrations: cd packages/db && pnpm generate
+- Never write raw SQL or manual migrations
+
+## Common Commands
+pnpm dev:dashboard    # Start dashboard
+pnpm format          # Format code
+pnpm lint:fix        # Fix linting
+pnpm dx              # Setup database
+
+## Forbidden Actions
+- Database schema changes without approval
+- Auth/payment modifications without approval
+- Dockerfile/docker-compose changes
+- Raw SQL queries
+- Committing secrets
+- Major version upgrades
+- Manual migrations
+
+## Documentation
+See AGENTS.md for complete guidelines
+
