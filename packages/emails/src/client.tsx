@@ -6,6 +6,8 @@ import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
 import type { PageSubscriptionProps } from "../emails/page-subscription";
+import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
+import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
 import StatusReportEmail from "../emails/status-report";
 import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
@@ -210,6 +212,35 @@ export class EmailClient {
       throw result.error;
     } catch (err) {
       console.error(`Error sending page subscription to ${req.to}`, err);
+    }
+  }
+
+  public async sendStatusPageMagicLink(
+    req: StatusPageMagicLinkProps & { to: string },
+  ) {
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Sending status page magic link email to ${req.to}`);
+      console.log(`>>> Magic Link: ${req.link}`);
+      return;
+    }
+
+    try {
+      const html = await render(<StatusPageMagicLinkEmail {...req} />);
+      const result = await this.client.emails.send({
+        from: "Status Page <notifications@notifications.openstatus.dev>",
+        subject: `Authenticate to ${req.page}`,
+        to: req.to,
+        html,
+      });
+
+      if (!result.error) {
+        console.log(`Sent status page magic link email to ${req.to}`);
+        return;
+      }
+
+      throw result.error;
+    } catch (err) {
+      console.error(`Error sending status page magic link to ${req.to}`, err);
     }
   }
 }

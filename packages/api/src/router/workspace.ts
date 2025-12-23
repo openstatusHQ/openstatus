@@ -21,32 +21,71 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { authedProcedure, createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const workspaceRouter = createTRPCRouter({
-  createWorkspace: protectedProcedure
-    .input(z.object({ userId: z.string() }))
-    .mutation(async (opts) => {
-      // guarantee the slug is unique accross our workspace entries
-      let slug: string | undefined = undefined;
+  generateSlug: authedProcedure.query(async (opts) => {
+    // Generate a unique random slug
+    let slug: string | undefined = undefined;
 
-      while (!slug) {
-        slug = randomWordSlugs.generateSlug(2);
+    while (!slug) {
+      slug = randomWordSlugs.generateSlug(2);
+      const slugAlreadyExists = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, slug))
+        .get();
+      if (slugAlreadyExists) {
+        slug = undefined;
+      }
+    }
+
+    return { slug };
+  }),
+
+  createWorkspace: authedProcedure
+    .input(
+      z.object({
+        slug: z.string().min(1).max(50).optional(),
+        name: z.string().min(1).max(50).optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      let slug = opts.input.slug;
+
+      // If no slug provided, generate one
+      if (!slug) {
+        while (!slug) {
+          slug = randomWordSlugs.generateSlug(2);
+          const slugAlreadyExists = await opts.ctx.db
+            .select()
+            .from(workspace)
+            .where(eq(workspace.slug, slug))
+            .get();
+          if (slugAlreadyExists) {
+            console.log(`slug already exists: '${slug}'`);
+            slug = undefined;
+          }
+        }
+      } else {
+        // Validate the provided slug is unique
         const slugAlreadyExists = await opts.ctx.db
           .select()
           .from(workspace)
           .where(eq(workspace.slug, slug))
           .get();
         if (slugAlreadyExists) {
-          console.log(`slug already exists: '${slug}'`);
-          slug = undefined;
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "Workspace slug already exists",
+          });
         }
       }
 
       const _workspace = await opts.ctx.db
         .insert(workspace)
-        .values({ slug, name: "" })
-        .returning({ id: workspace.id })
+        .values({ slug, name: opts.input.name || "" })
+        .returning({ id: workspace.id, slug: workspace.slug })
         .get();
 
       await opts.ctx.db
@@ -58,6 +97,8 @@ export const workspaceRouter = createTRPCRouter({
         })
         .returning()
         .get();
+
+      return _workspace;
     }),
   getUserWithWorkspace: protectedProcedure.query(async (opts) => {
     return await opts.ctx.db.query.user.findMany({

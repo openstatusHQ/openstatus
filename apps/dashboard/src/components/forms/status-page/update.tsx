@@ -225,8 +225,15 @@ export function FormStatusPageUpdate() {
         configLink={configLink}
       />
       <FormPasswordProtection
-        locked={workspace.limits["password-protection"] === false}
+        lockedMap={
+          new Map([
+            ["none", false],
+            ["password", workspace.limits["password-protection"] === false],
+            ["magiclink", true],
+          ])
+        }
         defaultValues={{
+          protectionType: statusPage.passwordProtected ? "password" : "none",
           passwordProtected: statusPage.passwordProtected ?? false,
           password: statusPage.password ?? undefined,
         }}
