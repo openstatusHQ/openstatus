@@ -199,7 +199,7 @@ export function sanitizeContent(input: string) {
     .replace(/<[^>]+>/g, "") // strip JSX tags
     .replace(/^#{1,6}\s+/gm, "") // strip markdown heading symbols, keep text
     .replace(/!\[.*?\]\(.*?\)/g, "") // strip images
-    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1") // keep link text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // keep link text
     .replace(/\*\*(.*?)\*\*/g, "$1") // strip bold
     .replace(/__(.*?)__/g, "$1") // strip italic
     .replace(/_(.*?)_/g, "$1") // strip underline
