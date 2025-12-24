@@ -368,7 +368,7 @@ export function CustomMDX(props: MDXRemoteProps) {
           components={
             {
               ...components,
-              ...(props.components || {}),
+              ...props.components,
             } as MDXRemoteProps["components"]
           }
         />
