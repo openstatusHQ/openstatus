@@ -38,7 +38,8 @@ const TeamInvitationEmail = ({
         <Layout>
           <Heading as="h3">
             You have been invited to join{" "}
-            {workspaceName ? `"${workspaceName}" workspace` : "OpenStatus.dev"} by {invitedBy}
+            {workspaceName ? `"${workspaceName}" workspace` : "OpenStatus.dev"}{" "}
+            by {invitedBy}
           </Heading>
           <Text>
             Click here to access the workspace:{" "}
