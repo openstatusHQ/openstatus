@@ -232,7 +232,12 @@ export function Client() {
             sure your object is satisfying the <code>Theme</code> interface. We
             provide a theme builder to help you with the process.
           </p>
-          <Button onClick={toggleSidebar}>Toggle Theme Builder</Button>
+          <div className="flex gap-2">
+            <Button onClick={toggleSidebar}>Toggle Theme Builder</Button>
+            <Button asChild variant="outline">
+              <Link href="/theme-editor">Open Full Editor</Link>
+            </Button>
+          </div>
           <p>
             Go to the{" "}
             <Link href="https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store">
