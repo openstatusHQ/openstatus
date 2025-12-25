@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sliders } from "lucide-react";
 import React, { use, useEffect } from "react";
 import { ActionBar } from "./action-bar/action-bar";
+import { ThemeProvider } from "./action-bar/components/theme-provider";
 import { DialogActionsProvider } from "./hooks/use-dialog-actions";
 import { useIsMobile } from "./hooks/use-mobile";
 import { useEditorStore } from "./store/editor-store";
@@ -69,24 +70,67 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
   // Mobile layout
   if (isMobile) {
     return (
+      <ThemeProvider>
+        <DialogActionsProvider>
+          <div className="relative isolate flex flex-1 overflow-hidden">
+            <div className="size-full flex-1 overflow-hidden">
+              <Tabs defaultValue="controls" className="h-full">
+                <TabsList className="w-full rounded-none">
+                  <TabsTrigger value="controls" className="flex-1">
+                    <Sliders className="mr-2 h-4 w-4" />
+                    Controls
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="flex-1">
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent
+                  value="controls"
+                  className="mt-0 h-[calc(100%-2.5rem)]"
+                >
+                  <div className="flex h-full flex-col">
+                    <ThemeControlPanel
+                      styles={styles}
+                      onChange={handleStyleChange}
+                      currentMode={themeState.currentMode}
+                      themePromise={themePromise}
+                    />
+                  </div>
+                </TabsContent>
+                <TabsContent
+                  value="preview"
+                  className="mt-0 h-[calc(100%-2.5rem)]"
+                >
+                  <div className="flex h-full flex-col">
+                    <ActionBar />
+                    <ThemePreviewPanel
+                      styles={styles}
+                      currentMode={themeState.currentMode}
+                    />
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+        </DialogActionsProvider>
+      </ThemeProvider>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <ThemeProvider>
       <DialogActionsProvider>
         <div className="relative isolate flex flex-1 overflow-hidden">
-          <div className="size-full flex-1 overflow-hidden">
-            <Tabs defaultValue="controls" className="h-full">
-              <TabsList className="w-full rounded-none">
-                <TabsTrigger value="controls" className="flex-1">
-                  <Sliders className="mr-2 h-4 w-4" />
-                  Controls
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="flex-1">
-                  Preview
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent
-                value="controls"
-                className="mt-0 h-[calc(100%-2.5rem)]"
+          <div className="size-full">
+            <ResizablePanelGroup direction="horizontal" className="isolate">
+              <ResizablePanel
+                defaultSize={30}
+                minSize={20}
+                maxSize={40}
+                className="z-1 min-w-[max(20%,22rem)]"
               >
-                <div className="flex h-full flex-col">
+                <div className="relative isolate flex h-full flex-1 flex-col">
                   <ThemeControlPanel
                     styles={styles}
                     onChange={handleStyleChange}
@@ -94,63 +138,24 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
                     themePromise={themePromise}
                   />
                 </div>
-              </TabsContent>
-              <TabsContent
-                value="preview"
-                className="mt-0 h-[calc(100%-2.5rem)]"
-              >
+              </ResizablePanel>
+              <ResizableHandle />
+              <ResizablePanel defaultSize={70}>
                 <div className="flex h-full flex-col">
-                  <ActionBar />
-                  <ThemePreviewPanel
-                    styles={styles}
-                    currentMode={themeState.currentMode}
-                  />
+                  <div className="flex min-h-0 flex-1 flex-col">
+                    <ActionBar />
+                    <ThemePreviewPanel
+                      styles={styles}
+                      currentMode={themeState.currentMode}
+                    />
+                  </div>
                 </div>
-              </TabsContent>
-            </Tabs>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           </div>
         </div>
       </DialogActionsProvider>
-    );
-  }
-
-  // Desktop layout
-  return (
-    <DialogActionsProvider>
-      <div className="relative isolate flex flex-1 overflow-hidden">
-        <div className="size-full">
-          <ResizablePanelGroup direction="horizontal" className="isolate">
-            <ResizablePanel
-              defaultSize={30}
-              minSize={20}
-              maxSize={40}
-              className="z-1 min-w-[max(20%,22rem)]"
-            >
-              <div className="relative isolate flex h-full flex-1 flex-col">
-                <ThemeControlPanel
-                  styles={styles}
-                  onChange={handleStyleChange}
-                  currentMode={themeState.currentMode}
-                  themePromise={themePromise}
-                />
-              </div>
-            </ResizablePanel>
-            <ResizableHandle />
-            <ResizablePanel defaultSize={70}>
-              <div className="flex h-full flex-col">
-                <div className="flex min-h-0 flex-1 flex-col">
-                  <ActionBar />
-                  <ThemePreviewPanel
-                    styles={styles}
-                    currentMode={themeState.currentMode}
-                  />
-                </div>
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </div>
-      </div>
-    </DialogActionsProvider>
+    </ThemeProvider>
   );
 };
 
