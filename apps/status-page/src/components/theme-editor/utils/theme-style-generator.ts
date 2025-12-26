@@ -1,16 +1,16 @@
-import { ThemeEditorState } from "../types/editor";
-import { colorFormatter } from "./color-converter";
-import { ColorFormat } from "../types";
-import { getShadowMap } from "./shadows";
 import { defaultLightThemeStyles } from "../config/theme";
-import { ThemeStyles } from "../types/theme";
+import type { ColorFormat } from "../types";
+import type { ThemeEditorState } from "../types/editor";
+import type { ThemeStyles } from "../types/theme";
+import { colorFormatter } from "./color-converter";
+import { getShadowMap } from "./shadows";
 
 type ThemeMode = "light" | "dark";
 
 const generateColorVariables = (
   themeStyles: ThemeStyles,
   mode: ThemeMode,
-  formatColor: (color: string) => string
+  formatColor: (color: string) => string,
 ): string => {
   const styles = themeStyles[mode];
   return `
@@ -48,7 +48,10 @@ const generateColorVariables = (
   --sidebar-ring: ${formatColor(styles["sidebar-ring"])};`;
 };
 
-const generateFontVariables = (themeStyles: ThemeStyles, mode: ThemeMode): string => {
+const generateFontVariables = (
+  themeStyles: ThemeStyles,
+  mode: ThemeMode,
+): string => {
   const styles = themeStyles[mode];
   return `
   --font-sans: ${styles["font-sans"]};
@@ -68,7 +71,10 @@ const generateShadowVariables = (shadowMap: Record<string, string>): string => {
   --shadow-2xl: ${shadowMap["shadow-2xl"]};`;
 };
 
-const generateRawShadowVariables = (themeStyles: ThemeStyles, mode: ThemeMode): string => {
+const generateRawShadowVariables = (
+  themeStyles: ThemeStyles,
+  mode: ThemeMode,
+): string => {
   const styles = themeStyles[mode];
   return `
   --shadow-x: ${styles["shadow-offset-x"]};
@@ -97,14 +103,14 @@ const generateTrackingVariables = (themeStyles: ThemeStyles): string => {
 const generateThemeVariables = (
   themeStyles: ThemeStyles,
   mode: ThemeMode,
-  formatColor: (color: string) => string
+  formatColor: (color: string) => string,
 ): string => {
   const selector = mode === "dark" ? ".dark" : ":root";
   const colorVars = generateColorVariables(themeStyles, mode, formatColor);
   const fontVars = generateFontVariables(themeStyles, mode);
   const radiusVar = `\n  --radius: ${themeStyles[mode].radius};`;
   const shadowVars = generateShadowVariables(
-    getShadowMap({ styles: themeStyles, currentMode: mode })
+    getShadowMap({ styles: themeStyles, currentMode: mode }),
   );
   const rawShadowVars = generateRawShadowVariables(themeStyles, mode);
   const spacingVar =
@@ -188,7 +194,7 @@ const generateTailwindV4ThemeInline = (themeStyles: ThemeStyles): string => {
 
 const generateTailwindV3Config = (
   _themeStyles: ThemeStyles,
-  colorFormat: ColorFormat = "hsl"
+  colorFormat: ColorFormat = "hsl",
 ): string => {
   const colorToken = (key: string) => {
     return colorFormat === "hsl" ? `"hsl(var(--${key}))"` : `"var(--${key})"`;
@@ -270,7 +276,7 @@ module.exports = {
 export const generateThemeCode = (
   themeEditorState: ThemeEditorState,
   colorFormat: ColorFormat = "hsl",
-  tailwindVersion: "3" | "4" = "3"
+  // tailwindVersion: "3" | "4" = "4", // Changed default to "4" - using v4 only
 ): string => {
   if (
     !themeEditorState ||
@@ -281,12 +287,13 @@ export const generateThemeCode = (
   }
 
   const themeStyles = themeEditorState.styles as ThemeStyles;
-  const formatColor = (color: string) => colorFormatter(color, colorFormat, tailwindVersion);
+  const formatColor = (color: string) =>
+    colorFormatter(color, colorFormat, "4"); // Hardcoded to "4"
 
   const lightTheme = generateThemeVariables(themeStyles, "light", formatColor);
   const darkTheme = generateThemeVariables(themeStyles, "dark", formatColor);
-  const tailwindV4Theme =
-    tailwindVersion === "4" ? `\n\n${generateTailwindV4ThemeInline(themeStyles)}` : "";
+  // const tailwindV4Theme = tailwindVersion === "4" ? `\n\n${generateTailwindV4ThemeInline(themeStyles)}` : ""; // Commented out - always using v4
+  const tailwindV4Theme = `\n\n${generateTailwindV4ThemeInline(themeStyles)}`; // Always generate v4 theme
 
   const bodyLetterSpacing =
     themeStyles["light"]["letter-spacing"] !== "0em"
@@ -299,7 +306,7 @@ export const generateThemeCode = (
 export const generateTailwindConfigCode = (
   themeEditorState: ThemeEditorState,
   colorFormat: ColorFormat = "hsl",
-  _tailwindVersion: "3" | "4" = "3"
+  _tailwindVersion: "3" | "4" = "4", // Changed default to "4" - parameter unused, kept for compatibility
 ): string => {
   if (
     !themeEditorState ||

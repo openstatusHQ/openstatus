@@ -7,39 +7,37 @@ export type ColorSelectorTab = "list" | "palette";
 
 const colorFormatsByVersion = {
   "3": ["hex", "rgb", "hsl"] as const,
-  "4": ["hex", "rgb", "hsl", "oklch"] as const,
+  "4": ["hex", "rgb", "hsl"] as const, // "oklch" removed - browser compatibility issues with inline styles
 };
 
 interface PreferencesStore {
-  tailwindVersion: "3" | "4";
+  // tailwindVersion: "3" | "4"; // Commented out - using v4 only
   colorFormat: ColorFormat;
   packageManager: PackageManager;
   colorSelectorTab: ColorSelectorTab;
-  chatSuggestionsOpen: boolean;
-  setTailwindVersion: (version: "3" | "4") => void;
+  // setTailwindVersion: (version: "3" | "4") => void; // Commented out - using v4 only
   setColorFormat: (format: ColorFormat) => void;
   setPackageManager: (pm: PackageManager) => void;
   setColorSelectorTab: (tab: ColorSelectorTab) => void;
-  setChatSuggestionsOpen: (open: boolean) => void;
   getAvailableColorFormats: () => readonly ColorFormat[];
 }
 
 export const usePreferencesStore = create<PreferencesStore>()(
   persist(
     (set, get) => ({
-      tailwindVersion: "4",
-      colorFormat: "oklch",
+      // tailwindVersion: "4", // Commented out - using v4 only
+      colorFormat: "hex", // Changed from "oklch" to "hex" for browser compatibility
       packageManager: "pnpm",
       colorSelectorTab: "list",
-      chatSuggestionsOpen: true,
-      setTailwindVersion: (version: "3" | "4") => {
-        const currentFormat = get().colorFormat;
-        if (version === "3" && currentFormat === "oklch") {
-          set({ tailwindVersion: version, colorFormat: "hsl" });
-        } else {
-          set({ tailwindVersion: version });
-        }
-      },
+      // setTailwindVersion: (version: "3" | "4") => { // Commented out - using v4 only
+      //   const currentFormat = get().colorFormat;
+      //   // OKLCH handling commented out - no longer supported
+      //   // if (version === "3" && currentFormat === "oklch") {
+      //   //   set({ tailwindVersion: version, colorFormat: "hsl" });
+      //   // } else {
+      //   set({ tailwindVersion: version });
+      //   // }
+      // },
       setColorFormat: (format: ColorFormat) => {
         const availableFormats = get().getAvailableColorFormats();
         if (availableFormats.includes(format)) {
@@ -53,11 +51,9 @@ export const usePreferencesStore = create<PreferencesStore>()(
         set({ colorSelectorTab: tab });
       },
       getAvailableColorFormats: () => {
-        const version = get().tailwindVersion as "3" | "4";
+        // const version = get().tailwindVersion as "3" | "4"; // Commented out - using v4 only
+        const version = "4"; // Hardcoded to v4
         return colorFormatsByVersion[version];
-      },
-      setChatSuggestionsOpen: (open: boolean) => {
-        set({ chatSuggestionsOpen: open });
       },
     }),
     {

@@ -1,4 +1,4 @@
-import { ThemeStyles } from "./theme";
+import type { ThemeStyles } from "./theme";
 
 // Base interface for any editor's state
 export interface BaseEditorState {
@@ -6,6 +6,7 @@ export interface BaseEditorState {
 }
 
 // Interface for editor-specific controls
+// biome-ignore lint/suspicious/noEmptyInterface: <explanation>
 export interface EditorControls {
   // Controls can be added per editor type as needed
 }
@@ -35,6 +36,8 @@ export interface EditorConfig {
   name: string;
   description: string;
   defaultState: BaseEditorState;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   controls: React.ComponentType<any>;
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   preview: React.ComponentType<any>;
 }

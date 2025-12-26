@@ -1,7 +1,7 @@
-import { colorFormatter } from "./color-converter";
-import { applyStyleToElement } from "./apply-style-to-element";
-import { ThemeEditorState } from "../types/editor";
 import { defaultThemeState } from "../config/theme";
+import type { ThemeEditorState } from "../types/editor";
+import { applyStyleToElement } from "./apply-style-to-element";
+import { colorFormatter } from "./color-converter";
 
 export const getShadowMap = (themeEditorState: ThemeEditorState) => {
   const mode = themeEditorState.currentMode;
@@ -16,7 +16,7 @@ export const getShadowMap = (themeEditorState: ThemeEditorState) => {
   const offsetY = styles["shadow-offset-y"];
   const blur = styles["shadow-blur"];
   const spread = styles["shadow-spread"];
-  const opacity = parseFloat(styles["shadow-opacity"]);
+  const opacity = Number.parseFloat(styles["shadow-opacity"]);
   const color = (opacityMultiplier: number) =>
     `hsl(${hsl} / ${(opacity * opacityMultiplier).toFixed(2)})`;
 
@@ -28,7 +28,9 @@ export const getShadowMap = (themeEditorState: ThemeEditorState) => {
     // Use the fixed blur specific to the shadow size
     const blur2 = fixedBlur;
     // Calculate spread relative to the first layer's spread variable
-    const spread2 = (parseFloat(spread?.replace("px", "") ?? "0") - 1).toString() + "px";
+    const spread2 =
+      (Number.parseFloat(spread?.replace("px", "") ?? "0") - 1).toString() +
+      "px";
     // Use the same color function (opacity can still be overridden by --shadow-opacity)
     const color2 = color(1.0); // Default opacity for second layer is 0.1 in examples
 
@@ -44,20 +46,20 @@ export const getShadowMap = (themeEditorState: ThemeEditorState) => {
 
     // Two layer shadows - use base vars for layer 1, mix fixed/calculated for layer 2
     "shadow-sm": `${offsetX} ${offsetY} ${blur} ${spread} ${color(
-      1.0
+      1.0,
     )}, ${secondLayer("1px", "2px")}`,
     shadow: `${offsetX} ${offsetY} ${blur} ${spread} ${color(1.0)}, ${secondLayer("1px", "2px")}`, // Alias for the 'shadow:' example line
 
     "shadow-md": `${offsetX} ${offsetY} ${blur} ${spread} ${color(
-      1.0
+      1.0,
     )}, ${secondLayer("2px", "4px")}`,
 
     "shadow-lg": `${offsetX} ${offsetY} ${blur} ${spread} ${color(
-      1.0
+      1.0,
     )}, ${secondLayer("4px", "6px")}`,
 
     "shadow-xl": `${offsetX} ${offsetY} ${blur} ${spread} ${color(
-      1.0
+      1.0,
     )}, ${secondLayer("8px", "10px")}`,
   };
 

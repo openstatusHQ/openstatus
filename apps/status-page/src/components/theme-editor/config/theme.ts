@@ -1,4 +1,6 @@
-import { ThemeEditorState } from "../types/editor";
+import type { ThemeEditorState } from "../types/editor";
+import type { ThemeStyles } from "../types/theme";
+import { defaultPresets } from "../utils/theme-presets";
 
 // these are common between light and dark modes
 // we can assume that light mode's value will be used for dark mode as well
@@ -25,106 +27,109 @@ export const DEFAULT_FONT_SERIF =
 export const DEFAULT_FONT_MONO =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
 
-// Default light theme styles
-export const defaultLightThemeStyles = {
-  background: "oklch(1 0 0)",
-  foreground: "oklch(0.145 0 0)",
-  card: "oklch(1 0 0)",
-  "card-foreground": "oklch(0.145 0 0)",
-  popover: "oklch(1 0 0)",
-  "popover-foreground": "oklch(0.145 0 0)",
-  primary: "oklch(0.205 0 0)",
-  "primary-foreground": "oklch(0.985 0 0)",
-  secondary: "oklch(0.97 0 0)",
-  "secondary-foreground": "oklch(0.205 0 0)",
-  muted: "oklch(0.97 0 0)",
-  "muted-foreground": "oklch(0.556 0 0)",
-  accent: "oklch(0.97 0 0)",
-  "accent-foreground": "oklch(0.205 0 0)",
-  destructive: "oklch(0.577 0.245 27.325)",
-  "destructive-foreground": "oklch(1 0 0)",
-  border: "oklch(0.922 0 0)",
-  input: "oklch(0.922 0 0)",
-  ring: "oklch(0.708 0 0)",
-  "chart-1": "oklch(0.81 0.10 252)",
-  "chart-2": "oklch(0.62 0.19 260)",
-  "chart-3": "oklch(0.55 0.22 263)",
-  "chart-4": "oklch(0.49 0.22 264)",
-  "chart-5": "oklch(0.42 0.18 266)",
-  radius: "0.625rem",
-  sidebar: "oklch(0.985 0 0)",
-  "sidebar-foreground": "oklch(0.145 0 0)",
-  "sidebar-primary": "oklch(0.205 0 0)",
-  "sidebar-primary-foreground": "oklch(0.985 0 0)",
-  "sidebar-accent": "oklch(0.97 0 0)",
-  "sidebar-accent-foreground": "oklch(0.205 0 0)",
-  "sidebar-border": "oklch(0.922 0 0)",
-  "sidebar-ring": "oklch(0.708 0 0)",
-  "font-sans": DEFAULT_FONT_SANS,
-  "font-serif": DEFAULT_FONT_SERIF,
-  "font-mono": DEFAULT_FONT_MONO,
+// // Default light theme styles (converted from OKLCH to hex for browser compatibility)
+// export const defaultLightThemeStyles = {
+//   background: "#ffffff",
+//   foreground: "#0a0a0a",
+//   card: "#ffffff",
+//   "card-foreground": "#0a0a0a",
+//   popover: "#ffffff",
+//   "popover-foreground": "#0a0a0a",
+//   primary: "#171717",
+//   "primary-foreground": "#fafafa",
+//   secondary: "#f5f5f5",
+//   "secondary-foreground": "#171717",
+//   muted: "#f5f5f5",
+//   "muted-foreground": "#737373",
+//   accent: "#f5f5f5",
+//   "accent-foreground": "#171717",
+//   destructive: "#e7000b",
+//   "destructive-foreground": "#ffffff",
+//   border: "#e5e5e5",
+//   input: "#e5e5e5",
+//   ring: "#a1a1a1",
+//   "chart-1": "#91c5ff",
+//   "chart-2": "#3a81f6",
+//   "chart-3": "#2563ef",
+//   "chart-4": "#1a4eda",
+//   "chart-5": "#1f3fad",
+//   radius: "0.625rem",
+//   sidebar: "#fafafa",
+//   "sidebar-foreground": "#0a0a0a",
+//   "sidebar-primary": "#171717",
+//   "sidebar-primary-foreground": "#fafafa",
+//   "sidebar-accent": "#f5f5f5",
+//   "sidebar-accent-foreground": "#171717",
+//   "sidebar-border": "#e5e5e5",
+//   "sidebar-ring": "#a1a1a1",
+//   "font-sans": DEFAULT_FONT_SANS,
+//   "font-serif": DEFAULT_FONT_SERIF,
+//   "font-mono": DEFAULT_FONT_MONO,
 
-  "shadow-color": "oklch(0 0 0)",
-  "shadow-opacity": "0.1",
-  "shadow-blur": "3px",
-  "shadow-spread": "0px",
-  "shadow-offset-x": "0",
-  "shadow-offset-y": "1px",
+//   "shadow-color": "#000000",
+//   "shadow-opacity": "0.1",
+//   "shadow-blur": "3px",
+//   "shadow-spread": "0px",
+//   "shadow-offset-x": "0",
+//   "shadow-offset-y": "1px",
 
-  "letter-spacing": "0em",
-  spacing: "0.25rem",
-};
+//   "letter-spacing": "0em",
+//   spacing: "0.25rem",
+// };
 
-// Default dark theme styles
-export const defaultDarkThemeStyles = {
-  ...defaultLightThemeStyles,
-  background: "oklch(0.145 0 0)",
-  foreground: "oklch(0.985 0 0)",
-  card: "oklch(0.205 0 0)",
-  "card-foreground": "oklch(0.985 0 0)",
-  popover: "oklch(0.269 0 0)",
-  "popover-foreground": "oklch(0.985 0 0)",
-  primary: "oklch(0.922 0 0)",
-  "primary-foreground": "oklch(0.205 0 0)",
-  secondary: "oklch(0.269 0 0)",
-  "secondary-foreground": "oklch(0.985 0 0)",
-  muted: "oklch(0.269 0 0)",
-  "muted-foreground": "oklch(0.708 0 0)",
-  accent: "oklch(0.371 0 0)",
-  "accent-foreground": "oklch(0.985 0 0)",
-  destructive: "oklch(0.704 0.191 22.216)",
-  "destructive-foreground": "oklch(0.985 0 0)",
-  border: "oklch(0.275 0 0)", // in place of oklch(1 0 0 / 10%)
-  input: "oklch(0.325 0 0)", // in place of oklch(1 0 0 / 15%)
-  ring: "oklch(0.556 0 0)",
-  "chart-1": "oklch(0.81 0.10 252)",
-  "chart-2": "oklch(0.62 0.19 260)",
-  "chart-3": "oklch(0.55 0.22 263)",
-  "chart-4": "oklch(0.49 0.22 264)",
-  "chart-5": "oklch(0.42 0.18 266)",
-  // Actual has radius but not in Expected, keeping it as is
-  radius: "0.625rem",
-  // Converting sidebar-related variables to match Actual format
-  sidebar: "oklch(0.205 0 0)",
-  "sidebar-foreground": "oklch(0.985 0 0)",
-  "sidebar-primary": "oklch(0.488 0.243 264.376)",
-  "sidebar-primary-foreground": "oklch(0.985 0 0)",
-  "sidebar-accent": "oklch(0.269 0 0)",
-  "sidebar-accent-foreground": "oklch(0.985 0 0)",
-  "sidebar-border": "oklch(0.275 0 0)", // in place of oklch(1 0 0 / 10%)
-  "sidebar-ring": "oklch(0.439 0 0)",
+// // Default dark theme styles (converted from OKLCH to hex for browser compatibility)
+// export const defaultDarkThemeStyles = {
+//   ...defaultLightThemeStyles,
+//   background: "#0a0a0a",
+//   foreground: "#fafafa",
+//   card: "#171717",
+//   "card-foreground": "#fafafa",
+//   popover: "#262626",
+//   "popover-foreground": "#fafafa",
+//   primary: "#e5e5e5",
+//   "primary-foreground": "#171717",
+//   secondary: "#262626",
+//   "secondary-foreground": "#fafafa",
+//   muted: "#262626",
+//   "muted-foreground": "#a1a1a1",
+//   accent: "#404040",
+//   "accent-foreground": "#fafafa",
+//   destructive: "#ff6467",
+//   "destructive-foreground": "#fafafa",
+//   border: "#282828",
+//   input: "#343434",
+//   ring: "#737373",
+//   "chart-1": "#91c5ff",
+//   "chart-2": "#3a81f6",
+//   "chart-3": "#2563ef",
+//   "chart-4": "#1a4eda",
+//   "chart-5": "#1f3fad",
+//   radius: "0.625rem",
+//   sidebar: "#171717",
+//   "sidebar-foreground": "#fafafa",
+//   "sidebar-primary": "#1447e6",
+//   "sidebar-primary-foreground": "#fafafa",
+//   "sidebar-accent": "#262626",
+//   "sidebar-accent-foreground": "#fafafa",
+//   "sidebar-border": "#282828",
+//   "sidebar-ring": "#525252",
 
-  "shadow-color": "oklch(0 0 0)",
+//   "shadow-color": "#000000",
 
-  "letter-spacing": "0em",
-  spacing: "0.25rem",
-};
+//   "letter-spacing": "0em",
+//   spacing: "0.25rem",
+// };
+
+export const defaultLightThemeStyles =
+  defaultPresets["modern-minimal"]?.styles?.light;
+export const defaultDarkThemeStyles =
+  defaultPresets["modern-minimal"]?.styles?.dark;
 
 // Default theme state
 export const defaultThemeState: ThemeEditorState = {
   styles: {
-    light: defaultLightThemeStyles,
-    dark: defaultDarkThemeStyles,
+    light: defaultLightThemeStyles as ThemeStyles["light"],
+    dark: defaultDarkThemeStyles as ThemeStyles["dark"],
   },
   currentMode:
     typeof window !== "undefined" &&

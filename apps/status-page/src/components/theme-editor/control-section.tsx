@@ -1,10 +1,15 @@
-import React, { useState } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import type { ControlSectionProps } from "@/components/theme-editor/types";
 import { cn } from "@/lib/utils";
-import { ControlSectionProps } from "@/types";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 import { SectionContext } from "./section-context";
 
-const ControlSection = ({ title, children, expanded = false, className }: ControlSectionProps) => {
+const ControlSection = ({
+  title,
+  children,
+  expanded = false,
+  className,
+}: ControlSectionProps) => {
   const [isExpanded, setIsExpanded] = useState(expanded);
 
   return (
@@ -26,17 +31,23 @@ const ControlSection = ({ title, children, expanded = false, className }: Contro
             className="text-muted-foreground hover:text-foreground transition-colors"
             aria-label={isExpanded ? "Collapse section" : "Expand section"}
           >
-            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {isExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
           </button>
         </div>
 
         <div
           className={cn(
             "overflow-hidden transition-all duration-200",
-            isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
+            isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0",
           )}
         >
-          <div className={cn("bg-background border-t p-3", className)}>{children}</div>
+          <div className={cn("bg-background border-t p-3", className)}>
+            {children}
+          </div>
         </div>
       </div>
     </SectionContext.Provider>

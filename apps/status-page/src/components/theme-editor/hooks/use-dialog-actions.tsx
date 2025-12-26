@@ -1,5 +1,5 @@
 import { type ReactNode, createContext, useContext, useState } from "react";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { CodePanelDialog } from "../code-panel-dialog";
 import CssImportDialog from "../css-import-dialog";
 import { useEditorStore } from "../store/editor-store";
@@ -37,10 +37,10 @@ function useDialogActionsStore(): DialogActionsContextType {
       styles,
     });
 
-    toast({
-      title: "CSS imported",
-      description: "Your custom CSS has been imported successfully",
-    });
+    // toast({
+    //   title: "CSS imported",
+    //   description: "Your custom CSS has been imported successfully",
+    // });
   };
 
   const value = {

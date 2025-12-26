@@ -8,12 +8,12 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePreferencesStore } from "@/store/preferences-store";
-import { useThemePresetStore } from "@/store/theme-preset-store";
+// import { useThemePresetStore } from "@/store/theme-preset-store";
 import type { ColorFormat } from "@/types";
 import { Check, Copy } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-import { useEditorStore } from "./store/editor-store";
+// import { useEditorStore } from "./store/editor-store";
 import type { ThemeEditorState } from "./types/editor";
 import {
   generateTailwindConfigCode,
@@ -25,26 +25,26 @@ interface CodePanelProps {
 }
 
 const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
-  const [registryCopied, setRegistryCopied] = useState(false);
+  // const [registryCopied, setRegistryCopied] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("index.css");
 
-  const preset = useEditorStore((state) => state.themeState.preset);
+  // const preset = useEditorStore((state) => state.themeState.preset);
   const colorFormat = usePreferencesStore((state) => state.colorFormat);
-  const tailwindVersion = usePreferencesStore((state) => state.tailwindVersion);
-  const packageManager = usePreferencesStore((state) => state.packageManager);
+  // const tailwindVersion = usePreferencesStore((state) => state.tailwindVersion);
+  // const packageManager = usePreferencesStore((state) => state.packageManager);
   const setColorFormat = usePreferencesStore((state) => state.setColorFormat);
-  const setTailwindVersion = usePreferencesStore(
-    (state) => state.setTailwindVersion,
-  );
-  const setPackageManager = usePreferencesStore(
-    (state) => state.setPackageManager,
-  );
-  const hasUnsavedChanges = useEditorStore((state) => state.hasUnsavedChanges);
+  // const setTailwindVersion = usePreferencesStore(
+  //   (state) => state.setTailwindVersion,
+  // );
+  // const setPackageManager = usePreferencesStore(
+  //   (state) => state.setPackageManager,
+  // );
+  // const hasUnsavedChanges = useEditorStore((state) => state.hasUnsavedChanges);
 
-  const isSavedPreset = useThemePresetStore(
-    (state) => preset && state.getPreset(preset)?.source === "SAVED",
-  );
+  // const isSavedPreset = useThemePresetStore(
+  //   (state) => preset && state.getPreset(preset)?.source === "SAVED",
+  // );
   const getAvailableColorFormats = usePreferencesStore(
     (state) => state.getAvailableColorFormats,
   );
@@ -52,83 +52,78 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
   const code = generateThemeCode(
     themeEditorState,
     colorFormat,
-    tailwindVersion,
+    // "4", // tailwindVersion - hardcoded to v4
   );
   const configCode = generateTailwindConfigCode(
     themeEditorState,
     colorFormat,
-    tailwindVersion,
+    "4", // tailwindVersion - hardcoded to v4
   );
 
-  const getRegistryCommand = (preset: string) => {
-    const url = isSavedPreset
-      ? `https://tweakcn.com/r/themes/${preset}`
-      : `https://tweakcn.com/r/themes/${preset}.json`;
-    switch (packageManager) {
-      case "pnpm":
-        return `pnpm dlx shadcn@latest add ${url}`;
-      case "npm":
-        return `npx shadcn@latest add ${url}`;
-      case "yarn":
-        return `yarn dlx shadcn@latest add ${url}`;
-      case "bun":
-        return `bunx shadcn@latest add ${url}`;
-    }
-  };
+  // const getRegistryCommand = (preset: string) => {
+  //   const url = isSavedPreset
+  //     ? `https://tweakcn.com/r/themes/${preset}`
+  //     : `https://tweakcn.com/r/themes/${preset}.json`;
+  //   switch (packageManager) {
+  //     case "pnpm":
+  //       return `pnpm dlx shadcn@latest add ${url}`;
+  //     case "npm":
+  //       return `npx shadcn@latest add ${url}`;
+  //     case "yarn":
+  //       return `yarn dlx shadcn@latest add ${url}`;
+  //     case "bun":
+  //       return `bunx shadcn@latest add ${url}`;
+  //   }
+  // };
 
-  const copyRegistryCommand = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        getRegistryCommand(preset ?? "default"),
-      );
-      setRegistryCopied(true);
-      setTimeout(() => setRegistryCopied(false), 2000);
-      captureCopyEvent("COPY_REGISTRY_COMMAND");
-    } catch (err) {
-      console.error("Failed to copy text:", err);
-    }
-  };
-
-  const captureCopyEvent = (_event: string) => {
-    // Analytics tracking removed
-  };
+  // const copyRegistryCommand = async () => {
+  //   try {
+  //     await navigator.clipboard.writeText(
+  //       getRegistryCommand(preset ?? "default"),
+  //     );
+  //     setRegistryCopied(true);
+  //     setTimeout(() => setRegistryCopied(false), 2000);
+  //     captureCopyEvent("COPY_REGISTRY_COMMAND");
+  //   } catch (err) {
+  //     console.error("Failed to copy text:", err);
+  //   }
+  // };
 
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      captureCopyEvent("COPY_CODE");
     } catch (err) {
       console.error("Failed to copy text:", err);
     }
   };
 
-  const showRegistryCommand = useMemo(() => {
-    return preset && preset !== "default" && !hasUnsavedChanges();
-  }, [preset, hasUnsavedChanges]);
+  // const showRegistryCommand = useMemo(() => {
+  //   return preset && preset !== "default" && !hasUnsavedChanges();
+  // }, [preset, hasUnsavedChanges]);
 
-  const PackageManagerHeader = ({
-    actionButton,
-  }: { actionButton: React.ReactNode }) => (
-    <div className="flex border-b">
-      {(["pnpm", "npm", "yarn", "bun"] as const).map((pm) => (
-        <button
-          key={pm}
-          type="button"
-          onClick={() => setPackageManager(pm)}
-          className={`px-3 py-1.5 text-sm font-medium ${
-            packageManager === pm
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {pm}
-        </button>
-      ))}
-      {actionButton}
-    </div>
-  );
+  // const PackageManagerHeader = ({
+  //   actionButton,
+  // }: { actionButton: React.ReactNode }) => (
+  //   <div className="flex border-b">
+  //     {(["pnpm", "npm", "yarn", "bun"] as const).map((pm) => (
+  //       <button
+  //         key={pm}
+  //         type="button"
+  //         onClick={() => setPackageManager(pm)}
+  //         className={`px-3 py-1.5 text-sm font-medium ${
+  //           packageManager === pm
+  //             ? "bg-muted text-foreground"
+  //             : "text-muted-foreground hover:text-foreground"
+  //         }`}
+  //       >
+  //         {pm}
+  //       </button>
+  //     ))}
+  //     {actionButton}
+  //   </div>
+  // );
 
   return (
     <div className="flex h-full flex-col">
@@ -137,7 +132,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
           <h2 className="text-lg font-semibold">Theme Code</h2>
         </div>
         <div className="mt-4 overflow-hidden rounded-md border">
-          <PackageManagerHeader
+          {/* <PackageManagerHeader
             actionButton={
               showRegistryCommand ? (
                 <Button
@@ -157,8 +152,8 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
                 </Button>
               ) : null
             }
-          />
-          {showRegistryCommand && (
+          /> */}
+          {/* {showRegistryCommand && (
             <div className="bg-muted/50 flex items-center justify-between p-2">
               <ScrollArea className="w-full">
                 <div className="overflow-y-hidden pb-2 whitespace-nowrap">
@@ -169,18 +164,20 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
                 <ScrollBar orientation="horizontal" />
               </ScrollArea>
             </div>
-          )}
+          )} */}
         </div>
       </div>
       <div className="mb-4 flex items-center gap-2">
-        <Select
+        {/* Tailwind version selector - commented out for v4 only */}
+        {/* <Select
           value={tailwindVersion}
           onValueChange={(value: "3" | "4") => {
             setTailwindVersion(value);
-            if (value === "4" && colorFormat === "hsl") {
-              setColorFormat("oklch");
-              setActiveTab("index.css");
-            }
+            // OKLCH removed - using hex as default for browser compatibility
+            // if (value === "4" && colorFormat === "hsl") {
+            //   setColorFormat("oklch");
+            //   setActiveTab("index.css");
+            // }
           }}
         >
           <SelectTrigger className="bg-muted/50 w-fit gap-1 border-none outline-hidden focus:border-none focus:ring-transparent">
@@ -190,7 +187,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
             <SelectItem value="3">Tailwind v3</SelectItem>
             <SelectItem value="4">Tailwind v4</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
         <Select
           value={colorFormat}
           onValueChange={(value: ColorFormat) => setColorFormat(value)}
@@ -221,14 +218,15 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
             >
               index.css
             </TabsTrigger>
-            {tailwindVersion === "3" && (
+            {/* Tailwind v3 config tab - commented out for v4 only */}
+            {/* {tailwindVersion === "3" && (
               <TabsTrigger
                 value="tailwind.config.ts"
                 className="h-7 px-3 text-sm font-medium"
               >
                 tailwind.config.ts
               </TabsTrigger>
-            )}
+            )} */}
           </TabsList>
 
           <div className="flex items-center gap-2">
@@ -266,7 +264,8 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
           </ScrollArea>
         </TabsContent>
 
-        {tailwindVersion === "3" && (
+        {/* Tailwind v3 config content - commented out for v4 only */}
+        {/* {tailwindVersion === "3" && (
           <TabsContent value="tailwind.config.ts" className="overflow-hidden">
             <ScrollArea className="relative h-full">
               <pre className="h-full rounded-none border-0 p-4 text-sm">
@@ -276,7 +275,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
               <ScrollBar orientation="vertical" />
             </ScrollArea>
           </TabsContent>
-        )}
+        )} */}
       </Tabs>
     </div>
   );

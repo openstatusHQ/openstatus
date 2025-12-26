@@ -11,7 +11,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 
 interface CssImportDialogProps {
   open: boolean;
@@ -19,7 +19,11 @@ interface CssImportDialogProps {
   onImport: (css: string) => void;
 }
 
-const CssImportDialog: React.FC<CssImportDialogProps> = ({ open, onOpenChange, onImport }) => {
+const CssImportDialog: React.FC<CssImportDialogProps> = ({
+  open,
+  onOpenChange,
+  onImport,
+}) => {
   const [cssText, setCssText] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +39,7 @@ const CssImportDialog: React.FC<CssImportDialogProps> = ({ open, onOpenChange, o
       // For now we'll just do a simple check
       if (!cssText.includes("--") || !cssText.includes(":")) {
         setError(
-          "Invalid CSS format. CSS should contain variable definitions like --primary: #color"
+          "Invalid CSS format. CSS should contain variable definitions like --primary: #color",
         );
         return;
       }
@@ -58,12 +62,15 @@ const CssImportDialog: React.FC<CssImportDialogProps> = ({ open, onOpenChange, o
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="flex max-h-[90dvh] flex-col overflow-hidden shadow-lg sm:max-h-[min(640px,80dvh)] sm:max-w-[550px] sm:pt-6">
-        <ScrollArea className="flex h-full flex-col" viewPortClassName="pb-2 *:space-y-6">
+        <ScrollArea
+          className="flex h-full flex-col"
+          viewPortClassName="pb-2 *:space-y-6"
+        >
           <ResponsiveDialogHeader className="px-6">
             <ResponsiveDialogTitle>Import Custom CSS</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              Paste your CSS file below to customize the theme colors. Make sure to include
-              variables like --primary, --background, etc.
+              Paste your CSS file below to customize the theme colors. Make sure
+              to include variables like --primary, --background, etc.
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
 
@@ -99,7 +106,12 @@ const CssImportDialog: React.FC<CssImportDialogProps> = ({ open, onOpenChange, o
         </ScrollArea>
 
         <ResponsiveDialogFooter className="bg-muted/30 mt-4 border-t px-6 py-4 sm:mt-0">
-          <Button variant="ghost" onClick={handleClose} size="sm" className="max-sm:w-full">
+          <Button
+            variant="ghost"
+            onClick={handleClose}
+            size="sm"
+            className="max-sm:w-full"
+          >
             Cancel
           </Button>
           <Button onClick={handleImport} size="sm" className="max-sm:w-full">

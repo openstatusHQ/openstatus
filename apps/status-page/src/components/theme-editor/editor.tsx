@@ -93,7 +93,7 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
                       styles={styles}
                       onChange={handleStyleChange}
                       currentMode={themeState.currentMode}
-                      themePromise={themePromise}
+                      // themePromise={themePromise}
                     />
                   </div>
                 </TabsContent>
@@ -135,7 +135,7 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
                     styles={styles}
                     onChange={handleStyleChange}
                     currentMode={themeState.currentMode}
-                    themePromise={themePromise}
+                    // themePromise={themePromise}
                   />
                 </div>
               </ResizablePanel>

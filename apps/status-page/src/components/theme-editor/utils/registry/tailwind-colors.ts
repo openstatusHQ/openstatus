@@ -1,4 +1,4 @@
-import { ValidTailwindShade } from "@/types";
+import type { ValidTailwindShade } from "../../types/index";
 
 // Complete Tailwind CSS color palette
 export const TAILWIND_PALETTE = {

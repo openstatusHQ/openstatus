@@ -1,27 +1,27 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
-import React, { use, useState } from "react";
+import React, { useState } from "react";
 
 import { HorizontalScrollArea } from "@/components/horizontal-scroll-area";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import ColorPicker from "./color-picker";
 import { COMMON_STYLES, defaultThemeState } from "./config/theme";
 import ControlSection from "./control-section";
-import { FontPicker } from "./font-picker";
-import HslAdjustmentControls from "./hsl-adjustment-controls";
+// import { FontPicker } from "./font-picker";
+// import HslAdjustmentControls from "./hsl-adjustment-controls";
 import ShadowControl from "./shadow-control";
 import { SliderWithInput } from "./slider-with-input";
-import { useEditorStore } from "./store/editor-store";
+// import { useEditorStore } from "./store/editor-store";
 // import ThemeEditActions from "./theme-edit-actions";
 import ThemePresetSelect from "./theme-preset-select";
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill";
-import type { FontInfo } from "./types/fonts";
+// import type { FontInfo } from "./types/fonts";
 import type { ThemeEditorControlsProps, ThemeStyleProps } from "./types/theme";
-import { buildFontFamily } from "./utils/fonts";
-import { getAppliedThemeFont } from "./utils/theme-fonts";
+// import { buildFontFamily } from "./utils/fonts";
+// import { getAppliedThemeFont } from "./utils/theme-fonts";
 
 type ControlTab = "colors" | "typography" | "other";
 
@@ -29,9 +29,9 @@ const ThemeControlPanel = ({
   styles,
   currentMode,
   onChange,
-  themePromise,
+  // themePromise,
 }: ThemeEditorControlsProps) => {
-  const { themeState } = useEditorStore();
+  // const { themeState } = useEditorStore();
   const [tab, setTab] = useState<ControlTab>("colors");
 
   const currentStyles = React.useMemo(
@@ -73,19 +73,14 @@ const ThemeControlPanel = ({
     return null; // Or some fallback UI
   }
 
-  const radius = parseFloat(currentStyles.radius.replace("rem", ""));
+  const radius = Number.parseFloat(currentStyles.radius.replace("rem", ""));
 
-  const theme = use(themePromise);
+  // const theme = use(themePromise);
 
   return (
     <>
       <div className="border-b">
-        {!theme ? (
-          <ThemePresetSelect className="h-14 rounded-none" />
-        ) : (
-          <></>
-          // <ThemeEditActions theme={theme} />
-        )}
+        <ThemePresetSelect className="h-14 rounded-none" />
       </div>
       <div className="flex min-h-0 flex-1 flex-col space-y-4">
         <Tabs
@@ -355,6 +350,7 @@ const ThemeControlPanel = ({
                     <a
                       href="https://tailwindcss.com/docs/font-family"
                       target="_blank"
+                      rel="noreferrer"
                       className="hover:text-muted-foreground/90 underline underline-offset-2"
                     >
                       Tailwind docs
@@ -364,7 +360,7 @@ const ThemeControlPanel = ({
                 </div>
               </div>
 
-              <ControlSection title="Font Family" expanded className="p-3">
+              {/* <ControlSection title="Font Family" expanded className="p-3">
                 <div className="mb-4">
                   <Label htmlFor="font-sans" className="mb-1.5 block text-xs">
                     Sans-Serif Font
@@ -424,11 +420,11 @@ const ThemeControlPanel = ({
                     }}
                   />
                 </div>
-              </ControlSection>
+              </ControlSection> */}
 
               <ControlSection title="Letter Spacing" expanded>
                 <SliderWithInput
-                  value={parseFloat(
+                  value={Number.parseFloat(
                     currentStyles["letter-spacing"]?.replace("em", ""),
                   )}
                   onChange={(value) =>
@@ -446,9 +442,9 @@ const ThemeControlPanel = ({
 
           <TabsContent value="other" className="mt-1 size-full overflow-hidden">
             <ScrollArea className="h-full px-4">
-              <ControlSection title="HSL Adjustments" expanded>
+              {/* <ControlSection title="HSL Adjustments" expanded>
                 <HslAdjustmentControls />
-              </ControlSection>
+              </ControlSection> */}
 
               <ControlSection title="Radius" expanded>
                 <SliderWithInput
@@ -464,7 +460,7 @@ const ThemeControlPanel = ({
 
               <ControlSection title="Spacing">
                 <SliderWithInput
-                  value={parseFloat(
+                  value={Number.parseFloat(
                     currentStyles?.spacing?.replace("rem", "") || "0",
                   )}
                   onChange={(value) => updateStyle("spacing", `${value}rem`)}
@@ -479,17 +475,19 @@ const ThemeControlPanel = ({
               <ControlSection title="Shadow">
                 <ShadowControl
                   shadowColor={currentStyles["shadow-color"]}
-                  shadowOpacity={parseFloat(currentStyles["shadow-opacity"])}
-                  shadowBlur={parseFloat(
+                  shadowOpacity={Number.parseFloat(
+                    currentStyles["shadow-opacity"],
+                  )}
+                  shadowBlur={Number.parseFloat(
                     currentStyles["shadow-blur"]?.replace("px", ""),
                   )}
-                  shadowSpread={parseFloat(
+                  shadowSpread={Number.parseFloat(
                     currentStyles["shadow-spread"]?.replace("px", ""),
                   )}
-                  shadowOffsetX={parseFloat(
+                  shadowOffsetX={Number.parseFloat(
                     currentStyles["shadow-offset-x"]?.replace("px", ""),
                   )}
-                  shadowOffsetY={parseFloat(
+                  shadowOffsetY={Number.parseFloat(
                     currentStyles["shadow-offset-y"]?.replace("px", ""),
                   )}
                   onChange={(key, value) => {

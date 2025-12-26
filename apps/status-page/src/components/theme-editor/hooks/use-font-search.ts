@@ -1,5 +1,5 @@
-import { PaginatedFontsResponse, type FontCategory } from "../types/fonts";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import type { FontCategory, PaginatedFontsResponse } from "../types/fonts";
 
 export type FilterFontCategory = "all" | FontCategory;
 

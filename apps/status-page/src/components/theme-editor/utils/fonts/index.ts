@@ -1,4 +1,4 @@
-import { FontCategory, FontInfo } from "../../types/fonts";
+import type { FontCategory, FontInfo } from "../../types/fonts";
 
 // Categories mapped to their display names and common fallbacks
 export const FONT_CATEGORIES = {
@@ -179,7 +179,10 @@ export const FALLBACK_FONTS: FontInfo[] = [
 
 // Build font-family value for CSS
 // e.g., font: "Inter", category: "sans-serif" -> "Inter, ui-sans-serif, system-ui, sans-serif"
-export function buildFontFamily(fontFamily: string, category: FontCategory): string {
+export function buildFontFamily(
+  fontFamily: string,
+  category: FontCategory,
+): string {
   return `${fontFamily}, ${SYSTEM_FONTS_FALLBACKS[category]}`;
 }
 
@@ -201,18 +204,34 @@ export function extractFontFamily(fontFamilyValue: string): string | null {
 
 // Get default weights for a font based on available variants
 export function getDefaultWeights(variants: string[]): string[] {
-  const weightMap = ["100", "200", "300", "400", "500", "600", "700", "800", "900"];
-  const availableWeights = variants.filter((variant) => weightMap.includes(variant));
+  const weightMap = [
+    "100",
+    "200",
+    "300",
+    "400",
+    "500",
+    "600",
+    "700",
+    "800",
+    "900",
+  ];
+  const availableWeights = variants.filter((variant) =>
+    weightMap.includes(variant),
+  );
 
   if (availableWeights.length === 0) return ["400"]; // Fallback to normal weight
 
   const preferredWeights = ["400", "500", "600", "700"];
-  const selectedWeights = preferredWeights.filter((weight) => availableWeights.includes(weight));
+  const selectedWeights = preferredWeights.filter((weight) =>
+    availableWeights.includes(weight),
+  );
 
   // If none of the preferred weights are available, use the first two available
   if (selectedWeights.length === 0) {
     const fallbackWeights = availableWeights.slice(0, 2);
-    return fallbackWeights.sort((a, b) => parseInt(a) - parseInt(b));
+    return fallbackWeights.sort(
+      (a, b) => Number.parseInt(a) - Number.parseInt(b),
+    );
   }
 
   // Return up to 4 weights, starting with preferred ones
@@ -222,7 +241,7 @@ export function getDefaultWeights(variants: string[]): string[] {
   ].slice(0, 4);
 
   // Sort weights numerically for Google Fonts API requirement
-  return finalWeights.sort((a, b) => parseInt(a) - parseInt(b));
+  return finalWeights.sort((a, b) => Number.parseInt(a) - Number.parseInt(b));
 }
 
 // Check if a font is available using the native document.fonts API
@@ -237,7 +256,7 @@ export function isFontLoaded(family: string, weight = "400"): boolean {
 export async function waitForFont(
   family: string,
   weight = "400",
-  timeout = 3000
+  timeout = 3000,
 ): Promise<boolean> {
   if (typeof document === "undefined" || !document.fonts) return false;
 
@@ -247,7 +266,9 @@ export async function waitForFont(
     // Use the native document.fonts.load() method
     await Promise.race([
       document.fonts.load(font),
-      new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), timeout),
+      ),
     ]);
 
     return document.fonts.check(font);

@@ -2,7 +2,7 @@
 
 // import ShadcnBlocksLogo from "@/assets/shadcnblocks.svg";
 import { HorizontalScrollArea } from "@/components/horizontal-scroll-area";
-import { ThemeToggle } from "@/components/theme-toggle";
+// import { ThemeToggle } from "@/components/theme-toggle";
 import { TooltipWrapper } from "@/components/tooltip-wrapper";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,13 +11,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { /* Maximize, Minimize, */ MoreVertical } from "lucide-react";
-import Link from "next/link";
 import { useQueryState } from "nuqs";
-import { lazy } from "react";
 // import { useFullscreen } from "./hooks/use-fullscreen";
 import ColorPreview from "./theme-preview/color-preview";
 import ExamplesPreviewContainer from "./theme-preview/examples-preview-container";
@@ -39,7 +37,7 @@ const ThemePreviewPanel = ({
 }: ThemeEditorPreviewProps) => {
   // const { isFullscreen, toggleFullscreen } = useFullscreen();
   const [activeTab, setActiveTab] = useQueryState("p", {
-    defaultValue: "cards",
+    defaultValue: "status-page",
   });
 
   if (!styles || !styles[currentMode]) {
@@ -65,14 +63,15 @@ const ThemePreviewPanel = ({
         >
           <HorizontalScrollArea className="mt-2 mb-1 flex w-full items-center justify-between px-4">
             <TabsList className="bg-background text-muted-foreground inline-flex w-fit items-center justify-center rounded-full px-0">
-              <TabsTriggerPill value="custom">Custom</TabsTriggerPill>
-              <TabsTriggerPill value="cards">Cards</TabsTriggerPill>
+              {/* <TabsTriggerPill value="custom">Custom</TabsTriggerPill>
+              <TabsTriggerPill value="cards">Cards</TabsTriggerPill> */}
 
-              <div className="hidden md:flex">
+              {/* <div className="hidden md:flex">
                 <TabsTriggerPill value="dashboard">Dashboard</TabsTriggerPill>
                 <TabsTriggerPill value="mail">Mail</TabsTriggerPill>
               </div>
-              <TabsTriggerPill value="pricing">Pricing</TabsTriggerPill>
+              <TabsTriggerPill value="pricing">Pricing</TabsTriggerPill> */}
+              <TabsTriggerPill value="status-page">Status Page</TabsTriggerPill>
               <TabsTriggerPill value="colors">Color Palette</TabsTriggerPill>
 
               <DropdownMenu>
@@ -93,15 +92,15 @@ const ThemePreviewPanel = ({
               </DropdownMenu>
             </TabsList>
 
-            <div className="flex items-center gap-0.5">
-              {/* {isFullscreen && (
+            {/* <div className="flex items-center gap-0.5">
+              {isFullscreen && (
                 <ThemeToggle
                   variant="ghost"
                   size="icon"
                   className="group size-8 hover:[&>svg]:scale-120 hover:[&>svg]:transition-all"
                 />
-              )} */}
-              {/* <TooltipWrapper
+              )}
+              <TooltipWrapper
                 label={isFullscreen ? "Exit full screen" : "Full screen"}
                 className="hidden md:inline-flex"
                 asChild
@@ -118,8 +117,8 @@ const ThemePreviewPanel = ({
                     <Maximize className="transition-all group-hover:scale-120" />
                   )}
                 </Button>
-              </TooltipWrapper> */}
-            </div>
+              </TooltipWrapper>
+            </div> */}
           </HorizontalScrollArea>
 
           <section className="relative size-full overflow-hidden p-4 pt-1">
@@ -132,27 +131,30 @@ const ThemePreviewPanel = ({
                 </ExamplesPreviewContainer>
               </TabsContent>
 
-              <TabsContent value="custom" className="@container m-0 size-full">
+              <TabsContent
+                value="status-page"
+                className="@container m-0 size-full"
+              >
                 <ExamplesPreviewContainer className="size-full">
-                  {/* <CustomDemo /> */}
+                  <div>Status Page</div>
                 </ExamplesPreviewContainer>
               </TabsContent>
 
-              <TabsContent
+              {/* <TabsContent
                 value="dashboard"
                 className="@container m-0 size-full"
               >
                 <ExamplesPreviewContainer className="size-full">
                   <ScrollArea className="size-full">
                     <div className="size-full min-w-[1400px]">
-                      {/* <DemoDashboard /> */}
+                      <DemoDashboard />
                     </div>
                     <ScrollBar orientation="horizontal" />
                   </ScrollArea>
                 </ExamplesPreviewContainer>
-              </TabsContent>
+              </TabsContent> */}
 
-              <TabsContent
+              {/* <TabsContent
                 value="pricing"
                 className="@container mt-0 h-full space-y-6"
               >
@@ -167,10 +169,10 @@ const ThemePreviewPanel = ({
                         className="group h-12 shadow-sm"
                       >
                         <div className="flex items-center gap-2">
-                          {/* <ShadcnBlocksLogo
+                          <ShadcnBlocksLogo
                             className="shrink-0"
                             style={{ width: "24px", height: "24px" }}
-                          /> */}
+                          />
                           <div className="text-left">
                             <div className="font-bold">Shadcnblocks.com</div>
                             <div className="text-muted-foreground group-hover:text-accent-foreground text-xs transition-colors">
@@ -182,29 +184,29 @@ const ThemePreviewPanel = ({
                     </Link>
                   </div>
                   <ScrollArea className="size-full">
-                    {/* <DemoPricing /> */}
+                    <DemoPricing />
                   </ScrollArea>
                 </ExamplesPreviewContainer>
-              </TabsContent>
+              </TabsContent> */}
 
-              <TabsContent value="mail" className="@container m-0 size-full">
+              {/* <TabsContent value="mail" className="@container m-0 size-full">
                 <ExamplesPreviewContainer className="size-full">
                   <ScrollArea className="size-full">
                     <div className="size-full min-w-[1300px]">
-                      {/* <DemoMail /> */}
+                      <DemoMail />
                     </div>
                     <ScrollBar orientation="horizontal" />
                   </ScrollArea>
                 </ExamplesPreviewContainer>
-              </TabsContent>
+              </TabsContent> */}
 
-              <TabsContent value="typography" className="m-0 size-full">
+              {/* <TabsContent value="typography" className="m-0 size-full">
                 <ExamplesPreviewContainer className="size-full">
                   <ScrollArea className="size-full">
-                    {/* <TypographyDemo /> */}
+                    <TypographyDemo />
                   </ScrollArea>
                 </ExamplesPreviewContainer>
-              </TabsContent>
+              </TabsContent> */}
 
               <TabsContent value="colors" className="m-0 size-full">
                 <ScrollArea className="size-full">

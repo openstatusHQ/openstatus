@@ -1,9 +1,9 @@
-import { ThemeEditorState } from "../types/editor";
-import { ThemeStyleProps, ThemeStyles } from "../types/theme";
+import { COMMON_STYLES } from "../config/theme";
+import type { ThemeEditorState } from "../types/editor";
+import type { ThemeStyleProps, ThemeStyles } from "../types/theme";
+import { applyStyleToElement } from "./apply-style-to-element";
 import { colorFormatter } from "./color-converter";
 import { setShadowVariables } from "./shadows";
-import { applyStyleToElement } from "./apply-style-to-element";
-import { COMMON_STYLES } from "../config/theme";
 
 type Theme = "dark" | "light";
 
@@ -22,8 +22,8 @@ const applyCommonStyles = (root: HTMLElement, themeStyles: ThemeStyleProps) => {
   Object.entries(themeStyles)
     .filter(([key]) =>
       COMMON_NON_COLOR_KEYS.includes(
-        key as (typeof COMMON_NON_COLOR_KEYS)[number]
-      )
+        key as (typeof COMMON_NON_COLOR_KEYS)[number],
+      ),
     )
     .forEach(([key, value]) => {
       if (typeof value === "string") {
@@ -35,13 +35,13 @@ const applyCommonStyles = (root: HTMLElement, themeStyles: ThemeStyleProps) => {
 const applyThemeColors = (
   root: HTMLElement,
   themeStyles: ThemeStyles,
-  mode: Theme
+  mode: Theme,
 ) => {
   Object.entries(themeStyles[mode]).forEach(([key, value]) => {
     if (
       typeof value === "string" &&
       !COMMON_NON_COLOR_KEYS.includes(
-        key as (typeof COMMON_NON_COLOR_KEYS)[number]
+        key as (typeof COMMON_NON_COLOR_KEYS)[number],
       )
     ) {
       const hslValue = colorFormatter(value, "hsl", "4");
@@ -53,7 +53,7 @@ const applyThemeColors = (
 // Exported function to apply theme styles to an element
 export const applyThemeToElement = (
   themeState: ThemeEditorState,
-  rootElement: HTMLElement
+  rootElement: HTMLElement,
 ) => {
   const { currentMode: mode, styles: themeStyles } = themeState;
 
