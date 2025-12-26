@@ -50,7 +50,7 @@ export type ReadOnlyColorDisplayProps = {
   linkTo: string;
 };
 
-export type ColorFormat = "hex" | "rgb" | "hsl"; // | "oklch" - Commented out due to browser compatibility issues
+export type ColorFormat = "hex" | "rgb" | "hsl" | "oklch";
 
 export type ValidTailwindShade =
   | "50"

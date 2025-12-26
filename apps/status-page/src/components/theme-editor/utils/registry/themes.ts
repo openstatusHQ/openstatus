@@ -9,7 +9,7 @@ import { getPresetThemeStyles } from "../theme-preset-helper";
 
 // Convert HSL color to the format expected by shadcn registry
 const convertToRegistryColor = (color: string): string => {
-  return colorFormatter(color, "hex"); // Changed from "oklch" to "hex" for browser compatibility
+  return colorFormatter(color, "oklch");
 };
 
 // Helper to get a value from either dark or light theme

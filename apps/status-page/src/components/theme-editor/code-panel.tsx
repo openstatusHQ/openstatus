@@ -1,3 +1,4 @@
+import type { ColorFormat } from "@/components/theme-editor/types";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,12 +9,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePreferencesStore } from "@/store/preferences-store";
-// import { useThemePresetStore } from "@/store/theme-preset-store";
-import type { ColorFormat } from "@/types";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
-// import { useEditorStore } from "./store/editor-store";
+import { CodeBlock } from "./code-block";
 import type { ThemeEditorState } from "./types/editor";
 import {
   generateTailwindConfigCode,
@@ -25,25 +24,15 @@ interface CodePanelProps {
 }
 
 const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
-  // const [registryCopied, setRegistryCopied] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("index.css");
 
-  // const preset = useEditorStore((state) => state.themeState.preset);
   const colorFormat = usePreferencesStore((state) => state.colorFormat);
-  // const tailwindVersion = usePreferencesStore((state) => state.tailwindVersion);
+  const tailwindVersion = usePreferencesStore((state) => state.tailwindVersion);
   const setColorFormat = usePreferencesStore((state) => state.setColorFormat);
-  // const setTailwindVersion = usePreferencesStore(
-  //   (state) => state.setTailwindVersion,
-  // );
-  // const setPackageManager = usePreferencesStore(
-  //   (state) => state.setPackageManager,
-  // );
-  // const hasUnsavedChanges = useEditorStore((state) => state.hasUnsavedChanges);
-
-  // const isSavedPreset = useThemePresetStore(
-  //   (state) => preset && state.getPreset(preset)?.source === "SAVED",
-  // );
+  const setTailwindVersion = usePreferencesStore(
+    (state) => state.setTailwindVersion,
+  );
   const getAvailableColorFormats = usePreferencesStore(
     (state) => state.getAvailableColorFormats,
   );
@@ -51,13 +40,9 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
   const code = generateThemeCode(
     themeEditorState,
     colorFormat,
-    // "4", // tailwindVersion - hardcoded to v4
+    tailwindVersion,
   );
-  const configCode = generateTailwindConfigCode(
-    themeEditorState,
-    colorFormat,
-    "4", // tailwindVersion - hardcoded to v4
-  );
+  const configCode = generateTailwindConfigCode(themeEditorState, colorFormat);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -77,16 +62,14 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
         </div>
       </div>
       <div className="mb-4 flex items-center gap-2">
-        {/* Tailwind version selector - commented out for v4 only */}
-        {/* <Select
+        <Select
           value={tailwindVersion}
           onValueChange={(value: "3" | "4") => {
             setTailwindVersion(value);
-            // OKLCH removed - using hex as default for browser compatibility
-            // if (value === "4" && colorFormat === "hsl") {
-            //   setColorFormat("oklch");
-            //   setActiveTab("index.css");
-            // }
+            if (value === "4" && colorFormat === "hsl") {
+              setColorFormat("oklch");
+              setActiveTab("index.css");
+            }
           }}
         >
           <SelectTrigger className="bg-muted/50 w-fit gap-1 border-none outline-hidden focus:border-none focus:ring-transparent">
@@ -96,7 +79,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
             <SelectItem value="3">Tailwind v3</SelectItem>
             <SelectItem value="4">Tailwind v4</SelectItem>
           </SelectContent>
-        </Select> */}
+        </Select>
         <Select
           value={colorFormat}
           onValueChange={(value: ColorFormat) => setColorFormat(value)}
@@ -127,15 +110,14 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
             >
               index.css
             </TabsTrigger>
-            {/* Tailwind v3 config tab - commented out for v4 only */}
-            {/* {tailwindVersion === "3" && (
+            {tailwindVersion === "3" && (
               <TabsTrigger
                 value="tailwind.config.ts"
                 className="h-7 px-3 text-sm font-medium"
               >
                 tailwind.config.ts
               </TabsTrigger>
-            )} */}
+            )}
           </TabsList>
 
           <div className="flex items-center gap-2">
@@ -165,26 +147,29 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
 
         <TabsContent value="index.css" className="overflow-hidden">
           <ScrollArea className="relative h-full">
-            <pre className="h-full rounded-none border-0 p-4 text-sm">
-              <code>{code}</code>
-            </pre>
+            <CodeBlock
+              code={code}
+              language="css"
+              className="h-full rounded-none border-0"
+            />
             <ScrollBar orientation="horizontal" />
             <ScrollBar orientation="vertical" />
           </ScrollArea>
         </TabsContent>
 
-        {/* Tailwind v3 config content - commented out for v4 only */}
-        {/* {tailwindVersion === "3" && (
+        {tailwindVersion === "3" && (
           <TabsContent value="tailwind.config.ts" className="overflow-hidden">
             <ScrollArea className="relative h-full">
-              <pre className="h-full rounded-none border-0 p-4 text-sm">
-                <code>{configCode}</code>
-              </pre>
+              <CodeBlock
+                code={configCode}
+                language="typescript"
+                className="h-full rounded-none border-0"
+              />
               <ScrollBar orientation="horizontal" />
               <ScrollBar orientation="vertical" />
             </ScrollArea>
           </TabsContent>
-        )} */}
+        )}
       </Tabs>
     </div>
   );

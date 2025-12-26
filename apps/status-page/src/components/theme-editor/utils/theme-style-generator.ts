@@ -276,7 +276,7 @@ module.exports = {
 export const generateThemeCode = (
   themeEditorState: ThemeEditorState,
   colorFormat: ColorFormat = "hsl",
-  // tailwindVersion: "3" | "4" = "4", // Changed default to "4" - using v4 only
+  tailwindVersion: "3" | "4" = "4",
 ): string => {
   if (
     !themeEditorState ||
@@ -288,12 +288,14 @@ export const generateThemeCode = (
 
   const themeStyles = themeEditorState.styles as ThemeStyles;
   const formatColor = (color: string) =>
-    colorFormatter(color, colorFormat, "4"); // Hardcoded to "4"
+    colorFormatter(color, colorFormat, tailwindVersion);
 
   const lightTheme = generateThemeVariables(themeStyles, "light", formatColor);
   const darkTheme = generateThemeVariables(themeStyles, "dark", formatColor);
-  // const tailwindV4Theme = tailwindVersion === "4" ? `\n\n${generateTailwindV4ThemeInline(themeStyles)}` : ""; // Commented out - always using v4
-  const tailwindV4Theme = `\n\n${generateTailwindV4ThemeInline(themeStyles)}`; // Always generate v4 theme
+  const tailwindV4Theme =
+    tailwindVersion === "4"
+      ? `\n\n${generateTailwindV4ThemeInline(themeStyles)}`
+      : "";
 
   const bodyLetterSpacing =
     themeStyles["light"]["letter-spacing"] !== "0em"
@@ -306,7 +308,6 @@ export const generateThemeCode = (
 export const generateTailwindConfigCode = (
   themeEditorState: ThemeEditorState,
   colorFormat: ColorFormat = "hsl",
-  _tailwindVersion: "3" | "4" = "4", // Changed default to "4" - parameter unused, kept for compatibility
 ): string => {
   if (
     !themeEditorState ||
