@@ -205,7 +205,7 @@ const ThemePresetSelect: React.FC<ThemePresetSelectProps> = ({
 }) => {
   const themeState = useEditorStore((store) => store.themeState);
   const applyThemePreset = useEditorStore((store) => store.applyThemePreset);
-  // const hasUnsavedChanges = useEditorStore((store) => store.hasUnsavedChanges);
+  const hasUnsavedChanges = useEditorStore((store) => store.hasUnsavedChanges);
   const currentPreset = themeState.preset;
   const mode = themeState.currentMode;
 
@@ -264,11 +264,11 @@ const ThemePresetSelect: React.FC<ThemePresetSelectProps> = ({
                 <ColorBox color={themeState.styles[mode].border} />
               </div>
               <span className="truncate text-left font-medium capitalize">
-                {/* {hasUnsavedChanges() ? (
+                {hasUnsavedChanges() ? (
                   <>Custom</>
                 ) : (
                   presets[currentPresetName || "default"]?.label || "default"
-                )} */}
+                )}
               </span>
             </div>
             <ChevronDown className="size-4 shrink-0" />
