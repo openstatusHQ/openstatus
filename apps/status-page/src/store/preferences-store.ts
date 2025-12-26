@@ -13,11 +13,9 @@ const colorFormatsByVersion = {
 interface PreferencesStore {
   // tailwindVersion: "3" | "4"; // Commented out - using v4 only
   colorFormat: ColorFormat;
-  packageManager: PackageManager;
   colorSelectorTab: ColorSelectorTab;
   // setTailwindVersion: (version: "3" | "4") => void; // Commented out - using v4 only
   setColorFormat: (format: ColorFormat) => void;
-  setPackageManager: (pm: PackageManager) => void;
   setColorSelectorTab: (tab: ColorSelectorTab) => void;
   getAvailableColorFormats: () => readonly ColorFormat[];
 }
@@ -27,7 +25,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
     (set, get) => ({
       // tailwindVersion: "4", // Commented out - using v4 only
       colorFormat: "hex", // Changed from "oklch" to "hex" for browser compatibility
-      packageManager: "pnpm",
       colorSelectorTab: "list",
       // setTailwindVersion: (version: "3" | "4") => { // Commented out - using v4 only
       //   const currentFormat = get().colorFormat;
@@ -43,9 +40,6 @@ export const usePreferencesStore = create<PreferencesStore>()(
         if (availableFormats.includes(format)) {
           set({ colorFormat: format });
         }
-      },
-      setPackageManager: (pm: PackageManager) => {
-        set({ packageManager: pm });
       },
       setColorSelectorTab: (tab: ColorSelectorTab) => {
         set({ colorSelectorTab: tab });

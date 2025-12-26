@@ -32,7 +32,6 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
   // const preset = useEditorStore((state) => state.themeState.preset);
   const colorFormat = usePreferencesStore((state) => state.colorFormat);
   // const tailwindVersion = usePreferencesStore((state) => state.tailwindVersion);
-  // const packageManager = usePreferencesStore((state) => state.packageManager);
   const setColorFormat = usePreferencesStore((state) => state.setColorFormat);
   // const setTailwindVersion = usePreferencesStore(
   //   (state) => state.setTailwindVersion,
@@ -60,35 +59,6 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
     "4", // tailwindVersion - hardcoded to v4
   );
 
-  // const getRegistryCommand = (preset: string) => {
-  //   const url = isSavedPreset
-  //     ? `https://tweakcn.com/r/themes/${preset}`
-  //     : `https://tweakcn.com/r/themes/${preset}.json`;
-  //   switch (packageManager) {
-  //     case "pnpm":
-  //       return `pnpm dlx shadcn@latest add ${url}`;
-  //     case "npm":
-  //       return `npx shadcn@latest add ${url}`;
-  //     case "yarn":
-  //       return `yarn dlx shadcn@latest add ${url}`;
-  //     case "bun":
-  //       return `bunx shadcn@latest add ${url}`;
-  //   }
-  // };
-
-  // const copyRegistryCommand = async () => {
-  //   try {
-  //     await navigator.clipboard.writeText(
-  //       getRegistryCommand(preset ?? "default"),
-  //     );
-  //     setRegistryCopied(true);
-  //     setTimeout(() => setRegistryCopied(false), 2000);
-  //     captureCopyEvent("COPY_REGISTRY_COMMAND");
-  //   } catch (err) {
-  //     console.error("Failed to copy text:", err);
-  //   }
-  // };
-
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -99,72 +69,11 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
     }
   };
 
-  // const showRegistryCommand = useMemo(() => {
-  //   return preset && preset !== "default" && !hasUnsavedChanges();
-  // }, [preset, hasUnsavedChanges]);
-
-  // const PackageManagerHeader = ({
-  //   actionButton,
-  // }: { actionButton: React.ReactNode }) => (
-  //   <div className="flex border-b">
-  //     {(["pnpm", "npm", "yarn", "bun"] as const).map((pm) => (
-  //       <button
-  //         key={pm}
-  //         type="button"
-  //         onClick={() => setPackageManager(pm)}
-  //         className={`px-3 py-1.5 text-sm font-medium ${
-  //           packageManager === pm
-  //             ? "bg-muted text-foreground"
-  //             : "text-muted-foreground hover:text-foreground"
-  //         }`}
-  //       >
-  //         {pm}
-  //       </button>
-  //     ))}
-  //     {actionButton}
-  //   </div>
-  // );
-
   return (
     <div className="flex h-full flex-col">
       <div className="mb-4 flex-none">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Theme Code</h2>
-        </div>
-        <div className="mt-4 overflow-hidden rounded-md border">
-          {/* <PackageManagerHeader
-            actionButton={
-              showRegistryCommand ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyRegistryCommand}
-                  className="ml-auto h-8"
-                  aria-label={
-                    registryCopied ? "Copied to clipboard" : "Copy to clipboard"
-                  }
-                >
-                  {registryCopied ? (
-                    <Check className="size-4" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
-                </Button>
-              ) : null
-            }
-          /> */}
-          {/* {showRegistryCommand && (
-            <div className="bg-muted/50 flex items-center justify-between p-2">
-              <ScrollArea className="w-full">
-                <div className="overflow-y-hidden pb-2 whitespace-nowrap">
-                  <code className="font-mono text-sm">
-                    {getRegistryCommand(preset as string)}
-                  </code>
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </div>
-          )} */}
         </div>
       </div>
       <div className="mb-4 flex items-center gap-2">

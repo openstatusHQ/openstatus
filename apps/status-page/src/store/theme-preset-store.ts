@@ -16,7 +16,6 @@ interface ThemePresetStore {
   getAllPresets: () => Record<string, ThemePreset>;
   getPreset: (id: string) => ThemePreset | undefined;
   loadDefaultPresets: () => void;
-  loadSavedPresets: () => void;
   unloadSavedPresets: () => void;
 }
 
@@ -27,10 +26,7 @@ export const useThemePresetStore = create<ThemePresetStore>((set, get) => ({
   loadDefaultPresets: () => {
     set({ presets: defaultPresets });
   },
-  loadSavedPresets: () => {
-    // This would normally fetch saved presets from an API
-    // For now, we just keep it empty
-  },
+
   unloadSavedPresets: () => {
     set({ presets: defaultPresets });
   },
