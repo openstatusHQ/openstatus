@@ -7,11 +7,11 @@ import { ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { COMMON_STYLES, defaultThemeState } from "./config/theme";
 import { HslPresetButton } from "./hsl-preset-button";
-// import { SliderWithInput } from "./slider-with-input";
+import { SliderWithInput } from "./slider-with-input";
 import { useEditorStore } from "./store/editor-store";
 import type { ThemeEditorState } from "./types/editor";
 import { debounce } from "./utils/debounce";
-// import { isDeepEqual } from "./utils/theme-preset-helper";
+import { isDeepEqual } from "./utils/theme-preset-helper";
 
 // Adjusts a color by modifying HSL values
 function adjustColorByHsl(
@@ -101,25 +101,25 @@ const HSL_PRESETS = [
 ];
 
 const HslAdjustmentControls = () => {
-  const { themeState, setThemeState } = useEditorStore();
-  // const { themeState, setThemeState, saveThemeCheckpoint, themeCheckpoint } = useEditorStore(); // Commented out - no checkpoint feature
+  const { themeState, setThemeState, saveThemeCheckpoint, themeCheckpoint } =
+    useEditorStore();
   const debouncedUpdateRef = useRef<ReturnType<typeof debounce> | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Get current HSL adjustments with fallback to defaults
   const currentHslAdjustments = useMemo(
-    () => themeState.hslAdjustments ?? defaultThemeState.hslAdjustments,
+    () => themeState.hslAdjustments ?? defaultThemeState?.hslAdjustments,
     [themeState.hslAdjustments],
   );
 
-  // Checkpoint save effect commented out - no checkpoint feature
-  // useEffect(() => {
-  //   if (
-  //     isDeepEqual(themeState.hslAdjustments, defaultThemeState.hslAdjustments)
-  //   ) {
-  //     saveThemeCheckpoint();
-  //   }
-  // }, [themeState.hslAdjustments, saveThemeCheckpoint]);
+  // Save checkpoint if HSL adjustments are at default values
+  useEffect(() => {
+    if (
+      isDeepEqual(themeState.hslAdjustments, defaultThemeState.hslAdjustments)
+    ) {
+      saveThemeCheckpoint();
+    }
+  }, [themeState.hslAdjustments, saveThemeCheckpoint]);
 
   // Setup debounced update function
   useEffect(() => {
@@ -134,8 +134,7 @@ const HslAdjustmentControls = () => {
         } = hslAdjustments ?? {};
 
         const adjustments = { hueShift, saturationScale, lightnessScale };
-        const state = themeState; // Simplified - no checkpoint feature
-        // const state = themeCheckpoint ?? themeState; // Commented out - no checkpoint feature
+        const state = themeCheckpoint ?? themeState;
         const { light: lightStyles, dark: darkStyles } = state.styles;
 
         const updatedLightStyles = Object.keys(lightStyles)
@@ -182,8 +181,7 @@ const HslAdjustmentControls = () => {
     );
 
     return () => debouncedUpdateRef.current?.cancel();
-  }, [themeState, setThemeState]);
-  // }, [themeState, setThemeState, themeCheckpoint]); // Commented out - removed themeCheckpoint dependency
+  }, [themeState, setThemeState, themeCheckpoint]);
 
   // Handle HSL value changes
   const handleHslChange = useCallback(
@@ -207,8 +205,9 @@ const HslAdjustmentControls = () => {
     [],
   );
 
-  const currentStyles = themeState.styles[themeState.currentMode];
-  // const currentStyles = (themeCheckpoint ?? themeState).styles[themeState.currentMode]; // Commented out - no checkpoint feature
+  const currentStyles = (themeCheckpoint ?? themeState).styles[
+    themeState.currentMode
+  ];
 
   return (
     <div className="@container">
@@ -230,10 +229,10 @@ const HslAdjustmentControls = () => {
             basePrimary={currentStyles.primary}
             baseSecondary={currentStyles.secondary}
             selected={
-              currentHslAdjustments?.hueShift === preset.hueShift &&
-              currentHslAdjustments?.saturationScale ===
+              currentHslAdjustments.hueShift === preset.hueShift &&
+              currentHslAdjustments.saturationScale ===
                 preset.saturationScale &&
-              currentHslAdjustments?.lightnessScale === preset.lightnessScale
+              currentHslAdjustments.lightnessScale === preset.lightnessScale
             }
             adjustColorByHsl={adjustColorByHsl}
             onClick={() => {
@@ -261,14 +260,9 @@ const HslAdjustmentControls = () => {
         </Button>
       )}
 
-      {/* <SliderWithInput
-        value={currentHslAdjustments?.hueShift}
-        onChange={(value) =>
-          handleHslChange(
-            "hueShift" as keyof typeof currentHslAdjustments,
-            value,
-          )
-        }
+      <SliderWithInput
+        value={currentHslAdjustments.hueShift}
+        onChange={(value) => handleHslChange("hueShift", value)}
         unit="deg"
         min={-180}
         max={180}
@@ -276,13 +270,8 @@ const HslAdjustmentControls = () => {
         label="Hue Shift"
       />
       <SliderWithInput
-        value={currentHslAdjustments?.saturationScale}
-        onChange={(value) =>
-          handleHslChange(
-            "saturationScale" as keyof typeof currentHslAdjustments,
-            value,
-          )
-        }
+        value={currentHslAdjustments.saturationScale}
+        onChange={(value) => handleHslChange("saturationScale", value)}
         unit="x"
         min={0}
         max={2}
@@ -290,19 +279,14 @@ const HslAdjustmentControls = () => {
         label="Saturation Multiplier"
       />
       <SliderWithInput
-        value={currentHslAdjustments?.lightnessScale}
-        onChange={(value) =>
-          handleHslChange(
-            "lightnessScale" as keyof typeof currentHslAdjustments,
-            value,
-          )
-        }
+        value={currentHslAdjustments.lightnessScale}
+        onChange={(value) => handleHslChange("lightnessScale", value)}
         unit="x"
         min={0.2}
         max={2}
         step={0.01}
         label="Lightness Multiplier"
-      /> */}
+      />
     </div>
   );
 };

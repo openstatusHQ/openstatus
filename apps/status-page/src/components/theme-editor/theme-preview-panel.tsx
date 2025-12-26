@@ -14,9 +14,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { /* Maximize, Minimize, */ MoreVertical } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import { useQueryState } from "nuqs";
-// import { useFullscreen } from "./hooks/use-fullscreen";
 import ColorPreview from "./theme-preview/color-preview";
 import ExamplesPreviewContainer from "./theme-preview/examples-preview-container";
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill";
@@ -35,7 +34,6 @@ const ThemePreviewPanel = ({
   styles,
   currentMode,
 }: ThemeEditorPreviewProps) => {
-  // const { isFullscreen, toggleFullscreen } = useFullscreen();
   const [activeTab, setActiveTab] = useQueryState("p", {
     defaultValue: "status-page",
   });
@@ -91,34 +89,6 @@ const ThemePreviewPanel = ({
                 </DropdownMenuContent>
               </DropdownMenu>
             </TabsList>
-
-            {/* <div className="flex items-center gap-0.5">
-              {isFullscreen && (
-                <ThemeToggle
-                  variant="ghost"
-                  size="icon"
-                  className="group size-8 hover:[&>svg]:scale-120 hover:[&>svg]:transition-all"
-                />
-              )}
-              <TooltipWrapper
-                label={isFullscreen ? "Exit full screen" : "Full screen"}
-                className="hidden md:inline-flex"
-                asChild
-              >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleFullscreen}
-                  className="group size-8"
-                >
-                  {isFullscreen ? (
-                    <Minimize className="transition-all group-hover:scale-120" />
-                  ) : (
-                    <Maximize className="transition-all group-hover:scale-120" />
-                  )}
-                </Button>
-              </TooltipWrapper>
-            </div> */}
           </HorizontalScrollArea>
 
           <section className="relative size-full overflow-hidden p-4 pt-1">

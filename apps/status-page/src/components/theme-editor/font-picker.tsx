@@ -74,6 +74,7 @@ export function FontPicker({
     enabled: open,
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!open) return;
     scrollRef.current?.scrollTo({ top: 0 });

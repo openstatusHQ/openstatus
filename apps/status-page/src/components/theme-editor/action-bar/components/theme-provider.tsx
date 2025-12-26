@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect } from "react";
-// import { useThemePresetFromUrl } from "../../hooks/use-theme-preset-from-url";
+import { useThemePresetFromUrl } from "../../hooks/use-theme-preset-from-url";
 import { useEditorStore } from "../../store/editor-store";
 import { applyThemeToElement } from "../../utils/apply-theme";
 
@@ -32,7 +32,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   const { themeState, setThemeState } = useEditorStore();
 
   // Handle theme preset from URL
-  // useThemePresetFromUrl();
+  useThemePresetFromUrl();
 
   useEffect(() => {
     const root = document.documentElement;
