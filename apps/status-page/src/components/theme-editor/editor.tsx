@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/resizable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sliders } from "lucide-react";
-import React, { use, useEffect } from "react";
+import React, { useEffect } from "react";
 import { ActionBar } from "./action-bar/action-bar";
 import { ThemeProvider } from "./action-bar/components/theme-provider";
 import { DialogActionsProvider } from "./hooks/use-dialog-actions";
@@ -16,10 +16,6 @@ import { useEditorStore } from "./store/editor-store";
 import ThemeControlPanel from "./theme-control-panel";
 import ThemePreviewPanel from "./theme-preview-panel";
 import type { Theme, ThemeStyles } from "./types/theme";
-
-interface EditorProps {
-  themePromise: Promise<Theme | null>;
-}
 
 const isThemeStyles = (styles: unknown): styles is ThemeStyles => {
   return (
@@ -31,12 +27,12 @@ const isThemeStyles = (styles: unknown): styles is ThemeStyles => {
   );
 };
 
-const Editor: React.FC<EditorProps> = ({ themePromise }) => {
+const Editor = () => {
   const themeState = useEditorStore((state) => state.themeState);
   const setThemeState = useEditorStore((state) => state.setThemeState);
   const isMobile = useIsMobile();
 
-  const initialTheme = themePromise ? use(themePromise) : null;
+  const initialTheme: Theme | null = null;
 
   const handleStyleChange = React.useCallback(
     (newStyles: ThemeStyles) => {
@@ -46,8 +42,9 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
     [setThemeState],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (initialTheme && isThemeStyles(initialTheme.styles)) {
+    if (initialTheme && isThemeStyles(initialTheme?.styles)) {
       const prev = useEditorStore.getState().themeState;
       setThemeState({
         ...prev,
@@ -93,7 +90,6 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
                       styles={styles}
                       onChange={handleStyleChange}
                       currentMode={themeState.currentMode}
-                      // themePromise={themePromise}
                     />
                   </div>
                 </TabsContent>
@@ -135,7 +131,6 @@ const Editor: React.FC<EditorProps> = ({ themePromise }) => {
                     styles={styles}
                     onChange={handleStyleChange}
                     currentMode={themeState.currentMode}
-                    // themePromise={themePromise}
                   />
                 </div>
               </ResizablePanel>

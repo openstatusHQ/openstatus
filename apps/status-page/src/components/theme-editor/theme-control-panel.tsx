@@ -29,7 +29,6 @@ const ThemeControlPanel = ({
   styles,
   currentMode,
   onChange,
-  // themePromise,
 }: ThemeEditorControlsProps) => {
   // const { themeState } = useEditorStore();
   const [tab, setTab] = useState<ControlTab>("colors");
@@ -74,8 +73,6 @@ const ThemeControlPanel = ({
   }
 
   const radius = Number.parseFloat(currentStyles.radius.replace("rem", ""));
-
-  // const theme = use(themePromise);
 
   return (
     <>
