@@ -68,7 +68,7 @@ const ThemeControlPanel = ({
     return null; // Or some fallback UI
   }
 
-  const radius = Number.parseFloat(currentStyles.radius.replace("rem", ""));
+  const radius = Number.parseFloat(currentStyles.radius?.replace("rem", ""));
 
   return (
     <>

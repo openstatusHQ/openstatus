@@ -29,9 +29,9 @@ export const DEFAULT_FONT_MONO =
   'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
 
 export const defaultLightThemeStyles =
-  defaultPresets["modern-minimal"]?.styles?.light;
+  defaultPresets["openstatus-rounded"]?.styles?.light;
 export const defaultDarkThemeStyles =
-  defaultPresets["modern-minimal"]?.styles?.dark;
+  defaultPresets["openstatus-rounded"]?.styles?.dark;
 
 // Default theme state
 export const defaultThemeState: ThemeEditorState = {

@@ -4,8 +4,10 @@ import Editor from "@/components/theme-editor/editor";
 
 export default function ThemeEditorPage() {
   return (
-    <div className="h-screen">
-      <Editor />
-    </div>
+    <main className="mx-auto">
+      <div className="mx-auto w-full space-y-8 ">
+        <Editor />
+      </div>
+    </main>
   );
 }
