@@ -6,7 +6,11 @@ import { HorizontalScrollArea } from "@/components/horizontal-scroll-area";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import ColorPicker from "./color-picker";
-import { COMMON_STYLES, defaultThemeState } from "./config/theme";
+import {
+  COMMON_STYLES,
+  defaultThemeState,
+  openstatusCommonStyles,
+} from "./config/theme";
 import ControlSection from "./control-section";
 import HslAdjustmentControls from "./hsl-adjustment-controls";
 import ShadowControl from "./shadow-control";
@@ -15,18 +19,19 @@ import ThemePresetSelect from "./theme-preset-select";
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill";
 import type { ThemeEditorControlsProps, ThemeStyleProps } from "./types/theme";
 
-type ControlTab = "colors" | "typography" | "other";
+type ControlTab = "colors" | "typography" | "other" | "openstatus";
 
 const ThemeControlPanel = ({
   styles,
   currentMode,
   onChange,
 }: ThemeEditorControlsProps) => {
-  const [tab, setTab] = useState<ControlTab>("colors");
+  const [tab, setTab] = useState<ControlTab>("openstatus");
 
   const currentStyles = React.useMemo(
     () => ({
       ...defaultThemeState.styles[currentMode],
+      ...openstatusCommonStyles?.[currentMode],
       ...styles?.[currentMode],
     }),
     [currentMode, styles],
@@ -78,6 +83,7 @@ const ThemeControlPanel = ({
         >
           <HorizontalScrollArea className="mt-2 mb-1 px-4">
             <TabsList className="bg-background text-muted-foreground inline-flex w-fit items-center justify-center rounded-full px-0">
+              <TabsTriggerPill value="openstatus">Openstatus</TabsTriggerPill>
               <TabsTriggerPill value="colors">Colors</TabsTriggerPill>
               <TabsTriggerPill value="typography">Typography</TabsTriggerPill>
               <TabsTriggerPill value="other">Other</TabsTriggerPill>
@@ -406,6 +412,40 @@ const ThemeControlPanel = ({
                       updateStyle(key as keyof ThemeStyleProps, `${value}px`);
                     }
                   }}
+                />
+              </ControlSection>
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent
+            value="openstatus"
+            className="mt-1 size-full overflow-hidden"
+          >
+            <ScrollArea className="h-full px-4">
+              <ControlSection title="Openstatus Colors" expanded>
+                <ColorPicker
+                  name="success"
+                  color={currentStyles.success}
+                  onChange={(color) => updateStyle("success", color)}
+                  label="Success"
+                />
+                <ColorPicker
+                  name="destructive"
+                  color={currentStyles.destructive}
+                  onChange={(color) => updateStyle("destructive", color)}
+                  label="Destructive"
+                />
+                <ColorPicker
+                  name="warning"
+                  color={currentStyles.warning}
+                  onChange={(color) => updateStyle("warning", color)}
+                  label="Warning"
+                />
+                <ColorPicker
+                  name="info"
+                  color={currentStyles.info}
+                  onChange={(color) => updateStyle("info", color)}
+                  label="Info"
                 />
               </ControlSection>
             </ScrollArea>

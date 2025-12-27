@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+export type OpenStatusColorID = "success" | "warning" | "info";
+
 export type FocusColorId =
   | "background"
   | "foreground"
@@ -32,7 +34,8 @@ export type FocusColorId =
   | "sidebar-accent"
   | "sidebar-accent-foreground"
   | "sidebar-border"
-  | "sidebar-ring";
+  | "sidebar-ring"
+  | OpenStatusColorID;
 
 interface ColorRefEntry {
   ref: HTMLElement | null;

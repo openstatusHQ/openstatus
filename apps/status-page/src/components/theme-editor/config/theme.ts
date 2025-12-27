@@ -1,3 +1,4 @@
+import type { OpenStatusColorID } from "../store/color-control-focus-store";
 import type { ThemeEditorState } from "../types/editor";
 import type { ThemeStyles } from "../types/theme";
 import { defaultPresets } from "../utils/theme-presets";
@@ -47,5 +48,24 @@ export const defaultThemeState: ThemeEditorState = {
     hueShift: 0,
     saturationScale: 1,
     lightnessScale: 1,
+  },
+};
+
+// these are the default colors for the openstatus colors
+// they are taken from the openstatus theme store
+// Add according to dark and light mode
+export const openstatusCommonStyles: Record<
+  "light" | "dark",
+  Record<OpenStatusColorID, string>
+> = {
+  light: {
+    success: "#008000",
+    warning: "#FFFF00",
+    info: "#0000FF",
+  },
+  dark: {
+    success: "#00FF00",
+    warning: "#FFFF00",
+    info: "#0000FF",
   },
 };
