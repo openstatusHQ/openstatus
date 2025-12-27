@@ -12,7 +12,7 @@ import TabsTriggerPill from "./theme-preview/tabs-trigger-pill";
 import type { ThemeEditorPreviewProps } from "./types/theme";
 
 const StatusMonitorPlayground = lazy(
-  () => import("./status-monitor-playground"),
+  () => import("./theme-preview/status-monitor-playground"),
 );
 
 const ThemePreviewPanel = ({

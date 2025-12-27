@@ -1,6 +1,6 @@
 import { TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import * as React from "react";
+import type React from "react";
 
 const TabsTriggerPill = ({
   children,
@@ -11,7 +11,7 @@ const TabsTriggerPill = ({
     <TabsTrigger
       className={cn(
         "ring-offset-background focus-visible:ring-ring data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground hover:text-muted-foreground/70 inline-flex items-center justify-center rounded-full px-3 py-1 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
-        className
+        className,
       )}
       {...props}
     >

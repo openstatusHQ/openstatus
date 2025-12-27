@@ -1,5 +1,5 @@
 import { defaultThemeState } from "../config/theme";
-import { ThemeStyles } from "../types/theme";
+import type { ThemeStyles } from "../types/theme";
 
 export function mergeThemeStylesWithDefaults(themeStyles: ThemeStyles) {
   const mergedStyles = {
