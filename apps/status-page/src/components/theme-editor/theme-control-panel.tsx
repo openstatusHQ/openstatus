@@ -1,26 +1,19 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
 import React, { useState } from "react";
 
 import { HorizontalScrollArea } from "@/components/horizontal-scroll-area";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import ColorPicker from "./color-picker";
 import { COMMON_STYLES, defaultThemeState } from "./config/theme";
 import ControlSection from "./control-section";
-import { FontPicker } from "./font-picker";
 import HslAdjustmentControls from "./hsl-adjustment-controls";
 import ShadowControl from "./shadow-control";
 import { SliderWithInput } from "./slider-with-input";
-import { useEditorStore } from "./store/editor-store";
 import ThemePresetSelect from "./theme-preset-select";
 import TabsTriggerPill from "./theme-preview/tabs-trigger-pill";
-import type { FontInfo } from "./types/fonts";
 import type { ThemeEditorControlsProps, ThemeStyleProps } from "./types/theme";
-import { buildFontFamily } from "./utils/fonts";
-import { getAppliedThemeFont } from "./utils/theme-fonts";
 
 type ControlTab = "colors" | "typography" | "other";
 
@@ -29,7 +22,6 @@ const ThemeControlPanel = ({
   currentMode,
   onChange,
 }: ThemeEditorControlsProps) => {
-  const { themeState } = useEditorStore();
   const [tab, setTab] = useState<ControlTab>("colors");
 
   const currentStyles = React.useMemo(
@@ -337,87 +329,6 @@ const ThemeControlPanel = ({
             className="mt-1 size-full overflow-hidden"
           >
             <ScrollArea className="h-full px-4">
-              <div className="bg-muted/50 mb-4 flex items-start gap-2.5 rounded-md border p-3">
-                <AlertCircle className="text-muted-foreground mt-0.5 h-5 w-5 shrink-0" />
-                <div className="text-muted-foreground text-sm">
-                  <p>
-                    To use custom fonts, embed them in your project. <br />
-                    See{" "}
-                    <a
-                      href="https://tailwindcss.com/docs/font-family"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="hover:text-muted-foreground/90 underline underline-offset-2"
-                    >
-                      Tailwind docs
-                    </a>{" "}
-                    for details.
-                  </p>
-                </div>
-              </div>
-
-              <ControlSection title="Font Family" expanded className="p-3">
-                <div className="mb-4">
-                  <Label htmlFor="font-sans" className="mb-1.5 block text-xs">
-                    Sans-Serif Font
-                  </Label>
-                  <FontPicker
-                    value={
-                      getAppliedThemeFont(themeState, "font-sans") || undefined
-                    }
-                    category="sans-serif"
-                    placeholder="Choose a sans-serif font..."
-                    onSelect={(font: FontInfo) => {
-                      const fontFamily = buildFontFamily(
-                        font.family,
-                        font.category,
-                      );
-                      updateStyle("font-sans", fontFamily);
-                    }}
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <Label htmlFor="font-serif" className="mb-1.5 block text-xs">
-                    Serif Font
-                  </Label>
-                  <FontPicker
-                    value={
-                      getAppliedThemeFont(themeState, "font-serif") || undefined
-                    }
-                    category="serif"
-                    placeholder="Choose a serif font..."
-                    onSelect={(font: FontInfo) => {
-                      const fontFamily = buildFontFamily(
-                        font.family,
-                        font.category,
-                      );
-                      updateStyle("font-serif", fontFamily);
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="font-mono" className="mb-1.5 block text-xs">
-                    Monospace Font
-                  </Label>
-                  <FontPicker
-                    value={
-                      getAppliedThemeFont(themeState, "font-mono") || undefined
-                    }
-                    category="monospace"
-                    placeholder="Choose a monospace font..."
-                    onSelect={(font: FontInfo) => {
-                      const fontFamily = buildFontFamily(
-                        font.family,
-                        font.category,
-                      );
-                      updateStyle("font-mono", fontFamily);
-                    }}
-                  />
-                </div>
-              </ControlSection>
-
               <ControlSection title="Letter Spacing" expanded>
                 <SliderWithInput
                   value={Number.parseFloat(
