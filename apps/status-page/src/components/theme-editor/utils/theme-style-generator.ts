@@ -1,4 +1,7 @@
-import { defaultLightThemeStyles } from "../config/theme";
+import {
+  defaultLightThemeStyles,
+  openstatusCommonStyles,
+} from "../config/theme";
 import type { ColorFormat } from "../types";
 import type { ThemeEditorState } from "../types/editor";
 import type { ThemeStyles } from "../types/theme";
@@ -13,6 +16,8 @@ const generateColorVariables = (
   formatColor: (color: string) => string,
 ): string => {
   const styles = themeStyles[mode];
+  const openstatusStyles = openstatusCommonStyles[mode];
+
   return `
   --background: ${formatColor(styles.background)};
   --foreground: ${formatColor(styles.foreground)};
@@ -45,7 +50,11 @@ const generateColorVariables = (
   --sidebar-accent: ${formatColor(styles["sidebar-accent"])};
   --sidebar-accent-foreground: ${formatColor(styles["sidebar-accent-foreground"])};
   --sidebar-border: ${formatColor(styles["sidebar-border"])};
-  --sidebar-ring: ${formatColor(styles["sidebar-ring"])};`;
+  --sidebar-ring: ${formatColor(styles["sidebar-ring"])};
+  --success: ${formatColor(styles?.success ?? openstatusStyles.success)};
+  --warning: ${formatColor(styles?.warning ?? openstatusStyles.warning)};
+  --info: ${formatColor(styles?.info ?? openstatusStyles.info)};
+  `;
 };
 
 const generateFontVariables = (
@@ -64,7 +73,7 @@ const generateShadowVariables = (shadowMap: Record<string, string>): string => {
   --shadow-2xs: ${shadowMap["shadow-2xs"]};
   --shadow-xs: ${shadowMap["shadow-xs"]};
   --shadow-sm: ${shadowMap["shadow-sm"]};
-  --shadow: ${shadowMap["shadow"]};
+  --shadow: ${shadowMap.shadow};
   --shadow-md: ${shadowMap["shadow-md"]};
   --shadow-lg: ${shadowMap["shadow-lg"]};
   --shadow-xl: ${shadowMap["shadow-xl"]};
@@ -86,7 +95,7 @@ const generateRawShadowVariables = (
 };
 
 const generateTrackingVariables = (themeStyles: ThemeStyles): string => {
-  const styles = themeStyles["light"];
+  const styles = themeStyles.light;
   if (styles["letter-spacing"] === "0em") {
     return "";
   }
@@ -115,26 +124,15 @@ const generateThemeVariables = (
   const rawShadowVars = generateRawShadowVariables(themeStyles, mode);
   const spacingVar =
     mode === "light"
-      ? `\n  --spacing: ${themeStyles["light"].spacing ?? defaultLightThemeStyles.spacing};`
+      ? `\n  --spacing: ${themeStyles.light.spacing ?? defaultLightThemeStyles.spacing};`
       : "";
 
   const trackingVars =
     mode === "light"
-      ? `\n  --tracking-normal: ${themeStyles["light"]["letter-spacing"] ?? defaultLightThemeStyles["letter-spacing"]};`
+      ? `\n  --tracking-normal: ${themeStyles.light["letter-spacing"] ?? defaultLightThemeStyles["letter-spacing"]};`
       : "";
 
-  return (
-    selector +
-    " {" +
-    colorVars +
-    fontVars +
-    radiusVar +
-    rawShadowVars +
-    shadowVars +
-    trackingVars +
-    spacingVar +
-    "\n}"
-  );
+  return `${selector} {${colorVars}${fontVars}${radiusVar}${rawShadowVars}${shadowVars}${trackingVars}${spacingVar}\n}`;
 };
 
 const generateTailwindV4ThemeInline = (themeStyles: ThemeStyles): string => {
@@ -189,6 +187,9 @@ const generateTailwindV4ThemeInline = (themeStyles: ThemeStyles): string => {
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);${generateTrackingVariables(themeStyles)}
+  --success: var(--success);
+  --warning: var(--warning);
+  --info: var(--info);
 }`;
 };
 
@@ -211,6 +212,9 @@ module.exports = {
         ring: ${colorToken("ring")},
         background: ${colorToken("background")},
         foreground: ${colorToken("foreground")},
+        success: ${colorToken("success")},
+        warning: ${colorToken("warning")},
+        info: ${colorToken("info")},
         primary: {
           DEFAULT: ${colorToken("primary")},
           foreground: ${colorToken("primary-foreground")},
@@ -298,7 +302,7 @@ export const generateThemeCode = (
       : "";
 
   const bodyLetterSpacing =
-    themeStyles["light"]["letter-spacing"] !== "0em"
+    themeStyles.light["letter-spacing"] !== "0em"
       ? "\n\nbody {\n  letter-spacing: var(--tracking-normal);\n}"
       : "";
 
