@@ -1,3 +1,4 @@
+import { usePreferencesStore } from "@/components/theme-editor/store/preferences-store";
 import type { ColorFormat } from "@/components/theme-editor/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,7 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePreferencesStore } from "@/store/preferences-store";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";

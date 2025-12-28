@@ -1,7 +1,7 @@
 // @ts-expect-error: owned by ngard
 import { isEqual } from "@ngard/tiny-isequal";
-import { useThemePresetStore } from "../../../store/theme-preset-store";
 import { defaultThemeState } from "../config/theme";
+import { useThemePresetStore } from "../store/theme-preset-store";
 import type { ThemeStyles } from "../types/theme";
 import { defaultPresets } from "./theme-presets";
 

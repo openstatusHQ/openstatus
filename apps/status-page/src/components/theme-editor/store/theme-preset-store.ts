@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { defaultPresets } from "../components/theme-editor/utils/theme-presets";
+import { defaultPresets } from "../utils/theme-presets";
 
 export interface ThemePreset {
   label?: string;

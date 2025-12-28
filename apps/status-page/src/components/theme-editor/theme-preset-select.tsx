@@ -1,3 +1,4 @@
+import { useThemePresetStore } from "@/components/theme-editor/store/theme-preset-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useThemePresetStore } from "@/store/theme-preset-store";
 import {
   ArrowLeft,
   ArrowRight,

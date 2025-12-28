@@ -1,5 +1,7 @@
 "use client";
 
+import type { ColorSelectorTab } from "@/components/theme-editor/store/preferences-store";
+import { usePreferencesStore } from "@/components/theme-editor/store/preferences-store";
 import { TooltipWrapper } from "@/components/tooltip-wrapper";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,8 +20,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TailwindCSS from "@/icons/tailwind-css";
 import { cn } from "@/lib/utils";
-import type { ColorSelectorTab } from "@/store/preferences-store";
-import { usePreferencesStore } from "@/store/preferences-store";
 import { formatHex, parse } from "culori";
 import { Check, LayoutGrid, List } from "lucide-react";
 import { useCallback } from "react";
