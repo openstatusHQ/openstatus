@@ -229,7 +229,7 @@ const HslAdjustmentControls = () => {
             basePrimary={currentStyles.primary}
             baseSecondary={currentStyles.secondary}
             selected={
-              currentHslAdjustments.hueShift === preset.hueShift &&
+              currentHslAdjustments?.hueShift === preset.hueShift &&
               currentHslAdjustments.saturationScale ===
                 preset.saturationScale &&
               currentHslAdjustments.lightnessScale === preset.lightnessScale
@@ -261,8 +261,13 @@ const HslAdjustmentControls = () => {
       )}
 
       <SliderWithInput
-        value={currentHslAdjustments.hueShift}
-        onChange={(value) => handleHslChange("hueShift", value)}
+        value={currentHslAdjustments?.hueShift ?? 0}
+        onChange={(value) =>
+          handleHslChange(
+            "hueShift" as keyof typeof currentHslAdjustments,
+            value,
+          )
+        }
         unit="deg"
         min={-180}
         max={180}
@@ -270,8 +275,13 @@ const HslAdjustmentControls = () => {
         label="Hue Shift"
       />
       <SliderWithInput
-        value={currentHslAdjustments.saturationScale}
-        onChange={(value) => handleHslChange("saturationScale", value)}
+        value={currentHslAdjustments?.saturationScale ?? 0}
+        onChange={(value) =>
+          handleHslChange(
+            "saturationScale" as keyof typeof currentHslAdjustments,
+            value,
+          )
+        }
         unit="x"
         min={0}
         max={2}
@@ -279,8 +289,13 @@ const HslAdjustmentControls = () => {
         label="Saturation Multiplier"
       />
       <SliderWithInput
-        value={currentHslAdjustments.lightnessScale}
-        onChange={(value) => handleHslChange("lightnessScale", value)}
+        value={currentHslAdjustments?.lightnessScale ?? 0}
+        onChange={(value) =>
+          handleHslChange(
+            "lightnessScale" as keyof typeof currentHslAdjustments,
+            value,
+          )
+        }
         unit="x"
         min={0.2}
         max={2}

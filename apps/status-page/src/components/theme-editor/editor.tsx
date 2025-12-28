@@ -44,17 +44,17 @@ const Editor = () => {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (initialTheme && isThemeStyles(initialTheme?.styles)) {
+    if (initialTheme && isThemeStyles((initialTheme as Theme)?.styles)) {
       const prev = useEditorStore.getState().themeState;
       setThemeState({
         ...prev,
-        styles: initialTheme.styles,
-        preset: initialTheme.id,
+        styles: (initialTheme as Theme).styles,
+        preset: (initialTheme as Theme).id,
       });
     }
   }, [initialTheme, setThemeState]);
 
-  if (initialTheme && !isThemeStyles(initialTheme.styles)) {
+  if (initialTheme && !isThemeStyles((initialTheme as Theme)?.styles)) {
     return (
       <div className="text-destructive flex h-full items-center justify-center">
         Fetched theme data is invalid.
