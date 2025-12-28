@@ -71,9 +71,9 @@ export function ColorSelectorPopover({
           <Button
             variant="ghost"
             size="sm"
-            className="group bg-input/25 size-8 rounded border shadow-none"
+            className="group size-8 rounded border bg-input/25 shadow-none"
           >
-            <TailwindCSS className="text-foreground group-hover:text-accent-foreground size-4 transition-colors" />
+            <TailwindCSS className="size-4 text-foreground transition-colors group-hover:text-accent-foreground" />
           </Button>
         </TooltipWrapper>
       </PopoverTrigger>
@@ -94,13 +94,13 @@ export function ColorSelectorPopover({
             <TabsList className="bg-transparent">
               <TabsTrigger
                 value="list"
-                className="data-[state=active]:bg-input/25 size-8 p-0 data-[state=active]:shadow-none"
+                className="size-8 p-0 data-[state=active]:bg-input/25 data-[state=active]:shadow-none"
               >
                 <List className="size-4" />
               </TabsTrigger>
               <TabsTrigger
                 value="palette"
-                className="data-[state=active]:bg-input/25 size-8 p-0 data-[state=active]:shadow-none"
+                className="size-8 p-0 data-[state=active]:bg-input/25 data-[state=active]:shadow-none"
               >
                 <LayoutGrid className="size-4" />
               </TabsTrigger>
@@ -115,7 +115,7 @@ export function ColorSelectorPopover({
                 placeholder="Search Tailwind colors..."
               />
               <ScrollArea className="flex-1 overflow-hidden">
-                <CommandEmpty className="text-muted-foreground p-4 text-center">
+                <CommandEmpty className="p-4 text-center text-muted-foreground">
                   No Tailwind color found.
                 </CommandEmpty>
 
@@ -210,13 +210,13 @@ function ColorSwatch({
       className={cn(
         "group relative cursor-pointer rounded-md border bg-(--color) transition-all hover:z-10 hover:scale-110 hover:shadow-lg",
         sizeClasses[size],
-        isSelected && "ring-2 ring-(--color)",
+        isSelected && "ring-(--color) ring-2",
         className,
       )}
       style={{ "--color": color } as React.CSSProperties}
       {...props}
     >
-      <div className="group-hover:ring-foreground/50 absolute inset-0 rounded-[inherit] ring-2 ring-transparent transition-all duration-200" />
+      <div className="absolute inset-0 rounded-[inherit] ring-2 ring-transparent transition-all duration-200 group-hover:ring-foreground/50" />
     </button>
   );
 }

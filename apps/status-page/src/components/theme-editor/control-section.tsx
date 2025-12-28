@@ -22,13 +22,13 @@ const ControlSection = ({
     >
       <div className={cn("mb-4 overflow-hidden rounded-lg border")}>
         <div
-          className="bg-background hover:bg-muted flex cursor-pointer items-center justify-between p-3"
+          className="flex cursor-pointer items-center justify-between bg-background p-3 hover:bg-muted"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <h3 className="text-sm font-medium">{title}</h3>
+          <h3 className="font-medium text-sm">{title}</h3>
           <button
             type="button"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground transition-colors hover:text-foreground"
             aria-label={isExpanded ? "Collapse section" : "Expand section"}
           >
             {isExpanded ? (
@@ -45,7 +45,7 @@ const ControlSection = ({
             isExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0",
           )}
         >
-          <div className={cn("bg-background border-t p-3", className)}>
+          <div className={cn("border-t bg-background p-3", className)}>
             {children}
           </div>
         </div>

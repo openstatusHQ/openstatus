@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { SliderWithInput } from "./slider-with-input";
 import ColorPicker from "./color-picker";
 

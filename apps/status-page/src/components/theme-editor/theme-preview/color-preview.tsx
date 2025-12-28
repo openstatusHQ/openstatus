@@ -21,16 +21,16 @@ function ColorPreviewItem({
   const { focusColor } = useColorControlFocus();
 
   return (
-    <div className="group/color-preview hover:bg-muted/60 relative flex items-center gap-2 rounded-md p-1 transition-colors">
+    <div className="group/color-preview relative flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted/60">
       <div
-        className="size-14 shrink-0 rounded-md border @max-3xl:size-12"
+        className="@max-3xl:size-12 size-14 shrink-0 rounded-md border"
         style={{ backgroundColor: color }}
       />
       <div className="flex-1 space-y-1 overflow-hidden">
-        <p className="line-clamp-2 text-sm leading-tight font-medium @max-3xl:text-xs">
+        <p className="line-clamp-2 font-medium @max-3xl:text-xs text-sm leading-tight">
           {label}
         </p>
-        <p className="text-muted-foreground truncate font-mono text-xs">
+        <p className="truncate font-mono text-muted-foreground text-xs">
           {color}
         </p>
       </div>
@@ -41,12 +41,12 @@ function ColorPreviewItem({
             variant="ghost"
             size="icon"
             onClick={() => focusColor(name as FocusColorId)}
-            className="size-7 @max-3xl:size-6 [&>svg]:size-3.5"
+            className="@max-3xl:size-6 size-7 [&>svg]:size-3.5"
           >
             <SquarePen />
           </Button>
         </TooltipWrapper>
-        <CopyButton textToCopy={color} className="size-7 @max-3xl:size-6" />
+        <CopyButton textToCopy={color} className="@max-3xl:size-6 size-7" />
       </div>
     </div>
   );
@@ -60,11 +60,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
   return (
     <div className="@container grid grid-cols-1 gap-4 md:gap-8">
       {/* Primary Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           Primary Theme Colors
         </h3>
-        <div className="@6xl grid grid-cols-1 gap-2 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="@6xl grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-2">
           <ColorPreviewItem
             label="Background"
             color={styles[currentMode].background}
@@ -89,11 +89,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
       </div>
 
       {/* Secondary & Accent Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           Secondary & Accent Colors
         </h3>
-        <div className="@6xl grid grid-cols-1 gap-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="@6xl grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-4">
           <ColorPreviewItem
             label="Secondary"
             color={styles[currentMode].secondary}
@@ -118,11 +118,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
       </div>
 
       {/* UI Component Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           UI Component Colors
         </h3>
-        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-4">
           <ColorPreviewItem
             label="Card"
             color={styles[currentMode].card}
@@ -157,11 +157,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
       </div>
 
       {/* Utility & Form Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           Utility & Form Colors
         </h3>
-        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-4">
           <ColorPreviewItem
             label="Border"
             color={styles[currentMode].border}
@@ -181,11 +181,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
       </div>
 
       {/* Status & Feedback Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           Status & Feedback Colors
         </h3>
-        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-4">
           <ColorPreviewItem
             label="Destructive"
             color={styles[currentMode].destructive}
@@ -200,11 +200,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
       </div>
 
       {/* Chart & Data Visualization Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           Chart & Visualization Colors
         </h3>
-        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-4">
           <ColorPreviewItem
             label="Chart 1"
             color={styles[currentMode]["chart-1"]}
@@ -234,11 +234,11 @@ const ColorPreview = ({ styles, currentMode }: ColorPreviewProps) => {
       </div>
 
       {/* Sidebar Colors */}
-      <div className="space-y-4 @max-3xl:space-y-2">
-        <h3 className="text-muted-foreground text-sm font-semibold">
+      <div className="@max-3xl:space-y-2 space-y-4">
+        <h3 className="font-semibold text-muted-foreground text-sm">
           Sidebar & Navigation Colors
         </h3>
-        <div className="grid grid-cols-1 gap-4 @sm:grid-cols-2 @2xl:grid-cols-3 @4xl:grid-cols-4">
+        <div className="grid @2xl:grid-cols-3 @4xl:grid-cols-4 @sm:grid-cols-2 grid-cols-1 gap-4">
           <ColorPreviewItem
             label="Sidebar Background"
             color={styles[currentMode].sidebar}

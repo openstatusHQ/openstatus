@@ -56,7 +56,7 @@ const Editor = () => {
 
   if (initialTheme && !isThemeStyles((initialTheme as Theme)?.styles)) {
     return (
-      <div className="text-destructive flex h-full items-center justify-center">
+      <div className="flex h-full items-center justify-center text-destructive">
         Fetched theme data is invalid.
       </div>
     );

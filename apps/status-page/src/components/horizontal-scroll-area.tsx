@@ -19,13 +19,13 @@ export function HorizontalScrollArea({
     <div className="relative w-full">
       <div
         className={cn(
-          "from-background/75 pointer-events-none absolute right-0 left-0 z-10 h-full bg-gradient-to-r to-transparent to-10% opacity-0 transition-opacity",
+          "pointer-events-none absolute right-0 left-0 z-10 h-full bg-gradient-to-r from-background/75 to-10% to-transparent opacity-0 transition-opacity",
           isScrollStart ? "opacity-0" : "opacity-100",
         )}
       />
       <div
         className={cn(
-          "from-background/75 pointer-events-none absolute right-0 left-0 z-10 h-full bg-gradient-to-l to-transparent to-10% opacity-0 transition-opacity",
+          "pointer-events-none absolute right-0 left-0 z-10 h-full bg-gradient-to-l from-background/75 to-10% to-transparent opacity-0 transition-opacity",
           isScrollEnd ? "opacity-0" : "opacity-100",
         )}
       />

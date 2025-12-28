@@ -111,13 +111,13 @@ const ColorPicker = ({ color, onChange, label, name }: ColorPickerProps) => {
       className={cn(
         "mb-3 transition-all duration-300",
         shouldAnimate &&
-          "bg-border/50 ring-primary -m-1.5 mb-1.5 rounded-sm p-1.5 ring-2",
+          "-m-1.5 mb-1.5 rounded-sm bg-border/50 p-1.5 ring-2 ring-primary",
       )}
     >
       <div className="mb-1.5 flex items-center justify-between">
         <Label
           htmlFor={`color-${label.replace(/\s+/g, "-").toLowerCase()}`}
-          className="text-xs font-medium"
+          className="font-medium text-xs"
         >
           {label}
         </Label>
@@ -141,7 +141,7 @@ const ColorPicker = ({ color, onChange, label, name }: ColorPickerProps) => {
           type="text"
           defaultValue={color}
           onChange={handleTextInputChange}
-          className="bg-input/25 border-border/20 h-8 flex-1 rounded border px-2 text-sm"
+          className="h-8 flex-1 rounded border border-border/20 bg-input/25 px-2 text-sm"
           placeholder="Enter color (hex or tailwind class)"
         />
 

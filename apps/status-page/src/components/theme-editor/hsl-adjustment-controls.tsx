@@ -214,7 +214,7 @@ const HslAdjustmentControls = () => {
       {/* Responsive preset grid */}
       <div
         className={cn(
-          "-m-1 mb-2 grid grid-cols-5 gap-2 overflow-hidden p-1 transition-all duration-300 ease-in-out @sm:grid-cols-7 @md:grid-cols-9 @lg:grid-cols-11 @xl:grid-cols-13",
+          "-m-1 mb-2 grid @lg:grid-cols-11 @md:grid-cols-9 @sm:grid-cols-7 @xl:grid-cols-13 grid-cols-5 gap-2 overflow-hidden p-1 transition-all duration-300 ease-in-out",
           !isExpanded ? "h-10" : "h-auto",
         )}
       >
@@ -247,7 +247,7 @@ const HslAdjustmentControls = () => {
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground mb-4 flex w-full items-center justify-center text-xs"
+          className="mb-4 flex w-full items-center justify-center text-muted-foreground text-xs"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? "Hide" : "Show more"} presets

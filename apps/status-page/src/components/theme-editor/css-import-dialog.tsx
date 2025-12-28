@@ -95,7 +95,7 @@ const CssImportDialog: React.FC<CssImportDialogProps> = ({
   /* And more */
 }
             `}
-              className="text-foreground min-h-[300px] font-mono text-sm"
+              className="min-h-[300px] font-mono text-foreground text-sm"
               value={cssText}
               onChange={(e) => {
                 setCssText(e.target.value);
@@ -105,7 +105,7 @@ const CssImportDialog: React.FC<CssImportDialogProps> = ({
           </div>
         </ScrollArea>
 
-        <ResponsiveDialogFooter className="bg-muted/30 mt-4 border-t px-6 py-4 sm:mt-0">
+        <ResponsiveDialogFooter className="mt-4 border-t bg-muted/30 px-6 py-4 sm:mt-0">
           <Button
             variant="ghost"
             onClick={handleClose}

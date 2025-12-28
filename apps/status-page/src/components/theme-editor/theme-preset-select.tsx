@@ -47,7 +47,7 @@ interface ColorBoxProps {
 
 const ColorBox: React.FC<ColorBoxProps> = ({ color }) => (
   <div
-    className="border-muted h-3 w-3 rounded-sm border"
+    className="h-3 w-3 rounded-sm border border-muted"
     style={{ backgroundColor: color }}
   />
 );
@@ -309,11 +309,11 @@ const ThemePresetSelect: React.FC<ThemePresetSelectProps> = ({
                         applyThemePreset(presetName);
                         setSearch("");
                       }}
-                      className="data-[highlighted]:bg-secondary/50 flex items-center gap-2 py-2"
+                      className="flex items-center gap-2 py-2 data-[highlighted]:bg-secondary/50"
                     >
                       <ThemeColors presetName={presetName} mode={mode} />
                       <div className="flex flex-1 items-center gap-2">
-                        <span className="text-sm font-medium capitalize">
+                        <span className="font-medium text-sm capitalize">
                           {presets[presetName]?.label || presetName}
                         </span>
                         {presets[presetName] &&

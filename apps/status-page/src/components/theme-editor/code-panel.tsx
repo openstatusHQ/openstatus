@@ -58,7 +58,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
     <div className="flex h-full flex-col">
       <div className="mb-4 flex-none">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold">Theme Code</h2>
+          <h2 className="font-semibold text-lg">Theme Code</h2>
         </div>
       </div>
       <div className="mb-4 flex items-center gap-2">
@@ -72,7 +72,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
             }
           }}
         >
-          <SelectTrigger className="bg-muted/50 w-fit gap-1 border-none outline-hidden focus:border-none focus:ring-transparent">
+          <SelectTrigger className="w-fit gap-1 border-none bg-muted/50 outline-hidden focus:border-none focus:ring-transparent">
             <SelectValue className="focus:ring-transparent" />
           </SelectTrigger>
           <SelectContent className="z-99999">
@@ -84,7 +84,7 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
           value={colorFormat}
           onValueChange={(value: ColorFormat) => setColorFormat(value)}
         >
-          <SelectTrigger className="bg-muted/50 w-fit gap-1 border-none outline-hidden focus:border-none focus:ring-transparent">
+          <SelectTrigger className="w-fit gap-1 border-none bg-muted/50 outline-hidden focus:border-none focus:ring-transparent">
             <SelectValue className="focus:ring-transparent" />
           </SelectTrigger>
           <SelectContent className="z-99999">
@@ -102,18 +102,18 @@ const CodePanel: React.FC<CodePanelProps> = ({ themeEditorState }) => {
         defaultValue="index.css"
         className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border"
       >
-        <div className="bg-muted/50 flex flex-none items-center justify-between border-b px-4 py-2">
+        <div className="flex flex-none items-center justify-between border-b bg-muted/50 px-4 py-2">
           <TabsList className="h-8 bg-transparent p-0">
             <TabsTrigger
               value="index.css"
-              className="h-7 px-3 text-sm font-medium"
+              className="h-7 px-3 font-medium text-sm"
             >
               index.css
             </TabsTrigger>
             {tailwindVersion === "3" && (
               <TabsTrigger
                 value="tailwind.config.ts"
-                className="h-7 px-3 text-sm font-medium"
+                className="h-7 px-3 font-medium text-sm"
               >
                 tailwind.config.ts
               </TabsTrigger>

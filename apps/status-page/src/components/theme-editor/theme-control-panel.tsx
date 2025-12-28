@@ -82,7 +82,7 @@ const ThemeControlPanel = ({
           className="flex min-h-0 w-full flex-1 flex-col"
         >
           <HorizontalScrollArea className="mt-2 mb-1 px-4">
-            <TabsList className="bg-background text-muted-foreground inline-flex w-fit items-center justify-center rounded-full px-0">
+            <TabsList className="inline-flex w-fit items-center justify-center rounded-full bg-background px-0 text-muted-foreground">
               <TabsTriggerPill value="openstatus">Openstatus</TabsTriggerPill>
               <TabsTriggerPill value="colors">Colors</TabsTriggerPill>
               <TabsTriggerPill value="typography">Typography</TabsTriggerPill>

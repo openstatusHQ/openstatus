@@ -56,7 +56,7 @@ export const HslPresetButton: React.FC<HslPresetButtonProps> = ({
             className={cn(
               "relative h-8 w-full overflow-hidden rounded-md p-0 shadow-sm transition-all duration-200",
               "hover:scale-105 hover:shadow-md",
-              selected ? "ring-primary ring-1 ring-offset-1" : "border-border border"
+              selected ? "ring-1 ring-primary ring-offset-1" : "border border-border"
             )}
             style={{ background: previewBg }}
           >
@@ -70,11 +70,11 @@ export const HslPresetButton: React.FC<HslPresetButtonProps> = ({
               </div>
             </div>
             {selected && (
-              <div className="bg-primary absolute right-0.5 bottom-0.5 h-2 w-2 rounded-full" />
+              <div className="absolute right-0.5 bottom-0.5 h-2 w-2 rounded-full bg-primary" />
             )}
           </Button>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs font-medium">
+        <TooltipContent side="bottom" className="font-medium text-xs">
           {label}
         </TooltipContent>
       </Tooltip>

@@ -29,8 +29,7 @@ export const getShadowMap = (themeEditorState: ThemeEditorState) => {
     const blur2 = fixedBlur;
     // Calculate spread relative to the first layer's spread variable
     const spread2 =
-      (Number.parseFloat(spread?.replace("px", "") ?? "0") - 1).toString() +
-      "px";
+      `${(Number.parseFloat(spread?.replace("px", "") ?? "0") - 1).toString()}px`;
     // Use the same color function (opacity can still be overridden by --shadow-opacity)
     const color2 = color(1.0); // Default opacity for second layer is 0.1 in examples
 

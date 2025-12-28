@@ -37,10 +37,10 @@ export const SliderWithInput = ({
 
   return (
     <div className="mb-3">
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="mb-1.5 flex items-center justify-between">
         <Label
           htmlFor={`slider-${label.replace(/\s+/g, "-").toLowerCase()}`}
-          className="text-xs font-medium"
+          className="font-medium text-xs"
         >
           {label}
         </Label>
@@ -54,9 +54,9 @@ export const SliderWithInput = ({
             min={min}
             max={max}
             step={step}
-            className="h-6 w-18 text-xs px-2"
+            className="h-6 w-18 px-2 text-xs"
           />
-          <span className="text-xs text-muted-foreground">{unit}</span>
+          <span className="text-muted-foreground text-xs">{unit}</span>
         </div>
       </div>
       <Slider

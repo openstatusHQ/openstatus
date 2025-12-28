@@ -168,7 +168,7 @@ const ResponsiveDialogOverlay = ({
     <ResponsiveDialogOverlay
       {...props}
       className={cn(
-        "sm:data-[state=open]:animate-in sm:data-[state=closed]:animate-out sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/70",
+        "sm:data-[state=closed]:fade-out-0 sm:data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/70 sm:data-[state=closed]:animate-out sm:data-[state=open]:animate-in",
         className,
       )}
     />
@@ -310,7 +310,7 @@ const ResponsiveDialogContent = React.forwardRef<
           {!shouldUseDialog && direction === "bottom" && (
             <div
               className={cn(
-                "bg-muted-foreground/25 dark:bg-muted mx-auto my-4 h-1.5 w-14 rounded-full pb-1.5 data-[vaul-handle]:h-1.5 data-[vaul-handle]:w-14 data-[vaul-handle]:pb-1.5",
+                "mx-auto my-4 h-1.5 w-14 rounded-full bg-muted-foreground/25 pb-1.5 data-[vaul-handle]:h-1.5 data-[vaul-handle]:w-14 data-[vaul-handle]:pb-1.5 dark:bg-muted",
                 dragHandleClassName,
               )}
             />
@@ -319,7 +319,7 @@ const ResponsiveDialogContent = React.forwardRef<
           {shouldShowCloseButton && (
             <ResponsiveDialogClose
               className={cn(
-                "ring-offset-background focus-visible:ring-ring data-[state=open]:bg-accent absolute top-4 right-4 rounded-sm opacity-70 backdrop-blur-sm transition-opacity hover:opacity-100 focus:ring-offset-2 focus:outline-none focus-visible:ring-2 disabled:pointer-events-none data-[state=open]:text-white",
+                "absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background backdrop-blur-sm transition-opacity hover:opacity-100 focus:outline-none focus:ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-white",
                 closeButtonClassName,
               )}
             >
@@ -381,7 +381,7 @@ const ResponsiveDialogTitle = React.forwardRef<
     <ResponsiveDialogTitle
       ref={ref}
       className={cn(
-        "text-lg leading-none font-semibold tracking-tight",
+        "font-semibold text-lg leading-none tracking-tight",
         className,
       )}
       {...props}

@@ -47,8 +47,8 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       id: "base",
       foregroundId: "foreground",
       backgroundId: "background",
-      foreground: currentStyles?.["foreground"],
-      background: currentStyles?.["background"],
+      foreground: currentStyles?.foreground,
+      background: currentStyles?.background,
       label: "Base",
       category: "content",
     },
@@ -57,7 +57,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "card-foreground",
       backgroundId: "card",
       foreground: currentStyles?.["card-foreground"],
-      background: currentStyles?.["card"],
+      background: currentStyles?.card,
       label: "Card",
       category: "content",
     },
@@ -66,7 +66,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "popover-foreground",
       backgroundId: "popover",
       foreground: currentStyles?.["popover-foreground"],
-      background: currentStyles?.["popover"],
+      background: currentStyles?.popover,
       label: "Popover",
       category: "content",
     },
@@ -75,7 +75,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "muted-foreground",
       backgroundId: "muted",
       foreground: currentStyles?.["muted-foreground"],
-      background: currentStyles?.["muted"],
+      background: currentStyles?.muted,
       label: "Muted",
       category: "content",
     },
@@ -86,7 +86,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "primary-foreground",
       backgroundId: "primary",
       foreground: currentStyles?.["primary-foreground"],
-      background: currentStyles?.["primary"],
+      background: currentStyles?.primary,
       label: "Primary",
       category: "interactive",
     },
@@ -95,7 +95,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "secondary-foreground",
       backgroundId: "secondary",
       foreground: currentStyles?.["secondary-foreground"],
-      background: currentStyles?.["secondary"],
+      background: currentStyles?.secondary,
       label: "Secondary",
       category: "interactive",
     },
@@ -104,7 +104,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "accent-foreground",
       backgroundId: "accent",
       foreground: currentStyles?.["accent-foreground"],
-      background: currentStyles?.["accent"],
+      background: currentStyles?.accent,
       label: "Accent",
       category: "interactive",
     },
@@ -115,7 +115,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "destructive-foreground",
       backgroundId: "destructive",
       foreground: currentStyles?.["destructive-foreground"],
-      background: currentStyles?.["destructive"],
+      background: currentStyles?.destructive,
       label: "Destructive",
       category: "functional",
     },
@@ -124,7 +124,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
       foregroundId: "sidebar-foreground",
       backgroundId: "sidebar",
       foreground: currentStyles?.["sidebar-foreground"],
-      background: currentStyles?.["sidebar"],
+      background: currentStyles?.sidebar,
       label: "Sidebar Base",
       category: "functional",
     },
@@ -205,7 +205,7 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
                 href="https://www.w3.org/TR/WCAG21/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary/80 underline transition-colors"
+                className="text-primary underline transition-colors hover:text-primary/80"
               >
                 Learn more
               </a>
@@ -254,8 +254,8 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
           <div className="space-y-6 px-6">
             {groupedPairs.map((group) => (
               <div key={group.category} className="">
-                <div className="bg-background sticky -top-px z-10 flex items-center gap-2 pb-4 sm:rounded-b-xl">
-                  <h2 className="text-md font-semibold">{group.label}</h2>
+                <div className="-top-px sticky z-10 flex items-center gap-2 bg-background pb-4 sm:rounded-b-xl">
+                  <h2 className="font-semibold text-md">{group.label}</h2>
                   <Separator className="flex-1" />
                 </div>
 
@@ -319,12 +319,12 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
                                       pair.background ?? "#000000",
                                   }}
                                   className="h-12 w-12 flex-shrink-0 rounded-md border shadow-sm"
-                                ></div>
+                                />
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-medium">
+                                  <span className="font-medium text-xs">
                                     Background
                                   </span>
-                                  <span className="text-muted-foreground font-mono text-xs">
+                                  <span className="font-mono text-muted-foreground text-xs">
                                     {pair.background}
                                   </span>
                                 </div>
@@ -336,12 +336,12 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
                                       pair.foreground ?? "#ffffff",
                                   }}
                                   className="h-12 w-12 flex-shrink-0 rounded-md border shadow-sm"
-                                ></div>
+                                />
                                 <div className="flex flex-col">
-                                  <span className="text-xs font-medium">
+                                  <span className="font-medium text-xs">
                                     Foreground
                                   </span>
-                                  <span className="text-muted-foreground font-mono text-xs">
+                                  <span className="font-mono text-muted-foreground text-xs">
                                     {pair.foreground}
                                   </span>
                                 </div>
@@ -358,13 +358,13 @@ const ContrastChecker = ({ currentStyles }: ContrastCheckerProps) => {
                                 <div className="p-4 text-center">
                                   <p
                                     style={{ color: pair.foreground }}
-                                    className="mb-2 text-4xl font-bold tracking-wider"
+                                    className="mb-2 font-bold text-4xl tracking-wider"
                                   >
                                     Aa
                                   </p>
                                   <p
                                     style={{ color: pair.foreground }}
-                                    className="text-sm font-medium"
+                                    className="font-medium text-sm"
                                   >
                                     Sample Text
                                   </p>
