@@ -10,10 +10,7 @@ export async function createUser(data: AdapterUser) {
     .insert(user)
     .values({
       email: rest.email,
-      photoUrl: rest.image,
       name: rest.name,
-      firstName: rest.firstName,
-      lastName: rest.lastName,
     })
     .returning()
     .get();

@@ -2,19 +2,26 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import type { Adapter } from "next-auth/adapters";
 
 import { db } from "@openstatus/db";
+// import {
+//   verificationToken,
+//   viewer,
+//   viewerSession,
+//   viewerAccounts,
+// } from "@openstatus/db/src/schema";
+
 import {
   account,
   session,
   user,
   verificationToken,
 } from "@openstatus/db/src/schema";
-
 import { createUser, getUser } from "./helpers";
 
 export const adapter: Adapter = {
   ...DrizzleAdapter(db, {
     // @ts-ignore
     usersTable: user,
+    // NOTE: only need accounts for external providers
     // @ts-ignore
     accountsTable: account,
     // @ts-ignore

@@ -2,6 +2,7 @@
 
 import { signIn } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { AuthError } from "next-auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 export async function signInWithResendAction(formData: FormData) {
@@ -15,6 +16,7 @@ export async function signInWithResendAction(formData: FormData) {
     }
 
     const queryClient = getQueryClient();
+    // NOTE: throws an error if the email domain is not allowed
     await queryClient.fetchQuery(
       trpc.statusPage.validateEmailDomain.queryOptions({ slug: domain, email }),
     );
@@ -27,6 +29,9 @@ export async function signInWithResendAction(formData: FormData) {
     // NOTE: https://github.com/nextauthjs/next-auth/discussions/9389
     if (isRedirectError(e)) return;
     console.error(e);
+    if (e instanceof AuthError) {
+      throw new Error(`Authentication error: ${e.type}`);
+    }
     throw e;
   }
 }
