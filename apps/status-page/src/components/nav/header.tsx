@@ -103,13 +103,6 @@ export function Header(props: React.ComponentProps<"header">) {
     }),
   );
 
-  // TODO: the accessType === "email-domain" cannot ONLY support email
-  // because we need authentication to access the status page
-  const _types =
-    page?.workspacePlan === "free"
-      ? (["slack", "rss", "json"] as const)
-      : (["email", "slack", "rss", "json"] as const);
-
   return (
     <header {...props}>
       <nav className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-3 py-2">

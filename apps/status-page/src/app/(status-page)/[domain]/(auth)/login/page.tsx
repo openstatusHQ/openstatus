@@ -6,7 +6,7 @@ import { notFound, useParams } from "next/navigation";
 import { SectionMagicLink } from "./_components/section-magic-link";
 import { SectionPassword } from "./_components/section-password";
 
-export default function AuthPage() {
+export default function LoginPage() {
   const { domain } = useParams<{ domain: string }>();
   const trpc = useTRPC();
   const { data: page } = useQuery(

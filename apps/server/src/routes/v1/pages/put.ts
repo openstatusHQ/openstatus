@@ -167,6 +167,8 @@ export function registerPutPage(api: typeof pagesApi) {
       .set({
         ...rest,
         customDomain: input.customDomain ?? "",
+        accessType:
+          rest.accessType ?? (rest.passwordProtected ? "password" : "public"),
         authEmailDomains: rest.authEmailDomains?.join(","),
         updatedAt: new Date(),
       })

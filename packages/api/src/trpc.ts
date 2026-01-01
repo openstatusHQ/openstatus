@@ -136,29 +136,7 @@ export const mergeRouters = t.mergeRouters;
 export const publicProcedure = t.procedure;
 
 /**
- * Reusable middleware that enforces users are logged in (no workspace required)
- */
-const enforceUserIsAuthedOnly = t.middleware(async (opts) => {
-  const { ctx } = opts;
-  if (!ctx.session?.user?.id) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-
-  const userProps = await db.query.user.findFirst({
-    where: eq(schema.user.id, Number(ctx.session.user.id)),
-  });
-
-  if (!userProps) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
-  }
-
-  const user = schema.selectUserSchema.parse(userProps);
-
-  return opts.next({ ctx: { ...ctx, user } });
-});
-
-/**
- * Reusable middleware that enforces users are logged in with workspace before running the
+ * Reusable middleware that enforces users are logged in before running the
  * procedure
  */
 const enforceUserIsAuthed = t.middleware(async (opts) => {
@@ -284,21 +262,11 @@ export const formdataMiddleware = t.middleware(async (opts) => {
 });
 
 /**
- * Authed procedure (user only, no workspace required)
+ * Protected (authed) procedure
  *
- * Use this for procedures that require authentication but don't need a workspace,
- * such as creating a workspace or generating slugs for new users.
- *
- * @see https://trpc.io/docs/procedures
- */
-export const authedProcedure = t.procedure.use(enforceUserIsAuthedOnly);
-
-/**
- * Protected (authed + workspace) procedure
- *
- * If you want a query or mutation to ONLY be accessible to logged in users with
- * a workspace, use this. It verifies the session is valid and guarantees
- * ctx.session.user and ctx.workspace are not null.
+ * If you want a query or mutation to ONLY be accessible to logged in users, use
+ * this. It verifies the session is valid and guarantees ctx.session.user is not
+ * null
  *
  * @see https://trpc.io/docs/procedures
  */

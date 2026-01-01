@@ -44,14 +44,7 @@ export default auth(async (req) => {
       .all();
 
     if (!query) {
-      console.log(
-        "No workspace found for user, redirecting to workspace creation",
-      );
-
-      if (!url.pathname.startsWith("/workspace/create")) {
-        return NextResponse.redirect(new URL("/workspace/create", req.url));
-      }
-      return response;
+      console.error(">> Should not happen, no workspace found for user");
     }
 
     response.cookies.set("workspace-slug", query.workspace.slug);

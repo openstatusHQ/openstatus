@@ -165,6 +165,8 @@ export function registerPostPage(api: typeof pagesApi) {
         ...rest,
         workspaceId: workspaceId,
         customDomain: rest.customDomain ?? "", // TODO: make database migration to allow null
+        accessType:
+          rest.accessType ?? (rest.passwordProtected ? "password" : "public"),
         authEmailDomains: rest.authEmailDomains?.join(","),
       })
       .returning()
