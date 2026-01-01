@@ -36,7 +36,7 @@ async function* makeIterator({
       }
 
       if (check.state === "success") {
-        storeCheckerData({ check, id });
+        await storeCheckerData({ check, id });
       }
 
       return encoder.encode(
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
   const { url, method } = json;
 
   const uuid = crypto.randomUUID().replace(/-/g, "");
-  storeBaseCheckerData({ url, method, id: uuid });
+  await storeBaseCheckerData({ url, method, id: uuid });
 
   const iterator = makeIterator({ url, method, id: uuid });
   const stream = iteratorToStream(iterator);

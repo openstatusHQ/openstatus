@@ -181,6 +181,7 @@ export class EmailClient {
       throw result.error;
     } catch (err) {
       console.error(`Error sending monitor alert to ${req.to}`, err);
+      throw err;
     }
   }
 

@@ -12,6 +12,7 @@ describe("Discord Notifications", () => {
   let fetchMock: any = undefined;
 
   beforeEach(() => {
+    // @ts-expect-error
     fetchMock = spyOn(global, "fetch").mockImplementation(() =>
       Promise.resolve(new Response(null, { status: 200 })),
     );
@@ -150,17 +151,15 @@ describe("Discord Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
-
-    // Should not throw - function catches errors internally
-    await sendAlert({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 500,
-      message: "Error",
-      cronTimestamp: Date.now(),
-    });
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      sendAlert({
+        // @ts-expect-error
+        monitor,
+        notification,
+        statusCode: 500,
+        message: "Error",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow();
   });
 });

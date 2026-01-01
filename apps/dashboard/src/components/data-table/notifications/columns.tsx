@@ -5,6 +5,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { type NotifierProvider, config } from "@/data/notifications.client";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
 import { TableCellBadge } from "../table-cell-badge";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -45,7 +46,9 @@ export const columns: ColumnDef<Notifier>[] = [
         return (
           <div className="flex flex-wrap gap-1">
             {value.map((m) => (
-              <TableCellBadge key={m.id} value={m.name} />
+              <Link href={`/monitors/${m.id}`} key={m.id}>
+                <TableCellBadge value={m.name} />
+              </Link>
             ))}
           </div>
         );

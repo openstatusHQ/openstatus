@@ -177,14 +177,16 @@ describe("Slack Notifications", () => {
     );
 
     // Should not throw - function catches errors internally
-    await sendAlert({
-      // @ts-expect-error
-      monitor,
-      notification,
-      statusCode: 500,
-      message: "Error",
-      cronTimestamp: Date.now(),
-    });
+    expect(
+      sendAlert({
+        // @ts-expect-error
+        monitor,
+        notification,
+        statusCode: 500,
+        message: "Error",
+        cronTimestamp: Date.now(),
+      }),
+    ).rejects.toThrow();
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });

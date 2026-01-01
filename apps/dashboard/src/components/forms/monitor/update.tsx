@@ -199,12 +199,14 @@ export function FormMonitorUpdate() {
         defaultValues={{
           statusPages: monitor.pages.map(({ id }) => id),
           description: monitor.description,
+          externalName: monitor.externalName ?? "",
         }}
         onSubmit={async (values) => {
           await updateStatusPagesMutation.mutateAsync({
             id: Number.parseInt(id),
             statusPages: values.statusPages,
             description: values.description,
+            externalName: values.externalName,
           });
         }}
       />

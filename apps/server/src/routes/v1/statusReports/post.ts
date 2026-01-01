@@ -183,7 +183,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           message: _newStatusReportUpdate.message,
           date: _newStatusReportUpdate.date.toISOString(),
           monitors: _statusReport.monitorsToStatusReports.map(
-            (i) => i.monitor.name,
+            (i) => i.monitor.externalName || i.monitor.name,
           ),
         });
       }

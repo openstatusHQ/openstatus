@@ -25,8 +25,8 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updatePrivateLocationMutation = useMutation(
     trpc.privateLocation.update.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
           queryKey: trpc.privateLocation.list.queryKey(),
         });
       },

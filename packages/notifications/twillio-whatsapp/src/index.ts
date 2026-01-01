@@ -31,22 +31,20 @@ export const sendAlert = async ({
   body.set("ContentSid", "HX8282106bfaecb7939e69f9c5564babe5");
   body.set("ContentVariables", contentVariables);
 
-  try {
-    await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
-      {
-        method: "post",
-        body,
-        headers: {
-          Authorization: `Basic ${btoa(
-            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
-          )}`,
-        },
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
+    {
+      method: "post",
+      body,
+      headers: {
+        Authorization: `Basic ${btoa(
+          `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
+        )}`,
       },
-    );
-  } catch (err) {
-    console.log(err);
-    // Do something
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to send WhatsApp message: ${res.statusText}`);
   }
 };
 
@@ -80,22 +78,20 @@ export const sendRecovery = async ({
   body.set("ContentSid", "HX8fdeb4201bed18ac8838b3c0135bbf28");
   body.set("ContentVariables", contentVariables);
 
-  try {
-    await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
-      {
-        method: "post",
-        body,
-        headers: {
-          Authorization: `Basic ${btoa(
-            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
-          )}`,
-        },
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
+    {
+      method: "post",
+      body,
+      headers: {
+        Authorization: `Basic ${btoa(
+          `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
+        )}`,
       },
-    );
-  } catch (err) {
-    console.log(err);
-    // Do something
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to send SMS: ${res.statusText}`);
   }
 };
 
@@ -127,22 +123,20 @@ export const sendDegraded = async ({
   body.set("ContentSid", "HX35589f2e7ac8b8be63f4bd62a60e435f");
   body.set("ContentVariables", contentVariables);
 
-  try {
-    await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
-      {
-        method: "post",
-        body,
-        headers: {
-          Authorization: `Basic ${btoa(
-            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
-          )}`,
-        },
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
+    {
+      method: "post",
+      body,
+      headers: {
+        Authorization: `Basic ${btoa(
+          `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
+        )}`,
       },
-    );
-  } catch (err) {
-    console.log(err);
-    // Do something
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to send SMS: ${res.statusText}`);
   }
 };
 

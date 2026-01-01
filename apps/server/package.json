@@ -12,7 +12,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/sentry": "1.2.0",
+    "@hono/sentry": "1.2.2",
     "@hono/zod-openapi": "1.1.5",
     "@hono/zod-validator": "0.2.2",
     "@logtape/logtape": "1.1.2",
@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/validator": "13.11.6",
+    "@types/validator": "13.12.0",
     "bun-types": "1.3.1",
     "dotenv": "16.3.1"
   }

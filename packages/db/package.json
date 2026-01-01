@@ -27,7 +27,7 @@
     "@types/node": "22.10.2",
     "drizzle-kit": "0.31.4",
     "next-auth": "5.0.0-beta.29",
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   },
   "author": "OpenStatus"
 }

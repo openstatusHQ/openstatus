@@ -3,7 +3,7 @@ import { discordDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 
 const postToWebhook = async (content: string, webhookUrl: string) => {
-  await fetch(webhookUrl, {
+  const res = await fetch(webhookUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -15,6 +15,11 @@ const postToWebhook = async (content: string, webhookUrl: string) => {
       username: "OpenStatus Notifications",
     }),
   });
+  if (!res.ok) {
+    throw new Error(
+      `Failed to send Discord webhook: ${res.status} ${res.statusText}`,
+    );
+  }
 };
 
 export const sendAlert = async ({
@@ -52,7 +57,7 @@ export const sendAlert = async ({
     );
   } catch (err) {
     console.error(err);
-    // Do something
+    throw err;
   }
 };
 
@@ -88,7 +93,7 @@ export const sendRecovery = async ({
     );
   } catch (err) {
     console.error(err);
-    // Do something
+    throw err;
   }
 };
 
@@ -124,7 +129,7 @@ export const sendDegraded = async ({
     );
   } catch (err) {
     console.error(err);
-    // Do something
+    throw err;
   }
 };
 

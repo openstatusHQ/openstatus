@@ -13,13 +13,20 @@ import { workspacePlanSchema } from "./workspaces";
 
 // TODO: create a 'public-status' schema with all the different types and validations
 
-export const selectPublicMonitorSchema = selectMonitorSchema.omit({
+// Base schema without transform so it can be extended
+const selectPublicMonitorBaseSchema = selectMonitorSchema.omit({
   body: true,
   headers: true,
   method: true,
   otelEndpoint: true,
   otelHeaders: true,
 });
+
+export const selectPublicMonitorSchema =
+  selectPublicMonitorBaseSchema.transform((data) => ({
+    ...data,
+    name: data.externalName || data.name,
+  }));
 
 export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
   statusReportUpdates: z.array(selectStatusReportUpdateSchema).prefault([]),
@@ -29,7 +36,7 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
         monitorId: z.number(),
         statusReportId: z.number(),
         monitor: selectPublicMonitorSchema,
-      }),
+      })
     )
     .prefault([]),
 });
@@ -41,7 +48,7 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
         monitorId: z.number(),
         maintenanceId: z.number(),
         monitor: selectPublicMonitorSchema,
-      }),
+      })
     )
     .prefault([]),
 });
@@ -60,7 +67,7 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
       pageId: z.number(),
       order: z.number().prefault(0).optional(),
       monitor: selectMonitorSchema,
-    }),
+    })
   ),
   maintenances: selectMaintenanceSchema.array().prefault([]),
   statusReports: selectStatusReportSchema
@@ -85,12 +92,19 @@ export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
     id: true,
   });
 
-const selectPublicMonitorWithStatusSchema = selectPublicMonitorSchema.extend({
-  status: z.enum(["success", "degraded", "error", "info"]).prefault("success"),
-  monitorGroupId: z.number().nullable().optional(),
-  order: z.number().prefault(0).optional(),
-  groupOrder: z.number().prefault(0).optional(),
-});
+const selectPublicMonitorWithStatusSchema = selectPublicMonitorBaseSchema
+  .extend({
+    status: z
+      .enum(["success", "degraded", "error", "info"])
+      .prefault("success"),
+    monitorGroupId: z.number().nullable().optional(),
+    order: z.number().default(0).optional(),
+    groupOrder: z.number().default(0).optional(),
+  })
+  .transform((data) => ({
+    ...data,
+    name: data.externalName || data.name,
+  }));
 
 const trackersSchema = z
   .array(
@@ -110,39 +124,26 @@ const trackersSchema = z
           .prefault("success"),
         order: z.number(),
       }),
-    ]),
+    ])
   )
   .prefault([]);
+
+export const statusPageEventSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  from: z.date(),
+  to: z.date().nullable(),
+  status: z.enum(["success", "degraded", "error", "info"]).prefault("success"),
+  type: z.enum(["maintenance", "incident", "report"]),
+});
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   monitorGroups: selectMonitorGroupSchema.array().prefault([]),
   // TODO: include status of the monitor
   monitors: selectPublicMonitorWithStatusSchema.array(),
   trackers: trackersSchema,
-  lastEvents: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      from: z.date(),
-      to: z.date().nullable(),
-      status: z
-        .enum(["success", "degraded", "error", "info"])
-        .prefault("success"),
-      type: z.enum(["maintenance", "incident", "report"]),
-    }),
-  ),
-  openEvents: z.array(
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      from: z.date(),
-      to: z.date().nullable(),
-      status: z
-        .enum(["success", "degraded", "error", "info"])
-        .prefault("success"),
-      type: z.enum(["maintenance", "incident", "report"]),
-    }),
-  ),
+  lastEvents: z.array(statusPageEventSchema),
+  openEvents: z.array(statusPageEventSchema),
   statusReports: z.array(selectStatusReportPageSchema),
   incidents: z.array(selectIncidentSchema),
   maintenances: z.array(selectMaintenancePageSchema),
@@ -161,7 +162,7 @@ export const selectPublicStatusReportSchemaWithRelation =
           monitorId: z.number(),
           statusReportId: z.number(),
           monitor: selectPublicMonitorSchema,
-        }),
+        })
       )
       .prefault([]),
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),

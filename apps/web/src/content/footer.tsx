@@ -1,7 +1,6 @@
 import { Link } from "@/content/link";
 import { ThemeToggle } from "@/content/theme-toggle";
 import { footerLinks } from "@/data/content";
-import { Suspense } from "react";
 import { FooterStatus } from "./footer-status";
 
 export function Footer() {
@@ -27,18 +26,14 @@ export function Footer() {
         ))}
       </div>
       <div className="grid gap-px border border-border border-t-0 bg-border sm:grid-cols-2 md:grid-cols-3 [&>*]:bg-background">
+        <Link
+          href="/cal"
+          className="flex w-full items-center gap-2 p-4 hover:bg-muted"
+        >
+          Talk to the founders
+        </Link>
         <div>
-          <Link
-            href="/cal"
-            className="flex w-full items-center gap-2 p-4 hover:bg-muted"
-          >
-            Talk to the founders
-          </Link>
-        </div>
-        <div>
-          <Suspense fallback="Loading...">
-            <FooterStatus />
-          </Suspense>
+          <FooterStatus />
         </div>
         <div className="sm:col-span-2 md:col-span-1">
           <ThemeToggle className="rounded-none" />

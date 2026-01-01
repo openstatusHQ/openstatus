@@ -15,6 +15,7 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
+    "@openstatus/notification-google-chat": "workspace:*",
     "@openstatus/notification-ntfy": "workspace:*",
     "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
@@ -29,6 +30,7 @@
     "@openstatus/utils": "workspace:*",
     "@upstash/qstash": "2.6.2",
     "drizzle-orm": "0.44.4",
+    "effect": "3.19.12",
     "hono": "4.5.3",
     "limiter": "^3.0.0",
     "zod": "4.1.13"
@@ -36,6 +38,6 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/bun": "latest",
-    "typescript": "5.7.2"
+    "typescript": "5.9.3"
   }
 }

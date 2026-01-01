@@ -124,7 +124,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _statusReportWithRelations.monitorsToStatusReports.map(
-            (monitor) => monitor.monitor.name,
+            (monitor) => monitor.monitor.externalName || monitor.monitor.name,
           ),
         });
       }
