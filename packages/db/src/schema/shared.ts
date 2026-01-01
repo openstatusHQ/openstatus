@@ -36,7 +36,7 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
         monitorId: z.number(),
         statusReportId: z.number(),
         monitor: selectPublicMonitorSchema,
-      })
+      }),
     )
     .prefault([]),
 });
@@ -48,7 +48,7 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
         monitorId: z.number(),
         maintenanceId: z.number(),
         monitor: selectPublicMonitorSchema,
-      })
+      }),
     )
     .prefault([]),
 });
@@ -67,7 +67,7 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
       pageId: z.number(),
       order: z.number().prefault(0).optional(),
       monitor: selectMonitorSchema,
-    })
+    }),
   ),
   maintenances: selectMaintenanceSchema.array().prefault([]),
   statusReports: selectStatusReportSchema
@@ -124,7 +124,7 @@ const trackersSchema = z
           .prefault("success"),
         order: z.number(),
       }),
-    ])
+    ]),
   )
   .prefault([]);
 
@@ -162,7 +162,7 @@ export const selectPublicStatusReportSchemaWithRelation =
           monitorId: z.number(),
           statusReportId: z.number(),
           monitor: selectPublicMonitorSchema,
-        })
+        }),
       )
       .prefault([]),
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),
