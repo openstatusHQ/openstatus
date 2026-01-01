@@ -32,6 +32,7 @@ export const limitsSchema = z.object({
   "status-subscribers": z.boolean().default(false),
   "custom-domain": z.boolean().default(false),
   "password-protection": z.boolean().default(false),
+  "email-domain-protection": z.boolean().default(false), // add-on but required in limits
   "white-label": z.boolean().default(false),
   /**
    * Notification limits
@@ -51,3 +52,21 @@ export const limitsSchema = z.object({
 });
 
 export type Limits = z.infer<typeof limitsSchema>;
+
+//
+
+const priceSchema = z.object({
+  USD: z.number(),
+  EUR: z.number(),
+  INR: z.number(),
+});
+
+export type Price = z.infer<typeof priceSchema>;
+
+export const addonsSchema = z.object({
+  "email-domain-protection": z.object({
+    price: priceSchema,
+  }),
+}) satisfies z.ZodType<Partial<Record<keyof Limits, { price: Price }>>>;
+
+export type Addons = z.infer<typeof addonsSchema>;

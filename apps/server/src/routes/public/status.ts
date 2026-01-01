@@ -45,7 +45,7 @@ status.get("/:slug", async (c) => {
       return c.json({ status: Status.Unknown });
     }
 
-    if (currentPage.passwordProtected) {
+    if (currentPage.accessType !== "public") {
       return c.json({ status: Status.Unknown });
     }
 

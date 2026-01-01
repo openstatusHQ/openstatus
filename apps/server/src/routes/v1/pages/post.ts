@@ -14,7 +14,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
-import { PageSchema } from "./schema";
+import { PageSchema, transformPageData } from "./schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -90,6 +90,26 @@ export function registerPostPage(api: typeof pagesApi) {
       });
     }
 
+    if (
+      !limits["password-protection"] &&
+      (input?.accessType === "password" || input?.password)
+    ) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for password protection",
+      });
+    }
+
+    if (
+      !limits["email-domain-protection"] &&
+      (input?.accessType === "email-domain" || input?.authEmailDomains?.length)
+    ) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for email domain protection",
+      });
+    }
+
     if (subdomainSafeList.includes(input.slug)) {
       throw new OpenStatusApiError({
         code: "BAD_REQUEST",
@@ -145,6 +165,7 @@ export function registerPostPage(api: typeof pagesApi) {
         ...rest,
         workspaceId: workspaceId,
         customDomain: rest.customDomain ?? "", // TODO: make database migration to allow null
+        authEmailDomains: rest.authEmailDomains?.join(","),
       })
       .returning()
       .get();
@@ -161,7 +182,7 @@ export function registerPostPage(api: typeof pagesApi) {
           .run();
       }
     }
-    const data = PageSchema.parse(_page);
+    const data = transformPageData(PageSchema.parse(_page));
     return c.json(data, 200);
   });
 }

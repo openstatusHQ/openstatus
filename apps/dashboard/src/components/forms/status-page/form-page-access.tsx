@@ -33,27 +33,31 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const protectionTypeSchema = z.enum(["none", "password", "magiclink"]);
+const accessTypeSchema = z.enum(["public", "password", "email-domain"]);
 
 const schema = z.object({
-  protectionType: protectionTypeSchema.default("none"),
-  passwordProtected: z.boolean().optional(), // TODO: replace with protectionType
+  accessType: accessTypeSchema.default("public"),
   password: z.string().optional(),
-  allowedDomains: z.preprocess(
-    (val) => (val ? val.split(",").map((domain) => domain.trim()) : []),
+  authEmailDomains: z.preprocess(
+    (val) =>
+      val
+        ? String(val)
+            .split(",")
+            .map((domain) => domain.trim())
+        : [],
     z.array(z.string()).optional(),
   ),
 });
 
 type FormValues = z.infer<typeof schema>;
 
-export function FormPasswordProtection({
+export function FormPageAccess({
   lockedMap,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  lockedMap?: Map<z.infer<typeof protectionTypeSchema>, boolean>;
+  lockedMap?: Map<z.infer<typeof accessTypeSchema>, boolean>;
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -61,14 +65,13 @@ export function FormPasswordProtection({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      protectionType: "none",
-      passwordProtected: false,
+      accessType: "public",
       password: "",
-      allowedDomains: [],
+      authEmailDomains: [],
     },
   });
-  const watchProtectionType = form.watch("protectionType");
-  const locked = lockedMap?.get(watchProtectionType);
+  const watchAccessType = form.watch("accessType");
+  const locked = lockedMap?.get(watchAccessType);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -99,7 +102,7 @@ export function FormPasswordProtection({
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
           <FormCardHeader>
-            <FormCardTitle>Protection</FormCardTitle>
+            <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
               Enable protection for your status page. Choose between simple
               password or email domain authentication via magic link.
@@ -108,7 +111,7 @@ export function FormPasswordProtection({
           <FormCardContent>
             <FormField
               control={form.control}
-              name="protectionType"
+              name="accessType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Protection Type</FormLabel>
@@ -117,15 +120,14 @@ export function FormPasswordProtection({
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
-                      disabled={!!defaultValues?.type}
                     >
                       {[
-                        { value: "none", icon: LockOpen, label: "Public" },
+                        { value: "public", icon: LockOpen, label: "Public" },
                         { value: "password", icon: Key, label: "Password" },
                         {
-                          value: "magiclink",
+                          value: "email-domain",
                           icon: ShieldUser,
-                          label: "Magic Link",
+                          label: "Magic Link (Auth)",
                         },
                       ].map((type) => {
                         return (
@@ -139,7 +141,6 @@ export function FormPasswordProtection({
                               <RadioGroupItem
                                 value={type.value}
                                 className="sr-only"
-                                disabled={!!defaultValues?.type}
                               />
                             </FormControl>
                             <type.icon
@@ -160,10 +161,10 @@ export function FormPasswordProtection({
               )}
             />
           </FormCardContent>
-          {watchProtectionType && watchProtectionType !== "none" ? (
+          {watchAccessType && watchAccessType !== "public" ? (
             <FormCardSeparator />
           ) : null}
-          {watchProtectionType === "password" ? (
+          {watchAccessType === "password" ? (
             <FormCardContent className="grid gap-4">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
@@ -186,23 +187,24 @@ export function FormPasswordProtection({
               />
             </FormCardContent>
           ) : null}
-          {watchProtectionType === "magiclink" ? (
+          {watchAccessType === "email-domain" ? (
             <FormCardContent className="grid gap-4">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
-                name="allowedDomains"
+                name="authEmailDomains"
                 disabled={locked}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Allowed Domains</FormLabel>
+                    <FormLabel>Email Domains</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
                     <FormMessage />
                     <FormDescription>
                       Comma-separated list of email domains. Only emails from
-                      these domains will be allowed to access the status page.
+                      these domains will be authenticated to access the status
+                      page.
                     </FormDescription>
                   </FormItem>
                 )}

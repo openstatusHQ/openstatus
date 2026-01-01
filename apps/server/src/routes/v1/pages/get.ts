@@ -5,7 +5,7 @@ import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page } from "@openstatus/db/src/schema";
 import type { pagesApi } from "./index";
-import { PageSchema, ParamsSchema } from "./schema";
+import { PageSchema, ParamsSchema, transformPageData } from "./schema";
 
 const getRoute = createRoute({
   method: "get",
@@ -46,7 +46,7 @@ export function registerGetPage(api: typeof pagesApi) {
       });
     }
 
-    const data = PageSchema.parse(_page);
+    const data = transformPageData(PageSchema.parse(_page));
 
     return c.json(data, 200);
   });

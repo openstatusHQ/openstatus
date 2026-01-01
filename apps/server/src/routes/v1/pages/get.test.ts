@@ -11,6 +11,8 @@ test("return the page", async () => {
   });
   const result = PageSchema.safeParse(await res.json());
 
+  console.log(result.error);
+
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
 });

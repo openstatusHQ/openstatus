@@ -103,7 +103,7 @@ export function FormWorkspaceCreate({
       if (result.data) {
         form.setValue("slug", result.data.slug);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to generate slug");
     }
   }

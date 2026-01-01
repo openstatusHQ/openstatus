@@ -3,6 +3,7 @@ import { THEME_KEYS } from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import { pageAccessTypes } from "./constants";
 import { page } from "./page";
 
 const slugSchema = z
@@ -22,8 +23,16 @@ const customDomainSchema = z
   )
   .or(z.enum([""]));
 
+const stringToArray = z.preprocess((val) => {
+  if (String(val).length > 0) {
+    return String(val).split(",");
+  }
+  return [];
+}, z.array(z.string()));
+
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: customDomainSchema.default(""),
+  accessType: z.enum(pageAccessTypes).default("public"),
   icon: z.string().optional(),
   slug: slugSchema,
 }).extend({
@@ -38,6 +47,7 @@ export const insertPageSchema = createInsertSchema(page, {
     )
     .optional()
     .default([]),
+  authEmailDomains: z.array(z.string()).nullish(),
 });
 
 export const pageConfigurationSchema = z.object({
@@ -55,7 +65,9 @@ export const pageConfigurationSchema = z.object({
 
 export const selectPageSchema = createSelectSchema(page).extend({
   password: z.string().optional().nullable().default(""),
+  accessType: z.enum(pageAccessTypes).default("public"),
   configuration: pageConfigurationSchema.nullish().default({}),
+  authEmailDomains: stringToArray.default([]),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

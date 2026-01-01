@@ -17,9 +17,9 @@ import { Inbox } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { flushSync } from "react-dom";
-import { signInWithResendAction } from "./actions";
+import { signInWithResendAction } from "../actions";
 
-export default function AuthPage() {
+export function SectionMagicLink() {
   const { domain } = useParams<{ domain: string }>();
   const [state, setState] = useState<"idle" | "pending" | "success">("idle");
 
@@ -55,7 +55,8 @@ export default function AuthPage() {
       <SectionHeader>
         <SectionTitle>Authenticate</SectionTitle>
         <SectionDescription>
-          Enter the email to receive a magic link to access the status page.
+          Enter your email to receive a magic link for accessing the status
+          page. Note: Only emails from approved domains are accepted.
         </SectionDescription>
       </SectionHeader>
       {state !== "success" ? (

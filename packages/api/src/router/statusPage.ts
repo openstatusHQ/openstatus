@@ -50,10 +50,6 @@ import {
 const WORKSPACES =
   process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
-// TODO: use db column `allowed_domains` instead of this static constant
-const ALLOWED_DOMAINS = ["openstatus.dev", "stpg.dev"];
-const PROTECTED_SLUG = "hello";
-
 export const statusPageRouter = createTRPCRouter({
   get: publicProcedure
     .input(
@@ -912,14 +908,24 @@ export const statusPageRouter = createTRPCRouter({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
       });
 
-      if (!_page || _page.slug !== PROTECTED_SLUG) {
+      if (!_page) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Page not found",
         });
       }
 
-      if (!ALLOWED_DOMAINS.includes(opts.input.email.split("@")[1])) {
+      if (_page.accessType !== "email-domain") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Page is not configured to allow email domain authentication",
+        });
+      }
+
+      const allowedDomains = _page.authEmailDomains?.split(",") ?? [];
+
+      if (!allowedDomains.includes(opts.input.email.split("@")[1])) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Invalid email domain",
@@ -990,6 +996,13 @@ export const statusPageRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Page not found",
+        });
+      }
+
+      if (_page.accessType !== "password") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Page is not configured to allow password authentication",
         });
       }
 

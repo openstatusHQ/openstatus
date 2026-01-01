@@ -69,7 +69,11 @@ export const config: Record<
       },
       {
         value: "password-protection",
-        label: "Password-protected",
+        label: "Password Protection",
+      },
+      {
+        value: "email-domain-protection",
+        label: "Magic Link (Auth)",
       },
     ],
   },

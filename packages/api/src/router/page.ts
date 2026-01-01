@@ -21,6 +21,7 @@ import {
   monitorGroup,
   monitorsToPages,
   page,
+  pageAccessTypes,
   selectMaintenanceSchema,
   selectMonitorGroupSchema,
   selectMonitorSchema,
@@ -115,6 +116,7 @@ export const pageRouter = createTRPCRouter({
           workspaceId: opts.ctx.workspace.id,
           configuration: JSON.stringify(configuration),
           ...pageProps,
+          authEmailDomains: pageProps.authEmailDomains?.join(","),
         })
         .returning()
         .get();
@@ -190,7 +192,11 @@ export const pageRouter = createTRPCRouter({
 
       const currentPage = await opts.ctx.db
         .update(page)
-        .set({ ...pageInput, updatedAt: new Date() })
+        .set({
+          ...pageInput,
+          updatedAt: new Date(),
+          authEmailDomains: pageInput.authEmailDomains?.join(","),
+        })
         .where(
           and(
             eq(page.id, pageInput.id),
@@ -735,7 +741,8 @@ export const pageRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        passwordProtected: z.boolean(),
+        accessType: z.enum(pageAccessTypes),
+        authEmailDomains: z.array(z.string()).nullish(),
         password: z.string().nullish(),
       }),
     )
@@ -750,7 +757,7 @@ export const pageRouter = createTRPCRouter({
       // the user is not eligible for password protection
       if (
         limit["password-protection"] === false &&
-        opts.input.passwordProtected === true
+        opts.input.accessType === "password"
       ) {
         throw new TRPCError({
           code: "FORBIDDEN",
@@ -759,10 +766,22 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      if (
+        limit["email-domain-protection"] === false &&
+        opts.input.accessType === "email-domain"
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Email domain protection is not available for your current plan.",
+        });
+      }
+
       await opts.ctx.db
         .update(page)
         .set({
-          passwordProtected: opts.input.passwordProtected,
+          accessType: opts.input.accessType,
+          authEmailDomains: opts.input.authEmailDomains?.join(","),
           password: opts.input.password,
           updatedAt: new Date(),
         })

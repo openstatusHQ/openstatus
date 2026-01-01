@@ -1,7 +1,10 @@
 "use client";
 
 import { Link } from "@/components/common/link";
-import { StatusUpdates } from "@/components/status-page/status-updates";
+import {
+  type StatusUpdateType,
+  StatusUpdates,
+} from "@/components/status-page/status-updates";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,6 +22,7 @@ import {
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Menu, MessageCircleMore } from "lucide-react";
@@ -26,6 +30,8 @@ import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+
+type Page = RouterOutputs["statusPage"]["get"];
 
 function useNav() {
   const pathname = usePathname();
@@ -48,6 +54,21 @@ function useNav() {
       isActive: pathname.startsWith(`${prefix ? `/${prefix}` : ""}/monitors`),
     },
   ];
+}
+
+function getStatusUpdateTypes(page: Page): StatusUpdateType[] {
+  if (!page) return [];
+
+  // NOTE: rss or json are not supported because of authentication
+  if (page?.accessType === "email-domain") {
+    return ["email"] as const;
+  }
+
+  if (page?.workspacePlan === "free") {
+    return ["slack", "rss", "json"] as const;
+  }
+
+  return ["email", "slack", "rss", "json"] as const;
 }
 
 export function Header(props: React.ComponentProps<"header">) {
@@ -82,11 +103,12 @@ export function Header(props: React.ComponentProps<"header">) {
     }),
   );
 
-  const types = (
+  // TODO: the accessType === "email-domain" cannot ONLY support email
+  // because we need authentication to access the status page
+  const _types =
     page?.workspacePlan === "free"
-      ? ["slack", "rss", "json"]
-      : ["email", "slack", "rss", "json"]
-  ) satisfies ("email" | "rss" | "ssh" | "json" | "slack")[];
+      ? (["slack", "rss", "json"] as const)
+      : (["email", "slack", "rss", "json"] as const);
 
   return (
     <header {...props}>
@@ -132,7 +154,7 @@ export function Header(props: React.ComponentProps<"header">) {
             <GetInTouch buttonType="icon" link={page.contactUrl} />
           ) : null}
           <StatusUpdates
-            types={types}
+            types={getStatusUpdateTypes(page)}
             onSubscribe={async (email) => {
               await subscribeMutation.mutateAsync({ slug: domain, email });
             }}

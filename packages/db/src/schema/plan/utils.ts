@@ -1,6 +1,6 @@
 import type { WorkspacePlan } from "../workspaces/validation";
 import { allPlans } from "./config";
-import type { Limits } from "./schema";
+import type { Addons, Limits } from "./schema";
 
 export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {
   return limits[limit] || allPlans.free.limits[limit];
@@ -30,17 +30,48 @@ export function getCurrency({
   return "USD";
 }
 
+type PriceObject = {
+  USD: number;
+  EUR: number;
+  INR: number;
+};
+
+type PriceConfig = {
+  value: number;
+  locale: string;
+  currency: string;
+};
+
+function getLocaleForCurrency(currency: string): string {
+  return currency === "EUR" ? "fr-FR" : "en-US";
+}
+
+function resolvePriceConfig(
+  price: PriceObject,
+  currency?: string,
+): PriceConfig {
+  const effectiveCurrency = currency && currency in price ? currency : "USD";
+  const value = price[effectiveCurrency as keyof PriceObject];
+  const locale = getLocaleForCurrency(effectiveCurrency);
+
+  return { value, locale, currency: effectiveCurrency };
+}
+
 export function getPriceConfig(plan: WorkspacePlan, currency?: string) {
   const planConfig = allPlans[plan];
-  if (!currency) {
-    return { value: planConfig.price.USD, locale: "en-US", currency: "USD" };
+  return resolvePriceConfig(planConfig.price, currency);
+}
+
+export function getAddonPriceConfig(
+  plan: WorkspacePlan,
+  addon: keyof Addons,
+  currency?: string,
+) {
+  const addonConfig = allPlans[plan].addons[addon];
+  if (!addonConfig) {
+    return null;
   }
-  if (currency in planConfig.price) {
-    const value = planConfig.price[currency as keyof typeof planConfig.price];
-    const locale = currency === "EUR" ? "fr-FR" : "en-US";
-    return { value, locale, currency };
-  }
-  return { value: planConfig.price.USD, locale: "en-US", currency: "USD" };
+  return resolvePriceConfig(addonConfig.price, currency);
 }
 
 export function getPlansForLimit(

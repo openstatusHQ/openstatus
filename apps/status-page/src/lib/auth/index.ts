@@ -34,7 +34,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         trpc.statusPage.validateEmailDomain.queryOptions({
           slug: prefix,
           email: params.user.email,
-        })
+        }),
       );
 
       if (!query) return false;

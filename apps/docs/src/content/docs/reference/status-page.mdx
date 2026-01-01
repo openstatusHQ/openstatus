@@ -14,14 +14,17 @@ You slug is a unique identifier for your status page. It is used in the URL of y
 
 You can configure a custom domain for your status page. e.g `status.example.com` => `https://status.example.com`
 
-### Password
+### Password (basic auth)
 
-You can add a password for your status page to protect a status page. If you are not authenticated, you will get redirected to the `/protected`.
+You can add a password for your status page to protect a status page. If you are not authenticated, you will get redirected to the `/login`.
 
-The password is stored in plain text in a `cookie`, so keep the password easy and fun. You can share any page by appending the password via the `pw` search param like: `https://custom.stpg.dev/?pw=my-secret-password` and we will automatically authenticate the user. This can be useful to authenticate to private RSS feeds.
+The password is stored in plain text in a `cookie`, so keep the password easy and fun. You can share any page by appending the password via the `pw` search param like: `https://[slug].openstatus.dev/?pw=my-secret-password` and we will automatically authenticate the user. This can be useful to authenticate to private RSS feeds.
 
-> If you need an email confirmed status page, e.g. by whitelisting domains for specific partners who would access the page with a magic link, please contact ping@openstatus.dev - we have that on our backlog and are happy to prioritze it.
+### Magic Link (session auth)
 
+You can secure your status page by restricting access to users with approved email domains. Users will receive a magic link sent to their email and, upon clicking it, will be authenticated via a session token.
+
+This feature is available as an add-on for paid plans and is not included by default.
 
 ### Favicon
 
