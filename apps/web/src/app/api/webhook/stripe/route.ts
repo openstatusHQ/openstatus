@@ -30,8 +30,10 @@ export async function POST(req: NextRequest) {
         await caller.stripeRouter.webhooks.sessionCompleted({ event });
         break;
       case "customer.subscription.updated":
-        console.log(event)
-        await caller.stripeRouter.webhooks.customerSubscriptionUpdated({ event });
+        console.log(event);
+        await caller.stripeRouter.webhooks.customerSubscriptionUpdated({
+          event,
+        });
         break;
       case "customer.subscription.deleted":
         await caller.stripeRouter.webhooks.customerSubscriptionDeleted({

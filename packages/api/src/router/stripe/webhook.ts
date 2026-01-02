@@ -30,7 +30,6 @@ export const webhookRouter = createTRPCRouter({
   customerSubscriptionUpdated: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
 
-
     const customerId =
       typeof subscription.customer === "string"
         ? subscription.customer
@@ -49,7 +48,7 @@ export const webhookRouter = createTRPCRouter({
     }
 
     for (const item of subscription.items.data) {
-      console.log(item)
+      console.log(item);
       const feature = getFeatureFromPriceId(item.price.id);
       if (!feature) {
         continue;
@@ -73,23 +72,22 @@ export const webhookRouter = createTRPCRouter({
         .run();
     }
 
-      const customer = await stripe.customers.retrieve(customerId);
-      if (!customer.deleted && customer.email) {
-        const userResult = await opts.ctx.db
-          .select()
-          .from(user)
-          .where(eq(user.email, customer.email))
-          .get();
-        if (!userResult) return;
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.deleted && customer.email) {
+      const userResult = await opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.email, customer.email))
+        .get();
+      if (!userResult) return;
 
-        const analytics = await setupAnalytics({
-          userId: `usr_${userResult.id}`,
-          email: userResult.email || undefined,
-          workspaceId: String(result.id),
-        });
-        await analytics.track(Events.AddFeature);
-      }
-
+      const analytics = await setupAnalytics({
+        userId: `usr_${userResult.id}`,
+        email: userResult.email || undefined,
+        workspaceId: String(result.id),
+      });
+      await analytics.track(Events.AddFeature);
+    }
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {
     const session = opts.input.event.data.object as Stripe.Checkout.Session;
@@ -118,7 +116,6 @@ export const webhookRouter = createTRPCRouter({
         message: "Workspace not found",
       });
     }
-
 
     for (const item of subscription.items.data) {
       const plan = getPlanFromPriceId(item.price.id);
@@ -177,7 +174,6 @@ export const webhookRouter = createTRPCRouter({
           plan: plan.plan,
         });
         await analytics.track(Events.UpgradeWorkspace);
-
       }
     }
   }),

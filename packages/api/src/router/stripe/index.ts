@@ -8,11 +8,11 @@ import {
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import type { Stripe } from "stripe";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
-import type { Stripe } from "stripe";
 
 const url =
   process.env.NODE_ENV === "production"
@@ -205,11 +205,11 @@ export const stripeRouter = createTRPCRouter({
         return;
       }
 
-      const sub = await stripe.customers.retrieve(stripeId, {
+      const sub = (await stripe.customers.retrieve(stripeId, {
         expand: ["subscriptions"],
-      }) as Stripe.Customer;
+      })) as Stripe.Customer;
 
-      if(!sub ) {
+      if (!sub) {
         return;
       }
 
@@ -219,18 +219,18 @@ export const stripeRouter = createTRPCRouter({
       const priceId = getPriceIdForFeature(opts.input.feature);
       if (opts.input.remove) {
         const items = await stripe.subscriptionItems.list({
-          subscription: sub.subscriptions?.data[0]?.id ,
-        })
+          subscription: sub.subscriptions?.data[0]?.id,
+        });
         const item = items.data.find((item) => item.price.id === priceId);
         if (item) {
           await stripe.subscriptionItems.del(item.id);
         }
-        return
+        return;
       }
 
       await stripe.subscriptionItems.create({
         price: priceId,
-        subscription: sub.subscriptions?.data[0]?.id ,
+        subscription: sub.subscriptions?.data[0]?.id,
         quantity: 1,
       });
 

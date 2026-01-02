@@ -15,8 +15,6 @@ const BASE_URL =
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
 
-
-
 type Workspace = RouterOutputs["workspace"]["get"];
 
 interface BillingAddonsProps {
