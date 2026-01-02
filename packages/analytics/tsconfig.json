@@ -2,6 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@openstatus/tsconfig/base.json",
   "exclude": ["dist", "node_modules"],
-  "compilerOptions": {},
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution":"nodenext"
+  },
   "include": ["**/*.ts", "env.ts"]
 }

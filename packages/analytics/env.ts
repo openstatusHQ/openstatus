@@ -8,7 +8,12 @@ export const env = createEnv({
   client: {
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: z.string(),
   },
-  // clientPrefix: "NEXT_PUBLIC_",
+  clientPrefix: "NEXT_PUBLIC_",
+
 
   runtimeEnv: process.env,
+
+  skipValidation: true,
+
+  // runtimeEnv: process.env,
 });
