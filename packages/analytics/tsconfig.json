@@ -3,8 +3,20 @@
   "extends": "@openstatus/tsconfig/base.json",
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext"
+    "outDir": "dist",
+    "target": "es2021",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "checkJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noUncheckedIndexedAccess": true
   },
   "include": ["**/*.ts", "env.ts"]
 }

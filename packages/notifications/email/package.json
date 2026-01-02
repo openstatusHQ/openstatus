@@ -14,10 +14,10 @@
     "@openstatus/utils": "workspace:*",
     "@react-email/components": "1.0.1",
     "@react-email/render": "2.0.0",
-    "@t3-oss/env-core": "0.13.10",
+    "@t3-oss/env-core": "0.7.1",
     "react-dom": "19.2.2",
     "resend": "6.6.0",
-    "zod": "3.25.76"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

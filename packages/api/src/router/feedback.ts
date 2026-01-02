@@ -13,7 +13,7 @@ export const feedbackRouter = createTRPCRouter({
         isMobile: z.boolean().optional(),
         // NOTE: coming from ContactForm
         name: z.string().optional(),
-        email: z.string().email().optional(),
+        email: z.email().optional(),
         blocker: z.boolean().optional(),
         type: z.string().optional(),
       }),
