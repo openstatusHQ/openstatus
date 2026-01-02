@@ -4,7 +4,7 @@
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "module": "nodenext",
-    "moduleResolution":"nodenext"
+    "moduleResolution": "nodenext"
   },
   "include": ["**/*.ts", "env.ts"]
 }

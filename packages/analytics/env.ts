@@ -10,7 +10,6 @@ export const env = createEnv({
   },
   clientPrefix: "NEXT_PUBLIC_",
 
-
   runtimeEnv: process.env,
 
   skipValidation: true,
