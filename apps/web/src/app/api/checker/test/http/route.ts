@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const _valid = httpPayloadSchema
       .pick({ url: true, method: true, headers: true, body: true })
-      .extend(z.object({ region: monitorRegionSchema.prefault("ams") }).shape)
+      .merge(z.object({ region: monitorRegionSchema.default("ams") }))
       .safeParse(json);
 
     if (!_valid.success) {

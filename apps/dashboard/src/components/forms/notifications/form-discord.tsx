@@ -32,7 +32,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("discord"),
-  data: z.url("Please enter a valid URL"),
+  data: z.string(),
   monitors: z.array(z.number()),
 });
 

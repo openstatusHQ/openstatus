@@ -7,7 +7,7 @@ export const OpsGeniePayloadAlert = z.object({
   message: z.string(),
   alias: z.string(),
   description: z.string(),
-  source: z.string().prefault("OpenStatus"),
+  source: z.string().default("OpenStatus"),
   details: z
     .object({
       message: z.string(),
@@ -18,5 +18,5 @@ export const OpsGeniePayloadAlert = z.object({
 });
 
 export const OpsGenieCloseAlert = z.object({
-  source: z.string().prefault("OpenStatus"),
+  source: z.string().default("OpenStatus"),
 });

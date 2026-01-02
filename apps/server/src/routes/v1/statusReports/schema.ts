@@ -30,14 +30,14 @@ export const StatusReportSchema = z
       .array(z.number())
       .optional()
       .nullable()
-      .prefault([])
+      .default([])
       .openapi({
         description: "The ids of the status report updates",
       }),
     monitorIds: z
       .array(z.number())
       .optional()
-      .prefault([])
+      .default([])
       .openapi({ description: "Ids of the monitors the status report." }),
     pageId: z.number().openapi({
       description: "The id of the page this status report belongs to",
