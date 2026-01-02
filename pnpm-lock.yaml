@@ -1713,13 +1713,13 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.9.3)(zod@3.25.76)
+        version: 0.7.1(typescript@5.9.3)(zod@4.1.13)
       validator:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.25.76
-        version: 3.25.76
+        specifier: 4.1.13
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1795,6 +1795,8 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  packages/react/dist: {}
 
   packages/regions:
     dependencies:
@@ -15723,12 +15725,6 @@ snapshots:
   '@t3-oss/env-core@0.7.0(typescript@5.9.3)(zod@4.1.13)':
     dependencies:
       zod: 4.1.13
-    optionalDependencies:
-      typescript: 5.9.3
-
-  '@t3-oss/env-core@0.7.1(typescript@5.9.3)(zod@3.25.76)':
-    dependencies:
-      zod: 3.25.76
     optionalDependencies:
       typescript: 5.9.3
 
