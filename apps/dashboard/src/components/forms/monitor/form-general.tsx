@@ -83,7 +83,7 @@ const schema = z.object({
       value: z.string(),
     }),
   ),
-  active: z.boolean().optional().default(true),
+  active: z.boolean().optional().prefault(true),
   assertions: z.array(
     z.discriminatedUnion("type", [
       statusAssertion,
@@ -94,11 +94,11 @@ const schema = z.object({
     ]),
   ),
   body: z.string().optional(),
-  skipCheck: z.boolean().optional().default(false),
-  saveCheck: z.boolean().optional().default(false),
+  skipCheck: z.boolean().optional().prefault(false),
+  saveCheck: z.boolean().optional().prefault(false),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
@@ -554,6 +554,7 @@ export function FormGeneral({
                                     placeholder="Header key"
                                     className="w-full"
                                     {...field}
+                                    value={field.value as string}
                                   />
                                   <FormMessage />
                                 </FormItem>
@@ -777,7 +778,7 @@ export function FormGeneral({
                             render={({ field }) => (
                               <FormItem>
                                 <Select
-                                  value={field.value}
+                                  value={field.value as string}
                                   onValueChange={field.onChange}
                                 >
                                   <SelectTrigger
@@ -839,6 +840,7 @@ export function FormGeneral({
                                     placeholder="Header key"
                                     className="w-full"
                                     {...field}
+                                    value={field.value as string}
                                   />
                                   <FormMessage />
                                 </FormItem>

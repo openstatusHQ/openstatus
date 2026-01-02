@@ -1,7 +1,7 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import { type NextRequest, after } from "next/server";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { ZodError, treeifyError } from "zod";
 
 import {
   type EventProps,
@@ -106,7 +106,7 @@ export const t = initTRPC
         data: {
           ...shape.data,
           zodError:
-            error.cause instanceof ZodError ? error.cause.flatten() : null,
+            error.cause instanceof ZodError ? treeifyError(error.cause) : null,
         },
       };
     },

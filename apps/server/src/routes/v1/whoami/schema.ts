@@ -9,7 +9,7 @@ export const WorkspaceSchema = z
       .optional()
       .openapi({ description: "The current workspace name" }),
     slug: z.string().openapi({ description: "The current workspace slug" }),
-    plan: z.enum(workspacePlans).nullable().default("free").openapi({
+    plan: z.enum(workspacePlans).nullable().prefault("free").openapi({
       description: "The current workspace plan",
     }),
   })

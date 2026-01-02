@@ -19,7 +19,7 @@ const webhookProcedure = publicProcedure.input(
       account: z.string().nullish(),
       created: z.number(),
       data: z.object({
-        object: z.record(z.any()),
+        object: z.record(z.string(), z.any()),
       }),
       type: z.string(),
     }),

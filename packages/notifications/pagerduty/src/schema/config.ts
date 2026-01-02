@@ -41,7 +41,7 @@ const baseEventPayloadSchema = z.object({
   dedup_key: z.string(),
 });
 
-export const triggerEventPayloadSchema = baseEventPayloadSchema.merge(
+export const triggerEventPayloadSchema = baseEventPayloadSchema.extend(
   z.object({
     event_action: z.literal("trigger"),
     payload: z.object({
@@ -56,19 +56,19 @@ export const triggerEventPayloadSchema = baseEventPayloadSchema.merge(
     }),
     images: z.array(imageSchema).optional(),
     links: z.array(linkSchema).optional(),
-  }),
+  }).shape,
 );
 
-export const acknowledgeEventPayloadSchema = baseEventPayloadSchema.merge(
+export const acknowledgeEventPayloadSchema = baseEventPayloadSchema.extend(
   z.object({
     event_action: z.literal("acknowledge"),
-  }),
+  }).shape,
 );
 
-export const resolveEventPayloadSchema = baseEventPayloadSchema.merge(
+export const resolveEventPayloadSchema = baseEventPayloadSchema.extend(
   z.object({
     event_action: z.literal("resolve"),
-  }),
+  }).shape,
 );
 
 export const eventPayloadV2Schema = z.discriminatedUnion("event_action", [

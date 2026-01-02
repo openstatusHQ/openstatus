@@ -13,7 +13,7 @@ export const env = createEnv({
     CRON_SECRET: z.string(),
     SCREENSHOT_SERVICE_URL: z.string(),
     QSTASH_TOKEN: z.string(),
-    NODE_ENV: z.string().default("development"),
+    NODE_ENV: z.string().prefault("development"),
     SUPER_ADMIN_TOKEN: z.string(),
     RESEND_API_KEY: z.string(),
   },
