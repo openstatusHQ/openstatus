@@ -20,7 +20,7 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@t3-oss/env-core": "0.13.10",
+    "@t3-oss/env-core": "0.7.1",
     "@trpc/client": "11.4.4",
     "@trpc/server": "11.4.4",
     "@unkey/api": "2.2.0",
