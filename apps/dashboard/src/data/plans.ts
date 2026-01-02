@@ -67,9 +67,14 @@ export const config: Record<
         value: "custom-domain",
         label: "Custom domain",
       },
+    ],
+  },
+  "status-page-audience": {
+    label: "Status Page Audience",
+    features: [
       {
         value: "password-protection",
-        label: "Password Protection",
+        label: "Password Protection (Basic)",
       },
       {
         value: "email-domain-protection",

@@ -1,5 +1,5 @@
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useCookieState } from "@/hooks/use-cookie-state";
 import type { RouterOutputs } from "@openstatus/api";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
@@ -43,7 +43,7 @@ export function BillingAddons({
               : "N/A"}
             /mo.
           </span>
-          <Switch defaultChecked={value} />
+          <Button size="sm" variant="secondary">Configure</Button>
         </div>
       </div>
     </div>
