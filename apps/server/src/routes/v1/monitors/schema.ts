@@ -20,11 +20,7 @@ const statusAssertion = z
       description: "The comparison to run",
       example: "eq",
     }),
-    target: z
-      .number()
-      .int()
-      .positive()
-      .openapi({ description: "The target value" }),
+    target: z.int().positive().openapi({ description: "The target value" }),
   })
   .openapi({
     description: "The status assertion",
@@ -94,13 +90,15 @@ export const ParamsSchema = z.object({
     }),
 });
 
+const PeriodicityEnumHonoSchema = z.enum([...monitorPeriodicitySchema.options]);
+
 export const MonitorSchema = z
   .object({
     id: z.number().openapi({
       example: 123,
       description: "The id of the monitor",
     }),
-    periodicity: monitorPeriodicitySchema.openapi({
+    periodicity: PeriodicityEnumHonoSchema.openapi({
       example: "1m",
       description: "How often the monitor should run",
     }),
@@ -111,38 +109,35 @@ export const MonitorSchema = z
     regions: z
       .preprocess(
         (val) => {
-          let regions: Array<unknown> = [];
-          if (!val) return regions;
+          let parsedRegions: Array<unknown> = [];
+          if (!val) return parsedRegions;
           if (Array.isArray(val)) {
-            regions = val;
+            parsedRegions = val;
           }
           if (String(val).length > 0) {
-            regions = String(val).split(",");
+            parsedRegions = String(val).split(",");
           }
-
-          const deprecatedRegions = regions.filter((r) => {
-            return !AVAILABLE_REGIONS.includes(
-              r as (typeof AVAILABLE_REGIONS)[number],
-            );
-          });
-
-          if (deprecatedRegions.length > 0) {
-            throw new ZodError([
-              {
-                code: "custom",
-                path: ["regions"],
-                message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
-                  ", ",
-                )}`,
-              },
-            ]);
-          }
-
-          return regions;
+          return parsedRegions;
         },
         z.array(z.enum(monitorRegions)),
       )
-      .default([])
+      .superRefine((regions, ctx) => {
+        const deprecatedRegions = regions.filter((r) => {
+          return !AVAILABLE_REGIONS.includes(
+            r as (typeof AVAILABLE_REGIONS)[number],
+          );
+        });
+        if (deprecatedRegions.length > 0) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["regions"],
+            message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+              ", ",
+            )}`,
+          });
+        }
+      })
+      .prefault([])
       .openapi({
         example: ["ams"],
         description: "Where we should monitor it",
@@ -166,7 +161,7 @@ export const MonitorSchema = z
         return String(val);
       }, z.string())
       .nullish()
-      .default("")
+      .prefault("")
       .openapi({
         example: "Hello World",
         description: "The body",
@@ -190,7 +185,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+        z.array(z.object({ key: z.string(), value: z.string() })).prefault([]),
       )
       .nullish()
       .openapi({
@@ -216,47 +211,46 @@ export const MonitorSchema = z
         }
       }, z.array(assertion))
       .nullish()
-      .default([])
+      .prefault([])
       .openapi({
         description: "The assertions to run",
       }),
     active: z
       .boolean()
-      .default(false)
+      .prefault(false)
       .openapi({ description: "If the monitor is active" }),
     public: z
       .boolean()
-      .default(false)
+      .prefault(false)
       .openapi({ description: "If the monitor is public" }),
     degradedAfter: z.number().nullish().openapi({
       description:
         "The time after the monitor is considered degraded in milliseconds",
     }),
-    timeout: z.number().nullish().default(45000).openapi({
+    timeout: z.number().nullish().prefault(45000).openapi({
       description: "The timeout of the request in milliseconds",
     }),
-    retry: z.number().default(3).openapi({
+    retry: z.number().prefault(3).openapi({
       description: "The number of retries to attempt",
     }),
-    followRedirects: z.boolean().default(true).openapi({
+    followRedirects: z.boolean().prefault(true).openapi({
       description: "If the monitor should follow redirects",
     }),
-    jobType: z.enum(monitorJobTypes).optional().default("http").openapi({
+    jobType: z.enum(monitorJobTypes).optional().prefault("http").openapi({
       description: "The type of the monitor",
     }),
     openTelemetry: z
       .object({
-        endpoint: z
-          .string()
-          .url()
-          .optional()
-          .default("http://localhost:4317")
-          .openapi({
-            description: "The endpoint of the OpenTelemetry collector",
-          }),
-        headers: z.record(z.string()).optional().default({}).openapi({
-          description: "The headers to send to the OpenTelemetry collector",
+        endpoint: z.url().optional().prefault("http://localhost:4317").openapi({
+          description: "The endpoint of the OpenTelemetry collector",
         }),
+        headers: z
+          .record(z.string(), z.string())
+          .optional()
+          .prefault({})
+          .openapi({
+            description: "The headers to send to the OpenTelemetry collector",
+          }),
       })
       .optional()
       .openapi({
@@ -316,13 +310,13 @@ export const TriggerResult = z.discriminatedUnion("jobType", [
 ]);
 
 export const ResultRun = z.object({
-  latency: z.number().int(), // in ms
-  statusCode: z.number().int().nullable().default(null),
-  monitorId: z.string().default(""),
+  latency: z.int(), // in ms
+  statusCode: z.int().nullable().prefault(null),
+  monitorId: z.string().prefault(""),
   url: z.string().optional(),
-  error: z.coerce.boolean().default(false),
+  error: z.coerce.boolean().prefault(false),
   region: z.enum(monitorRegions),
-  timestamp: z.number().int().optional(),
+  timestamp: z.int().optional(),
   message: z.string().nullable().optional(),
   timing: z
     .preprocess((val) => {
@@ -413,7 +407,7 @@ const baseRequest = z.object({
       },
       z.array(z.enum(monitorRegions)),
     )
-    .default([])
+    .prefault([])
     .openapi({
       example: ["ams"],
       description: "Where we should monitor it",
@@ -421,7 +415,6 @@ const baseRequest = z.object({
   openTelemetry: z
     .object({
       endpoint: z
-        .string()
         .url()
         .optional()
         .openapi({
@@ -441,13 +434,10 @@ const baseRequest = z.object({
 
 const httpRequestSchema = z.object({
   method: z.enum(monitorMethods),
-  url: z
-    .string()
-    .url()
-    .openapi({
-      description: "URL to request",
-      examples: ["https://openstat.us", "https://www.openstatus.dev"],
-    }),
+  url: z.url().openapi({
+    description: "URL to request",
+    examples: ["https://openstat.us", "https://www.openstatus.dev"],
+  }),
   headers: z
     .record(z.string(), z.string())
     .optional()

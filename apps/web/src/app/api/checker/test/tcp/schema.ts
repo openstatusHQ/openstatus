@@ -7,12 +7,12 @@ export const tcpPayload = z.object({
   monitorId: z.string(),
   url: z.string(),
   cronTimestamp: z.number(),
-  timeout: z.number().default(45000),
+  timeout: z.number().prefault(45000),
   degradedAfter: z.number().nullable(),
 });
 
 export const TCPResponse = z.object({
-  type: z.literal("tcp").default("tcp"),
+  type: z.literal("tcp").prefault("tcp"),
   requestId: z.number().optional(),
   workspaceId: z.number().optional(),
   monitorId: z.number().optional(),
@@ -27,11 +27,11 @@ export const TCPResponse = z.object({
 });
 
 export const TCPResponseTest = TCPResponse.extend({
-  state: z.literal("success").default("success"),
+  state: z.literal("success").prefault("success"),
 }).or(
   z.object({
-    type: z.literal("tcp").default("tcp"),
-    state: z.literal("error").default("error"),
+    type: z.literal("tcp").prefault("tcp"),
+    state: z.literal("error").prefault("error"),
   }),
 );
 export type tcpPayload = z.infer<typeof tcpPayload>;
