@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/index.ts",
   "dependencies": {
-    "@openpanel/sdk": "1.0.0",
-    "@t3-oss/env-core": "0.7.1",
+    "@openpanel/sdk": "1.0.3",
+    "@t3-oss/env-core": "0.13.10",
     "zod": "4.1.13"
   },
   "devDependencies": {
