@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const ctx = await createTRPCContext({ req });
     const caller = lambdaRouter.createCaller(ctx);
 
-    console.log(event.type)
+    console.log(event.type);
     switch (event.type) {
       case "checkout.session.completed":
         await caller.stripeRouter.webhooks.sessionCompleted({ event });

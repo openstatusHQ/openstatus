@@ -43,7 +43,7 @@ export const webhookRouter = createTRPCRouter({
         ? subscription.customer
         : subscription.customer.id;
 
-    console.log(customerId)
+    console.log(customerId);
     const result = await opts.ctx.db
       .select()
       .from(workspace)
@@ -57,7 +57,7 @@ export const webhookRouter = createTRPCRouter({
     }
 
     for (const item of subscription.items.data) {
-      console.log(item)
+      console.log(item);
       const plan = getPlanFromPriceId(item.price.id);
       if (!plan) {
         const feature = getFeatureFromPriceId(item.price.id);
@@ -79,7 +79,7 @@ export const webhookRouter = createTRPCRouter({
             })
             .where(eq(workspace.id, result.id))
             .run();
-          continue
+          continue;
         }
         console.error("Invalid plan");
         throw new TRPCError({
