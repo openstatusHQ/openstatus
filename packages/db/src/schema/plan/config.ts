@@ -67,9 +67,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     addons: {
       "email-domain-protection": {
         price: {
-          USD: 50,
-          EUR: 50,
-          INR: 5000,
+          USD: 100,
+          EUR: 100,
+          INR: 10_000,
         },
       },
     },
@@ -112,14 +112,14 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     price: {
       USD: 100,
       EUR: 100,
-      INR: 10000,
+      INR: 10_000,
     },
     addons: {
       "email-domain-protection": {
         price: {
-          USD: 50,
-          EUR: 50,
-          INR: 5000,
+          USD: 100,
+          EUR: 100,
+          INR: 10_000,
         },
       },
     },
