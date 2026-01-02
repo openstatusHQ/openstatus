@@ -43,7 +43,9 @@ export function BillingAddons({
               : "N/A"}
             /mo.
           </span>
-          <Button size="sm" variant="secondary">Configure</Button>
+          <Button size="sm" variant="secondary">
+            Configure
+          </Button>
         </div>
       </div>
     </div>
