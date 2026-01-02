@@ -4,7 +4,7 @@ import { z } from "zod";
 import { pageSubscriber } from "./page_subscribers";
 
 export const insertPageSubscriberSchema = createInsertSchema(pageSubscriber, {
-  email: z.email(),
+  email: z.string().email(),
 });
 
 export const selectPageSubscriberSchema = createSelectSchema(pageSubscriber);

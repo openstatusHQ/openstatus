@@ -19,7 +19,7 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: z.string(),
     GCP_PRIVATE_KEY: z.string(),
     CRON_SECRET: z.string(),
-    EXTERNAL_API_URL: z.url(),
+    EXTERNAL_API_URL: z.string().url(),
     CLICKHOUSE_URL: z.string(),
     CLICKHOUSE_USERNAME: z.string(),
     CLICKHOUSE_PASSWORD: z.string(),

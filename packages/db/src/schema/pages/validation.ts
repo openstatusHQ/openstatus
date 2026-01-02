@@ -23,39 +23,39 @@ const customDomainSchema = z
   .or(z.enum([""]));
 
 export const insertPageSchema = createInsertSchema(page, {
-  customDomain: customDomainSchema.prefault(""),
+  customDomain: customDomainSchema.default(""),
   icon: z.string().optional(),
   slug: slugSchema,
 }).extend({
-  password: z.string().nullable().optional().prefault(""),
+  password: z.string().nullable().optional().default(""),
   monitors: z
     .array(
       z.object({
         // REMINDER: has to be different from `id` in as the prop is already used by react-hook-form
         monitorId: z.number(),
-        order: z.number().prefault(0).optional(),
+        order: z.number().default(0).optional(),
       }),
     )
     .optional()
-    .prefault([]),
+    .default([]),
 });
 
 export const pageConfigurationSchema = z.object({
   value: z
     .enum(["duration", "requests", "manual"])
     .nullish()
-    .prefault("requests"),
-  type: z.enum(["absolute", "manual"]).nullish().prefault("absolute"),
-  uptime: z.coerce.boolean().nullish().prefault(true),
+    .default("requests"),
+  type: z.enum(["absolute", "manual"]).nullish().default("absolute"),
+  uptime: z.coerce.boolean().nullish().default(true),
   theme: z
     .enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]])
     .nullish()
-    .prefault("default"),
+    .default("default"),
 });
 
 export const selectPageSchema = createSelectSchema(page).extend({
-  password: z.string().optional().nullable().prefault(""),
-  configuration: pageConfigurationSchema.nullish().prefault({}),
+  password: z.string().optional().nullable().default(""),
+  configuration: pageConfigurationSchema.nullish().default({}),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

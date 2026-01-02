@@ -4,7 +4,7 @@ import { z } from "zod";
 import { invitation } from "./invitation";
 
 export const insertInvitationSchema = createInsertSchema(invitation, {
-  email: z.email(),
+  email: z.string().email(),
 });
 
 export const selectInvitationSchema = createSelectSchema(invitation);

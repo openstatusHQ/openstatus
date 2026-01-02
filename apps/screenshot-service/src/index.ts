@@ -35,7 +35,7 @@ app.post(
   zValidator(
     "json",
     z.object({
-      url: z.url(),
+      url: z.string().url(),
       incidentId: z.number(),
       kind: z.enum(["incident", "recovery"]),
     }),

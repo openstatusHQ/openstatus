@@ -6,10 +6,7 @@ import { deserialize } from "@openstatus/assertions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { FormDangerZone } from "./form-danger-zone";
-import {
-  FOLLOW_REDIRECTS_DEFAULT,
-  FormFollowRedirect,
-} from "./form-follow-redirect";
+import { FormFollowRedirect } from "./form-follow-redirect";
 import { FormGeneral } from "./form-general";
 import { FormNotifiers } from "./form-notifiers";
 import { FormOtel } from "./form-otel";
@@ -229,20 +226,20 @@ export function FormMonitorUpdate() {
         onSubmit={async (values) =>
           await updateRetryMutation.mutateAsync({
             id: Number.parseInt(id),
-            retry: values.retry ?? RETRY_DEFAULT,
+            retry: values.retry,
           })
         }
       />
       <FormFollowRedirect
         defaultValues={{
-          followRedirects: monitor.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
+          followRedirects: monitor.followRedirects ?? true,
         }}
-        onSubmit={async (values) =>
+        onSubmit={async (values) => {
           await updateFollowRedirectsMutation.mutateAsync({
             id: Number.parseInt(id),
-            followRedirects: values.followRedirects ?? FOLLOW_REDIRECTS_DEFAULT,
-          })
-        }
+            followRedirects: values.followRedirects,
+          });
+        }}
       />
       <FormOtel
         locked={workspace.limits.otel === false}

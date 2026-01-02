@@ -60,10 +60,7 @@ test("invalid payload should return 400", async () => {
   });
 
   const result = (await res.json()) as Record<string, unknown>;
-  // expect(result.message).toBe("invalid_date in 'acknowledgedAt': Invalid date");
-  expect(result.message).toBe(
-    "invalid_type in 'acknowledgedAt': Invalid input: expected date, received Date",
-  );
+  expect(result.message).toBe("invalid_date in 'acknowledgedAt': Invalid date");
   expect(res.status).toBe(400);
 });
 

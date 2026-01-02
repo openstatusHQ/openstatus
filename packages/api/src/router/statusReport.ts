@@ -227,7 +227,7 @@ export const statusReportRouter = createTRPCRouter({
     .query(async (opts) => {
       const selectPublicStatusReportSchemaWithRelation =
         selectStatusReportSchema.extend({
-          status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
+          status: statusReportStatusSchema.default("investigating"), // TODO: remove!
           monitorsToStatusReports: z
             .array(
               z.object({
@@ -236,9 +236,9 @@ export const statusReportRouter = createTRPCRouter({
                 monitor: selectMonitorSchema,
               }),
             )
-            .prefault([]),
+            .default([]),
           statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-          date: z.date().prefault(new Date()),
+          date: z.date().default(new Date()),
         });
 
       const data = await opts.ctx.db.query.statusReport.findFirst({
@@ -275,7 +275,7 @@ export const statusReportRouter = createTRPCRouter({
   getStatusReportByWorkspace: protectedProcedure.query(async (opts) => {
     // FIXME: can we get rid of that?
     const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
-      status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
+      status: statusReportStatusSchema.default("investigating"), // TODO: remove!
       monitorsToStatusReports: z
         .array(
           z.object({
@@ -284,7 +284,7 @@ export const statusReportRouter = createTRPCRouter({
             monitor: selectMonitorSchema,
           }),
         )
-        .prefault([]),
+        .default([]),
       statusReportUpdates: z.array(selectStatusReportUpdateSchema),
     });
 
@@ -308,7 +308,7 @@ export const statusReportRouter = createTRPCRouter({
     .query(async (opts) => {
       // FIXME: can we get rid of that?
       const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
-        status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
+        status: statusReportStatusSchema.default("investigating"), // TODO: remove!
         monitorsToStatusReports: z
           .array(
             z.object({
@@ -317,7 +317,7 @@ export const statusReportRouter = createTRPCRouter({
               monitor: selectMonitorSchema,
             }),
           )
-          .prefault([]),
+          .default([]),
         statusReportUpdates: z.array(selectStatusReportUpdateSchema),
       });
 
@@ -412,8 +412,8 @@ export const statusReportRouter = createTRPCRouter({
 
       return selectStatusReportSchema
         .extend({
-          updates: z.array(selectStatusReportUpdateSchema).prefault([]),
-          monitors: z.array(selectMonitorSchema).prefault([]),
+          updates: z.array(selectStatusReportUpdateSchema).default([]),
+          monitors: z.array(selectMonitorSchema).default([]),
           page: selectPageSchema,
         })
         .array()

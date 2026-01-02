@@ -17,7 +17,7 @@
     "@t3-oss/env-core": "0.7.1",
     "react-dom": "19.2.2",
     "resend": "6.6.0",
-    "zod": "4.1.13"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

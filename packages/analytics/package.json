@@ -6,7 +6,7 @@
   "dependencies": {
     "@openpanel/sdk": "1.0.0",
     "@t3-oss/env-core": "0.7.1",
-    "zod": "4.1.13"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

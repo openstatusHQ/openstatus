@@ -32,14 +32,10 @@ const RETRY_MAX = 10;
 export const RETRY_DEFAULT = 3;
 
 const schema = z.object({
-  retry: z.coerce
-    .number<number>()
-    .min(RETRY_MIN)
-    .max(RETRY_MAX)
-    .prefault(RETRY_DEFAULT),
+  retry: z.coerce.number().min(RETRY_MIN).max(RETRY_MAX).default(RETRY_DEFAULT),
 });
 
-type FormValues = z.input<typeof schema>;
+type FormValues = z.infer<typeof schema>;
 
 export function FormRetry({
   defaultValues,
