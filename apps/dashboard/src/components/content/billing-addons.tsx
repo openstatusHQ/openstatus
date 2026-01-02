@@ -70,7 +70,7 @@ export function BillingAddons({
                     successUrl: `${BASE_URL}/settings/billing?success=true`,
                     cancelUrl: `${BASE_URL}/settings/billing`,
                     feature: addon,
-                    remove:true
+                    remove: true,
                   });
                 });
               }}
