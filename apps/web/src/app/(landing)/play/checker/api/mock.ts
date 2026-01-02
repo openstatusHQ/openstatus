@@ -35,6 +35,7 @@ export const data = {
     {
       type: "http",
       status: 200,
+      state: "success",
       latency: 889,
       headers: {
         Age: "0",

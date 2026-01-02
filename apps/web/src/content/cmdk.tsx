@@ -272,7 +272,7 @@ export function CmdK() {
         </kbd>
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="overflow-hidden rounded-none p-0 font-mono shadow-2xl top-[15%] translate-y-0">
+        <DialogContent className="top-[15%] translate-y-0 overflow-hidden rounded-none p-0 font-mono shadow-2xl">
           <DialogTitle className="sr-only">Search</DialogTitle>
           <Command
             onKeyDown={(e) => {
