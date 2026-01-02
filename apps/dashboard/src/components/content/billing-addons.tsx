@@ -1,8 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useCookieState } from "@/hooks/use-cookie-state";
-import { getStripe } from "@/lib/stripe";
-import { useTRPC } from "@/lib/trpc/client";
+
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
@@ -15,13 +14,8 @@ const BASE_URL =
   process.env.NODE_ENV === "production"
     ? "https://app.openstatus.dev"
     : "http://localhost:3000";
-import { useMutation } from "@tanstack/react-query";
-import { startTransition } from "react";
 
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+
 
 type Workspace = RouterOutputs["workspace"]["get"];
 
@@ -43,6 +37,7 @@ export function BillingAddons({
   const value = workspace.limits[addon];
   const [currency] = useCookieState("x-currency", "USD");
   const price = getAddonPriceConfig(plan, addon, currency);
+  const trpc = useTRPC();
 
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.addAddon.mutationOptions({}),
