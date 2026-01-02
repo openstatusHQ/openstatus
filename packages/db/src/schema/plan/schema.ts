@@ -72,3 +72,15 @@ export const addonsSchema = z.object({
 }) satisfies z.ZodType<Partial<Record<keyof Limits, { price: Price }>>>;
 
 export type Addons = z.infer<typeof addonsSchema>;
+
+/**
+ * Enforces that addon keys in Limits must be set to false
+ * (since addons can only be enabled by purchasing them)
+ */
+export type PlanLimits = {
+  [K in keyof Limits]: K extends keyof Addons
+    ? Limits[K] extends boolean
+      ? false // Force addon boolean fields to false
+      : Limits[K] // Non-boolean fields (like "sms-limit") stay as-is
+    : Limits[K]; // Non-addon fields stay as-is
+};
