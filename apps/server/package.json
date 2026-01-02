@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@hono/sentry": "1.2.2",
-    "@hono/zod-openapi": "0.15.1",
+    "@hono/zod-openapi": "1.1.5",
     "@hono/zod-validator": "0.2.2",
     "@logtape/logtape": "1.1.2",
     "@logtape/sentry": "1.1.2",
@@ -35,7 +35,7 @@
     "nanoid": "5.0.7",
     "percentile": "1.6.0",
     "validator": "13.12.0",
-    "zod": "3.25.76"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

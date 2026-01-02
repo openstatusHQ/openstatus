@@ -89,7 +89,9 @@ export const cron = async ({
   const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
   if (!monitors.success) {
-    console.error(`Error while fetching the monitors ${monitors.error.errors}`);
+    console.error(
+      `Error while fetching the monitors ${monitors.error.issues.map((issue) => issue.message).join(", ")}`,
+    );
     throw new Error("Error while fetching the monitors");
   }
 
@@ -104,7 +106,7 @@ export const cron = async ({
     const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
     if (!monitorStatus.success) {
       console.error(
-        `Error while fetching the monitor status ${monitorStatus.error.errors}`,
+        `Error while fetching the monitor status ${monitorStatus.error.issues.map((issue) => issue.message).join(", ")}`,
       );
       continue;
     }

@@ -43,7 +43,6 @@ export const PageSchema = z
         example: "status.acme.com",
       }),
     icon: z
-      .string()
       .url()
       .or(z.literal(""))
       .transform((val) => (val ? val : undefined))
@@ -52,7 +51,7 @@ export const PageSchema = z
         description: "The icon of the page",
         example: "https://example.com/icon.png",
       }),
-    passwordProtected: z.boolean().optional().default(false).openapi({
+    passwordProtected: z.boolean().optional().prefault(false).openapi({
       description:
         "Deprecated in favor of `accessType`. Used to set the password protection type. Returns true if `accessType` is set to 'password' and false otherwise.",
       example: true,
@@ -77,7 +76,7 @@ export const PageSchema = z
         description: "The email domains of the page",
         example: ["example.com", "example.org"],
       }),
-    showMonitorValues: z.boolean().optional().nullish().default(true).openapi({
+    showMonitorValues: z.boolean().optional().nullish().prefault(true).openapi({
       description:
         "Displays the total and failed request numbers for each monitor. Deprecated and will be removed in the future in favor for `configuration` property.",
       example: true,

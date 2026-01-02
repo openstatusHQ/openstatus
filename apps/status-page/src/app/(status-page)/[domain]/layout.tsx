@@ -18,10 +18,10 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 export const schema = z.object({
-  value: z.enum(["duration", "requests", "manual"]).default("duration"),
-  type: z.enum(["absolute", "manual"]).default("absolute"),
-  uptime: z.coerce.boolean().default(true),
-  theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]).default("default"),
+  value: z.enum(["duration", "requests", "manual"]).prefault("duration"),
+  type: z.enum(["absolute", "manual"]).prefault("absolute"),
+  uptime: z.coerce.boolean().prefault(true),
+  theme: z.enum(THEME_KEYS as [ThemeKey, ...ThemeKey[]]).prefault("default"),
 });
 
 export default async function Layout({
