@@ -36,17 +36,20 @@ import { z } from "zod";
 const accessTypeSchema = z.enum(["public", "password", "email-domain"]);
 
 const schema = z.object({
-  accessType: accessTypeSchema.default("public"),
+  accessType: accessTypeSchema,
   password: z.string().optional(),
-  authEmailDomains: z.preprocess(
-    (val) =>
-      val
-        ? String(val)
-            .split(",")
-            .map((domain) => domain.trim())
-        : [],
-    z.array(z.string()).optional(),
-  ),
+  authEmailDomains: z
+    .preprocess(
+      (val: string[] | undefined) =>
+        val
+          ? String(val)
+              .split(",")
+              .map((domain) => domain.trim())
+              .filter((domain) => domain.length > 0)
+          : [],
+      z.array(z.string()).optional(),
+    )
+    .optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
