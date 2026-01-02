@@ -7,6 +7,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
 import { useMutation } from "@tanstack/react-query";
+import { Check } from "lucide-react";
 import { startTransition } from "react";
 
 const BASE_URL =
@@ -31,7 +32,7 @@ export function BillingAddons({
   workspace,
 }: BillingAddonsProps) {
   const plan = workspace.plan;
-  const _value = workspace.limits[addon];
+  const value = workspace.limits[addon];
   const [currency] = useCookieState("x-currency", "USD");
   const price = getAddonPriceConfig(plan, addon, currency);
   const trpc = useTRPC();
@@ -55,7 +56,8 @@ export function BillingAddons({
           <div className="truncate text-muted-foreground">{description}</div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-mono text-foreground">
+          {value ? <Check className="size-4 text-success" /> : null}
+          <span className="font-mono text-foreground text-sm">
             {price
               ? new Intl.NumberFormat(price.locale, {
                   style: "currency",
