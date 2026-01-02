@@ -22,7 +22,6 @@ interface BillingAddonsProps {
   description: React.ReactNode;
   addon: keyof Addons;
   workspace: Workspace;
-  // TODO: onCheckedChange -> redirect to Stripe
 }
 
 export function BillingAddons({
@@ -59,9 +58,6 @@ export function BillingAddons({
               : "N/A"}
             /mo.
           </span>
-          <Button size="sm" variant="secondary">
-            Configure
-          </Button>
           {value ? (
             <Button
               size="sm"
@@ -74,6 +70,7 @@ export function BillingAddons({
                     successUrl: `${BASE_URL}/settings/billing?success=true`,
                     cancelUrl: `${BASE_URL}/settings/billing`,
                     feature: addon,
+                    remove:true
                   });
                 });
               }}
