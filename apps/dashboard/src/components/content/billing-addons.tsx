@@ -58,43 +58,23 @@ export function BillingAddons({
               : "N/A"}
             /mo.
           </span>
-          {value ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                startTransition(async () => {
-                  await checkoutSessionMutation.mutateAsync({
-                    // TODO HANDLE REMOVE
-                    workspaceSlug: workspace.slug,
-                    successUrl: `${BASE_URL}/settings/billing?success=true`,
-                    cancelUrl: `${BASE_URL}/settings/billing`,
-                    feature: addon,
-                    remove: true,
-                  });
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              startTransition(async () => {
+                await checkoutSessionMutation.mutateAsync({
+                  workspaceSlug: workspace.slug,
+                  successUrl: `${BASE_URL}/settings/billing?success=true`,
+                  cancelUrl: `${BASE_URL}/settings/billing`,
+                  feature: addon,
+                  remove: value ? true : false,
                 });
-              }}
-            >
-              Remove
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => {
-                startTransition(async () => {
-                  await checkoutSessionMutation.mutateAsync({
-                    workspaceSlug: workspace.slug,
-                    successUrl: `${BASE_URL}/settings/billing?success=true`,
-                    cancelUrl: `${BASE_URL}/settings/billing`,
-                    feature: addon,
-                  });
-                });
-              }}
-            >
-              Add
-            </Button>
-          )}
+              });
+            }}
+          >
+            {value ? "Remove" : "Add"}
+          </Button>
         </div>
       </div>
     </div>
