@@ -1,5 +1,5 @@
 import { OpenPanel, type PostEventPayload } from "@openpanel/sdk";
-import { env } from "../env";
+import { env } from "./env";
 import type { EventProps } from "./events";
 
 const op = new OpenPanel({
