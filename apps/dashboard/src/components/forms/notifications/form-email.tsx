@@ -29,7 +29,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("email"),
-  data: z.email(),
+  data: z.string().email(),
   monitors: z.array(z.number()),
 });
 

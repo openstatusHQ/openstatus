@@ -56,7 +56,7 @@ const schema = z
     notifySubscribers: z.boolean().optional(),
   })
   .refine((data) => data.endDate > data.startDate, {
-    error: "End date cannot be earlier than start date.",
+    message: "End date cannot be earlier than start date.",
     path: ["endDate"],
   });
 

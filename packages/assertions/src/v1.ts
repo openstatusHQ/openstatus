@@ -211,53 +211,55 @@ function evaluateRecord(
   return { success: true };
 }
 
-export const base = z.looseObject({
-  version: z.enum(["v1"]).prefault("v1"),
-  type: z.string(),
-});
-export const statusAssertion = base.extend(
+export const base = z
+  .object({
+    version: z.enum(["v1"]).default("v1"),
+    type: z.string(),
+  })
+  .passthrough();
+export const statusAssertion = base.merge(
   z.object({
     type: z.literal("status"),
     compare: numberCompare,
-    target: z.int().positive(),
-  }).shape,
+    target: z.number().int().positive(),
+  }),
 );
 
-export const headerAssertion = base.extend(
+export const headerAssertion = base.merge(
   z.object({
     type: z.literal("header"),
     compare: stringCompare,
     key: z.string(),
     target: z.string(),
-  }).shape,
+  }),
 );
 
-export const textBodyAssertion = base.extend(
+export const textBodyAssertion = base.merge(
   z.object({
     type: z.literal("textBody"),
     compare: stringCompare,
     target: z.string(),
-  }).shape,
+  }),
 );
 
-export const jsonBodyAssertion = base.extend(
+export const jsonBodyAssertion = base.merge(
   z.object({
     type: z.literal("jsonBody"),
     path: z.string(), // https://www.npmjs.com/package/jsonpath-plus
     compare: stringCompare,
     target: z.string(),
-  }).shape,
+  }),
 );
 
 export const dnsRecords = ["A", "AAAA", "CNAME", "MX", "TXT", "NS"] as const;
 
-export const recordAssertion = base.extend(
+export const recordAssertion = base.merge(
   z.object({
     type: z.literal("dnsRecord"),
     key: z.enum(dnsRecords),
     compare: recordCompare,
     target: z.string(),
-  }).shape,
+  }),
 );
 
 export const assertion = z.discriminatedUnion("type", [

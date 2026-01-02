@@ -30,11 +30,11 @@ const DEGRADED = 30_000;
 const TIMEOUT = 45_000;
 
 const schema = z.object({
-  degradedAfter: z.coerce.number<number>().optional(),
-  timeout: z.coerce.number<number>(),
+  degradedAfter: z.coerce.number().optional(),
+  timeout: z.coerce.number(),
 });
 
-type FormValues = z.input<typeof schema>;
+type FormValues = z.infer<typeof schema>;
 
 export function FormResponseTime({
   defaultValues,

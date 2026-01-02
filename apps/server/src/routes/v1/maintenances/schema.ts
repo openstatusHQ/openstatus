@@ -37,7 +37,7 @@ export const MaintenanceSchema = z
     monitorIds: z
       .array(z.number())
       .optional()
-      .prefault([])
+      .default([])
       .openapi({ description: "IDs of affected monitors" }),
     pageId: z.number().openapi({
       description: "The id of the status page this maintenance belongs to",

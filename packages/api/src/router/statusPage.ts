@@ -357,10 +357,8 @@ export const statusPageRouter = createTRPCRouter({
         monitorIds: z.string().array(),
         cardType: z
           .enum(["requests", "duration", "dominant", "manual"])
-          .prefault("requests"),
-        barType: z
-          .enum(["absolute", "dominant", "manual"])
-          .prefault("dominant"),
+          .default("requests"),
+        barType: z.enum(["absolute", "dominant", "manual"]).default("dominant"),
       }),
     )
     .query(async (opts) => {
@@ -834,7 +832,9 @@ export const statusPageRouter = createTRPCRouter({
 
   subscribe: publicProcedure
     .meta({ track: Events.SubscribePage, trackProps: ["slug", "email"] })
-    .input(z.object({ slug: z.string().toLowerCase(), email: z.email() }))
+    .input(
+      z.object({ slug: z.string().toLowerCase(), email: z.string().email() }),
+    )
     .mutation(async (opts) => {
       if (!opts.input.slug) return null;
 

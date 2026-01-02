@@ -32,7 +32,7 @@
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "2.2.2",
-    "zod": "4.1.13"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

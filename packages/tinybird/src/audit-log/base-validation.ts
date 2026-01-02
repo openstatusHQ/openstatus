@@ -9,10 +9,11 @@ export const baseSchema = z.object({
   action: z.string(),
   // REMINDER: do not use .default(Date.now()), it will be evaluated only once
   timestamp: z
+    .number()
     .int()
     .optional()
     .transform((val) => val || Date.now()),
-  version: z.int().prefault(1),
+  version: z.number().int().default(1),
 });
 
 /**
@@ -30,7 +31,7 @@ export const actorSchema = z
     id: z.string(),
     type: actorTypeSchema,
   })
-  .prefault({
+  .default({
     id: "server",
     type: "system",
   });

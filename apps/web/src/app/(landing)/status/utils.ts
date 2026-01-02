@@ -15,12 +15,12 @@ export const externalStatus = z.object({
   name: z.string(),
   url: z.string(),
   external_id: z.string(),
-  last_updated_at: z.iso.datetime({ offset: true }),
+  last_updated_at: z.string().datetime({ offset: true }),
   time_zone: z.string(),
   status_indicator: z.string(),
   status_description: atlassianDescriptionEnum,
   created_at: z.string(),
-  updated_at: z.iso.datetime(),
+  updated_at: z.string().datetime(),
 });
 
 export const externalStatusArray = z.array(externalStatus);

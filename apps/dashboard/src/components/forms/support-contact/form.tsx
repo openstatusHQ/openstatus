@@ -49,16 +49,10 @@ export const types = [
 ];
 
 export const schema = z.object({
-  name: z.string().min(1, {
-    error: "Name is required",
-  }),
+  name: z.string().min(1, { message: "Name is required" }),
   type: z.enum(["bug", "demo", "feature", "security", "question"]),
-  email: z.email({
-    error: "Invalid email address",
-  }),
-  message: z.string().min(1, {
-    error: "Message is required",
-  }),
+  email: z.string().email({ message: "Invalid email address" }),
+  message: z.string().min(1, { message: "Message is required" }),
   blocker: z.boolean(),
 });
 

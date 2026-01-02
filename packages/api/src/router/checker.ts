@@ -26,7 +26,7 @@ const ABORT_TIMEOUT = 10000;
 
 // Input schemas
 const httpTestInput = z.object({
-  url: z.url(),
+  url: z.string().url(),
   method: z
     .enum([
       "GET",
@@ -39,10 +39,10 @@ const httpTestInput = z.object({
       "CONNECT",
       "TRACE",
     ])
-    .prefault("GET"),
+    .default("GET"),
   headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
   body: z.string().optional(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.optional().default("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
@@ -53,17 +53,17 @@ const httpTestInput = z.object({
         recordAssertion,
       ]),
     )
-    .prefault([]),
+    .default([]),
 });
 
 const tcpTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.optional().default("ams"),
 });
 
 const dnsTestInput = z.object({
   url: z.string(),
-  region: monitorRegionSchema.optional().prefault("ams"),
+  region: monitorRegionSchema.optional().default("ams"),
   assertions: z
     .array(
       z.discriminatedUnion("type", [
@@ -74,13 +74,13 @@ const dnsTestInput = z.object({
         jsonBodyAssertion,
       ]),
     )
-    .prefault([]),
+    .default([]),
 });
 
 export const tcpOutput = z
   .object({
-    state: z.literal("success").prefault("success"),
-    type: z.literal("tcp").prefault("tcp"),
+    state: z.literal("success").default("success"),
+    type: z.literal("tcp").default("tcp"),
     requestId: z.number().optional(),
     workspaceId: z.number().optional(),
     monitorId: z.number().optional(),
@@ -95,18 +95,18 @@ export const tcpOutput = z
   })
   .or(
     z.object({
-      state: z.literal("error").prefault("error"),
+      state: z.literal("error").default("error"),
       message: z.string(),
     }),
   );
 
 export const httpOutput = z
   .object({
-    state: z.literal("success").prefault("success"),
-    type: z.literal("http").prefault("http"),
+    state: z.literal("success").default("success"),
+    type: z.literal("http").default("http"),
     status: z.number(),
     latency: z.number(),
-    headers: z.record(z.string(), z.string()),
+    headers: z.record(z.string()),
     timestamp: z.number(),
     timing: z.object({
       dnsStart: z.number(),
@@ -125,25 +125,23 @@ export const httpOutput = z
   })
   .or(
     z.object({
-      state: z.literal("error").prefault("error"),
+      state: z.literal("error").default("error"),
       message: z.string(),
     }),
   );
 
 export const dnsOutput = z
   .object({
-    state: z.literal("success").prefault("success"),
-    type: z.literal("dns").prefault("dns"),
-    records: z
-      .partialRecord(z.enum(dnsRecords), z.array(z.string()))
-      .prefault({}),
+    state: z.literal("success").default("success"),
+    type: z.literal("dns").default("dns"),
+    records: z.record(z.enum(dnsRecords), z.array(z.string())).default({}),
     latency: z.number().optional(),
     timestamp: z.number(),
     region: monitorRegionSchema,
   })
   .or(
     z.object({
-      state: z.literal("error").prefault("error"),
+      state: z.literal("error").default("error"),
       message: z.string(),
     }),
   );

@@ -12,15 +12,15 @@ export const selectNotificationSchema = createSelectSchema(notification).extend(
       .preprocess((val) => {
         return String(val);
       }, z.string())
-      .prefault("{}"),
+      .default("{}"),
   },
 );
 
 // we need to extend, otherwise data can be `null` or `undefined` - default is not
 export const insertNotificationSchema = createInsertSchema(notification).extend(
   {
-    data: z.string().prefault("{}"),
-    monitors: z.array(z.number()).optional().prefault([]),
+    data: z.string().default("{}"),
+    monitors: z.array(z.number()).optional().default([]),
   },
 );
 
@@ -33,19 +33,19 @@ const phoneRegex = new RegExp(
 );
 
 export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
-export const emailSchema = z.email();
-export const urlSchema = z.url();
+export const emailSchema = z.string().email();
+export const urlSchema = z.string().url();
 
 export const ntfyDataSchema = z.object({
   ntfy: z.object({
-    topic: z.string().prefault(""),
-    serverUrl: z.string().prefault("https://ntfy.sh"),
+    topic: z.string().default(""),
+    serverUrl: z.string().default("https://ntfy.sh"),
     token: z.string().optional(),
   }),
 });
 export const webhookDataSchema = z.object({
   webhook: z.object({
-    endpoint: z.url(),
+    endpoint: z.string().url(),
     headers: z
       .array(z.object({ key: z.string(), value: z.string() }))
       .optional(),
@@ -88,59 +88,59 @@ export const NotificationDataSchema = z.union([
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
   "provider",
   [
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("discord"),
         data: discordDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("email"),
         data: emailDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("google-chat"),
         data: googleChatDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("ntfy"),
         data: ntfyDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("pagerduty"),
         data: pagerdutyDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("opsgenie"),
         data: opsgenieDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("sms"),
         data: phoneDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("slack"),
         data: slackDataSchema,
-      }).shape,
+      }),
     ),
-    insertNotificationSchema.extend(
+    insertNotificationSchema.merge(
       z.object({
         provider: z.literal("webhook"),
         data: webhookDataSchema,
-      }).shape,
+      }),
     ),
     insertNotificationSchema.merge(
       z.object({

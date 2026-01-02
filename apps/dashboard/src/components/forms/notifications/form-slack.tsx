@@ -32,7 +32,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("slack"),
-  data: z.url("Please enter a valid URL"),
+  data: z.string().url(),
   monitors: z.array(z.number()),
 });
 

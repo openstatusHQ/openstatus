@@ -115,9 +115,6 @@ export function FormTelegram({
           loading: "Sending test...",
           success: "Test sent",
           error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
-            }
             if (error instanceof Error) {
               return error.message;
             }
