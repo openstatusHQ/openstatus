@@ -16,21 +16,20 @@ export const getFeatureFromPriceId = (priceId: string) => {
   );
 };
 
+
+
 export const getPriceIdForPlan = (plan: WorkspacePlan) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
   return PLANS.find((p) => p.plan === plan)?.price.monthly.priceIds[env];
 };
 
-export const getPriceIdForFeature = (
-  feature: "email-domain-protection" | "status-pages-whitelabel",
-) => {
+
+export const getPriceIdForFeature = (feature: "email-domain-protection" | "status-pages-whitelabel") => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
-  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
-    env
-  ];
-};
+  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[env];
+}
 export const PLANS = [
   {
     plan: "team",
@@ -61,6 +60,7 @@ export const PLANS = [
   };
 }>;
 
+
 export const FEATURES = [
   {
     feature: "email-domain-protection",
@@ -72,10 +72,10 @@ export const FEATURES = [
         },
       },
     },
-  },
+  }
 ] satisfies Array<{
-  feature: "email-domain-protection" | "status-pages-whitelabel"; // Improve typings
-  price: {
-    monthly: { priceIds: { test: string; production: string } };
-  };
+feature: "email-domain-protection" | "status-pages-whitelabel"; // Improve typings
+price: {
+  monthly: { priceIds: { test: string; production: string } };
+};
 }>;

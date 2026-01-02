@@ -164,6 +164,10 @@ export const Events = {
     name: "workspace_updated",
     channel: "workspace",
   },
+  AddFeature:{
+    name: "feature_added",
+    channel:"billing"
+  },
   UpgradeWorkspace: {
     name: "workspace_upgraded",
     channel: "billing",

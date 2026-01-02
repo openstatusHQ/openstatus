@@ -12,6 +12,7 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
+import type { Stripe } from "stripe";
 
 const url =
   process.env.NODE_ENV === "production"
@@ -166,18 +167,17 @@ export const stripeRouter = createTRPCRouter({
       return session;
     }),
 
-  getCheckoutSessionForAddOn: protectedProcedure
+  addAddon: protectedProcedure
     .input(
       z.object({
         workspaceSlug: z.string(),
         feature: z.enum(["email-domain-protection"]),
         successUrl: z.string().optional(),
         cancelUrl: z.string().optional(),
-        // TODO: plan: workspacePlanSchema
+        remove: z.boolean().optional(),
       }),
     )
     .mutation(async (opts) => {
-      console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
       const result = await opts.ctx.db
         .select()
@@ -200,57 +200,40 @@ export const stripeRouter = createTRPCRouter({
         .get();
 
       if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
-      let stripeId = result.stripeId;
+      const stripeId = result.stripeId;
       if (!stripeId) {
-        const currentUser = await opts.ctx.db
-          .select()
-          .from(user)
-          .where(eq(user.id, opts.ctx.user.id))
-          .get();
-        const customerData: {
-          metadata: { workspaceId: string };
-          email?: string;
-        } = {
-          metadata: {
-            workspaceId: String(result.id),
-          },
-          email: currentUser?.email || "",
-        };
-        const stripeUser = await stripe.customers.create(customerData);
-
-        stripeId = stripeUser.id;
-        await opts.ctx.db
-          .update(workspace)
-          .set({ stripeId })
-          .where(eq(workspace.id, result.id))
-          .run();
+        return;
       }
 
+      const sub = await stripe.customers.retrieve(stripeId, {
+        expand: ["subscriptions"],
+      }) as Stripe.Customer;
+
+      if(!sub ) {
+        return;
+      }
+
+      if (!sub.subscriptions?.data[0]?.id) {
+        return;
+      }
       const priceId = getPriceIdForFeature(opts.input.feature);
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        customer: stripeId,
-        customer_update: {
-          name: "auto",
-          address: "auto",
-        },
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        tax_id_collection: {
-          enabled: true,
-        },
-        mode: "subscription",
-        success_url:
-          opts.input.successUrl ||
-          `${url}/app/${result.slug}/settings/billing?success=true`,
-        cancel_url:
-          opts.input.cancelUrl || `${url}/app/${result.slug}/settings/billing`,
+      if (opts.input.remove) {
+        const items = await stripe.subscriptionItems.list({
+          subscription: sub.subscriptions?.data[0]?.id ,
+        })
+        const item = items.data.find((item) => item.price.id === priceId);
+        if (item) {
+          await stripe.subscriptionItems.del(item.id);
+        }
+        return
+      }
+
+      await stripe.subscriptionItems.create({
+        price: priceId,
+        subscription: sub.subscriptions?.data[0]?.id ,
+        quantity: 1,
       });
 
-      return session;
+      return;
     }),
 });

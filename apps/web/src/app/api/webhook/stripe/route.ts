@@ -25,12 +25,14 @@ export async function POST(req: NextRequest) {
     const ctx = await createTRPCContext({ req });
     const caller = lambdaRouter.createCaller(ctx);
 
-    console.log(event.type);
     switch (event.type) {
       case "checkout.session.completed":
         await caller.stripeRouter.webhooks.sessionCompleted({ event });
         break;
-
+      case "customer.subscription.updated":
+        console.log(event)
+        await caller.stripeRouter.webhooks.customerSubscriptionUpdated({ event });
+        break;
       case "customer.subscription.deleted":
         await caller.stripeRouter.webhooks.customerSubscriptionDeleted({
           event,

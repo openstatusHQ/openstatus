@@ -3,11 +3,19 @@ import { Label } from "@/components/ui/label";
 import { useCookieState } from "@/hooks/use-cookie-state";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
+import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
 import { useMutation } from "@tanstack/react-query";
 import { Check } from "lucide-react";
+import { startTransition } from "react";
+
+const BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://app.openstatus.dev"
+    : "http://localhost:3000";
+import { useMutation } from "@tanstack/react-query";
 import { startTransition } from "react";
 
 const BASE_URL =
@@ -35,19 +43,11 @@ export function BillingAddons({
   const value = workspace.limits[addon];
   const [currency] = useCookieState("x-currency", "USD");
   const price = getAddonPriceConfig(plan, addon, currency);
-  const trpc = useTRPC();
 
   const checkoutSessionMutation = useMutation(
-    trpc.stripeRouter.getCheckoutSessionForAddOn.mutationOptions({
-      onSuccess: async (data) => {
-        if (!data) return;
-
-        const stripe = await getStripe();
-        stripe?.redirectToCheckout({ sessionId: data.id });
-      },
-    }),
+    trpc.stripeRouter.addAddon.mutationOptions({}),
   );
-
+  console.log(value);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col justify-between gap-1.5 sm:flex-row">
@@ -66,23 +66,45 @@ export function BillingAddons({
               : "N/A"}
             /mo.
           </span>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              startTransition(async () => {
-                await checkoutSessionMutation.mutateAsync({
-                  // TODO: move to the server as we have the current workspace
-                  workspaceSlug: workspace.slug,
-                  successUrl: `${BASE_URL}/settings/billing?success=true`,
-                  cancelUrl: `${BASE_URL}/settings/billing`,
-                  feature: addon,
-                });
-              });
-            }}
-          >
+          <Button size="sm" variant="secondary">
             Configure
           </Button>
+          {value ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                startTransition(async () => {
+                  await checkoutSessionMutation.mutateAsync({
+                    // TODO HANDLE REMOVE
+                    workspaceSlug: workspace.slug,
+                    successUrl: `${BASE_URL}/settings/billing?success=true`,
+                    cancelUrl: `${BASE_URL}/settings/billing`,
+                    feature: addon,
+                  });
+                });
+              }}
+            >
+              Remove
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                startTransition(async () => {
+                  await checkoutSessionMutation.mutateAsync({
+                    workspaceSlug: workspace.slug,
+                    successUrl: `${BASE_URL}/settings/billing?success=true`,
+                    cancelUrl: `${BASE_URL}/settings/billing`,
+                    feature: addon,
+                  });
+                });
+              }}
+            >
+              Add
+            </Button>
+          )}
         </div>
       </div>
     </div>
