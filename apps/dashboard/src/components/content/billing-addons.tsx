@@ -31,7 +31,7 @@ export function BillingAddons({
   workspace,
 }: BillingAddonsProps) {
   const plan = workspace.plan;
-  const value = workspace.limits[addon];
+  const _value = workspace.limits[addon];
   const [currency] = useCookieState("x-currency", "USD");
   const price = getAddonPriceConfig(plan, addon, currency);
   const trpc = useTRPC();

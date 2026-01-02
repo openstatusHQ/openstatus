@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   integer,
   primaryKey,
@@ -7,7 +7,6 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import type { AdapterAccountType } from "next-auth/adapters";
-import { page } from "../pages";
 
 export const viewer = sqliteTable("viewer", {
   id: integer("id").primaryKey(),
@@ -23,29 +22,9 @@ export const viewer = sqliteTable("viewer", {
   ),
 });
 
-export const viewerRelations = relations(viewer, ({ many }) => ({
-  viewersToPages: many(viewersToPages),
-}));
-
-export const viewersToPages = sqliteTable(
-  "viewers_to_pages",
-  {
-    viewerId: integer("viewer_id")
-      .notNull()
-      .references(() => viewer.id),
-    pageId: integer("page_id")
-      .notNull()
-      .references(() => page.id),
-    createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
-    ),
-  },
-  (t) => [primaryKey({ name: "pk", columns: [t.viewerId, t.pageId] })],
-);
-
 export const viewerSession = sqliteTable("viewer_session", {
   sessionToken: text("session_token").primaryKey(),
-  viewerId: integer("viewer_id")
+  userId: integer("user_id")
     .notNull()
     .references(() => viewer.id, { onDelete: "cascade" }),
   expires: integer("expires", { mode: "timestamp_ms" }).notNull(),
@@ -54,7 +33,7 @@ export const viewerSession = sqliteTable("viewer_session", {
 export const viewerAccounts = sqliteTable(
   "viewer_accounts",
   {
-    viewerId: text("viewer_id")
+    userId: text("user_id")
       .notNull()
       .references(() => viewer.id, { onDelete: "cascade" }),
     type: text("type").$type<AdapterAccountType>().notNull(),

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "91110551-f8d9-4e24-80d3-6f5d6fbfc76f",
+  "id": "e8d9889c-8d28-4311-83e6-9fd28c840595",
   "prevId": "d7863fda-51fb-4d7c-b9e6-fd1943ad5d71",
   "tables": {
     "workspace": {
@@ -2776,8 +2776,8 @@
     "viewer_accounts": {
       "name": "viewer_accounts",
       "columns": {
-        "viewer_id": {
-          "name": "viewer_id",
+        "user_id": {
+          "name": "user_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -2856,12 +2856,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "viewer_accounts_viewer_id_viewer_id_fk": {
-          "name": "viewer_accounts_viewer_id_viewer_id_fk",
+        "viewer_accounts_user_id_viewer_id_fk": {
+          "name": "viewer_accounts_user_id_viewer_id_fk",
           "tableFrom": "viewer_accounts",
           "tableTo": "viewer",
           "columnsFrom": [
-            "viewer_id"
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -2892,8 +2892,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "viewer_id": {
-          "name": "viewer_id",
+        "user_id": {
+          "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -2909,12 +2909,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "viewer_session_viewer_id_viewer_id_fk": {
-          "name": "viewer_session_viewer_id_viewer_id_fk",
+        "viewer_session_user_id_viewer_id_fk": {
+          "name": "viewer_session_user_id_viewer_id_fk",
           "tableFrom": "viewer_session",
           "tableTo": "viewer",
           "columnsFrom": [
-            "viewer_id"
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -2924,73 +2924,6 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "viewers_to_pages": {
-      "name": "viewers_to_pages",
-      "columns": {
-        "viewer_id": {
-          "name": "viewer_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "page_id": {
-          "name": "page_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "viewers_to_pages_viewer_id_viewer_id_fk": {
-          "name": "viewers_to_pages_viewer_id_viewer_id_fk",
-          "tableFrom": "viewers_to_pages",
-          "tableTo": "viewer",
-          "columnsFrom": [
-            "viewer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "viewers_to_pages_page_id_page_id_fk": {
-          "name": "viewers_to_pages_page_id_page_id_fk",
-          "tableFrom": "viewers_to_pages",
-          "tableTo": "page",
-          "columnsFrom": [
-            "page_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "pk": {
-          "columns": [
-            "viewer_id",
-            "page_id"
-          ],
-          "name": "pk"
-        }
-      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     }

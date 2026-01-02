@@ -2,7 +2,7 @@ import type { DefaultSession } from "next-auth";
 import NextAuth, { AuthError } from "next-auth";
 
 import { db, eq } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import { viewer } from "@openstatus/db/src/schema";
 
 import { getValidCustomDomain } from "@/lib/domain";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
@@ -40,11 +40,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (!query) return false;
 
       if (params.account?.provider === "resend") {
-        if (Number.isNaN(Number(params.user.id))) return false;
+        // if the user is new, the id is the verification_token and not the viewer id, so we cannot update the viewer
+        if (Number.isNaN(Number(params.user.id))) return true;
         await db
-          .update(user)
+          .update(viewer)
           .set({ updatedAt: new Date() })
-          .where(eq(user.id, Number(params.user.id)))
+          .where(eq(viewer.id, Number(params.user.id)))
           .run();
 
         return true;
