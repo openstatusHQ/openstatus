@@ -181,7 +181,7 @@ export function Client() {
                 {allPlans[workspace.plan].addons["email-domain-protection"] ? (
                   <BillingAddons
                     label="Magic Link (Auth)"
-                    description="Only allow specific emails to access the status page."
+                    description="Only allow user with a given email domain to access the status page."
                     addon="email-domain-protection"
                     workspace={workspace}
                   />

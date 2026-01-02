@@ -10,7 +10,7 @@ import {
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getPriceIdForPlan } from "./utils";
+import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =
@@ -139,6 +139,94 @@ export const stripeRouter = createTRPCRouter({
       }
 
       const priceId = getPriceIdForPlan(opts.input.plan);
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        customer: stripeId,
+        customer_update: {
+          name: "auto",
+          address: "auto",
+        },
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        tax_id_collection: {
+          enabled: true,
+        },
+        mode: "subscription",
+        success_url:
+          opts.input.successUrl ||
+          `${url}/app/${result.slug}/settings/billing?success=true`,
+        cancel_url:
+          opts.input.cancelUrl || `${url}/app/${result.slug}/settings/billing`,
+      });
+
+      return session;
+    }),
+
+  getCheckoutSessionForAddOn: protectedProcedure
+    .input(
+      z.object({
+        workspaceSlug: z.string(),
+        feature: z.enum(["email-domain-protection"]),
+        successUrl: z.string().optional(),
+        cancelUrl: z.string().optional(),
+        // TODO: plan: workspacePlanSchema
+      }),
+    )
+    .mutation(async (opts) => {
+      console.log("getCheckoutSession");
+      // The following code is duplicated we should extract it
+      const result = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, opts.input.workspaceSlug))
+        .get();
+
+      if (!result) return;
+
+      const currentUser = opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.id, opts.ctx.user.id))
+        .as("currentUser");
+      const userHasAccess = await opts.ctx.db
+        .select()
+        .from(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.workspaceId, result.id))
+        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+        .get();
+
+      if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
+      let stripeId = result.stripeId;
+      if (!stripeId) {
+        const currentUser = await opts.ctx.db
+          .select()
+          .from(user)
+          .where(eq(user.id, opts.ctx.user.id))
+          .get();
+        const customerData: {
+          metadata: { workspaceId: string };
+          email?: string;
+        } = {
+          metadata: {
+            workspaceId: String(result.id),
+          },
+          email: currentUser?.email || "",
+        };
+        const stripeUser = await stripe.customers.create(customerData);
+
+        stripeId = stripeUser.id;
+        await opts.ctx.db
+          .update(workspace)
+          .set({ stripeId })
+          .where(eq(workspace.id, result.id))
+          .run();
+      }
+
+      const priceId = getPriceIdForFeature(opts.input.feature);
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer: stripeId,
