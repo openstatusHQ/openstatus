@@ -14,5 +14,5 @@ export const env = createEnv({
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID:
       process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
   },
-  skipValidation:true,
+  skipValidation: true,
 });
