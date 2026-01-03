@@ -4,7 +4,10 @@ import "./globals.css";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { auth } from "@/lib/auth";
+import { TRPCReactProvider } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { SessionProvider } from "next-auth/react";
 import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ogMetadata, twitterMetadata } from "./metadata";
@@ -68,11 +71,13 @@ export const metadata: Metadata = {
 
 // export const dynamic = "error";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -85,18 +90,22 @@ export default function RootLayout({
           "font-sans antialiased ",
         )}
       >
-        <NuqsAdapter>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <TailwindIndicator />
-            <Toaster richColors expand />
-          </ThemeProvider>
-        </NuqsAdapter>
+        <SessionProvider session={session}>
+          <TRPCReactProvider>
+            <NuqsAdapter>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+                <TailwindIndicator />
+                <Toaster richColors expand />
+              </ThemeProvider>
+            </NuqsAdapter>
+          </TRPCReactProvider>
+        </SessionProvider>
       </body>
     </html>
   );

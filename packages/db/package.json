@@ -17,10 +17,10 @@
     "@openstatus/assertions": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
-    "@t3-oss/env-core": "0.7.1",
+    "@t3-oss/env-core": "0.13.10",
     "drizzle-orm": "0.44.4",
-    "drizzle-zod": "0.5.1",
-    "zod": "3.25.76"
+    "drizzle-zod": "0.8.3",
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

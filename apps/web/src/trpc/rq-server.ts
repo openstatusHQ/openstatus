@@ -1,6 +1,5 @@
 import "server-only";
 
-import { auth } from "@/lib/auth";
 import { type AppRouter, appRouter, t } from "@openstatus/api";
 import type { Context } from "@openstatus/api/src/trpc";
 import { db } from "@openstatus/db";
@@ -10,12 +9,10 @@ import { makeQueryClient } from "./query-client";
 
 const createContextCached = cache(
   async (..._args: unknown[]): Promise<Context> => {
-    const session = await auth();
-
     return {
       req: undefined,
       db,
-      session,
+      session: null,
     };
   },
 );

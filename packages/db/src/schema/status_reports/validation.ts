@@ -15,18 +15,18 @@ export const insertStatusReportUpdateSchema = createInsertSchema(
     status: statusReportStatusSchema,
   },
 ).extend({
-  date: z.coerce.date().optional().default(new Date()),
+  date: z.coerce.date().optional().prefault(new Date()),
 });
 
 export const insertStatusReportSchema = createInsertSchema(statusReport, {
   status: statusReportStatusSchema,
 })
   .extend({
-    date: z.coerce.date().optional().default(new Date()),
+    date: z.coerce.date().optional().prefault(new Date()),
     /**
      * relationship to monitors and pages
      */
-    monitors: z.number().array().optional().default([]),
+    monitors: z.number().array().optional().prefault([]),
   })
   .extend({
     /**

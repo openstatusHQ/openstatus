@@ -6,6 +6,7 @@ import { monitorsToPages } from "../monitors";
 import { pageSubscriber } from "../page_subscribers";
 import { statusReport } from "../status_reports";
 import { workspace } from "../workspaces";
+import { pageAccessTypes } from "./constants";
 
 export const page = sqliteTable("page", {
   id: integer("id").primaryKey(),
@@ -27,9 +28,12 @@ export const page = sqliteTable("page", {
 
   // Password protecting the status page - no specific restriction on password
   password: text("password", { length: 256 }),
+  // @deprecated: instead, use accessType
   passwordProtected: integer("password_protected", { mode: "boolean" }).default(
     false,
   ),
+  accessType: text("access_type", { enum: pageAccessTypes }).default("public"),
+  authEmailDomains: text("auth_email_domains", { mode: "text" }), // TODO: change to json
 
   // links and urls
   homepageUrl: text("homepage_url", { length: 256 }),
@@ -42,6 +46,7 @@ export const page = sqliteTable("page", {
 
   /**
    * Displays the total and failed request numbers for each monitor
+   * TODO: remove this column - we moved into configuration
    */
   showMonitorValues: integer("show_monitor_values", {
     mode: "boolean",

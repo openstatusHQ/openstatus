@@ -14,13 +14,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+import { Badge } from "@/components/ui/badge";
 import { config as featureGroups, plans } from "@/data/plans";
 import { useCookieState } from "@/hooks/use-cookie-state";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import { getPriceConfig } from "@openstatus/db/src/schema/plan/utils";
+import {
+  getAddonPriceConfig,
+  getPriceConfig,
+} from "@openstatus/db/src/schema/plan/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 const BASE_URL =
@@ -80,13 +84,13 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                     </p>
                   </div>
                   <p className="text-right">
-                    <span className="font-cal text-lg">
+                    <span className="font-mono text-lg">
                       {new Intl.NumberFormat(price.locale, {
                         style: "currency",
                         currency: price.currency,
                       }).format(price.value)}
                     </span>
-                    <span className="font-light text-muted-foreground text-sm">
+                    <span className="text-muted-foreground text-sm">
                       /month
                     </span>
                   </p>
@@ -131,59 +135,90 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                   {label}
                 </TableCell>
               </TableRow>
-              {features.map(({ value, label: featureLabel, monthly }) => (
-                <TableRow key={groupKey + value}>
-                  <TableCell>
-                    <div className="flex items-center gap-2 text-wrap">
-                      {featureLabel}
-                    </div>
-                  </TableCell>
-                  {filteredPlans.map((plan) => {
-                    const limitValue =
-                      plan.limits[value as keyof typeof plan.limits];
+              {features.map(
+                ({ value, label: featureLabel, monthly, badge }) => (
+                  <TableRow key={groupKey + value}>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-wrap">
+                        {featureLabel}{" "}
+                        {badge ? (
+                          <Badge variant="outline">{badge}</Badge>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                    {filteredPlans.map((plan) => {
+                      const limitValue =
+                        plan.limits[value as keyof typeof plan.limits];
+                      const isAddon = value in plan.addons;
 
-                    function renderContent() {
-                      if (typeof limitValue === "boolean") {
-                        return limitValue ? (
-                          <Check className="h-4 w-4 text-foreground" />
-                        ) : (
-                          <span className="text-muted-foreground/50">
-                            &#8208;
-                          </span>
-                        );
-                      }
-                      if (typeof limitValue === "number") {
-                        return new Intl.NumberFormat("us")
-                          .format(limitValue)
-                          .toString();
+                      function renderContent() {
+                        if (isAddon) {
+                          const price = getAddonPriceConfig(
+                            plan.id,
+                            value as keyof typeof plan.addons,
+                            currency,
+                          );
+                          if (!price) return null;
+                          return (
+                            <div>
+                              <span className="text-muted-foreground">
+                                add-on{" "}
+                              </span>
+                              <span>
+                                {new Intl.NumberFormat(price.locale, {
+                                  style: "currency",
+                                  currency: price.currency,
+                                }).format(price.value)}
+                                /mo.
+                              </span>
+                            </div>
+                          );
+                        }
+                        if (typeof limitValue === "boolean") {
+                          return limitValue ? (
+                            <Check className="h-4 w-4 text-foreground" />
+                          ) : (
+                            <span className="text-muted-foreground/50">
+                              &#8208;
+                            </span>
+                          );
+                        }
+                        if (typeof limitValue === "number") {
+                          return new Intl.NumberFormat("us")
+                            .format(limitValue)
+                            .toString();
+                        }
+
+                        // TODO: create a format function for this in @data/plans
+                        if (value === "regions" && Array.isArray(limitValue)) {
+                          return limitValue?.length ?? 0;
+                        }
+
+                        if (
+                          Array.isArray(limitValue) &&
+                          limitValue.length > 0
+                        ) {
+                          return limitValue[0];
+                        }
+                        return limitValue;
                       }
 
-                      // TODO: create a format function for this in @data/plans
-                      if (value === "regions" && Array.isArray(limitValue)) {
-                        return limitValue?.length ?? 0;
-                      }
-
-                      if (Array.isArray(limitValue) && limitValue.length > 0) {
-                        return limitValue[0];
-                      }
-                      return limitValue;
-                    }
-
-                    return (
-                      <TableCell
-                        key={plan.id + value}
-                        className={cn(
-                          "font-mono",
-                          plan.id === "starter" && "bg-muted/30",
-                        )}
-                      >
-                        {renderContent()}
-                        {monthly ? "/mo" : ""}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
+                      return (
+                        <TableCell
+                          key={plan.id + value}
+                          className={cn(
+                            "font-mono",
+                            plan.id === "starter" && "bg-muted/30",
+                          )}
+                        >
+                          {renderContent()}
+                          {monthly ? "/mo." : ""}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                ),
+              )}
             </Fragment>
           ),
         )}

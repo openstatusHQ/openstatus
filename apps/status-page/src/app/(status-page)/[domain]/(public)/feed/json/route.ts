@@ -1,3 +1,4 @@
+import { auth } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { notFound, unauthorized } from "next/navigation";
 
@@ -25,11 +26,20 @@ export async function GET(
 
     if (!_page) return notFound();
 
-    if (_page.passwordProtected) {
+    if (_page.accessType === "password") {
       const url = new URL(_request.url);
       const password = url.searchParams.get("pw");
       console.log({ url, _page, password });
       if (password !== _page.password) return unauthorized();
+    }
+
+    if (_page.accessType === "email-domain") {
+      const session = await auth();
+      const user = session?.user;
+      const allowedDomains = _page.authEmailDomains ?? [];
+      if (!user || !user.email) return unauthorized();
+      if (!allowedDomains.includes(user.email.split("@")[1]))
+        return unauthorized();
     }
 
     const page = await queryClient.fetchQuery(

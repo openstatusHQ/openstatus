@@ -8,7 +8,7 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "zod": "3.25.76"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

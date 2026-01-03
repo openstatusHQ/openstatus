@@ -10,6 +10,8 @@ import { SIZE, calSemiBold, interLight, interRegular } from "../utils";
 
 export const runtime = "edge";
 
+// TODO: legacy Tracker - use api.statusPage.get.query instead
+
 export async function GET(req: Request) {
   const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
     [interRegular, interLight, calSemiBold],
@@ -18,19 +20,17 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const slug = searchParams.has("slug") ? searchParams.get("slug") : undefined;
-  const passwordProtected = searchParams.has("passwordProtected")
-    ? searchParams.get("passwordProtected") === "true" // FIXME: can we use Boolean("true") or Boolean("false")?
-    : undefined;
 
   const page = await api.page.getPageBySlug.query({ slug: slug || "" });
+  const _protected = page?.accessType !== "public";
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;
 
   // REMINDER: if password protected, we keep the status 'operational' by default, hiding the actual status
   const tracker = new Tracker({
-    incidents: passwordProtected ? undefined : page?.incidents,
-    statusReports: passwordProtected ? undefined : page?.statusReports,
-    maintenances: passwordProtected ? undefined : page?.maintenances,
+    incidents: _protected ? undefined : page?.incidents,
+    statusReports: _protected ? undefined : page?.statusReports,
+    maintenances: _protected ? undefined : page?.maintenances,
   });
 
   return new ImageResponse(

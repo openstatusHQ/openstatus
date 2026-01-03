@@ -13,7 +13,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
-import { PageSchema, ParamsSchema } from "./schema";
+import { PageSchema, ParamsSchema, transformPageData } from "./schema";
 
 const putRoute = createRoute({
   method: "put",
@@ -69,6 +69,26 @@ export function registerPutPage(api: typeof pagesApi) {
     if (
       limits["password-protection"] === false &&
       input?.passwordProtected === true
+    ) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for password protection",
+      });
+    }
+
+    if (
+      limits["email-domain-protection"] === false &&
+      (input?.accessType === "email-domain" || input?.authEmailDomains?.length)
+    ) {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for email domain protection",
+      });
+    }
+
+    if (
+      limits["password-protection"] === false &&
+      (input?.accessType === "password" || input?.password)
     ) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
@@ -147,6 +167,9 @@ export function registerPutPage(api: typeof pagesApi) {
       .set({
         ...rest,
         customDomain: input.customDomain ?? "",
+        accessType:
+          rest.accessType ?? (rest.passwordProtected ? "password" : "public"),
+        authEmailDomains: rest.authEmailDomains?.join(","),
         updatedAt: new Date(),
       })
       .where(eq(page.id, _page.id))
@@ -188,10 +211,12 @@ export function registerPutPage(api: typeof pagesApi) {
       }
     }
 
-    const data = PageSchema.parse({
-      ...newPage,
-      monitors: monitors || currentMonitorsToPages,
-    });
+    const data = transformPageData(
+      PageSchema.parse({
+        ...newPage,
+        monitors: monitors || currentMonitorsToPages,
+      }),
+    );
 
     return c.json(data, 200);
   });

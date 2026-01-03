@@ -13,7 +13,7 @@ export const CheckSchema = MonitorSchema.pick({
       .number()
       .max(5)
       .optional()
-      .default(1)
+      .prefault(1)
       .openapi({ description: "The number of times to run the check" }),
     aggregated: z
       .boolean()
@@ -87,7 +87,7 @@ export const ResponseSchema = z.object({
     .optional()
     .openapi({ description: "The body of the response" }),
   headers: z
-    .record(z.string())
+    .record(z.string(), z.string())
     .optional()
     .openapi({ description: "The headers of the response" }),
   timing: TimingSchema.openapi({
@@ -131,7 +131,7 @@ export const AggregatedResult = z.object({
 });
 
 export const CheckPostResponseSchema = z.object({
-  id: z.number().int().openapi({ description: "The id of the check" }),
+  id: z.int().openapi({ description: "The id of the check" }),
   raw: z.array(TimingSchema).openapi({
     description: "The raw data of the check",
   }),

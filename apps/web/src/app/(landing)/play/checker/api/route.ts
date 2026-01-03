@@ -25,6 +25,7 @@ async function* makeIterator({
   // Create an array to store all the promises
   const promises = AVAILABLE_REGIONS.map(async (region, index) => {
     try {
+      console.log(`Checking ${region}...`);
       // Perform the fetch operation
       const check =
         process.env.NODE_ENV === "production"

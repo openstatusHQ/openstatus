@@ -68,6 +68,10 @@ export const Events = {
     name: "user_subscribe_verified",
     channel: "page",
   },
+  ValidateEmailDomain: {
+    name: "email_domain_validated",
+    channel: "page",
+  },
   CreateReport: {
     name: "report_created",
     channel: "report",
@@ -159,6 +163,10 @@ export const Events = {
   UpdateWorkspace: {
     name: "workspace_updated",
     channel: "workspace",
+  },
+  AddFeature: {
+    name: "feature_added",
+    channel: "billing",
   },
   UpgradeWorkspace: {
     name: "workspace_upgraded",

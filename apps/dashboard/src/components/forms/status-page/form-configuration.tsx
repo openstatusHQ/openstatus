@@ -67,7 +67,7 @@ const configurationSchema = z
       return true;
     },
     {
-      message: "Value must be manual when type is manual",
+      error: "Value must be manual when type is manual",
       path: ["value"],
     },
   );

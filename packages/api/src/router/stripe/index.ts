@@ -2,15 +2,19 @@ import { z } from "zod";
 
 import { eq } from "@openstatus/db";
 import {
+  selectWorkspaceSchema,
   user,
   usersToWorkspaces,
   workspace,
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
+import { TRPCError } from "@trpc/server";
+import type { Stripe } from "stripe";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getPriceIdForPlan } from "./utils";
+import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =
@@ -164,5 +168,97 @@ export const stripeRouter = createTRPCRouter({
       });
 
       return session;
+    }),
+
+  addAddon: protectedProcedure
+    .input(
+      z.object({
+        workspaceSlug: z.string(),
+        feature: z.enum(["email-domain-protection"]),
+        successUrl: z.string().optional(),
+        cancelUrl: z.string().optional(),
+        remove: z.boolean().optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      // The following code is duplicated we should extract it
+      const result = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, opts.input.workspaceSlug))
+        .get();
+
+      if (!result) return;
+
+      const ws = selectWorkspaceSchema.parse(result);
+
+      const currentUser = opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.id, opts.ctx.user.id))
+        .as("currentUser");
+      const userHasAccess = await opts.ctx.db
+        .select()
+        .from(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.workspaceId, result.id))
+        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+        .get();
+
+      if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
+      const stripeId = result.stripeId;
+      if (!stripeId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace has no Stripe ID",
+        });
+      }
+
+      const sub = (await stripe.customers.retrieve(stripeId, {
+        expand: ["subscriptions"],
+      })) as Stripe.Customer;
+
+      if (!sub) {
+        return;
+      }
+
+      if (!sub.subscriptions?.data[0]?.id) {
+        return;
+      }
+
+      const priceId = getPriceIdForFeature(opts.input.feature);
+
+      if (opts.input.remove) {
+        const items = await stripe.subscriptionItems.list({
+          subscription: sub.subscriptions?.data[0]?.id,
+        });
+        const item = items.data.find((item) => item.price.id === priceId);
+        if (item) {
+          await stripe.subscriptionItems.del(item.id);
+        }
+      } else {
+        await stripe.subscriptionItems.create({
+          price: priceId,
+          subscription: sub.subscriptions?.data[0]?.id,
+          quantity: 1,
+        });
+      }
+
+      // NOTE: update the limits based on the feature type
+
+      const newLimits = updateAddonInLimits(
+        ws.limits,
+        opts.input.feature,
+        opts.input.remove ? "remove" : "add",
+      );
+
+      await opts.ctx.db
+        .update(workspace)
+        .set({ limits: JSON.stringify(newLimits) })
+        .where(eq(workspace.id, result.id))
+        .run();
+
+      // TODO: send email to user notifying about the change if not already from stripe
+
+      return;
     }),
 });

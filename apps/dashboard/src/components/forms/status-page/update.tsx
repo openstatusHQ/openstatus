@@ -12,7 +12,7 @@ import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
 import { FormMonitors } from "./form-monitors";
-import { FormPasswordProtection } from "./form-password-protection";
+import { FormPageAccess } from "./form-page-access";
 
 export function FormStatusPageUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -224,17 +224,28 @@ export function FormStatusPageUpdate() {
         }}
         configLink={configLink}
       />
-      <FormPasswordProtection
-        locked={workspace.limits["password-protection"] === false}
+      <FormPageAccess
+        lockedMap={
+          new Map([
+            ["public", false],
+            ["password", workspace.limits["password-protection"] === false],
+            [
+              "email-domain",
+              workspace.limits["email-domain-protection"] === false,
+            ],
+          ])
+        }
         defaultValues={{
-          passwordProtected: statusPage.passwordProtected ?? false,
+          accessType: statusPage.accessType,
           password: statusPage.password ?? undefined,
+          authEmailDomains: statusPage.authEmailDomains ?? [],
         }}
         onSubmit={async (values) => {
           await updatePasswordProtectionMutation.mutateAsync({
             id: Number.parseInt(id),
-            passwordProtected: values.passwordProtected ?? false,
+            accessType: values.accessType,
             password: values.password,
+            authEmailDomains: values.authEmailDomains,
           });
         }}
       />

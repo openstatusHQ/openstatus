@@ -1,7 +1,6 @@
 "use client";
 
 import { Link } from "@/components/common/link";
-import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import {
@@ -49,6 +48,10 @@ export function Sidebar() {
                 </Link>
               ),
             },
+            {
+              label: "Access Type",
+              value: statusPage.accessType,
+            },
             { label: "Domain", value: statusPage.customDomain || "-" },
             {
               label: "Favicon",
@@ -89,40 +92,21 @@ export function Sidebar() {
           label: "Configuration",
           items: [
             {
-              label: "Legacy",
-              value: <TableCellBoolean value={statusPage.legacyPage} />,
+              label: "Theme",
+              value: statusPage.configuration?.theme ?? "-",
             },
             {
-              label: "Protected",
-              value: <TableCellBoolean value={statusPage.passwordProtected} />,
+              label: "Bar Value",
+              value: statusPage.configuration?.type ?? "-",
             },
-            ...(statusPage.legacyPage
-              ? [
-                  {
-                    label: "Show values",
-                    value: (
-                      <TableCellBoolean value={statusPage.showMonitorValues} />
-                    ),
-                  },
-                ]
-              : [
-                  {
-                    label: "Theme",
-                    value: statusPage.configuration?.theme ?? "-",
-                  },
-                  {
-                    label: "Bar Value",
-                    value: statusPage.configuration?.type ?? "-",
-                  },
-                  {
-                    label: "Card Value",
-                    value: statusPage.configuration?.value ?? "-",
-                  },
-                  {
-                    label: "Show Uptime",
-                    value: statusPage.configuration?.uptime ? "Yes" : "No",
-                  },
-                ]),
+            {
+              label: "Card Value",
+              value: statusPage.configuration?.value ?? "-",
+            },
+            {
+              label: "Show Uptime",
+              value: statusPage.configuration?.uptime ? "Yes" : "No",
+            },
           ],
         },
         {

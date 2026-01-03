@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const json = await request.json();
     const _valid = tcpPayload
       .pick({ url: true })
-      .merge(z.object({ region: monitorRegionSchema.default("ams") }))
+      .extend(z.object({ region: monitorRegionSchema.prefault("ams") }).shape)
       .safeParse(json);
 
     if (!_valid.success) {

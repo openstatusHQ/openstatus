@@ -1,7 +1,20 @@
 import { Footer } from "@/components/nav/footer";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { Suspense } from "react";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default async function Layout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ domain: string }>;
+}) {
+  const queryClient = getQueryClient();
+  const { domain } = await params;
+  await queryClient.prefetchQuery(
+    trpc.statusPage.get.queryOptions({ slug: domain }),
+  );
+
   return (
     <Suspense>
       <div className="flex min-h-screen flex-col gap-4">

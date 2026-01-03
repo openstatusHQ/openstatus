@@ -29,10 +29,10 @@ import { z } from "zod";
 export const FOLLOW_REDIRECTS_DEFAULT = true;
 
 const schema = z.object({
-  followRedirects: z.boolean().default(true),
+  followRedirects: z.boolean().prefault(true),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export function FormFollowRedirect({
   defaultValues,

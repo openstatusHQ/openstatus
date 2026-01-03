@@ -109,6 +109,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       .set({
         ...rest,
         regions: regions ? regions.join(",") : undefined,
+        description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,

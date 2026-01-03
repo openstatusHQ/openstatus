@@ -17,9 +17,20 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
-type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
+export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
+
+function getUpdateLink(type: "rss" | "json" | "atom", page?: Page | null) {
+  const baseUrl = getBaseUrl({
+    slug: page?.slug,
+    customDomain: page?.customDomain,
+  });
+
+  return `${baseUrl}/feed/${type}${
+    page?.accessType === "password" ? `?pw=${page?.password}` : ""
+  }`;
+}
 
 // TODO: use domain instead of openstatus subdomain if available
 
@@ -37,10 +48,8 @@ export function StatusUpdates({
   ...props
 }: StatusUpdatesProps) {
   const [success, setSuccess] = useState(false);
-  const baseUrl = getBaseUrl({
-    slug: page?.slug,
-    customDomain: page?.customDomain,
-  });
+
+  if (types.length === 0) return null;
 
   return (
     <Popover>
@@ -55,7 +64,7 @@ export function StatusUpdates({
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 overflow-hidden p-0">
-        <Tabs defaultValue="email">
+        <Tabs defaultValue={types[0]}>
           <TabsList className="w-full rounded-none border-b">
             {types.includes("email") ? (
               <TabsTrigger value="email">Email</TabsTrigger>
@@ -105,9 +114,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="rss"
-                value={`${baseUrl}/feed/rss${
-                  page?.passwordProtected ? `?pw=${page?.password}` : ""
-                }`}
+                value={getUpdateLink("rss", page)}
               />
             </div>
             <Separator />
@@ -116,9 +123,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="atom"
-                value={`${baseUrl}/feed/atom${
-                  page?.passwordProtected ? `?pw=${page?.password}` : ""
-                }`}
+                value={getUpdateLink("atom", page)}
               />
             </div>
           </TabsContent>
@@ -128,9 +133,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="json"
-                value={`${baseUrl}/feed/json${
-                  page?.passwordProtected ? `?pw=${page?.password}` : ""
-                }`}
+                value={getUpdateLink("json", page)}
               />
             </div>
           </TabsContent>
@@ -153,9 +156,7 @@ export function StatusUpdates({
               <CopyInputButton
                 className="w-full"
                 id="slack"
-                value={`/feed subscribe ${baseUrl}/feed/rss${
-                  page?.passwordProtected ? `?pw=${page?.password}` : ""
-                }`}
+                value={`/feed subscribe ${getUpdateLink("rss", page)}`}
               />
             </div>
           </TabsContent>

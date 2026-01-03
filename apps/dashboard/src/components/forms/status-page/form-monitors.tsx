@@ -103,9 +103,9 @@ const schema = z.object({
       id: z.number(),
       order: z.number(),
       name: z.string(),
-      monitors: z
-        .array(monitorSchema)
-        .min(1, { message: "At least one monitor is required" }),
+      monitors: z.array(monitorSchema).min(1, {
+        error: "At least one monitor is required",
+      }),
     }),
   ),
 });

@@ -20,7 +20,7 @@
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@t3-oss/env-core": "0.7.1",
+    "@t3-oss/env-core": "0.13.10",
     "@trpc/client": "11.4.4",
     "@trpc/server": "11.4.4",
     "@unkey/api": "2.2.0",
@@ -32,7 +32,7 @@
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "2.2.2",
-    "zod": "3.25.76"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
