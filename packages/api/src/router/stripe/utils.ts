@@ -1,6 +1,7 @@
 // Shamelessly stolen from dub.co
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 
 export const getPlanFromPriceId = (priceId: string) => {
   const env =
@@ -8,11 +9,28 @@ export const getPlanFromPriceId = (priceId: string) => {
   return PLANS.find((plan) => plan.price.monthly.priceIds[env] === priceId);
 };
 
+export const getFeatureFromPriceId = (priceId: string) => {
+  const env =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  return FEATURES.find(
+    (feature) => feature.price.monthly.priceIds[env] === priceId,
+  );
+};
+
 export const getPriceIdForPlan = (plan: WorkspacePlan) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
   return PLANS.find((p) => p.plan === plan)?.price.monthly.priceIds[env];
 };
+
+export const getPriceIdForFeature = (feature: keyof Addons) => {
+  const env =
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
+    env
+  ];
+};
+
 export const PLANS = [
   {
     plan: "team",
@@ -38,6 +56,36 @@ export const PLANS = [
   },
 ] satisfies Array<{
   plan: WorkspacePlan;
+  price: {
+    monthly: { priceIds: { test: string; production: string } };
+  };
+}>;
+
+export const FEATURES = [
+  {
+    feature: "email-domain-protection",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1Sl4xqBXJcTfzsyJlzpD1DDm",
+          production: "price_1Sl6oqBXJcTfzsyJCxtzDIx5",
+        },
+      },
+    },
+  },
+  {
+    feature: "white-label",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1SlbQsBXJcTfzsyJ1awtpOno",
+          production: "price_1SlbSdBXJcTfzsyJahJiFE8D",
+        },
+      },
+    },
+  },
+] satisfies Array<{
+  feature: keyof Addons;
   price: {
     monthly: { priceIds: { test: string; production: string } };
   };

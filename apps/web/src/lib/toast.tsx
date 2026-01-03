@@ -19,7 +19,7 @@ const config = {
       label: "Discord",
       onClick: () => {
         if (typeof window === "undefined") return;
-        window.open("/discord", "_blank")?.location;
+        window.open("/discord", "_blank");
       },
     },
   },

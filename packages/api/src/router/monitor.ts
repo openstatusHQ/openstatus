@@ -106,7 +106,6 @@ export const monitorRouter = createTRPCRouter({
         regions,
         headers,
         notifications,
-        id,
         pages,
         tags,
         statusAssertions,
@@ -219,7 +218,7 @@ export const monitorRouter = createTRPCRouter({
               monitorTag: selectMonitorTagSchema,
             })
             .array(),
-          maintenance: z.boolean().default(false).optional(),
+          maintenance: z.boolean().prefault(false).optional(),
           monitorsToNotifications: z
             .object({
               notification: selectNotificationSchema,
@@ -660,7 +659,7 @@ export const monitorRouter = createTRPCRouter({
         selectMonitorSchema.extend({
           monitorTagsToMonitors: z
             .array(z.object({ monitorTag: selectMonitorTagSchema }))
-            .default([]),
+            .prefault([]),
         }),
       )
       .parse(monitors);
@@ -696,7 +695,7 @@ export const monitorRouter = createTRPCRouter({
           selectMonitorSchema.extend({
             monitorTagsToMonitors: z
               .array(z.object({ monitorTag: selectMonitorTagSchema }))
-              .default([]),
+              .prefault([]),
           }),
         )
         .parse(
@@ -854,8 +853,8 @@ export const monitorRouter = createTRPCRouter({
       return z
         .array(
           selectMonitorSchema.extend({
-            tags: z.array(selectMonitorTagSchema).default([]),
-            incidents: z.array(selectIncidentSchema).default([]),
+            tags: z.array(selectMonitorTagSchema).prefault([]),
+            incidents: z.array(selectIncidentSchema).prefault([]),
           }),
         )
         .parse(
@@ -901,12 +900,12 @@ export const monitorRouter = createTRPCRouter({
 
       return selectMonitorSchema
         .extend({
-          notifications: z.array(selectNotificationSchema).default([]),
-          pages: z.array(selectPageSchema).default([]),
-          tags: z.array(selectMonitorTagSchema).default([]),
-          maintenances: z.array(selectMaintenanceSchema).default([]),
-          incidents: z.array(selectIncidentSchema).default([]),
-          privateLocations: z.array(selectPrivateLocationSchema).default([]),
+          notifications: z.array(selectNotificationSchema).prefault([]),
+          pages: z.array(selectPageSchema).prefault([]),
+          tags: z.array(selectMonitorTagSchema).prefault([]),
+          maintenances: z.array(selectMaintenanceSchema).prefault([]),
+          incidents: z.array(selectIncidentSchema).prefault([]),
+          privateLocations: z.array(selectPrivateLocationSchema).prefault([]),
         })
         .parse({
           ...data,
@@ -1141,7 +1140,7 @@ export const monitorRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         timeout: z.number(),
-        degradedAfter: z.number().optional(),
+        degradedAfter: z.number().nullish(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1293,11 +1292,11 @@ export const monitorRouter = createTRPCRouter({
             recordAssertion,
           ]),
         ),
-        active: z.boolean().default(true),
+        active: z.boolean().prefault(true),
         // skip the test check if assertions are OK
-        skipCheck: z.boolean().default(true),
+        skipCheck: z.boolean().prefault(true),
         // save check in db (iff success? -> e.g. onboarding to get a first ping)
-        saveCheck: z.boolean().default(false),
+        saveCheck: z.boolean().prefault(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -1419,9 +1418,9 @@ export const monitorRouter = createTRPCRouter({
             recordAssertion,
           ]),
         ),
-        active: z.boolean().default(false),
-        saveCheck: z.boolean().default(false),
-        skipCheck: z.boolean().default(false),
+        active: z.boolean().prefault(false),
+        saveCheck: z.boolean().prefault(false),
+        skipCheck: z.boolean().prefault(false),
       }),
     )
     .mutation(async ({ ctx, input }) => {

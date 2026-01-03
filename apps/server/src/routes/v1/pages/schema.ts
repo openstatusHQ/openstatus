@@ -43,7 +43,6 @@ export const PageSchema = z
         example: "status.acme.com",
       }),
     icon: z
-      .string()
       .url()
       .or(z.literal(""))
       .transform((val) => (val ? val : undefined))
@@ -52,19 +51,36 @@ export const PageSchema = z
         description: "The icon of the page",
         example: "https://example.com/icon.png",
       }),
-    passwordProtected: z.boolean().optional().default(false).openapi({
+    passwordProtected: z.boolean().optional().prefault(false).openapi({
       description:
-        "Make the page password protected. Used with the 'passwordProtected' property.",
+        "Deprecated in favor of `accessType`. Used to set the password protection type. Returns true if `accessType` is set to 'password' and false otherwise.",
       example: true,
+      deprecated: true,
     }),
+    accessType: z
+      .enum(["public", "password", "email-domain"])
+      .default("public")
+      .openapi({
+        description: "The access type of the page",
+        example: "public",
+      }),
     password: z.string().optional().nullish().openapi({
       description: "Your password to protect the page from the public",
       example: "hidden-password",
     }),
-    showMonitorValues: z.boolean().optional().nullish().default(true).openapi({
+    authEmailDomains: z
+      .array(z.string())
+      .optional()
+      .nullish()
+      .openapi({
+        description: "The email domains of the page",
+        example: ["example.com", "example.org"],
+      }),
+    showMonitorValues: z.boolean().optional().nullish().prefault(true).openapi({
       description:
-        "Displays the total and failed request numbers for each monitor",
+        "Displays the total and failed request numbers for each monitor. Deprecated and will be removed in the future in favor for `configuration` property.",
       example: true,
+      deprecated: true,
     }),
     monitors: z
       .array(z.number())
@@ -90,3 +106,19 @@ export const PageSchema = z
   .openapi("Page");
 
 export type PageSchema = z.infer<typeof PageSchema>;
+
+/**
+ * Transforms page data to ensure passwordProtected reflects accessType
+ * This should be used when parsing page data for responses
+ *
+ * NOTE: cannot be used in `PageSchema` because `.omit` is not supported otherwise
+ */
+export function transformPageData<
+  T extends { accessType?: string; passwordProtected?: boolean },
+>(data: T): T & { passwordProtected: boolean } {
+  return {
+    ...data,
+    passwordProtected:
+      data.accessType === "password" ? true : data.passwordProtected ?? false,
+  };
+}

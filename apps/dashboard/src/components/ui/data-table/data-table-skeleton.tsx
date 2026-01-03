@@ -39,7 +39,7 @@ export function DataTableSkeleton({ rows = 3 }: DataTableSkeletonProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {new Array(rows).fill(0).map((_, i) => (
+        {[rows].fill(0).map((_, i) => (
           <TableRow key={i} className="hover:bg-transparent">
             <TableCell>
               <Skeleton className="my-1.5 h-4 w-full max-w-40" />

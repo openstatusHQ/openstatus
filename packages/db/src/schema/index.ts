@@ -17,3 +17,4 @@ export * from "./check";
 export * from "./monitor_run";
 export * from "./private_locations";
 export * from "./monitor_groups";
+export * from "./viewers";

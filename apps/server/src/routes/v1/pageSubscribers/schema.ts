@@ -20,7 +20,7 @@ export const PageSubscriberSchema = z
       description: "The id of the subscriber",
       example: 1,
     }),
-    email: z.string().email().openapi({
+    email: z.email().openapi({
       description: "The email of the subscriber",
     }),
     pageId: z.number().openapi({

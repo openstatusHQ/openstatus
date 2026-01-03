@@ -1,7 +1,6 @@
 {
   "extends": "@openstatus/tsconfig/nextjs.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },

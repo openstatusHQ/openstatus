@@ -1,7 +1,7 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 import { type NextRequest, after } from "next/server";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { ZodError, treeifyError } from "zod";
 
 import {
   type EventProps,
@@ -12,11 +12,13 @@ import {
 import { db, eq, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
-// TODO: create a package for this
-import {
-  type DefaultSession as Session,
-  auth,
-} from "../../../apps/web/src/lib/auth";
+// Generic session type that works with both User and Viewer
+type Session = {
+  user?: {
+    id?: string | null;
+    email?: string | null;
+  } | null;
+} | null;
 
 /**
  * 1. CONTEXT
@@ -67,8 +69,10 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
 export const createTRPCContext = async (opts: {
   req: NextRequest;
   serverSideCall?: boolean;
+  auth?: () => Promise<Session>;
 }) => {
-  const session = await auth();
+  // Use provided auth function or return null session
+  const session = opts.auth ? await opts.auth() : null;
   const workspace = null;
   const user = null;
 
@@ -106,7 +110,7 @@ export const t = initTRPC
         data: {
           ...shape.data,
           zodError:
-            error.cause instanceof ZodError ? error.cause.flatten() : null,
+            error.cause instanceof ZodError ? treeifyError(error.cause) : null,
         },
       };
     },

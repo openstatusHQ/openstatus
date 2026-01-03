@@ -4,7 +4,7 @@ import { openApiErrorResponses } from "@/libs/errors";
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import type { pagesApi } from "./index";
-import { PageSchema } from "./schema";
+import { PageSchema, transformPageData } from "./schema";
 
 const getAllRoute = createRoute({
   method: "get",
@@ -33,7 +33,9 @@ export function registerGetAllPages(api: typeof pagesApi) {
       .from(page)
       .where(eq(page.workspaceId, workspaceId));
 
-    const data = PageSchema.array().parse(_pages);
+    const data = PageSchema.array()
+      .parse(_pages)
+      .map((page) => transformPageData(page));
 
     return c.json(data, 200);
   });

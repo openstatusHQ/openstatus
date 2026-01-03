@@ -1,9 +1,6 @@
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { auth } from "@/lib/auth";
-import { TRPCReactProvider } from "@/lib/trpc/client";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import { SessionProvider } from "next-auth/react";
 import { cookies } from "next/headers";
 
 export default async function Layout({
@@ -11,7 +8,6 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
   const cookieStore = await cookies();
   const hasState = cookieStore.has("sidebar_state");
   const defaultOpen = hasState
@@ -19,16 +15,12 @@ export default async function Layout({
     : true;
 
   return (
-    <SessionProvider session={session}>
-      <TRPCReactProvider>
-        <HydrateSidebar>
-          <SidebarProvider defaultOpen={defaultOpen}>
-            <AppSidebar />
-            <SidebarInset>{children}</SidebarInset>
-          </SidebarProvider>
-        </HydrateSidebar>
-      </TRPCReactProvider>
-    </SessionProvider>
+    <HydrateSidebar>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar />
+        <SidebarInset>{children}</SidebarInset>
+      </SidebarProvider>
+    </HydrateSidebar>
   );
 }
 

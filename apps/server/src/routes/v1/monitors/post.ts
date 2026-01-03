@@ -104,6 +104,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         ...rest,
         workspaceId: workspaceId,
         regions: regions ? regions.join(",") : undefined,
+        description: input.description ?? undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,

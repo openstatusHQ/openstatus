@@ -115,8 +115,8 @@ export function NavStatusPages() {
             const isActive = pathname.startsWith(`/status-pages/${item.id}/`);
             const actions = getActions({
               edit: () => router.push(`/status-pages/${item.id}/edit`),
-              "copy-id": () => {
-                navigator.clipboard.writeText(item.id.toString());
+              "copy-id": async () => {
+                await navigator.clipboard.writeText(item.id.toString());
                 toast.success("Status Page ID copied to clipboard");
               },
             });

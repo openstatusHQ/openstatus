@@ -14,7 +14,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-export default function PrivatePage() {
+export function SectionPassword() {
   const { domain } = useParams<{ domain: string }>();
   const searchParams = useSearchParams();
   const trpc = useTRPC();

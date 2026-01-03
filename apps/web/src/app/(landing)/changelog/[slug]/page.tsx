@@ -8,6 +8,8 @@ import { ContentPagination } from "../../content-pagination";
 
 const baseUrl = "http://localhost:3000";
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const posts = getChangelogPosts();
 

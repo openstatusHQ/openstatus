@@ -25,6 +25,7 @@ async function* makeIterator({
   // Create an array to store all the promises
   const promises = AVAILABLE_REGIONS.map(async (region, index) => {
     try {
+      console.log(`Checking ${region}...`);
       // Perform the fetch operation
       const check =
         process.env.NODE_ENV === "production"
@@ -36,7 +37,7 @@ async function* makeIterator({
       }
 
       if (check.state === "success") {
-        storeCheckerData({ check, id });
+        await storeCheckerData({ check, id });
       }
 
       return encoder.encode(
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
   const { url, method } = json;
 
   const uuid = crypto.randomUUID().replace(/-/g, "");
-  storeBaseCheckerData({ url, method, id: uuid });
+  await storeBaseCheckerData({ url, method, id: uuid });
 
   const iterator = makeIterator({ url, method, id: uuid });
   const stream = iteratorToStream(iterator);

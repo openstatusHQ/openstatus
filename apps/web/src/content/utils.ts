@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import slugify from "slugify";
 import { z } from "zod";
 
 const metadataSchema = z.object({
@@ -47,20 +48,23 @@ function readMDXFile(filePath: string) {
   return parseFrontmatter(rawContent);
 }
 
-function getMDXDataFromDir(dir: string) {
+function getMDXDataFromDir(dir: string, prefix = "") {
   const mdxFiles = getMDXFiles(dir);
   return mdxFiles.map((file) => {
-    return getMDXDataFromFile(path.join(dir, file));
+    return getMDXDataFromFile(path.join(dir, file), prefix);
   });
 }
 
-function getMDXDataFromFile(filePath: string) {
+function getMDXDataFromFile(filePath: string, prefix = "") {
   const { metadata, content } = readMDXFile(filePath);
-  const slug = path.basename(filePath, path.extname(filePath));
+  const slugRaw = path.basename(filePath, path.extname(filePath));
+  const slug = slugify(slugRaw, { lower: true, strict: true });
+  const href = prefix ? `${prefix}/${slug}` : `/${slug}`;
   return {
     metadata,
     slug,
     content,
+    href,
   };
 }
 
@@ -69,24 +73,28 @@ export type MDXData = ReturnType<typeof getMDXDataFromFile>;
 export function getBlogPosts(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "blog"),
+    "/blog",
   );
 }
 
 export function getChangelogPosts(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "changelog"),
+    "/changelog",
   );
 }
 
 export function getProductPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "product"),
+    "",
   );
 }
 
 export function getUnrelatedPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "unrelated"),
+    "",
   );
 }
 
@@ -100,6 +108,7 @@ export function getUnrelatedPage(slug: string): MDXData {
       "unrelated",
       `${slug}.mdx`,
     ),
+    "",
   );
 }
 
@@ -110,25 +119,82 @@ export function getMainPages(): MDXData[] {
 export function getComparePages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "compare"),
+    "/compare",
   );
 }
 
 export function getHomePage(): MDXData {
   return getMDXDataFromFile(
     path.join(process.cwd(), "src", "content", "pages", "home.mdx"),
+    "",
   );
 }
 
 export function getToolsPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "tools"),
+    "/play",
   );
 }
 
 export function getToolsPage(slug: string): MDXData {
   return getMDXDataFromFile(
     path.join(process.cwd(), "src", "content", "pages", "tools", `${slug}.mdx`),
+    "/play",
   );
+}
+
+export const PAGE_TYPES = [
+  "blog",
+  "changelog",
+  "product",
+  "unrelated",
+  "compare",
+  "tools",
+  "all",
+] as const;
+
+export type PageType = (typeof PAGE_TYPES)[number];
+
+export function getPages(type: PageType) {
+  switch (type) {
+    case "blog":
+      return getBlogPosts();
+    case "changelog":
+      return getChangelogPosts();
+    case "product":
+      return getProductPages();
+    case "unrelated":
+      return getUnrelatedPages();
+    case "compare":
+      return getComparePages();
+    case "tools":
+      return getToolsPages();
+    case "all":
+      return [
+        ...getBlogPosts(),
+        ...getChangelogPosts(),
+        ...getProductPages(),
+        ...getUnrelatedPages(),
+        ...getComparePages(),
+        ...getToolsPages(),
+      ];
+    default:
+      throw new Error(`Unknown page type: ${type}`);
+  }
+}
+
+export function getCategories() {
+  return [
+    ...new Set([
+      ...getBlogPosts().map((post) => post.metadata.category),
+      ...getChangelogPosts().map((post) => post.metadata.category),
+      ...getProductPages().map((post) => post.metadata.category),
+      ...getUnrelatedPages().map((post) => post.metadata.category),
+      ...getComparePages().map((post) => post.metadata.category),
+      ...getToolsPages().map((post) => post.metadata.category),
+    ]),
+  ] as const;
 }
 
 export function formatDate(targetDate: Date, includeRelative = false) {

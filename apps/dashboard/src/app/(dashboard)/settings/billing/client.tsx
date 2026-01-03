@@ -1,6 +1,11 @@
 "use client";
 
+import { BillingAddons } from "@/components/content/billing-addons";
 import { BillingProgress } from "@/components/content/billing-progress";
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   Section,
   SectionDescription,
@@ -22,6 +27,7 @@ import {
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -121,6 +127,8 @@ export function Client() {
 
   if (!workspace) return null;
 
+  const addons = allPlans[workspace.plan].addons;
+
   return (
     <SectionGroup>
       <Section>
@@ -133,9 +141,9 @@ export function Client() {
         <FormCardGroup>
           <FormCard>
             <FormCardHeader>
-              <FormCardTitle>Limits</FormCardTitle>
+              <FormCardTitle>Usage</FormCardTitle>
               <FormCardDescription>
-                Overview of your current limits.
+                Overview of your current usage, limits and addons.
               </FormCardDescription>
             </FormCardHeader>
             <FormCardContent>
@@ -155,16 +163,44 @@ export function Client() {
                   value={workspace.usage?.notifications ?? 0}
                   max={workspace.limits["notification-channels"]}
                 />
+                <BillingProgress
+                  label="Total requests in the last 30 days"
+                  value={totalRequests}
+                  max={calculateTotalRequests(workspace.limits)}
+                />
               </div>
             </FormCardContent>
             <FormCardSeparator />
             <FormCardContent>
-              <div className="flex flex-col gap-2">
-                <BillingProgress
-                  label="Requests in the last 30 days"
-                  value={totalRequests}
-                  max={calculateTotalRequests(workspace.limits)}
-                />
+              <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
+                <FormCardTitle>Add-ons</FormCardTitle>
+                <FormCardDescription>
+                  Extend your limits with additional features.
+                </FormCardDescription>
+              </FormCardHeader>
+              <div className="flex flex-col gap-2 pt-4">
+                {/* TODO: redirect to stripe product */}
+                {addons["email-domain-protection"] ? (
+                  <BillingAddons
+                    label="Magic Link (Auth)"
+                    description="Only allow user with a given email domain to access the status page."
+                    addon="email-domain-protection"
+                    workspace={workspace}
+                  />
+                ) : null}
+                {addons["white-label"] ? (
+                  <BillingAddons
+                    label="White Label"
+                    description="Remove the 'powered by openstatus.dev' footer from your status pages."
+                    addon="white-label"
+                    workspace={workspace}
+                  />
+                ) : null}
+                {Object.keys(addons).length === 0 ? (
+                  <EmptyStateContainer>
+                    <EmptyStateTitle>No add-ons available</EmptyStateTitle>
+                  </EmptyStateContainer>
+                ) : null}
               </div>
             </FormCardContent>
             <FormCardFooter>

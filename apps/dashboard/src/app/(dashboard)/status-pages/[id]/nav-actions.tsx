@@ -42,8 +42,8 @@ export function NavActions() {
 
   const actions = getActions({
     edit: () => router.push(`/status-pages/${id}/edit`),
-    "copy-id": () => {
-      navigator.clipboard.writeText(id);
+    "copy-id": async () => {
+      await navigator.clipboard.writeText(id);
       toast.success("Status Page ID copied to clipboard");
     },
   });

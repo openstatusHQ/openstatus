@@ -68,12 +68,12 @@ export function CheckerProvider({
   }, [urlId]);
 
   // Helper function to update both local state and URL
-  const updateId: React.Dispatch<React.SetStateAction<string | null>> = (
+  const updateId: React.Dispatch<React.SetStateAction<string | null>> = async (
     newId,
   ) => {
     const value = typeof newId === "function" ? newId(id) : newId;
     setId(value);
-    setSearchParams({ id: value });
+    await setSearchParams({ id: value });
   };
 
   return (
@@ -123,11 +123,15 @@ export function Form({
 
     startTransition(async () => {
       async function fetchAndReadStream() {
+        let toastId: string | number | undefined;
         try {
-          const toastId = toast.loading("Loading data from regions...", {
+          toastId = toast.loading("Loading data from regions...", {
             duration: Number.POSITIVE_INFINITY,
             closeButton: false,
           });
+
+          const abortController = new AbortController();
+          const timeoutId = setTimeout(() => abortController.abort(), 10_000);
 
           const response = await fetch("/play/checker/api", {
             method: "POST",
@@ -135,7 +139,10 @@ export function Form({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ url, method }),
+            signal: abortController.signal,
           });
+
+          clearTimeout(timeoutId);
 
           const reader = response?.body?.getReader();
           if (!reader) return;
@@ -206,7 +213,14 @@ export function Form({
           }
         } catch (error) {
           console.error("Error fetching data:", error);
-          // Could add error handling/toast here
+          if (error instanceof Error && error.name === "AbortError") {
+            toast.error("Request timeout", {
+              id: toastId,
+              description:
+                "The request took too long and was aborted after 7 seconds.",
+              className: "text-destructive!",
+            });
+          }
         }
       }
 

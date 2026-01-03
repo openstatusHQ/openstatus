@@ -7,9 +7,9 @@
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
-    "@t3-oss/env-core": "0.7.1",
+    "@t3-oss/env-core": "0.13.10",
     "validator": "13.12.0",
-    "zod": "3.25.76"
+    "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

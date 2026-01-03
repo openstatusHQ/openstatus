@@ -53,7 +53,7 @@ export const slugify = (str: string) => {
 };
 
 export async function copyToClipboard(value: string) {
-  navigator.clipboard.writeText(value);
+  await navigator.clipboard.writeText(value);
 }
 
 export function numberFormatter(value: number) {

@@ -30,7 +30,7 @@ export function ContentList({
               </ContentListItemDate>
               <ContentListItemTitle>{post.metadata.title}</ContentListItemTitle>
               {withCategory ? (
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground md:ml-auto">
                   [{post.metadata.category}]
                 </span>
               ) : null}

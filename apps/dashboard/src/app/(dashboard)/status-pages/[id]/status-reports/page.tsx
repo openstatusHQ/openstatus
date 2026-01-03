@@ -35,10 +35,12 @@ export default function Page() {
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
-      onSuccess: (statusReport) => {
+      onSuccess: async (statusReport) => {
         // TODO: move to server
         if (statusReport.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: statusReport.id });
+          await sendStatusReportUpdateMutation.mutateAsync({
+            id: statusReport.id,
+          });
         }
         //
         refetch();
