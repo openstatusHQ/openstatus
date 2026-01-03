@@ -9,6 +9,7 @@ import {
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
 import type { Stripe } from "stripe";
@@ -16,7 +17,6 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
-import { addons } from "@openstatus/db/src/schema/plan/schema";
 
 const url =
   process.env.NODE_ENV === "production"

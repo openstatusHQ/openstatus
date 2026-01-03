@@ -23,9 +23,7 @@ export const getPriceIdForPlan = (plan: WorkspacePlan) => {
   return PLANS.find((p) => p.plan === plan)?.price.monthly.priceIds[env];
 };
 
-export const getPriceIdForFeature = (
-  feature: keyof Addons,
-) => {
+export const getPriceIdForFeature = (feature: keyof Addons) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
   return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
@@ -85,7 +83,7 @@ export const FEATURES = [
         },
       },
     },
-  }
+  },
 ] satisfies Array<{
   feature: keyof Addons;
   price: {
