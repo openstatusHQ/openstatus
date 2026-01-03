@@ -1,3 +1,4 @@
+import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { Feed } from "feed";
@@ -20,6 +21,7 @@ export async function GET(
   try {
     const queryClient = getQueryClient();
     const { domain, type } = await props.params;
+
     if (!["rss", "atom"].includes(type)) return notFound();
 
     const page = await queryClient.fetchQuery(
@@ -27,11 +29,20 @@ export async function GET(
     );
     if (!page) return notFound();
 
-    if (page.passwordProtected) {
+    if (page.accessType === "password") {
       const url = new URL(_request.url);
       const password = url.searchParams.get("pw");
       console.log({ url, page, password });
       if (password !== page.password) return unauthorized();
+    }
+
+    if (page.accessType === "email-domain") {
+      const session = await auth();
+      const user = session?.user;
+      const allowedDomains = page.authEmailDomains ?? [];
+      if (!user || !user.email) return unauthorized();
+      if (!allowedDomains.includes(user.email.split("@")[1]))
+        return unauthorized();
     }
 
     const baseUrl = getBaseUrl({

@@ -1,10 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+
+import { auth } from "@/lib/auth";
 
 import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { page, selectPageSchema } from "@openstatus/db/src/schema";
+import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 
-export default async function _proxy1(req: NextRequest) {
+export default auth(async (req) => {
   const url = req.nextUrl.clone();
   const response = NextResponse.next();
   const cookies = req.cookies;
@@ -48,7 +51,7 @@ export default async function _proxy1(req: NextRequest) {
     return response;
   }
 
-  const _page = await db
+  const query = await db
     .select()
     .from(page)
     .where(
@@ -56,43 +59,45 @@ export default async function _proxy1(req: NextRequest) {
     )
     .get();
 
-  console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
+  const validation = selectPageSchema.safeParse(query);
 
-  if (!_page) {
-    // return NextResponse.redirect(new URL("https://stpg.dev"));
-    // TODO: work on 404 page
+  if (!validation.success) {
     return response;
   }
 
-  if (_page?.passwordProtected) {
+  const _page = validation.data;
+
+  console.log({ slug: _page?.slug, customDomain: _page?.customDomain });
+
+  if (_page?.accessType === "password") {
     const protectedCookie = cookies.get(createProtectedCookieKey(_page.slug));
     const cookiePassword = protectedCookie ? protectedCookie.value : undefined;
     const queryPassword = url.searchParams.get("pw");
     const password = queryPassword || cookiePassword;
 
-    if (password !== _page.password && !url.pathname.endsWith("/protected")) {
+    if (password !== _page.password && !url.pathname.endsWith("/login")) {
       const { pathname, origin } = req.nextUrl;
 
       // custom domain redirect
       if (_page.customDomain && host !== `${_page.slug}.stpg.dev`) {
         const redirect = pathname.replace(`/${_page.customDomain}`, "");
         const url = new URL(
-          `https://${
-            _page.customDomain
-          }/protected?redirect=${encodeURIComponent(redirect)}`,
+          `https://${_page.customDomain}/login?redirect=${encodeURIComponent(
+            redirect,
+          )}`,
         );
-        console.log("redirect to /protected", url.toString());
+        console.log("redirect to /login", url.toString());
         return NextResponse.redirect(url);
       }
 
       const url = new URL(
         `${origin}${
           type === "pathname" ? `/${prefix}` : ""
-        }/protected?redirect=${encodeURIComponent(pathname)}`,
+        }/login?redirect=${encodeURIComponent(pathname)}`,
       );
       return NextResponse.redirect(url);
     }
-    if (password === _page.password && url.pathname.endsWith("/protected")) {
+    if (password === _page.password && url.pathname.endsWith("/login")) {
       const redirect = url.searchParams.get("redirect");
 
       // custom domain redirect
@@ -109,6 +114,31 @@ export default async function _proxy1(req: NextRequest) {
           }`,
         ),
       );
+    }
+  }
+
+  if (_page.accessType === "email-domain") {
+    const { origin, pathname } = req.nextUrl;
+    const email = req.auth?.user?.email;
+    const emailDomain = email?.split("@")[1];
+    if (
+      !pathname.endsWith("/login") &&
+      (!emailDomain || !_page.authEmailDomains.includes(emailDomain))
+    ) {
+      const url = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}/login`,
+      );
+      return NextResponse.redirect(url);
+    }
+    if (
+      pathname.endsWith("/login") &&
+      emailDomain &&
+      _page.authEmailDomains.includes(emailDomain)
+    ) {
+      const url = new URL(
+        `${origin}${type === "pathname" ? `/${prefix}` : ""}`,
+      );
+      return NextResponse.redirect(url);
     }
   }
 
@@ -169,48 +199,10 @@ export default async function _proxy1(req: NextRequest) {
     return NextResponse.rewrite(rewriteUrl);
   }
   return response;
-}
+});
 
 export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
-};
-
-export const getValidSubdomain = (host?: string | null) => {
-  let subdomain: string | null = null;
-  if (!host && typeof window !== "undefined") {
-    // On client side, get the host from window
-    // biome-ignore lint: to fix later
-    host = window.location.host;
-  }
-
-  // Exclude localhost and IP addresses from being treated as subdomains
-  if (
-    host?.match(/^(localhost|127\\.0\\.0\\.1|::1|\\d+\\.\\d+\\.\\d+\\.\\d+)/)
-  ) {
-    return null;
-  }
-
-  // we should improve here for custom vercel deploy page
-  if (host?.includes(".") && !host.includes(".vercel.app")) {
-    const candidate = host.split(".")[0];
-    if (candidate && !candidate.includes("www")) {
-      // Valid candidate
-      subdomain = candidate;
-    }
-  }
-
-  // In case the host is a custom domain
-  if (
-    host &&
-    !(
-      host?.includes("stpg.dev") ||
-      host?.includes("openstatus.dev") ||
-      host?.endsWith(".vercel.app")
-    )
-  ) {
-    subdomain = host;
-  }
-  return subdomain;
 };

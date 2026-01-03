@@ -13,7 +13,10 @@ export function BillingProgress({ label, value, max }: BillingProgressProps) {
         <div className="flex justify-between text-muted-foreground text-sm">
           <div className="font-medium">{label}</div>
           <div className="font-mono">
-            <span className="text-foreground">{value}</span>/{max}
+            <span className="text-foreground">
+              {new Intl.NumberFormat("de-DE").format(value)}
+            </span>
+            /{new Intl.NumberFormat("de-DE").format(max)}
           </div>
         </div>
         <Progress value={(value / max) * 100} />

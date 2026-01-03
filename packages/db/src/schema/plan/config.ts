@@ -1,22 +1,18 @@
 import { AVAILABLE_REGIONS, FREE_FLY_REGIONS } from "@openstatus/regions";
 import type { WorkspacePlan } from "../workspaces/validation";
-import type { Limits } from "./schema";
+import type { Addons, PlanLimits, Price } from "./schema";
+
+type PlanConfig = {
+  title: "Hobby" | "Starter" | "Pro";
+  id: WorkspacePlan;
+  description: string;
+  price: Price;
+  addons: Partial<Addons>;
+  limits: PlanLimits;
+};
 
 // TODO: rename to `planConfig`
-export const allPlans: Record<
-  WorkspacePlan,
-  {
-    title: "Hobby" | "Starter" | "Pro";
-    id: WorkspacePlan;
-    description: string;
-    price: {
-      USD: number;
-      EUR: number;
-      INR: number;
-    };
-    limits: Limits;
-  }
-> = {
+export const allPlans: Record<WorkspacePlan, PlanConfig> = {
   free: {
     title: "Hobby",
     id: "free",
@@ -26,6 +22,7 @@ export const allPlans: Record<
       EUR: 0,
       INR: 0,
     },
+    addons: {},
     limits: {
       version: undefined,
       monitors: 1,
@@ -43,18 +40,19 @@ export const allPlans: Record<
       "status-subscribers": false,
       "custom-domain": false,
       "password-protection": false,
+      "email-domain-protection": false,
       "white-label": false,
       notifications: true,
       sms: false,
       "sms-limit": 0,
       pagerduty: false,
       opsgenie: false,
+      whatsapp: false,
       "notification-channels": 1,
       members: 1,
       "audit-log": false,
       regions: [...FREE_FLY_REGIONS],
       "private-locations": false,
-      whatsapp: false,
     },
   },
   starter: {
@@ -65,6 +63,15 @@ export const allPlans: Record<
       USD: 30,
       EUR: 30,
       INR: 3000,
+    },
+    addons: {
+      "email-domain-protection": {
+        price: {
+          USD: 100,
+          EUR: 100,
+          INR: 10_000,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -83,10 +90,12 @@ export const allPlans: Record<
       "status-subscribers": true,
       "custom-domain": true,
       "password-protection": true,
+      "email-domain-protection": false,
       "white-label": false,
       notifications: true,
       pagerduty: true,
       opsgenie: true,
+      whatsapp: true,
       sms: true,
       "sms-limit": 50,
       "notification-channels": 10,
@@ -94,7 +103,6 @@ export const allPlans: Record<
       "audit-log": false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": false,
-      whatsapp: true,
     },
   },
   team: {
@@ -104,7 +112,16 @@ export const allPlans: Record<
     price: {
       USD: 100,
       EUR: 100,
-      INR: 10000,
+      INR: 10_000,
+    },
+    addons: {
+      "email-domain-protection": {
+        price: {
+          USD: 100,
+          EUR: 100,
+          INR: 10_000,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -123,18 +140,19 @@ export const allPlans: Record<
       "status-subscribers": true,
       "custom-domain": true,
       "password-protection": true,
+      "email-domain-protection": false,
       "white-label": false,
       notifications: true,
       sms: true,
       "sms-limit": 100,
       pagerduty: true,
       opsgenie: true,
+      whatsapp: true,
       "notification-channels": 20,
       members: "Unlimited",
       "audit-log": true,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": true,
-      whatsapp: true,
     },
   },
 };

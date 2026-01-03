@@ -898,6 +898,47 @@ export const statusPageRouter = createTRPCRouter({
       return _pageSubscriber.id;
     }),
 
+  validateEmailDomain: publicProcedure
+    .meta({ track: Events.ValidateEmailDomain, trackProps: ["slug", "email"] })
+    .input(z.object({ slug: z.string().toLowerCase(), email: z.string() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+      });
+
+      if (!_page) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found",
+        });
+      }
+
+      if (_page.accessType !== "email-domain") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "Page is not configured to allow email domain authentication",
+        });
+      }
+
+      const allowedDomains = _page.authEmailDomains?.split(",") ?? [];
+
+      if (!allowedDomains.includes(opts.input.email.split("@")[1])) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid email domain",
+        });
+      }
+
+      return {
+        email: opts.input.email,
+        slug: opts.input.slug,
+        page: _page,
+      };
+    }),
+
   verifyEmail: publicProcedure
     .meta({ track: Events.VerifySubscribePage, trackProps: ["slug"] })
     .input(z.object({ slug: z.string().toLowerCase(), token: z.string() }))
@@ -955,6 +996,13 @@ export const statusPageRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Page not found",
+        });
+      }
+
+      if (_page.accessType !== "password") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Page is not configured to allow password authentication",
         });
       }
 

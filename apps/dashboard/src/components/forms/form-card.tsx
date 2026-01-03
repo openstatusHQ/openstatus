@@ -82,6 +82,7 @@ export function FormCardContent({
     <CardContent
       className={cn(
         "px-4 group-has-data-[slot=card-upgrade]:pointer-events-none group-has-data-[slot=card-upgrade]:opacity-50",
+        "has-data-[slot=card-content-upgrade]:pointer-events-none has-data-[slot=card-content-upgrade]:opacity-50",
         className,
       )}
       {...props}
@@ -169,6 +170,24 @@ export function FormCardUpgrade({
   return (
     <div
       data-slot="card-upgrade"
+      className={cn("hidden", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+// NOTE; this is for a very specific case where we don't want to disable the whole content
+// and instead disable specpfic card content (e.g. for add-ons)
+export function FormCardContentUpgrade({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-content-upgrade"
       className={cn("hidden", className)}
       {...props}
     >

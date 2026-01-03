@@ -114,17 +114,13 @@ export async function generateMetadata({
     },
     twitter: {
       ...twitterMetadata,
-      images: [
-        `/api/og/page?slug=${page?.slug}&passwordProtected=${page?.passwordProtected}`,
-      ],
+      images: [`/api/og/page?slug=${page?.slug}`],
       title: page?.title,
       description: page?.description,
     },
     openGraph: {
       ...ogMetadata,
-      images: [
-        `/api/og/page?slug=${page?.slug}&passwordProtected=${page?.passwordProtected}`,
-      ],
+      images: [`/api/og/page?slug=${page?.slug}`],
       title: page?.title,
       description: page?.description,
     },
