@@ -12,9 +12,11 @@ import {
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
+import { TRPCError } from "@trpc/server";
+import type { Stripe } from "stripe";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getPriceIdForPlan } from "./utils";
+import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =
@@ -203,43 +205,56 @@ export const stripeRouter = createTRPCRouter({
         .get();
 
       if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
-      // const stripeId = result.stripeId;
-      // if (!stripeId) {
-      //   throw new TRPCError({
-      //     code: "BAD_REQUEST",
-      //     message: "Workspace has no Stripe ID",
-      //   });
-      // }
+      const stripeId = result.stripeId;
+      if (!stripeId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace has no Stripe ID",
+        });
+      }
 
-      // const sub = (await stripe.customers.retrieve(stripeId, {
-      //   expand: ["subscriptions"],
-      // })) as Stripe.Customer;
+      const sub = (await stripe.customers.retrieve(stripeId, {
+        expand: ["subscriptions"],
+      })) as Stripe.Customer;
 
-      // if (!sub) {
-      //   return;
-      // }
+      if (!sub) {
+        return;
+      }
 
-      // if (!sub.subscriptions?.data[0]?.id) {
-      //   return;
-      // }
+      if (!sub.subscriptions?.data[0]?.id) {
+        return;
+      }
 
-      // const priceId = getPriceIdForFeature(opts.input.feature);
+      const priceId = getPriceIdForFeature(opts.input.feature);
 
-      // if (opts.input.remove) {
-      //   const items = await stripe.subscriptionItems.list({
-      //     subscription: sub.subscriptions?.data[0]?.id,
-      //   });
-      //   const item = items.data.find((item) => item.price.id === priceId);
-      //   if (item) {
-      //     await stripe.subscriptionItems.del(item.id);
-      //   }
-      // } else {
-      //   await stripe.subscriptionItems.create({
-      //     price: priceId,
-      //     subscription: sub.subscriptions?.data[0]?.id,
-      //     quantity: 1,
-      //   });
-      // }
+      if (!priceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid feature",
+        });
+      }
+
+      // WARNING: we need to update to .filter instead of .find
+      // making sure we delete all items with the same price id
+
+      const quantity =
+        typeof opts.input.value === "number" ? opts.input.value : 1;
+
+      if (opts.input.value) {
+        const items = await stripe.subscriptionItems.list({
+          subscription: sub.subscriptions?.data[0]?.id,
+        });
+        const item = items.data.find((item) => item.price.id === priceId);
+        if (item) {
+          await stripe.subscriptionItems.del(item.id);
+        }
+      } else {
+        await stripe.subscriptionItems.create({
+          price: priceId,
+          subscription: sub.subscriptions?.data[0]?.id,
+          quantity,
+        });
+      }
 
       const defaultLimit = allPlans[ws.plan].limits[opts.input.feature];
       const newValue =
