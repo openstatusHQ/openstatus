@@ -68,7 +68,19 @@ export const webhookRouter = createTRPCRouter({
 
       const ws = selectWorkspaceSchema.parse(_ws);
 
-      const newLimits = updateAddonInLimits(ws.limits, feature.feature, "add");
+      const currentValue = ws.limits[feature.feature];
+      const newValue =
+        typeof currentValue === "boolean"
+          ? true
+          : typeof currentValue === "number"
+            ? currentValue + 1
+            : currentValue;
+
+      const newLimits = updateAddonInLimits(
+        ws.limits,
+        feature.feature,
+        newValue,
+      );
 
       await opts.ctx.db
         .update(workspace)
@@ -137,10 +149,18 @@ export const webhookRouter = createTRPCRouter({
 
           const ws = selectWorkspaceSchema.parse(_ws);
 
+          const currentValue = ws.limits[feature.feature];
+          const newValue =
+            typeof currentValue === "boolean"
+              ? true
+              : typeof currentValue === "number"
+                ? currentValue + 1
+                : currentValue;
+
           const newLimits = updateAddonInLimits(
             ws.limits,
             feature.feature,
-            "add",
+            newValue,
           );
 
           await opts.ctx.db
