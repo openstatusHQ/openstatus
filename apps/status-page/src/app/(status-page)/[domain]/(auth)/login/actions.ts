@@ -2,6 +2,7 @@
 
 import { signIn } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { TRPCClientError } from "@trpc/client";
 import { AuthError } from "next-auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 
@@ -12,7 +13,10 @@ export async function signInWithResendAction(formData: FormData) {
     const domain = formData.get("domain") as string;
 
     if (!email || !redirectTo) {
-      throw new Error("Email and redirectTo are required");
+      return {
+        success: false,
+        error: "Email and redirectTo are required",
+      };
     }
 
     const queryClient = getQueryClient();
@@ -26,26 +30,40 @@ export async function signInWithResendAction(formData: FormData) {
       );
     } catch (error) {
       console.error("[SignIn] Email validation failed", error);
-      throw new Error(
-        "Your email domain is not authorized to access this status page",
-      );
+      if (error instanceof TRPCClientError) {
+        return { success: false, error: error.message };
+      }
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return {
+        success: false,
+        error: "An unexpected error occurred during sign in",
+      };
     }
 
     await signIn("resend", {
       email,
       redirectTo,
     });
+
+    return { success: true };
   } catch (e) {
     // NOTE: https://github.com/nextauthjs/next-auth/discussions/9389
-    if (isRedirectError(e)) return;
+    if (isRedirectError(e)) {
+      return { success: true };
+    }
     console.error("[SignIn] Error:", e);
     if (e instanceof AuthError) {
-      throw new Error(`Authentication error: ${e.type}`);
+      return { success: false, error: e.type };
     }
     if (e instanceof Error) {
-      // Re-throw the error with the original message
-      throw e;
+      return { success: false, error: e.message };
     }
-    throw new Error("An unexpected error occurred during sign in");
+
+    return {
+      success: false,
+      error: "An unexpected error occurred during sign in",
+    };
   }
 }
