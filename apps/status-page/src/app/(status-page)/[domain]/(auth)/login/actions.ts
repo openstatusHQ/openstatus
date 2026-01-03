@@ -17,9 +17,19 @@ export async function signInWithResendAction(formData: FormData) {
 
     const queryClient = getQueryClient();
     // NOTE: throws an error if the email domain is not allowed
-    await queryClient.fetchQuery(
-      trpc.statusPage.validateEmailDomain.queryOptions({ slug: domain, email }),
-    );
+    try {
+      await queryClient.fetchQuery(
+        trpc.statusPage.validateEmailDomain.queryOptions({
+          slug: domain,
+          email,
+        }),
+      );
+    } catch (error) {
+      console.error("[SignIn] Email validation failed", error);
+      throw new Error(
+        "Your email domain is not authorized to access this status page",
+      );
+    }
 
     await signIn("resend", {
       email,
@@ -28,10 +38,14 @@ export async function signInWithResendAction(formData: FormData) {
   } catch (e) {
     // NOTE: https://github.com/nextauthjs/next-auth/discussions/9389
     if (isRedirectError(e)) return;
-    console.error(e);
+    console.error("[SignIn] Error:", e);
     if (e instanceof AuthError) {
       throw new Error(`Authentication error: ${e.type}`);
     }
-    throw e;
+    if (e instanceof Error) {
+      // Re-throw the error with the original message
+      throw e;
+    }
+    throw new Error("An unexpected error occurred during sign in");
   }
 }
