@@ -65,7 +65,7 @@ const priceSchema = z.object({
 
 export type Price = z.infer<typeof priceSchema>;
 
-export const addons = ["email-domain-protection"] as const satisfies Partial<
+export const addons = ["email-domain-protection", "white-label"] as const satisfies Partial<
   keyof Limits
 >[];
 

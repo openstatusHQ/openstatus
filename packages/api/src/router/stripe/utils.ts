@@ -24,7 +24,7 @@ export const getPriceIdForPlan = (plan: WorkspacePlan) => {
 };
 
 export const getPriceIdForFeature = (
-  feature: "email-domain-protection" | "status-pages-whitelabel",
+  feature: keyof Addons,
 ) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
@@ -75,6 +75,17 @@ export const FEATURES = [
       },
     },
   },
+  {
+    feature: "white-label",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1SlbQsBXJcTfzsyJ1awtpOno",
+          production: "price_1SlbSdBXJcTfzsyJahJiFE8D",
+        },
+      },
+    },
+  }
 ] satisfies Array<{
   feature: keyof Addons;
   price: {

@@ -16,6 +16,7 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
+import { addons } from "@openstatus/db/src/schema/plan/schema";
 
 const url =
   process.env.NODE_ENV === "production"
@@ -174,9 +175,7 @@ export const stripeRouter = createTRPCRouter({
     .input(
       z.object({
         workspaceSlug: z.string(),
-        feature: z.enum(["email-domain-protection"]),
-        successUrl: z.string().optional(),
-        cancelUrl: z.string().optional(),
+        feature: z.enum(addons),
         remove: z.boolean().optional(),
       }),
     )
