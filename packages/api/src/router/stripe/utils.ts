@@ -23,9 +23,7 @@ export const getPriceIdForPlan = (plan: WorkspacePlan) => {
   return PLANS.find((p) => p.plan === plan)?.price.monthly.priceIds[env];
 };
 
-export const getPriceIdForFeature = (
-  feature: "email-domain-protection" | "status-pages-whitelabel",
-) => {
+export const getPriceIdForFeature = (feature: keyof Addons) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
   return FEATURES.find((f) => f.feature === feature)?.price.monthly.priceIds[
@@ -71,6 +69,17 @@ export const FEATURES = [
         priceIds: {
           test: "price_1Sl4xqBXJcTfzsyJlzpD1DDm",
           production: "price_1Sl6oqBXJcTfzsyJCxtzDIx5",
+        },
+      },
+    },
+  },
+  {
+    feature: "white-label",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1SlbQsBXJcTfzsyJ1awtpOno",
+          production: "price_1SlbSdBXJcTfzsyJahJiFE8D",
         },
       },
     },

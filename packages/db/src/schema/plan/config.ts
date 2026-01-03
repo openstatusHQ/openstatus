@@ -72,6 +72,13 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           INR: 10_000,
         },
       },
+      "white-label": {
+        price: {
+          USD: 300,
+          EUR: 300,
+          INR: 30_000,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -120,6 +127,13 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           USD: 100,
           EUR: 100,
           INR: 10_000,
+        },
+      },
+      "white-label": {
+        price: {
+          USD: 300,
+          EUR: 300,
+          INR: 30_000,
         },
       },
     },

@@ -9,6 +9,7 @@ import {
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
 import type { Stripe } from "stripe";
@@ -174,9 +175,7 @@ export const stripeRouter = createTRPCRouter({
     .input(
       z.object({
         workspaceSlug: z.string(),
-        feature: z.enum(["email-domain-protection"]),
-        successUrl: z.string().optional(),
-        cancelUrl: z.string().optional(),
+        feature: z.enum(addons),
         remove: z.boolean().optional(),
       }),
     )

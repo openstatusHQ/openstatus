@@ -23,11 +23,6 @@ import { Check } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
-
 type Workspace = RouterOutputs["workspace"]["get"];
 
 interface BillingAddonsProps {
@@ -67,8 +62,6 @@ export function BillingAddons({
       try {
         const promise = checkoutSessionMutation.mutateAsync({
           workspaceSlug: workspace.slug,
-          successUrl: `${BASE_URL}/settings/billing?success=true`,
-          cancelUrl: `${BASE_URL}/settings/billing`,
           feature: addon,
           remove: value,
         });
