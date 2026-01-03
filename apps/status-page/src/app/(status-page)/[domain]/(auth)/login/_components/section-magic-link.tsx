@@ -13,6 +13,7 @@ import {
 } from "@/components/content/section";
 import { FormEmail, type FormValues } from "@/components/forms/form-email";
 import { Button } from "@/components/ui/button";
+import { generateServerActionPromise } from "@/lib/server-actions";
 import { Inbox } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -42,7 +43,7 @@ export function SectionMagicLink() {
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      await signInWithResendAction(formData);
+      await generateServerActionPromise(signInWithResendAction(formData));
       setState("success");
     } catch (error) {
       setState("idle");
