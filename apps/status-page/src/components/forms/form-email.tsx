@@ -1,6 +1,6 @@
 "use client";
 
-import { Form } from "@/components/ui/form";
+import { Form, FormMessage } from "@/components/ui/form";
 import {
   FormControl,
   FormField,
@@ -76,6 +76,7 @@ export function FormEmail({
               <FormControl>
                 <Input type="email" {...field} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

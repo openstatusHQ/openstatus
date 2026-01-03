@@ -23,7 +23,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       if (!host) throw new AuthError("No host found");
 
-      const req = new Request(host, { headers: new Headers(_headers) });
+      const protocol = _headers.get("x-forwarded-proto") || "https";
+      const req = new Request(`${protocol}://${host}`, {
+        headers: new Headers(_headers),
+      });
       const { prefix } = getValidCustomDomain(req);
 
       if (!prefix || !params.user.email) return false;
