@@ -102,6 +102,8 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_page) return null;
 
+      const ws = selectWorkspaceSchema.safeParse(_page.workspace);
+
       const configuration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
       );
@@ -294,6 +296,8 @@ export const statusPageRouter = createTRPCRouter({
         })
         .sort((a, b) => a.order - b.order);
 
+      const whiteLabel = ws.data?.limits["white-label"] ?? false;
+
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         monitors,
@@ -319,6 +323,7 @@ export const statusPageRouter = createTRPCRouter({
         status,
         lastEvents,
         openEvents,
+        whiteLabel,
       });
     }),
 

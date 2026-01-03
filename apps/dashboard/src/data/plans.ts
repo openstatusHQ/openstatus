@@ -67,6 +67,10 @@ export const config: Record<
         value: "custom-domain",
         label: "Custom domain",
       },
+      {
+        value: "white-label",
+        label: "White Label",
+      },
     ],
   },
   "status-page-audience": {

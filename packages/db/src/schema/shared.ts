@@ -152,6 +152,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
     .nullable()
     .prefault("free")
     .transform((val) => val ?? "free"),
+  whiteLabel: z.boolean().prefault(false),
 });
 
 export const selectPublicStatusReportSchemaWithRelation =

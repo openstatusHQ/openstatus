@@ -29,16 +29,18 @@ export function Footer(props: React.ComponentProps<"footer">) {
     <footer {...props}>
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-4 px-3 py-2">
         <div>
-          <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
-            powered by{" "}
-            <Link
-              href="https://openstatus.dev"
-              target="_blank"
-              rel="noreferrer"
-            >
-              openstatus.dev
-            </Link>
-          </p>
+          {!page.whiteLabel ? (
+            <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
+              powered by{" "}
+              <Link
+                href="https://openstatus.dev"
+                target="_blank"
+                rel="noreferrer"
+              >
+                openstatus.dev
+              </Link>
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center gap-4">
           <TimestampHoverCard
