@@ -9,6 +9,7 @@ import {
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
@@ -240,10 +241,16 @@ export const stripeRouter = createTRPCRouter({
       //   });
       // }
 
+      const defaultLimit = allPlans[ws.plan].limits[opts.input.feature];
+      const newValue =
+        typeof opts.input.value === "number" && typeof defaultLimit === "number"
+          ? opts.input.value + defaultLimit
+          : opts.input.value;
+
       const newLimits = updateAddonInLimits(
         ws.limits,
         opts.input.feature,
-        opts.input.value,
+        newValue,
       );
 
       await opts.ctx.db

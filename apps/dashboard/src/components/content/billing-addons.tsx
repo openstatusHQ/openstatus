@@ -35,6 +35,12 @@ interface BillingAddonsProps {
   workspace: Workspace;
 }
 
+interface PriceConfig {
+  value: number;
+  currency: string;
+  locale: string;
+}
+
 export function BillingAddons({
   label,
   description,
@@ -56,15 +62,22 @@ export function BillingAddons({
     }),
   );
   const plan = workspace.plan;
-  const defaultWorkspaceValue = workspace.limits[addon];
-  const [value, setValue] = useState<number | boolean>(defaultWorkspaceValue);
-  const defaultPlanValue = allPlans[plan].limits[addon];
+  const defaultLimit = allPlans[workspace.plan].limits[addon];
+  const workspaceLimit = workspace.limits[addon];
+  const defaultValue =
+    typeof workspaceLimit === "number" && typeof defaultLimit === "number"
+      ? // current value - default value to evaluate the difference
+        workspaceLimit - defaultLimit
+      : workspaceLimit;
+  const [value, setValue] = useState<number | boolean>(defaultValue);
   const price = getAddonPriceConfig(plan, addon, currency);
-  const hasAddon = defaultWorkspaceValue !== defaultPlanValue;
 
+  // Reset value when modal opens
   useEffect(() => {
-    setValue(defaultWorkspaceValue);
-  }, [defaultWorkspaceValue]);
+    if (open) {
+      setValue(defaultValue);
+    }
+  }, [open, defaultValue]);
 
   function submitAction() {
     startTransition(async () => {
@@ -80,7 +93,7 @@ export function BillingAddons({
           loading: "Updating...",
           success: () => {
             setOpen(false);
-            return value ? "Removed" : "Added";
+            return "Billing information updated";
           },
           error: (error) => {
             if (isTRPCClientError(error)) {
@@ -95,7 +108,10 @@ export function BillingAddons({
       }
     });
   }
-
+  const hasAddon =
+    typeof defaultValue === "number"
+      ? defaultValue > 0
+      : defaultValue !== defaultLimit;
   const isQuantity = typeof value === "number";
 
   return (
@@ -108,78 +124,22 @@ export function BillingAddons({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="font-mono text-foreground text-sm">
-              {price
-                ? new Intl.NumberFormat(price.locale, {
-                    style: "currency",
-                    currency: price.currency,
-                  }).format(price.value)
-                : "N/A"}
+              {formatPrice(price)}
               {isQuantity ? "/mo./each" : "/mo."}
             </span>
-            {hasAddon ? <Check className="size-4 text-success" /> : null}
+            {hasAddon && !isQuantity ? (
+              <Check className="size-4 text-success" />
+            ) : null}
+            {hasAddon && isQuantity ? (
+              <span className="font-mono text-success">+{value}</span>
+            ) : null}
           </div>
           <div className="col-span-2 flex items-center justify-end gap-1.5 lg:col-span-1">
-            {typeof value === "number" &&
-            typeof defaultPlanValue === "number" &&
-            typeof defaultWorkspaceValue === "number" ? (
-              <>
-                <ButtonGroup aria-label="Quantity" className="h-fit">
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => setValue(value - 1)}
-                    disabled={value === defaultPlanValue}
-                  >
-                    <MinusIcon />
-                  </Button>
-                  <Input
-                    type="number"
-                    value={value}
-                    className="h-8 w-16 text-right"
-                    step={1}
-                    min={defaultPlanValue}
-                    onChange={(e) => {
-                      const value = Number.parseInt(e.target.value);
-                      if (Number.isNaN(value)) {
-                        setValue(defaultPlanValue);
-                      } else {
-                        setValue(
-                          Math.max(
-                            typeof defaultPlanValue === "number"
-                              ? defaultPlanValue
-                              : 0,
-                            value,
-                          ),
-                        );
-                      }
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => setValue(value + 1)}
-                  >
-                    <PlusIcon />
-                  </Button>
-                </ButtonGroup>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={value === defaultWorkspaceValue}
-                  >
-                    {value >= defaultWorkspaceValue ? "Add" : "Remove"}
-                  </Button>
-                </AlertDialogTrigger>
-              </>
-            ) : null}
-            {typeof value === "boolean" ? (
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="secondary">
-                  {defaultWorkspaceValue ? "Remove" : "Add"}
-                </Button>
-              </AlertDialogTrigger>
-            ) : null}
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="secondary">
+                {getButtonLabel(hasAddon, value)}
+              </Button>
+            </AlertDialogTrigger>
           </div>
         </div>
       </div>
@@ -187,32 +147,18 @@ export function BillingAddons({
         <AlertDialogHeader>
           <AlertDialogTitle>{label}</AlertDialogTitle>
           <AlertDialogDescription>
-            {hasAddon ? (
-              <>
-                {label} will be removed from your subscription. You will save{" "}
-                {price
-                  ? new Intl.NumberFormat(price.locale, {
-                      style: "currency",
-                      currency: price.currency,
-                    }).format(price.value)
-                  : "N/A"}
-                /mo. on your next billing cycle.
-              </>
-            ) : (
-              <>
-                {label} will be added to your subscription. You will be charged
-                an additional{" "}
-                {price
-                  ? new Intl.NumberFormat(price.locale, {
-                      style: "currency",
-                      currency: price.currency,
-                    }).format(price.value)
-                  : "N/A"}
-                /mo. on your next billing cycle.
-              </>
-            )}
+            {getDialogDescription(label, price, value, hasAddon)}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        {isQuantity &&
+        typeof value === "number" &&
+        typeof defaultLimit === "number" ? (
+          <QuantityControl
+            value={value}
+            setValue={setValue}
+            defaultLimit={defaultLimit}
+          />
+        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
@@ -220,12 +166,119 @@ export function BillingAddons({
               e.preventDefault();
               submitAction();
             }}
-            disabled={isPending}
+            disabled={
+              isPending ||
+              (typeof value === "number" &&
+                typeof defaultValue === "number" &&
+                value === defaultValue)
+            }
           >
-            {isPending ? "Updating..." : hasAddon ? "Remove" : "Add"}
+            {getButtonLabel(hasAddon, value, isPending)}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+// NOTE: could move to lib/formatter.ts
+function formatPrice(price: PriceConfig | null) {
+  if (!price) return "N/A";
+  return new Intl.NumberFormat(price.locale, {
+    style: "currency",
+    currency: price.currency,
+  }).format(price.value);
+}
+
+function getButtonLabel(
+  hasAddon: boolean,
+  value: number | boolean,
+  isPending = false,
+) {
+  if (isPending) return "Updating...";
+
+  const isBoolean = typeof value === "boolean";
+  const isQuantity = typeof value === "number";
+
+  if (isQuantity) return "Update";
+
+  if (isBoolean) {
+    return hasAddon ? "Remove" : "Add";
+  }
+
+  return null;
+}
+
+function getDialogDescription(
+  label: string,
+  price: PriceConfig | null,
+  value: number | boolean,
+  hasAddon: boolean,
+) {
+  const formattedPrice = formatPrice(price);
+  const isBoolean = typeof value === "boolean";
+  const isQuantity = typeof value === "number";
+  const priceSuffix = isQuantity ? "/mo./each" : "/mo.";
+
+  if (isBoolean) {
+    if (hasAddon) {
+      return `${label} will be removed from your subscription. You will save ${formattedPrice}${priceSuffix} on your next billing cycle.`;
+    }
+    return `${label} will be added to your subscription. You will be charged an additional ${formattedPrice}${priceSuffix} on your next billing cycle.`;
+  }
+
+  if (isQuantity) {
+    return `${label} will be updated to ${value} on your next billing cycle. You will be charged ${formattedPrice}${priceSuffix} on your next billing cycle.`;
+  }
+}
+
+function QuantityControl({
+  value,
+  setValue,
+  defaultLimit,
+}: {
+  value: number;
+  setValue: (value: number) => void;
+  defaultLimit: number | boolean;
+}) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = Number.parseInt(e.target.value);
+    if (Number.isNaN(newValue)) {
+      setValue(typeof defaultLimit === "number" ? defaultLimit : 0);
+    } else {
+      setValue(
+        Math.max(typeof defaultLimit === "number" ? defaultLimit : 0, newValue),
+      );
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-center gap-2 py-2">
+      <ButtonGroup aria-label="Quantity" className="h-fit">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setValue(value - 1)}
+          disabled={value <= 0}
+        >
+          <MinusIcon />
+        </Button>
+        <Input
+          type="number"
+          value={value}
+          className="w-16 text-right"
+          step={1}
+          min={0}
+          onChange={handleChange}
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setValue(value + 1)}
+        >
+          <PlusIcon />
+        </Button>
+      </ButtonGroup>
+    </div>
   );
 }
