@@ -2,12 +2,15 @@ import { z } from "zod";
 
 import { eq } from "@openstatus/db";
 import {
+  selectWorkspaceSchema,
   user,
   usersToWorkspaces,
   workspace,
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
+import { TRPCError } from "@trpc/server";
 import type { Stripe } from "stripe";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
@@ -187,6 +190,8 @@ export const stripeRouter = createTRPCRouter({
 
       if (!result) return;
 
+      const ws = selectWorkspaceSchema.parse(result);
+
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -202,7 +207,10 @@ export const stripeRouter = createTRPCRouter({
       if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
       const stripeId = result.stripeId;
       if (!stripeId) {
-        return;
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace has no Stripe ID",
+        });
       }
 
       const sub = (await stripe.customers.retrieve(stripeId, {
@@ -216,7 +224,9 @@ export const stripeRouter = createTRPCRouter({
       if (!sub.subscriptions?.data[0]?.id) {
         return;
       }
+
       const priceId = getPriceIdForFeature(opts.input.feature);
+
       if (opts.input.remove) {
         const items = await stripe.subscriptionItems.list({
           subscription: sub.subscriptions?.data[0]?.id,
@@ -225,14 +235,29 @@ export const stripeRouter = createTRPCRouter({
         if (item) {
           await stripe.subscriptionItems.del(item.id);
         }
-        return;
+      } else {
+        await stripe.subscriptionItems.create({
+          price: priceId,
+          subscription: sub.subscriptions?.data[0]?.id,
+          quantity: 1,
+        });
       }
 
-      await stripe.subscriptionItems.create({
-        price: priceId,
-        subscription: sub.subscriptions?.data[0]?.id,
-        quantity: 1,
-      });
+      // NOTE: update the limits based on the feature type
+
+      const newLimits = updateAddonInLimits(
+        ws.limits,
+        opts.input.feature,
+        opts.input.remove ? "remove" : "add",
+      );
+
+      await opts.ctx.db
+        .update(workspace)
+        .set({ limits: JSON.stringify(newLimits) })
+        .where(eq(workspace.id, result.id))
+        .run();
+
+      // TODO: send email to user notifying about the change if not already from stripe
 
       return;
     }),

@@ -4,9 +4,16 @@ import { z } from "zod";
 
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
-import { user, workspace } from "@openstatus/db/src/schema";
+import {
+  selectWorkspaceSchema,
+  user,
+  workspace,
+} from "@openstatus/db/src/schema";
 
-import { getLimits } from "@openstatus/db/src/schema/plan/utils";
+import {
+  getLimits,
+  updateAddonInLimits,
+} from "@openstatus/db/src/schema/plan/utils";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getFeatureFromPriceId, getPlanFromPriceId } from "./utils";
@@ -53,16 +60,16 @@ export const webhookRouter = createTRPCRouter({
       if (!feature) {
         continue;
       }
-      const ws = await opts.ctx.db
+      const _ws = await opts.ctx.db
         .select()
         .from(workspace)
         .where(eq(workspace.stripeId, customerId))
         .get();
-      const currentLimit = JSON.parse(ws?.limits || "{}");
-      const newLimits = {
-        ...currentLimit,
-        [feature.feature]: true,
-      };
+
+      const ws = selectWorkspaceSchema.parse(_ws);
+
+      const newLimits = updateAddonInLimits(ws.limits, feature.feature, "add");
+
       await opts.ctx.db
         .update(workspace)
         .set({
@@ -122,16 +129,20 @@ export const webhookRouter = createTRPCRouter({
       if (!plan) {
         const feature = getFeatureFromPriceId(item.price.id);
         if (feature) {
-          const ws = await opts.ctx.db
+          const _ws = await opts.ctx.db
             .select()
             .from(workspace)
             .where(eq(workspace.stripeId, customerId))
             .get();
-          const currentLimit = JSON.parse(ws?.limits || "{}");
-          const newLimits = {
-            ...currentLimit,
-            [feature.feature]: true,
-          };
+
+          const ws = selectWorkspaceSchema.parse(_ws);
+
+          const newLimits = updateAddonInLimits(
+            ws.limits,
+            feature.feature,
+            "add",
+          );
+
           await opts.ctx.db
             .update(workspace)
             .set({

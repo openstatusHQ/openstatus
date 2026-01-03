@@ -65,22 +65,27 @@ const priceSchema = z.object({
 
 export type Price = z.infer<typeof priceSchema>;
 
-export const addonsSchema = z.object({
-  "email-domain-protection": z.object({
+export const addons = ["email-domain-protection"] as const satisfies Partial<
+  keyof Limits
+>[];
+
+export const addonsSchema = z.partialRecord(
+  z.enum(addons),
+  z.object({
     price: priceSchema,
   }),
-}) satisfies z.ZodType<Partial<Record<keyof Limits, { price: Price }>>>;
+) satisfies z.ZodType<Partial<Record<keyof Limits, { price: Price }>>>;
 
 export type Addons = z.infer<typeof addonsSchema>;
 
 /**
- * Enforces that addon keys in Limits must be set to false
+ * Enforces that addon keys in Limits must be set to false in plan configs
  * (since addons can only be enabled by purchasing them)
  */
 export type PlanLimits = {
   [K in keyof Limits]: K extends keyof Addons
     ? Limits[K] extends boolean
       ? false // Force addon boolean fields to false
-      : Limits[K] // Non-boolean fields (like "sms-limit") stay as-is
+      : Limits[K] // Non-boolean fields stay as-is
     : Limits[K]; // Non-addon fields stay as-is
 };

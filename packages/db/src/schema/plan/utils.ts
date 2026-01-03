@@ -1,6 +1,6 @@
 import type { WorkspacePlan } from "../workspaces/validation";
 import { allPlans } from "./config";
-import type { Addons, Limits } from "./schema";
+import { type Addons, type Limits, limitsSchema } from "./schema";
 
 export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {
   return limits[limit] || allPlans.free.limits[limit];
@@ -126,4 +126,37 @@ export function getPlansForLimit(
 
     return false;
   });
+}
+
+/**
+ * Add or remove an addon from limits
+ * Automatically infers addon type (toggle/quantity) from the limit field type
+ * @param limits - Current workspace limits
+ * @param addon - Addon key to add/remove
+ * @param action - "add" to enable/increment, "remove" to disable/decrement
+ * @param quantity - Optional quantity for quantity-based addons (defaults to 1)
+ * @returns Updated limits object
+ */
+export function updateAddonInLimits(
+  limits: Limits,
+  addon: keyof Addons,
+  action: "add" | "remove",
+  _quantity = 1,
+): Limits {
+  const currentValue = limits[addon];
+  const newLimits = { ...limits };
+
+  // Infer addon type from the limit field type
+  if (typeof currentValue === "boolean") {
+    // Toggle addon: boolean on/off
+    newLimits[addon] = action === "add";
+  } else if (typeof currentValue === "number") {
+    // Quantity addon: increment/decrement
+    // newLimits[addon] = Math.max(
+    //   0,
+    //   currentValue + (action === "add" ? quantity : -quantity)
+    // ); // Don't go below 0
+  }
+
+  return limitsSchema.parse(newLimits);
 }

@@ -1,6 +1,7 @@
 // Shamelessly stolen from dub.co
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 
 export const getPlanFromPriceId = (priceId: string) => {
   const env =
@@ -31,6 +32,7 @@ export const getPriceIdForFeature = (
     env
   ];
 };
+
 export const PLANS = [
   {
     plan: "team",
@@ -74,7 +76,7 @@ export const FEATURES = [
     },
   },
 ] satisfies Array<{
-  feature: "email-domain-protection" | "status-pages-whitelabel"; // Improve typings
+  feature: keyof Addons;
   price: {
     monthly: { priceIds: { test: string; production: string } };
   };

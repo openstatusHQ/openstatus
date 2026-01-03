@@ -24,7 +24,7 @@ const customDomainSchema = z
   .or(z.enum([""]));
 
 const stringToArray = z.preprocess((val) => {
-  if (String(val).length > 0) {
+  if (val && String(val).length > 0) {
     return String(val).split(",");
   }
   return [];
