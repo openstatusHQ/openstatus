@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 
 import { render } from "@react-email/render";
+import { Effect, Schedule } from "effect";
 import { Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
@@ -98,35 +99,38 @@ export class EmailClient {
       return;
     }
 
-    try {
-      const html = await render(<StatusReportEmail {...req} />);
+    const html = await render(<StatusReportEmail {...req} />);
 
-      for (const recipients of chunk(req.to, 100)) {
-        const result = await this.client.batch.send(
-          recipients.map((subscriber) => ({
-            from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-            subject: req.reportTitle,
-            to: subscriber,
-            html,
-          })),
-        );
-
-        if (result.error) {
-          console.error(
-            `Error sending status report update batch to ${recipients}: ${result.error}`,
-          );
-        }
-      }
-
-      console.log(
-        `Sent status report update email to ${req.to.length} subscribers`,
+    for (const recipients of chunk(req.to, 100)) {
+      const sendEmail = Effect.tryPromise({
+        try: () =>
+          this.client.batch.send(
+            recipients.map((subscriber) => ({
+              from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+              subject: req.reportTitle,
+              to: subscriber,
+              html,
+            })),
+          ),
+        catch: (_unknown) =>
+          new Error(
+            `Error sending status report update batch to ${recipients}`,
+          ),
+      }).pipe(
+        Effect.andThen((result) =>
+          result.error ? Effect.fail(result.error) : Effect.succeed(result),
+        ),
+        Effect.retry({
+          times: 3,
+          schedule: Schedule.exponential("1000 millis"),
+        }),
       );
-    } catch (err) {
-      console.error(
-        `Error sending status report update email to ${req.to}`,
-        err,
-      );
+      await Effect.runPromise(sendEmail).catch(console.error);
     }
+
+    console.log(
+      `Sent status report update email to ${req.to.length} subscribers`,
+    );
   }
 
   public async sendTeamInvitation(req: TeamInvitationProps & { to: string }) {
