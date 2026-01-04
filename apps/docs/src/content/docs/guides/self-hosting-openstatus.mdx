@@ -1,35 +1,58 @@
 ---
-title: How to self host openstatus
-description: Learn how to self host openstatus in your own infra.
+title: How to Self-Host OpenStatus
+description: Complete guide to deploying OpenStatus on your own infrastructure
 ---
+
 import { Image } from 'astro:assets';
 
 import localOpenstatus from '../../../assets/guides/self-hosting-openstatus/local-openstatus.png';
 
+## Problem
 
-If you want to self host openstatus, we provide a [docker-compose](https://github.com/openstatusHQ/openstatus/blob/2aa970b7fc2afaca5e3ec584beda69c1f69ca34d/docker-compose.yaml) file to get you started quickly.
+You want to run OpenStatus on your own infrastructure instead of using the hosted service. This gives you full control over your data, customization options, and the ability to monitor internal services not accessible from the public internet.
 
+## Solution
+
+OpenStatus provides a Docker Compose setup that makes self-hosting straightforward. This guide walks you through deploying all necessary services and configuring your self-hosted instance.
+
+## Prerequisites
+
+- Docker and Docker Compose installed
+- Basic understanding of Docker and containerization
+- Command line experience
+- Git installed
+- Node.js and pnpm (for database migrations)
 
 ## Known limitations
 
-- It only works with private locations. You have to deploy our probes to the cloud provider of your choice. 
+Self-hosting OpenStatus currently has these constraints:
 
-## Get started
+- It only works with private locations. You have to deploy our probes to the cloud provider of your choice.
 
-1. Clone the repository
+## Step-by-step guide
+
+### 1. Clone the repository
+
+Get the latest version of OpenStatus:
 
 ```bash
-git clone 
+git clone https://github.com/openstatusHQ/openstatus
+cd openstatus
 ```
 
-2. Copy the `.env.example` file to `.env` and modify the environment variables as needed.
+2. Copy the `.env.example` file to `.env.docker` and modify the environment variables as needed.
 
 ```bash
 cp .env.docker.example .env.docker
 ```
 
+Review and update the environment variables in `.env.docker` for your setup.
+
 3. Build the containers
-```
+
+Use Docker BuildKit for optimal build performance:
+
+```bash
 export DOCKER_BUILDKIT=1
 docker compose up -d
 ```
@@ -93,19 +116,51 @@ The docker image of the private location is `ghcr.io/openstatushq/private-locati
 
   <Image
     src={localOpenstatus}
-    alt="Openstatus running locally"
+    alt="OpenStatus running locally with self-hosted services"
   />
   
 
-## Our services Services
+## Service architecture
+
+OpenStatus consists of multiple services running together:
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| workflows | 3000 | Background jobs |
+| workflows | 3000 | Background jobs and scheduled tasks |
 | server | 3001 | API backend (tRPC) |
-| dashboard | 3002 | Admin interface |
+| dashboard | 3002 | Admin interface for configuration |
 | status-page | 3003 | Public status pages |
-| private-location | 8081 | Monitoring agent |
+| private-location | 8081 | Monitoring agent for checks |
 | libsql | 8080 | Database (HTTP) |
 | libsql | 5001 | Database (gRPC) |
-| tinybird-local | 7181 | Analytics |
+| tinybird-local | 7181 | Analytics and metrics |
+
+## What you've accomplished
+
+Congratulations! You've successfully:
+- ✅ Deployed OpenStatus on your own infrastructure
+- ✅ Configured all required services
+- ✅ Set up a private location for monitoring
+- ✅ Created your first self-hosted monitor
+
+## Troubleshooting
+
+**Containers won't start**: Check Docker logs with `docker compose logs [service-name]`
+
+**Database migrations fail**: Ensure you're in the correct directory and have pnpm installed
+
+**Private location not connecting**: Verify the `OPENSTATUS_KEY` and `OPENSTATUS_INGEST_URL` are correct
+
+**Tinybird issues**: Make sure the Tinybird token is correctly set in `.env.docker`
+
+## Next steps
+
+- **[Deploy Private Locations](/guides/how-to-deploy-probes-cloudflare-containers)** - Set up monitoring from multiple regions
+- **[Create Monitors](/tutorial/how-to-create-monitor)** - Start monitoring your services
+- **[Configure Notifications](/monitoring/customization/notification)** - Get alerted on issues
+
+## Additional resources
+
+- **[Docker Compose file](https://github.com/openstatusHQ/openstatus/blob/main/docker-compose.yaml)** - Review the complete configuration
+- **[Private Location Reference](/reference/private-location)** - Technical specifications
+- **[Join our Discord](https://www.openstatus.dev/discord)** - Get help from the community
