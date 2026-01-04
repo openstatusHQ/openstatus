@@ -1,6 +1,6 @@
 ---
 title: Create Your First Monitor
-description: "How to create your first monitor with OpenStatus"
+description: "A step-by-step tutorial to create your first monitor with OpenStatus"
 ---
 
 import { Image } from 'astro:assets';
@@ -11,9 +11,21 @@ import createMonitor2 from '../../../assets/tutorial/create-monitor/create-monit
 
 import { ShowcaseYouTube } from 'starlight-showcases'
 
+## What you'll learn
 
+In this tutorial, you'll learn how to create your first monitor—an automated watchdog for your services. A monitor periodically checks your endpoints to ensure they are available, performant, and returning the correct data. Think of it as a `curl` command that runs 24/7, providing continuous insights into the health of your application.
 
-This tutorial will walk you through the process of creating your first monitor, your automated watchdog for your services. A monitor periodically checks your endpoints to ensure they are available, performant, and returning the correct data. Think of it as a `curl` command that runs 24/7, providing continuous insights into the health of your application.
+### Prerequisites
+
+- An OpenStatus account (free tier available at [openstatus.dev](https://www.openstatus.dev))
+- A URL endpoint to monitor (can be your own service or any public URL)
+
+### What you'll build
+
+By the end of this tutorial, you'll have:
+- A working uptime monitor checking your endpoint every minute
+- Real-time metrics showing response time and status codes
+- Understanding of how to customize HTTP requests for different scenarios
 
 
 ## Get Started in 1 Minute
@@ -93,6 +105,29 @@ You can add any number of custom HTTP headers to your request. This is particula
 ## Important Considerations
 ### Monitoring Third-Party Endpoints
 <Aside>If you're monitoring a URL you don't own (like `google.com` or a partner API), your requests might be blocked by firewalls or rate limiters (e.g., Cloudflare). This is a security measure on their end to prevent scraping or denial-of-service attacks.</Aside>
+
+## What you've accomplished
+
+Congratulations! You've successfully:
+- ✅ Created your first uptime monitor
+- ✅ Configured basic HTTP monitoring settings
+- ✅ Learned about customizing requests with methods, headers, and body
+- ✅ Understood key monitoring metrics (response time, status codes, timing breakdown)
+
+## What's next?
+
+Now that you have a monitor running, you can:
+
+- **[Create a Status Page](/tutorial/how-to-create-status-page)** - Share your service status publicly with users
+- **[Set Up Alerting](/monitoring/customization/notification)** - Get notified when your service goes down
+- **[Configure Assertions](/monitoring/customization/assertions)** - Validate response content, not just status codes
+- **[Add Multiple Regions](/monitoring/customization/locations)** - Monitor from different global locations
+
+### Learn more
+
+- **[Understanding Uptime Monitoring](/concept/uptime-monitoring)** - Deep dive into monitoring concepts
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - What metrics we track
+- **[HTTP Monitor Reference](/reference/http-monitor)** - Complete technical specifications
 
 
 

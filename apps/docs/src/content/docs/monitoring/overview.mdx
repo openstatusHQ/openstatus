@@ -1,17 +1,25 @@
 ---
-title: Overview
-description: "Learn more about synthetic monitoring and how to use it with OpenStatus"
+title: Monitoring Overview
+description: "Introduction to synthetic monitoring with OpenStatus"
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import { Image } from 'astro:assets';
 import overview from '../../../assets/monitor/overview/dashboard.png';
 
-With openstatus, you can simulate user requests to check the availability and performance of your website, API, or server from different locations around the globe. This proactive approach helps you find issues before your users do.
+## What is synthetic monitoring?
+
+With OpenStatus, you can simulate user requests to check the availability and performance of your website, API, or server from different locations around the globe. This proactive approach helps you find issues before your users do.
+
+Synthetic monitoring complements real user monitoring (RUM) by providing:
+- **Consistent baseline**: Predictable checks at regular intervals
+- **Early warning system**: Detect issues before they affect many users
+- **Global perspective**: Monitor from multiple regions simultaneously
+- **24/7 coverage**: Continuous monitoring, even when you have no traffic
 
 <Image
     src={overview}
-    alt="Charts with status code and response time"
+    alt="OpenStatus dashboard showing status codes and response time charts"
 />
 
 
@@ -36,13 +44,31 @@ You can create a new monitor in one of four ways:
 
 ### Monitor types
 
+We support different types of monitors for various use cases:
+
 <CardGrid>
     <LinkCard
         title="HTTP Monitor"
         href="/monitoring/type/http"
+        description="Monitor HTTP/HTTPS endpoints including APIs and websites"
     />
     <LinkCard
         title="TCP Monitor"
         href="/monitoring/type/tcp"
+        description="Monitor TCP port availability for databases and services"
     />
 </CardGrid>
+
+## Getting started
+
+Ready to start monitoring? Follow these guides:
+
+1. **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial
+2. **[Configure Notifications](/monitoring/customization/notification)** - Get alerted on issues
+3. **[Set Up Assertions](/monitoring/customization/assertions)** - Validate response content
+
+## Learn more
+
+- **[Understanding Uptime Monitoring](/concept/uptime-monitoring)** - Core concepts explained
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - What metrics we track
+- **[Monitoring as Code](/monitoring/monitoring-as-code)** - Manage monitors with YAML

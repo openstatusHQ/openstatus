@@ -1,17 +1,27 @@
 ---
-title: How to monitor your Model Context Provider (MCP) server?
-description: Learn how to monitor your MCP server with openstatus.
+title: How to Monitor Your Model Context Provider (MCP) Server
+description: Learn how to monitor your MCP server with OpenStatus using JSON-RPC ping checks
 sidebar:
   label: Monitor your MCP Server
 ---
+
+## Problem
+
+You're running a Model Context Provider (MCP) server and need to ensure it's healthy and responsive. Traditional HTTP monitoring isn't sufficient because MCP servers use the JSON-RPC 2.0 protocol with specific request/response patterns.
+
+## Solution
+
+OpenStatus can monitor MCP servers by sending JSON-RPC ping requests to your endpoint. This guide shows you how to set up monitoring for any MCP server using the OpenStatus CLI.
+
+## Prerequisites
+
+-  An OpenStatus account and CLI installed
+-  An MCP server with a publicly accessible endpoint
+-  Basic understanding of JSON-RPC protocol
+
+## Background: What is MCP?
+
 In this guide, we will show you how to monitor your remote MCP server using OpenStatus. We will use the Hugging Face MCP server for this article, but you can apply the same principles to any MCP server. You can find the code for this guide on [GitHub](https://github.com/openstatusHQ/template/tree/a69eac06e9d3d8579768dad803304e456f56ec33/mcp-server).
-
-**Prerequisites**
-
--  An OpenStatus account and CLI
--  An MCP server
-
-## Model Context Provider (MCP)
 
 A Model Context Provider is a component that supplies additional context, data, or capabilities to AI models during runtime through the Model Context Protocol (MCP). It acts as a bridge, allowing AI models to access external resources such as databases, APIs, file systems, or other services not included in their original training data.
 
@@ -117,3 +127,24 @@ This guide has shown you how to create a monitor for your MCP server using the O
 For example, here is our monitor for the HF MCP server:
 
 [https://www.openstatus.dev/public/monitors/5961](https://www.openstatus.dev/public/monitors/5961)
+
+## What you've accomplished
+
+You've successfully:
+- ✅ Created a JSON-RPC based monitor for an MCP server
+- ✅ Configured assertions to validate ping responses
+- ✅ Set up monitoring from multiple global regions
+- ✅ Automated monitor deployment using YAML configuration
+
+## Next steps
+
+- **[Run Synthetic Tests in GitHub Actions](/guides/how-to-run-synthetic-test-github-action/)** - Automate monitoring in your CI/CD
+- **[Set up Alerting](/monitoring/customization/notification)** - Get notified when your MCP server goes down
+- **[Export Metrics to OTLP](/guides/how-to-export-metrics-to-otlp-endpoint)** - Send metrics to your observability platform
+
+## Related resources
+
+- **[JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)** - Understanding the protocol
+- **[MCP Official Documentation](https://modelcontextprotocol.io/docs/concepts/architecture#debugging-and-monitoring)** - MCP health checks
+- **[HTTP Monitor Reference](/reference/http-monitor)** - Complete API reference
+- **[CLI Reference](/reference/cli-reference)** - Full CLI documentation

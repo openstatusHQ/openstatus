@@ -1,6 +1,6 @@
 ---
-title: Overview
-description: "Discover the different notification channels available in OpenStatus"
+title: Alerting Overview
+description: "Configure notification channels to receive alerts when your services experience issues"
 ---
 import { Card } from '@astrojs/starlight/components';
 import { CardGrid } from '@astrojs/starlight/components';
@@ -8,28 +8,55 @@ import { Image } from 'astro:assets';
 import { LinkCard } from '@astrojs/starlight/components';
 import DiscordNotification from '../../../assets/notification/discord-notification.png';
 
-If you connect notification channels to your OpenStatus account, you can receive
-alerts when your services are down. We will contact you when an incident is
-created.
+## About alerting
 
-By default we don't send any notification. You need to connect your monitor to a notification channel to receive alerts.
+If you connect notification channels to your OpenStatus account, you can receive alerts when your services are down. We will contact you when an incident is created, ensuring you're the first to know about issues affecting your services.
+
+By default, we don't send any notifications. You need to connect your monitor to a notification channel to receive alerts. This gives you full control over your alerting strategy.
 
   <Image
     src={DiscordNotification}
-    alt="Create your notification bot"
+    alt="Example of Discord notification showing an incident alert"
   />
+
+## How alerting works
+
+1. **Monitor detects issue**: Your monitor fails its check (timeout, wrong status code, failed assertion)
+2. **Incident created**: OpenStatus creates an incident after confirming the issue
+3. **Notifications sent**: All configured channels receive an alert
+4. **Recovery notification**: When the service recovers, you're notified again
+
+## Alert management best practices
+
+- **Multiple channels**: Configure backup notification methods
+- **Team coverage**: Distribute alerts across team members
+- **Escalation**: Use PagerDuty or similar for on-call rotation
+- **Noise reduction**: Fine-tune monitoring to avoid false positives
 
 ## Notification channels
 
-<CardGrid>
-  <LinkCard title="Email ✉️" href="/alerting/providers/email" description=" Receive an email"/>
-  <LinkCard title="Slack 📣" href="/alerting/providers/slack" description="Get notified on Slack" />
-  <LinkCard title="Discord 🤖" href="/alerting/providers/discord" description="Get notified on Discord" />
-  <LinkCard title="SMS 📱" href="/alerting/providers/sms" description="Receive a text message" />
-  <LinkCard title="ntfy.sh 🔔" href="/alerting/providers/ntfy" description="Receive a ntfy.sh notification" />
-  <LinkCard title="Pagerduty 📟" href="/alerting/providers/pagerduty" description="Receive a pagerduty notification"/ >
-  <LinkCard title="Phone 📞" href="/alerting/providers/phone-call" description="Get called on your phone" />
-  <LinkCard title="Telegram 📡" href="/alerting/providers/telegram" description="Get notified on Telegram" />
-  <LinkCard title="Webhook 🌐" href="/alerting/providers/webhook" description="Get notified by webhook" />
+Choose from a variety of channels to receive alerts:
 
+<CardGrid>
+  <LinkCard title="Email ✉️" href="/alerting/providers/email" description="Receive email notifications for incidents" />
+  <LinkCard title="Slack 📣" href="/alerting/providers/slack" description="Get notified in your Slack workspace" />
+  <LinkCard title="Discord 🤖" href="/alerting/providers/discord" description="Get notified in your Discord server" />
+  <LinkCard title="SMS 📱" href="/alerting/providers/sms" description="Receive text messages for critical alerts" />
+  <LinkCard title="Phone Call 📞" href="/alerting/providers/phone-call" description="Get called for urgent incidents" />
+  <LinkCard title="PagerDuty 📟" href="/alerting/providers/pagerduty" description="Integrate with on-call schedules" />
+  <LinkCard title="Telegram 📡" href="/alerting/providers/telegram" description="Get notified on Telegram" />
+  <LinkCard title="ntfy.sh 🔔" href="/alerting/providers/ntfy" description="Receive push notifications via ntfy.sh" />
+  <LinkCard title="Webhook 🌐" href="/alerting/providers/webhook" description="Send alerts to custom endpoints" />
 </CardGrid>
+
+## Getting started
+
+1. **[Configure Notifications](/monitoring/customization/notification)** - Connect your first notification channel
+2. **[Set up a monitor](/tutorial/how-to-create-monitor)** - Create a monitor if you haven't already
+3. **[Test your alerts](/monitoring/customization/notification)** - Ensure notifications work as expected
+
+## Learn more
+
+- **[Notification Reference](/reference/notification)** - Technical specifications for each provider
+- **[Best Practices](/concept/best-practices-status-page)** - Communication strategies during incidents
+- **[Monitor Configuration](/monitoring/overview)** - Set up effective monitoring
