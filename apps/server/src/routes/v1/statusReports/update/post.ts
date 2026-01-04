@@ -55,7 +55,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
 
     const _statusReport = await db
       .update(statusReport)
-      .set({ status: input.status })
+      .set({ status: input.status, updatedAt: new Date() })
       .where(
         and(
           eq(statusReport.id, Number(id)),
@@ -82,14 +82,6 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       })
       .returning()
       .get();
-
-    await db
-      .update(statusReport)
-      .set({
-        status: input.status,
-        updatedAt: new Date(),
-      })
-      .where(eq(statusReport.id, _statusReport.id));
 
     if (limits.notifications && _statusReport.pageId) {
       const _statusReportWithRelations = await db.query.statusReport.findFirst({
