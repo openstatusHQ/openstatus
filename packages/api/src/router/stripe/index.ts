@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { eq } from "@openstatus/db";
+import { count, eq, schema } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
@@ -9,6 +9,7 @@ import {
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
@@ -176,7 +177,7 @@ export const stripeRouter = createTRPCRouter({
       z.object({
         workspaceSlug: z.string(),
         feature: z.enum(addons),
-        remove: z.boolean().optional(),
+        value: z.union([z.boolean(), z.number()]),
       }),
     )
     .mutation(async (opts) => {
@@ -226,29 +227,65 @@ export const stripeRouter = createTRPCRouter({
 
       const priceId = getPriceIdForFeature(opts.input.feature);
 
-      if (opts.input.remove) {
-        const items = await stripe.subscriptionItems.list({
-          subscription: sub.subscriptions?.data[0]?.id,
+      if (!priceId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid feature",
         });
-        const item = items.data.find((item) => item.price.id === priceId);
-        if (item) {
-          await stripe.subscriptionItems.del(item.id);
+      }
+
+      const quantity =
+        typeof opts.input.value === "number" ? opts.input.value : 1;
+
+      // We need to check the total of status page
+      if (opts.input.feature === "status-pages") {
+        const statusPageCt = await opts.ctx.db
+          .select({ count: count() })
+          .from(schema.page)
+          .where(eq(schema.page.workspaceId, result.id))
+          .get();
+        const pageCount = statusPageCt?.count ?? 0;
+        if (pageCount > quantity + allPlans[ws.plan].limits["status-pages"]) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `You already have ${pageCount} status pages, please delete some status page first.`,
+          });
         }
+      }
+
+      const items = await stripe.subscriptionItems.list({
+        subscription: sub.subscriptions?.data[0]?.id,
+      });
+
+      const item = items.data.find((item) => item.price.id === priceId);
+
+      if (!opts.input.value && typeof opts.input.value === "boolean" && item) {
+        await stripe.subscriptionItems.del(item.id);
+      } else if (typeof opts.input.value === "number" && item) {
+        await stripe.subscriptionItems.update(item.id, {
+          quantity,
+        });
       } else {
         await stripe.subscriptionItems.create({
           price: priceId,
           subscription: sub.subscriptions?.data[0]?.id,
-          quantity: 1,
+          quantity,
         });
       }
 
-      // NOTE: update the limits based on the feature type
+      const defaultLimit = allPlans[ws.plan].limits[opts.input.feature];
+      const newValue =
+        typeof opts.input.value === "number" && typeof defaultLimit === "number"
+          ? opts.input.value + defaultLimit
+          : opts.input.value;
 
       const newLimits = updateAddonInLimits(
         ws.limits,
         opts.input.feature,
-        opts.input.remove ? "remove" : "add",
+        newValue,
       );
+
+      console.log("new Limits");
 
       await opts.ctx.db
         .update(workspace)

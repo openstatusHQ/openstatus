@@ -84,6 +84,17 @@ export const FEATURES = [
       },
     },
   },
+  {
+    feature: "status-pages",
+    price: {
+      monthly: {
+        priceIds: {
+          test: "price_1Slrk8BXJcTfzsyJXQxshFU4",
+          production: "price_1SlrkHBXJcTfzsyJIxHeKUYe",
+        },
+      },
+    },
+  },
 ] satisfies Array<{
   feature: keyof Addons;
   price: {

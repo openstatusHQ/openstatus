@@ -68,6 +68,7 @@ export type Price = z.infer<typeof priceSchema>;
 export const addons = [
   "email-domain-protection",
   "white-label",
+  "status-pages",
 ] as const satisfies Partial<keyof Limits>[];
 
 export const addonsSchema = z.partialRecord(
