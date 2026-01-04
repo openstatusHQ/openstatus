@@ -114,10 +114,10 @@ test("create status report update from different workspace should return 404", a
   const date = new Date();
   date.setMilliseconds(0);
 
-  const res = await app.request("/v1/status_report/2/update", {
+  const res = await app.request("/v1/status_report/1/update", {
     method: "POST",
     headers: {
-      "x-openstatus-key": "1",
+      "x-openstatus-key": "2",
       "content-type": "application/json",
     },
     body: JSON.stringify({

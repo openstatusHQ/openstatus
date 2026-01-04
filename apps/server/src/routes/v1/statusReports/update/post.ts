@@ -28,7 +28,7 @@ const postRouteUpdate = createRoute({
       description: "the status report update",
       content: {
         "application/json": {
-          schema: StatusReportUpdateSchema.omit({ id: true }),
+          schema: StatusReportUpdateSchema.omit({ id: true, statusReportId: true }),
         },
       },
     },
@@ -130,7 +130,27 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       }
     }
 
-    const data = StatusReportSchema.parse(_statusReportUpdate);
+    // Query the full status report with all its relationships
+    const fullStatusReport = await db.query.statusReport.findFirst({
+      where: eq(statusReport.id, Number(id)),
+      with: {
+        statusReportUpdates: true,
+        monitorsToStatusReports: true,
+      },
+    });
+
+    if (!fullStatusReport) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Status Report ${id} not found`,
+      });
+    }
+
+    const data = StatusReportSchema.parse({
+      ...fullStatusReport,
+      statusReportUpdateIds: fullStatusReport.statusReportUpdates.map((u) => u.id),
+      monitorIds: fullStatusReport.monitorsToStatusReports.map((m) => m.monitorId),
+    });
 
     return c.json(data, 200);
   });
