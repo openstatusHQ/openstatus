@@ -239,7 +239,11 @@ export const stripeRouter = createTRPCRouter({
 
       // We need to check the total of status page
       if (opts.input.feature === "status-pages") {
-        const statusPageCt = await opts.ctx.db.select({count: count()}).from(schema.page).where(eq(schema.page.workspaceId, result.id)).get();
+        const statusPageCt = await opts.ctx.db
+          .select({ count: count() })
+          .from(schema.page)
+          .where(eq(schema.page.workspaceId, result.id))
+          .get();
         const pageCount = statusPageCt?.count ?? 0;
         if (pageCount > quantity + allPlans[ws.plan].limits["status-pages"]) {
           throw new TRPCError({
@@ -256,10 +260,10 @@ export const stripeRouter = createTRPCRouter({
       const item = items.data.find((item) => item.price.id === priceId);
 
       if (!opts.input.value && typeof opts.input.value === "boolean" && item) {
-          await stripe.subscriptionItems.del(item.id);
-      } else if(typeof opts.input.value === "number" && item) {
-          await stripe.subscriptionItems.update(item.id, {
-            quantity,
+        await stripe.subscriptionItems.del(item.id);
+      } else if (typeof opts.input.value === "number" && item) {
+        await stripe.subscriptionItems.update(item.id, {
+          quantity,
         });
       } else {
         await stripe.subscriptionItems.create({
@@ -281,7 +285,7 @@ export const stripeRouter = createTRPCRouter({
         newValue,
       );
 
-      console.log('new Limits')
+      console.log("new Limits");
 
       await opts.ctx.db
         .update(workspace)

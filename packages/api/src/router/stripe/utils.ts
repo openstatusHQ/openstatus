@@ -94,7 +94,7 @@ export const FEATURES = [
         },
       },
     },
-  }
+  },
 ] satisfies Array<{
   feature: keyof Addons;
   price: {

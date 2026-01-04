@@ -3,11 +3,11 @@ import type Stripe from "stripe";
 import { z } from "zod";
 
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import {  eq } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
-  workspace
+  workspace,
 } from "@openstatus/db/src/schema";
 
 import {
