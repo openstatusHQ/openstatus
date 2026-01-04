@@ -3,11 +3,11 @@ import type Stripe from "stripe";
 import { z } from "zod";
 
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
+import {  eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
-  workspace,
+  workspace
 } from "@openstatus/db/src/schema";
 
 import {
@@ -54,42 +54,41 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    for (const item of subscription.items.data) {
-      console.log(item);
-      const feature = getFeatureFromPriceId(item.price.id);
-      if (!feature) {
-        continue;
-      }
-      const _ws = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.stripeId, customerId))
-        .get();
+    // for (const item of subscription.items.data) {
+    //   const feature = getFeatureFromPriceId(item.price.id);
+    //   if (!feature) {
+    //     continue;
+    //   }
+    //   const _ws = await opts.ctx.db
+    //     .select()
+    //     .from(workspace)
+    //     .where(eq(workspace.stripeId, customerId))
+    //     .get();
 
-      const ws = selectWorkspaceSchema.parse(_ws);
+    //   const ws = selectWorkspaceSchema.parse(_ws);
 
-      const currentValue = ws.limits[feature.feature];
-      const newValue =
-        typeof currentValue === "boolean"
-          ? true
-          : typeof currentValue === "number"
-            ? currentValue + 1
-            : currentValue;
+    //   const currentValue = ws.limits[feature.feature];
+    //   const newValue =
+    //     typeof currentValue === "boolean"
+    //       ? true
+    //       : typeof currentValue === "number"
+    //         ? currentValue + 1
+    //         : currentValue;
 
-      const newLimits = updateAddonInLimits(
-        ws.limits,
-        feature.feature,
-        newValue,
-      );
+    //   const newLimits = updateAddonInLimits(
+    //     ws.limits,
+    //     feature.feature,
+    //     newValue,
+    //   );
 
-      await opts.ctx.db
-        .update(workspace)
-        .set({
-          limits: JSON.stringify(newLimits),
-        })
-        .where(eq(workspace.id, result.id))
-        .run();
-    }
+    //   await opts.ctx.db
+    //     .update(workspace)
+    //     .set({
+    //       limits: JSON.stringify(newLimits),
+    //     })
+    //     .where(eq(workspace.id, result.id))
+    //     .run();
+    // }
 
     const customer = await stripe.customers.retrieve(customerId);
     if (!customer.deleted && customer.email) {

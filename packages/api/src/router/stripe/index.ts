@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { eq } from "@openstatus/db";
+import { count, eq, schema } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
@@ -234,20 +234,33 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
-      // WARNING: we need to update to .filter instead of .find
-      // making sure we delete all items with the same price id
-
       const quantity =
         typeof opts.input.value === "number" ? opts.input.value : 1;
 
-      if (opts.input.value) {
-        const items = await stripe.subscriptionItems.list({
-          subscription: sub.subscriptions?.data[0]?.id,
-        });
-        const item = items.data.find((item) => item.price.id === priceId);
-        if (item) {
-          await stripe.subscriptionItems.del(item.id);
+      // We need to check the total of status page
+      if (opts.input.feature === "status-pages") {
+        const statusPageCt = await opts.ctx.db.select({count: count()}).from(schema.page).where(eq(schema.page.workspaceId, result.id)).get();
+        const pageCount = statusPageCt?.count ?? 0;
+        if (pageCount > quantity + allPlans[ws.plan].limits["status-pages"]) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `You already have ${pageCount} status pages, please delete some status page first.`,
+          });
         }
+      }
+
+      const items = await stripe.subscriptionItems.list({
+        subscription: sub.subscriptions?.data[0]?.id,
+      });
+
+      const item = items.data.find((item) => item.price.id === priceId);
+
+      if (!opts.input.value && typeof opts.input.value === "boolean" && item) {
+          await stripe.subscriptionItems.del(item.id);
+      } else if(typeof opts.input.value === "number" && item) {
+          await stripe.subscriptionItems.update(item.id, {
+            quantity,
+        });
       } else {
         await stripe.subscriptionItems.create({
           price: priceId,
@@ -267,6 +280,8 @@ export const stripeRouter = createTRPCRouter({
         opts.input.feature,
         newValue,
       );
+
+      console.log('new Limits')
 
       await opts.ctx.db
         .update(workspace)
