@@ -148,3 +148,47 @@ test("create status report update without message should return 400", async () =
 
   expect(res.status).toBe(400);
 });
+
+test("create status report update with resolved status should return 200", async () => {
+  const date = new Date();
+  date.setMilliseconds(0);
+
+  const res = await app.request("/v1/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "resolved",
+      message: "Issue has been fully resolved",
+      date: date.toISOString(),
+    }),
+  });
+
+  expect(res.status).toBe(200);
+
+  const json = await res.json();
+  const result = StatusReportSchema.safeParse(json);
+  expect(result.success).toBe(true);
+});
+
+test("create status report update without date should use default", async () => {
+  const res = await app.request("/v1/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "monitoring",
+      message: "Test message without explicit date",
+    }),
+  });
+
+  expect(res.status).toBe(200);
+
+  const json = await res.json();
+  const result = StatusReportSchema.safeParse(json);
+  expect(result.success).toBe(true);
+});
