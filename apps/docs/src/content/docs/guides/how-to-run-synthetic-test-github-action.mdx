@@ -1,21 +1,30 @@
 ---
-title: How to run a synthetic test in a GitHub Action
-description: Learn how to run a synthetic test in a GitHub Action using OpenStatus.
+title: How to Run Synthetic Tests in GitHub Actions
+description: Integrate OpenStatus synthetic monitoring into your CI/CD pipeline
 sidebar:
-  label: GitHub Action for Synthetics Tests
+  label: GitHub Action for Synthetics
 ---
 
-In this guide, we will show you how to run a synthetic test in a GitHub Action using OpenStatus.
+## Problem
 
-### Requirements
+You want to validate that your application's critical endpoints are working before deploying to production. Running synthetic tests in your CI/CD pipeline catches issues early and prevents broken deployments.
 
-- An [OpenStatus](https://www.openstatus.dev) Account .
-- A GitHub Repository.
+## Solution
 
-### Create a configuration file
+OpenStatus provides a GitHub Action that runs your configured monitors as part of your CI/CD workflow. This guide shows you how to set it up.
 
-First, you need to create a configuration file for your synthetic test.
+## Prerequisites
 
+- An [OpenStatus](https://www.openstatus.dev) account
+- A GitHub repository
+- At least one monitor configured in OpenStatus
+- Admin access to your GitHub repository (for secrets)
+
+## Step-by-step guide
+
+### 1. Create a configuration file
+
+Create a file named `openstatus.config.yaml` in your repository root:
 
 ```yaml
 tests:
@@ -23,32 +32,44 @@ tests:
     - 1
     - 2
 ```
-The ids are the ids of the monitors you want to run. You can find the ids in the URL of the monitor page.
 
+**Finding monitor IDs:**
+1. Go to your OpenStatus dashboard
+2. Click on a monitor
+3. The ID is in the URL: `https://www.openstatus.dev/app/[workspace]/monitors/[ID]`
 
-### Get your OpenStatus API Key
+**Tip:** Start with your most critical monitors and expand from there.
 
-You can find your API key in the settings page of your OpenStatus account.
-Go to the settings page and copy your API key.
+### 2. Get your OpenStatus API key
 
+1. Go to your OpenStatus workspace settings
+2. Navigate to the API section
+3. Create a new API key or copy an existing one
+4. Store it securely - you'll need it for the next step
 
+### 3. Add your API key to GitHub Secrets
 
-### Add your API Key to GitHub Secrets
+Secure your API key as a GitHub secret:
 
-Go to the settings of your repository and add a new secret with the name `OPENSTATUS_API_KEY` and the value of your OpenStatus API key.
+1. Go to your GitHub repository
+2. Click **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Name: `OPENSTATUS_API_KEY`
+5. Value: Your OpenStatus API key
+6. Click **Add secret**
 
+### 4. Create the GitHub Action workflow
 
-### Create a GitHub Action
-
-Create a new file in your repository under `.github/workflows` with the following content:
+Create `.github/workflows/openstatus.yml`:
 
 ```yaml
 name: Run OpenStatus Synthetics CI
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger
   push:
-    branches: [ main ]
+    branches: [ main ]  # Trigger on push to main
+  pull_request:        # Run on PRs (optional)
 
 jobs:
   synthetic_ci:
@@ -57,12 +78,98 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Run OpenStatus Synthetics CI
         uses: openstatushq/openstatus-github-action@v1
         with:
           api_key: ${{ secrets.OPENSTATUS_API_KEY }}
 ```
 
-### Run the GitHub Action
+### 5. Commit and push
 
-On every push to the main branch, the GitHub Action will run the synthetic tests you have configured in the configuration file.
+```bash
+git add openstatus.config.yaml .github/workflows/openstatus.yml
+git commit -m "Add OpenStatus synthetic tests to CI"
+git push origin main
+```
+
+The GitHub Action will run automatically on the next push to `main`.
+
+## What you've accomplished
+
+Great work! You've successfully:
+- ✅ Integrated OpenStatus into your CI/CD pipeline
+- ✅ Automated synthetic testing on every deployment
+- ✅ Added a safety check before production releases
+- ✅ Set up continuous validation of critical endpoints
+
+## Customization options
+
+### Run on different branches
+
+```yaml
+on:
+  push:
+    branches: [ main, staging, develop ]
+```
+
+### Run on pull requests
+
+```yaml
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+```
+
+### Run on a schedule
+
+```yaml
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # Every 4 hours
+```
+
+### Multiple configuration files
+
+```yaml
+- name: Run OpenStatus Synthetics CI
+  uses: openstatushq/openstatus-github-action@v1
+  with:
+    api_key: ${{ secrets.OPENSTATUS_API_KEY }}
+    config_file: .openstatus/production.yaml
+```
+
+## Best practices
+
+1. **Start small**: Begin with 2-3 critical monitors
+2. **Fail fast**: Run synthetic tests early in your pipeline
+3. **Monitor the monitors**: Track your synthetic test success rate
+4. **Environment-specific**: Use different monitors for staging vs production
+5. **Document failures**: Investigate and document any CI failures
+
+## Troubleshooting
+
+**Action fails with authentication error:**
+- Verify `OPENSTATUS_API_KEY` secret is set correctly
+- Check that your API key hasn't expired
+
+**Monitors not found:**
+- Confirm monitor IDs are correct in `openstatus.config.yaml`
+- Ensure monitors are active in your OpenStatus dashboard
+
+**Tests timing out:**
+- Check that your endpoints are accessible from GitHub's runners
+- Consider increasing timeouts in monitor configuration
+
+## Next steps
+
+- **[Monitor Your MCP Server](/guides/how-to-monitor-mcp-server/)** - Advanced monitoring examples
+- **[Monitoring as Code](/concept/uptime-monitoring-as-code)** - Manage monitors with YAML
+- **[CLI Reference](/reference/cli-reference)** - Automate monitor management
+- **[Export Metrics](/guides/how-to-export-metrics-to-otlp-endpoint)** - Send data to your observability platform
+
+## Related resources
+
+- **[GitHub Action on Marketplace](https://github.com/marketplace/actions/openstatus-synthetics-ci)** - Official action
+- **[Example Repository](https://github.com/openstatusHQ/github-action-example)** - Working examples
+- **[Join Discord](https://www.openstatus.dev/discord)** - Get help from the community

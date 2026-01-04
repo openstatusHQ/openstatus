@@ -1,40 +1,96 @@
 ---
-title: HTTP Monitor
+title: HTTP Monitor Reference
+description: Complete technical specification for HTTP/HTTPS endpoint monitoring
 ---
 
-An HTTP Monitor is a component that allows you to monitor the status of HTTP endpoints. It can be used to monitor the status of a website, an API, or any other HTTP endpoint.
+## Overview
+
+An HTTP Monitor is a component that allows you to monitor the status of HTTP and HTTPS endpoints. It can be used to monitor websites, APIs, webhooks, or any other HTTP-accessible service.
+
+**Use cases:**
+- Website uptime monitoring
+- API health checks
+- Webhook endpoint validation
+- CDN performance monitoring
+- Authentication endpoint testing
 
 ## Configuration
 
 ### URL
 
-The url of the HTTP endpoint you want to monitor e.g `https://openstat.us`
+**Type:** String (required)  
+**Format:** Full URL including protocol
+
+The URL of the HTTP endpoint you want to monitor.
+
+**Examples:**
+- `https://openstat.us`
+- `https://api.example.com/health`
+- `http://internal-service.local:8080/status`
+
+**Note:** We recommend using HTTPS for better security.
 
 ### Methods
 
-The HTTP method you want to use to monitor the endpoint.
-- `GET`
-- `POST`
-- `PUT`
-- `DELETE`
-- `HEAD`
-- `OPTIONS`
-- `PATCH`
-- `TRACE`
+**Type:** String (required)  
+**Default:** `GET`
+
+The HTTP method to use when making the request to the endpoint.
+
+**Available methods:**
+- `GET` - Retrieve data (most common for health checks)
+- `POST` - Send data to create/trigger actions
+- `PUT` - Update existing resources
+- `DELETE` - Remove resources
+- `HEAD` - Like GET but without response body
+- `OPTIONS` - Query supported methods
+- `PATCH` - Partial resource updates
+- `TRACE` - Echo request for debugging
+
+**Common usage:**
+- Health checks: `GET`
+- API testing: `POST`, `PUT`, `DELETE`
+- Webhook testing: `POST`
 
 ### Body
 
-The body of the HTTP request you want to send to the endpoint. You use binary data if the content type is `application/octet-stream`.
-Example:
-- `{ "key": "value" }`
-- `data:image/jpeg;base64,/9j...`
+**Type:** String (optional)  
+**Available for:** `POST`, `PUT`, `PATCH` methods
+
+The request body to send with the HTTP request. Supports both text and binary data.
+
+**Text body examples:**
+```json
+{ "key": "value" }
+```
+
+**Binary data:**
+For binary content (e.g., images), use base64 encoding with data URI:
+```
+data:image/jpeg;base64,/9j...
+```
+
+**Content type:** Set the appropriate `Content-Type` header (e.g., `application/json`, `application/octet-stream`).
 ### Headers
 
-The headers you want to send with the HTTP request
+**Type:** Key-value pairs (optional)
 
-Example:
-- `"Content-Type": "application/json"`
-- `'Content-Type: application/octet-stream'`
+Custom HTTP headers to include with your request.
+
+**Common examples:**
+```
+Content-Type: application/json
+Authorization: Bearer your_token_here
+Accept: application/json
+User-Agent: Custom-Agent/1.0
+```
+
+**Use cases:**
+- **Authentication:** Send API tokens or credentials
+- **Content negotiation:** Specify accepted response formats
+- **Custom identification:** Add tracking or debugging headers
+
+**Note:** OpenStatus automatically adds `User-Agent: OpenStatus/1.0` to all requests.
 
 ### Regions
 
@@ -130,18 +186,63 @@ Validate the status code of the response. The comparisons are:
 - Less Than or Equal
 
 #### Headers assertions
-Validate the headers of the reponse. The comparisons are:
+
+**Purpose:** Validate response headers
+
+Validate the headers of the response. The comparisons are:
 - Contains
 - Not Contains
 - Equal
 - Not Equal
 - Empty
 
+**Example use cases:**
+- Verify cache headers are present
+- Check security headers (e.g., `X-Frame-Options`)
+- Validate content-type in responses
+
 ### OpenTelemetry
+
+Export monitoring metrics to your observability platform.
+
 #### OTLP Endpoint
-The endpoint we use to export the metrics. We only support HTTP endpoint.
+
+**Type:** String (optional)  
+**Protocol:** HTTP only
+
+The OTLP (OpenTelemetry Protocol) endpoint where metrics should be exported.
+
+**Example:** `https://otlp.example.com/v1/metrics`
+
 #### OTLP Headers
-The headers we use to export the metrics to your otlp endpoint.
+
+**Type:** Key-value pairs (optional)
+
+Headers to include when exporting metrics to your OTLP endpoint.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
 
 ### Public
-If set to true the monitors data is accessible on the status page (default:`false`)
+
+**Type:** Boolean  
+**Default:** `false`
+
+Controls whether monitor data is accessible on your public status page.
+
+- `true` - Monitor metrics and status are visible to all status page visitors
+- `false` - Monitor data remains private, visible only in your dashboard
+
+**Use cases for public:**
+- Transparency with users about service health
+- Public API status pages
+- SaaS service availability pages
+
+## Related resources
+
+- **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial
+- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - All tracked metrics
+- **[CLI Reference](/reference/cli-reference)** - Manage monitors as code
