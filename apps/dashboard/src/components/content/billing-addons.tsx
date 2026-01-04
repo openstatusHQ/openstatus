@@ -131,7 +131,7 @@ export function BillingAddons({
               <Check className="size-4 text-success" />
             ) : null}
             {hasAddon && isQuantity ? (
-              <span className="font-mono text-success">+{value}</span>
+              <span className="font-mono text-success">+{defaultValue}</span>
             ) : null}
           </div>
           <div className="col-span-2 flex items-center justify-end gap-1.5 lg:col-span-1">
