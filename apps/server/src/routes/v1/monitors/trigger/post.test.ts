@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { app } from "@/index";
 import { afterEach, mock } from "bun:test";
+import { app } from "@/index";
 import { TriggerSchema } from "./schema";
 
 const mockFetch = mock();
