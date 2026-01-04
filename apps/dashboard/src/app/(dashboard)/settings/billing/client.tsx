@@ -127,7 +127,7 @@ export function Client() {
 
   if (!workspace) return null;
 
-  const addons = allPlans[workspace.plan].addons;
+  const planAddons = allPlans[workspace.plan].addons;
 
   return (
     <SectionGroup>
@@ -179,8 +179,7 @@ export function Client() {
                 </FormCardDescription>
               </FormCardHeader>
               <div className="flex flex-col gap-2 pt-4">
-                {/* TODO: redirect to stripe product */}
-                {addons["email-domain-protection"] ? (
+                {planAddons["email-domain-protection"] ? (
                   <BillingAddons
                     label="Magic Link (Auth)"
                     description="Only allow user with a given email domain to access the status page."
@@ -188,7 +187,7 @@ export function Client() {
                     workspace={workspace}
                   />
                 ) : null}
-                {addons["white-label"] ? (
+                {planAddons["white-label"] ? (
                   <BillingAddons
                     label="White Label"
                     description="Remove the 'powered by openstatus.dev' footer from your status pages."
@@ -196,7 +195,15 @@ export function Client() {
                     workspace={workspace}
                   />
                 ) : null}
-                {Object.keys(addons).length === 0 ? (
+                {planAddons["status-pages"] ? (
+                  <BillingAddons
+                    label="Status Pages"
+                    description="Create and manage status pages for your workspace."
+                    addon="status-pages"
+                    workspace={workspace}
+                  />
+                ) : null}
+                {Object.keys(planAddons).length === 0 ? (
                   <EmptyStateContainer>
                     <EmptyStateTitle>No add-ons available</EmptyStateTitle>
                   </EmptyStateContainer>

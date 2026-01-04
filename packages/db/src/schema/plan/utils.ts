@@ -129,33 +129,27 @@ export function getPlansForLimit(
 }
 
 /**
- * Add or remove an addon from limits
- * Automatically infers addon type (toggle/quantity) from the limit field type
+ * Update an addon value in limits
  * @param limits - Current workspace limits
- * @param addon - Addon key to add/remove
- * @param action - "add" to enable/increment, "remove" to disable/decrement
- * @param quantity - Optional quantity for quantity-based addons (defaults to 1)
+ * @param addon - Addon key to update
+ * @param value - The value to set (boolean for toggle addons, number for quantity addons)
  * @returns Updated limits object
  */
 export function updateAddonInLimits(
   limits: Limits,
   addon: keyof Addons,
-  action: "add" | "remove",
-  _quantity = 1,
+  value: boolean | number,
 ): Limits {
   const currentValue = limits[addon];
   const newLimits = { ...limits };
 
-  // Infer addon type from the limit field type
-  if (typeof currentValue === "boolean") {
-    // Toggle addon: boolean on/off
-    newLimits[addon] = action === "add";
-  } else if (typeof currentValue === "number") {
-    // Quantity addon: increment/decrement
-    // newLimits[addon] = Math.max(
-    //   0,
-    //   currentValue + (action === "add" ? quantity : -quantity)
-    // ); // Don't go below 0
+  // Infer addon type from the limit field type and set the value
+  if (typeof currentValue === "boolean" && typeof value === "boolean") {
+    // Toggle addon: set boolean value
+    (newLimits[addon] as boolean) = value;
+  } else if (typeof currentValue === "number" && typeof value === "number") {
+    // Quantity addon: set numeric value (ensure it doesn't go below 0)
+    (newLimits[addon] as number) = Math.max(0, value);
   }
 
   return limitsSchema.parse(newLimits);

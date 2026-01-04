@@ -159,17 +159,28 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                             currency,
                           );
                           if (!price) return null;
+
+                          const isNumber = typeof limitValue === "number";
                           return (
                             <div>
-                              <span className="text-muted-foreground">
-                                add-on{" "}
+                              <span>
+                                {isNumber
+                                  ? new Intl.NumberFormat("us")
+                                      .format(limitValue)
+                                      .toString()
+                                  : null}
                               </span>
                               <span>
-                                {new Intl.NumberFormat(price.locale, {
-                                  style: "currency",
-                                  currency: price.currency,
-                                }).format(price.value)}
-                                /mo.
+                                <span className="text-muted-foreground">
+                                  {isNumber ? " + " : ""}
+                                </span>
+                                <span>
+                                  {new Intl.NumberFormat(price.locale, {
+                                    style: "currency",
+                                    currency: price.currency,
+                                  }).format(price.value)}
+                                  {isNumber ? "/mo./each" : "/mo."}
+                                </span>
                               </span>
                             </div>
                           );
