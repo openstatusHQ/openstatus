@@ -132,7 +132,7 @@ test("create status report update without date should use default", async () => 
 
 test("create status report update with past date should return 200", async () => {
   const pastDate = new Date();
-  pastDate.setDate(pastDate.getDate() - 1);
+  pastDate.setTime(pastDate.getTime() - 24 * 60 * 60 * 1000);
   
   const res = await app.request("/v1/status_report_update", {
     method: "POST",
