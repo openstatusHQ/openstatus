@@ -133,7 +133,7 @@ test("create status report update without date should use default", async () => 
 test("create status report update with past date should return 200", async () => {
   const pastDate = new Date();
   pastDate.setTime(pastDate.getTime() - 24 * 60 * 60 * 1000);
-  
+
   const res = await app.request("/v1/status_report_update", {
     method: "POST",
     headers: {
@@ -154,8 +154,9 @@ test("create status report update with past date should return 200", async () =>
 });
 
 test("create status report update with long message should return 200", async () => {
-  const longMessage = "This is a very detailed status update message that provides comprehensive information about the incident, including what happened, what is being done to resolve it, and what measures are being taken to prevent similar issues in the future. We apologize for any inconvenience this may have caused.";
-  
+  const longMessage =
+    "This is a very detailed status update message that provides comprehensive information about the incident, including what happened, what is being done to resolve it, and what measures are being taken to prevent similar issues in the future. We apologize for any inconvenience this may have caused.";
+
   const res = await app.request("/v1/status_report_update", {
     method: "POST",
     headers: {

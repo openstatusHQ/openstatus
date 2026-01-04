@@ -28,7 +28,10 @@ const postRouteUpdate = createRoute({
       description: "the status report update",
       content: {
         "application/json": {
-          schema: StatusReportUpdateSchema.omit({ id: true, statusReportId: true }),
+          schema: StatusReportUpdateSchema.omit({
+            id: true,
+            statusReportId: true,
+          }),
         },
       },
     },
@@ -140,8 +143,12 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
 
     const data = StatusReportSchema.parse({
       ...fullStatusReport,
-      statusReportUpdateIds: fullStatusReport.statusReportUpdates.map((u) => u.id),
-      monitorIds: fullStatusReport.monitorsToStatusReports.map((m) => m.monitorId),
+      statusReportUpdateIds: fullStatusReport.statusReportUpdates.map(
+        (u) => u.id,
+      ),
+      monitorIds: fullStatusReport.monitorsToStatusReports.map(
+        (m) => m.monitorId,
+      ),
     });
 
     return c.json(data, 200);

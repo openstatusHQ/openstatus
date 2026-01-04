@@ -127,7 +127,7 @@ test("create HTTP monitor with PUT method should return 200", async () => {
         url: "https://api.example.com/resource",
         method: "PUT",
         body: '{"data":"updated"}',
-        headers: { "authorization": "Bearer token123" },
+        headers: { authorization: "Bearer token123" },
       },
       active: true,
       public: false,
@@ -396,7 +396,7 @@ test("create HTTP monitor with DELETE method should return 200", async () => {
       request: {
         url: "https://api.example.com/resource/123",
         method: "DELETE",
-        headers: { "authorization": "Bearer token" },
+        headers: { authorization: "Bearer token" },
       },
       active: true,
       public: false,
