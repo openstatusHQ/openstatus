@@ -1,6 +1,6 @@
 ---
 title: How to deploy the openstatus probe to Cloudflare Containers
-description: Learn how to use OpenStatus monitoring data and deploy your own Status Page to cloudflare pages.
+description: Learn how to use openstatus monitoring data and deploy your own Status Page to cloudflare pages.
 sidebar:
   label: Deploy private probes on Cloudflare Containers
 ---
@@ -9,7 +9,7 @@ import log from '../../../assets/guides/how-to-deploy-probes-cf-containters/clou
 import os from '../../../assets/guides/how-to-deploy-probes-cf-containters/private-location.jpg';
 
 
-In this guide we will show you how to deploy the OpenStatus probe to Cloudflare Containers.
+In this guide we will show you how to deploy the openstatus probe to Cloudflare Containers.
 
 Cloudflare Containers is a platform that allows you to run serverless containers in the Cloudflare network.
 
@@ -23,9 +23,9 @@ The code showcased in this guide is available on [GitHub](https://github.com/ope
 
 
 
-### Create a private location on OpenStatus
+### Create a private location on openstatus
 
-1. Go to the OpenStatus dashboard.
+1. Go to the openstatus dashboard.
 2. Click on the `Private locations` in the sidebar.
 3. Click on the `Create Private Location` button.
 4. Give it a human readable name.
@@ -95,7 +95,7 @@ async scheduled(_controller: any, env: Env) {
 },
 ```
 
-9. Add you OpenStatus API secret
+9. Add you openstatus API secret
 
 ```bash
 pnpm wrangler secret put OPENSTATUS_KEY
@@ -118,11 +118,11 @@ You have successfully deployed the openstatus private location probe to Cloudfla
 
   <Image
     src={log}
-    alt="OpenStatus Private Location on Cloudflare Containers"
-    caption="Cloudflare Workers Logs showing OpenStatus Private Location running"
+    alt="openstatus Private Location on Cloudflare Containers"
+    caption="Cloudflare Workers Logs showing openstatus Private Location running"
   />
 
   <Image
     src={os}
-    alt="OpenStatus Private Location on Cloudflare Containers"
+    alt="openstatus Private Location on Cloudflare Containers"
   />

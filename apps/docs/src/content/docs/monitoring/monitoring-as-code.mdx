@@ -1,6 +1,6 @@
 ---
 title: Monitoring as Code
-description: "How to manage monitors as code with OpenStatus?"
+description: "How to manage monitors as code with openstatus?"
 ---
 
 ## Introduction
@@ -14,7 +14,7 @@ Monitoring as code is a practice that allows you to define and manage your monit
 
 ## Getting Started
 
-OpenStatus provides a [CLI](/tutorial/get-started-with-openstatus-cli) tool that allows you to create, update, and delete monitors as code. To get started, you need to install the CLI tool.
+openstatus provides a [CLI](/tutorial/get-started-with-openstatus-cli) tool that allows you to create, update, and delete monitors as code. To get started, you need to install the CLI tool.
 
 ## Examples
 
@@ -39,7 +39,7 @@ uptime-monitor:
     url: https://openstat.us
     method: GET
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
   assertions:
     - kind: statusCode
       compare: eq
@@ -69,7 +69,7 @@ mcp-server:
         "method": "ping"
       }
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
       Accept: application/json, text/event-stream
       Content-Type: application/json
   assertions:
@@ -81,4 +81,4 @@ mcp-server:
       target: '{"result":{},"jsonrpc":"2.0","id":"openstatus"}'
 ```
 
-You can find more examples in the [OpenStatus Template GitHub repository](https://github.com/openstatusHQ/cli-template/).
+You can find more examples in the [openstatus Template GitHub repository](https://github.com/openstatusHQ/cli-template/).

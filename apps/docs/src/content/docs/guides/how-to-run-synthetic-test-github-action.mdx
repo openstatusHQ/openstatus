@@ -1,6 +1,6 @@
 ---
 title: How to Run Synthetic Tests in GitHub Actions
-description: Integrate OpenStatus synthetic monitoring into your CI/CD pipeline
+description: Integrate openstatus synthetic monitoring into your CI/CD pipeline
 sidebar:
   label: GitHub Action for Synthetics
 ---
@@ -11,13 +11,13 @@ You want to validate that your application's critical endpoints are working befo
 
 ## Solution
 
-OpenStatus provides a GitHub Action that runs your configured monitors as part of your CI/CD workflow. This guide shows you how to set it up.
+openstatus provides a GitHub Action that runs your configured monitors as part of your CI/CD workflow. This guide shows you how to set it up.
 
 ## Prerequisites
 
-- An [OpenStatus](https://www.openstatus.dev) account
+- An [openstatus](https://www.openstatus.dev) account
 - A GitHub repository
-- At least one monitor configured in OpenStatus
+- At least one monitor configured in openstatus
 - Admin access to your GitHub repository (for secrets)
 
 ## Step-by-step guide
@@ -34,15 +34,15 @@ tests:
 ```
 
 **Finding monitor IDs:**
-1. Go to your OpenStatus dashboard
+1. Go to your openstatus dashboard
 2. Click on a monitor
 3. The ID is in the URL: `https://www.openstatus.dev/app/[workspace]/monitors/[ID]`
 
 **Tip:** Start with your most critical monitors and expand from there.
 
-### 2. Get your OpenStatus API key
+### 2. Get your openstatus API key
 
-1. Go to your OpenStatus workspace settings
+1. Go to your openstatus workspace settings
 2. Navigate to the API section
 3. Create a new API key or copy an existing one
 4. Store it securely - you'll need it for the next step
@@ -55,7 +55,7 @@ Secure your API key as a GitHub secret:
 2. Click **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret**
 4. Name: `OPENSTATUS_API_KEY`
-5. Value: Your OpenStatus API key
+5. Value: Your openstatus API key
 6. Click **Add secret**
 
 ### 4. Create the GitHub Action workflow
@@ -63,7 +63,7 @@ Secure your API key as a GitHub secret:
 Create `.github/workflows/openstatus.yml`:
 
 ```yaml
-name: Run OpenStatus Synthetics CI
+name: Run openstatus Synthetics CI
 
 on:
   workflow_dispatch:  # Manual trigger
@@ -74,12 +74,12 @@ on:
 jobs:
   synthetic_ci:
     runs-on: ubuntu-latest
-    name: Run OpenStatus Synthetics CI
+    name: Run openstatus Synthetics CI
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         
-      - name: Run OpenStatus Synthetics CI
+      - name: Run openstatus Synthetics CI
         uses: openstatushq/openstatus-github-action@v1
         with:
           api_key: ${{ secrets.OPENSTATUS_API_KEY }}
@@ -89,7 +89,7 @@ jobs:
 
 ```bash
 git add openstatus.config.yaml .github/workflows/openstatus.yml
-git commit -m "Add OpenStatus synthetic tests to CI"
+git commit -m "Add openstatus synthetic tests to CI"
 git push origin main
 ```
 
@@ -98,7 +98,7 @@ The GitHub Action will run automatically on the next push to `main`.
 ## What you've accomplished
 
 Great work! You've successfully:
-- ✅ Integrated OpenStatus into your CI/CD pipeline
+- ✅ Integrated openstatus into your CI/CD pipeline
 - ✅ Automated synthetic testing on every deployment
 - ✅ Added a safety check before production releases
 - ✅ Set up continuous validation of critical endpoints
@@ -132,7 +132,7 @@ on:
 ### Multiple configuration files
 
 ```yaml
-- name: Run OpenStatus Synthetics CI
+- name: Run openstatus Synthetics CI
   uses: openstatushq/openstatus-github-action@v1
   with:
     api_key: ${{ secrets.OPENSTATUS_API_KEY }}
@@ -155,7 +155,7 @@ on:
 
 **Monitors not found:**
 - Confirm monitor IDs are correct in `openstatus.config.yaml`
-- Ensure monitors are active in your OpenStatus dashboard
+- Ensure monitors are active in your openstatus dashboard
 
 **Tests timing out:**
 - Check that your endpoints are accessible from GitHub's runners

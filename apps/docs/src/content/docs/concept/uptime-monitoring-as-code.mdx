@@ -40,7 +40,7 @@ uptime-monitor:
     url: https://openstat.us
     method: GET
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
   assertions:
     - kind: statusCode
       compare: eq
@@ -63,7 +63,7 @@ graphql-monitor:
     url: https://api.github.com/graphql
     method: POST
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
       Authorization: Bearer YOUR_TOKEN_HERE
     body: |
       {

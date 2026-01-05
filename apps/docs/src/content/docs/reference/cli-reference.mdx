@@ -4,9 +4,9 @@ title: CLI Reference
 
 ## CLI interface - openstatus
 
-OpenStatus is a command line interface for managing your monitors and triggering your synthetics tests.
+openstatus is a command line interface for managing your monitors and triggering your synthetics tests.
 
-This is OpenStatus Command Line Interface, the OpenStatus.dev CLI.
+This is openstatus Command Line Interface, the openstatus.dev CLI.
 
 Usage:
 
@@ -30,7 +30,7 @@ Create or update monitors.
 
 > openstatus monitors apply [options]
 
-Creates or updates monitors according to the OpenStatus configuration file.
+Creates or updates monitors according to the openstatus configuration file.
 
 Usage:
 
@@ -43,7 +43,7 @@ The following flags are supported:
 | Name                        | Description                                           |   Default value   |  Environment variables |
 |-----------------------------|-------------------------------------------------------|:-----------------:|:----------------------:|
 | `--config="…"` (`-c`)       | The configuration file containing monitor information | `openstatus.yaml` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token                           |                   | `OPENSTATUS_API_TOKEN` |
 | `--auto-accept` (`-y`)      | Automatically accept the prompt                       |      `false`      |         *none*         |
 
 
@@ -65,7 +65,7 @@ The following flags are supported:
 
 | Name                        | Description                 |   Default value   |  Environment variables |
 |-----------------------------|-----------------------------|:-----------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                   | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token |                   | `OPENSTATUS_API_TOKEN` |
 | `--output="…"` (`-o`)       | The output file name        | `openstatus.yaml` |         *none*         |
 
 ### `monitors info` subcommand
@@ -86,7 +86,7 @@ The following flags are supported:
 
 | Name                        | Description                 | Default value |  Environment variables |
 |-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
 
 ### `monitors list` subcommand
 
@@ -107,7 +107,7 @@ The following flags are supported:
 | Name                        | Description                               | Default value |  Environment variables |
 |-----------------------------|-------------------------------------------|:-------------:|:----------------------:|
 | `--all`                     | List all monitors including inactive ones |    `false`    |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token               |               | `OPENSTATUS_API_TOKEN` |
 
 ### `monitors trigger` subcommand
 
@@ -127,7 +127,7 @@ The following flags are supported:
 
 | Name                        | Description                 | Default value |  Environment variables |
 |-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
 
 ### `run` command (aliases: `r`)
 
@@ -148,7 +148,7 @@ The following flags are supported:
 | Name                        | Description                 |      Default value       |  Environment variables |
 |-----------------------------|-----------------------------|:------------------------:|:----------------------:|
 | `--config="…"`              | The configuration file      | `config.openstatus.yaml` |         *none*         |
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |                          | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token |                          | `OPENSTATUS_API_TOKEN` |
 
 ### `whoami` command (aliases: `w`)
 
@@ -168,4 +168,4 @@ The following flags are supported:
 
 | Name                        | Description                 | Default value |  Environment variables |
 |-----------------------------|-----------------------------|:-------------:|:----------------------:|
-| `--access-token="…"` (`-t`) | OpenStatus API Access Token |               | `OPENSTATUS_API_TOKEN` |
+| `--access-token="…"` (`-t`) | openstatus API Access Token |               | `OPENSTATUS_API_TOKEN` |

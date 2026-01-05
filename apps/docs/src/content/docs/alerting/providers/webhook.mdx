@@ -1,6 +1,6 @@
 ---
 title: Webhook
-description: "How to set up Webhook notifications in OpenStatus to get alerts when your synthetic check fail"
+description: "How to set up Webhook notifications in openstatus to get alerts when your synthetic check fail"
 ---
 ## Setting Up Webhook Notifications
 To set up Webhook notifications, follow these steps:
@@ -12,7 +12,7 @@ Navigate to your notifications tab within the application.
 Click on the "Add Notification" button and select Webhook as the notification type.
 
 3.	**Provide Notification URL**\
-Enter the URL where OpenStatus will send the notification payload. This URL should be publicly accessible and capable of handling incoming POST requests.
+Enter the URL where openstatus will send the notification payload. This URL should be publicly accessible and capable of handling incoming POST requests.
 
 4. **Optional: Add Custom Headers**\
 If needed, you can include custom headers in your request for additional context or authentication.
@@ -21,7 +21,7 @@ If needed, you can include custom headers in your request for additional context
 ## Notification Payloads
 
 
-OpenStatus sends different payloads depending on the status of the monitor. Below are the payload structures for both
+openstatus sends different payloads depending on the status of the monitor. Below are the payload structures for both
 recovery and failure notifications.
 
 

@@ -1,6 +1,6 @@
 ---
-title: How to Self-Host OpenStatus
-description: Complete guide to deploying OpenStatus on your own infrastructure
+title: How to Self-Host openstatus
+description: Complete guide to deploying openstatus on your own infrastructure
 ---
 
 import { Image } from 'astro:assets';
@@ -9,11 +9,11 @@ import localOpenstatus from '../../../assets/guides/self-hosting-openstatus/loca
 
 ## Problem
 
-You want to run OpenStatus on your own infrastructure instead of using the hosted service. This gives you full control over your data, customization options, and the ability to monitor internal services not accessible from the public internet.
+You want to run openstatus on your own infrastructure instead of using the hosted service. This gives you full control over your data, customization options, and the ability to monitor internal services not accessible from the public internet.
 
 ## Solution
 
-OpenStatus provides a Docker Compose setup that makes self-hosting straightforward. This guide walks you through deploying all necessary services and configuring your self-hosted instance.
+openstatus provides a Docker Compose setup that makes self-hosting straightforward. This guide walks you through deploying all necessary services and configuring your self-hosted instance.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ OpenStatus provides a Docker Compose setup that makes self-hosting straightforwa
 
 ## Known limitations
 
-Self-hosting OpenStatus currently has these constraints:
+Self-hosting openstatus currently has these constraints:
 
 - It only works with private locations. You have to deploy our probes to the cloud provider of your choice.
 
@@ -33,7 +33,7 @@ Self-hosting OpenStatus currently has these constraints:
 
 ### 1. Clone the repository
 
-Get the latest version of OpenStatus:
+Get the latest version of openstatus:
 
 ```bash
 git clone https://github.com/openstatusHQ/openstatus
@@ -79,7 +79,7 @@ tb --local open
 
 8. Update the `.env.docker` file with your Tinybird TOKEN
 
-9. Connect to your OpenStatus instance and create a new workspace.
+9. Connect to your openstatus instance and create a new workspace.
 
 10. Update your newly created workspace with the following limits:
 
@@ -116,13 +116,13 @@ The docker image of the private location is `ghcr.io/openstatushq/private-locati
 
   <Image
     src={localOpenstatus}
-    alt="OpenStatus running locally with self-hosted services"
+    alt="openstatus running locally with self-hosted services"
   />
   
 
 ## Service architecture
 
-OpenStatus consists of multiple services running together:
+openstatus consists of multiple services running together:
 
 | Service | Port | Purpose |
 |---------|------|---------|
@@ -138,7 +138,7 @@ OpenStatus consists of multiple services running together:
 ## What you've accomplished
 
 Congratulations! You've successfully:
-- ✅ Deployed OpenStatus on your own infrastructure
+- ✅ Deployed openstatus on your own infrastructure
 - ✅ Configured all required services
 - ✅ Set up a private location for monitoring
 - ✅ Created your first self-hosted monitor
