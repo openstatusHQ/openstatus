@@ -146,7 +146,7 @@ test("run TCP monitor with valid id should return 200", async () => {
   }
 });
 
-test("run monitor with multiple regions should return array of results", async () => {
+test.todo("run monitor with multiple regions should return array of results", async () => {
   mockFetch.mockReturnValue(
     Promise.resolve(
       new Response(

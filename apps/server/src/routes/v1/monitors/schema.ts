@@ -392,7 +392,7 @@ const baseRequest = z.object({
         });
 
         if (deprecatedRegions.length > 0) {
-          throw new ZodError([
+          throw new z.ZodError([
             {
               code: "custom",
               path: ["regions"],
@@ -455,13 +455,14 @@ const httpRequestSchema = z.object({
 });
 
 const tcpRequestSchema = z.object({
-  host: z
-    .string()
-    .openapi({
-      examples: ["example.com", "localhost"],
-      description: "Host to connect to",
-    })
-    .min(1),
+  host: z.string().openapi({
+    examples: ["example.com", "localhost"],
+    description: "Host to connect to",
+  }).min(1),
+  host: z.string().min(1).openapi({
+    examples: ["example.com", "localhost"],
+    description: "Host to connect to",
+  }),
   port: z.number().openapi({
     description: "Port to connect to",
     examples: [80, 443, 1337],
