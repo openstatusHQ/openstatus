@@ -32,7 +32,6 @@ export class OpenStatusApiError extends HTTPException {
 }
 
 export function handleError(err: Error, c: Context): Response {
-
   if (err instanceof ZodError) {
     const error = SchemaError.fromZod(err, c);
 

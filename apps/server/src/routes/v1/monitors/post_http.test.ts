@@ -3,8 +3,6 @@ import { expect, test } from "bun:test";
 import { app } from "@/index";
 import { MonitorSchema } from "./schema";
 
-
-
 test("create a valid monitor", async () => {
   const res = await app.request("/v1/monitor/http", {
     method: "POST",
@@ -13,27 +11,27 @@ test("create a valid monitor", async () => {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      "active": true,
-      "degradedAfter": 60,
-      "description": "This is a test",
-      "frequency": "10m",
-      "name": "Test2",
-      "regions": [
-        "iad"
-      ],
+      active: true,
+      degradedAfter: 60,
+      description: "This is a test",
+      frequency: "10m",
+      name: "Test2",
+      regions: ["iad"],
       request: {
         url: "https://api.openstatus.dev/health",
         method: "POST",
         body: '{"hello":"world"}',
         headers: { "content-type": "application/json" },
       },
-      assertions: [{
-        kind: "statusCode",
-        compare: "eq",
-        target: 200,
-      },
-      { kind: "header",compare: "not_eq", key: "key", target: "value" }],
-      "retry": 3
+      assertions: [
+        {
+          kind: "statusCode",
+          compare: "eq",
+          target: 200,
+        },
+        { kind: "header", compare: "not_eq", key: "key", target: "value" },
+      ],
+      retry: 3,
     }),
   });
 
@@ -433,7 +431,6 @@ test("create HTTP monitor with invalid URL should return 400", async () => {
 });
 
 test("create HTTP monitor with deprecated regions should return 400", async () => {
-
   const res = await app.request("/v1/monitor/http", {
     method: "POST",
     headers: {
