@@ -128,7 +128,6 @@ test("create a valid maintenance", async () => {
       pageId: 1,
     }),
   });
-
   const result = MaintenanceSchema.safeParse(await res.json());
 
   expect(res.status).toBe(200);

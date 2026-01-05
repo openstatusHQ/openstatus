@@ -44,7 +44,7 @@ export const MaintenanceSchema = z
       description: "The id of the status page this maintenance belongs to",
     }),
   })
-  .refine((maintenance) => maintenance.from < maintenance.to, {
+  .refine((maintenance) => maintenance.from <= maintenance.to, {
     error: "'from' date must be before 'to' date",
   })
   .openapi("Maintenance");

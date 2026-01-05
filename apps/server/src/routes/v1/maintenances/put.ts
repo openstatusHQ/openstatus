@@ -101,6 +101,16 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
       }
     }
 
+    const inputFrom = input?.from ?? _maintenance.from;
+    const inputTo = input?.to ?? _maintenance?.to;
+
+    if (inputFrom && inputTo && new Date(inputFrom) > new Date(inputTo)) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: "`date.from` cannot be after `date.to`",
+      });
+    }
+
     const updatedMaintenance = await db.transaction(async (tx) => {
       const updated = await tx
         .update(maintenance)
