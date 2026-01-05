@@ -19,15 +19,38 @@ and begin monitoring your services in seconds.
 
 ## Self-Hosted Version
 
-For users who want to host openstatus on their own infrastructure, all our code is [open source](https://github.com/openstatushq/openstatus)
+For users who want to host openstatus on their own infrastructure, all our code is [open source](https://github.com/openstatushq/openstatus).
 
-While we are working on making the self-hosted version easier to deploy, you can start with a community-maintained option like the **Vercel Edge Checker**.
+We offer a few ways to get started with self-hosting:
 
-### Vercel Edge Checker
+### With Docker (Recommended)
 
-The Vercel Edge Checker is a lightweight version of openstatus that you can deploy to Vercel with a single click. It's a great way to get familiar with self-hosting openstatus.
+The fastest way to get started for both development and self-hosting is with Docker.
 
+```sh
+# 1. Copy environment file
+cp .env.docker.example .env.docker
 
-<Aside>
-We are actively working to simplify self-hosting and have an open [issue](https://github.com/openstatusHQ/openstatus/issues/322) on GitHub regarding this. Stay tuned!
-</Aside>
+# 2. Start all services
+docker compose up -d
+
+# 3. Access the application
+open http://localhost:3002  # Dashboard
+open http://localhost:3003  # Status Pages
+```
+
+For a complete guide on using Docker, including database setup and configuration, please see our [DOCKER.md](https://github.com/openstatushq/openstatus/blob/main/DOCKER.md) file.
+
+### With Devbox
+
+You can use [Devbox](https://www.jetify.com/devbox/) to easily manage your development environment.
+
+1.  Install Devbox
+    ```sh
+    curl -fsSL https://get.jetify.com/devbox | bash
+    ```
+2.  Install project dependencies, build and start services
+    ```sh
+    devbox services up
+    ```
+

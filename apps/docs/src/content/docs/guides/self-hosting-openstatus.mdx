@@ -31,87 +31,110 @@ Self-hosting openstatus currently has these constraints:
 
 ## Step-by-step guide
 
-### 1. Clone the repository
+This guide is divided into three parts: launching the services, setting up the database and analytics, and configuring the application through the UI.
 
-Get the latest version of openstatus:
+### Part 1: Initial Setup and Service Launch
 
-```bash
-git clone https://github.com/openstatusHQ/openstatus
-cd openstatus
-```
+1.  **Clone the Repository**
 
-2. Copy the `.env.example` file to `.env.docker` and modify the environment variables as needed.
+    Get the latest version of openstatus:
+    ```bash
+    git clone https://github.com/openstatushq/openstatus
+    cd openstatus
+    ```
 
-```bash
-cp .env.docker.example .env.docker
-```
+2.  **Configure Your Environment**
 
-Review and update the environment variables in `.env.docker` for your setup.
+    Copy the example environment file. This file will hold all your configuration variables.
+    ```bash
+    cp .env.docker.example .env.docker
+    ```
+    Open `.env.docker` in a text editor. At a minimum, you **must** set a value for `AUTH_SECRET` for authentication to work. For a complete setup, review the file for other variables like OAuth providers or email services.
 
-3. Build the containers
+3.  **Build and Start Services**
 
-Use Docker BuildKit for optimal build performance:
+    Use Docker Compose to build and run all openstatus services in the background.
+    ```bash
+    export DOCKER_BUILDKIT=1
+    docker compose up -d
+    ```
+    You can check the status of the services with `docker compose ps`. It might take a few minutes for all services to be healthy.
 
-```bash
-export DOCKER_BUILDKIT=1
-docker compose up -d
-```
+### Part 2: Database and Analytics Setup
 
-4. Migrate the database
+4.  **Run Database Migrations**
 
-```bash
-cd packages/db
-pnpm migrate
-```
+    The database container starts with an empty database. You must run migrations to set up the required schema.
+    ```bash
+    # Make sure you are in the root of the openstatus project
+    cd packages/db
+    pnpm install
+    pnpm migrate
+    cd ../.. # Return to the project root
+    ```
 
-5. Create Tinybird datasources, pipes and endpoints
+5.  **Deploy Local Tinybird Analytics**
 
-```bash
-cd packages/tinybird
-tb --local deploy 
-```
+    Tinybird is used for analytics. Deploy the local datasources, pipes, and endpoints.
+    ```bash
+    # Make sure you are in the root of the openstatus project
+    cd packages/tinybird
+    pnpm install
+    tb --local deploy
+    cd ../.. # Return to the project root
+    ```
 
-7. Access Tinybird local UI and get your TOKEN
+6.  **Configure Tinybird API Key**
 
-```bash
-tb --local open
-```
+    You need to get your local Tinybird admin token and add it to your environment file.
+    ```bash
+    cd packages/tinybird
+    tb --local open # This opens the Tinybird UI in your browser
+    ```
+    In the Tinybird UI, find and copy your admin token. Then, add it to your `.env.docker` file in the root of the project:
+    ```env
+    TINY_BIRD_API_KEY="your-tinybird-admin-token"
+    ```
+    After adding the token, restart your services for the changes to take effect:
+    ```bash
+    # Make sure you are in the root of the openstatus project
+    docker compose restart
+    ```
 
-8. Update the `.env.docker` file with your Tinybird TOKEN
+### Part 3: Application Configuration
 
-9. Connect to your openstatus instance and create a new workspace.
+Now that the services are running, you can access the dashboard and perform the final setup steps.
 
-10. Update your newly created workspace with the following limits:
+-   **Dashboard:** `http://localhost:3002`
+-   **Status Pages:** `http://localhost:3003`
 
-```json
-{
-  "monitors": 100,
-  "periodicity": ["30s", "1m", "5m", "10m", "30m", "1h"],
-  "multi-region": true,
-  "data-retention": "24 months",
-  "status-pages": 20,
-  "maintenance": true,
-  "status-subscribers": true,
-  "custom-domain": true,
-  "password-protection": true,
-  "white-label": true,
-  "notifications": true,
-  "sms": true,
-  "pagerduty": true,
-  "notification-channels": 50,
-  "members": "Unlimited",
-  "audit-log": true,
-  "private-locations": true
-}
-```
+7.  **Create a Workspace and Set Limits**
 
-11. Create a new private location in the dashboard.
+    -   Navigate to the dashboard at `http://localhost:3002`.
+    -   Sign up and create a new workspace.
+    -   Because this is a self-hosted instance, you need to manually set the feature limits for your workspace directly in the database.
 
-12. Deploy the private location to your cloud provider of choice with your location api key `OPENSTATUS_KEY`, and  `OPENSTATUS_INGEST_URL` . 
+    The following command updates the limits for the workspace with `id = 1`. If your workspace has a different ID, change the `WHERE id = 1` part of the command.
+    ```bash
+    curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+      -d '{"statements":["UPDATE workspace SET limits = '\''{\\"monitors\\":100,\\"periodicity\\":[\\"30s\\",\\"1m\\",\\"5m\\",\\"10m\\",\\"30m\\",\\"1h\\"],\\"multi-region\\":true,\\"data-retention\\":\\"24 months\\",\\"status-pages\\":20,\\"maintenance\\":true,\\"status-subscribers\\":true,\\"custom-domain\\":true,\\"password-protection\\":true,\\"white-label\\":true,\\"notifications\\":true,\\"sms\\":true,\\"pagerduty\\":true,\\"notification-channels\\":50,\\"members\\":\\"Unlimited\\",\\"audit-log\\":true,\\"private-locations\\":true}'\'' WHERE id = 1"]}'
+    ```
+    You can find your workspace ID by inspecting the database with a command like `curl -X POST http://localhost:8080/ -H "Content-Type: application/json" -d '{"statements":["SELECT id, name FROM workspace"]}'`.
 
-The docker image of the private location is `ghcr.io/openstatushq/private-location:latest`
+8.  **Deploy a Private Location**
 
-13. Create monitors and start monitoring your services!
+    The self-hosted version relies on private locations to perform checks.
+    -   In the dashboard, navigate to **Settings -> Private Locations** and create a new one.
+    -   Copy the generated `OPENSTATUS_KEY`.
+    -   Deploy the private location probe to your infrastructure using the Docker image `ghcr.io/openstatushq/private-location:latest`.
+    -   When deploying, you must provide two environment variables to the container:
+        -   `OPENSTATUS_KEY`: The key you just copied.
+        -   `OPENSTATUS_INGEST_URL`: The URL of your self-hosted server's API endpoint (e.g., `http://<your-server-ip-or-domain>:3001`).
+    -   For a detailed guide on deploying a private location, see **[Deploy Private Locations on Cloudflare Containers](/guides/how-to-deploy-probes-cloudflare-containers)**.
+
+9.  **Create Monitors**
+
+    You're all set! You can now create monitors in the dashboard. They will be checked by the private location you deployed.
 
 
   <Image
