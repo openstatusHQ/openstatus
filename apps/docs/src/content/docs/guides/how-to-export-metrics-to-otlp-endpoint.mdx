@@ -1,5 +1,6 @@
 ---
-title: How to Export Metrics to your OTLP endpoint
+title: How to Export Metrics to an OTLP Endpoint
+description: A step-by-step guide to sending openstatus metrics to your observability platform via OTLP.
 ---
 import { Image } from 'astro:assets';
 
@@ -8,56 +9,91 @@ import newrelic  from '../../../assets/guides/how-to-export-metrics-via-otel/new
 import signoz  from '../../../assets/guides/how-to-export-metrics-via-otel/signoz.jpg';
 import honeycomb    from '../../../assets/guides/how-to-export-metrics-via-otel/honeycomb.jpg';
 
+## Problem
 
-At openstatus, we believe you should be able to export your metrics to your OTLP endpoint without having to change your existing monitoring platform.
+You want to analyze your openstatus monitoring data alongside other telemetry data in your existing observability platform (like Grafana, New Relic, or Honeycomb). You need a standardized way to export these metrics without building a custom integration.
 
+## Solution
 
+openstatus can export monitoring metrics to any OTLP (OpenTelemetry Protocol) compatible endpoint. By adding a simple configuration to your `openstatus.yaml` file, you can have metrics from every check sent directly to your monitoring stack.
 
-## Export your metrics to your OTLP endpoint
+## Prerequisites
 
-In your monitoring platform find the configuration section for metrics export.
+- An observability platform that supports OTLP metric ingestion over HTTP.
+- An `openstatus.yaml` file to configure your monitors.
+- The [openstatus CLI](/tutorial/get-started-with-openstatus-cli) to apply your configuration.
 
-Right now we only support HTTP OTLP endpoint.
+## Step-by-step guide
 
-In your `openstatus.yaml` file, add the following configuration:
+### 1. Locate your OTLP endpoint URL and headers
+
+First, you need to find the specific URL and any required authentication headers from your observability platform. This is usually found in the documentation under "OTLP," "OpenTelemetry," or "Metrics Export."
+
+-   **Endpoint URL**: Look for an HTTP endpoint for OTLP metrics. It will typically end in `/v1/metrics`. For example: `https://otlp.your-provider.com/v1/metrics`.
+-   **Headers**: You will likely need an authentication header, such as `Authorization: Bearer YOUR_API_KEY` or `X-API-Key: YOUR_API_KEY`.
+
+### 2. Configure your `openstatus.yaml` file
+
+Open your `openstatus.yaml` file and add the `openTelemetry` block at the top level.
 
 ```yaml
+# yaml-language-server: $schema=https://www.openstatus.dev/schema.json
+
 openTelemetry:
-  endpoint: http://your-otel-endpoint:4318/v1/metrics
+  endpoint: <YOUR_OTLP_ENDPOINT_URL>
   headers:
-    Authorization: Bearer your-token
+    Authorization: Bearer <YOUR_TOKEN>
+    # Add any other required headers here
+
+# Your monitors are defined below
+my-first-monitor:
+  # ...
 ```
 
-After every check we will send you the metrics to your monitoring stack.
+Replace `<YOUR_OTLP_ENDPOINT_URL>` and `<YOUR_TOKEN>` with the values you found in step 1.
 
+**Note**: Currently, we only support OTLP over HTTP.
 
-### Grafana
+### 3. Apply the configuration
 
-  <Image
-    src={grafana}
-    alt="openstatus metrics in grafana"
-  />
+Use the openstatus CLI to apply the changes to your account.
 
-### honeycomb
+```bash
+openstatus apply
+```
 
-  <Image
-    src={honeycomb}
-    alt="openstatus metrics in honeycomb"
-  />
+After applying the configuration, openstatus will send metrics to your specified endpoint after every check is completed.
 
+### 4. Verify in your observability platform
 
-### New Relic
+Go to your observability platform and look for the new metrics coming from openstatus. You should be able to build dashboards and alerts based on this data.
 
-  <Image
-    src={newrelic}
-    alt="openstatus metrics in new-relic"
-  />
+Here are some examples of what it can look like:
 
+#### Grafana
 
+<Image
+  src={grafana}
+  alt="openstatus metrics in grafana"
+/>
 
-### signoz
+#### Honeycomb
 
-  <Image
-    src={signoz}
-    alt="openstatus metrics in signoz"
-  />
+<Image
+  src={honeycomb}
+  alt="openstatus metrics in honeycomb"
+/>
+
+#### New Relic
+
+<Image
+  src={newrelic}
+  alt="openstatus metrics in new-relic"
+/>
+
+#### SigNoz
+
+<Image
+  src={signoz}
+  alt="openstatus metrics in signoz"
+/>

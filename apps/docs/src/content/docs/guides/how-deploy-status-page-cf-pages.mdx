@@ -1,114 +1,79 @@
 ---
-title: How to deploy your own status page to Cloudflare Pages
-description: Learn how to use openstatus monitoring data and deploy your own Status Page to cloudflare pages.
+title: How to Deploy a Status Page to Cloudflare Pages
+description: Learn how to use openstatus monitoring data to deploy a status page on Cloudflare Pages.
 sidebar:
   label: Host your status page on Cloudflare Pages
 ---
 import { Image } from 'astro:assets';
 import statusPage from '../../../assets/guides/how-deploy-status-page-cf-pages/status-page.png';
 
-## Introduction
+## Problem
 
-At openstatus, we believe that monitoring your endpoints should be easy and accessible to everyone.
-We also believe that having a status page is essential for your users to know the status of your services.
-We also think that manually updating your status page is a waste of time. The best way to update your status page is to automate it. That's why we built openstatus.
+You need a fast, reliable, and automated status page, but you don't want to manage the hosting infrastructure. Manually updating a status page during an incident is inefficient and error-prone.
 
-In this guide, we will show you how to deploy your own status page to Cloudflare Pages using openstatus monitoring data.
+## Solution
 
-For the Status Page, we will use [Astro](https://astro.build/) a new JavaScript web framework, that allows you to build faster websites with less JavaScript.
+Deploy a custom status page to Cloudflare's global edge network using openstatus as the data source. This guide shows you how to use our Astro-based template to create a status page that automatically reflects your monitoring data.
 
-The code showcased in this guide is available on [GitHub](https://github.com/openstatusHQ/astro-status-page)
+The code for the template is available on [GitHub](https://github.com/openstatusHQ/astro-status-page).
 
-
-
-  <Image
-    src={statusPage}
-    alt="Astro Status Page"
-  />
-
+<Image
+  src={statusPage}
+  alt="Astro Status Page"
+/>
 
 ## Prerequisites
 
-To follow this guide, you need:
+- A Cloudflare account
+- An [openstatus account](https://www.openstatus.dev) with at least one monitor configured.
 
-- A Cloudflare Account.
-- An [openstatus](https://www.openstatus.dev) Account.
+## Step-by-step guide
 
-## Start monitoring your services
+### 1. Get your openstatus API key
 
-To get your monitoring data, you need to create a monitor on openstatus.
-We will monitor the status of your endpoint and get the data to display on your status page.
+First, you need an API key to fetch your monitoring data.
 
+1.  Navigate to your openstatus dashboard.
+2.  Go to **Settings** → **API Token**.
+3.  Click **Create API Key** and copy the key.
 
-### How to create a monitor
+### 2. Set up the Astro project
 
-To create a monitor, follow these steps:
-1. Go to the openstatus dashboard.
-2. Click on the `Monitors` tab.
-3. Click on the `Create Monitor` button.
-4. Fill in the form with your endpoint details.
-5. Click on the `Create Monitor` button.
+Clone our status page template and install the dependencies.
 
-
-### Get your openstatus API key
-
-To get your API key, follow these steps:
-
-1. Go to the openstatus dashboard.
-2. Click on the `Settings` tab.
-3. Click on the `API Token` tab.
-4. Click on the `Create API Key` button.
-5. Copy your API key.
-
-## Deploy your own status page
-
-With openstatus monitoring data, you can bring your status page to life. You can really make it your own.
-We are going to deploy a simple status page that shows the status of your endpoint.
-
-For this guide we are going to use our [Astro Status Page](https://github.com/openstatusHQ/astro-status-page) template.
-
-### Customize the Astro Status Page
-
-In the `index.astro` we are fetching the monitor data from openstatus and displaying it on the page.
-
-```ts
-const response = await fetch("https://api.openstatus.dev/v1/monitor", {
-  headers: {
-    "x-openstatus-key": env.API_KEY,
-  },
-});
-
-const data = await response.json();
-
-
-const r = monitorsSchema.parse(data);
-
-// our monitors id
-const monitorIds = [1]
-const result = r.filter((m) => monitorIds.find(id => m.id === id) );
+```bash
+git clone https://github.com/openstatusHQ/astro-status-page.git
+cd astro-status-page
+npm install
 ```
 
-In the line `const monitorIds = [1]` you need to replace `1` with the list of monitors id you want to display.
+### 3. Customize the status page
 
+You need to specify which monitors to display on your page.
 
-### Deploy the Astro Status Page to Cloudflare Pages
+1.  Open the `src/pages/index.astro` file.
+2.  Find the following line of code:
+    ```javascript
+    const monitorIds = [1]
+    ```
+3.  Replace the `1` with the ID of the monitor you want to display. You can find the monitor ID in the URL when you view a monitor in the openstatus dashboard (`/monitors/[ID]`). You can also add multiple IDs: `[1, 2, 5]`.
 
-First in your Cloudflare dashboard you need to set the environment variable.
+### 4. Configure your Cloudflare environment variable
 
-Go to your Cloudflare dashboard and click on the `Workers & Pages`.
+Before deploying, you must provide your openstatus API key to Cloudflare.
 
-Select your site and click on the `Settings` tab.
+1.  Go to your Cloudflare dashboard and click on **Workers & Pages**.
+2.  Select your site and go to the **Settings** tab.
+3.  Navigate to **Environment variables** and add a new variable:
+    -   **Variable name**: `API_KEY`
+    -   **Value**: Paste your openstatus API key here.
 
-You can add your openstatus API key as an environment variable.
+### 5. Deploy to Cloudflare Pages
 
-```env
-API_KEY=your-api-key
-```
-
-Now you can deploy your Astro Status Page to Cloudflare Pages with the following command:
+Now you can deploy your status page.
 
 ```bash
 npm run pages:deploy
 ```
 
-Your Status Page is now live on Cloudflare Pages. 🎉
+After the command completes, your status page will be live on Cloudflare Pages. 🎉
