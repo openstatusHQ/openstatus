@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 
-import { createInnerTRPCContext } from "../trpc";
-import { appRouter } from "../root";
-import { TRPCError } from "@trpc/server";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { TRPCError } from "@trpc/server";
+import { appRouter } from "../root";
+import { createInnerTRPCContext } from "../trpc";
 
 function getTestContext(limits?: unknown) {
   return createInnerTRPCContext({

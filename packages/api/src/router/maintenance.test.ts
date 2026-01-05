@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { createInnerTRPCContext } from "../trpc";
 import { appRouter } from "../root";
+import { createInnerTRPCContext } from "../trpc";
 
 function getTestContext() {
   return createInnerTRPCContext({
