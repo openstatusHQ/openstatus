@@ -11,7 +11,7 @@ test("return all maintenances", async () => {
   });
 
   const result = MaintenanceSchema.array().safeParse(await res.json());
-
+  console.log(result)
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.length).toBeGreaterThan(0);
