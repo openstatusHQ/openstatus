@@ -99,7 +99,7 @@ export class EmailClient {
       return;
     }
 
-    const html = await render(<StatusReportEmail {...req} />);
+    // const html = await render(<StatusReportEmail {...req} />);
 
     for (const recipients of chunk(req.to, 100)) {
       const sendEmail = Effect.tryPromise({
@@ -109,7 +109,8 @@ export class EmailClient {
               from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
               subject: req.reportTitle,
               to: subscriber,
-              html,
+              // html,
+              react: <StatusReportEmail {...req} />,
             })),
           ),
         catch: (_unknown) =>
