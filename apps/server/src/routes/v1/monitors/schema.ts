@@ -385,28 +385,27 @@ const baseRequest = z.object({
           regions = String(val).split(",");
         }
 
-        const deprecatedRegions = regions.filter((r) => {
-          return !AVAILABLE_REGIONS.includes(
-            r as (typeof AVAILABLE_REGIONS)[number],
-          );
-        });
-
-        if (deprecatedRegions.length > 0) {
-          throw new ZodError([
-            {
-              code: "custom",
-              path: ["regions"],
-              message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
-                ", ",
-              )}`,
-            },
-          ]);
-        }
-
         return regions;
       },
       z.array(z.enum(monitorRegions)),
     )
+    .superRefine((regions, ctx) => {
+      const deprecatedRegions = regions.filter((r) => {
+        return !AVAILABLE_REGIONS.includes(
+          r as (typeof AVAILABLE_REGIONS)[number],
+        );
+      });
+
+      if (deprecatedRegions.length > 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["regions"],
+          message: `Deprecated regions are not allowed: ${deprecatedRegions.join(
+            ", ",
+          )}`,
+        });
+      }
+    })
     .prefault([])
     .openapi({
       example: ["ams"],
