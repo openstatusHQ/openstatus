@@ -1,7 +1,43 @@
 ---
-title: Private Location
+title: Private Location Reference
+description: Technical specification for configuring and utilizing private monitoring locations.
 ---
-A private location is a location that you can set up within your own infrastructure to run monitoring checks from there.
 
+## Overview
 
-For example this is useful if you want to monitor services that are not publicly accessible, such as internal APIs or services behind a firewall.
+A private location in OpenStatus enables users to deploy monitoring probes within their own infrastructure or private networks. This capability is essential for monitoring internal services, APIs, or systems that are not publicly accessible from the internet, such as those behind firewalls or within a Virtual Private Cloud (VPC).
+
+**Key benefits:**
+-   **Internal Monitoring:** Monitor services running on private networks.
+-   **Security:** Keep sensitive internal endpoints protected from public exposure.
+-   **Compliance:** Meet specific regulatory or security compliance requirements by controlling data paths.
+-   **Reduced Latency:** Conduct checks closer to your services for more accurate performance metrics.
+
+## How it Works
+
+When a private location is configured, OpenStatus provides a mechanism (e.g., a container image or agent) that you deploy within your private environment. This deployed component acts as a local monitoring probe, executing checks on behalf of your OpenStatus account.
+
+1.  **Deployment:** You deploy the OpenStatus private probe within your chosen infrastructure (e.g., a Docker container on a server, a Kubernetes pod).
+2.  **Secure Connection:** The private probe establishes a secure, outbound-only connection to the OpenStatus platform, eliminating the need for inbound firewall rules.
+3.  **Check Execution:** OpenStatus dispatches monitoring tasks to your private probe via this secure connection. The probe then executes the configured checks against your internal services.
+4.  **Result Reporting:** The private probe securely sends the monitoring results (e.g., status, latency, response data) back to the OpenStatus platform for processing, alerting, and visualization.
+
+## Configuration
+
+Detailed steps for setting up a private location involve:
+
+1.  **Probe Deployment:** Provisioning a server or container environment within your private network.
+2.  **Agent Installation:** Deploying the OpenStatus private probe agent (e.g., Docker image) onto your infrastructure.
+3.  **Authentication:** Configuring the probe with necessary API keys or tokens to securely authenticate with your OpenStatus workspace.
+4.  **Network Access:** Ensuring the deployed probe has network access to the internal services it needs to monitor, as well as outbound access to the OpenStatus platform.
+
+**Example Use Cases:**
+-   Monitoring an internal REST API that is only accessible from within your corporate network.
+-   Checking the health of a database server running on a private subnet.
+-   Performing synthetic transactions on an internal web application before it's exposed publicly.
+
+## Related resources
+
+- **[How to Deploy Probes on Cloudflare Containers](/guides/how-to-deploy-probes-cloudflare-containers)** - A guide for deploying private probes using Cloudflare Workers/Containers. (Example deployment guide)
+- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview of monitoring within OpenStatus.
+- **[CLI Reference](/reference/cli-reference)** - Manage monitors as code, including those utilizing private locations.

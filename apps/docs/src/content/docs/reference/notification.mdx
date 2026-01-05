@@ -1,55 +1,85 @@
 ---
-title: Notification
+title: Notification Channels Reference
+description: Technical specification for OpenStatus notification channels and alert payloads.
 ---
 
-A notification is a channel that is used to send alerts when your monitor status changes. By default no notifications are created in your workspace.
+## Overview
 
+Notifications in OpenStatus provide real-time alerts regarding changes in monitor status, such as recovery from an outage or detection of a new failure. By default, no notification channels are configured in a new workspace. Users must configure and enable specific channels to receive alerts.
 
-## Notification Channels:
+## Notification Channels
+
+Each notification channel requires specific configuration parameters to enable alert delivery.
 
 ### Slack
 
-Require a [Slack incoming webhook](https://api.slack.com/incoming-webhooks)
+Integrates with Slack to send alerts to a designated channel.
+
+**Configuration:**
+-   **Incoming Webhook URL:** (Required) A [Slack incoming webhook URL](https://api.slack.com/incoming-webhooks) where notifications will be posted.
 
 ### Email
 
-Require an email address
+Sends alerts directly to a specified email address.
+
+**Configuration:**
+-   **Email Address:** (Required) The recipient's email address.
 
 ### Discord
 
-Require a [discord webhook](https://support.discord.com/hc/en-us/articles/228383668
-) e.g. `https://discordapp.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz1234567890`
+Delivers alerts to a Discord channel via a webhook.
+
+**Configuration:**
+-   **Webhook URL:** (Required) A [Discord webhook URL](https://support.discord.com/hc/en-us/articles/228383668) for the target channel.
+    **Example:** `https://discordapp.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz1234567890`
 
 ### Google Chat
 
-Require a [Google Chat webhook](https://developers.google.com/workspace/chat/quickstart/webhooks)
+Sends notifications to a Google Chat space.
+
+**Configuration:**
+-   **Webhook URL:** (Required) A [Google Chat webhook URL](https://developers.google.com/workspace/chat/quickstart/webhooks) for the target space.
+
 ### SMS
 
-Require a phone number (international format e.g. +14155552671)
+Sends alerts as SMS messages to a mobile phone number.
 
-Due to provider routing, SMS may not be delivered to all countries. Please contact support if you encounter any issues. Or use whatsapp notification instead.
+**Configuration:**
+-   **Phone Number:** (Required) The recipient's phone number in international format (e.g., `+14155552671`).
+
+**Note:** SMS delivery can vary by country due to provider routing. Contact support if delivery issues are encountered. WhatsApp notifications may be an alternative.
 
 ### WhatsApp
 
-Require a phone number (international format e.g. +14155552671)
+Sends alerts as WhatsApp messages to a mobile phone number.
 
+**Configuration:**
+-   **Phone Number:** (Required) The recipient's phone number in international format (e.g., `+14155552671`).
 
 ### Telegram
 
-Requires to know the chat id.
+Delivers alerts to a specified Telegram chat.
 
-> This integration is fully functional but accessing the chat id is not smooth yet. It requires manual effort to access your chat id. **You can ask RawDataBot `@raw_info_bot` for your chat id.**
+**Configuration:**
+-   **Chat ID:** (Required) The unique identifier for the Telegram chat. This typically requires manual retrieval; users can ask `@raw_info_bot` for their chat ID.
 
-The bot's id is `@openstatushq_bot` to make sure you are getting the correct notifications.
+**Bot ID:** The official OpenStatus Telegram bot ID is `@openstatushq_bot`.
 
 ### Webhook
 
-- URL (require)
-- Headers (optional)
+Sends HTTP POST requests to a custom endpoint with a JSON payload.
+
+**Configuration:**
+-   **URL:** (Required) The endpoint URL to which the webhook payload will be sent.
+-   **Headers:** (Optional) Custom HTTP headers to include with the webhook request (key-value pairs).
 
 #### Notification Payloads
 
-##### Payload for Monitor Recovery
+Webhook notifications utilize specific JSON payloads for different monitor status changes.
+
+##### Monitor Recovery Payload
+
+Sent when a monitor recovers from a `degraded` or `error` state.
 
 ```json
 {
@@ -65,19 +95,21 @@ The bot's id is `@openstatushq_bot` to make sure you are getting the correct not
 }
 ```
 
+**Payload Fields:**
 
-Fields Explanation:
--	monitor: Contains details about the monitor.
-    -	id: Unique identifier for the monitor.
-    -	name: Name of the monitor.
-    -	url: The URL being monitored.
--	cronTimestamp: The timestamp when the check was executed, in milliseconds since epoch.
--	status: Indicates the current status of the monitor (in this case, "recovered").
--	statusCode: The HTTP status code returned by the monitored service.
--	latency: The time taken to complete the check, in milliseconds.
+| Field         | Type     | Description                                                          |
+| :------------ | :------- | :------------------------------------------------------------------- |
+| `monitor.id`  | `number` | Unique identifier of the monitor.                                    |
+| `monitor.name`| `string` | Name of the monitor.                                                 |
+| `monitor.url` | `string` | The URL or URI being monitored.                                      |
+| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.        |
+| `status`      | `string` | Indicates the monitor status: `"recovered"`.                        |
+| `statusCode`  | `number` | (Optional) HTTP status code returned by the monitored service.        |
+| `latency`     | `number` | (Optional) Time taken to complete the check in milliseconds.         |
 
+##### Monitor Failure Payload
 
-##### Payload for Monitor Failure
+Sent when a monitor enters an `error` or `degraded` state.
 
 ```json
 {
@@ -92,19 +124,20 @@ Fields Explanation:
 }
 ```
 
-Fields Explanation:
+**Payload Fields:**
 
--	monitor: Contains details about the monitor.
-    -	id: Unique identifier for the monitor.
-  	-	name: Name of the monitor.
-  	-	url: The URL being monitored.
--	cronTimestamp: The timestamp when the check was executed, in milliseconds since epoch.
--	status: Indicates the current status of the monitor (in this case, "error").
--	errorMessage: A description of the error encountered during the check.
-
+| Field         | Type     | Description                                                          |
+| :------------ | :------- | :------------------------------------------------------------------- |
+| `monitor.id`  | `number` | Unique identifier of the monitor.                                    |
+| `monitor.name`| `string` | Name of the monitor.                                                 |
+| `monitor.url` | `string` | The URL or URI being monitored.                                      |
+| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.        |
+| `status`      | `string` | Indicates the monitor status: `"degraded"` or `"error"`.         |
+| `errorMessage`| `string` | (Optional) A description of the error encountered during the check.  |
 
 #### Zod Schema
 
+The validation schema for webhook payloads:
 
 ```ts
 import { z } from "zod";
@@ -121,18 +154,32 @@ export const PayloadSchema = z.object({
   latency: z.number().optional(),
   errorMessage: z.string().optional(),
 });
-````
+```
 
 ### OpsGenie
 
-- API key from OpsGenie (required)
+Integrates with OpsGenie for incident management.
+
+**Configuration:**
+-   **API Key:** (Required) An API key obtained from your OpsGenie account.
 
 ### PagerDuty
 
-Follow the step in PagerDuty workflow
+Integrates with PagerDuty for incident alerting.
+
+**Configuration:**
+-   **Integration Steps:** (Required) Follow the specific integration steps provided within the PagerDuty workflow to set up this channel.
 
 ### Ntfy
 
-- Ntfy topic (required)
-- Custom server url (optional)
-- bearer token (optional)
+Sends notifications to an Ntfy topic.
+
+**Configuration:**
+-   **Ntfy Topic:** (Required) The topic name to which notifications will be published.
+-   **Custom Server URL:** (Optional) The URL of a custom Ntfy server if not using the default.
+-   **Bearer Token:** (Optional) An authentication token for accessing the Ntfy server.
+
+## Related resources
+
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - Details on all metrics collected by monitors.
+- **[Incident Reference](/reference/incident)** - Information about incident creation and management. 

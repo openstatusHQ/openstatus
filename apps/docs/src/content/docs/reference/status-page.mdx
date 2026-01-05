@@ -1,54 +1,87 @@
 ---
-title: Status Page
+title: Status Page Reference
+description: Complete technical specification for OpenStatus status page configuration.
 ---
 
-A status page is a web page that displays the current status of a service or system.
+## Overview
+
+A status page is a dedicated web interface provided by OpenStatus that publicly displays the operational status of your services and systems. It serves as a transparent communication tool during incidents and for showcasing overall service health.
+
+**Key features:**
+-   Real-time service status updates.
+-   Incident communication and history.
+-   Customizable branding and domain.
+-   Multiple access control options.
 
 ## Configuration
 
+OpenStatus provides several configuration options to customize your status page's appearance, accessibility, and functionality.
+
 ### Slug
 
-You slug is a unique identifier for your status page. It is used in the URL of your status page. e.g `status` => `https://status.openstatus.dev`
+**Type:** String (required)
+**Format:** URL-friendly string (e.g., `my-service-status`)
+
+A unique identifier that forms part of your status page's default URL. For example, a slug of `status` will result in a URL like `https://status.openstatus.dev`.
 
 ### Custom Domain
 
-You can configure a custom domain for your status page. e.g `status.example.com` => `https://status.example.com`
+**Type:** String (optional)
+**Format:** Valid domain name (e.g., `status.example.com`)
 
-### Password (basic auth)
+Allows you to host your status page on a custom domain. Once configured, your status page will be accessible at `https://your-custom-domain.com`.
 
-You can add a password for your status page to protect a status page. If you are not authenticated, you will get redirected to the `/login`.
+### Password (Basic Auth)
 
-The password is stored in plain text in a `cookie`, so keep the password easy and fun. You can share any page by appending the password via the `pw` search param like: `https://[slug].openstatus.dev/?pw=my-secret-password` and we will automatically authenticate the user. This can be useful to authenticate to private RSS feeds.
+**Type:** String (optional)
 
-### Magic Link (session auth)
+Enables basic password protection for your status page. If a password is set, users will be redirected to a login page (`/login`) to gain access. The password is stored in a cookie upon successful authentication.
 
-You can secure your status page by restricting access to users with approved email domains. Users will receive a magic link sent to their email and, upon clicking it, will be authenticated via a session token.
+**Sharing with password:** You can provide direct access by appending the password as a URL search parameter: `https://[slug].openstatus.dev/?pw=your-secret-password`. This method is also useful for authenticating private RSS feeds.
 
-This feature is available as an add-on for paid plans and is not included by default.
+### Magic Link (Session Auth)
+
+**Type:** Boolean (add-on feature)
+
+Restricts access to your status page to users with approved email domains. Users receive a magic link via email, which, upon clicking, authenticates them via a session token. This feature is typically available as a paid add-on for specific plans.
 
 ### Favicon
 
-You can add a favicon for your status page.
+**Type:** Image file (e.g., `.ico`, `.png`)
 
+Allows you to upload a custom favicon that will appear in browser tabs and bookmarks for your status page.
 
-### JSON Feed 
+### JSON Feed
 
-You can access your status page data in JSON format by appending `/feed/json` to your status page URL. 
+**Type:** Read-only endpoint
+**Format:** JSON
 
-Example: `https://status.openstatus.dev/feed/json`
+Provides a machine-readable JSON representation of your status page data. This feed can be accessed by appending `/feed/json` to your status page URL.
+
+**Example:** `https://status.openstatus.dev/feed/json`
 
 ### SSH Command
 
-Check the current status page anytime from your Terminal with:
+**Type:** Command-line utility
 
-```
+Allows you to quickly check the current status page status directly from your terminal using an SSH command.
+
+**Usage:**
+
+```bash
 ssh [slug]@ssh.openstatus.dev
 ```
 
-Example: `ssh status@ssh.openstatus.dev`
+**Example:** `ssh my-service@ssh.openstatus.dev`
 
 ### White Label
 
-The White Label add-on allows you to remove the "powered by openstatus.dev" footer from your status page, providing a fully branded experience for your users.
+**Type:** Boolean (add-on feature)
 
-This feature is available as a paid add-on for Starter and Pro plans at $300/month. Once enabled in your workspace settings, the OpenStatus branding will be removed from all status pages in your workspace.
+Removes the "powered by openstatus.dev" footer from your status page, providing a fully branded experience. This feature is typically available as a paid add-on for Starter and Pro plans and is enabled via your workspace settings, affecting all status pages within that workspace.
+
+## Related resources
+
+- **[Create Status Page](/status-page/create-status-page)** - Step-by-step tutorial on creating a status page.
+- **[How to Configure Status Page](/tutorial/how-to-configure-status-page)** - Guide on advanced status page configuration.
+- **[Status Report Reference](/reference/status-report)** - Details on how incident statuses are managed and reported.

@@ -1,19 +1,38 @@
 ---
-title: TCP Monitor
+title: TCP Monitor Reference
+description: Complete technical specification for TCP service monitoring.
 ---
 
+## Overview
 
-A TCP Monitor is a component that allows you to monitor the status of your services.
+A TCP Monitor is a component that establishes a connection to a specified TCP endpoint (IP address and port) to verify its reachability and responsiveness. This is fundamental for monitoring the availability of services that communicate over TCP, such as databases, mail servers, and custom network services.
+
+**Use cases:**
+-   Database server availability checks (e.g., PostgreSQL, MySQL).
+-   Mail server (SMTP, IMAP, POP3) reachability.
+-   Custom application service port monitoring.
+-   Validating network connectivity to specific endpoints.
 
 ## Configuration
 
 ### URI
 
-The url of the endpoint you want to monitor e.g `openstat.us:443`
+**Type:** String (required)
+**Format:** Hostname or IP address with port (e.g., `example.com:8080`, `192.168.1.1:22`)
+
+The endpoint of the TCP service you want to monitor. This includes the hostname or IP address and the port number.
+
+**Examples:**
+- `openstat.us:443`
+- `db.internal:5432`
+- `10.0.0.5:3306`
 
 ### Regions
 
-The regions where we are triggering the HTTP request.
+**Type:** Array of Strings (required)
+**Format:** Region identifiers (e.g., `iad`, `jnb`)
+
+The geographical regions from which the TCP connection attempt will be initiated. This allows for verification of service availability and network latency across different global locations.
 
 __Africa__
 
@@ -69,25 +88,64 @@ __Oceania__
 
 ### Frequency
 
-The check interval, we support the following frequencies:
-- 30 seconds
-- 1 minute
-- 5 minutes
-- 10 minutes
-- 30 minutes
-- 1 hour
+**Type:** String (required)
+**Format:** Duration string (e.g., `30s`, `1m`, `1h`)
+
+The interval at which the TCP monitor will attempt to connect to the target URI. Supported frequencies:
+- `30 seconds`
+- `1 minute`
+- `5 minutes`
+- `10 minutes`
+- `30 minutes`
+- `1 hour`
 
 ### Response Time Thresholds
+
 #### Timeout
-The timeout for the HTTP request, default: `45 seconds`
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The maximum duration to wait for a successful TCP connection. If the connection cannot be established within this time, the check is considered a failure.
+
 #### Degraded
-The duration for which the HTTP request is considered degraded.
+
+**Type:** Duration (optional)
+
+The duration after which a TCP connection attempt is considered to be in a degraded performance state. This allows for early warning of network latency or service slowdowns.
 
 ### Retry
-The number of retries for the HTTP request. Default: `3`
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor will automatically retry a failed TCP connection attempt before reporting a definitive error. For example: `3`
 
 ### OpenTelemetry
-#### OTPL Endpoint
-The endpoint we use to export the metrics. We only support HTTP endpoint.
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
+#### OTLP Endpoint
+
+**Type:** String (optional)
+**Protocol:** HTTP only
+
+The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported. Only HTTP endpoints are supported for metric export.
+
 #### OTLP Headers
-The headers we use to export the metrics to your otlp endpoint.
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
+
+## Related resources
+
+- **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial on setting up a monitor.
+- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview of OpenStatus monitoring capabilities.
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - Detailed information on all metrics and data points collected by monitors.
+- **[CLI Reference](/reference/cli-reference)** - Guide to managing OpenStatus monitors programmatically using the command-line interface.

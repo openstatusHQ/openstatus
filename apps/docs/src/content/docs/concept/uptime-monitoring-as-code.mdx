@@ -1,7 +1,26 @@
 ---
-title: Uptime Monitoring as Code
+title: Understanding Monitoring as Code
+description: "Why and how to manage monitoring configuration as code for GitOps workflows"
 ---
 import { Code } from '@astrojs/starlight/components';
+
+## The traditional approach (and its problems)
+
+Traditionally, monitoring is configured through web dashboards:
+1. Log into a web interface
+2. Click through forms to create monitors
+3. Manually replicate configuration across environments
+4. No audit trail of who changed what
+5. Difficult to review changes before they go live
+
+This works for small teams with few monitors, but doesn't scale.
+
+## What is monitoring as code?
+
+**Monitoring as Code** treats your monitoring configuration the same way you treat your application code: as text files that can be versioned, reviewed, and deployed through automated pipelines.
+
+Instead of clicking buttons, you define monitors in YAML:
+
 export const code = `
 # yaml-language-server: $schema=https://www.openstatus.dev/schema.json
 uptime-monitor:
@@ -21,7 +40,7 @@ uptime-monitor:
     url: https://openstat.us
     method: GET
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
   assertions:
     - kind: statusCode
       compare: eq
@@ -44,7 +63,7 @@ graphql-monitor:
     url: https://api.github.com/graphql
     method: POST
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
       Authorization: Bearer YOUR_TOKEN_HERE
     body: |
       {
@@ -52,7 +71,7 @@ graphql-monitor:
       }
 `
 
-Uptime monitoring is a vital part of any robust system, ensuring your services are online and available to users. Historically, this has involved manually configuring monitors through a web interface, which can be tedious and prone to human error. Uptime Monitoring as Code changes this by treating your monitoring configurations like any other part of your application—as code.
+Uptime monitoring is a vital part of any robust system, ensuring your services are online and available to users. Historically, this has involved manually configuring monitors through a web interface, which can be tedious and prone to human error. Uptime Monitoring as Code changes this by treating your monitoring configurations like any other part of your application-as code.
 
 
 ## Why Use Uptime Monitoring as Code?
@@ -80,7 +99,7 @@ Here’s an example of what your `openstatus.yaml` file might look like:
 
 ### Making Changes with the CLI
 
-Once your `openstatus.yaml` file is ready, you use our [command-line interface (CLI)](/tutorial/get-started-with-openstatus-cli) to apply the changes. The CLI compares your local configuration with the current state of your monitors and applies only the necessary changes—creating new monitors, updating existing ones, or deleting those no longer defined.
+Once your `openstatus.yaml` file is ready, you use our [command-line interface (CLI)](/tutorial/get-started-with-openstatus-cli) to apply the changes. The CLI compares your local configuration with the current state of your monitors and applies only the necessary changes creating new monitors, updating existing ones, or deleting those no longer defined.
 
 **Common CLI Commands:**
 
@@ -88,3 +107,20 @@ Once your `openstatus.yaml` file is ready, you use our [command-line interface (
 - `openstatus monitors import`: Import the monitors from your dashboard to a new `openstatus.yaml` file.
 
 By integrating this **Uptime Monitoring as Code** workflow into your development lifecycle, you can achieve a more reliable, consistent, and scalable system. It's about moving from manual clicks to automated, version-controlled operations.
+
+## Best practices
+
+1. **Start simple**: Begin with a few monitors, expand as you learn
+2. **Use templates**: Create reusable patterns for common monitor types
+3. **Environment variables**: Use secrets management for tokens and sensitive data
+4. **Review changes**: Always review diffs before applying
+5. **Document decisions**: Use commit messages to explain "why"
+
+## Next steps
+
+Ready to implement monitoring as code?
+
+- **[Get Started with CLI](/tutorial/get-started-with-openstatus-cli)** - Install and configure the CLI
+- **[Monitor Your MCP Server](/guides/how-to-monitor-mcp-server/)** - Real-world example
+- **[CLI Reference](/reference/cli-reference)** - Complete command documentation
+- **[YAML Examples](https://github.com/openstatusHQ/cli-template)** - Sample configurations

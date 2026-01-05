@@ -1,4 +1,57 @@
 ---
-title: About this project
-description: Learn more about the project I’m working on.
+title: Reference Documentation
+description: Technical specifications, API documentation, and configuration references
 ---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## 📖 Reference
+
+Reference documentation provides **technical specifications** and detailed information about openstatus components, APIs, and configuration options. This is where you look up exact parameter names, return types, and available options.
+
+### When to use reference docs
+
+Reference documentation is ideal when you:
+- Need to look up specific API endpoints or parameters
+- Want to know all available configuration options
+- Are looking for technical specifications
+- Need to understand data structures and types
+
+### Monitor Types
+
+Detailed specifications for each monitor type:
+
+<CardGrid>
+  <LinkCard title="HTTP Monitor" href="/reference/http-monitor" description="Complete reference for HTTP/HTTPS endpoint monitoring" />
+  <LinkCard title="TCP Monitor" href="/reference/tcp-monitor" description="TCP port monitoring specifications" />
+  <LinkCard title="DNS Monitor" href="/reference/dns-monitor" description="DNS resolution monitoring reference" />
+</CardGrid>
+
+### Components & Features
+
+<CardGrid>
+  <LinkCard title="Status Page" href="/reference/status-page" description="Status page configuration options" />
+  <LinkCard title="Status Report" href="/reference/status-report" description="Status report specifications" />
+  <LinkCard title="Subscriber" href="/reference/subscriber" description="Status page subscriber reference" />
+  <LinkCard title="Incident" href="/reference/incident" description="Incident management reference" />
+  <LinkCard title="Notification" href="/reference/notification" description="Notification channel specifications" />
+</CardGrid>
+
+### Infrastructure & Tools
+
+<CardGrid>
+  <LinkCard title="CLI Reference" href="/reference/cli-reference" description="Complete command-line interface documentation" />
+  <LinkCard title="Terraform Provider" href="/reference/terraform" description="Infrastructure as code with Terraform" />
+  <LinkCard title="Private Location" href="/reference/private-location" description="Self-hosted monitoring agent reference" />
+</CardGrid>
+
+### API Documentation
+
+For programmatic access to openstatus:
+- **[REST API](https://api.openstatus.dev/v1)** - Full REST API reference with interactive examples
+
+### Related sections
+
+- **[Tutorials](/tutorial/getting-started/)** - Learn how to use these features step-by-step
+- **[How-to guides](/guides/getting-started/)** - Practical examples of common use cases
+- **[Explanations](/concept/getting-started/)** - Understand the concepts behind the reference material

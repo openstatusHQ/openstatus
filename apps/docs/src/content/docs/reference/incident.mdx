@@ -1,7 +1,45 @@
 ---
-title: Incident
+title: Incident Reference
+description: Technical specification for incident management and lifecycle
 ---
 
-An incident is a problem related to a monitor. They are created automatically when a monitor fails.
+## Overview
 
-At least 50% must have failed to trigger the incident.
+An incident in OpenStatus represents a detected problem or service disruption related to a monitored resource. Incidents are automatically generated when a monitor reports a failure condition that meets predefined criteria. They serve as a central point for tracking, managing, and resolving service impairments.
+
+**Key characteristics:**
+-   Automatically triggered by monitor failures.
+-   Aggregates related failure events for a single monitor.
+-   Provides a clear status of service health.
+
+## Incident Triggering
+
+An incident is triggered when a significant percentage of recent monitoring checks for a given monitor report a failed status. This mechanism prevents false positives from transient network issues.
+
+**Trigger Condition:**
+-   **Failure Threshold:** An incident is initiated when at least 50% of the checks within a defined window (e.g., the last `N` checks or within a `T` duration) have reported a `failure` or `degraded` status.
+
+## Incident Lifecycle and States
+
+Incidents progress through several states reflecting their current resolution status. These states are managed through status reports (see [Status Report Reference](/reference/status-report)).
+
+**Primary States:**
+-   `investigating`: The incident has been detected, and the team is actively looking into the root cause.
+-   `identified`: The root cause of the incident has been identified.
+-   `monitoring`: A fix has been deployed or a mitigation is in place, and the service is being monitored to confirm resolution.
+-   `resolved`: The incident has been fully resolved, and the service is operating normally.
+
+## Properties
+
+While an incident is active, it collects and displays key information related to the service disruption.
+
+-   **Monitor Association:** Each incident is directly linked to the monitor that triggered it, providing immediate context to the affected service.
+-   **Start Time:** Timestamp indicating when the incident was first detected and created.
+-   **Status Reports:** A chronological log of all updates and state changes applied to the incident.
+-   **Impacted Locations:** Details on the geographical regions from which the monitor reported failures.
+
+## Related resources
+
+- **[Status Report Reference](/reference/status-report)** - Details on how incident statuses are managed and reported.
+- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview of monitoring within OpenStatus.
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - All tracked metrics collected by monitors.

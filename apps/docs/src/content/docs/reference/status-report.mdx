@@ -1,25 +1,56 @@
 ---
-title: Status Report
+title: Status Report Reference
+description: Technical specification for incident status updates within OpenStatus.
 ---
 
-A status report is an event of an incident.
+## Overview
 
+A status report is a chronological update or event associated with an ongoing incident in OpenStatus. These reports are crucial for communicating the progress of an incident, from initial detection to final resolution, providing transparency to stakeholders.
 
-## Configuration
+**Purpose:**
+-   To document the lifecycle and progress of an incident.
+-   To communicate current incident status and actions taken.
+-   To provide historical context for post-incident analysis.
+
+## Relationship to Incidents
+
+Each status report is directly linked to a specific incident. As an incident progresses through its resolution process, new status reports are added to provide updates, often accompanied by a change in the incident's overall status.
+
+## Configuration and Properties
+
+A status report consists of several key properties that define its content and context.
 
 ### Status
 
-The status of an incident can be:
+**Type:** Enumerated String (required)
 
-- `investigating`
-- `identified`
-- `monitoring`
-- `resolved`
+Represents the current stage or state of the associated incident at the time the report is issued. The available statuses are:
+
+-   `investigating`: The incident has been detected, and the team is actively looking into the root cause.
+-   `identified`: The root cause of the incident has been identified.
+-   `monitoring`: A fix has been deployed or a mitigation is in place, and the service is being monitored to confirm resolution.
+-   `resolved`: The incident has been fully resolved, and the service is operating normally.
 
 ### Date
 
-The date of the status report
+**Type:** Datetime (required)
+**Format:** ISO 8601 (e.g., `2026-01-05T12:30:00Z`)
+
+The timestamp indicating when the status report was created or when the reported status took effect. This provides a clear timeline for incident progression.
 
 ### Message
 
-The message of the status report
+**Type:** String (required)
+
+A descriptive message detailing the update, actions taken, or any relevant information regarding the incident at the time of the report. This message should be clear and concise, providing context to the status change.
+
+**Example Messages:**
+-   `"Initial detection of elevated error rates on the API. Investigating potential upstream issues."`
+-   `"Root cause identified as a misconfigured caching layer. Working on a rollback."`
+-   `"Fix deployed to production. Monitoring service health for full recovery."`
+-   `"All services restored to normal operation. Incident resolved."`
+
+## Related resources
+
+- **[Incident Reference](/reference/incident)** - Detailed information on incident creation and lifecycle.
+- **[Status Page Reference](/reference/status-page)** - Information on how status reports are displayed on public status pages.

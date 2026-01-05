@@ -1,44 +1,103 @@
 ---
-title: HTTP Monitor
+title: HTTP Monitor Reference
+description: Complete technical specification for HTTP/HTTPS endpoint monitoring
 ---
 
-An HTTP Monitor is a component that allows you to monitor the status of HTTP endpoints. It can be used to monitor the status of a website, an API, or any other HTTP endpoint.
+## Overview
+
+An HTTP Monitor is a component that allows you to monitor the status of HTTP and HTTPS endpoints. It can be used to monitor websites, APIs, webhooks, or any other HTTP-accessible service.
+
+**Use cases:**
+- Website uptime monitoring
+- API health checks
+- Webhook endpoint validation
+- CDN performance monitoring
+- Authentication endpoint testing
 
 ## Configuration
 
 ### URL
 
-The url of the HTTP endpoint you want to monitor e.g `https://openstat.us`
+**Type:** String (required)  
+**Format:** Full URL including protocol
+
+The URL of the HTTP endpoint you want to monitor.
+
+**Examples:**
+- `https://openstat.us`
+- `https://api.example.com/health`
+- `http://internal-service.local:8080/status`
+
+**Note:** We recommend using HTTPS for better security.
 
 ### Methods
 
-The HTTP method you want to use to monitor the endpoint.
-- `GET`
-- `POST`
-- `PUT`
-- `DELETE`
-- `HEAD`
-- `OPTIONS`
-- `PATCH`
-- `TRACE`
+**Type:** String (required)  
+**Default:** `GET`
+
+The HTTP method to use when making the request to the endpoint.
+
+**Available methods:**
+- `GET` - Retrieve data (most common for health checks)
+- `POST` - Send data to create/trigger actions
+- `PUT` - Update existing resources
+- `DELETE` - Remove resources
+- `HEAD` - Like GET but without response body
+- `OPTIONS` - Query supported methods
+- `PATCH` - Partial resource updates
+- `TRACE` - Echo request for debugging
+
+**Common usage:**
+- Health checks: `GET`
+- API testing: `POST`, `PUT`, `DELETE`
+- Webhook testing: `POST`
 
 ### Body
 
-The body of the HTTP request you want to send to the endpoint. You use binary data if the content type is `application/octet-stream`.
-Example:
-- `{ "key": "value" }`
-- `data:image/jpeg;base64,/9j...`
+**Type:** String (optional)  
+**Available for:** `POST`, `PUT`, `PATCH` methods
+
+The request body to send with the HTTP request. Supports both text and binary data.
+
+**Text body examples:**
+```json
+{ "key": "value" }
+```
+
+**Binary data:**
+For binary content (e.g., images), use base64 encoding with data URI:
+```
+data:image/jpeg;base64,/9j...
+```
+
+**Content type:** Set the appropriate `Content-Type` header (e.g., `application/json`, `application/octet-stream`).
 ### Headers
 
-The headers you want to send with the HTTP request
+**Type:** Key-value pairs (optional)
 
-Example:
-- `"Content-Type": "application/json"`
-- `'Content-Type: application/octet-stream'`
+Custom HTTP headers to include with your request.
+
+**Common examples:**
+```
+Content-Type: application/json
+Authorization: Bearer your_token_here
+Accept: application/json
+User-Agent: Custom-Agent/1.0
+```
+
+**Use cases:**
+- **Authentication:** Send API tokens or credentials
+- **Content negotiation:** Specify accepted response formats
+- **Custom identification:** Add tracking or debugging headers
+
+**Note:** openstatus automatically adds `User-Agent: openstatus/1.0` to all requests.
 
 ### Regions
 
-The regions where we are triggering the HTTP request.
+**Type:** Array of Strings (required)
+**Format:** Region identifiers (e.g., `iad`, `jnb`)
+
+The geographical regions from which the HTTP request will be triggered. This allows for monitoring global availability and performance.
 
 __Africa__
 
@@ -94,54 +153,126 @@ __Oceania__
 
 ### Frequency
 
-The check interval, we support the following frequencies:
-- 30 seconds
-- 1 minute
-- 5 minutes
-- 10 minutes
-- 30 minutes
-- 1 hour
+**Type:** String (required)
+**Format:** Duration string (e.g., `30s`, `1m`, `1h`)
+
+The interval at which the HTTP monitor will perform checks. Supported frequencies:
+- `30 seconds`
+- `1 minute`
+- `5 minutes`
+- `10 minutes`
+- `30 minutes`
+- `1 hour`
 
 ### Response Time Thresholds
+
 #### Timeout
-The timeout for the HTTP request, default is `45 seconds`
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The maximum duration to wait for the HTTP request to complete. If the request exceeds this time, it is considered a failure.
+
 #### Degraded
-The duration for which the HTTP request is considered degraded.
+
+**Type:** Duration (optional)
+
+The duration after which the HTTP request is considered to be performing in a degraded state. This threshold allows for proactive alerting on performance issues before a complete outage.
 
 ### Retry
-The number of retries for the HTTP request. For example: `3`
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor will automatically retry the HTTP request upon failure before reporting a definitive error. For example: `3`
 
 ### Assertions
-#### Body assertions
-Validate the body of the response. The comparisons are:
-- Contains
-- Not Contains
-- Equal
-- Not Equal
-- Empty
 
-#### Status code assertions
-Validate the status code of the response. The comparisons are:
-- Equal
-- Not Equal
-- Greater Than
-- Greater Than or Equal
-- Less Than
-- Less Than or Equal
+Assertions allow you to validate specific aspects of the HTTP response.
 
-#### Headers assertions
-Validate the headers of the reponse. The comparisons are:
-- Contains
-- Not Contains
-- Equal
-- Not Equal
-- Empty
+#### Body Assertions
+
+Validate the content of the HTTP response body.
+
+**Comparisons:**
+- `Contains`: The response body must include the specified string.
+- `Not Contains`: The response body must not include the specified string.
+- `Equal`: The response body must exactly match the specified string.
+- `Not Equal`: The response body must not exactly match the specified string.
+- `Empty`: The response body must be empty.
+
+#### Status Code Assertions
+
+Validate the HTTP status code of the response.
+
+**Comparisons:**
+- `Equal`: The status code must be exactly the specified value.
+- `Not Equal`: The status code must not be the specified value.
+- `Greater Than`: The status code must be greater than the specified value.
+- `Greater Than or Equal`: The status code must be greater than or equal to the specified value.
+- `Less Than`: The status code must be less than the specified value.
+- `Less Than or Equal`: The status code must be less than or equal to the specified value.
+
+#### Headers Assertions
+
+Validate the presence or content of specific HTTP response headers.
+
+**Purpose:** Verify cache headers, check security headers (e.g., `X-Frame-Options`), validate content-type.
+
+**Comparisons:**
+- `Contains`: A header's value must include the specified string.
+- `Not Contains`: A header's value must not include the specified string.
+- `Equal`: A header's value must exactly match the specified string.
+- `Not Equal`: A header's value must not exactly match the specified string.
+- `Empty`: A header's value must be empty or the header must not be present.
+
+**Example Use Cases:**
+- Verify `Cache-Control` headers are present and correct.
+- Check for the existence of security-related headers like `Strict-Transport-Security`.
+- Validate the `Content-Type` header in API responses.
 
 ### OpenTelemetry
+
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
+
 #### OTLP Endpoint
-The endpoint we use to export the metrics. We only support HTTP endpoint.
+
+**Type:** String (optional)  
+**Protocol:** HTTP only
+
+The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported.
+
+**Example:** `https://otlp.example.com/v1/metrics`
+
 #### OTLP Headers
-The headers we use to export the metrics to your otlp endpoint.
+
+**Type:** Key-value pairs (optional)
+
+Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
+
+**Common example:**
+```
+Authorization: Bearer <your_token>
+```
 
 ### Public
-If set to true the monitors data is accessible on the status page (default:`false`)
+
+**Type:** Boolean  
+**Default:** `false`
+
+Controls the visibility of monitor data on your public status page.
+
+- `true`: Monitor metrics and status are visible to all visitors of your status page.
+- `false`: Monitor data remains private, accessible only within your OpenStatus dashboard.
+
+**Use cases for public visibility:**
+- Enhancing transparency with users regarding service health.
+- Providing public API status pages.
+- Displaying SaaS service availability to customers.
+
+## Related resources
+
+- **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial on setting up a monitor.
+- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview of OpenStatus monitoring capabilities.
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - Detailed information on all metrics and data points collected by monitors.
+- **[CLI Reference](/reference/cli-reference)** - Guide to managing OpenStatus monitors programmatically using the command-line interface.
