@@ -21,11 +21,12 @@ test("Create Maintenance", async () => {
   const ctx = getTestContext();
   const caller = appRouter.createCaller(ctx);
 
-  const createdMaintenance = await caller.maintenance.create({
+  const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    from,
-    to,
+    startDate:from,
+    endDate:to,
+    pageId:1,
   });
 
   expect(createdMaintenance).toMatchObject({
@@ -42,11 +43,12 @@ test("Get Maintenance by ID", async () => {
   const ctx = getTestContext();
   const caller = appRouter.createCaller(ctx);
 
-  const createdMaintenance = await caller.maintenance.create({
+  const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    from,
-    to,
+    startDate:from,
+    endDate:to,
+    pageId:1,
   });
 
   const createdMaintenanceId = createdMaintenance.id;
@@ -69,22 +71,27 @@ test("Update Maintenance", async () => {
   const ctx = getTestContext();
   const caller = appRouter.createCaller(ctx);
 
-  const createdMaintenance = await caller.maintenance.create({
+  const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    from,
-    to,
+    startDate:from,
+    endDate:to,
+    pageId:1,
   });
 
   const createdMaintenanceId = createdMaintenance.id;
 
-  const updatedMaintenance = await caller.maintenance.updateLegacy({
+    await caller.maintenance.update({
     id: createdMaintenanceId,
     title: "Updated Test Maintenance",
     message: "This is an updated test maintenance.",
-    from,
-    to,
+    startDate: from,
+    endDate:to,
   });
+
+    const updatedMaintenance = await caller.maintenance.getById({
+      id: createdMaintenanceId,
+    });
 
   expect(updatedMaintenance).toMatchObject({
     id: createdMaintenanceId,
@@ -100,11 +107,12 @@ test("Delete Maintenance", async () => {
   const ctx = getTestContext();
   const caller = appRouter.createCaller(ctx);
 
-  const createdMaintenance = await caller.maintenance.create({
+  const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    from,
-    to,
+    startDate:from,
+    endDate:to,
+    pageId:1,
   });
 
   const createdMaintenanceId = createdMaintenance.id;
