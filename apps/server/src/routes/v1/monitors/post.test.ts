@@ -33,13 +33,12 @@ test("create a valid monitor", async () => {
     }),
   });
 
-  const result = MonitorSchema.safeParse(await res.json());
-
   expect(res.status).toBe(200);
+  const result = MonitorSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
 });
 
-test("create a status report with invalid payload should return 400", async () => {
+test("create a monitor with invalid payload should return 400", async () => {
   const res = await app.request("/v1/monitor", {
     method: "POST",
     headers: {

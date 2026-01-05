@@ -21,6 +21,16 @@ test("no auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
+test("invalid incident id should return 400", async () => {
+  const res = await app.request("/v1/incident/invalid-id", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+
+  expect(res.status).toBe(400);
+});
+
 test("invalid incident id should return 404", async () => {
   const res = await app.request("/v1/incident/2", {
     headers: {
