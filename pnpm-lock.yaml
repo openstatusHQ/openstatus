@@ -448,13 +448,13 @@ importers:
     dependencies:
       '@hono/sentry':
         specifier: 1.2.2
-        version: 1.2.2(hono@4.5.3)
+        version: 1.2.2(hono@4.11.3)
       '@hono/zod-openapi':
         specifier: 1.1.5
-        version: 1.1.5(hono@4.5.3)(zod@4.1.13)
+        version: 1.1.5(hono@4.11.3)(zod@4.1.13)
       '@hono/zod-validator':
-        specifier: 0.2.2
-        version: 0.2.2(hono@4.5.3)(zod@4.1.13)
+        specifier: 0.7.6
+        version: 0.7.6(hono@4.11.3)(zod@4.1.13)
       '@logtape/logtape':
         specifier: 1.1.2
         version: 1.1.2
@@ -493,7 +493,7 @@ importers:
         version: link:../../packages/utils
       '@scalar/hono-api-reference':
         specifier: 0.8.5
-        version: 0.8.5(hono@4.5.3)
+        version: 0.8.5(hono@4.11.3)
       '@t3-oss/env-core':
         specifier: 0.13.10
         version: 0.13.10(typescript@5.9.3)(zod@4.1.13)
@@ -504,8 +504,8 @@ importers:
         specifier: 2.6.2
         version: 2.6.2
       hono:
-        specifier: 4.5.3
-        version: 4.5.3
+        specifier: 4.11.3
+        version: 4.11.3
       nanoid:
         specifier: 5.0.7
         version: 5.0.7
@@ -1804,6 +1804,8 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+
+  packages/react/dist: {}
 
   packages/regions:
     dependencies:
@@ -8203,6 +8205,10 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
+  hono@4.11.3:
+    resolution: {integrity: sha512-PmQi306+M/ct/m5s66Hrg+adPnkD5jiO6IjA7WhWw0gSBSo1EcRegwuI1deZ+wd5pzCGynCcn2DprnE4/yEV4w==}
+    engines: {node: '>=16.9.0'}
+
   hono@4.5.3:
     resolution: {integrity: sha512-r26WwwbKD3BAYdfB294knNnegNda7VfV1tVn66D9Kvl9WQTdrR+5eKdoeaQNHQcC3Gr0KBikzAtjd6VsRGVSaw==}
     engines: {node: '>=16.0.0'}
@@ -12796,16 +12802,21 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
+  '@hono/sentry@1.2.2(hono@4.11.3)':
+    dependencies:
+      hono: 4.11.3
+      toucan-js: 4.1.1
+
   '@hono/sentry@1.2.2(hono@4.5.3)':
     dependencies:
       hono: 4.5.3
       toucan-js: 4.1.1
 
-  '@hono/zod-openapi@1.1.5(hono@4.5.3)(zod@4.1.13)':
+  '@hono/zod-openapi@1.1.5(hono@4.11.3)(zod@4.1.13)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.2.0(zod@4.1.13)
-      '@hono/zod-validator': 0.7.6(hono@4.5.3)(zod@4.1.13)
-      hono: 4.5.3
+      '@hono/zod-validator': 0.7.6(hono@4.11.3)(zod@4.1.13)
+      hono: 4.11.3
       openapi3-ts: 4.5.0
       zod: 4.1.13
 
@@ -12814,9 +12825,9 @@ snapshots:
       hono: 4.5.3
       zod: 4.1.13
 
-  '@hono/zod-validator@0.7.6(hono@4.5.3)(zod@4.1.13)':
+  '@hono/zod-validator@0.7.6(hono@4.11.3)(zod@4.1.13)':
     dependencies:
-      hono: 4.5.3
+      hono: 4.11.3
       zod: 4.1.13
 
   '@hookform/devtools@4.4.0(@types/react@19.2.2)(react-dom@19.2.2(react@19.2.2))(react@19.2.2)':
@@ -15140,10 +15151,10 @@ snapshots:
     dependencies:
       '@scalar/types': 0.1.11
 
-  '@scalar/hono-api-reference@0.8.5(hono@4.5.3)':
+  '@scalar/hono-api-reference@0.8.5(hono@4.11.3)':
     dependencies:
       '@scalar/core': 0.2.11
-      hono: 4.5.3
+      hono: 4.11.3
 
   '@scalar/openapi-types@0.2.1':
     dependencies:
@@ -18260,6 +18271,8 @@ snapshots:
   hoist-non-react-statics@3.3.2:
     dependencies:
       react-is: 16.13.1
+
+  hono@4.11.3: {}
 
   hono@4.5.3: {}
 

@@ -32,11 +32,9 @@ test("create a valid monitor", async () => {
       ],
     }),
   });
-  const r = await res.json();
-  console.log(r);
-  const result = MonitorSchema.safeParse(r);
 
   expect(res.status).toBe(200);
+  const result = MonitorSchema.safeParse(await res.json());
   expect(result.success).toBe(true);
 });
 

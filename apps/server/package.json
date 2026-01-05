@@ -14,7 +14,7 @@
   "dependencies": {
     "@hono/sentry": "1.2.2",
     "@hono/zod-openapi": "1.1.5",
-    "@hono/zod-validator": "0.2.2",
+    "@hono/zod-validator": "0.7.6",
     "@logtape/logtape": "1.1.2",
     "@logtape/sentry": "1.1.2",
     "@openstatus/analytics": "workspace:*",
@@ -31,7 +31,7 @@
     "@t3-oss/env-core": "0.13.10",
     "@unkey/api": "2.2.0",
     "@upstash/qstash": "2.6.2",
-    "hono": "4.5.3",
+    "hono": "4.11.3",
     "nanoid": "5.0.7",
     "percentile": "1.6.0",
     "validator": "13.12.0",

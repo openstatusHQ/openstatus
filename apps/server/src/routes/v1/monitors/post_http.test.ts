@@ -17,20 +17,6 @@ test("create a valid monitor", async () => {
       "degradedAfter": 60,
       "description": "This is a test",
       "frequency": "10m",
-      "kind": "tcp",
-      "name": "Test2",
-      "regions": [
-        "iad"
-      ],
-      "request": {
-        "host": "openstat.us",
-        "port": 80
-      },
-      "retry": 3
-      "active": true,
-      "degradedAfter": 60,
-      "description": "This is a test",
-      "frequency": "10m",
       "name": "Test2",
       "regions": [
         "iad"
