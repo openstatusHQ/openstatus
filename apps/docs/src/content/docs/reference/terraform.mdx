@@ -1,27 +1,127 @@
 ---
-title: Terraform Provider
-description:
-  "Use openstatus Terraform provider to manage your monitors and status page."
+title: Terraform Provider Reference
+description: Technical specification for the OpenStatus Terraform Provider.
 ---
 
-Here you can find the official openstatus Terraform provider. This provider
-allows you to manage your monitors and status page using Terraform.
+## Overview
 
-https://registry.terraform.io/providers/openstatusHQ/openstatus/latest
+The OpenStatus Terraform provider enables you to manage your OpenStatus monitors and status pages programmatically using HashiCorp Terraform. This allows for Infrastructure as Code (IaC) practices, version control, and automated deployment of your monitoring configurations.
 
-## Usage
+**Key capabilities:**
+-   Define and manage OpenStatus monitors as Terraform resources.
+-   Automate the deployment and updates of monitoring configurations.
+-   Integrate OpenStatus into your existing IaC workflows.
 
+## Installation
+
+To use the OpenStatus Terraform provider, declare it in your Terraform configuration file (`.tf`). Terraform will automatically download and install the provider when you run `terraform init`.
+
+```terraform
+terraform {
+  required_providers {
+    openstatus = {
+      source = "openstatusHQ/openstatus"
+      version = "~> 0.1" # Use the latest version
+    }
+  }
+}
 ```
+
+For the latest provider version, refer to the [official Terraform Registry](https://registry.terraform.io/providers/openstatusHQ/openstatus/latest).
+
+## Provider Configuration
+
+The OpenStatus Terraform provider requires authentication via an API token.
+
+### `openstatus_api_token`
+
+**Type:** String (required)
+**Description:** Your OpenStatus API Access Token. This token is used to authenticate your Terraform requests with the OpenStatus API.
+
+**Example:**
+
+```terraform
 provider "openstatus" {
-  openstatus_api_token= "YOUR_API_TOKEN"
-}
-
-resource "openstatus_monitor" "my_monitor" {
-  url   = "https://www.openstatus.dev"
-  regions= ["iad", "jnb"]
-  periodicity =  "10m"
-  name = "test-monitor"
-  active = true
-  description = "This is a test monitor"
+  openstatus_api_token = "YOUR_OPENSTATUS_API_TOKEN"
 }
 ```
+
+## Resources
+
+The provider currently supports managing `openstatus_monitor` resources.
+
+### `openstatus_monitor`
+
+Manages an OpenStatus monitor. This resource allows you to define and control the parameters of a synthetic monitor.
+
+**Arguments:**
+
+| Argument      | Type                  | Required | Default | Description                                                                                                                                     |
+| :------------ | :-------------------- | :------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `url`         | `string`              | Yes      |         | The URL or URI of the endpoint to be monitored. Format depends on the monitor type (e.g., full URL for HTTP, host:port for TCP).          |
+| `regions`     | `list(string)`        | Yes      |         | A list of region identifiers (e.g., `"iad"`, `"jnb"`) from where the monitor checks will be performed.                                        |
+| `periodicity` | `string`              | Yes      |         | The frequency at which the monitor will perform checks. Supported values: `"30s"`, `"1m"`, `"5m"`, `"10m"`, `"30m"`, `"1h"`. |
+| `name`        | `string`              | Yes      |         | A human-readable name for the monitor.                                                                                                          |
+| `active`      | `bool`                | Yes      |         | Specifies whether the monitor is active (`true`) or paused (`false`).                                                                           |
+| `description` | `string` (optional)   | No       | `""`    | A detailed description of the monitor's purpose or configuration.                                                                               |
+| `monitor_type` | `string`             | Yes      |         | The type of monitor to create. Supported values: `"HTTP"`, `"TCP"`, `"DNS"`                                                               |
+| `method`      | `string` (optional)   | No       | `"GET"` | (HTTP monitors only) The HTTP method to use for the request (e.g., `"GET"`, `"POST"`).                                                     |
+| `body`        | `string` (optional)   | No       | `""`    | (HTTP monitors only) The request body to send for `POST`, `PUT`, `PATCH` methods.                                                              |
+| `headers`     | `map(string)` (optional)| No       | `{}`    | (HTTP monitors only) A map of custom HTTP headers to include with the request.                                                                  |
+| `timeout`     | `string` (optional)   | No       | `"45s"` | The maximum duration to wait for a response. Format: duration string (e.g., `"30s"`, `"1m"`).                                              |
+| `degraded_after`| `string` (optional) | No       | `""`    | The duration after which a response is considered degraded. Format: duration string.                                                            |
+| `retries`     | `number` (optional)   | No       | `3`     | The number of times the monitor will retry a failed check.                                                                                      |
+| `public`      | `bool` (optional)     | No       | `false` | Controls whether monitor data is accessible on your public status page.                                                                         |
+| `otlp_endpoint`| `string` (optional)  | No       | `""`    | The OTLP (OpenTelemetry Protocol) endpoint URL for exporting metrics.                                                                           |
+| `otlp_headers`| `map(string)` (optional)| No       | `{}`    | Custom headers to include when exporting metrics to your OTLP endpoint.                                                                       |
+
+**Example Usage:**
+
+```terraform
+resource "openstatus_monitor" "my_website_monitor" {
+  name        = "My Website Availability"
+  description = "Checks the main website for uptime and response time."
+  url         = "https://www.example.com"
+  monitor_type = "HTTP"
+  method      = "GET"
+  regions     = ["us-east-1", "eu-west-1"]
+  periodicity = "1m"
+  active      = true
+  public      = true
+  timeout     = "60s"
+}
+
+resource "openstatus_monitor" "internal_api_monitor" {
+  name        = "Internal API Health Check"
+  description = "Monitors the health of a critical internal API."
+  url         = "https://api.internal.corp:8443/health"
+  monitor_type = "HTTP"
+  method      = "GET"
+  regions     = ["private-location-id"]
+  periodicity = "5m"
+  active      = true
+  public      = false
+  headers = {
+    "Authorization" = "Bearer ${var.internal_api_token}"
+    "Accept"        = "application/json"
+  }
+}
+
+resource "openstatus_monitor" "database_port_monitor" {
+  name        = "Database TCP Port Check"
+  description = "Ensures the PostgreSQL port is open and reachable."
+  url         = "db.example.com:5432"
+  monitor_type = "TCP"
+  regions     = ["us-west-2"]
+  periodicity = "30s"
+  active      = true
+}
+```
+
+## Related resources
+
+- **[OpenStatus Monitoring Overview](/monitoring/overview)** - Learn more about monitoring concepts in OpenStatus.
+- **[HTTP Monitor Reference](/reference/http-monitor)** - Detailed specification for HTTP monitor configuration.
+- **[TCP Monitor Reference](/reference/tcp-monitor)** - Detailed specification for TCP monitor configuration.
+- **[DNS Monitor Reference](/reference/dns-monitor)** - Detailed specification for DNS monitor configuration.
+- **[CLI Reference](/reference/cli-reference)** - Manage monitors using the OpenStatus command-line interface.

@@ -94,7 +94,10 @@ User-Agent: Custom-Agent/1.0
 
 ### Regions
 
-The regions where we are triggering the HTTP request.
+**Type:** Array of Strings (required)
+**Format:** Region identifiers (e.g., `iad`, `jnb`)
+
+The geographical regions from which the HTTP request will be triggered. This allows for monitoring global availability and performance.
 
 __Africa__
 
@@ -150,67 +153,94 @@ __Oceania__
 
 ### Frequency
 
-The check interval, we support the following frequencies:
-- 30 seconds
-- 1 minute
-- 5 minutes
-- 10 minutes
-- 30 minutes
-- 1 hour
+**Type:** String (required)
+**Format:** Duration string (e.g., `30s`, `1m`, `1h`)
+
+The interval at which the HTTP monitor will perform checks. Supported frequencies:
+- `30 seconds`
+- `1 minute`
+- `5 minutes`
+- `10 minutes`
+- `30 minutes`
+- `1 hour`
 
 ### Response Time Thresholds
+
 #### Timeout
-The timeout for the HTTP request, default is `45 seconds`
+
+**Type:** Duration (optional)
+**Default:** `45 seconds`
+
+The maximum duration to wait for the HTTP request to complete. If the request exceeds this time, it is considered a failure.
+
 #### Degraded
-The duration for which the HTTP request is considered degraded.
+
+**Type:** Duration (optional)
+
+The duration after which the HTTP request is considered to be performing in a degraded state. This threshold allows for proactive alerting on performance issues before a complete outage.
 
 ### Retry
-The number of retries for the HTTP request. For example: `3`
+
+**Type:** Integer (optional)
+**Default:** `3`
+
+The number of times the monitor will automatically retry the HTTP request upon failure before reporting a definitive error. For example: `3`
 
 ### Assertions
-#### Body assertions
-Validate the body of the response. The comparisons are:
-- Contains
-- Not Contains
-- Equal
-- Not Equal
-- Empty
 
-#### Status code assertions
-Validate the status code of the response. The comparisons are:
-- Equal
-- Not Equal
-- Greater Than
-- Greater Than or Equal
-- Less Than
-- Less Than or Equal
+Assertions allow you to validate specific aspects of the HTTP response.
 
-#### Headers assertions
+#### Body Assertions
 
-**Purpose:** Validate response headers
+Validate the content of the HTTP response body.
 
-Validate the headers of the response. The comparisons are:
-- Contains
-- Not Contains
-- Equal
-- Not Equal
-- Empty
+**Comparisons:**
+- `Contains`: The response body must include the specified string.
+- `Not Contains`: The response body must not include the specified string.
+- `Equal`: The response body must exactly match the specified string.
+- `Not Equal`: The response body must not exactly match the specified string.
+- `Empty`: The response body must be empty.
 
-**Example use cases:**
-- Verify cache headers are present
-- Check security headers (e.g., `X-Frame-Options`)
-- Validate content-type in responses
+#### Status Code Assertions
+
+Validate the HTTP status code of the response.
+
+**Comparisons:**
+- `Equal`: The status code must be exactly the specified value.
+- `Not Equal`: The status code must not be the specified value.
+- `Greater Than`: The status code must be greater than the specified value.
+- `Greater Than or Equal`: The status code must be greater than or equal to the specified value.
+- `Less Than`: The status code must be less than the specified value.
+- `Less Than or Equal`: The status code must be less than or equal to the specified value.
+
+#### Headers Assertions
+
+Validate the presence or content of specific HTTP response headers.
+
+**Purpose:** Verify cache headers, check security headers (e.g., `X-Frame-Options`), validate content-type.
+
+**Comparisons:**
+- `Contains`: A header's value must include the specified string.
+- `Not Contains`: A header's value must not include the specified string.
+- `Equal`: A header's value must exactly match the specified string.
+- `Not Equal`: A header's value must not exactly match the specified string.
+- `Empty`: A header's value must be empty or the header must not be present.
+
+**Example Use Cases:**
+- Verify `Cache-Control` headers are present and correct.
+- Check for the existence of security-related headers like `Strict-Transport-Security`.
+- Validate the `Content-Type` header in API responses.
 
 ### OpenTelemetry
 
-Export monitoring metrics to your observability platform.
+Configures the export of monitoring metrics to an OpenTelemetry-compatible observability platform.
 
 #### OTLP Endpoint
 
 **Type:** String (optional)  
 **Protocol:** HTTP only
 
-The OTLP (OpenTelemetry Protocol) endpoint where metrics should be exported.
+The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be exported.
 
 **Example:** `https://otlp.example.com/v1/metrics`
 
@@ -218,7 +248,7 @@ The OTLP (OpenTelemetry Protocol) endpoint where metrics should be exported.
 
 **Type:** Key-value pairs (optional)
 
-Headers to include when exporting metrics to your OTLP endpoint.
+Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
 
 **Common example:**
 ```
@@ -230,19 +260,19 @@ Authorization: Bearer <your_token>
 **Type:** Boolean  
 **Default:** `false`
 
-Controls whether monitor data is accessible on your public status page.
+Controls the visibility of monitor data on your public status page.
 
-- `true` - Monitor metrics and status are visible to all status page visitors
-- `false` - Monitor data remains private, visible only in your dashboard
+- `true`: Monitor metrics and status are visible to all visitors of your status page.
+- `false`: Monitor data remains private, accessible only within your OpenStatus dashboard.
 
-**Use cases for public:**
-- Transparency with users about service health
-- Public API status pages
-- SaaS service availability pages
+**Use cases for public visibility:**
+- Enhancing transparency with users regarding service health.
+- Providing public API status pages.
+- Displaying SaaS service availability to customers.
 
 ## Related resources
 
-- **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial
-- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview
-- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - All tracked metrics
-- **[CLI Reference](/reference/cli-reference)** - Manage monitors as code
+- **[Create Your First Monitor](/tutorial/how-to-create-monitor)** - Step-by-step tutorial on setting up a monitor.
+- **[Monitoring Overview](/monitoring/overview)** - Conceptual overview of OpenStatus monitoring capabilities.
+- **[Monitor Data Collected](/monitoring/monitor-data-collected)** - Detailed information on all metrics and data points collected by monitors.
+- **[CLI Reference](/reference/cli-reference)** - Guide to managing OpenStatus monitors programmatically using the command-line interface.
