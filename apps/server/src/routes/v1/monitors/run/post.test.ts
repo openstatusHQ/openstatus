@@ -94,17 +94,20 @@ test("run monitor without auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test.todo("run monitor from different workspace should return 404", async () => {
-  const res = await app.request("/v1/monitor/2/run", {
-    method: "POST",
-    headers: {
-      "x-openstatus-key": "1",
-      "content-type": "application/json",
-    },
-  });
+test.todo(
+  "run monitor from different workspace should return 404",
+  async () => {
+    const res = await app.request("/v1/monitor/2/run", {
+      method: "POST",
+      headers: {
+        "x-openstatus-key": "1",
+        "content-type": "application/json",
+      },
+    });
 
-  expect(res.status).toBe(404);
-});
+    expect(res.status).toBe(404);
+  },
+);
 
 test("run TCP monitor with valid id should return 200", async () => {
   mockFetch.mockReturnValue(

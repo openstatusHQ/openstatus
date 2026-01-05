@@ -11,20 +11,18 @@ test("create a valid monitor", async () => {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      "active": true,
-      "degradedAfter": 60,
-      "description": "This is a test",
-      "frequency": "10m",
-      "kind": "tcp",
-      "name": "Test2",
-      "regions": [
-        "iad"
-      ],
-      "request": {
-        "host": "openstat.us",
-        "port": 80
+      active: true,
+      degradedAfter: 60,
+      description: "This is a test",
+      frequency: "10m",
+      kind: "tcp",
+      name: "Test2",
+      regions: ["iad"],
+      request: {
+        host: "openstat.us",
+        port: 80,
       },
-      "retry": 3
+      retry: 3,
     }),
   });
 

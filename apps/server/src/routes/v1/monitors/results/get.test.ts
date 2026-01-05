@@ -59,20 +59,23 @@ test("get monitor result from different workspace should return 404", async () =
   expect(res.status).toBe(404);
 });
 
-test.todo("get monitor result with valid TCP monitor should return 200", async () => {
-  const res = await app.request("/v1/monitor/4/result/2", {
-    method: "GET",
-    headers: {
-      "x-openstatus-key": "1",
-    },
-  });
+test.todo(
+  "get monitor result with valid TCP monitor should return 200",
+  async () => {
+    const res = await app.request("/v1/monitor/4/result/2", {
+      method: "GET",
+      headers: {
+        "x-openstatus-key": "1",
+      },
+    });
 
-  expect(res.status).toBe(200);
+    expect(res.status).toBe(200);
 
-  const json = await res.json();
-  const result = ResultRun.array().safeParse(json);
-  expect(result.success).toBe(true);
-});
+    const json = await res.json();
+    const result = ResultRun.array().safeParse(json);
+    expect(result.success).toBe(true);
+  },
+);
 
 test("get monitor result with non-matching result id should return 404", async () => {
   const res = await app.request("/v1/monitor/1/result/2", {
