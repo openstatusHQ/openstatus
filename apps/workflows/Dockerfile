@@ -3,9 +3,9 @@
 # See https://github.com/lenra-io/dofigen
 
 # ca-certs
-FROM debian@sha256:5fc1d68d490d6e22a8b182f67d2b9ed800e6dd49e997dd595a46977fe7cece46 AS ca-certs
+FROM debian@sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f AS ca-certs
 LABEL \
-    org.opencontainers.image.base.digest="sha256:5fc1d68d490d6e22a8b182f67d2b9ed800e6dd49e997dd595a46977fe7cece46" \
+    org.opencontainers.image.base.digest="sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
 RUN apt update && apt install -y ca-certificates && update-ca-certificates
 
@@ -21,10 +21,10 @@ COPY \
 RUN bun run src/build-docker.ts
 
 # install
-FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS install
+FROM oven/bun@sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3 AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
+    org.opencontainers.image.base.digest="sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.5" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
@@ -55,10 +55,10 @@ RUN \
     bun install --production  --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS build
+FROM oven/bun@sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3 AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3" \
+    org.opencontainers.image.base.digest="sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.5" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/workflows
@@ -84,11 +84,11 @@ COPY \
 RUN bun install
 
 # runtime
-FROM debian@sha256:5fc1d68d490d6e22a8b182f67d2b9ed800e6dd49e997dd595a46977fe7cece46 AS runtime
+FROM debian@sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f AS runtime
 LABEL \
     io.dofigen.version="2.6.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:5fc1d68d490d6e22a8b182f67d2b9ed800e6dd49e997dd595a46977fe7cece46" \
+    org.opencontainers.image.base.digest="sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="Background job processing and probe scheduling for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
