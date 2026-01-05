@@ -94,20 +94,17 @@ test("run monitor without auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test.todo(
-  "run monitor from different workspace should return 404",
-  async () => {
-    const res = await app.request("/v1/monitor/2/run", {
-      method: "POST",
-      headers: {
-        "x-openstatus-key": "1",
-        "content-type": "application/json",
-      },
-    });
+test("run monitor from different workspace should return 404", async () => {
+  const res = await app.request("/v1/monitor/2/run", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
 
-    expect(res.status).toBe(404);
-  },
-);
+  expect(res.status).toBe(404);
+});
 
 test("run TCP monitor with valid id should return 200", async () => {
   mockFetch.mockReturnValue(
@@ -146,47 +143,44 @@ test("run TCP monitor with valid id should return 200", async () => {
   }
 });
 
-test.todo(
-  "run monitor with multiple regions should return array of results",
-  async () => {
-    mockFetch.mockReturnValue(
-      Promise.resolve(
-        new Response(
-          JSON.stringify({
-            jobType: "http",
-            status: 200,
-            latency: 100,
-            region: "ams",
-            timestamp: 1234567890,
-            timing: {
-              dnsStart: 1,
-              dnsDone: 2,
-              connectStart: 3,
-              connectDone: 4,
-              tlsHandshakeStart: 5,
-              tlsHandshakeDone: 6,
-              firstByteStart: 7,
-              firstByteDone: 8,
-              transferStart: 9,
-              transferDone: 10,
-            },
-          }),
-          { status: 200, headers: { "content-type": "application/json" } },
-        ),
+test("run monitor with multiple regions should return array of results", async () => {
+  mockFetch.mockReturnValue(
+    Promise.resolve(
+      new Response(
+        JSON.stringify({
+          jobType: "http",
+          status: 200,
+          latency: 100,
+          region: "ams",
+          timestamp: 1234567890,
+          timing: {
+            dnsStart: 1,
+            dnsDone: 2,
+            connectStart: 3,
+            connectDone: 4,
+            tlsHandshakeStart: 5,
+            tlsHandshakeDone: 6,
+            firstByteStart: 7,
+            firstByteDone: 8,
+            transferStart: 9,
+            transferDone: 10,
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
       ),
-    );
+    ),
+  );
 
-    const res = await app.request("/v1/monitor/5/run", {
-      method: "POST",
-      headers: {
-        "x-openstatus-key": "1",
-        "content-type": "application/json",
-      },
-    });
+  const res = await app.request("/v1/monitor/5/run", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
 
-    expect(res.status).toBe(200);
+  expect(res.status).toBe(200);
 
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  },
-);
+  const json = await res.json();
+  expect(Array.isArray(json)).toBe(true);
+});

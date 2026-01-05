@@ -81,20 +81,16 @@ test("trigger monitor without auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test.todo(
-  "trigger monitor from different workspace should return 404",
-  async () => {
-    const res = await app.request("/v1/monitor/2/trigger", {
-      method: "POST",
-      headers: {
-        "x-openstatus-key": "1",
-        "content-type": "application/json",
-      },
-    });
-
-    expect(res.status).toBe(404);
-  },
-);
+test("trigger monitor from different workspace should return 404", async () => {
+  const res = await app.request("/v1/monitor/99/trigger", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
+  expect(res.status).toBe(404);
+});
 
 test("trigger deleted monitor should return 404", async () => {
   const res = await app.request("/v1/monitor/3/trigger", {

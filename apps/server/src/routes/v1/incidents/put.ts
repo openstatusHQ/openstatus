@@ -25,7 +25,12 @@ const putRoute = createRoute({
           schema: IncidentSchema.pick({
             acknowledgedAt: true,
             resolvedAt: true,
-          }).partial(),
+          })
+            .partial()
+            .refine(
+              (data) => data.acknowledgedAt !== undefined || data.resolvedAt !== undefined,
+              "Either acknowledgedAt or resolvedAt must be provided",
+            ),
         },
       },
     },
