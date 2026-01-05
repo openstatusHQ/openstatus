@@ -28,7 +28,9 @@ const putRoute = createRoute({
           })
             .partial()
             .refine(
-              (data) => data.acknowledgedAt !== undefined || data.resolvedAt !== undefined,
+              (data) =>
+                data.acknowledgedAt !== undefined ||
+                data.resolvedAt !== undefined,
               "Either acknowledgedAt or resolvedAt must be provided",
             ),
         },

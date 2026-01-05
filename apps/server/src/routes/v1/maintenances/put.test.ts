@@ -118,24 +118,27 @@ test.todo("update only the dates", async () => {
   expect(result.data?.to).toEqual(to);
 });
 
-test.todo("update maintenance with `from` date after `to` date should return 400", async () => {
-  const to = new Date();
-  const from = new Date(to.getTime() + 3600000); // from is 1 hour after to
+test.todo(
+  "update maintenance with `from` date after `to` date should return 400",
+  async () => {
+    const to = new Date();
+    const from = new Date(to.getTime() + 3600000); // from is 1 hour after to
 
-  const res = await app.request("/v1/maintenance/1", {
-    method: "PUT",
-    headers: {
-      "x-openstatus-key": "1",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: from.toISOString(),
-      to: to.toISOString(),
-    }),
-  });
+    const res = await app.request("/v1/maintenance/1", {
+      method: "PUT",
+      headers: {
+        "x-openstatus-key": "1",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: from.toISOString(),
+        to: to.toISOString(),
+      }),
+    });
 
-  expect(res.status).toBe(400);
-});
+    expect(res.status).toBe(400);
+  },
+);
 
 test("remove all maintenance monitors", async () => {
   const res = await app.request("/v1/maintenance/1", {
