@@ -4,33 +4,27 @@ import { app } from "@/index";
 import { MonitorSchema } from "./schema";
 
 test("create a valid monitor", async () => {
-  const res = await app.request("/v1/monitor/http", {
+  const res = await app.request("/v1/monitor/tcp", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      frequency: "10m",
-      name: "OpenStatus",
-      description: "OpenStatus website",
-      regions: ["ams", "gru"],
-      request: {
-        url: "https://www.openstatus.dev",
-        method: "POST",
-        body: '{"hello":"world"}',
-        headers: { "content-type": "application/json" },
-      },
-      active: true,
-      public: true,
-      assertions: [
-        {
-          kind: "statusCode",
-          compare: "eq",
-          target: 200,
-        },
-        { kind: "header", compare: "not_eq", key: "key", target: "value" },
+      "active": true,
+      "degradedAfter": 60,
+      "description": "This is a test",
+      "frequency": "10m",
+      "kind": "tcp",
+      "name": "Test2",
+      "regions": [
+        "iad"
       ],
+      "request": {
+        "host": "openstat.us",
+        "port": 80
+      },
+      "retry": 3
     }),
   });
 

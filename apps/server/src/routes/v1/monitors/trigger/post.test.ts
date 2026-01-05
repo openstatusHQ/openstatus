@@ -169,7 +169,7 @@ test("trigger monitor with multiple regions should return result id", async () =
     ),
   );
 
-  const res = await app.request("/v1/monitor/5/trigger", {
+  const res = await app.request("/v1/monitor/1/trigger", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
