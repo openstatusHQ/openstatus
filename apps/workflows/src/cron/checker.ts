@@ -98,7 +98,7 @@ export async function sendCheckerTasks(
   const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
   if (!monitors.success) {
-    logger.error(`Error while fetching the monitors ${monitors.error.errors}`);
+    logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
   }
 
@@ -113,7 +113,7 @@ export async function sendCheckerTasks(
     const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
     if (!monitorStatus.success) {
       console.error(
-        `Error while fetching the monitor status ${monitorStatus.error.errors}`,
+        `Error while fetching the monitor status ${monitorStatus.error}`,
       );
       continue;
     }
