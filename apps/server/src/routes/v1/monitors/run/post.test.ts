@@ -169,19 +169,18 @@ test("run monitor with multiple regions should return array of results", async (
         { status: 200, headers: { "content-type": "application/json" } },
       ),
     ),
-    );
+  );
 
-    const res = await app.request("/v1/monitor/5/run", {
-      method: "POST",
-      headers: {
-        "x-openstatus-key": "1",
-        "content-type": "application/json",
-      },
-    });
+  const res = await app.request("/v1/monitor/5/run", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+  });
 
-    expect(res.status).toBe(200);
+  expect(res.status).toBe(200);
 
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  },
-);
+  const json = await res.json();
+  expect(Array.isArray(json)).toBe(true);
+});

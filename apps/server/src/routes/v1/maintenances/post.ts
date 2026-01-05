@@ -70,14 +70,12 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
       });
     }
 
-
     if (input.from > input.to) {
       throw new OpenStatusApiError({
         code: "BAD_REQUEST",
         message: "`date.from` cannot be after `date.to`",
       });
     }
-
 
     const _page = await db
       .select()
