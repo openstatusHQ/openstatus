@@ -24,9 +24,9 @@ test("Create Maintenance", async () => {
   const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    startDate:from,
-    endDate:to,
-    pageId:1,
+    startDate: from,
+    endDate: to,
+    pageId: 1,
   });
 
   expect(createdMaintenance).toMatchObject({
@@ -46,9 +46,9 @@ test("Get Maintenance by ID", async () => {
   const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    startDate:from,
-    endDate:to,
-    pageId:1,
+    startDate: from,
+    endDate: to,
+    pageId: 1,
   });
 
   const createdMaintenanceId = createdMaintenance.id;
@@ -74,24 +74,24 @@ test("Update Maintenance", async () => {
   const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    startDate:from,
-    endDate:to,
-    pageId:1,
+    startDate: from,
+    endDate: to,
+    pageId: 1,
   });
 
   const createdMaintenanceId = createdMaintenance.id;
 
-    await caller.maintenance.update({
+  await caller.maintenance.update({
     id: createdMaintenanceId,
     title: "Updated Test Maintenance",
     message: "This is an updated test maintenance.",
     startDate: from,
-    endDate:to,
+    endDate: to,
   });
 
-    const updatedMaintenance = await caller.maintenance.getById({
-      id: createdMaintenanceId,
-    });
+  const updatedMaintenance = await caller.maintenance.getById({
+    id: createdMaintenanceId,
+  });
 
   expect(updatedMaintenance).toMatchObject({
     id: createdMaintenanceId,
@@ -110,9 +110,9 @@ test("Delete Maintenance", async () => {
   const createdMaintenance = await caller.maintenance.new({
     title: "Test Maintenance",
     message: "This is a test maintenance.",
-    startDate:from,
-    endDate:to,
-    pageId:1,
+    startDate: from,
+    endDate: to,
+    pageId: 1,
   });
 
   const createdMaintenanceId = createdMaintenance.id;
