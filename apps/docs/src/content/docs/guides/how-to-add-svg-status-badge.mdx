@@ -1,78 +1,103 @@
 ---
-title: How to Add an SVG Status Badge to your GitHub README
+title: How to Add a Status Badge to a GitHub README
+description: A step-by-step guide to adding a real-time SVG or PNG status badge to your GitHub repository.
 ---
 
-You want to add an SVG status badge to your GitHub README?
+## Problem
 
-### PNG Badge
+You want to display the real-time status of your service directly in your GitHub repository's README file. This provides immediate visibility to your users and team members about the health of your application.
 
-```html
-<img src='https://[slug].openstatus.dev/badge'>
-```
+## Solution
 
-This will return a PNG image with the status of your page. It will look like this:
-<img src='https://status.openstatus.dev/badge' />
+openstatus provides embeddable status badges that you can add to any Markdown file, including your `README.md`. You can choose between a modern SVG badge or a legacy PNG badge.
 
-You can customize the theme by adding `?theme=dark` and the size of it by adding `?size=lg`.
+## Prerequisites
 
-Supported themes:
-- `dark`
-- `light` (default)
+-   An openstatus account with a configured status page.
+-   The "slug" of your status page (the unique name in its URL, e.g., `https://[slug].openstatus.dev`).
 
-Supported sizes:
-- `sm` (default)
-- `md`
-- `lg`
-- `xl`
+## Step-by-step guide
 
-It will display the following labels based on the current status of the status page:
+### Step 1: Choose your badge type
 
-```
-Operational
-Degraded
-Outage
-Incident
-Maintenance
-Unknown
-```
+We recommend using the modern SVG badge (v2) as it offers more customization options.
 
-### SVG Badge (v2)
+-   **SVG Badge (v2)**: More flexible, better styling, and uses a monospaced font.
+-   **PNG Badge (Legacy)**: Simpler, but with fewer customization options.
 
-```html
-<img src='https://[slug].openstatus.dev/badge/v2'>
-```
+### Step 2: Add the badge to your README
 
-This will return a PNG image with the status of your page. It will look like this:
-<img src='https://status.openstatus.dev/badge/v2' />
+Copy the Markdown snippet for your chosen badge type and paste it into your `README.md` file. **Remember to replace `[slug]` with your status page slug.**
 
-You can customize the theme by adding `?theme=dark`, the size of it by adding `?size=lg` and the variant `?variant=outline` - use what fits best to you!
+---
 
-Supported themes:
-- `light` (default)
-- `dark`
+#### Option A: Modern SVG Badge (Recommended)
 
-Supported sizes:
-- `sm` (default)
-- `md`
-- `lg`
-- `xl`
+This is the recommended badge for most use cases.
 
-Supported variants:
-- `default` (default)
-- `outline`
-
-The **outline** variant simply adds a slightly rounded border to the svg `rect`. It mainly can be used for GitHub README or Markdown where styling is not supported.
-
-Compared to the PNG badge, we let you define the `border` and `border-radius` of the SVG badge and the font is mono.
-
-It will display the following labels based on the current status of the status page:
+##### Base URL
 
 ```
-All Systems Operational
-Degraded Performance
-Partial Outage
-Major Outage
-Ongoing Incident
-Under Maintenance
-Unknown
+https://[slug].openstatus.dev/badge/v2
 ```
+
+##### Markdown Snippet
+
+```
+![Status](https://[slug].openstatus.dev/badge/v2)
+```
+
+**Example:**
+
+![Status](https://status.openstatus.dev/badge/v2)
+
+##### Customization
+
+You can customize the badge by adding query parameters to the URL.
+
+-   **Theme**: `?theme=dark` (default is `light`)
+-   **Size**: `?size=md` (options: `sm`, `md`, `lg`, `xl`; default is `sm`)
+-   **Variant**: `?variant=outline` (adds a border; default has no border)
+
+**Example with all options:**
+
+```
+![Status](https://[slug].openstatus.dev/badge/v2?theme=dark&size=lg&variant=outline)
+```
+
+---
+
+#### Option B: Legacy PNG Badge
+
+Use this badge if you prefer the older style.
+
+##### Base URL
+
+```
+https://[slug].openstatus.dev/badge
+```
+
+##### Markdown Snippet
+
+```markdown
+![Status](https://[slug].openstatus.dev/badge)
+```
+
+**Example:**
+
+![Status](https://status.openstatus.dev/badge)
+
+##### Customization
+
+-   **Theme**: `?theme=dark` (default is `light`)
+-   **Size**: `?size=lg` (options: `sm`, `md`, `lg`, `xl`; default is `sm`)
+
+**Example with all options:**
+
+```
+![Status](https://[slug].openstatus.dev/badge?theme=dark&size=lg)
+```
+
+### Step 3: Commit your changes
+
+Save your `README.md` file and commit it to your repository. The status badge will now be visible to anyone visiting your repository. It will automatically update to reflect the current status of your services.
