@@ -12,20 +12,6 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    docker:
-      fromImage:
-        path: oven/bun
-        digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.5
-        org.opencontainers.image.base.digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
-      workdir: /app/apps/workflows
-      copy:
-      - paths:
-        - .
-        target: /app/
-      run:
-      - bun run src/build-docker.ts
     ca-certs:
       fromImage:
         path: debian
@@ -40,9 +26,9 @@ effective: |
         path: oven/bun
         digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
       label:
-        org.opencontainers.image.base.digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.5
         org.opencontainers.image.stage: install
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.5
+        org.opencontainers.image.base.digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
       workdir: /app/
       run:
       - bun install --production  --frozen-lockfile --verbose
@@ -95,14 +81,43 @@ effective: |
         source: packages/upstash/package.json
       - target: packages/theme-store/package.json
         source: packages/theme-store/package.json
-    build:
+    docker:
+      fromImage:
+        path: oven/bun
+        digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.5
+        org.opencontainers.image.base.digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
+      workdir: /app/apps/workflows
+      copy:
+      - paths:
+        - .
+        target: /app/
+      run:
+      - bun run src/build-docker.ts
+    libsql:
       fromImage:
         path: oven/bun
         digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
       label:
         org.opencontainers.image.base.digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.5
+      workdir: /app/
+      copy:
+      - fromBuilder: docker
+        paths:
+        - /app/apps/build-docker/package.json
+        target: /app/package.json
+      run:
+      - bun install
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
+      label:
         org.opencontainers.image.stage: build
         org.opencontainers.image.base.name: docker.io/oven/bun:1.3.5
+        org.opencontainers.image.base.digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -116,33 +131,18 @@ effective: |
         target: /app/node_modules
       run:
       - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app
-    libsql:
-      fromImage:
-        path: oven/bun
-        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
-        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
-      workdir: /app/
-      copy:
-      - fromBuilder: docker
-        paths:
-        - /app/apps/build-docker/package.json
-        target: /app/package.json
-      run:
-      - bun install
   fromImage:
     path: debian
     digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
+    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    org.opencontainers.image.title: OpenStatus Workflows
     io.dofigen.version: 2.6.0
     org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -174,13 +174,11 @@ images:
           digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
     oven:
       bun:
-        1.3.3:
-          digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
         1.3.5:
           digest: sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3
 resources:
   dofigen.yml:
-    hash: 31cef4b70fa33ceb4b9b38f32c98ff13646d0f494bfb79c22734d22b67e9a1d8
+    hash: 29f1495061a739f083141290a5cc9ec438b02fcf0483141ab8598810c1daec57
     content: |
       ignore:
         - node_modules
@@ -254,7 +252,7 @@ resources:
           run: bun run src/build-docker.ts
 
         libsql:
-          fromImage: oven/bun:1.3.3
+          fromImage: oven/bun:1.3.5
           workdir: /app/
           copy:
             - fromBuilder: docker
