@@ -22,6 +22,31 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const maintenanceRouter = createTRPCRouter({
+  create: protectedProcedure
+    .meta({ track: Events.CreateMaintenance })
+    .input(insertMaintenanceSchema)
+    .mutation(async (opts) => {
+      const _maintenance = await opts.ctx.db
+        .insert(maintenance)
+        .values({ ...opts.input, workspaceId: opts.ctx.workspace.id })
+        .returning()
+        .get();
+
+      if (opts.input.monitors?.length) {
+        await opts.ctx.db
+          .insert(maintenancesToMonitors)
+          .values(
+            opts.input.monitors.map((monitorId) => ({
+              maintenanceId: _maintenance.id,
+              monitorId,
+            })),
+          )
+          .returning()
+          .get();
+      }
+
+      return _maintenance;
+    }),
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
