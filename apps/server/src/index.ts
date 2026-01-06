@@ -45,7 +45,7 @@ const loggerProvider = new LoggerProvider({
   processors: [new SimpleLogRecordProcessor(exporter)],
 });
 
-const legacy = getOpenTelemetrySink({
+const defaultLogger = getOpenTelemetrySink({
   serviceName: "openstatus-server",
   otlpExporterConfig: {
     url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
@@ -57,11 +57,12 @@ const legacy = getOpenTelemetrySink({
   additionalResource: resourceFromAttributes({
     [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
   }),
-});
+})
 configure({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
-    otel: getOpenTelemetrySink({ loggerProvider }),
+
+   otel: defaultLogger,
   },
   loggers: [
     {
