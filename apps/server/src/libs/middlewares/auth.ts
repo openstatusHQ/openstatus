@@ -66,6 +66,11 @@ export async function authMiddleware(
       message: "Workspace data is invalid",
     });
   }
+  const event = c.get('event')
+  event.workspace = {
+    id : validation.data.id,
+    name : validation.data.name,
+  }
 
   c.set("workspace", validation.data);
 

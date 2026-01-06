@@ -3,4 +3,5 @@ import type { RequestIdVariables } from "hono/request-id";
 
 export type Variables = RequestIdVariables & {
   workspace: Workspace;
-};
+  event: Record<string, unknown>;
+} ;
