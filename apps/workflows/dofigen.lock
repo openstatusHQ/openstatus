@@ -12,6 +12,36 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.3
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app --external '@libsql/*' --external libsql
+    ca-certs:
+      fromImage:
+        path: debian
+        digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+      label:
+        org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+        org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+      run:
+      - apt update && apt install -y ca-certificates && update-ca-certificates
     install:
       fromImage:
         path: oven/bun
@@ -133,16 +163,17 @@ effective: |
       - apt update && apt install -y ca-certificates && update-ca-certificates
   fromImage:
     path: debian
-    digest: sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f
+    digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
   label:
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
     org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
+    org.opencontainers.image.base.digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.title: OpenStatus Workflows
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
     io.dofigen.version: 2.6.0
-    org.opencontainers.image.base.digest: sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f
-    org.opencontainers.image.description: Background job processing and probe scheduling for OpenStatus
-    org.opencontainers.image.title: OpenStatus Workflows
   workdir: /app/
   copy:
   - fromBuilder: build
@@ -150,11 +181,20 @@ effective: |
     - /app/apps/workflows/app
     target: /app/apps/workflows/
     chmod: '555'
-  - fromBuilder: libsql
+  - fromBuilder: build
     paths:
-    - /app/node_modules
-    target: /app/packages/db/node_modules
-  - fromBuilder: libsql
+    - /app/packages/db
+    target: /app/packages/db/
+  - paths:
+    - apps/workflows/start.sh
+    target: /app/start.sh
+    chmod: '755'
+  - fromBuilder: build
+    paths:
+    - /usr/local/bin/bun
+    target: /usr/local/bin/bun
+    chmod: '755'
+  - fromBuilder: install
     paths:
     - /app/node_modules
     target: /app/node_modules
@@ -162,8 +202,14 @@ effective: |
     paths:
     - /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
+  root:
+    run:
+    - apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+    - mkdir -p /app/data
+    - chown -R 1000:1000 /app/data
   entrypoint:
-  - /app/apps/workflows/app
+  - /bin/sh
+  - /app/start.sh
   expose:
   - port: 3000
 images:
@@ -177,10 +223,14 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f
+          digest: sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b
+    oven:
+      bun:
+        1.3.3:
+          digest: sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4
 resources:
   dofigen.yml:
-    hash: 31cef4b70fa33ceb4b9b38f32c98ff13646d0f494bfb79c22734d22b67e9a1d8
+    hash: a0ad1a5bb9b6026553537d163c77052133cbd7231927105febf9c2e86500ca3c
     content: |
       ignore:
         - node_modules
@@ -246,22 +296,6 @@ resources:
             NODE_ENV: production
           run: bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app
 
-        docker:
-          fromImage: oven/bun:1.3.5
-          workdir: /app/apps/workflows
-          copy:
-           - . /app/
-          run: bun run src/build-docker.ts
-
-        libsql:
-          fromImage: oven/bun:1.3.3
-          workdir: /app/
-          copy:
-            - fromBuilder: docker
-              source: /app/apps/build-docker/package.json
-              target: /app/package.json
-          run: bun install
-
         ca-certs:
           fromImage: debian:bullseye-slim
           run: apt update && apt install -y ca-certificates && update-ca-certificates
@@ -277,20 +311,34 @@ resources:
         org.opencontainers.image.vendor: OpenStatus
         org.opencontainers.image.authors: OpenStatus Team
 
+      # Create data directory and install curl as root before switching to user 1000
+      root:
+        run:
+          - apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+          - mkdir -p /app/data
+          - chown -R 1000:1000 /app/data
+
       # Copy artifacts from build stages
       copy:
         - fromBuilder: build
           source: /app/apps/workflows/app
           target: /app/apps/workflows/
           chmod: "555"
-        - fromBuilder: libsql
-          source: /app/node_modules
-          target: /app/packages/db/node_modules
-        - fromBuilder: libsql
+        - fromBuilder: build
+          source: /app/packages/db
+          target: /app/packages/db/
+        - source: apps/workflows/start.sh
+          target: /app/start.sh
+          chmod: "755"
+        - fromBuilder: build
+          source: /usr/local/bin/bun
+          target: /usr/local/bin/bun
+          chmod: "755"
+        - fromBuilder: install
           source: /app/node_modules
           target: /app/node_modules
         - fromBuilder: ca-certs
           source: /etc/ssl/certs/ca-certificates.crt
           target: /etc/ssl/certs/
       expose: "3000"
-      entrypoint: /app/apps/workflows/app
+      entrypoint: ["/bin/sh", "/app/start.sh"]
