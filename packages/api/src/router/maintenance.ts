@@ -22,7 +22,6 @@ import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const maintenanceRouter = createTRPCRouter({
-
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
