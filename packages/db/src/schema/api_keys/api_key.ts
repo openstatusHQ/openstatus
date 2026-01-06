@@ -1,12 +1,11 @@
-
 import { relations } from "drizzle-orm";
-import { text, integer, sqliteTable } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
 
-import { workspace } from "../workspaces";
 import { user } from "../users";
+import { workspace } from "../workspaces";
 
 export const apiKey = sqliteTable("api_key", {
   id: integer("id").primaryKey({ autoIncrement: true }),

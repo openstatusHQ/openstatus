@@ -1,6 +1,5 @@
-
-import { db, eq, apiKey } from "@openstatus/db";
 import { randomBytes } from "node:crypto";
+import { apiKey, db, eq } from "@openstatus/db";
 
 export const createApiKey = async ({
   name,
@@ -33,9 +32,6 @@ export const getApiKeys = async ({ workspaceId }: { workspaceId: string }) => {
 };
 
 export const getApiKey = async ({ token }: { token: string }) => {
-  const [key] = await db
-    .select()
-    .from(apiKey)
-    .where(eq(apiKey.token, token));
+  const [key] = await db.select().from(apiKey).where(eq(apiKey.token, token));
   return key;
 };
