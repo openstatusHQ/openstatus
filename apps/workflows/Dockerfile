@@ -3,11 +3,22 @@
 # See https://github.com/lenra-io/dofigen
 
 # ca-certs
-FROM debian@sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b AS ca-certs
+FROM debian@sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f AS ca-certs
 LABEL \
-    org.opencontainers.image.base.digest="sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b" \
+    org.opencontainers.image.base.digest="sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
 RUN apt update && apt install -y ca-certificates && update-ca-certificates
+
+# docker
+FROM oven/bun@sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3 AS docker
+LABEL \
+    org.opencontainers.image.base.digest="sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.5"
+WORKDIR /app/apps/workflows
+COPY \
+    --link \
+    "." "/app/"
+RUN bun run src/build-docker.ts
 
 # install
 FROM oven/bun@sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3 AS install
@@ -60,12 +71,24 @@ COPY \
     "/app/node_modules" "/app/node_modules"
 RUN bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app
 
+# libsql
+FROM oven/bun@sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4 AS libsql
+LABEL \
+    org.opencontainers.image.base.digest="sha256:fbf8e67e9d3b806c86be7a2f2e9bae801f2d9212a21db4dcf8cc9889f5a3c9c4" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.3"
+WORKDIR /app/
+COPY \
+    --from=docker \
+    --link \
+    "/app/apps/build-docker/package.json" "/app/package.json"
+RUN bun install
+
 # runtime
-FROM debian@sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b AS runtime
+FROM debian@sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f AS runtime
 LABEL \
     io.dofigen.version="2.6.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b" \
+    org.opencontainers.image.base.digest="sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="Background job processing and probe scheduling for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
@@ -79,23 +102,12 @@ COPY \
     --link \
     "/app/apps/workflows/app" "/app/apps/workflows/"
 COPY \
-    --from=build \
+    --from=libsql \
     --chown=1000:1000 \
     --link \
-    "/app/packages/db" "/app/packages/db/"
+    "/app/node_modules" "/app/packages/db/node_modules"
 COPY \
-    --chown=1000:1000 \
-    --chmod=755 \
-    --link \
-    "apps/workflows/start.sh" "/app/start.sh"
-COPY \
-    --from=build \
-    --chown=1000:1000 \
-    --chmod=755 \
-    --link \
-    "/usr/local/bin/bun" "/usr/local/bin/bun"
-COPY \
-    --from=install \
+    --from=libsql \
     --chown=1000:1000 \
     --link \
     "/app/node_modules" "/app/node_modules"
@@ -104,12 +116,6 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
-USER 0:0
-RUN <<EOF
-apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-mkdir -p /app/data
-chown -R 1000:1000 /app/data
-EOF
 USER 1000:1000
 EXPOSE 3000
-ENTRYPOINT ["/bin/sh", "/app/start.sh"]
+ENTRYPOINT ["/app/apps/workflows/app"]
