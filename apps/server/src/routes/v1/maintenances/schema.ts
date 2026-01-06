@@ -4,6 +4,7 @@ export const ParamsSchema = z.object({
   id: z
     .string()
     .min(1)
+    .regex(/^\d+$/, "ID must be a numeric string")
     .openapi({
       param: {
         name: "id",
@@ -42,6 +43,9 @@ export const MaintenanceSchema = z
     pageId: z.number().openapi({
       description: "The id of the status page this maintenance belongs to",
     }),
+  })
+  .refine((maintenance) => maintenance.from <= maintenance.to, {
+    error: "'from' date must be before 'to' date",
   })
   .openapi("Maintenance");
 

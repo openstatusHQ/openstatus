@@ -1,6 +1,6 @@
 ---
-title: How to deploy the openstatus probe to Cloudflare Containers
-description: Learn how to use OpenStatus monitoring data and deploy your own Status Page to cloudflare pages.
+title: How to Deploy a Private Probe on Cloudflare Containers
+description: A step-by-step guide to deploying an openstatus private monitoring probe on Cloudflare Containers.
 sidebar:
   label: Deploy private probes on Cloudflare Containers
 ---
@@ -9,120 +9,134 @@ import log from '../../../assets/guides/how-to-deploy-probes-cf-containters/clou
 import os from '../../../assets/guides/how-to-deploy-probes-cf-containters/private-location.jpg';
 
 
-In this guide we will show you how to deploy the OpenStatus probe to Cloudflare Containers.
+## Problem
 
-Cloudflare Containers is a platform that allows you to run serverless containers in the Cloudflare network.
+You need to monitor internal services that are not accessible from the public internet, or you want to run checks from your own infrastructure for compliance or performance reasons. You need a lightweight, serverless way to run these monitoring probes without managing virtual machines.
 
-Cloudflare containers automatically scales down after a given time. We will push a cron worker that will keep our container alive and running on Cloudflare Containers platform.
+## Solution
 
-The code showcased in this guide is available on [GitHub](https://github.com/openstatusHQ/private-location-cloudflare-container)
+Deploy the openstatus private location probe as a serverless container using Cloudflare Containers. This allows you to run monitoring checks from within your own network infrastructure, managed by Cloudflare. This guide will walk you through the entire process, from creating the private location in openstatus to deploying the container.
 
-### Requirements
-- A Cloudflare Account.
-- An [openstatus](https://www.openstatus.dev) Account.
+The code for the Cloudflare Worker template is available on [GitHub](https://github.com/openstatusHQ/private-location-cloudflare-container).
 
+## Prerequisites
+- A Cloudflare account
+- An [openstatus account](https://www.openstatus.dev)
+- `pnpm` and `docker` installed on your local machine
 
+## Step-by-step guide
 
-### Create a private location on OpenStatus
+### 1. Create a private location in openstatus
 
-1. Go to the OpenStatus dashboard.
-2. Click on the `Private locations` in the sidebar.
-3. Click on the `Create Private Location` button.
-4. Give it a human readable name.
-5. Save token.
-6. Click submit to save the newly created private location.
+First, you need to create a private location in your openstatus workspace to get an access key.
 
-### Create a Cloudflare Container
+1.  Go to the openstatus dashboard.
+2.  Click on **Private locations** in the sidebar.
+3.  Click **Create Private Location**.
+4.  Give it a human-readable name (e.g., "Cloudflare-EU").
+5.  Copy the generated token and save it somewhere secure.
+6.  Click **Submit** to save the new private location.
 
-1. Create a new cloudflare workers container template using the following command:
+### 2. Set up the Cloudflare project
+
+Next, create a new Cloudflare project using the containers template.
 
 ```bash
 pnpm create cloudflare@latest --template=cloudflare/templates/containers-template
 ```
 
-2. Fetch openstatus private location image from Docker Hub, we need to specify the platform to linux/amd64 because Cloudflare Containers currently only supports amd64 architecture.:
+### 3. Pull and tag the probe Docker image
+
+Pull the official openstatus private location image from Docker Hub. You must specify the `linux/amd64` platform, as this is what Cloudflare Containers supports.
 
 ```bash
-docker docker pull --platform linux/amd64 ghcr.io/openstatushq/private-location:latest
-```
+# Pull the image
+docker pull --platform linux/amd64 ghcr.io/openstatushq/private-location:latest
 
-3. Tag the image, be aware we cannot use the `latest` tag on Cloudflare Containers:
-
-```bash
+# Tag the image for Cloudflare (you cannot use the 'latest' tag)
 docker tag ghcr.io/openstatushq/private-location:latest openstatus-private-location:v1
 ```
 
-4. Push the image to Cloudflare Container Registry:
+### 4. Push the image to Cloudflare Container Registry
+
+Push the tagged image to your Cloudflare account's container registry.
 
 ```bash
 pnpm wrangler containers push openstatus-private-location:v1
 ```
 
-5. Update the `wrangler.toml` file to use the pushed image:
+### 5. Configure `wrangler.toml`
 
-```toml
-[containers]
-    image = "registry.cloudflare.com/GENERATED_ID/openstatus-private-location:cf-1"
-```
+Now, configure your Cloudflare project to use the container and run it on a schedule.
 
-6. Update the worker to use a cron trigger to keep the container alive, add the following to your `wrangler.toml` file:
+1.  Open the `wrangler.toml` file.
+2.  Add a `[containers]` section to link the image you pushed. Replace `GENERATED_ID` with the actual ID from the previous step's output.
+    ```toml
+    [containers]
+    image = "registry.cloudflare.com/GENERATED_ID/openstatus-private-location:v1"
+    ```
+3.  Add a `triggers` section to run the worker on a cron schedule. This keeps the container alive, as Cloudflare Containers automatically scales to zero.
+    ```toml
+    triggers = { cron = ["*/2 * * * *"] } # Runs every 2 minutes
+    ```
 
-```toml
-triggers = { cron = ["*/2 * * * *"] }
-```
+### 6. Configure the worker
 
-7. Update the `index.ts` file to run a simple command to keep the container alive:
+Update the worker script (`index.ts`) to start the container with the correct environment variables.
 
-```ts
-sleepAfter = "150s";
-```
-and
+1.  Set the `sleepAfter` value to control how long the container runs after being invoked.
+    ```typescript
+    sleepAfter = "150s";
+    ```
+2.  Update the `scheduled` function to pass your openstatus key to the container.
+    ```typescript
+    async scheduled(_controller: any, env: Env) {
+      try {
+        const container = getContainer(env.MY_CONTAINER);
+        await container.start({
+          envVars: {
+            OPENSTATUS_KEY: env.OPENSTATUS_KEY,
+          },
+        });
+      } catch (e) {
+        console.error("Error in scheduled task:", e);
+      }
+    
+      return new Response("ok");
+    },
+    ```
 
-```ts
-async scheduled(_controller: any, env: Env) {
-  try {
-    const container = getContainer(env.MY_CONTAINER);
-    await container.start({
-      envVars: {
-        OPENSTATUS_KEY: env.OPENSTATUS_KEY,
-      },
-    });
-  } catch (e) {
-    console.error("Error in scheduled task:", e);
-  }
+### 7. Add your openstatus key as a secret
 
-  return new Response("ok");
-},
-```
-
-9. Add you OpenStatus API secret
+Securely provide your private location token to the Cloudflare worker.
 
 ```bash
+# Paste the token you saved in Step 1 when prompted
 pnpm wrangler secret put OPENSTATUS_KEY
 ```
 
+### 8. Deploy the application
 
-10. Deploy the container to Cloudflare Containers:
+Finally, deploy the worker and container to Cloudflare.
 
 ```bash
 pnpm wrangler deploy
 ```
 
+Your private location probe is now running on Cloudflare Containers and will start picking up monitoring jobs from your openstatus workspace.
 
+## Verify the deployment
 
+You can check the logs of your Cloudflare Worker to see the probe in action. In your openstatus dashboard, the private location should now show as connected.
 
-## Conclusion
-
-You have successfully deployed the openstatus private location probe to Cloudflare Containers. Thus you can monitor your endpoint from Cloudflare's global network.
-
-
-  <Image
+<Image
     src={log}
-    alt="OpenStatus Private Location on Cloudflare Containers"
-    caption="Cloudflare Workers Logs showing OpenStatus Private Location running"
+    alt="Cloudflare Workers Logs showing openstatus Private Location running"
+    caption="Cloudflare Workers logs showing the private probe running."
   />
 
-  <Image
+<Image
     src={os}
-    alt="OpenStatus Private Location on Cloudflare Containers"
+    alt="openstatus Private Location connected"
+    caption="The private location showing as 'Connected' in the openstatus dashboard."
   />

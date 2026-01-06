@@ -54,30 +54,41 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    for (const item of subscription.items.data) {
-      console.log(item);
-      const feature = getFeatureFromPriceId(item.price.id);
-      if (!feature) {
-        continue;
-      }
-      const _ws = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.stripeId, customerId))
-        .get();
+    // for (const item of subscription.items.data) {
+    //   const feature = getFeatureFromPriceId(item.price.id);
+    //   if (!feature) {
+    //     continue;
+    //   }
+    //   const _ws = await opts.ctx.db
+    //     .select()
+    //     .from(workspace)
+    //     .where(eq(workspace.stripeId, customerId))
+    //     .get();
 
-      const ws = selectWorkspaceSchema.parse(_ws);
+    //   const ws = selectWorkspaceSchema.parse(_ws);
 
-      const newLimits = updateAddonInLimits(ws.limits, feature.feature, "add");
+    //   const currentValue = ws.limits[feature.feature];
+    //   const newValue =
+    //     typeof currentValue === "boolean"
+    //       ? true
+    //       : typeof currentValue === "number"
+    //         ? currentValue + 1
+    //         : currentValue;
 
-      await opts.ctx.db
-        .update(workspace)
-        .set({
-          limits: JSON.stringify(newLimits),
-        })
-        .where(eq(workspace.id, result.id))
-        .run();
-    }
+    //   const newLimits = updateAddonInLimits(
+    //     ws.limits,
+    //     feature.feature,
+    //     newValue,
+    //   );
+
+    //   await opts.ctx.db
+    //     .update(workspace)
+    //     .set({
+    //       limits: JSON.stringify(newLimits),
+    //     })
+    //     .where(eq(workspace.id, result.id))
+    //     .run();
+    // }
 
     const customer = await stripe.customers.retrieve(customerId);
     if (!customer.deleted && customer.email) {
@@ -137,10 +148,18 @@ export const webhookRouter = createTRPCRouter({
 
           const ws = selectWorkspaceSchema.parse(_ws);
 
+          const currentValue = ws.limits[feature.feature];
+          const newValue =
+            typeof currentValue === "boolean"
+              ? true
+              : typeof currentValue === "number"
+                ? currentValue + 1
+                : currentValue;
+
           const newLimits = updateAddonInLimits(
             ws.limits,
             feature.feature,
-            "add",
+            newValue,
           );
 
           await opts.ctx.db

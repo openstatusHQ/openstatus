@@ -1,7 +1,43 @@
 ---
-title: Subscriber
+title: Subscriber Reference
+description: Technical specification for managing status page subscribers and their notifications.
 ---
 
-A subscriber is a user who receives notifications about incidents.
+## Overview
 
-They have to subscribe to update from your status page.
+A subscriber in OpenStatus is an entity (typically a user or an integration) that opts to receive real-time notifications and updates regarding incidents and status changes on a specific status page. Subscribers play a crucial role in maintaining transparent communication during service disruptions.
+
+**Key functions of subscribers:**
+-   Receive automated alerts when monitor statuses change or incidents are updated.
+-   Stay informed about service health without actively monitoring the status page.
+-   Choose preferred notification channels for receiving updates.
+
+## Subscription Process
+
+Users typically subscribe to a status page's updates through a dedicated interface provided on the status page itself. The process involves:
+
+1.  **Inputting Contact Information:** Providing an email address, phone number, or other contact details depending on the available notification channels.
+2.  **Opt-in Confirmation:** Confirming their subscription, often through a verification link sent to the provided contact to prevent unwanted subscriptions.
+3.  **Channel Selection (Optional):** Selecting which specific notification channels (e.g., email, SMS, Slack webhook) they wish to receive updates through, if multiple options are available.
+
+## Notification Types Received
+
+Subscribers receive notifications for key events affecting the monitored services linked to the status page:
+
+-   **Incident Creation:** When a new incident is detected and published.
+-   **Incident Updates:** When status reports are published for an ongoing incident (e.g., status changes from `investigating` to `identified`, `monitoring`, or `resolved`).
+-   **Monitor Status Changes:** Direct alerts for individual monitor status changes if configured to do so (less common for public subscribers).
+
+## Subscriber Management
+
+Status page administrators can manage their subscriber lists, including:
+
+-   **Viewing Subscribers:** Accessing a list of all active subscribers for a status page.
+-   **Adding/Removing Subscribers:** Manually adding or removing subscribers.
+-   **Communication:** Sending ad-hoc notifications to the subscriber list (if supported by the platform).
+
+## Related resources
+
+- **[Status Page Reference](/reference/status-page)** - Detailed information on managing and configuring status pages.
+- **[Notification Channels Reference](/reference/notification)** - Technical specifications for the various notification delivery methods.
+- **[Incident Reference](/reference/incident)** - Information about incident creation and management.

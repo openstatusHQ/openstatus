@@ -1,45 +1,42 @@
 ---
-title: How to monitor your Model Context Provider (MCP) server?
-description: Learn how to monitor your MCP server with openstatus.
+title: How to Monitor Your Model Context Provider (MCP) Server
+description: Learn how to monitor your MCP server with openstatus using JSON-RPC ping checks
 sidebar:
   label: Monitor your MCP Server
 ---
-In this guide, we will show you how to monitor your remote MCP server using OpenStatus. We will use the Hugging Face MCP server for this article, but you can apply the same principles to any MCP server. You can find the code for this guide on [GitHub](https://github.com/openstatusHQ/template/tree/a69eac06e9d3d8579768dad803304e456f56ec33/mcp-server).
 
-**Prerequisites**
+## Problem: Ensuring Your MCP Server is Always Responsive
 
--  An OpenStatus account and CLI
--  An MCP server
+Running a Model Context Provider (MCP) server is critical for your AI applications, but traditional HTTP monitoring often falls short. MCP servers communicate using the JSON-RPC 2.0 protocol, requiring specific request/response patterns that standard health checks don't cover. How can you confidently ensure your MCP server is healthy and responsive at all times, without custom scripts or complex setups?
 
-## Model Context Provider (MCP)
+## Solution: JSON-RPC Ping Monitoring with openstatus
 
-A Model Context Provider is a component that supplies additional context, data, or capabilities to AI models during runtime through the Model Context Protocol (MCP). It acts as a bridge, allowing AI models to access external resources such as databases, APIs, file systems, or other services not included in their original training data.
+openstatus offers a robust solution for monitoring your MCP servers. By sending precise JSON-RPC `ping` requests to your endpoint from multiple global locations, openstatus verifies not only network reachability but also the correct functioning of your server's JSON-RPC interface. This guide will walk you through setting up comprehensive monitoring for any MCP server using the openstatus CLI.
 
-### What is an MCP Server?
+## Prerequisites
 
-The server component of the MCP protocol hosts and manages external resources, tools, or data sources that AI models can access. It handles incoming requests from MCP clients, processes them according to the protocol specifications, and returns the requested information or executes the specified actions. The MCP server serves as the backend provider, exposing capabilities like database queries, file operations, or API calls in a standardized format for AI models to interact with.
+Before you begin, ensure you have:
 
-The protocol must adhere to the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification).
+-   An [openstatus account](https://www.openstatus.dev/app/login).
+-   The [openstatus CLI installed](/tutorial/get-started-with-openstatus-cli). (If you haven't installed it yet, follow this guide first).
+-   An MCP server with a publicly accessible endpoint.
+-   A basic understanding of the [JSON-RPC 2.0 protocol](https://www.jsonrpc.org/specification).
 
-### JSON-RPC Protocol
+## Background: Understanding MCP for Monitoring
 
-JSON-RPC is a remote procedure call protocol that uses JSON as its data format. It is designed to be simple and easy to implement while providing a robust and flexible way to communicate between clients and servers. The JSON-RPC protocol is transport-independent, but for MCP servers, it uses HTTP/HTTPS, making it easy to monitor with OpenStatus.
+A Model Context Provider (MCP) is a crucial component that extends AI models with external context, data, or capabilities via the **Model Context Protocol (MCP)**. Essentially, it acts as a bridge, allowing AI models to interact with resources like databases, APIs, or file systems that aren't part of their core training.
 
-### Ping Utility
+### The MCP Server and JSON-RPC 2.0
 
-The official [MCP documentation](https://modelcontextprotocol.io/docs/concepts/architecture#debugging-and-monitoring) recommends implementing a health check for your MCP server. The protocol includes a mechanism to verify that the server is still responsive: the ping utility. The ping feature operates using a basic request/response mechanism.
+## Step-by-step guide
 
-## Create Your OpenStatus Monitor
+### 1. Create your `openstatus.yaml` file
 
- OpenStatus allows you to monitor your MCP server by sending a ping request to your MCP server's endpoint on a regular basis from multiple locations around the world. Making it easy to monitor your remote MCP server's health and performance.
+openstatus allows you to define and manage your monitors using a YAML configuration file, which is ideal for GitOps workflows. This approach ensures your monitoring setup is version-controlled, auditable, and easily deployable.
 
-### YAML Configuration
+Create a file named `openstatus.yaml` and add the following configuration, adapting it for your own MCP endpoint. This example targets a Hugging Face MCP server.
 
-The [OpenStatus CLI](/tutorial/get-started-with-openstatus-cli) allows you to create monitor defined in a YAML configuration file. This is perfect solution if want to manage your monitors via GitOps.
-
-Here's an example of a monitor configuration for Hugging Face MCP server:
-
-```YAML
+```yaml
 # yaml-language-server: $schema=https://www.openstatus.dev/schema.json
 
 mcp-server:
@@ -60,7 +57,7 @@ mcp-server:
         "method": "ping"
       }
     headers:
-      User-Agent: OpenStatus
+      User-Agent: openstatus
       Accept: application/json, text/event-stream
       Content-Type: application/json
   assertions:
@@ -72,48 +69,69 @@ mcp-server:
       target: '{"result":{},"jsonrpc":"2.0","id":"openstatus"}'
 ```
 
-### What Does This Monitor Do?
+### 2. Understand the configuration
 
-We send an HTTP POST request to the MCP server. The request body contains a JSON-RPC request with the method "ping".
+Let's break down the key fields in this YAML configuration:
 
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "openstatus",
-  "method": "ping"
-}
+-   `name` & `description`: A human-readable name and explanation for your monitor.
+-   `frequency`: How often openstatus will run the check (e.g., `1m`, `5m`, `10m`).
+-   `regions`: An array of geographic regions from which to perform checks (e.g., `["iad", "ams", "lax"]`). Monitoring from multiple regions helps detect localized issues.
+-   `retry`: The number of times to retry a failed check before marking it as down.
+-   `kind`: Must be `http` for MCP servers.
+-   `request`:
+    -   `url`: The full URL of your MCP server's JSON-RPC endpoint.
+    -   `method`: Must be `POST` for JSON-RPC requests.
+    -   `body`: The JSON-RPC `ping` request payload.
+    -   `headers`: Standard HTTP headers for JSON-RPC communication.
+-   `assertions`: Rules to validate the server's response.
+    -   `statusCode`: Ensures the HTTP response is `200 OK`.
+    -   `textBody`: Verifies that the response payload exactly matches the expected JSON-RPC `ping` result.
+
+### 3. Test your MCP server (Optional)
+
+Before deploying your monitor, you can manually test your MCP server's `ping` endpoint with `curl` to confirm it responds as expected. This helps verify the `target` value for your `textBody` assertion.
+
+```bash
+curl -X POST \\
+  -H "Content-Type: application/json" \\
+  -d '{"jsonrpc": "2.0", "id": "openstatus", "method": "ping"}' \\
+  https://hf.co/mcp # Replace with your MCP server URL
 ```
 
-We set our headers to accept `application/json` and `text/event-stream`. We also include assertions to verify the response.
+A healthy server should return a JSON response like `{"result":{},"jsonrpc":"2.0","id":"openstatus"}`.
 
-First, we check that the status code is 200.
+### 4. Deploy your monitor
 
-```YAML
-    - kind: statusCode
-      compare: eq
-      target: 200
-```
-
-Next, we verify that the response body is correct.
-
-```YAML
-    - kind: textBody
-      compare: eq
-      target: '{"result":{},"jsonrpc":"2.0","id":"openstatus"}'
-```
-
-### Using OpenStatus CLI to Create Your Monitor
-
-To create your monitor, use the OpenStatus CLI.
+Once your `openstatus.yaml` file is ready, use the openstatus CLI to create the monitor:
 
 ```bash
 openstatus create openstatus.yaml
 ```
 
-## Conclusion
+This command uploads your configuration, and monitoring will begin immediately.
 
-This guide has shown you how to create a monitor for your MCP server using the OpenStatus CLI. You can view the monitor in the OpenStatus dashboard.
+## Conclusion: Comprehensive MCP Server Monitoring Achieved
 
-For example, here is our monitor for the HF MCP server:
+This guide has equipped you with the knowledge to effectively monitor your MCP server using openstatus. By leveraging YAML configuration and the openstatus CLI, you can ensure your critical AI infrastructure remains healthy and responsive.
 
-[https://www.openstatus.dev/public/monitors/5961](https://www.openstatus.dev/public/monitors/5961)
+## What You've Accomplished
+
+-   ✅ Successfully configured a JSON-RPC based monitor for your MCP server.
+-   ✅ Implemented precise assertions to validate `ping` responses.
+-   ✅ Set up global monitoring to detect localized or widespread issues.
+-   ✅ Automated monitor deployment using a version-controlled YAML configuration.
+
+## Next Steps
+
+Now that your MCP server is under robust monitoring, consider further enhancing your setup:
+
+-   **[Set up Alerting](/monitoring/customization/notification)**: Configure notifications to be immediately informed of any MCP server downtime or performance degradation.
+-   **[Export Metrics to OTLP](/guides/how-to-export-metrics-to-otlp-endpoint)**: Integrate your MCP monitoring data with your existing observability platform for centralized analytics.
+-   **[Run Synthetic Tests in GitHub Actions](/guides/how-to-run-synthetic-test-github-action/)**: Incorporate these synthetic checks into your CI/CD pipeline for pre-deployment validation.
+
+## Related Resources
+
+-   **[JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)**: Deep dive into the JSON-RPC protocol.
+-   **[MCP Official Documentation](https://modelcontextprotocol.io/docs/concepts/architecture#debugging-and-monitoring)**: Official insights into MCP health checks.
+-   **[HTTP Monitor Reference](/reference/http-monitor)**: Comprehensive API reference for HTTP monitors.
+-   **[CLI Reference](/reference/cli-reference)**: Full documentation for the openstatus CLI.

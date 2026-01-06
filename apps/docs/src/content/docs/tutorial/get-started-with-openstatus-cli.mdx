@@ -1,31 +1,52 @@
 ---
 title: Get Started with openstatus CLI
+description: "Step-by-step tutorial to install and use the openstatus CLI for monitoring as code"
 ---
 
 import { Image } from 'astro:assets';
 import CLI from '../../../assets/tutorial/get-started-with-openstatus-cli/CLI.png';
 
+## What you'll learn
+
+In this tutorial, you'll learn how to use the openstatus CLI to manage your monitors as code. This enables you to version control your monitoring configuration, automate deployments, and implement GitOps workflows.
+
+### Prerequisites
+
+- An openstatus account
+- Command line experience
+- API token from your openstatus workspace (Settings → API)
+
+### What you'll build
+
+By the end of this tutorial, you'll have:
+- openstatus CLI installed on your system
+- Monitors exported to a YAML configuration file
+- Understanding of monitoring as code workflows
+- Ability to manage monitors programmatically
+
 <Image
   src={CLI}
-  alt="openstatus CLI"
+  alt="openstatus CLI in action showing monitor management"
 />
 
 ## Installation
 
+Install the openstatus CLI to manage your monitors directly from code.
 
-Install the OpenStatus CLI to set up your monitors straight in your code.
+### macOS
 
-### OS X
+Using Homebrew (recommended):
 ```bash
 brew install openstatusHQ/cli/openstatus --cask
 ```
-or
 
+Or using the install script:
 ```bash
 curl -sSL instl.sh/openstatushq/cli/macos | bash
 ```
 
 ### Linux
+
 ```bash
 curl -sSL instl.sh/openstatushq/cli/linux | bash
 ```
@@ -36,26 +57,64 @@ curl -sSL instl.sh/openstatushq/cli/linux | bash
 iwr instl.sh/openstatushq/cli/windows | iex
 ```
 
-## Add API Key
+## Configure API authentication
 
-Create an API key in your workspace settings.
+Create an API key in your workspace settings (Settings → API), then set it as an environment variable:
 
 ```bash
 export OPENSTATUS_API_TOKEN=<your-api-token>
 ```
 
-## Import Monitors
+**Tip**: Add this to your shell profile (`~/.bashrc`, `~/.zshrc`) to persist across sessions.
 
-Import monitors from your workspace to a YAML file.
+## Import existing monitors
+
+Start by importing your existing monitors from your workspace to a YAML file:
 
 ```bash
 openstatus monitors import
 ```
 
-### Manage Monitors
+This creates an `openstatus.yaml` file containing all your current monitors. This file becomes your single source of truth for monitoring configuration.
 
-Add, remove, or update monitors from a YAML file and apply your changes.
+## Manage monitors as code
+
+Now you can add, remove, or update monitors in the YAML file and apply your changes:
 
 ```bash
 openstatus monitors apply
 ```
+
+The CLI will show you a diff of changes before applying them, ensuring you're aware of what will be modified.
+
+## What you've accomplished
+
+Excellent work! You've successfully:
+- ✅ Installed the openstatus CLI
+- ✅ Configured API authentication
+- ✅ Imported monitors to a YAML file
+- ✅ Learned the monitoring as code workflow
+
+## What's next?
+
+Now that you have the CLI set up, you can:
+
+- **[Monitor Your MCP Server](/guides/how-to-monitor-mcp-server/)** - Example of CLI-based monitor configuration
+- **[Monitoring as Code](/monitoring/monitoring-as-code)** - Learn about the YAML configuration format
+- **[CLI Reference](/reference/cli-reference)** - Complete command documentation
+- **[Set up CI/CD](/guides/how-to-run-synthetic-test-github-action/)** - Automate monitoring in your pipeline
+
+### Advanced workflows
+
+With the CLI, you can:
+- Version control your monitoring configuration with Git
+- Review monitoring changes in pull requests
+- Automate monitor creation for new services
+- Sync monitors across multiple environments
+- Implement GitOps for infrastructure monitoring
+
+## Learn more
+
+- **[Monitoring as Code Concept](/concept/uptime-monitoring-as-code)** - Why manage monitors as code
+- **[CLI Reference](/reference/cli-reference)** - All available commands
+- **[YAML Configuration Examples](https://github.com/openstatusHQ/cli-template)** - Sample configurations

@@ -79,6 +79,13 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           INR: 30_000,
         },
       },
+      "status-pages": {
+        price: {
+          USD: 20,
+          EUR: 20,
+          INR: 2_000,
+        },
+      },
     },
     limits: {
       version: undefined,
@@ -134,6 +141,13 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
           USD: 300,
           EUR: 300,
           INR: 30_000,
+        },
+      },
+      "status-pages": {
+        price: {
+          USD: 20,
+          EUR: 20,
+          INR: 2_000,
         },
       },
     },

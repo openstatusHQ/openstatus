@@ -60,10 +60,37 @@ test("invalid payload should return 400", async () => {
   });
 
   const result = (await res.json()) as Record<string, unknown>;
-  // expect(result.message).toBe("invalid_date in 'acknowledgedAt': Invalid date");
   expect(result.message).toBe(
     "invalid_type in 'acknowledgedAt': Invalid input: expected date, received Date",
   );
+  expect(res.status).toBe(400);
+});
+
+test("invalid incident id should return 400", async () => {
+  const res = await app.request("/v1/incident/invalid-id", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      acknowledgedAt: new Date().toISOString(),
+    }),
+  });
+
+  expect(res.status).toBe(400);
+});
+
+test("empty body should return 400", async () => {
+  const res = await app.request("/v1/incident/2", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+
   expect(res.status).toBe(400);
 });
 
