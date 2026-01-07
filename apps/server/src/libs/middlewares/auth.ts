@@ -6,7 +6,15 @@ import { env } from "@/env";
 import { OpenStatusApiError } from "@/libs/errors";
 import type { Variables } from "@/types";
 import { db, eq } from "@openstatus/db";
+import { apiKey } from "@openstatus/db/src/schema/api-keys";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
+import {
+  hashApiKey,
+  shouldUpdateLastUsed,
+} from "@openstatus/db/src/utils/api-key";
+import { getLogger } from "@logtape/logtape";
+
+const logger = getLogger("api-server")
 
 export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
@@ -72,25 +80,71 @@ export async function authMiddleware(
   await next();
 }
 
-async function validateKey(key: string): Promise<{
+async function validateKey(
+  key: string
+): Promise<{
   result: { valid: boolean; ownerId?: string };
   error?: { message: string };
 }> {
   if (env.NODE_ENV === "production") {
     /**
-     * The Unkey api key starts with `os_` - that's how we can differentiate if we
-     * want to roll out our own key verification in the future.
-     * > We cannot use `os_` as a prefix for our own keys.
+     * Both custom and Unkey API keys use the `os_` prefix for seamless transition.
+     * Custom keys are checked first in the database, then falls back to Unkey.
      */
     if (key.startsWith("os_")) {
+      // 1. Try custom DB first
+      const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
+      const customKey = await db
+        .select()
+        .from(apiKey)
+        .where(eq(apiKey.prefix, prefix))
+        .get();
+
+      if (customKey) {
+        // Verify hash
+        const hash = hashApiKey(key);
+        if (hash !== customKey.hashedToken) {
+          return {
+            result: { valid: false },
+            error: { message: "Invalid API Key" },
+          };
+        }
+        // Check expiration
+        if (customKey.expiresAt && customKey.expiresAt < new Date()) {
+          return {
+            result: { valid: false },
+            error: { message: "API Key expired" },
+          };
+        }
+        // Update lastUsedAt (debounced)
+        if (shouldUpdateLastUsed(customKey.lastUsedAt)) {
+          await db
+            .update(apiKey)
+            .set({ lastUsedAt: new Date() })
+            .where(eq(apiKey.id, customKey.id));
+        }
+        return {
+          result: { valid: true, ownerId: String(customKey.workspaceId) },
+        };
+      }
+
+      // 2. Fall back to Unkey (transition period)
       const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
       const res = await keysVerifyKey(unkey, { key });
       if (!res.ok) {
-        console.error("Unkey Error", res.error?.message);
+        logger.error("Unkey Error {*}", { ...res.error });
         return {
           result: { valid: false, ownerId: undefined },
           error: { message: "Invalid API verification" },
         };
+      }
+      // Add deprecation header when Unkey key is used
+      if (res.value.data.valid) {
+        logger.info(
+          "Unkey key used  - Workspace: {workspaceId}", {
+            workspace:  res.value.data.identity?.externalId
+          },
+        );
       }
       return {
         result: {
