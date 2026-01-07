@@ -54,7 +54,9 @@ describe("createApiKey", () => {
       expiresAt: null,
     });
     expect(result.key.prefix).toBe(result.token.slice(0, 11));
-    expect(await verifyApiKeyHash(result.token, result.key.hashedToken)).toBe(true);
+    expect(await verifyApiKeyHash(result.token, result.key.hashedToken)).toBe(
+      true,
+    );
 
     // Save for later tests
     testApiKeyId = result.key.id;

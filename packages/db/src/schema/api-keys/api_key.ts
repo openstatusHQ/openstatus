@@ -10,7 +10,7 @@ export const apiKey = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
     description: text("description"),
-    prefix: text("prefix").notNull(),
+    prefix: text("prefix").notNull().unique(),
     hashedToken: text("hashed_token").notNull().unique(),
     workspaceId: integer("workspace_id")
       .notNull()

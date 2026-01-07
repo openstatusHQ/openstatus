@@ -23,7 +23,7 @@ export async function createApiKey(
   description?: string,
   expiresAt?: Date,
 ): Promise<{ token: string; key: typeof apiKey.$inferSelect }> {
-  const { token, prefix, hash } = generateKey();
+  const { token, prefix, hash } = await generateKey();
 
   const [key] = await db
     .insert(apiKey)
@@ -53,6 +53,11 @@ export async function createApiKey(
 export async function verifyApiKey(
   token: string,
 ): Promise<typeof apiKey.$inferSelect | null> {
+  // Validate token format before database query
+  if (!/^os_[a-f0-9]{32}$/.test(token)) {
+    return null;
+  }
+
   // Extract prefix from token
   const prefix = token.slice(0, 11); // "os_" + 8 chars = 11 total
 

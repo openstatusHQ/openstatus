@@ -90,6 +90,14 @@ async function validateKey(key: string): Promise<{
      * Custom keys are checked first in the database, then falls back to Unkey.
      */
     if (key.startsWith("os_")) {
+      // Validate token format before database query
+      if (!/^os_[a-f0-9]{32}$/.test(key)) {
+        return {
+          result: { valid: false },
+          error: { message: "Invalid API Key format" },
+        };
+      }
+
       // 1. Try custom DB first
       const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
       const customKey = await db
@@ -100,7 +108,7 @@ async function validateKey(key: string): Promise<{
 
       if (customKey) {
         // Verify hash using bcrypt-compatible verification
-        if (!verifyApiKeyHash(key, customKey.hashedToken)) {
+        if (!(await verifyApiKeyHash(key, customKey.hashedToken))) {
           return {
             result: { valid: false },
             error: { message: "Invalid API Key" },
