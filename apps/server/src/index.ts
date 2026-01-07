@@ -57,12 +57,12 @@ const defaultLogger = getOpenTelemetrySink({
   additionalResource: resourceFromAttributes({
     [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
   }),
-})
+});
 configure({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
 
-   otel: defaultLogger,
+    otel: defaultLogger,
   },
   loggers: [
     {
