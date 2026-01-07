@@ -68,7 +68,7 @@ export async function verifyApiKey(
   }
 
   // Verify hash using bcrypt-compatible verification
-  if (!verifyApiKeyHash(token, key.hashedToken)) {
+  if (!(await verifyApiKeyHash(token, key.hashedToken))) {
     return null;
   }
 

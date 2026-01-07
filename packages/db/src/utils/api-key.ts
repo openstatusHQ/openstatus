@@ -34,7 +34,7 @@ export function hashApiKey(token: string): string {
  * @param storedHash - The stored hash to verify against
  * @returns True if the token matches the hash
  */
-export function verifyApiKeyHash(token: string, storedHash: string): boolean {
+export async function  verifyApiKeyHash(token: string, storedHash: string): Promise<boolean> {
   // Check if it's a bcrypt hash (starts with $2a$, $2b$, or $2y$)
   if (storedHash.startsWith("$2")) {
     return bcrypt.compareSync(token, storedHash);

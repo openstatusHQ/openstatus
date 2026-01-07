@@ -40,10 +40,10 @@ describe("API Key Utilities", () => {
   });
 
   describe("hashApiKey", () => {
-    it("should generate hash that can verify the token", () => {
+    it("should generate hash that can verify the token", async () => {
       const { token, hash } = generateApiKey();
 
-      expect(verifyApiKeyHash(token, hash)).toBe(true);
+      expect(await verifyApiKeyHash(token, hash)).toBe(true);
     });
   });
 
@@ -62,14 +62,14 @@ describe("API Key Utilities", () => {
       expect(hash).toMatch(/^\$2[aby]\$/);
     });
 
-    it("should generate hash that can verify the original token", () => {
+    it("should generate hash that can verify the original token", async () => {
       const token = "os_test_token_12345";
       const hash = hashApiKey(token);
 
-      expect(verifyApiKeyHash(token, hash)).toBe(true);
+      expect(await verifyApiKeyHash(token, hash)).toBe(true);
     });
 
-    it("should generate different hashes for same token on multiple calls", () => {
+    it("should generate different hashes for same token on multiple calls", async () => {
       const token = "os_same_token";
       const hash1 = hashApiKey(token);
       const hash2 = hashApiKey(token);
@@ -77,61 +77,61 @@ describe("API Key Utilities", () => {
       // bcrypt uses salt, so same input produces different hashes
       expect(hash1).not.toBe(hash2);
       // But both should verify the token
-      expect(verifyApiKeyHash(token, hash1)).toBe(true);
-      expect(verifyApiKeyHash(token, hash2)).toBe(true);
+      expect(await verifyApiKeyHash(token, hash1)).toBe(true);
+      expect(await verifyApiKeyHash(token, hash2)).toBe(true);
     });
   });
 
   describe("verifyApiKeyHash", () => {
-    it("should return true for valid bcrypt hash with correct token", () => {
+    it("should return true for valid bcrypt hash with correct token", async () => {
       const token = "os_valid_token_12345";
       const hash = hashApiKey(token);
 
-      expect(verifyApiKeyHash(token, hash)).toBe(true);
+      expect(await verifyApiKeyHash(token, hash)).toBe(true);
     });
 
-    it("should return false for valid bcrypt hash with wrong token", () => {
+    it("should return false for valid bcrypt hash with wrong token", async () => {
       const correctToken = "os_correct_token";
       const wrongToken = "os_wrong_token";
       const hash = hashApiKey(correctToken);
 
-      expect(verifyApiKeyHash(wrongToken, hash)).toBe(false);
+      expect(await verifyApiKeyHash(wrongToken, hash)).toBe(false);
     });
 
-    it("should return false for non-bcrypt hash format", () => {
+    it("should return false for non-bcrypt hash format", async () => {
       const token = "os_test_token";
       const invalidHash = "not_a_bcrypt_hash";
 
-      expect(verifyApiKeyHash(token, invalidHash)).toBe(false);
+      expect(await verifyApiKeyHash(token, invalidHash)).toBe(false);
     });
 
-    it("should return false for SHA-256 hash format", () => {
+    it("should return false for SHA-256 hash format", async () => {
       const token = "os_test_token";
       // SHA-256 hashes are 64 hex characters
       const sha256Hash =
         "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
 
-      expect(verifyApiKeyHash(token, sha256Hash)).toBe(false);
+      expect(await verifyApiKeyHash(token, sha256Hash)).toBe(false);
     });
 
-    it("should return false for empty hash", () => {
+    it("should return false for empty hash", async () => {
       const token = "os_test_token";
 
-      expect(verifyApiKeyHash(token, "")).toBe(false);
+      expect(await verifyApiKeyHash(token, "")).toBe(false);
     });
 
-    it("should return false for empty token with valid hash", () => {
+    it("should return false for empty token with valid hash", async () => {
       const hash = hashApiKey("os_some_token");
 
-      expect(verifyApiKeyHash("", hash)).toBe(false);
+      expect(await verifyApiKeyHash("", hash)).toBe(false);
     });
 
-    it("should handle bcrypt hashes with different cost factors", () => {
+    it("should handle bcrypt hashes with different cost factors", async () => {
       const token = "os_test_token";
       const hash = hashApiKey(token);
 
       // Should work regardless of the $2a$, $2b$, or $2y$ variant
-      expect(verifyApiKeyHash(token, hash)).toBe(true);
+      expect(await verifyApiKeyHash(token, hash)).toBe(true);
     });
   });
 
