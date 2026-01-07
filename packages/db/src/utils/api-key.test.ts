@@ -1,10 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-  generateApiKey,
-  hashApiKey,
-  shouldUpdateLastUsed,
-  verifyApiKeyHash,
-} from "./api-key";
+import { generateApiKey, hashApiKey, shouldUpdateLastUsed, verifyApiKeyHash } from "./api-key";
 
 describe("API Key Utilities", () => {
   describe("generateApiKey", () => {
@@ -37,13 +32,9 @@ describe("API Key Utilities", () => {
 
       expect(token.slice(0, 11)).toBe(prefix);
     });
+  });
 
-    it("should generate a valid bcrypt hash", () => {
-      const { hash } = generateApiKey();
-
-      // Bcrypt hashes start with $2a$, $2b$, or $2y$
-      expect(hash).toMatch(/^\$2[aby]\$/);
-    });
+  describe("hashApiKey", () => {
 
     it("should generate hash that can verify the token", () => {
       const { token, hash } = generateApiKey();

@@ -1,9 +1,9 @@
-import crypto from "node:crypto";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 /**
  * Generates a new API key with token, prefix, and hash
- * @returns Object containing the full token, prefix for lookup, and bcrypt hash
+ * @returns Object containing the full token, prefix for lookup, and SHA-256 hash
  */
 export function generateApiKey(): {
   token: string;

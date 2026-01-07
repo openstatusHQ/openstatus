@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { db, eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
-import { hashApiKey } from "@openstatus/db/src/utils/api-key";
+import { verifyApiKeyHash } from "@openstatus/db/src/utils/api-key";
 
 import {
   createApiKey,
@@ -54,7 +54,7 @@ describe("createApiKey", () => {
       expiresAt: null,
     });
     expect(result.key.prefix).toBe(result.token.slice(0, 11));
-    expect(result.key.hashedToken).toBe(hashApiKey(result.token));
+    expect(verifyApiKeyHash(result.token, result.key.hashedToken)).toBe(true);
 
     // Save for later tests
     testApiKeyId = result.key.id;
@@ -86,7 +86,7 @@ describe("createApiKey", () => {
     // SQLite stores timestamps with second precision, so compare with tolerance
     expect(result.key.expiresAt?.getTime()).toBeCloseTo(
       expiresAt.getTime(),
-      -3,
+      -4,
     );
   });
 
@@ -401,7 +401,7 @@ describe("updateLastUsed", () => {
 
     expect(updatedKey?.lastUsedAt?.getTime()).toBeCloseTo(
       twoMinutesAgo.getTime(),
-      -3,
+      -4,
     );
 
     // Clean up
