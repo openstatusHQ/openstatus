@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { generateApiKey, hashApiKey, shouldUpdateLastUsed, verifyApiKeyHash } from "./api-key";
+import {
+  generateApiKey,
+  hashApiKey,
+  shouldUpdateLastUsed,
+  verifyApiKeyHash,
+} from "./api-key";
 
 describe("API Key Utilities", () => {
   describe("generateApiKey", () => {
@@ -35,7 +40,6 @@ describe("API Key Utilities", () => {
   });
 
   describe("hashApiKey", () => {
-
     it("should generate hash that can verify the token", () => {
       const { token, hash } = generateApiKey();
 
