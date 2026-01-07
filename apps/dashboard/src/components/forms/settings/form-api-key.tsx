@@ -7,7 +7,6 @@ import {
 } from "@/components/content/empty-state";
 import { EmptyStateContainer } from "@/components/content/empty-state";
 import { DataTable } from "@/components/data-table/settings/api-key/data-table";
-import { FormAlertDialog } from "@/components/forms/form-alert-dialog";
 import {
   FormCard,
   FormCardContent,
@@ -26,6 +25,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -41,37 +52,52 @@ export function FormApiKey() {
   const [isPending, startTransition] = useTransition();
   const { copy } = useCopyToClipboard();
   const [result, setResult] = useState<{
-    keyId: string;
+    token: string;
     key: string;
   } | null>(null);
+  // Should use react hookform ?
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+
   const { data: workspace } = useQuery(
     trpc.workspace.getWorkspace.queryOptions(),
   );
-  const { data: apiKey, refetch } = useQuery(trpc.apiKey.get.queryOptions());
+  const { data: apiKeys = [], refetch } = useQuery(
+    trpc.apiKeyRouter.getAll.queryOptions(),
+  );
   const createApiKeyMutation = useMutation(
-    trpc.apiKey.create.mutationOptions({
+    trpc.apiKeyRouter.create.mutationOptions({
       onSuccess: (data) => {
         if (data) {
-          setResult(data);
+          setResult({ token: data.token, key: data.key.name });
+          setCreateDialogOpen(false);
+          // Reset form
+          setName("");
+          setDescription("");
+          setExpiresAt("");
         } else {
           throw new Error("Failed to create API key");
         }
       },
     }),
   );
-  const revokeApiKeyMutation = useMutation(
-    trpc.apiKey.revoke.mutationOptions({
-      onSuccess: () => refetch(),
-    }),
-  );
 
   async function createAction() {
-    if (isPending || !workspace) return;
+    if (isPending || !workspace || !name.trim()) {
+      if (!name.trim()) {
+        toast.error("Name is required");
+      }
+      return;
+    }
 
     startTransition(async () => {
       try {
         const promise = createApiKeyMutation.mutateAsync({
-          ownerId: workspace.id,
+          name: name.trim(),
+          description: description.trim() || undefined,
+          // expiresAt: new Date(),
         });
         toast.promise(promise, {
           loading: "Creating...",
@@ -93,21 +119,21 @@ export function FormApiKey() {
   return (
     <FormCard>
       <FormCardHeader>
-        <FormCardTitle>API Key</FormCardTitle>
+        <FormCardTitle>API Keys</FormCardTitle>
         <FormCardDescription>
-          Create and revoke your API key.
+          Create and manage your API keys.
         </FormCardDescription>
       </FormCardHeader>
       <FormCardContent>
-        {!apiKey ? (
+        {apiKeys.length === 0 ? (
           <EmptyStateContainer>
-            <EmptyStateTitle>No API key</EmptyStateTitle>
+            <EmptyStateTitle>No API keys</EmptyStateTitle>
             <EmptyStateDescription>
               Access your data via API.
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable apiKey={apiKey} />
+          <DataTable apiKeys={apiKeys} refetch={refetch} />
         )}
       </FormCardContent>
       <FormCardFooter>
@@ -122,38 +148,81 @@ export function FormApiKey() {
           </Link>
           .
         </FormCardFooterInfo>
-        {!apiKey ? (
-          <Button size="sm" onClick={createAction}>
-            Create
-          </Button>
-        ) : (
-          <FormAlertDialog
-            confirmationValue="API Key"
-            submitAction={async () => {
-              await revokeApiKeyMutation.mutateAsync({
-                keyId: apiKey.keyId,
-              });
-            }}
-          />
-        )}
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm">Create</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create API Key</DialogTitle>
+              <DialogDescription>
+                Create a new API key to access your workspace data.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">
+                  Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Production API"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Used for production deployment"
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expiresAt">Expiration Date (optional)</Label>
+                <Input
+                  id="expiresAt"
+                  type="date"
+                  value={expiresAt}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setCreateDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={createAction} disabled={isPending || !name.trim()}>
+                Create
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </FormCardFooter>
       <AlertDialog open={!!result} onOpenChange={() => setResult(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>API Key</AlertDialogTitle>
+            <AlertDialogTitle>API Key Created</AlertDialogTitle>
             <AlertDialogDescription>
               Ensure you copy your API key before closing this dialog. You will
               not see it again.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
-            <code className="flex-1 font-mono text-sm">{result?.key}</code>
+            <code className="flex-1 font-mono text-sm break-all">{result?.token}</code>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 shrink-0"
               onClick={() => {
-                copy(result?.key || "", { withToast: true });
+                copy(result?.token || "", { withToast: true });
               }}
             >
               <Copy className="h-4 w-4" />

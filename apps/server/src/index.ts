@@ -104,7 +104,7 @@ app.route("/v1", api);
  */
 
 const isDev = process.env.NODE_ENV === "development";
-const port = 3000;
+const port = 3001;
 
 if (isDev) showRoutes(app, { verbose: true, colorize: true });
 

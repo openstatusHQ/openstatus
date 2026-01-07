@@ -1,4 +1,3 @@
-import { apiKeyRouter } from "./router/apiKey";
 import { blobRouter } from "./router/blob";
 import { checkerRouter } from "./router/checker";
 import { domainRouter } from "./router/domain";
@@ -23,7 +22,6 @@ import { createTRPCRouter } from "./trpc";
 
 // Deployed to /trpc/edge/**
 export const edgeRouter = createTRPCRouter({
-  apiKey: apiKeyRouter,
   workspace: workspaceRouter,
   monitor: monitorRouter,
   page: pageRouter,

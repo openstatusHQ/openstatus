@@ -1,4 +1,4 @@
-import crypto from "node:crypto";
+import crypto from "crypto";
 
 /**
  * Generates a new API key with token, prefix, and hash
