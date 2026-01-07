@@ -13,14 +13,14 @@ import { getOpenTelemetrySink } from "@logtape/otel";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from "@opentelemetry/semantic-conventions";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
 import { api } from "./routes/v1";
-import { resourceFromAttributes } from "@opentelemetry/resources";
-import { SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from "@opentelemetry/semantic-conventions";
 
 type Env = {
   Variables: {
@@ -57,11 +57,11 @@ const legacy = getOpenTelemetrySink({
   additionalResource: resourceFromAttributes({
     [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
   }),
-})
+});
 configure({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
-    otel: getOpenTelemetrySink({loggerProvider}),
+    otel: getOpenTelemetrySink({ loggerProvider }),
   },
   loggers: [
     {
