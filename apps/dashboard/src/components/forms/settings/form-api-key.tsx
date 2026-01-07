@@ -35,7 +35,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useTRPC } from "@/lib/trpc/client";
@@ -44,8 +43,27 @@ import { isTRPCClientError } from "@trpc/client";
 import { Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 // we should prefetch the api key on the server (layout)
+
+const schema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  expiresAt: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof schema>;
 
 export function FormApiKey() {
   const trpc = useTRPC();
@@ -55,11 +73,16 @@ export function FormApiKey() {
     token: string;
     key: string;
   } | null>(null);
-  // Should use react hookform ?
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [expiresAt, setExpiresAt] = useState("");
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: "",
+      description: "",
+      expiresAt: "",
+    },
+  });
 
   const { data: workspace } = useQuery(
     trpc.workspace.getWorkspace.queryOptions(),
@@ -73,10 +96,7 @@ export function FormApiKey() {
         if (data) {
           setResult({ token: data.token, key: data.key.name });
           setCreateDialogOpen(false);
-          // Reset form
-          setName("");
-          setDescription("");
-          setExpiresAt("");
+          form.reset();
         } else {
           throw new Error("Failed to create API key");
         }
@@ -84,20 +104,17 @@ export function FormApiKey() {
     }),
   );
 
-  async function createAction() {
-    if (isPending || !workspace || !name.trim()) {
-      if (!name.trim()) {
-        toast.error("Name is required");
-      }
+  function createAction(values: FormValues) {
+    if (isPending || !workspace) {
       return;
     }
 
     startTransition(async () => {
       try {
         const promise = createApiKeyMutation.mutateAsync({
-          name: name.trim(),
-          description: description.trim() || undefined,
-          // expiresAt: new Date(),
+          name: values.name.trim(),
+          description: values.description?.trim() || undefined,
+          expiresAt: values.expiresAt ? new Date(values.expiresAt) : undefined,
         });
         toast.promise(promise, {
           loading: "Creating...",
@@ -153,59 +170,79 @@ export function FormApiKey() {
             <Button size="sm">Create</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create API Key</DialogTitle>
-              <DialogDescription>
-                Create a new API key to access your workspace data.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Production API"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Used for production deployment"
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expiresAt">Expiration Date (optional)</Label>
-                <Input
-                  id="expiresAt"
-                  type="date"
-                  value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
-                  min={new Date().toISOString().split("T")[0]}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setCreateDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={createAction}
-                disabled={isPending || !name.trim()}
-              >
-                Create
-              </Button>
-            </DialogFooter>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(createAction)} >
+                <DialogHeader>
+                  <DialogTitle>Create API Key</DialogTitle>
+                  <DialogDescription>
+                    Create a new API key to access your workspace data.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Name
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Production API" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Used for production deployment"
+                            rows={3}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="expiresAt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiration Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            min={new Date().toISOString().split("T")[0]}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <DialogFooter className="mt-4">
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    Create
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </FormCardFooter>
