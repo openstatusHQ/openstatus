@@ -28,23 +28,6 @@ type Env = {
   };
 };
 
-import { OTLPLogExporter } from "@opentelemetry/exporter-logs-otlp-http";
-import {
-  LoggerProvider,
-  SimpleLogRecordProcessor,
-} from "@opentelemetry/sdk-logs";
-
-const exporter = new OTLPLogExporter({
-  url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-  headers: {
-    Authorization: `Bearer ${env.AXIOM_TOKEN}`,
-    "X-Axiom-Dataset": env.AXIOM_DATASET,
-  },
-});
-const loggerProvider = new LoggerProvider({
-  processors: [new SimpleLogRecordProcessor(exporter)],
-});
-
 const defaultLogger = getOpenTelemetrySink({
   serviceName: "openstatus-server",
   otlpExporterConfig: {
@@ -134,7 +117,7 @@ app.use("*", async (c, next) => {
       const duration = Date.now() - startTime;
 
       event.duration_ms = duration;
-      otelLogger.info({ ...event });
+      otelLogger.info("request completed", { ...event });
       logger.info("Request completed", {
         status: c.res.status,
         duration,
