@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -43,13 +44,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
-import { Copy } from "lucide-react";
+import { format } from "date-fns";
+import { CalendarIcon, Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -68,7 +76,7 @@ type FormValues = z.infer<typeof schema>;
 export function FormApiKey() {
   const trpc = useTRPC();
   const [isPending, startTransition] = useTransition();
-  const { copy } = useCopyToClipboard();
+  const { copy, isCopied } = useCopyToClipboard();
   const [result, setResult] = useState<{
     token: string;
     key: string;
@@ -94,6 +102,7 @@ export function FormApiKey() {
     trpc.apiKeyRouter.create.mutationOptions({
       onSuccess: (data) => {
         if (data) {
+          refetch();
           setResult({ token: data.token, key: data.key.name });
           setCreateDialogOpen(false);
           form.reset();
@@ -213,15 +222,60 @@ export function FormApiKey() {
                     control={form.control}
                     name="expiresAt"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Expiration Date</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="date"
-                            min={new Date().toISOString().split("T")[0]}
-                            {...field}
-                          />
-                        </FormControl>
+                        <Popover modal>
+                          <FormControl>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className={cn(
+                                  "w-[240px] pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {field.value ? (
+                                  format(new Date(field.value), "PPP")
+                                ) : (
+                                  <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                          </FormControl>
+                          <PopoverContent
+                            className="pointer-events-auto w-auto p-0"
+                            align="start"
+                          >
+                            <Calendar
+                              mode="single"
+                              selected={
+                                field.value ? new Date(field.value) : undefined
+                              }
+                              onSelect={(date) => {
+                                if (!date) {
+                                  field.onChange("");
+                                  return;
+                                }
+                                // Convert to ISO string and take only the date part (YYYY-MM-DD)
+                                const dateString = date
+                                  .toISOString()
+                                  .split("T")[0];
+                                field.onChange(dateString);
+                              }}
+                              disabled={(date) => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                const compareDate = new Date(date);
+                                compareDate.setHours(0, 0, 0, 0);
+                                return compareDate < today;
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -265,18 +319,15 @@ export function FormApiKey() {
                 copy(result?.token || "", { withToast: true });
               }}
             >
-              <Copy className="h-4 w-4" />
+              {isCopied ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
             </Button>
           </div>
           <AlertDialogFooter>
-            <Button
-              onClick={() => {
-                refetch();
-                setResult(null);
-              }}
-            >
-              Done
-            </Button>
+            <Button onClick={() => setResult(null)}>Done</Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

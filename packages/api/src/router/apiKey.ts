@@ -66,7 +66,7 @@ export const apiKeyRouter = createTRPCRouter({
         });
       }
 
-      return { success: true };
+      return;
     }),
 
   getAll: protectedProcedure.query(async ({ ctx }) => {
