@@ -5,16 +5,16 @@ import type { Context, Next } from "hono";
 import { env } from "@/env";
 import { OpenStatusApiError } from "@/libs/errors";
 import type { Variables } from "@/types";
+import { getLogger } from "@logtape/logtape";
 import { db, eq } from "@openstatus/db";
-import { apiKey } from "@openstatus/db/src/schema/api-keys";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
+import { apiKey } from "@openstatus/db/src/schema/api-keys";
 import {
   hashApiKey,
   shouldUpdateLastUsed,
 } from "@openstatus/db/src/utils/api-key";
-import { getLogger } from "@logtape/logtape";
 
-const logger = getLogger("api-server")
+const logger = getLogger("api-server");
 
 export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
@@ -80,9 +80,7 @@ export async function authMiddleware(
   await next();
 }
 
-async function validateKey(
-  key: string
-): Promise<{
+async function validateKey(key: string): Promise<{
   result: { valid: boolean; ownerId?: string };
   error?: { message: string };
 }> {
@@ -140,11 +138,9 @@ async function validateKey(
       }
       // Add deprecation header when Unkey key is used
       if (res.value.data.valid) {
-        logger.info(
-          "Unkey key used  - Workspace: {workspaceId}", {
-            workspace:  res.value.data.identity?.externalId
-          },
-        );
+        logger.info("Unkey key used  - Workspace: {workspaceId}", {
+          workspace: res.value.data.identity?.externalId,
+        });
       }
       return {
         result: {

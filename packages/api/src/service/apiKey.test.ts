@@ -22,9 +22,7 @@ beforeAll(async () => {
   // Clean up any existing test data
   await db.delete(apiKey).where(eq(apiKey.name, "Test API Key"));
   await db.delete(apiKey).where(eq(apiKey.name, "Test Key with Description"));
-  await db
-    .delete(apiKey)
-    .where(eq(apiKey.name, "Test Key with Expiration"));
+  await db.delete(apiKey).where(eq(apiKey.name, "Test Key with Expiration"));
 
   // Use existing test workspace and user from seed data
   testWorkspaceId = 1;
@@ -35,9 +33,7 @@ afterAll(async () => {
   // Clean up test data
   await db.delete(apiKey).where(eq(apiKey.name, "Test API Key"));
   await db.delete(apiKey).where(eq(apiKey.name, "Test Key with Description"));
-  await db
-    .delete(apiKey)
-    .where(eq(apiKey.name, "Test Key with Expiration"));
+  await db.delete(apiKey).where(eq(apiKey.name, "Test Key with Expiration"));
 });
 
 describe("createApiKey", () => {
@@ -287,15 +283,9 @@ describe("getApiKeys", () => {
 
     // Should include at least the 3 keys we just created plus the test key from earlier
     expect(keys.length).toBeGreaterThanOrEqual(4);
-    expect(
-      keys.some((k) => k.name === "Workspace Key 1"),
-    ).toBe(true);
-    expect(
-      keys.some((k) => k.name === "Workspace Key 2"),
-    ).toBe(true);
-    expect(
-      keys.some((k) => k.name === "Workspace Key 3"),
-    ).toBe(true);
+    expect(keys.some((k) => k.name === "Workspace Key 1")).toBe(true);
+    expect(keys.some((k) => k.name === "Workspace Key 2")).toBe(true);
+    expect(keys.some((k) => k.name === "Workspace Key 3")).toBe(true);
 
     // All keys should belong to the test workspace
     keys.forEach((key) => {

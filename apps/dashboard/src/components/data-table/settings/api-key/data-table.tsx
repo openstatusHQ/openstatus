@@ -70,7 +70,9 @@ export function DataTable({
               </TableCell>
               <TableCell>
                 <div className="flex flex-col">
-                  <span className="text-sm">{formatDate(apiKey.createdAt)}</span>
+                  <span className="text-sm">
+                    {formatDate(apiKey.createdAt)}
+                  </span>
                   {apiKey.createdBy && (
                     <span className="text-muted-foreground text-xs">
                       by{" "}

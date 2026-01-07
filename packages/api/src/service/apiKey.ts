@@ -2,9 +2,9 @@ import { eq } from "@openstatus/db";
 import { db } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
 import {
+  shouldUpdateLastUsed as checkShouldUpdateLastUsed,
   generateApiKey as generateKey,
   hashApiKey,
-  shouldUpdateLastUsed as checkShouldUpdateLastUsed,
 } from "@openstatus/db/src/utils/api-key";
 
 /**
@@ -52,7 +52,7 @@ export async function createApiKey(
  */
 export async function verifyApiKey(
   token: string,
-): Promise<(typeof apiKey.$inferSelect) | null> {
+): Promise<typeof apiKey.$inferSelect | null> {
   // Extract prefix from token
   const prefix = token.slice(0, 11); // "os_" + 8 chars = 11 total
 

@@ -16,11 +16,8 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 export const apiKeyRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreateAPI })
-    .input(
-      createApiKeySchema,
-    )
+    .input(createApiKeySchema)
     .mutation(async ({ input, ctx }) => {
-
       // Verify user has access to the workspace
       const allowedWorkspaces = await db
         .select()
@@ -42,7 +39,7 @@ export const apiKeyRouter = createTRPCRouter({
       // Create the API key using the custom service
       const { token, key } = await createCustomApiKey(
         ctx.workspace.id,
-        (ctx.user.id),
+        ctx.user.id,
         input.name,
         input.description,
         input.expiresAt,

@@ -199,7 +199,10 @@ export function FormApiKey() {
               >
                 Cancel
               </Button>
-              <Button onClick={createAction} disabled={isPending || !name.trim()}>
+              <Button
+                onClick={createAction}
+                disabled={isPending || !name.trim()}
+              >
                 Create
               </Button>
             </DialogFooter>
@@ -216,7 +219,9 @@ export function FormApiKey() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
-            <code className="flex-1 font-mono text-sm break-all">{result?.token}</code>
+            <code className="flex-1 break-all font-mono text-sm">
+              {result?.token}
+            </code>
             <Button
               variant="ghost"
               size="icon"
