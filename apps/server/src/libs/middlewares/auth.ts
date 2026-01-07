@@ -10,8 +10,8 @@ import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { apiKey } from "@openstatus/db/src/schema/api-keys";
 import {
-  hashApiKey,
   shouldUpdateLastUsed,
+  verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
 
 const logger = getLogger("api-server");
@@ -99,9 +99,8 @@ async function validateKey(key: string): Promise<{
         .get();
 
       if (customKey) {
-        // Verify hash
-        const hash = hashApiKey(key);
-        if (hash !== customKey.hashedToken) {
+        // Verify hash using bcrypt-compatible verification
+        if (!verifyApiKeyHash(key, customKey.hashedToken)) {
           return {
             result: { valid: false },
             error: { message: "Invalid API Key" },
@@ -114,6 +113,7 @@ async function validateKey(key: string): Promise<{
             error: { message: "API Key expired" },
           };
         }
+
         // Update lastUsedAt (debounced)
         if (shouldUpdateLastUsed(customKey.lastUsedAt)) {
           await db

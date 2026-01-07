@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { generateApiKey, hashApiKey, shouldUpdateLastUsed } from "./api-key";
+import {
+  generateApiKey,
+  hashApiKey,
+  shouldUpdateLastUsed,
+  verifyApiKeyHash,
+} from "./api-key";
 
 describe("API Key Utilities", () => {
   describe("generateApiKey", () => {
@@ -19,13 +24,7 @@ describe("API Key Utilities", () => {
       expect(prefix.length).toBe(11);
     });
 
-    it("should generate a valid SHA-256 hash", () => {
-      const { hash } = generateApiKey();
 
-      // SHA-256 hash should be 64 hex characters
-      expect(hash).toMatch(/^[a-f0-9]{64}$/);
-      expect(hash.length).toBe(64);
-    });
 
     it("should generate unique tokens", () => {
       const key1 = generateApiKey();
@@ -40,17 +39,22 @@ describe("API Key Utilities", () => {
 
       expect(token.slice(0, 11)).toBe(prefix);
     });
+
+    it("should generate a valid bcrypt hash", () => {
+      const { hash } = generateApiKey();
+
+      // Bcrypt hashes start with $2a$, $2b$, or $2y$
+      expect(hash).toMatch(/^\$2[aby]\$/);
+    });
+
+    it("should generate hash that can verify the token", () => {
+      const { token, hash } = generateApiKey();
+
+      expect(verifyApiKeyHash(token, hash)).toBe(true);
+    });
   });
 
   describe("hashApiKey", () => {
-    it("should generate consistent hash for same token", () => {
-      const token = "os_test123456789abcdef0123456789";
-      const hash1 = hashApiKey(token);
-      const hash2 = hashApiKey(token);
-
-      expect(hash1).toBe(hash2);
-    });
-
     it("should generate different hashes for different tokens", () => {
       const hash1 = hashApiKey("os_token1");
       const hash2 = hashApiKey("os_token2");
@@ -58,11 +62,83 @@ describe("API Key Utilities", () => {
       expect(hash1).not.toBe(hash2);
     });
 
-    it("should match hash from generateApiKey", () => {
-      const { token, hash } = generateApiKey();
-      const recomputedHash = hashApiKey(token);
+    it("should generate a valid bcrypt hash", () => {
+      const hash = hashApiKey("os_test_token");
 
-      expect(recomputedHash).toBe(hash);
+      // Bcrypt hashes start with $2a$, $2b$, or $2y$
+      expect(hash).toMatch(/^\$2[aby]\$/);
+    });
+
+    it("should generate hash that can verify the original token", () => {
+      const token = "os_test_token_12345";
+      const hash = hashApiKey(token);
+
+      expect(verifyApiKeyHash(token, hash)).toBe(true);
+    });
+
+    it("should generate different hashes for same token on multiple calls", () => {
+      const token = "os_same_token";
+      const hash1 = hashApiKey(token);
+      const hash2 = hashApiKey(token);
+
+      // bcrypt uses salt, so same input produces different hashes
+      expect(hash1).not.toBe(hash2);
+      // But both should verify the token
+      expect(verifyApiKeyHash(token, hash1)).toBe(true);
+      expect(verifyApiKeyHash(token, hash2)).toBe(true);
+    });
+  });
+
+  describe("verifyApiKeyHash", () => {
+    it("should return true for valid bcrypt hash with correct token", () => {
+      const token = "os_valid_token_12345";
+      const hash = hashApiKey(token);
+
+      expect(verifyApiKeyHash(token, hash)).toBe(true);
+    });
+
+    it("should return false for valid bcrypt hash with wrong token", () => {
+      const correctToken = "os_correct_token";
+      const wrongToken = "os_wrong_token";
+      const hash = hashApiKey(correctToken);
+
+      expect(verifyApiKeyHash(wrongToken, hash)).toBe(false);
+    });
+
+    it("should return false for non-bcrypt hash format", () => {
+      const token = "os_test_token";
+      const invalidHash = "not_a_bcrypt_hash";
+
+      expect(verifyApiKeyHash(token, invalidHash)).toBe(false);
+    });
+
+    it("should return false for SHA-256 hash format", () => {
+      const token = "os_test_token";
+      // SHA-256 hashes are 64 hex characters
+      const sha256Hash =
+        "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+
+      expect(verifyApiKeyHash(token, sha256Hash)).toBe(false);
+    });
+
+    it("should return false for empty hash", () => {
+      const token = "os_test_token";
+
+      expect(verifyApiKeyHash(token, "")).toBe(false);
+    });
+
+    it("should return false for empty token with valid hash", () => {
+      const hash = hashApiKey("os_some_token");
+
+      expect(verifyApiKeyHash("", hash)).toBe(false);
+    });
+
+    it("should handle bcrypt hashes with different cost factors", () => {
+      const token = "os_test_token";
+      const hash = hashApiKey(token);
+
+      // Should work regardless of the $2a$, $2b$, or $2y$ variant
+      expect(verifyApiKeyHash(token, hash)).toBe(true);
     });
   });
 
@@ -90,6 +166,36 @@ describe("API Key Utilities", () => {
     it("should return false when just updated", () => {
       const justNow = new Date();
       expect(shouldUpdateLastUsed(justNow, 5)).toBe(false);
+    });
+
+    it("should handle boundary case at exact debounce time", () => {
+      const exactlyFiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      // At exactly the debounce time, it should not update (needs to be > not >=)
+      expect(shouldUpdateLastUsed(exactlyFiveMinutesAgo, 5)).toBe(false);
+    });
+
+    it("should handle boundary case just after debounce time", () => {
+      const justOverFiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000 - 1);
+      expect(shouldUpdateLastUsed(justOverFiveMinutesAgo, 5)).toBe(true);
+    });
+
+    it("should use default debounce of 5 minutes when not specified", () => {
+      const fourMinutesAgo = new Date(Date.now() - 4 * 60 * 1000);
+      const sixMinutesAgo = new Date(Date.now() - 6 * 60 * 1000);
+
+      expect(shouldUpdateLastUsed(fourMinutesAgo)).toBe(false);
+      expect(shouldUpdateLastUsed(sixMinutesAgo)).toBe(true);
+    });
+
+    it("should handle zero debounce period", () => {
+      const oneSecondAgo = new Date(Date.now() - 1000);
+      expect(shouldUpdateLastUsed(oneSecondAgo, 0)).toBe(true);
+    });
+
+    it("should handle very long debounce periods", () => {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      expect(shouldUpdateLastUsed(oneHourAgo, 120)).toBe(false); // 2 hours
+      expect(shouldUpdateLastUsed(oneHourAgo, 30)).toBe(true); // 30 minutes
     });
   });
 });

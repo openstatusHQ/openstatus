@@ -4,7 +4,7 @@ import { apiKey } from "@openstatus/db/src/schema";
 import {
   shouldUpdateLastUsed as checkShouldUpdateLastUsed,
   generateApiKey as generateKey,
-  hashApiKey,
+  verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
 
 /**
@@ -67,9 +67,8 @@ export async function verifyApiKey(
     return null;
   }
 
-  // Verify hash
-  const hash = hashApiKey(token);
-  if (hash !== key.hashedToken) {
+  // Verify hash using bcrypt-compatible verification
+  if (!verifyApiKeyHash(token, key.hashedToken)) {
     return null;
   }
 
