@@ -24,8 +24,6 @@ describe("API Key Utilities", () => {
       expect(prefix.length).toBe(11);
     });
 
-
-
     it("should generate unique tokens", () => {
       const key1 = generateApiKey();
       const key2 = generateApiKey();
