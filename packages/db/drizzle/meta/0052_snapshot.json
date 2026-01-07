@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "39dab4cb-5dc3-40a5-b4db-b8049a0d8f77",
+  "id": "cc596587-5474-42a7-b638-1b7c771fbc5e",
   "prevId": "e8d9889c-8d28-4311-83e6-9fd28c840595",
   "tables": {
     "workspace": {
@@ -3003,6 +3003,13 @@
         }
       },
       "indexes": {
+        "api_key_prefix_unique": {
+          "name": "api_key_prefix_unique",
+          "columns": [
+            "prefix"
+          ],
+          "isUnique": true
+        },
         "api_key_hashed_token_unique": {
           "name": "api_key_hashed_token_unique",
           "columns": [

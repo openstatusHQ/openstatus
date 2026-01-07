@@ -13,5 +13,6 @@ CREATE TABLE `api_key` (
 	FOREIGN KEY (`created_by_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `api_key_prefix_unique` ON `api_key` (`prefix`);--> statement-breakpoint
 CREATE UNIQUE INDEX `api_key_hashed_token_unique` ON `api_key` (`hashed_token`);--> statement-breakpoint
 CREATE INDEX `api_key_prefix_idx` ON `api_key` (`prefix`);
