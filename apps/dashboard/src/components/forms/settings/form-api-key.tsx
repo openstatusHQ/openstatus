@@ -34,15 +34,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import { Copy } from "lucide-react";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -51,8 +42,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import { Copy } from "lucide-react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 // we should prefetch the api key on the server (layout)
@@ -171,7 +171,7 @@ export function FormApiKey() {
           </DialogTrigger>
           <DialogContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(createAction)} >
+              <form onSubmit={form.handleSubmit(createAction)}>
                 <DialogHeader>
                   <DialogTitle>Create API Key</DialogTitle>
                   <DialogDescription>
@@ -184,9 +184,7 @@ export function FormApiKey() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>
-                          Name
-                        </FormLabel>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
                           <Input placeholder="Production API" {...field} />
                         </FormControl>
