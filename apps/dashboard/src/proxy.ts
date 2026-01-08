@@ -32,6 +32,14 @@ export default auth(async (req) => {
     return NextResponse.redirect(newURL);
   }
 
+  if (req.auth && url.pathname === "/login") {
+    const redirectTo = url.searchParams.get("redirectTo");
+    if (redirectTo) {
+      const redirectToUrl = new URL(redirectTo, req.url);
+      return NextResponse.redirect(redirectToUrl);
+    }
+  }
+
   const hasWorkspaceSlug = req.cookies.has("workspace-slug");
 
   if (req.auth?.user?.id && !hasWorkspaceSlug) {

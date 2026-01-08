@@ -31,7 +31,9 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
+import { useEffect } from "react";
 import { searchParamsParsers } from "./search-params";
 
 const moreActions = [
@@ -86,7 +88,9 @@ const moreActions = [
 ];
 
 export function Client() {
-  const [{ step }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [{ step, callbackUrl }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
+  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: workspace, refetch } = useQuery(
@@ -123,6 +127,16 @@ export function Client() {
   const createFeedbackMutation = useMutation(
     trpc.feedback.submit.mutationOptions({}),
   );
+
+  useEffect(() => {
+    if (callbackUrl) {
+      const callbackUrlObj = new URL(callbackUrl);
+      const redirectTo = callbackUrlObj.searchParams.get("redirectTo");
+      if (redirectTo?.startsWith("/invite")) {
+        router.push(redirectTo);
+      }
+    }
+  }, [callbackUrl, router]);
 
   return (
     <SectionGroup>
