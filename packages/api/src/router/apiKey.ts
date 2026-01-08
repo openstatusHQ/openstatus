@@ -1,24 +1,24 @@
-import { UnkeyCore } from "@unkey/api/core";
-import { apisListKeys } from "@unkey/api/funcs/apisListKeys";
-import { keysCreateKey } from "@unkey/api/funcs/keysCreateKey";
-import { keysDeleteKey } from "@unkey/api/funcs/keysDeleteKey";
 import { z } from "zod";
 
 import { Events } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import { createApiKeySchema } from "@openstatus/db/src/schema/api-keys/validation";
 
 import { TRPCError } from "@trpc/server";
-import { env } from "../env";
+import {
+  createApiKey as createCustomApiKey,
+  getApiKeys,
+  revokeApiKey,
+} from "../service/apiKey";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const apiKeyRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreateAPI })
-    .input(z.object({ ownerId: z.number() }))
+    .input(createApiKeySchema)
     .mutation(async ({ input, ctx }) => {
-      const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
-
+      // Verify user has access to the workspace
       const allowedWorkspaces = await db
         .select()
         .from(usersToWorkspaces)
@@ -29,62 +29,71 @@ export const apiKeyRouter = createTRPCRouter({
 
       const allowedIds = allowedWorkspaces.map((i) => i.workspace.id);
 
-      if (!allowedIds.includes(input.ownerId)) {
+      if (!allowedIds.includes(ctx.workspace.id)) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Unauthorized",
         });
       }
 
-      const res = await keysCreateKey(unkey, {
-        apiId: env.UNKEY_API_ID,
-        externalId: String(input.ownerId),
-        prefix: "os",
-      });
+      // Create the API key using the custom service
+      const { token, key } = await createCustomApiKey(
+        ctx.workspace.id,
+        ctx.user.id,
+        input.name,
+        input.description,
+        input.expiresAt,
+      );
 
-      if (!res.ok) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: res.error.message,
-        });
-      }
-
-      return res.value.data;
+      // Return both the key details and the full token (one-time display)
+      return {
+        token,
+        key,
+      };
     }),
 
   revoke: protectedProcedure
     .meta({ track: Events.RevokeAPI })
-    .input(z.object({ keyId: z.string() }))
-    .mutation(async ({ input }) => {
-      const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
+    .input(z.object({ keyId: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      // Revoke the key with workspace ownership verification
+      const success = await revokeApiKey(input.keyId, ctx.workspace.id);
 
-      const res = await keysDeleteKey(unkey, { keyId: input.keyId });
-
-      if (!res.ok) {
+      if (!success) {
         throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: res.error.message,
+          code: "NOT_FOUND",
+          message: "API key not found or unauthorized",
         });
       }
 
-      return res.value;
+      return;
     }),
 
-  get: protectedProcedure.query(async ({ ctx }) => {
-    const unkey = new UnkeyCore({ rootKey: env.UNKEY_TOKEN });
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    // Get all API keys for the workspace
+    const keys = await getApiKeys(ctx.workspace.id);
 
-    const res = await apisListKeys(unkey, {
-      externalId: String(ctx.workspace.id),
-      apiId: env.UNKEY_API_ID,
-    });
+    // Fetch user information for each key's creator
+    const keysWithUserInfo = await Promise.all(
+      keys.map(async (key) => {
+        const creator = await db
+          .select({
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          })
+          .from(user)
+          .where(eq(user.id, key.createdById))
+          .get();
 
-    if (!res.ok) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: res.error.message,
-      });
-    }
+        return {
+          ...key,
+          createdBy: creator,
+        };
+      }),
+    );
 
-    return res.value.data[0];
+    return keysWithUserInfo;
   }),
 });
