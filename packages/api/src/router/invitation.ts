@@ -62,7 +62,7 @@ export const invitationRouter = createTRPCRouter({
 
       if (process.env.NODE_ENV === "development") {
         console.log(
-          `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `,
+          `>>>> Invitation token: http://localhost:3000/invite?token=${token} <<<< `,
         );
       }
 
@@ -108,7 +108,7 @@ export const invitationRouter = createTRPCRouter({
     }),
 
   /**
-   * REMINDER: we are not using a protected procedure here of the `/app/invite` url
+   * REMINDER: we are not using a protected procedure here of the `/invite` url
    * instead of `/app/workspace-slug/invite` as the user is not allowed to it yet.
    * We validate the auth token in the `acceptInvitation` procedure
    */
