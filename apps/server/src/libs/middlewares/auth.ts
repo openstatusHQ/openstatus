@@ -91,12 +91,12 @@ async function validateKey(key: string): Promise<{
      */
     if (key.startsWith("os_")) {
       // Validate token format before database query
-      if (!/^os_[a-f0-9]{32}$/.test(key)) {
-        return {
-          result: { valid: false },
-          error: { message: "Invalid API Key format" },
-        };
-      }
+      // if (!/^os_[a-f0-9]{32}$/.test(key)) {
+      //   return {
+      //     result: { valid: false },
+      //     error: { message: "Invalid API Key format" },
+      //   };
+      // }
 
       // 1. Try custom DB first
       const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
