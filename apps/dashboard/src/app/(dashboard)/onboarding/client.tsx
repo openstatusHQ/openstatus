@@ -129,13 +129,7 @@ export function Client() {
   );
 
   useEffect(() => {
-    if (callbackUrl) {
-      const callbackUrlObj = new URL(callbackUrl);
-      const redirectTo = callbackUrlObj.searchParams.get("redirectTo");
-      if (redirectTo?.startsWith("/invite")) {
-        router.push(redirectTo);
-      }
-    }
+    if (callbackUrl) router.push(callbackUrl);
   }, [callbackUrl, router]);
 
   return (
