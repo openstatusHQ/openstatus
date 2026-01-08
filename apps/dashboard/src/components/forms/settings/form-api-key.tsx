@@ -307,22 +307,21 @@ export function FormApiKey() {
               not see it again.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
-            <code className="flex-1 break-all font-mono text-sm">
-              {result?.token}
-            </code>
+          <div>
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
+              variant="outline"
+              size="sm"
               onClick={() => {
-                copy(result?.token || "", { withToast: true });
+                copy(result?.token || "", {
+                  successMessage: "Copied API key to clipboard",
+                });
               }}
             >
+              <code>{result?.token}</code>
               {isCopied ? (
-                <Check className="h-4 w-4" />
+                <Check size={16} className="text-muted-foreground" />
               ) : (
-                <Copy className="h-4 w-4" />
+                <Copy size={16} className="text-muted-foreground" />
               )}
             </Button>
           </div>
