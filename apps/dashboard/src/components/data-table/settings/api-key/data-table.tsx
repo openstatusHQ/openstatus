@@ -28,12 +28,6 @@ export function DataTable({
     }),
   );
 
-  const truncateText = (text: string | null, maxLength: number) => {
-    if (!text) return "-";
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength)}...`;
-  };
-
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -52,8 +46,8 @@ export function DataTable({
           {apiKeys.map((apiKey) => (
             <TableRow key={apiKey.id}>
               <TableCell className="font-medium">{apiKey.name}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {truncateText(apiKey.description, 40)}
+              <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                {apiKey.description ?? "-"}
               </TableCell>
               <TableCell>
                 <code className="text-xs">{apiKey.prefix}...</code>
