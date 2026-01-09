@@ -16,6 +16,8 @@ export const env = createEnv({
     NODE_ENV: z.string().prefault("development"),
     SUPER_ADMIN_TOKEN: z.string(),
     RESEND_API_KEY: z.string(),
+    AXIOM_TOKEN: z.string(),
+    AXIOM_DATASET: z.string(),
   },
 
   /**

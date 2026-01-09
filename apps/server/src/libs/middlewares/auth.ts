@@ -75,6 +75,12 @@ export async function authMiddleware(
     });
   }
 
+  const event = c.get("event");
+  event.workspace = {
+    id: validation.data.id,
+    name: validation.data.name,
+  };
+
   c.set("workspace", validation.data);
 
   await next();
