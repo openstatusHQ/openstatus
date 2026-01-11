@@ -9,6 +9,7 @@ import {
   workspacePlans,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
@@ -173,6 +174,7 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   addAddon: protectedProcedure
+    .meta({ track: Events.AddFeature, trackProps: ["feature"] })
     .input(
       z.object({
         workspaceSlug: z.string(),
