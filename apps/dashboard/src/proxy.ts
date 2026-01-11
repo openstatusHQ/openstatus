@@ -22,6 +22,7 @@ export default auth(async (req) => {
   }
 
   if (!req.auth && url.pathname !== "/login") {
+    console.log("User not authenticated, redirecting to login");
     const newURL = new URL("/login", req.url);
     const encodedSearchParams = `${url.pathname}${url.search}`;
 
@@ -34,6 +35,7 @@ export default auth(async (req) => {
 
   if (req.auth && url.pathname === "/login") {
     const redirectTo = url.searchParams.get("redirectTo");
+    console.log("User authenticated, redirecting to", redirectTo);
     if (redirectTo) {
       const redirectToUrl = new URL(redirectTo, req.url);
       return NextResponse.redirect(redirectToUrl);
