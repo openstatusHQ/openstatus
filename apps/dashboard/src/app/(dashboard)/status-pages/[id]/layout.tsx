@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import {
   AppHeader,
   AppHeaderActions,
@@ -19,9 +21,20 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery(
-    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-  );
+  try {
+    const pageData = await queryClient.fetchQuery(
+      trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
+    );
+
+    // Redirect to status-pages list if page doesn't exist or user doesn't have access
+    if (!pageData?.id) {
+      redirect("/status-pages");
+    }
+  } catch {
+    // Redirect if fetching page fails (e.g., user doesn't have access)
+    redirect("/status-pages");
+  }
+
   await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
 
   return (
