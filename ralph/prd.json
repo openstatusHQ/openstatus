@@ -1,0 +1,8 @@
+[
+  {
+    "category": "functional",
+    "description": "When a user is on wrong dashboard /status-pages/[id] redirect him to /status-pages",
+    "steps": ["Redirect user no access for page id", "Avoid throwing an error"],
+    "passes": false
+  }
+]
