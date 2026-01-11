@@ -21,17 +21,11 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  try {
-    const pageData = await queryClient.fetchQuery(
-      trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
-    );
+  const pageData = await queryClient.fetchQuery(
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) })
+  );
 
-    // Redirect to status-pages list if page doesn't exist or user doesn't have access
-    if (!pageData?.id) {
-      redirect("/status-pages");
-    }
-  } catch {
-    // Redirect if fetching page fails (e.g., user doesn't have access)
+  if (!pageData?.id) {
     redirect("/status-pages");
   }
 
