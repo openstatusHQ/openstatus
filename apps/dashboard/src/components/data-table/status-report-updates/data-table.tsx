@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type StatusReportUpdates =
@@ -40,6 +40,7 @@ export function DataTable({
 }) {
   const trpc = useTRPC();
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const sendStatusReportUpdateMutation = useMutation(
     trpc.emailRouter.sendStatusReport.mutationOptions(),
@@ -60,6 +61,8 @@ export function DataTable({
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        // Refresh server components
+        router.refresh();
       },
     }),
   );
