@@ -22,7 +22,7 @@ export default async function Layout({
   const queryClient = getQueryClient();
 
   const pageData = await queryClient.fetchQuery(
-    trpc.page.get.queryOptions({ id: Number.parseInt(id) })
+    trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
   if (!pageData?.id) {
