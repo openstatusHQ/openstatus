@@ -34,7 +34,7 @@ export default async function Page(props: {
         <form
           action={async () => {
             "use server";
-            await signIn("github", { redirectTo });
+            await signIn("github", { redirectTo: redirectTo ?? undefined });
           }}
           className="w-full"
         >
@@ -45,7 +45,7 @@ export default async function Page(props: {
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo });
+            await signIn("google", { redirectTo: redirectTo ?? undefined });
           }}
           className="w-full"
         >
