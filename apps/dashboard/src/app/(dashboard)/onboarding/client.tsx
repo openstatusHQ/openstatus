@@ -129,7 +129,17 @@ export function Client() {
   );
 
   useEffect(() => {
-    if (callbackUrl) router.push(callbackUrl);
+    if (!callbackUrl) return;
+    // Ignore base URL redirects - only redirect for meaningful paths (e.g., /invite?token=...)
+    try {
+      const url = new URL(callbackUrl, window.location.origin);
+      if (url.pathname === "/" || url.pathname === "") return;
+      router.push(callbackUrl);
+    } catch {
+      // If callbackUrl is a relative path, check it directly
+      if (callbackUrl === "/" || callbackUrl === "") return;
+      router.push(callbackUrl);
+    }
   }, [callbackUrl, router]);
 
   return (
