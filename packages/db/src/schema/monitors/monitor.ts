@@ -13,6 +13,7 @@ import { monitorGroup } from "../monitor_groups";
 import { monitorStatusTable } from "../monitor_status/monitor_status";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
+import { pageComponent } from "../page_components";
 import { page } from "../pages";
 import { privateLocationToMonitors } from "../private_locations";
 import { monitorsToStatusReport } from "../status_reports";
@@ -75,6 +76,7 @@ export const monitor = sqliteTable("monitor", {
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
   monitorsToPages: many(monitorsToPages),
+  pageComponents: many(pageComponent),
   monitorsToStatusReports: many(monitorsToStatusReport),
   monitorTagsToMonitors: many(monitorTagsToMonitors),
   workspace: one(workspace, {

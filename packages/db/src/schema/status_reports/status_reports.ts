@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
+import { statusReportsToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
 
@@ -56,6 +57,7 @@ export const StatusReportRelations = relations(
   statusReport,
   ({ one, many }) => ({
     monitorsToStatusReports: many(monitorsToStatusReport),
+    statusReportsToPageComponents: many(statusReportsToPageComponents),
     page: one(page, {
       fields: [statusReport.pageId],
       references: [page.id],
