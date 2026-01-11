@@ -21,14 +21,14 @@ The `prd.json` file is an array of object with the following format:
 
 The `progress.txt` file simply keeps track of the changes and implementation decisions.
 
-You can run Raplh with a human-in-the-loop by running:
+You can run Ralph with a human-in-the-loop by running:
 
 ```
-./ralph-once.ts
+./ralph-once.sh
 ```
 
-Or in AFK mode within the sandbox environment by specifying the iterantion number with:
+Or in AFK mode within the sandbox environment by specifying the iteration number with:
 
 ```
-./afk-raph.ts 10
-``
+./afk-raph.sh 10
+```
