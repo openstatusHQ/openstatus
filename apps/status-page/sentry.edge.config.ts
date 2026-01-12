@@ -3,7 +3,7 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 import * as Sentry from "@sentry/nextjs";
-import { TRPCError } from "@trpc/server";
+import type { TRPCError } from "@trpc/server";
 
 // tRPC error codes that should not be reported to Sentry (expected client errors)
 const IGNORED_TRPC_CODES: TRPCError["code"][] = [
