@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package openstatus.health.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/health/v1;healthv1";
+
+// HealthService provides health check endpoints for load balancer probes.
+service HealthService {
+  // Check returns the current serving status of the service.
+  rpc Check(CheckRequest) returns (CheckResponse);
+}
+
+// CheckRequest is the request message for health checks.
+message CheckRequest {
+  // Optional service name to check. If empty, checks overall service health.
+  string service = 1;
+}
+
+// CheckResponse is the response message for health checks.
+message CheckResponse {
+  // ServingStatus represents the health status of the service.
+  enum ServingStatus {
+    // SERVING_STATUS_UNSPECIFIED indicates an unknown status.
+    SERVING_STATUS_UNSPECIFIED = 0;
+    // SERVING_STATUS_SERVING indicates the service is healthy and serving.
+    SERVING_STATUS_SERVING = 1;
+    // SERVING_STATUS_NOT_SERVING indicates the service is not healthy.
+    SERVING_STATUS_NOT_SERVING = 2;
+  }
+
+  // The serving status of the service.
+  ServingStatus status = 1;
+}

@@ -1,0 +1,191 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/monitor/v1/monitor.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+// MonitorService provides CRUD and operational commands for monitors.
+service MonitorService {
+  // CreateMonitor creates a new monitor in the workspace.
+  rpc CreateMonitor(CreateMonitorRequest) returns (CreateMonitorResponse);
+
+  // GetMonitor retrieves a single monitor by ID.
+  rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse);
+
+  // ListMonitors returns a paginated list of monitors.
+  rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse);
+
+  // UpdateMonitor modifies an existing monitor.
+  rpc UpdateMonitor(UpdateMonitorRequest) returns (UpdateMonitorResponse);
+
+  // DeleteMonitor removes a monitor.
+  rpc DeleteMonitor(DeleteMonitorRequest) returns (DeleteMonitorResponse);
+
+  // TriggerMonitor initiates an immediate check.
+  rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse);
+
+  // PauseMonitor suspends monitoring.
+  rpc PauseMonitor(PauseMonitorRequest) returns (PauseMonitorResponse);
+
+  // ResumeMonitor resumes a paused monitor.
+  rpc ResumeMonitor(ResumeMonitorRequest) returns (ResumeMonitorResponse);
+}
+
+// CreateMonitorRequest is the request to create a new monitor.
+message CreateMonitorRequest {
+  // Human-readable name for the monitor (required).
+  string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 256}];
+
+  // Optional description of the monitor.
+  string description = 2 [(buf.validate.field).string.max_len = 1024];
+
+  // Check interval in seconds (required, must be one of: 60, 300, 600, 1800, 3600).
+  int32 periodicity = 3 [(buf.validate.field).int32 = {in: [60, 300, 600, 1800, 3600]}];
+
+  // Regions where the monitor should run (required, 1-35 regions).
+  repeated string regions = 4 [(buf.validate.field).repeated = {min_items: 1, max_items: 35}];
+
+  // Type-specific configuration (required).
+  MonitorConfig config = 5 [(buf.validate.field).required = true];
+
+  // Latency threshold in ms after which the monitor is considered degraded.
+  optional int32 degraded_after_ms = 6 [(buf.validate.field).int32 = {gte: 0, lte: 60000}];
+
+  // Tags for categorization.
+  repeated string tags = 7 [(buf.validate.field).repeated.max_items = 10];
+}
+
+// CreateMonitorResponse is the response after creating a monitor.
+message CreateMonitorResponse {
+  // The created monitor.
+  Monitor monitor = 1;
+}
+
+// GetMonitorRequest is the request to retrieve a monitor.
+message GetMonitorRequest {
+  // The ID of the monitor to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetMonitorResponse is the response containing the requested monitor.
+message GetMonitorResponse {
+  // The requested monitor.
+  Monitor monitor = 1;
+}
+
+// ListMonitorsRequest is the request to list monitors.
+message ListMonitorsRequest {
+  // Maximum number of monitors to return (default: 50, max: 100).
+  int32 page_size = 1 [(buf.validate.field).int32 = {gte: 1, lte: 100}];
+
+  // Token from previous response for pagination.
+  optional string page_token = 2;
+
+  // Filter by monitor status.
+  optional MonitorStatus status_filter = 3;
+
+  // Filter by monitor type.
+  optional MonitorType type_filter = 4;
+}
+
+// ListMonitorsResponse is the response containing a list of monitors.
+message ListMonitorsResponse {
+  // The monitors in this page.
+  repeated Monitor monitors = 1;
+
+  // Token for retrieving the next page, empty if no more results.
+  string next_page_token = 2;
+
+  // Total count of monitors matching the filter.
+  int32 total_count = 3;
+}
+
+// UpdateMonitorRequest is the request to update a monitor.
+message UpdateMonitorRequest {
+  // The ID of the monitor to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Human-readable name for the monitor.
+  optional string name = 2 [(buf.validate.field).string = {min_len: 1, max_len: 256}];
+
+  // Description of the monitor.
+  optional string description = 3 [(buf.validate.field).string.max_len = 1024];
+
+  // Check interval in seconds.
+  optional int32 periodicity = 4 [(buf.validate.field).int32 = {in: [60, 300, 600, 1800, 3600]}];
+
+  // Regions where the monitor should run.
+  repeated string regions = 5 [(buf.validate.field).repeated = {max_items: 35}];
+
+  // Type-specific configuration.
+  optional MonitorConfig config = 6;
+
+  // Latency threshold in ms after which the monitor is considered degraded.
+  optional int32 degraded_after_ms = 7 [(buf.validate.field).int32 = {gte: 0, lte: 60000}];
+
+  // Tags for categorization.
+  repeated string tags = 8 [(buf.validate.field).repeated.max_items = 10];
+}
+
+// UpdateMonitorResponse is the response after updating a monitor.
+message UpdateMonitorResponse {
+  // The updated monitor.
+  Monitor monitor = 1;
+}
+
+// DeleteMonitorRequest is the request to delete a monitor.
+message DeleteMonitorRequest {
+  // The ID of the monitor to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteMonitorResponse is the response after deleting a monitor.
+message DeleteMonitorResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// TriggerMonitorRequest is the request to trigger an immediate check.
+message TriggerMonitorRequest {
+  // The ID of the monitor to trigger (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Specific regions to check (optional, defaults to all configured regions).
+  repeated string regions = 2 [(buf.validate.field).repeated.max_items = 35];
+}
+
+// TriggerMonitorResponse is the response after triggering a monitor check.
+message TriggerMonitorResponse {
+  // Unique identifier for this check execution.
+  string check_id = 1;
+
+  // Message indicating the trigger status.
+  string message = 2;
+}
+
+// PauseMonitorRequest is the request to pause a monitor.
+message PauseMonitorRequest {
+  // The ID of the monitor to pause (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// PauseMonitorResponse is the response after pausing a monitor.
+message PauseMonitorResponse {
+  // The paused monitor.
+  Monitor monitor = 1;
+}
+
+// ResumeMonitorRequest is the request to resume a paused monitor.
+message ResumeMonitorRequest {
+  // The ID of the monitor to resume (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// ResumeMonitorResponse is the response after resuming a monitor.
+message ResumeMonitorResponse {
+  // The resumed monitor.
+  Monitor monitor = 1;
+}
