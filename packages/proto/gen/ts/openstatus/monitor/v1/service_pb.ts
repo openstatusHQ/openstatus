@@ -2,80 +2,99 @@
 // @generated from file openstatus/monitor/v1/service.proto (package openstatus.monitor.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
-import type { Monitor, MonitorConfig, MonitorStatus, MonitorType } from "./monitor_pb.ts";
-import { file_openstatus_monitor_v1_monitor } from "./monitor_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv2";
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
+import type {
+  Monitor,
+  MonitorConfig,
+  MonitorStatus,
+  MonitorType,
+} from "./monitor_pb.ts";
+import { file_openstatus_monitor_v1_monitor } from "./monitor_pb.ts";
 
 /**
  * Describes the file openstatus/monitor/v1/service.proto.
  */
-export const file_openstatus_monitor_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIq8CChRDcmVhdGVNb25pdG9yUmVxdWVzdBIYCgRuYW1lGAEgASgJQgq6SAdyBRABGIACEh0KC2Rlc2NyaXB0aW9uGAIgASgJQgi6SAVyAxiACBIoCgtwZXJpb2RpY2l0eRgDIAEoBUITukgQGg4wPDCsAjDYBDCIDjCQHBIbCgdyZWdpb25zGAQgAygJQgq6SAeSAQQIARAjEjwKBmNvbmZpZxgFIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnQga6SAPIAQESKwoRZGVncmFkZWRfYWZ0ZXJfbXMYBiABKAVCC7pICBoGGODUAygASACIAQESFgoEdGFncxgHIAMoCUIIukgFkgECEApCFAoSX2RlZ3JhZGVkX2FmdGVyX21zIkgKFUNyZWF0ZU1vbml0b3JSZXNwb25zZRIvCgdtb25pdG9yGAEgASgLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3IiKAoRR2V0TW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiRQoSR2V0TW9uaXRvclJlc3BvbnNlEi8KB21vbml0b3IYASABKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvciL9AQoTTGlzdE1vbml0b3JzUmVxdWVzdBIcCglwYWdlX3NpemUYASABKAVCCbpIBhoEGGQoARIXCgpwYWdlX3Rva2VuGAIgASgJSACIAQESQAoNc3RhdHVzX2ZpbHRlchgDIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzSAGIAQESPAoLdHlwZV9maWx0ZXIYBCABKA4yIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclR5cGVIAogBAUINCgtfcGFnZV90b2tlbkIQCg5fc3RhdHVzX2ZpbHRlckIOCgxfdHlwZV9maWx0ZXIidgoUTGlzdE1vbml0b3JzUmVzcG9uc2USMAoIbW9uaXRvcnMYASADKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvchIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkSEwoLdG90YWxfY291bnQYAyABKAUiggMKFFVwZGF0ZU1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEh0KBG5hbWUYAiABKAlCCrpIB3IFEAEYgAJIAIgBARIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAYgBARItCgtwZXJpb2RpY2l0eRgEIAEoBUITukgQGg4wPDCsAjDYBDCIDjCQHEgCiAEBEhkKB3JlZ2lvbnMYBSADKAlCCLpIBZIBAhAjEjkKBmNvbmZpZxgGIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnSAOIAQESKwoRZGVncmFkZWRfYWZ0ZXJfbXMYByABKAVCC7pICBoGGODUAygASASIAQESFgoEdGFncxgIIAMoCUIIukgFkgECEApCBwoFX25hbWVCDgoMX2Rlc2NyaXB0aW9uQg4KDF9wZXJpb2RpY2l0eUIJCgdfY29uZmlnQhQKEl9kZWdyYWRlZF9hZnRlcl9tcyJIChVVcGRhdGVNb25pdG9yUmVzcG9uc2USLwoHbW9uaXRvchgBIAEoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yIisKFERlbGV0ZU1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIigKFURlbGV0ZU1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIkcKFVRyaWdnZXJNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIZCgdyZWdpb25zGAIgAygJQgi6SAWSAQIQIyI7ChZUcmlnZ2VyTW9uaXRvclJlc3BvbnNlEhAKCGNoZWNrX2lkGAEgASgJEg8KB21lc3NhZ2UYAiABKAkiKgoTUGF1c2VNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJHChRQYXVzZU1vbml0b3JSZXNwb25zZRIvCgdtb25pdG9yGAEgASgLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3IiKwoUUmVzdW1lTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiSAoVUmVzdW1lTW9uaXRvclJlc3BvbnNlEi8KB21vbml0b3IYASABKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvcjLkBgoOTW9uaXRvclNlcnZpY2USagoNQ3JlYXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVNb25pdG9yUmVzcG9uc2USYQoKR2V0TW9uaXRvchIoLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVxdWVzdBopLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVzcG9uc2USZwoMTGlzdE1vbml0b3JzEioub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yc1JlcXVlc3QaKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JzUmVzcG9uc2USagoNVXBkYXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVNb25pdG9yUmVzcG9uc2USagoNRGVsZXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVzcG9uc2USbQoOVHJpZ2dlck1vbml0b3ISLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVHJpZ2dlck1vbml0b3JSZXF1ZXN0Gi0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRyaWdnZXJNb25pdG9yUmVzcG9uc2USZwoMUGF1c2VNb25pdG9yEioub3BlbnN0YXR1cy5tb25pdG9yLnYxLlBhdXNlTW9uaXRvclJlcXVlc3QaKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuUGF1c2VNb25pdG9yUmVzcG9uc2USagoNUmVzdW1lTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZXN1bWVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZXN1bWVNb25pdG9yUmVzcG9uc2VCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_monitor]);
+export const file_openstatus_monitor_v1_service: GenFile =
+  /*@__PURE__*/
+  fileDesc(
+    "CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIq8CChRDcmVhdGVNb25pdG9yUmVxdWVzdBIYCgRuYW1lGAEgASgJQgq6SAdyBRABGIACEh0KC2Rlc2NyaXB0aW9uGAIgASgJQgi6SAVyAxiACBIoCgtwZXJpb2RpY2l0eRgDIAEoBUITukgQGg4wPDCsAjDYBDCIDjCQHBIbCgdyZWdpb25zGAQgAygJQgq6SAeSAQQIARAjEjwKBmNvbmZpZxgFIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnQga6SAPIAQESKwoRZGVncmFkZWRfYWZ0ZXJfbXMYBiABKAVCC7pICBoGGODUAygASACIAQESFgoEdGFncxgHIAMoCUIIukgFkgECEApCFAoSX2RlZ3JhZGVkX2FmdGVyX21zIkgKFUNyZWF0ZU1vbml0b3JSZXNwb25zZRIvCgdtb25pdG9yGAEgASgLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3IiKAoRR2V0TW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiRQoSR2V0TW9uaXRvclJlc3BvbnNlEi8KB21vbml0b3IYASABKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvciL9AQoTTGlzdE1vbml0b3JzUmVxdWVzdBIcCglwYWdlX3NpemUYASABKAVCCbpIBhoEGGQoARIXCgpwYWdlX3Rva2VuGAIgASgJSACIAQESQAoNc3RhdHVzX2ZpbHRlchgDIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yU3RhdHVzSAGIAQESPAoLdHlwZV9maWx0ZXIYBCABKA4yIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclR5cGVIAogBAUINCgtfcGFnZV90b2tlbkIQCg5fc3RhdHVzX2ZpbHRlckIOCgxfdHlwZV9maWx0ZXIidgoUTGlzdE1vbml0b3JzUmVzcG9uc2USMAoIbW9uaXRvcnMYASADKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvchIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkSEwoLdG90YWxfY291bnQYAyABKAUiggMKFFVwZGF0ZU1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEh0KBG5hbWUYAiABKAlCCrpIB3IFEAEYgAJIAIgBARIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAYgBARItCgtwZXJpb2RpY2l0eRgEIAEoBUITukgQGg4wPDCsAjDYBDCIDjCQHEgCiAEBEhkKB3JlZ2lvbnMYBSADKAlCCLpIBZIBAhAjEjkKBmNvbmZpZxgGIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnSAOIAQESKwoRZGVncmFkZWRfYWZ0ZXJfbXMYByABKAVCC7pICBoGGODUAygASASIAQESFgoEdGFncxgIIAMoCUIIukgFkgECEApCBwoFX25hbWVCDgoMX2Rlc2NyaXB0aW9uQg4KDF9wZXJpb2RpY2l0eUIJCgdfY29uZmlnQhQKEl9kZWdyYWRlZF9hZnRlcl9tcyJIChVVcGRhdGVNb25pdG9yUmVzcG9uc2USLwoHbW9uaXRvchgBIAEoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yIisKFERlbGV0ZU1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIigKFURlbGV0ZU1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIkcKFVRyaWdnZXJNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIZCgdyZWdpb25zGAIgAygJQgi6SAWSAQIQIyI7ChZUcmlnZ2VyTW9uaXRvclJlc3BvbnNlEhAKCGNoZWNrX2lkGAEgASgJEg8KB21lc3NhZ2UYAiABKAkiKgoTUGF1c2VNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJHChRQYXVzZU1vbml0b3JSZXNwb25zZRIvCgdtb25pdG9yGAEgASgLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3IiKwoUUmVzdW1lTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiSAoVUmVzdW1lTW9uaXRvclJlc3BvbnNlEi8KB21vbml0b3IYASABKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvcjLkBgoOTW9uaXRvclNlcnZpY2USagoNQ3JlYXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVNb25pdG9yUmVzcG9uc2USYQoKR2V0TW9uaXRvchIoLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVxdWVzdBopLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yUmVzcG9uc2USZwoMTGlzdE1vbml0b3JzEioub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yc1JlcXVlc3QaKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JzUmVzcG9uc2USagoNVXBkYXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVNb25pdG9yUmVzcG9uc2USagoNRGVsZXRlTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5EZWxldGVNb25pdG9yUmVzcG9uc2USbQoOVHJpZ2dlck1vbml0b3ISLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVHJpZ2dlck1vbml0b3JSZXF1ZXN0Gi0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRyaWdnZXJNb25pdG9yUmVzcG9uc2USZwoMUGF1c2VNb25pdG9yEioub3BlbnN0YXR1cy5tb25pdG9yLnYxLlBhdXNlTW9uaXRvclJlcXVlc3QaKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuUGF1c2VNb25pdG9yUmVzcG9uc2USagoNUmVzdW1lTW9uaXRvchIrLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZXN1bWVNb25pdG9yUmVxdWVzdBosLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZXN1bWVNb25pdG9yUmVzcG9uc2VCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM",
+    [file_buf_validate_validate, file_openstatus_monitor_v1_monitor],
+  );
 
 /**
  * CreateMonitorRequest is the request to create a new monitor.
  *
  * @generated from message openstatus.monitor.v1.CreateMonitorRequest
  */
-export type CreateMonitorRequest = Message<"openstatus.monitor.v1.CreateMonitorRequest"> & {
-  /**
-   * Human-readable name for the monitor (required).
-   *
-   * @generated from field: string name = 1;
-   */
-  name: string;
+export type CreateMonitorRequest =
+  Message<"openstatus.monitor.v1.CreateMonitorRequest"> & {
+    /**
+     * Human-readable name for the monitor (required).
+     *
+     * @generated from field: string name = 1;
+     */
+    name: string;
 
-  /**
-   * Optional description of the monitor.
-   *
-   * @generated from field: string description = 2;
-   */
-  description: string;
+    /**
+     * Optional description of the monitor.
+     *
+     * @generated from field: string description = 2;
+     */
+    description: string;
 
-  /**
-   * Check interval in seconds (required, must be one of: 60, 300, 600, 1800, 3600).
-   *
-   * @generated from field: int32 periodicity = 3;
-   */
-  periodicity: number;
+    /**
+     * Check interval in seconds (required, must be one of: 60, 300, 600, 1800, 3600).
+     *
+     * @generated from field: int32 periodicity = 3;
+     */
+    periodicity: number;
 
-  /**
-   * Regions where the monitor should run (required, 1-35 regions).
-   *
-   * @generated from field: repeated string regions = 4;
-   */
-  regions: string[];
+    /**
+     * Regions where the monitor should run (required, 1-35 regions).
+     *
+     * @generated from field: repeated string regions = 4;
+     */
+    regions: string[];
 
-  /**
-   * Type-specific configuration (required).
-   *
-   * @generated from field: openstatus.monitor.v1.MonitorConfig config = 5;
-   */
-  config?: MonitorConfig;
+    /**
+     * Type-specific configuration (required).
+     *
+     * @generated from field: openstatus.monitor.v1.MonitorConfig config = 5;
+     */
+    config?: MonitorConfig;
 
-  /**
-   * Latency threshold in ms after which the monitor is considered degraded.
-   *
-   * @generated from field: optional int32 degraded_after_ms = 6;
-   */
-  degradedAfterMs?: number;
+    /**
+     * Latency threshold in ms after which the monitor is considered degraded.
+     *
+     * @generated from field: optional int32 degraded_after_ms = 6;
+     */
+    degradedAfterMs?: number;
 
-  /**
-   * Tags for categorization.
-   *
-   * @generated from field: repeated string tags = 7;
-   */
-  tags: string[];
-};
+    /**
+     * Tags for categorization.
+     *
+     * @generated from field: repeated string tags = 7;
+     */
+    tags: string[];
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.CreateMonitorRequest.
  * Use `create(CreateMonitorRequestSchema)` to create a new message.
  */
-export const CreateMonitorRequestSchema: GenMessage<CreateMonitorRequest> = /*@__PURE__*/
+export const CreateMonitorRequestSchema: GenMessage<CreateMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 0);
 
 /**
@@ -83,20 +102,22 @@ export const CreateMonitorRequestSchema: GenMessage<CreateMonitorRequest> = /*@_
  *
  * @generated from message openstatus.monitor.v1.CreateMonitorResponse
  */
-export type CreateMonitorResponse = Message<"openstatus.monitor.v1.CreateMonitorResponse"> & {
-  /**
-   * The created monitor.
-   *
-   * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
-   */
-  monitor?: Monitor;
-};
+export type CreateMonitorResponse =
+  Message<"openstatus.monitor.v1.CreateMonitorResponse"> & {
+    /**
+     * The created monitor.
+     *
+     * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
+     */
+    monitor?: Monitor;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.CreateMonitorResponse.
  * Use `create(CreateMonitorResponseSchema)` to create a new message.
  */
-export const CreateMonitorResponseSchema: GenMessage<CreateMonitorResponse> = /*@__PURE__*/
+export const CreateMonitorResponseSchema: GenMessage<CreateMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 1);
 
 /**
@@ -104,20 +125,22 @@ export const CreateMonitorResponseSchema: GenMessage<CreateMonitorResponse> = /*
  *
  * @generated from message openstatus.monitor.v1.GetMonitorRequest
  */
-export type GetMonitorRequest = Message<"openstatus.monitor.v1.GetMonitorRequest"> & {
-  /**
-   * The ID of the monitor to retrieve (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type GetMonitorRequest =
+  Message<"openstatus.monitor.v1.GetMonitorRequest"> & {
+    /**
+     * The ID of the monitor to retrieve (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.GetMonitorRequest.
  * Use `create(GetMonitorRequestSchema)` to create a new message.
  */
-export const GetMonitorRequestSchema: GenMessage<GetMonitorRequest> = /*@__PURE__*/
+export const GetMonitorRequestSchema: GenMessage<GetMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 2);
 
 /**
@@ -125,20 +148,22 @@ export const GetMonitorRequestSchema: GenMessage<GetMonitorRequest> = /*@__PURE_
  *
  * @generated from message openstatus.monitor.v1.GetMonitorResponse
  */
-export type GetMonitorResponse = Message<"openstatus.monitor.v1.GetMonitorResponse"> & {
-  /**
-   * The requested monitor.
-   *
-   * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
-   */
-  monitor?: Monitor;
-};
+export type GetMonitorResponse =
+  Message<"openstatus.monitor.v1.GetMonitorResponse"> & {
+    /**
+     * The requested monitor.
+     *
+     * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
+     */
+    monitor?: Monitor;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.GetMonitorResponse.
  * Use `create(GetMonitorResponseSchema)` to create a new message.
  */
-export const GetMonitorResponseSchema: GenMessage<GetMonitorResponse> = /*@__PURE__*/
+export const GetMonitorResponseSchema: GenMessage<GetMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 3);
 
 /**
@@ -146,41 +171,43 @@ export const GetMonitorResponseSchema: GenMessage<GetMonitorResponse> = /*@__PUR
  *
  * @generated from message openstatus.monitor.v1.ListMonitorsRequest
  */
-export type ListMonitorsRequest = Message<"openstatus.monitor.v1.ListMonitorsRequest"> & {
-  /**
-   * Maximum number of monitors to return (default: 50, max: 100).
-   *
-   * @generated from field: int32 page_size = 1;
-   */
-  pageSize: number;
+export type ListMonitorsRequest =
+  Message<"openstatus.monitor.v1.ListMonitorsRequest"> & {
+    /**
+     * Maximum number of monitors to return (default: 50, max: 100).
+     *
+     * @generated from field: int32 page_size = 1;
+     */
+    pageSize: number;
 
-  /**
-   * Token from previous response for pagination.
-   *
-   * @generated from field: optional string page_token = 2;
-   */
-  pageToken?: string;
+    /**
+     * Token from previous response for pagination.
+     *
+     * @generated from field: optional string page_token = 2;
+     */
+    pageToken?: string;
 
-  /**
-   * Filter by monitor status.
-   *
-   * @generated from field: optional openstatus.monitor.v1.MonitorStatus status_filter = 3;
-   */
-  statusFilter?: MonitorStatus;
+    /**
+     * Filter by monitor status.
+     *
+     * @generated from field: optional openstatus.monitor.v1.MonitorStatus status_filter = 3;
+     */
+    statusFilter?: MonitorStatus;
 
-  /**
-   * Filter by monitor type.
-   *
-   * @generated from field: optional openstatus.monitor.v1.MonitorType type_filter = 4;
-   */
-  typeFilter?: MonitorType;
-};
+    /**
+     * Filter by monitor type.
+     *
+     * @generated from field: optional openstatus.monitor.v1.MonitorType type_filter = 4;
+     */
+    typeFilter?: MonitorType;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.ListMonitorsRequest.
  * Use `create(ListMonitorsRequestSchema)` to create a new message.
  */
-export const ListMonitorsRequestSchema: GenMessage<ListMonitorsRequest> = /*@__PURE__*/
+export const ListMonitorsRequestSchema: GenMessage<ListMonitorsRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 4);
 
 /**
@@ -188,34 +215,36 @@ export const ListMonitorsRequestSchema: GenMessage<ListMonitorsRequest> = /*@__P
  *
  * @generated from message openstatus.monitor.v1.ListMonitorsResponse
  */
-export type ListMonitorsResponse = Message<"openstatus.monitor.v1.ListMonitorsResponse"> & {
-  /**
-   * The monitors in this page.
-   *
-   * @generated from field: repeated openstatus.monitor.v1.Monitor monitors = 1;
-   */
-  monitors: Monitor[];
+export type ListMonitorsResponse =
+  Message<"openstatus.monitor.v1.ListMonitorsResponse"> & {
+    /**
+     * The monitors in this page.
+     *
+     * @generated from field: repeated openstatus.monitor.v1.Monitor monitors = 1;
+     */
+    monitors: Monitor[];
 
-  /**
-   * Token for retrieving the next page, empty if no more results.
-   *
-   * @generated from field: string next_page_token = 2;
-   */
-  nextPageToken: string;
+    /**
+     * Token for retrieving the next page, empty if no more results.
+     *
+     * @generated from field: string next_page_token = 2;
+     */
+    nextPageToken: string;
 
-  /**
-   * Total count of monitors matching the filter.
-   *
-   * @generated from field: int32 total_count = 3;
-   */
-  totalCount: number;
-};
+    /**
+     * Total count of monitors matching the filter.
+     *
+     * @generated from field: int32 total_count = 3;
+     */
+    totalCount: number;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.ListMonitorsResponse.
  * Use `create(ListMonitorsResponseSchema)` to create a new message.
  */
-export const ListMonitorsResponseSchema: GenMessage<ListMonitorsResponse> = /*@__PURE__*/
+export const ListMonitorsResponseSchema: GenMessage<ListMonitorsResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 5);
 
 /**
@@ -223,69 +252,71 @@ export const ListMonitorsResponseSchema: GenMessage<ListMonitorsResponse> = /*@_
  *
  * @generated from message openstatus.monitor.v1.UpdateMonitorRequest
  */
-export type UpdateMonitorRequest = Message<"openstatus.monitor.v1.UpdateMonitorRequest"> & {
-  /**
-   * The ID of the monitor to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateMonitorRequest =
+  Message<"openstatus.monitor.v1.UpdateMonitorRequest"> & {
+    /**
+     * The ID of the monitor to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * Human-readable name for the monitor.
-   *
-   * @generated from field: optional string name = 2;
-   */
-  name?: string;
+    /**
+     * Human-readable name for the monitor.
+     *
+     * @generated from field: optional string name = 2;
+     */
+    name?: string;
 
-  /**
-   * Description of the monitor.
-   *
-   * @generated from field: optional string description = 3;
-   */
-  description?: string;
+    /**
+     * Description of the monitor.
+     *
+     * @generated from field: optional string description = 3;
+     */
+    description?: string;
 
-  /**
-   * Check interval in seconds.
-   *
-   * @generated from field: optional int32 periodicity = 4;
-   */
-  periodicity?: number;
+    /**
+     * Check interval in seconds.
+     *
+     * @generated from field: optional int32 periodicity = 4;
+     */
+    periodicity?: number;
 
-  /**
-   * Regions where the monitor should run.
-   *
-   * @generated from field: repeated string regions = 5;
-   */
-  regions: string[];
+    /**
+     * Regions where the monitor should run.
+     *
+     * @generated from field: repeated string regions = 5;
+     */
+    regions: string[];
 
-  /**
-   * Type-specific configuration.
-   *
-   * @generated from field: optional openstatus.monitor.v1.MonitorConfig config = 6;
-   */
-  config?: MonitorConfig;
+    /**
+     * Type-specific configuration.
+     *
+     * @generated from field: optional openstatus.monitor.v1.MonitorConfig config = 6;
+     */
+    config?: MonitorConfig;
 
-  /**
-   * Latency threshold in ms after which the monitor is considered degraded.
-   *
-   * @generated from field: optional int32 degraded_after_ms = 7;
-   */
-  degradedAfterMs?: number;
+    /**
+     * Latency threshold in ms after which the monitor is considered degraded.
+     *
+     * @generated from field: optional int32 degraded_after_ms = 7;
+     */
+    degradedAfterMs?: number;
 
-  /**
-   * Tags for categorization.
-   *
-   * @generated from field: repeated string tags = 8;
-   */
-  tags: string[];
-};
+    /**
+     * Tags for categorization.
+     *
+     * @generated from field: repeated string tags = 8;
+     */
+    tags: string[];
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.UpdateMonitorRequest.
  * Use `create(UpdateMonitorRequestSchema)` to create a new message.
  */
-export const UpdateMonitorRequestSchema: GenMessage<UpdateMonitorRequest> = /*@__PURE__*/
+export const UpdateMonitorRequestSchema: GenMessage<UpdateMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 6);
 
 /**
@@ -293,20 +324,22 @@ export const UpdateMonitorRequestSchema: GenMessage<UpdateMonitorRequest> = /*@_
  *
  * @generated from message openstatus.monitor.v1.UpdateMonitorResponse
  */
-export type UpdateMonitorResponse = Message<"openstatus.monitor.v1.UpdateMonitorResponse"> & {
-  /**
-   * The updated monitor.
-   *
-   * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
-   */
-  monitor?: Monitor;
-};
+export type UpdateMonitorResponse =
+  Message<"openstatus.monitor.v1.UpdateMonitorResponse"> & {
+    /**
+     * The updated monitor.
+     *
+     * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
+     */
+    monitor?: Monitor;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.UpdateMonitorResponse.
  * Use `create(UpdateMonitorResponseSchema)` to create a new message.
  */
-export const UpdateMonitorResponseSchema: GenMessage<UpdateMonitorResponse> = /*@__PURE__*/
+export const UpdateMonitorResponseSchema: GenMessage<UpdateMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 7);
 
 /**
@@ -314,20 +347,22 @@ export const UpdateMonitorResponseSchema: GenMessage<UpdateMonitorResponse> = /*
  *
  * @generated from message openstatus.monitor.v1.DeleteMonitorRequest
  */
-export type DeleteMonitorRequest = Message<"openstatus.monitor.v1.DeleteMonitorRequest"> & {
-  /**
-   * The ID of the monitor to delete (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type DeleteMonitorRequest =
+  Message<"openstatus.monitor.v1.DeleteMonitorRequest"> & {
+    /**
+     * The ID of the monitor to delete (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.DeleteMonitorRequest.
  * Use `create(DeleteMonitorRequestSchema)` to create a new message.
  */
-export const DeleteMonitorRequestSchema: GenMessage<DeleteMonitorRequest> = /*@__PURE__*/
+export const DeleteMonitorRequestSchema: GenMessage<DeleteMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 8);
 
 /**
@@ -335,20 +370,22 @@ export const DeleteMonitorRequestSchema: GenMessage<DeleteMonitorRequest> = /*@_
  *
  * @generated from message openstatus.monitor.v1.DeleteMonitorResponse
  */
-export type DeleteMonitorResponse = Message<"openstatus.monitor.v1.DeleteMonitorResponse"> & {
-  /**
-   * Whether the deletion was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type DeleteMonitorResponse =
+  Message<"openstatus.monitor.v1.DeleteMonitorResponse"> & {
+    /**
+     * Whether the deletion was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.DeleteMonitorResponse.
  * Use `create(DeleteMonitorResponseSchema)` to create a new message.
  */
-export const DeleteMonitorResponseSchema: GenMessage<DeleteMonitorResponse> = /*@__PURE__*/
+export const DeleteMonitorResponseSchema: GenMessage<DeleteMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 9);
 
 /**
@@ -356,27 +393,29 @@ export const DeleteMonitorResponseSchema: GenMessage<DeleteMonitorResponse> = /*
  *
  * @generated from message openstatus.monitor.v1.TriggerMonitorRequest
  */
-export type TriggerMonitorRequest = Message<"openstatus.monitor.v1.TriggerMonitorRequest"> & {
-  /**
-   * The ID of the monitor to trigger (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type TriggerMonitorRequest =
+  Message<"openstatus.monitor.v1.TriggerMonitorRequest"> & {
+    /**
+     * The ID of the monitor to trigger (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * Specific regions to check (optional, defaults to all configured regions).
-   *
-   * @generated from field: repeated string regions = 2;
-   */
-  regions: string[];
-};
+    /**
+     * Specific regions to check (optional, defaults to all configured regions).
+     *
+     * @generated from field: repeated string regions = 2;
+     */
+    regions: string[];
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.TriggerMonitorRequest.
  * Use `create(TriggerMonitorRequestSchema)` to create a new message.
  */
-export const TriggerMonitorRequestSchema: GenMessage<TriggerMonitorRequest> = /*@__PURE__*/
+export const TriggerMonitorRequestSchema: GenMessage<TriggerMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 10);
 
 /**
@@ -384,27 +423,29 @@ export const TriggerMonitorRequestSchema: GenMessage<TriggerMonitorRequest> = /*
  *
  * @generated from message openstatus.monitor.v1.TriggerMonitorResponse
  */
-export type TriggerMonitorResponse = Message<"openstatus.monitor.v1.TriggerMonitorResponse"> & {
-  /**
-   * Unique identifier for this check execution.
-   *
-   * @generated from field: string check_id = 1;
-   */
-  checkId: string;
+export type TriggerMonitorResponse =
+  Message<"openstatus.monitor.v1.TriggerMonitorResponse"> & {
+    /**
+     * Unique identifier for this check execution.
+     *
+     * @generated from field: string check_id = 1;
+     */
+    checkId: string;
 
-  /**
-   * Message indicating the trigger status.
-   *
-   * @generated from field: string message = 2;
-   */
-  message: string;
-};
+    /**
+     * Message indicating the trigger status.
+     *
+     * @generated from field: string message = 2;
+     */
+    message: string;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.TriggerMonitorResponse.
  * Use `create(TriggerMonitorResponseSchema)` to create a new message.
  */
-export const TriggerMonitorResponseSchema: GenMessage<TriggerMonitorResponse> = /*@__PURE__*/
+export const TriggerMonitorResponseSchema: GenMessage<TriggerMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 11);
 
 /**
@@ -412,20 +453,22 @@ export const TriggerMonitorResponseSchema: GenMessage<TriggerMonitorResponse> = 
  *
  * @generated from message openstatus.monitor.v1.PauseMonitorRequest
  */
-export type PauseMonitorRequest = Message<"openstatus.monitor.v1.PauseMonitorRequest"> & {
-  /**
-   * The ID of the monitor to pause (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type PauseMonitorRequest =
+  Message<"openstatus.monitor.v1.PauseMonitorRequest"> & {
+    /**
+     * The ID of the monitor to pause (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.PauseMonitorRequest.
  * Use `create(PauseMonitorRequestSchema)` to create a new message.
  */
-export const PauseMonitorRequestSchema: GenMessage<PauseMonitorRequest> = /*@__PURE__*/
+export const PauseMonitorRequestSchema: GenMessage<PauseMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 12);
 
 /**
@@ -433,20 +476,22 @@ export const PauseMonitorRequestSchema: GenMessage<PauseMonitorRequest> = /*@__P
  *
  * @generated from message openstatus.monitor.v1.PauseMonitorResponse
  */
-export type PauseMonitorResponse = Message<"openstatus.monitor.v1.PauseMonitorResponse"> & {
-  /**
-   * The paused monitor.
-   *
-   * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
-   */
-  monitor?: Monitor;
-};
+export type PauseMonitorResponse =
+  Message<"openstatus.monitor.v1.PauseMonitorResponse"> & {
+    /**
+     * The paused monitor.
+     *
+     * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
+     */
+    monitor?: Monitor;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.PauseMonitorResponse.
  * Use `create(PauseMonitorResponseSchema)` to create a new message.
  */
-export const PauseMonitorResponseSchema: GenMessage<PauseMonitorResponse> = /*@__PURE__*/
+export const PauseMonitorResponseSchema: GenMessage<PauseMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 13);
 
 /**
@@ -454,20 +499,22 @@ export const PauseMonitorResponseSchema: GenMessage<PauseMonitorResponse> = /*@_
  *
  * @generated from message openstatus.monitor.v1.ResumeMonitorRequest
  */
-export type ResumeMonitorRequest = Message<"openstatus.monitor.v1.ResumeMonitorRequest"> & {
-  /**
-   * The ID of the monitor to resume (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type ResumeMonitorRequest =
+  Message<"openstatus.monitor.v1.ResumeMonitorRequest"> & {
+    /**
+     * The ID of the monitor to resume (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.ResumeMonitorRequest.
  * Use `create(ResumeMonitorRequestSchema)` to create a new message.
  */
-export const ResumeMonitorRequestSchema: GenMessage<ResumeMonitorRequest> = /*@__PURE__*/
+export const ResumeMonitorRequestSchema: GenMessage<ResumeMonitorRequest> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 14);
 
 /**
@@ -475,20 +522,22 @@ export const ResumeMonitorRequestSchema: GenMessage<ResumeMonitorRequest> = /*@_
  *
  * @generated from message openstatus.monitor.v1.ResumeMonitorResponse
  */
-export type ResumeMonitorResponse = Message<"openstatus.monitor.v1.ResumeMonitorResponse"> & {
-  /**
-   * The resumed monitor.
-   *
-   * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
-   */
-  monitor?: Monitor;
-};
+export type ResumeMonitorResponse =
+  Message<"openstatus.monitor.v1.ResumeMonitorResponse"> & {
+    /**
+     * The resumed monitor.
+     *
+     * @generated from field: openstatus.monitor.v1.Monitor monitor = 1;
+     */
+    monitor?: Monitor;
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.ResumeMonitorResponse.
  * Use `create(ResumeMonitorResponseSchema)` to create a new message.
  */
-export const ResumeMonitorResponseSchema: GenMessage<ResumeMonitorResponse> = /*@__PURE__*/
+export const ResumeMonitorResponseSchema: GenMessage<ResumeMonitorResponse> =
+  /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_service, 15);
 
 /**
@@ -506,7 +555,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof CreateMonitorRequestSchema;
     output: typeof CreateMonitorResponseSchema;
-  },
+  };
   /**
    * GetMonitor retrieves a single monitor by ID.
    *
@@ -516,7 +565,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof GetMonitorRequestSchema;
     output: typeof GetMonitorResponseSchema;
-  },
+  };
   /**
    * ListMonitors returns a paginated list of monitors.
    *
@@ -526,7 +575,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof ListMonitorsRequestSchema;
     output: typeof ListMonitorsResponseSchema;
-  },
+  };
   /**
    * UpdateMonitor modifies an existing monitor.
    *
@@ -536,7 +585,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof UpdateMonitorRequestSchema;
     output: typeof UpdateMonitorResponseSchema;
-  },
+  };
   /**
    * DeleteMonitor removes a monitor.
    *
@@ -546,7 +595,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof DeleteMonitorRequestSchema;
     output: typeof DeleteMonitorResponseSchema;
-  },
+  };
   /**
    * TriggerMonitor initiates an immediate check.
    *
@@ -556,7 +605,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof TriggerMonitorRequestSchema;
     output: typeof TriggerMonitorResponseSchema;
-  },
+  };
   /**
    * PauseMonitor suspends monitoring.
    *
@@ -566,7 +615,7 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof PauseMonitorRequestSchema;
     output: typeof PauseMonitorResponseSchema;
-  },
+  };
   /**
    * ResumeMonitor resumes a paused monitor.
    *
@@ -576,7 +625,5 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof ResumeMonitorRequestSchema;
     output: typeof ResumeMonitorResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_openstatus_monitor_v1_service, 0);
-
+  };
+}> = /*@__PURE__*/ serviceDesc(file_openstatus_monitor_v1_service, 0);
