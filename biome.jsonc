@@ -5,6 +5,7 @@
       "packages/ui/src/components/*.tsx",
       "packages/ui/src/components/*.ts",
       "apps/dashboard/src/scripts/*.ts",
+      "packages/proto/gen",
       ".devbox"
     ]
   },

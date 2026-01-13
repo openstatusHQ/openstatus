@@ -17,6 +17,7 @@ import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
 import { api } from "./routes/v1";
+import { mountRpcRoutes } from "./routes/v2";
 
 configureSync({
   sinks: {
@@ -76,6 +77,11 @@ app.use("*", async (c, next) => {
 });
 
 app.onError(handleError);
+
+/**
+ * ConnectRPC Routes API v2
+ */
+mountRpcRoutes(app);
 
 /**
  * Public Routes

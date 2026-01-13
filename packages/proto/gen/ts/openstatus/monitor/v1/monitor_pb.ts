@@ -2,26 +2,18 @@
 // @generated from file openstatus/monitor/v1/monitor.proto (package openstatus.monitor.v1, syntax proto3)
 /* eslint-disable */
 
-import type { Message } from "@bufbuild/protobuf";
-import type {
-  GenEnum,
-  GenFile,
-  GenMessage,
-} from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
-import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/monitor/v1/monitor.proto.
  */
-export const file_openstatus_monitor_v1_monitor: GenFile =
-  /*@__PURE__*/
-  fileDesc(
-    "CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIssBCg1IdHRwQXNzZXJ0aW9uEjYKBHR5cGUYASABKA4yKC5vcGVuc3RhdHVzLm1vbml0b3IudjEuSHR0cEFzc2VydGlvblR5cGUSQgoKY29tcGFyYXRvchgCIAEoDjIuLm9wZW5zdGF0dXMubW9uaXRvci52MS5IdHRwQXNzZXJ0aW9uQ29tcGFyYXRvchIWCg5leHBlY3RlZF92YWx1ZRgDIAEoCRIXCgpoZWFkZXJfa2V5GAQgASgJSACIAQFCDQoLX2hlYWRlcl9rZXki2wIKC0h0dHBNb25pdG9yEhUKA3VybBgBIAEoCUIIukgFcgOIAQESMQoGbWV0aG9kGAIgASgOMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkh0dHBNZXRob2QSQAoHaGVhZGVycxgDIAMoCzIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5IdHRwTW9uaXRvci5IZWFkZXJzRW50cnkSEQoEYm9keRgEIAEoCUgAiAEBEiAKCnRpbWVvdXRfbXMYBSABKAVCDLpICRoHGODUAyjoBxIYChBmb2xsb3dfcmVkaXJlY3RzGAYgASgIEjgKCmFzc2VydGlvbnMYByADKAsyJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuSHR0cEFzc2VydGlvbhouCgxIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIHCgVfYm9keSJgCgpUY3BNb25pdG9yEhUKBGhvc3QYASABKAlCB7pIBHICEAESGQoEcG9ydBgCIAEoBUILukgIGgYY//8DKAESIAoKdGltZW91dF9tcxgDIAEoBUIMukgJGgcY4NQDKOgHIpsBCgpEbnNNb25pdG9yEhcKBmRvbWFpbhgBIAEoCUIHukgEcgIQARI5CgtyZWNvcmRfdHlwZRgCIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5EbnNSZWNvcmRUeXBlEhcKD2V4cGVjdGVkX3ZhbHVlcxgDIAMoCRIgCgp0aW1lb3V0X21zGAQgASgFQgy6SAkaBxjg1AMo6AcisQEKDU1vbml0b3JDb25maWcSMgoEaHR0cBgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IdHRwTW9uaXRvckgAEjAKA3RjcBgCIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5UY3BNb25pdG9ySAASMAoDZG5zGAMgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkRuc01vbml0b3JIAEIICgZjb25maWcioAMKB01vbml0b3ISCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIwCgR0eXBlGAQgASgOMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3JUeXBlEjQKBmNvbmZpZxgFIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnEhMKC3BlcmlvZGljaXR5GAYgASgFEg8KB3JlZ2lvbnMYByADKAkSNAoGc3RhdHVzGAggASgOMiQub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3JTdGF0dXMSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASHgoRZGVncmFkZWRfYWZ0ZXJfbXMYCyABKAVIAIgBARIMCgR0YWdzGAwgAygJQhQKEl9kZWdyYWRlZF9hZnRlcl9tcyp/Cg1Nb25pdG9yU3RhdHVzEh4KGk1PTklUT1JfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVTU9OSVRPUl9TVEFUVVNfQUNUSVZFEAESGQoVTU9OSVRPUl9TVEFUVVNfUEFVU0VEEAISGAoUTU9OSVRPUl9TVEFUVVNfRVJST1IQAypuCgtNb25pdG9yVHlwZRIcChhNT05JVE9SX1RZUEVfVU5TUEVDSUZJRUQQABIVChFNT05JVE9SX1RZUEVfSFRUUBABEhQKEE1PTklUT1JfVFlQRV9UQ1AQAhIUChBNT05JVE9SX1RZUEVfRE5TEAMqxwEKCkh0dHBNZXRob2QSGwoXSFRUUF9NRVRIT0RfVU5TUEVDSUZJRUQQABITCg9IVFRQX01FVEhPRF9HRVQQARIUChBIVFRQX01FVEhPRF9QT1NUEAISEwoPSFRUUF9NRVRIT0RfUFVUEAMSFQoRSFRUUF9NRVRIT0RfUEFUQ0gQBBIWChJIVFRQX01FVEhPRF9ERUxFVEUQBRIUChBIVFRQX01FVEhPRF9IRUFEEAYSFwoTSFRUUF9NRVRIT0RfT1BUSU9OUxAHKsUBCg1EbnNSZWNvcmRUeXBlEh8KG0ROU19SRUNPUkRfVFlQRV9VTlNQRUNJRklFRBAAEhUKEUROU19SRUNPUkRfVFlQRV9BEAESGAoURE5TX1JFQ09SRF9UWVBFX0FBQUEQAhIZChVETlNfUkVDT1JEX1RZUEVfQ05BTUUQAxIWChJETlNfUkVDT1JEX1RZUEVfTVgQBBIWChJETlNfUkVDT1JEX1RZUEVfTlMQBRIXChNETlNfUkVDT1JEX1RZUEVfVFhUEAYqmwEKEUh0dHBBc3NlcnRpb25UeXBlEiMKH0hUVFBfQVNTRVJUSU9OX1RZUEVfVU5TUEVDSUZJRUQQABIjCh9IVFRQX0FTU0VSVElPTl9UWVBFX1NUQVRVU19DT0RFEAESHAoYSFRUUF9BU1NFUlRJT05fVFlQRV9CT0RZEAISHgoaSFRUUF9BU1NFUlRJT05fVFlQRV9IRUFERVIQAyrqAgoXSHR0cEFzc2VydGlvbkNvbXBhcmF0b3ISKQolSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9VTlNQRUNJRklFRBAAEiQKIEhUVFBfQVNTRVJUSU9OX0NPTVBBUkFUT1JfRVFVQUxTEAESKAokSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9OT1RfRVFVQUxTEAISJgoiSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9DT05UQUlOUxADEioKJkhUVFBfQVNTRVJUSU9OX0NPTVBBUkFUT1JfTk9UX0NPTlRBSU5TEAQSKgomSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9HUkVBVEVSX1RIQU4QBRInCiNIVFRQX0FTU0VSVElPTl9DT01QQVJBVE9SX0xFU1NfVEhBThAGEisKJ0hUVFBfQVNTRVJUSU9OX0NPTVBBUkFUT1JfTUFUQ0hFU19SRUdFWBAHQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z",
-    [file_buf_validate_validate, file_google_protobuf_timestamp],
-  );
+export const file_openstatus_monitor_v1_monitor: GenFile = /*@__PURE__*/
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIssBCg1IdHRwQXNzZXJ0aW9uEjYKBHR5cGUYASABKA4yKC5vcGVuc3RhdHVzLm1vbml0b3IudjEuSHR0cEFzc2VydGlvblR5cGUSQgoKY29tcGFyYXRvchgCIAEoDjIuLm9wZW5zdGF0dXMubW9uaXRvci52MS5IdHRwQXNzZXJ0aW9uQ29tcGFyYXRvchIWCg5leHBlY3RlZF92YWx1ZRgDIAEoCRIXCgpoZWFkZXJfa2V5GAQgASgJSACIAQFCDQoLX2hlYWRlcl9rZXki2wIKC0h0dHBNb25pdG9yEhUKA3VybBgBIAEoCUIIukgFcgOIAQESMQoGbWV0aG9kGAIgASgOMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkh0dHBNZXRob2QSQAoHaGVhZGVycxgDIAMoCzIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5IdHRwTW9uaXRvci5IZWFkZXJzRW50cnkSEQoEYm9keRgEIAEoCUgAiAEBEiAKCnRpbWVvdXRfbXMYBSABKAVCDLpICRoHGODUAyjoBxIYChBmb2xsb3dfcmVkaXJlY3RzGAYgASgIEjgKCmFzc2VydGlvbnMYByADKAsyJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuSHR0cEFzc2VydGlvbhouCgxIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIHCgVfYm9keSJgCgpUY3BNb25pdG9yEhUKBGhvc3QYASABKAlCB7pIBHICEAESGQoEcG9ydBgCIAEoBUILukgIGgYY//8DKAESIAoKdGltZW91dF9tcxgDIAEoBUIMukgJGgcY4NQDKOgHIpsBCgpEbnNNb25pdG9yEhcKBmRvbWFpbhgBIAEoCUIHukgEcgIQARI5CgtyZWNvcmRfdHlwZRgCIAEoDjIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5EbnNSZWNvcmRUeXBlEhcKD2V4cGVjdGVkX3ZhbHVlcxgDIAMoCRIgCgp0aW1lb3V0X21zGAQgASgFQgy6SAkaBxjg1AMo6AcisQEKDU1vbml0b3JDb25maWcSMgoEaHR0cBgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IdHRwTW9uaXRvckgAEjAKA3RjcBgCIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5UY3BNb25pdG9ySAASMAoDZG5zGAMgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkRuc01vbml0b3JIAEIICgZjb25maWcioAMKB01vbml0b3ISCgoCaWQYASABKAkSDAoEbmFtZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIwCgR0eXBlGAQgASgOMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3JUeXBlEjQKBmNvbmZpZxgFIAEoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Nb25pdG9yQ29uZmlnEhMKC3BlcmlvZGljaXR5GAYgASgFEg8KB3JlZ2lvbnMYByADKAkSNAoGc3RhdHVzGAggASgOMiQub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3JTdGF0dXMSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASHgoRZGVncmFkZWRfYWZ0ZXJfbXMYCyABKAVIAIgBARIMCgR0YWdzGAwgAygJQhQKEl9kZWdyYWRlZF9hZnRlcl9tcyp/Cg1Nb25pdG9yU3RhdHVzEh4KGk1PTklUT1JfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVTU9OSVRPUl9TVEFUVVNfQUNUSVZFEAESGQoVTU9OSVRPUl9TVEFUVVNfUEFVU0VEEAISGAoUTU9OSVRPUl9TVEFUVVNfRVJST1IQAypuCgtNb25pdG9yVHlwZRIcChhNT05JVE9SX1RZUEVfVU5TUEVDSUZJRUQQABIVChFNT05JVE9SX1RZUEVfSFRUUBABEhQKEE1PTklUT1JfVFlQRV9UQ1AQAhIUChBNT05JVE9SX1RZUEVfRE5TEAMqxwEKCkh0dHBNZXRob2QSGwoXSFRUUF9NRVRIT0RfVU5TUEVDSUZJRUQQABITCg9IVFRQX01FVEhPRF9HRVQQARIUChBIVFRQX01FVEhPRF9QT1NUEAISEwoPSFRUUF9NRVRIT0RfUFVUEAMSFQoRSFRUUF9NRVRIT0RfUEFUQ0gQBBIWChJIVFRQX01FVEhPRF9ERUxFVEUQBRIUChBIVFRQX01FVEhPRF9IRUFEEAYSFwoTSFRUUF9NRVRIT0RfT1BUSU9OUxAHKsUBCg1EbnNSZWNvcmRUeXBlEh8KG0ROU19SRUNPUkRfVFlQRV9VTlNQRUNJRklFRBAAEhUKEUROU19SRUNPUkRfVFlQRV9BEAESGAoURE5TX1JFQ09SRF9UWVBFX0FBQUEQAhIZChVETlNfUkVDT1JEX1RZUEVfQ05BTUUQAxIWChJETlNfUkVDT1JEX1RZUEVfTVgQBBIWChJETlNfUkVDT1JEX1RZUEVfTlMQBRIXChNETlNfUkVDT1JEX1RZUEVfVFhUEAYqmwEKEUh0dHBBc3NlcnRpb25UeXBlEiMKH0hUVFBfQVNTRVJUSU9OX1RZUEVfVU5TUEVDSUZJRUQQABIjCh9IVFRQX0FTU0VSVElPTl9UWVBFX1NUQVRVU19DT0RFEAESHAoYSFRUUF9BU1NFUlRJT05fVFlQRV9CT0RZEAISHgoaSFRUUF9BU1NFUlRJT05fVFlQRV9IRUFERVIQAyrqAgoXSHR0cEFzc2VydGlvbkNvbXBhcmF0b3ISKQolSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9VTlNQRUNJRklFRBAAEiQKIEhUVFBfQVNTRVJUSU9OX0NPTVBBUkFUT1JfRVFVQUxTEAESKAokSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9OT1RfRVFVQUxTEAISJgoiSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9DT05UQUlOUxADEioKJkhUVFBfQVNTRVJUSU9OX0NPTVBBUkFUT1JfTk9UX0NPTlRBSU5TEAQSKgomSFRUUF9BU1NFUlRJT05fQ09NUEFSQVRPUl9HUkVBVEVSX1RIQU4QBRInCiNIVFRQX0FTU0VSVElPTl9DT01QQVJBVE9SX0xFU1NfVEhBThAGEisKJ0hUVFBfQVNTRVJUSU9OX0NPTVBBUkFUT1JfTUFUQ0hFU19SRUdFWBAHQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * HttpAssertion defines an assertion to validate HTTP responses.
@@ -62,8 +54,7 @@ export type HttpAssertion = Message<"openstatus.monitor.v1.HttpAssertion"> & {
  * Describes the message openstatus.monitor.v1.HttpAssertion.
  * Use `create(HttpAssertionSchema)` to create a new message.
  */
-export const HttpAssertionSchema: GenMessage<HttpAssertion> =
-  /*@__PURE__*/
+export const HttpAssertionSchema: GenMessage<HttpAssertion> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_monitor, 0);
 
 /**
@@ -126,8 +117,7 @@ export type HttpMonitor = Message<"openstatus.monitor.v1.HttpMonitor"> & {
  * Describes the message openstatus.monitor.v1.HttpMonitor.
  * Use `create(HttpMonitorSchema)` to create a new message.
  */
-export const HttpMonitorSchema: GenMessage<HttpMonitor> =
-  /*@__PURE__*/
+export const HttpMonitorSchema: GenMessage<HttpMonitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_monitor, 1);
 
 /**
@@ -162,8 +152,7 @@ export type TcpMonitor = Message<"openstatus.monitor.v1.TcpMonitor"> & {
  * Describes the message openstatus.monitor.v1.TcpMonitor.
  * Use `create(TcpMonitorSchema)` to create a new message.
  */
-export const TcpMonitorSchema: GenMessage<TcpMonitor> =
-  /*@__PURE__*/
+export const TcpMonitorSchema: GenMessage<TcpMonitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_monitor, 2);
 
 /**
@@ -205,8 +194,7 @@ export type DnsMonitor = Message<"openstatus.monitor.v1.DnsMonitor"> & {
  * Describes the message openstatus.monitor.v1.DnsMonitor.
  * Use `create(DnsMonitorSchema)` to create a new message.
  */
-export const DnsMonitorSchema: GenMessage<DnsMonitor> =
-  /*@__PURE__*/
+export const DnsMonitorSchema: GenMessage<DnsMonitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_monitor, 3);
 
 /**
@@ -218,43 +206,38 @@ export type MonitorConfig = Message<"openstatus.monitor.v1.MonitorConfig"> & {
   /**
    * @generated from oneof openstatus.monitor.v1.MonitorConfig.config
    */
-  config:
-    | {
-        /**
-         * HTTP monitor configuration.
-         *
-         * @generated from field: openstatus.monitor.v1.HttpMonitor http = 1;
-         */
-        value: HttpMonitor;
-        case: "http";
-      }
-    | {
-        /**
-         * TCP monitor configuration.
-         *
-         * @generated from field: openstatus.monitor.v1.TcpMonitor tcp = 2;
-         */
-        value: TcpMonitor;
-        case: "tcp";
-      }
-    | {
-        /**
-         * DNS monitor configuration.
-         *
-         * @generated from field: openstatus.monitor.v1.DnsMonitor dns = 3;
-         */
-        value: DnsMonitor;
-        case: "dns";
-      }
-    | { case: undefined; value?: undefined };
+  config: {
+    /**
+     * HTTP monitor configuration.
+     *
+     * @generated from field: openstatus.monitor.v1.HttpMonitor http = 1;
+     */
+    value: HttpMonitor;
+    case: "http";
+  } | {
+    /**
+     * TCP monitor configuration.
+     *
+     * @generated from field: openstatus.monitor.v1.TcpMonitor tcp = 2;
+     */
+    value: TcpMonitor;
+    case: "tcp";
+  } | {
+    /**
+     * DNS monitor configuration.
+     *
+     * @generated from field: openstatus.monitor.v1.DnsMonitor dns = 3;
+     */
+    value: DnsMonitor;
+    case: "dns";
+  } | { case: undefined; value?: undefined };
 };
 
 /**
  * Describes the message openstatus.monitor.v1.MonitorConfig.
  * Use `create(MonitorConfigSchema)` to create a new message.
  */
-export const MonitorConfigSchema: GenMessage<MonitorConfig> =
-  /*@__PURE__*/
+export const MonitorConfigSchema: GenMessage<MonitorConfig> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_monitor, 4);
 
 /**
@@ -352,8 +335,7 @@ export type Monitor = Message<"openstatus.monitor.v1.Monitor"> & {
  * Describes the message openstatus.monitor.v1.Monitor.
  * Use `create(MonitorSchema)` to create a new message.
  */
-export const MonitorSchema: GenMessage<Monitor> =
-  /*@__PURE__*/
+export const MonitorSchema: GenMessage<Monitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_monitor, 5);
 
 /**
@@ -394,8 +376,7 @@ export enum MonitorStatus {
 /**
  * Describes the enum openstatus.monitor.v1.MonitorStatus.
  */
-export const MonitorStatusSchema: GenEnum<MonitorStatus> =
-  /*@__PURE__*/
+export const MonitorStatusSchema: GenEnum<MonitorStatus> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 0);
 
 /**
@@ -436,8 +417,7 @@ export enum MonitorType {
 /**
  * Describes the enum openstatus.monitor.v1.MonitorType.
  */
-export const MonitorTypeSchema: GenEnum<MonitorType> =
-  /*@__PURE__*/
+export const MonitorTypeSchema: GenEnum<MonitorType> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 1);
 
 /**
@@ -506,8 +486,7 @@ export enum HttpMethod {
 /**
  * Describes the enum openstatus.monitor.v1.HttpMethod.
  */
-export const HttpMethodSchema: GenEnum<HttpMethod> =
-  /*@__PURE__*/
+export const HttpMethodSchema: GenEnum<HttpMethod> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 2);
 
 /**
@@ -569,8 +548,7 @@ export enum DnsRecordType {
 /**
  * Describes the enum openstatus.monitor.v1.DnsRecordType.
  */
-export const DnsRecordTypeSchema: GenEnum<DnsRecordType> =
-  /*@__PURE__*/
+export const DnsRecordTypeSchema: GenEnum<DnsRecordType> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 3);
 
 /**
@@ -611,8 +589,7 @@ export enum HttpAssertionType {
 /**
  * Describes the enum openstatus.monitor.v1.HttpAssertionType.
  */
-export const HttpAssertionTypeSchema: GenEnum<HttpAssertionType> =
-  /*@__PURE__*/
+export const HttpAssertionTypeSchema: GenEnum<HttpAssertionType> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 4);
 
 /**
@@ -681,6 +658,6 @@ export enum HttpAssertionComparator {
 /**
  * Describes the enum openstatus.monitor.v1.HttpAssertionComparator.
  */
-export const HttpAssertionComparatorSchema: GenEnum<HttpAssertionComparator> =
-  /*@__PURE__*/
+export const HttpAssertionComparatorSchema: GenEnum<HttpAssertionComparator> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 5);
+

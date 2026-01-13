@@ -16,6 +16,36 @@ import {
 
 const logger = getLogger("api-server");
 
+/**
+ * Looks up a workspace by ID and validates the data.
+ * Throws OpenStatusApiError if workspace is not found or invalid.
+ */
+export async function lookupWorkspace(workspaceId: number) {
+  const _workspace = await db
+    .select()
+    .from(workspace)
+    .where(eq(workspace.id, workspaceId))
+    .get();
+
+  if (!_workspace) {
+    throw new OpenStatusApiError({
+      code: "NOT_FOUND",
+      message: "Workspace not found, please contact support",
+    });
+  }
+
+  const validation = selectWorkspaceSchema.safeParse(_workspace);
+
+  if (!validation.success) {
+    throw new OpenStatusApiError({
+      code: "BAD_REQUEST",
+      message: "Workspace data is invalid",
+    });
+  }
+
+  return validation.data;
+}
+
 export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
   next: Next,
@@ -52,35 +82,13 @@ export async function authMiddleware(
     });
   }
 
-  const _workspace = await db
-    .select()
-    .from(workspace)
-    .where(eq(workspace.id, ownerId))
-    .get();
-
-  if (!_workspace) {
-    console.error("Workspace not found");
-    throw new OpenStatusApiError({
-      code: "NOT_FOUND",
-      message: "Workspace not found, please contact support",
-    });
-  }
-
-  const validation = selectWorkspaceSchema.safeParse(_workspace);
-
-  if (!validation.success) {
-    throw new OpenStatusApiError({
-      code: "BAD_REQUEST",
-      message: "Workspace data is invalid",
-    });
-  }
-
-  c.set("workspace", validation.data);
+  const workspaceData = await lookupWorkspace(ownerId);
+  c.set("workspace", workspaceData);
 
   await next();
 }
 
-async function validateKey(key: string): Promise<{
+export async function validateKey(key: string): Promise<{
   result: { valid: boolean; ownerId?: string };
   error?: { message: string };
 }> {
