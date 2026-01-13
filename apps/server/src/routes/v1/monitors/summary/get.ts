@@ -2,10 +2,8 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
-import { OSTinybird } from "@openstatus/tinybird";
-import { Redis } from "@openstatus/upstash";
 
-import { env } from "@/env";
+import { redis, tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "../index";
 import { ParamsSchema, SummarySchema } from "./schema";
@@ -14,9 +12,6 @@ import { ParamsSchema, SummarySchema } from "./schema";
 if (process.env.NODE_ENV === "test") {
   require("@/libs/test/preload");
 }
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-const redis = Redis.fromEnv();
 
 const getMonitorStats = createRoute({
   method: "get",
