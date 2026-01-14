@@ -180,6 +180,10 @@ export default defineConfig({
               slug: "reference/notification",
             },
             {
+              label: "Location",
+              slug: "reference/location",
+            },
+            {
               label: "Private location",
               slug: "reference/private-location",
             },

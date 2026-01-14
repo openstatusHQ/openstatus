@@ -3,10 +3,10 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3 AS install
+FROM oven/bun@sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a AS install
 LABEL \
-    org.opencontainers.image.base.digest="sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.5" \
+    org.opencontainers.image.base.digest="sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.6" \
     org.opencontainers.image.stage="install"
 WORKDIR /app/
 RUN \
@@ -30,10 +30,10 @@ RUN \
     bun install --production --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3 AS build
+FROM oven/bun@sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a AS build
 LABEL \
-    org.opencontainers.image.base.digest="sha256:e90cdbaf9ccdb3d4bd693aa335c3310a6004286a880f62f79b18f9b1312a8ec3" \
-    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.5" \
+    org.opencontainers.image.base.digest="sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a" \
+    org.opencontainers.image.base.name="docker.io/oven/bun:1.3.6" \
     org.opencontainers.image.stage="build"
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
@@ -47,11 +47,11 @@ COPY \
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f AS runtime
+FROM debian@sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734 AS runtime
 LABEL \
     io.dofigen.version="2.6.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f" \
+    org.opencontainers.image.base.digest="sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
