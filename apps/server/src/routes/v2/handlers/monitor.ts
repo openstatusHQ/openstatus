@@ -2,10 +2,10 @@ import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import {
+  HttpMethod,
   type MonitorService,
   MonitorStatus,
   MonitorType,
-  HttpMethod,
 } from "@openstatus/proto/monitor/v1";
 
 import { getRpcContext } from "../interceptors";
@@ -45,7 +45,7 @@ type MonitorConfig =
           timeoutMs: number;
         };
       };
-  };
+    };
 
 /**
  * Helper to create a protobuf Timestamp from a Date.
@@ -69,8 +69,8 @@ async function getMonitorById(id: number, workspaceId: number) {
       and(
         eq(monitor.id, id),
         eq(monitor.workspaceId, workspaceId),
-        isNull(monitor.deletedAt)
-      )
+        isNull(monitor.deletedAt),
+      ),
     )
     .get();
 }
@@ -147,7 +147,9 @@ function periodicityToSeconds(periodicity: string): number {
 /**
  * Helper to transform database monitor to proto Monitor.
  */
-function dbMonitorToProto(dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>) {
+function dbMonitorToProto(
+  dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
+) {
   const monitorType = jobTypeToProtoType(dbMon.jobType);
 
   // Build config based on job type
@@ -160,11 +162,14 @@ function dbMonitorToProto(dbMon: NonNullable<Awaited<ReturnType<typeof getMonito
         const parsedHeaders = JSON.parse(dbMon.headers);
         if (Array.isArray(parsedHeaders)) {
           headers = parsedHeaders.reduce(
-            (acc: { [key: string]: string }, h: { key: string; value: string }) => {
+            (
+              acc: { [key: string]: string },
+              h: { key: string; value: string },
+            ) => {
               acc[h.key] = h.value;
               return acc;
             },
-            {}
+            {},
           );
         }
       } catch {
@@ -222,12 +227,8 @@ function dbMonitorToProto(dbMon: NonNullable<Awaited<ReturnType<typeof getMonito
     periodicity: periodicityToSeconds(dbMon.periodicity),
     regions: dbMon.regions?.split(",").filter(Boolean) ?? [],
     status: activeToProtoStatus(dbMon.active),
-    createdAt: dbMon.createdAt
-      ? dateToTimestamp(dbMon.createdAt)
-      : undefined,
-    updatedAt: dbMon.updatedAt
-      ? dateToTimestamp(dbMon.updatedAt)
-      : undefined,
+    createdAt: dbMon.createdAt ? dateToTimestamp(dbMon.createdAt) : undefined,
+    updatedAt: dbMon.updatedAt ? dateToTimestamp(dbMon.updatedAt) : undefined,
     degradedAfterMs: dbMon.degradedAfter ?? undefined,
     tags: [], // Tags are stored in a separate relation table
   };
@@ -266,13 +267,19 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     ];
 
     // Apply status filter
-    if (req.statusFilter !== undefined && req.statusFilter !== MonitorStatus.UNSPECIFIED) {
+    if (
+      req.statusFilter !== undefined &&
+      req.statusFilter !== MonitorStatus.UNSPECIFIED
+    ) {
       const isActive = req.statusFilter === MonitorStatus.ACTIVE;
       conditions.push(eq(monitor.active, isActive));
     }
 
     // Apply type filter
-    if (req.typeFilter !== undefined && req.typeFilter !== MonitorType.UNSPECIFIED) {
+    if (
+      req.typeFilter !== undefined &&
+      req.typeFilter !== MonitorType.UNSPECIFIED
+    ) {
       const jobType =
         req.typeFilter === MonitorType.HTTP
           ? "http"
@@ -317,12 +324,18 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async createMonitor(_req, _ctx) {
     // TODO: Implement with shared service layer
-    throw new ConnectError("CreateMonitor not yet implemented", Code.Unimplemented);
+    throw new ConnectError(
+      "CreateMonitor not yet implemented",
+      Code.Unimplemented,
+    );
   },
 
   async updateMonitor(_req, _ctx) {
     // TODO: Implement with shared service layer
-    throw new ConnectError("UpdateMonitor not yet implemented", Code.Unimplemented);
+    throw new ConnectError(
+      "UpdateMonitor not yet implemented",
+      Code.Unimplemented,
+    );
   },
 
   async deleteMonitor(req, ctx) {
@@ -349,7 +362,10 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
   async triggerMonitor(_req, _ctx) {
     // TODO: Implement with shared service layer
-    throw new ConnectError("TriggerMonitor not yet implemented", Code.Unimplemented);
+    throw new ConnectError(
+      "TriggerMonitor not yet implemented",
+      Code.Unimplemented,
+    );
   },
 
   async pauseMonitor(req, ctx) {

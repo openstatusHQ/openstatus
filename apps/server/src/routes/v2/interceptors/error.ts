@@ -1,6 +1,6 @@
 import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
-import type { ErrorCode } from "@openstatus/error";
 import { getLogger } from "@logtape/logtape";
+import type { ErrorCode } from "@openstatus/error";
 
 import { OpenStatusApiError } from "@/libs/errors";
 import { RPC_CONTEXT_KEY } from "./auth";
@@ -69,7 +69,7 @@ export function errorInterceptor(): Interceptor {
 
       throw new ConnectError(
         error instanceof Error ? error.message : "Internal server error",
-        Code.Internal
+        Code.Internal,
       );
     }
   };

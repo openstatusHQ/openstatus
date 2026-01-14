@@ -57,7 +57,7 @@ export function loggingInterceptor(): Interceptor {
           });
           throw error;
         }
-      }
+      },
     );
   };
 }

@@ -5,16 +5,16 @@ import {
 } from "@connectrpc/connect/protocol";
 import type { Hono } from "hono";
 
-import { MonitorService } from "@openstatus/proto/monitor/v1";
 import { HealthService } from "@openstatus/proto/health/v1";
+import { MonitorService } from "@openstatus/proto/monitor/v1";
 
+import { healthServiceImpl } from "./handlers/health";
+import { monitorServiceImpl } from "./handlers/monitor";
 import {
   authInterceptor,
-  loggingInterceptor,
   errorInterceptor,
+  loggingInterceptor,
 } from "./interceptors";
-import { monitorServiceImpl } from "./handlers/monitor";
-import { healthServiceImpl } from "./handlers/health";
 
 /**
  * Create ConnectRPC router with services.
@@ -42,7 +42,9 @@ export function mountRpcRoutes(app: Hono) {
     const pathWithoutPrefix = url.pathname.replace(/^\/rpc/, "");
 
     // Find the handler that matches this request
-    const handler = routes.handlers.find((h) => h.requestPath === pathWithoutPrefix);
+    const handler = routes.handlers.find(
+      (h) => h.requestPath === pathWithoutPrefix,
+    );
 
     if (!handler) {
       return c.json({ error: "Not found" }, 404);

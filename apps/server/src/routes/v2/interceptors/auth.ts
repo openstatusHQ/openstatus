@@ -22,7 +22,7 @@ export interface RpcContext {
  * Context key for storing RPC context in request context values.
  */
 export const RPC_CONTEXT_KEY = createContextKey<RpcContext | undefined>(
-  undefined
+  undefined,
 );
 
 /**
@@ -42,7 +42,7 @@ export function authInterceptor(): Interceptor {
     if (!apiKey) {
       throw new ConnectError(
         "Missing 'x-openstatus-key' header",
-        Code.Unauthenticated
+        Code.Unauthenticated,
       );
     }
 
@@ -85,12 +85,14 @@ export function authInterceptor(): Interceptor {
 /**
  * Helper to get RPC context from handler context.
  */
-export function getRpcContext(ctx: { values: { get: <T>(key: { id: symbol; defaultValue: T }) => T } }): RpcContext {
+export function getRpcContext(ctx: {
+  values: { get: <T>(key: { id: symbol; defaultValue: T }) => T };
+}): RpcContext {
   const rpcCtx = ctx.values.get(RPC_CONTEXT_KEY);
   if (!rpcCtx) {
     throw new ConnectError(
       "RPC context not found - auth interceptor may not have run",
-      Code.Internal
+      Code.Internal,
     );
   }
   return rpcCtx;
