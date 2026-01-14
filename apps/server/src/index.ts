@@ -79,7 +79,7 @@ app.use("*", async (c, next) => {
 app.onError(handleError);
 
 /**
- * ConnectRPC Routes API v2
+ * ConnectRPC Routes API v2 ftw
  */
 mountRpcRoutes(app);
 
