@@ -1,7 +1,7 @@
 name: Fly Preview API server
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed]
+    types: [opened, reopened, synchronize, closed, ready_for_review]
     paths:
       - "apps/server/**"
       - "packages/db/**"
@@ -10,6 +10,7 @@ on:
       - "packages/tsconfig/**"
       - "packages/utils/**"
       - "packages/upstash/**"
+      - "packages/proto/**"
 
 env:
     FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

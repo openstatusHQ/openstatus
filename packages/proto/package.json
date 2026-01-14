@@ -26,12 +26,12 @@
     "clean": "rm -rf gen/ts"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.10.2",
+    "@bufbuild/protobuf": "2.10.2",
     "@connectrpc/connect": "^2.1.1"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.57.2",
-    "@bufbuild/protoc-gen-es": "^2.10.2",
+    "@bufbuild/protoc-gen-es": "2.10.2",
     "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.9.3"
   }
