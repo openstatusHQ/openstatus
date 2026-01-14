@@ -36,7 +36,7 @@ export const routes = createConnectRouter({
  */
 export function mountRpcRoutes(app: Hono) {
   // Handle all RPC routes at /rpc/* prefix
-  app.all("/v2/*", async (c) => {
+  app.all("/rpc/*", async (c) => {
     const url = new URL(c.req.url);
     // Remove the /rpc prefix from the path for matching
     const pathWithoutPrefix = url.pathname.replace(/^\/rpc/, "");

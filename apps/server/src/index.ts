@@ -17,7 +17,7 @@ import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
 import { api } from "./routes/v1";
-import { mountRpcRoutes } from "./routes/v2";
+import { mountRpcRoutes } from "./routes/rpc";
 
 configureSync({
   sinks: {
