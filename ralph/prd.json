@@ -229,7 +229,7 @@
       "Verify status reports are correctly associated",
       "Verify maintenances are correctly associated"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Cleanup",

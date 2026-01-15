@@ -621,3 +621,74 @@ bun test src/router/page.api-behavior.test.ts
 
 ### Next Steps:
 - Proceed with "Testing - Query Verification" task
+
+## 2026-01-15: Testing - Query Verification Complete
+
+Completed the "Testing - Query Verification" task by creating a comprehensive test suite to compare old vs new query results.
+
+### Changes Made:
+1. Created `packages/api/src/router/page.query-verification.test.ts`:
+   - Test suite comparing `monitors_to_pages` vs `page_components` query results
+   - Verifies field mapping, ordering, grouping, and associations
+
+### Test Coverage:
+
+**1. Ordering is Identical**:
+- Verifies `order` field exists in both tables with same name and default (0)
+- Verifies `groupOrder` field exists in both tables with same name and default (0)
+- Verifies both use integer (number) type for consistent sorting
+
+**2. Grouping is Identical**:
+- Verifies `pageComponent.groupId` replaces `monitorsToPages.monitorGroupId`
+- Verifies both reference the same `pageGroup` table
+- Verifies both fields are nullable for ungrouped monitors
+- Verifies relations are defined for group data fetching
+
+**3. Status Reports are Correctly Associated**:
+- Verifies `statusReportsToPageComponents` junction table exists
+- Verifies `statusReportId` and `pageComponentId` foreign key fields
+- Verifies relations are defined for both junction table and pageComponent
+- Verifies integer types for foreign keys
+
+**4. Maintenances are Correctly Associated**:
+- Verifies `maintenancesToPageComponents` junction table exists
+- Verifies `maintenanceId` and `pageComponentId` foreign key fields
+- Verifies relations are defined for both junction table and pageComponent
+- Verifies integer types for foreign keys
+
+**Field Mapping Verification**:
+- `pageComponent.pageId` maps to `monitorsToPages.pageId`
+- `pageComponent.monitorId` maps to `monitorsToPages.monitorId`
+- `pageComponent.groupId` maps semantically to `monitorsToPages.monitorGroupId`
+
+**Query Result Format Verification**:
+- Verifies pageComponent has all fields to reconstruct monitorsToPages format
+- Verifies additional enhanced fields (id, workspaceId, type, name, description)
+- Documents expected query result structures for both tables
+
+**Cascade Behavior Verification**:
+- Page deletion cascades to pageComponents
+- Monitor deletion cascades to pageComponents
+- Group deletion sets groupId to NULL
+
+**API Response Compatibility**:
+- Verifies transformation from new to old format is straightforward
+- Verifies junction tables allow proper fan-out for status reports and maintenances
+
+### Type Check Results:
+- Only pre-existing error in `env.ts` (unrelated to this change)
+- All schema types and test file pass type checking
+
+### Usage:
+```bash
+cd packages/api
+bun test src/router/page.query-verification.test.ts
+```
+
+### Notes:
+- Tests document the expected parity between old and new implementations
+- All field types, defaults, and constraints are verified to match
+- The transformation layer in routers maps `groupId` to `monitorGroupId` for backward compatibility
+
+### Next Steps:
+- Proceed with "Cleanup" task
