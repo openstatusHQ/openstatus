@@ -92,14 +92,19 @@ export class EmailClient {
   public async sendStatusReportUpdate(
     req: StatusReportProps & {
       subscribers: Array<{ email: string; token: string }>;
-      baseUrl?: string;
+      pageSlug: string;
+      customDomain?: string | null;
     },
   ) {
-    const baseUrl = req.baseUrl ?? "https://api.openstatus.dev";
+    const statusPageBaseUrl = req.customDomain
+      ? `https://${req.customDomain}`
+      : `https://${req.pageSlug}.openstatus.dev`;
 
     if (process.env.NODE_ENV === "development") {
       console.log(
-        `Sending status report update emails to ${req.subscribers.map((s) => s.email).join(", ")}`,
+        `Sending status report update emails to ${req.subscribers
+          .map((s) => s.email)
+          .join(", ")}`,
       );
       return;
     }
@@ -109,7 +114,7 @@ export class EmailClient {
         try: () =>
           this.client.batch.send(
             recipients.map((subscriber) => {
-              const unsubscribeUrl = `${baseUrl}/public/unsubscribe/${subscriber.token}`;
+              const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
                 subject: req.reportTitle,
@@ -119,14 +124,15 @@ export class EmailClient {
                 ),
                 headers: {
                   "List-Unsubscribe": `<${unsubscribeUrl}>`,
-                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
                 },
               };
             }),
           ),
         catch: (_unknown) =>
           new Error(
-            `Error sending status report update batch to ${recipients.map((r) => r.email)}`,
+            `Error sending status report update batch to ${recipients.map(
+              (r) => r.email,
+            )}`,
           ),
       }).pipe(
         Effect.andThen((result) =>

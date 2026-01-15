@@ -128,6 +128,8 @@ export function registerPostStatusReportUpdate(
             token: subscriber.token,
           })),
           pageTitle: _page.title,
+          pageSlug: _page.slug,
+          customDomain: _page.customDomain,
           reportTitle: _statusReport.title,
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,

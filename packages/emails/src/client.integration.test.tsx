@@ -4,72 +4,9 @@ import { describe, expect, test } from "bun:test";
 import { render } from "@react-email/render";
 import StatusReportEmail from "../emails/status-report";
 
-describe("Status Report Email - List-Unsubscribe Headers", () => {
-  const baseUrl = "https://api.openstatus.dev";
-  const testToken = "550e8400-e29b-41d4-a716-446655440000";
-  const expectedUnsubscribeUrl = `${baseUrl}/public/unsubscribe/${testToken}`;
-
-  test("should construct correct List-Unsubscribe header URL", () => {
-    // Simulate the header construction logic from EmailClient.sendStatusReportUpdate
-    const subscriber = { email: "test@example.com", token: testToken };
-    const unsubscribeUrl = `${baseUrl}/public/unsubscribe/${subscriber.token}`;
-
-    const headers = {
-      "List-Unsubscribe": `<${unsubscribeUrl}>`,
-      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-    };
-
-    expect(headers["List-Unsubscribe"]).toBe(`<${expectedUnsubscribeUrl}>`);
-  });
-
-  test("should include List-Unsubscribe-Post header for RFC 8058 compliance", () => {
-    const subscriber = { email: "test@example.com", token: testToken };
-    const unsubscribeUrl = `${baseUrl}/public/unsubscribe/${subscriber.token}`;
-
-    const headers = {
-      "List-Unsubscribe": `<${unsubscribeUrl}>`,
-      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-    };
-
-    expect(headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
-  });
-
-  test("should use custom baseUrl when provided", () => {
-    const customBaseUrl = "https://custom-api.example.com";
-    const subscriber = { email: "test@example.com", token: testToken };
-    const unsubscribeUrl = `${customBaseUrl}/public/unsubscribe/${subscriber.token}`;
-
-    expect(unsubscribeUrl).toBe(
-      `${customBaseUrl}/public/unsubscribe/${testToken}`,
-    );
-  });
-
-  test("should generate unique unsubscribe URLs per subscriber", () => {
-    const subscribers = [
-      { email: "user1@example.com", token: "token-1-uuid" },
-      { email: "user2@example.com", token: "token-2-uuid" },
-      { email: "user3@example.com", token: "token-3-uuid" },
-    ];
-
-    const urls = subscribers.map(
-      (s) => `${baseUrl}/public/unsubscribe/${s.token}`,
-    );
-
-    // Each URL should be unique
-    const uniqueUrls = new Set(urls);
-    expect(uniqueUrls.size).toBe(subscribers.length);
-
-    // Each URL should match expected pattern
-    for (const subscriber of subscribers) {
-      const expectedUrl = `${baseUrl}/public/unsubscribe/${subscriber.token}`;
-      expect(urls).toContain(expectedUrl);
-    }
-  });
-});
-
 describe("Status Report Email - Unsubscribe Link in Body", () => {
   const unsubscribeUrl =
-    "https://api.openstatus.dev/public/unsubscribe/test-token";
+    "https://openstatus.openstatus.dev/unsubscribe/test-token";
 
   test("should include unsubscribe link in email body when URL is provided", async () => {
     const html = await render(
@@ -148,7 +85,7 @@ describe("Status Report Email - Email Content Validation", () => {
       date: "2024-01-15T10:00:00.000Z",
       message: "We are investigating the issue",
       monitors: ["API", "Web"],
-      unsubscribeUrl: "https://api.openstatus.dev/public/unsubscribe/test",
+      unsubscribeUrl: "https://openstatus.openstatus.dev/unsubscribe/test",
     };
 
     const html = await render(<StatusReportEmail {...props} />);
@@ -184,7 +121,8 @@ describe("Status Report Email - Email Content Validation", () => {
       );
 
       // Should render without errors and contain the status
-      expect(html).toContain(status.toUpperCase());
+      // Note: status is rendered lowercase in HTML with text-transform: uppercase CSS
+      expect(html).toContain(status);
     }
   });
 });

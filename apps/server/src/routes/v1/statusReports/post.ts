@@ -188,6 +188,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
             token: subscriber.token,
           })),
           pageTitle: pageInfo.title,
+          pageSlug: pageInfo.slug,
+          customDomain: pageInfo.customDomain,
           reportTitle: _newStatusReport.title,
           status: _newStatusReportUpdate.status,
           message: _newStatusReportUpdate.message,

@@ -123,6 +123,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
             token: subscriber.token,
           })),
           pageTitle: _statusReportWithRelations.page.title,
+          pageSlug: _statusReportWithRelations.page.slug,
+          customDomain: _statusReportWithRelations.page.customDomain,
           reportTitle: _statusReportWithRelations.title,
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,

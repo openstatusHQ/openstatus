@@ -154,6 +154,8 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
             token: subscriber.token,
           })),
           pageTitle: _page.title,
+          pageSlug: _page.slug,
+          customDomain: _page.customDomain,
           reportTitle: _maintenance.title,
           status: "maintenance",
           message: _maintenance.message,
