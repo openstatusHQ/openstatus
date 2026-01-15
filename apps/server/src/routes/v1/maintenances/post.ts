@@ -142,7 +142,10 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
       });
 
       const validSubscribers = subscribers.filter(
-        (s): s is typeof s & { token: string } => s.token !== null,
+        (s): s is typeof s & { token: string } =>
+          s.token !== null &&
+          s.acceptedAt !== null &&
+          s.unsubscribedAt === null,
       );
       if (_page && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({

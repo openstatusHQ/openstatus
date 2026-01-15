@@ -111,7 +111,10 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         .all();
 
       const validSubscribers = subscribers.filter(
-        (s): s is typeof s & { token: string } => s.token !== null,
+        (s): s is typeof s & { token: string } =>
+          s.token !== null &&
+          s.acceptedAt !== null &&
+          s.unsubscribedAt === null,
       );
       if (_statusReportWithRelations?.page && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({

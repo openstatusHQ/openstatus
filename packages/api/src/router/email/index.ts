@@ -63,7 +63,10 @@ export const emailRouter = createTRPCRouter({
           return;
         const validSubscribers =
           _statusReportUpdate.statusReport.page.pageSubscribers.filter(
-            (s): s is typeof s & { token: string } => s.token !== null,
+            (s): s is typeof s & { token: string } =>
+              s.token !== null &&
+              s.acceptedAt !== null &&
+              s.unsubscribedAt === null,
           );
         if (!validSubscribers.length) return;
 
@@ -114,7 +117,10 @@ export const emailRouter = createTRPCRouter({
         if (!_maintenance) return;
         if (!_maintenance.page) return;
         const validSubscribers = _maintenance.page.pageSubscribers.filter(
-          (s): s is typeof s & { token: string } => s.token !== null,
+          (s): s is typeof s & { token: string } =>
+            s.token !== null &&
+            s.acceptedAt !== null &&
+            s.unsubscribedAt === null,
         );
         if (!validSubscribers.length) return;
 

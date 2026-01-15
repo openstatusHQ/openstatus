@@ -176,7 +176,10 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       }
 
       const validSubscribers = subscribers.filter(
-        (s): s is typeof s & { token: string } => s.token !== null,
+        (s): s is typeof s & { token: string } =>
+          s.token !== null &&
+          s.acceptedAt !== null &&
+          s.unsubscribedAt === null,
       );
       if (pageInfo && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({
