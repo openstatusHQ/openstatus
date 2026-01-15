@@ -107,3 +107,22 @@
     - Added `isNull` import from `@openstatus/db`
     - Added `isNull(pageSubscriber.unsubscribedAt)` to the where clause when fetching subscribers
     - This ensures unsubscribed users are excluded from status report update email notifications
+
+### Task 9: Frontend - Unsubscribe Confirmation Page
+- **PRD Item**: "Create unsubscribe confirmation page in status-page app"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Created `apps/status-page/src/app/(status-page)/[domain]/(public)/unsubscribe/[token]/page.tsx`:
+    - Client component using React Query and TRPC
+    - Fetches subscriber info using `getSubscriberByToken` query on mount
+    - Displays loading state while fetching
+    - Shows error state for invalid/expired tokens or already unsubscribed
+    - Shows confirmation view with page name and masked email
+    - "Cancel" button to go back, "Confirm Unsubscribe" button to proceed
+    - Calls `unsubscribe` mutation on button click with loading state
+    - Shows success state after successful unsubscription
+    - Shows error state if mutation fails with error message
+  - Created `apps/status-page/src/app/(status-page)/[domain]/(public)/unsubscribe/[token]/layout.tsx`:
+    - Client layout component matching the verify page pattern
+    - Fetches page info using `statusPage.get` query
+    - Displays page title and description in Status header

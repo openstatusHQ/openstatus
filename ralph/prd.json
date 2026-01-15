@@ -97,7 +97,7 @@
       "Show success state after unsubscription",
       "Show error state for invalid/expired tokens"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Dashboard - Subscriber Table Update",
