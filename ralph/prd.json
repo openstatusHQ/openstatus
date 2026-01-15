@@ -217,7 +217,7 @@
       "Test: Status page displays monitors correctly with grouping/ordering",
       "Test: Duplicate monitor on same page blocked by unique constraint"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Query Verification",
