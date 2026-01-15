@@ -77,3 +77,21 @@
     - Styled footer with small (12px), muted gray text (#6b7280) for appropriate visual hierarchy
     - Updated `PreviewProps` to include sample `unsubscribeUrl` for email preview
     - Removed the old `// TODO: add unsubscribe link!` comment
+
+### Task 7: Email Client - List-Unsubscribe Headers
+- **PRD Item**: "Add RFC 8058 headers for one-click unsubscribe in email clients"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `packages/emails/src/client.tsx`:
+    - Updated `sendStatusReportUpdate` method signature to accept `subscribers: Array<{ email: string; token: string }>` instead of `to: string[]`
+    - Added optional `baseUrl` parameter (defaults to `https://api.openstatus.dev`)
+    - For each subscriber, builds unsubscribe URL: `${baseUrl}/public/unsubscribe/${subscriber.token}`
+    - Added `List-Unsubscribe` header with the unsubscribe URL
+    - Added `List-Unsubscribe-Post: List-Unsubscribe=One-Click` header for RFC 8058 compliance
+    - Passes `unsubscribeUrl` prop to `StatusReportEmail` component for each subscriber
+  - Updated all callers of `sendStatusReportUpdate`:
+    - `apps/server/src/routes/v1/statusReports/post.ts`: Pass subscribers with email and token, filter out null tokens
+    - `apps/server/src/routes/v1/statusReportUpdates/post.ts`: Pass subscribers with email and token, filter out null tokens
+    - `apps/server/src/routes/v1/maintenances/post.ts`: Pass subscribers with email and token, filter out null tokens
+    - `apps/server/src/routes/v1/statusReports/update/post.ts`: Pass subscribers with email and token, filter out null tokens
+    - `packages/api/src/router/email/index.ts`: Updated `sendStatusReport` and `sendMaintenance` mutations to pass subscribers with tokens, filter out null tokens

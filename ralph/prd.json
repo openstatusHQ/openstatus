@@ -71,7 +71,7 @@
       "Add `List-Unsubscribe-Post: List-Unsubscribe=One-Click` header",
       "Pass unsubscribe URL to status-report email template"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Query Updates - Filter Unsubscribed",

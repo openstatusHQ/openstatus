@@ -114,9 +114,15 @@ export function registerPostStatusReportUpdate(
         },
       });
 
-      if (_page && subscribers.length > 0) {
+      const validSubscribers = subscribers.filter(
+        (s): s is typeof s & { token: string } => s.token !== null,
+      );
+      if (_page && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({
-          to: subscribers.map((subscriber) => subscriber.email),
+          subscribers: validSubscribers.map((subscriber) => ({
+            email: subscriber.email,
+            token: subscriber.token,
+          })),
           pageTitle: _page.title,
           reportTitle: _statusReport.title,
           status: _statusReportUpdate.status,

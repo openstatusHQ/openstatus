@@ -110,9 +110,15 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         )
         .all();
 
-      if (_statusReportWithRelations?.page) {
+      const validSubscribers = subscribers.filter(
+        (s): s is typeof s & { token: string } => s.token !== null,
+      );
+      if (_statusReportWithRelations?.page && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({
-          to: subscribers.map((subscriber) => subscriber.email),
+          subscribers: validSubscribers.map((subscriber) => ({
+            email: subscriber.email,
+            token: subscriber.token,
+          })),
           pageTitle: _statusReportWithRelations.page.title,
           reportTitle: _statusReportWithRelations.title,
           status: _statusReportUpdate.status,

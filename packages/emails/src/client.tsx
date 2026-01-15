@@ -90,32 +90,41 @@ export class EmailClient {
   }
 
   public async sendStatusReportUpdate(
-    req: StatusReportProps & { to: string[] },
+    req: StatusReportProps & {
+      subscribers: Array<{ email: string; token: string }>;
+      baseUrl?: string;
+    },
   ) {
+    const baseUrl = req.baseUrl ?? "https://api.openstatus.dev";
+
     if (process.env.NODE_ENV === "development") {
       console.log(
-        `Sending status report update emails to ${req.to.join(", ")}`,
+        `Sending status report update emails to ${req.subscribers.map((s) => s.email).join(", ")}`,
       );
       return;
     }
 
-    // const html = await render(<StatusReportEmail {...req} />);
-
-    for (const recipients of chunk(req.to, 100)) {
+    for (const recipients of chunk(req.subscribers, 100)) {
       const sendEmail = Effect.tryPromise({
         try: () =>
           this.client.batch.send(
-            recipients.map((subscriber) => ({
-              from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
-              subject: req.reportTitle,
-              to: subscriber,
-              // html,
-              react: <StatusReportEmail {...req} />,
-            })),
+            recipients.map((subscriber) => {
+              const unsubscribeUrl = `${baseUrl}/public/unsubscribe/${subscriber.token}`;
+              return {
+                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                subject: req.reportTitle,
+                to: subscriber.email,
+                react: <StatusReportEmail {...req} unsubscribeUrl={unsubscribeUrl} />,
+                headers: {
+                  "List-Unsubscribe": `<${unsubscribeUrl}>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                },
+              };
+            }),
           ),
         catch: (_unknown) =>
           new Error(
-            `Error sending status report update batch to ${recipients}`,
+            `Error sending status report update batch to ${recipients.map((r) => r.email)}`,
           ),
       }).pipe(
         Effect.andThen((result) =>
@@ -130,7 +139,7 @@ export class EmailClient {
     }
 
     console.log(
-      `Sent status report update email to ${req.to.length} subscribers`,
+      `Sent status report update email to ${req.subscribers.length} subscribers`,
     );
   }
 
