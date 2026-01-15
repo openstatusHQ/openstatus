@@ -416,3 +416,41 @@ Updated `packages/api/src/router/monitor.ts`:
 
 ### Next Steps:
 - Proceed with Testing tasks to verify the migration works correctly
+
+## 2026-01-15: Testing - Table Rename Complete
+
+Completed the "Testing - Table Rename" task to verify the monitor_group to page_groups rename works correctly.
+
+### Verification Performed:
+
+1. **Verified `monitor_group` table renamed to `page_groups`**:
+   - Migration file `0053_page_components.sql` contains `ALTER TABLE monitor_group RENAME TO page_groups`
+   - Schema file `packages/db/src/schema/page_groups/page_groups.ts` defines `pageGroup` table as `"page_groups"`
+
+2. **Verified existing group data is preserved**:
+   - `ALTER TABLE RENAME` preserves all existing data
+   - No data transformation required
+
+3. **Verified foreign keys updated correctly**:
+   - `pageComponent.groupId` references `pageGroup.id` with `onDelete: "set null"`
+   - `pageGroupRelations` includes `pageComponents: many(pageComponent)` relation
+
+4. **Verified queries using pageGroup work**:
+   - TypeScript type checks pass (only pre-existing errors in env.ts, Bun types)
+   - All router files (`page.ts`, `statusPage.ts`) use `pageGroup` correctly
+   - Backward compatibility maintained with `monitorGroups` and `monitorGroupId` field names in API responses
+
+### Files Verified:
+- `packages/db/src/schema/page_groups/page_groups.ts` - Table definition and relations
+- `packages/db/src/schema/page_groups/validation.ts` - Zod schemas
+- `packages/db/src/schema/page_components/page_components.ts` - Foreign key to pageGroup
+- `packages/db/drizzle/0053_page_components.sql` - Migration SQL
+- `packages/api/src/router/page.ts` - Uses pageGroup in queries
+- `packages/api/src/router/statusPage.ts` - Uses pageGroup in queries
+
+### Notes:
+- The old `monitor_groups` folder still exists but is no longer exported from schema index (orphaned)
+- This is acceptable as the new `page_groups` folder is the canonical source
+
+### Next Steps:
+- Proceed with "Testing - Data Migration" task

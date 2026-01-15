@@ -174,7 +174,7 @@
       "Verify foreign keys updated correctly",
       "Verify queries using pageGroup work"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Data Migration",
