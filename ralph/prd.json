@@ -43,7 +43,7 @@
       "Add composite primary key on both columns",
       "Add `created_at` timestamp field"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Relations Definition",

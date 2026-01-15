@@ -68,3 +68,40 @@ Completed the "Schema Creation - page_component" task to create the new `page_co
 ### Next Steps:
 - Create junction tables for status reports and maintenances (Schema Creation - Junction Tables)
 - Define relations in related tables (Relations Definition)
+
+## 2026-01-15: Schema Creation - Junction Tables Complete
+
+Completed the "Schema Creation - Junction Tables" task to create junction tables linking status reports and maintenances to page_components.
+
+### Changes Made:
+1. Created `packages/db/src/schema/page_components/status_reports_to_page_components.ts`:
+   - `status_report_to_page_component` table with:
+     - `statusReportId` - foreign key with CASCADE delete
+     - `pageComponentId` - foreign key with CASCADE delete
+     - Composite primary key on both columns
+     - `createdAt` timestamp field
+   - `statusReportsToPageComponentsRelations` with one-to-one relations to statusReport and pageComponent
+
+2. Created `packages/db/src/schema/page_components/maintenances_to_page_components.ts`:
+   - `maintenance_to_page_component` table with:
+     - `maintenanceId` - foreign key with CASCADE delete
+     - `pageComponentId` - foreign key with CASCADE delete
+     - Composite primary key on both columns
+     - `createdAt` timestamp field
+   - `maintenancesToPageComponentsRelations` with one-to-one relations to maintenance and pageComponent
+
+3. Updated `packages/db/src/schema/page_components/index.ts` to export the new junction tables
+
+4. Updated `packages/db/src/schema/page_components/page_components.ts`:
+   - Added imports for junction tables
+   - Extended `pageComponentRelations` with `many` relations to:
+     - `statusReportsToPageComponents`
+     - `maintenancesToPageComponents`
+
+### Notes:
+- Followed existing patterns from `monitorsToStatusReport` and `maintenancesToMonitors`
+- All tables and relations are exported through the schema index
+- TypeScript type checks pass for the new files
+
+### Next Steps:
+- Define relations in related tables (Relations Definition) - add many relations from statusReport and maintenance to the new junction tables

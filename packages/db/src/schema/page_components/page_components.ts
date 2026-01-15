@@ -10,6 +10,8 @@ import { monitor } from "../monitors";
 import { pageGroup } from "../page_groups";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
+import { maintenancesToPageComponents } from "./maintenances_to_page_components";
+import { statusReportsToPageComponents } from "./status_reports_to_page_components";
 
 export const pageComponentTypes = ["external", "monitor"] as const;
 
@@ -49,21 +51,26 @@ export const pageComponent = sqliteTable(
   }),
 );
 
-export const pageComponentRelations = relations(pageComponent, ({ one }) => ({
-  workspace: one(workspace, {
-    fields: [pageComponent.workspaceId],
-    references: [workspace.id],
+export const pageComponentRelations = relations(
+  pageComponent,
+  ({ one, many }) => ({
+    workspace: one(workspace, {
+      fields: [pageComponent.workspaceId],
+      references: [workspace.id],
+    }),
+    page: one(page, {
+      fields: [pageComponent.pageId],
+      references: [page.id],
+    }),
+    monitor: one(monitor, {
+      fields: [pageComponent.monitorId],
+      references: [monitor.id],
+    }),
+    group: one(pageGroup, {
+      fields: [pageComponent.groupId],
+      references: [pageGroup.id],
+    }),
+    statusReportsToPageComponents: many(statusReportsToPageComponents),
+    maintenancesToPageComponents: many(maintenancesToPageComponents),
   }),
-  page: one(page, {
-    fields: [pageComponent.pageId],
-    references: [page.id],
-  }),
-  monitor: one(monitor, {
-    fields: [pageComponent.monitorId],
-    references: [monitor.id],
-  }),
-  group: one(pageGroup, {
-    fields: [pageComponent.groupId],
-    references: [pageGroup.id],
-  }),
-}));
+);
