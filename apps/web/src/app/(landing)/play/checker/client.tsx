@@ -37,7 +37,12 @@ import {
 } from "react";
 import { searchParamsParsers } from "./search-params";
 
-type Values = { region: string; latency: number; status: number; timing?: Timing };
+type Values = {
+  region: string;
+  latency: number;
+  status: number;
+  timing?: Timing;
+};
 
 type CheckerContextType = {
   values: Values[];
