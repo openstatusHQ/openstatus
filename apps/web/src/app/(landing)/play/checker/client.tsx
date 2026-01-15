@@ -2,6 +2,7 @@
 
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
+  type Timing,
   is32CharHex,
   latencyFormatter,
   regionCheckerSchema,
@@ -34,8 +35,14 @@ import {
   useTransition,
 } from "react";
 import { searchParamsParsers } from "./search-params";
+import { handleExportCSV } from "./utils";
 
-type Values = { region: string; latency: number; status: number };
+type Values = {
+  region: string;
+  latency: number;
+  status: number;
+  timing: Timing;
+};
 
 type CheckerContextType = {
   values: Values[];
@@ -188,6 +195,7 @@ export function Form({
                         region: check.region,
                         latency: check.latency,
                         status: check.status,
+                        timing: check.timing,
                       };
                     }
                     return null;
@@ -392,6 +400,24 @@ export function DetailsButtonLink() {
       >
         Response details
       </Link>
+    </Button>
+  );
+}
+
+export function ExportToCSVButton() {
+  const { values } = useCheckerContext();
+
+  if (values.length === 0) {
+    return null;
+  }
+
+  return (
+    <Button
+      variant="outline"
+      className="h-full w-full rounded-none p-4 text-base"
+      onClick={() => handleExportCSV(values)}
+    >
+      Export to CSV
     </Button>
   );
 }
