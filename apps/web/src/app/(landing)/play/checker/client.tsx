@@ -3,7 +3,6 @@
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
   type Timing,
-  getTimingPhases,
   is32CharHex,
   latencyFormatter,
   regionCheckerSchema,
@@ -36,12 +35,13 @@ import {
   useTransition,
 } from "react";
 import { searchParamsParsers } from "./search-params";
+import { handleExportCSV } from "./utils";
 
 type Values = {
   region: string;
   latency: number;
   status: number;
-  timing?: Timing;
+  timing: Timing;
 };
 
 type CheckerContextType = {
@@ -404,38 +404,6 @@ export function DetailsButtonLink() {
   );
 }
 
-function convertToCSV(values: Values[]): string {
-  const headers = [
-    "Region Code",
-    "Location",
-    "Provider",
-    "Latency (ms)",
-    "Status",
-    "DNS (ms)",
-    "Connect (ms)",
-    "TLS (ms)",
-    "TTFB (ms)",
-    "Transfer (ms)",
-  ];
-  const rows = values.map((value) => {
-    const regionConfig = regionDict[value.region as Region];
-    const timing = value.timing ? getTimingPhases(value.timing) : null;
-    return [
-      regionConfig.code,
-      regionConfig.location,
-      regionConfig.provider,
-      value.latency.toString(),
-      value.status.toString(),
-      timing?.dns.toString() ?? "",
-      timing?.connection.toString() ?? "",
-      timing?.tls.toString() ?? "",
-      timing?.ttfb.toString() ?? "",
-      timing?.transfer.toString() ?? "",
-    ].join(",");
-  });
-  return [headers.join(","), ...rows].join("\n");
-}
-
 export function ExportToCSVButton() {
   const { values } = useCheckerContext();
 
@@ -443,25 +411,11 @@ export function ExportToCSVButton() {
     return null;
   }
 
-  function handleExport() {
-    const csv = convertToCSV(values);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `checker-results-${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("CSV exported successfully");
-  }
-
   return (
     <Button
       variant="outline"
       className="h-full w-full rounded-none p-4 text-base"
-      onClick={handleExport}
+      onClick={() => handleExportCSV(values)}
     >
       Export to CSV
     </Button>
