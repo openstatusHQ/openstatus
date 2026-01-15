@@ -2,6 +2,8 @@
 
 import { IconCloudProvider } from "@/components/icon-cloud-provider";
 import {
+  type Timing,
+  getTimingPhases,
   is32CharHex,
   latencyFormatter,
   regionCheckerSchema,
@@ -35,7 +37,7 @@ import {
 } from "react";
 import { searchParamsParsers } from "./search-params";
 
-type Values = { region: string; latency: number; status: number };
+type Values = { region: string; latency: number; status: number; timing?: Timing };
 
 type CheckerContextType = {
   values: Values[];
@@ -188,6 +190,7 @@ export function Form({
                         region: check.region,
                         latency: check.latency,
                         status: check.status,
+                        timing: check.timing,
                       };
                     }
                     return null;
@@ -397,15 +400,32 @@ export function DetailsButtonLink() {
 }
 
 function convertToCSV(values: Values[]): string {
-  const headers = ["Region Code", "Location", "Provider", "Latency (ms)", "Status"];
+  const headers = [
+    "Region Code",
+    "Location",
+    "Provider",
+    "Latency (ms)",
+    "Status",
+    "DNS (ms)",
+    "Connect (ms)",
+    "TLS (ms)",
+    "TTFB (ms)",
+    "Transfer (ms)",
+  ];
   const rows = values.map((value) => {
     const regionConfig = regionDict[value.region as Region];
+    const timing = value.timing ? getTimingPhases(value.timing) : null;
     return [
       regionConfig.code,
       regionConfig.location,
       regionConfig.provider,
       value.latency.toString(),
       value.status.toString(),
+      timing?.dns.toString() ?? "",
+      timing?.connection.toString() ?? "",
+      timing?.tls.toString() ?? "",
+      timing?.ttfb.toString() ?? "",
+      timing?.transfer.toString() ?? "",
     ].join(",");
   });
   return [headers.join(","), ...rows].join("\n");
