@@ -1,6 +1,7 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import { pageComponent } from "../page_components";
 import { page } from "../pages";
 import { workspace } from "../workspaces";
 
@@ -21,3 +22,15 @@ export const pageGroup = sqliteTable("page_groups", {
     sql`(strftime('%s', 'now'))`,
   ),
 });
+
+export const pageGroupRelations = relations(pageGroup, ({ one, many }) => ({
+  workspace: one(workspace, {
+    fields: [pageGroup.workspaceId],
+    references: [workspace.id],
+  }),
+  page: one(page, {
+    fields: [pageGroup.pageId],
+    references: [page.id],
+  }),
+  pageComponents: many(pageComponent),
+}));

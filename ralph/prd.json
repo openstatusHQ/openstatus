@@ -58,7 +58,7 @@
       "Update `maintenanceRelations` in `maintenances/maintenance.ts` to include junction relation",
       "Add `pageGroupRelations` in `page_groups/page_groups.ts` with workspace, page, pageComponents"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Validation Schema",

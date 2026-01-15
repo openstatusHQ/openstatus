@@ -105,3 +105,42 @@ Completed the "Schema Creation - Junction Tables" task to create junction tables
 
 ### Next Steps:
 - Define relations in related tables (Relations Definition) - add many relations from statusReport and maintenance to the new junction tables
+
+## 2026-01-15: Relations Definition Complete
+
+Completed the "Relations Definition" task to add Drizzle relations connecting page_components to related tables.
+
+### Changes Made:
+1. Updated `packages/db/src/schema/pages/page.ts`:
+   - Added import for `pageComponent` from `../page_components`
+   - Added `pageComponents: many(pageComponent)` to `pageRelations`
+
+2. Updated `packages/db/src/schema/monitors/monitor.ts`:
+   - Added import for `pageComponent` from `../page_components`
+   - Added `pageComponents: many(pageComponent)` to `monitorRelation`
+
+3. Updated `packages/db/src/schema/status_reports/status_reports.ts`:
+   - Added import for `statusReportsToPageComponents` from `../page_components`
+   - Added `statusReportsToPageComponents: many(statusReportsToPageComponents)` to `StatusReportRelations`
+
+4. Updated `packages/db/src/schema/maintenances/maintenance.ts`:
+   - Added import for `maintenancesToPageComponents` from `../page_components`
+   - Added `maintenancesToPageComponents: many(maintenancesToPageComponents)` to `maintenanceRelations`
+
+5. Updated `packages/db/src/schema/page_groups/page_groups.ts`:
+   - Added import for `relations` from `drizzle-orm`
+   - Added import for `pageComponent` from `../page_components`
+   - Created new `pageGroupRelations` with:
+     - `workspace: one(workspace)` - relation to workspace
+     - `page: one(page)` - relation to page
+     - `pageComponents: many(pageComponent)` - relation to page components in this group
+
+### Notes:
+- All relations follow existing Drizzle patterns in the codebase
+- Type checks pass for the modified files
+- The `pageComponentRelations` already had relations defined in the junction tables task
+- The index.ts exports use `export *` so new exports are automatically included
+
+### Next Steps:
+- Generate database migration with `pnpm db:generate`
+- Run migration and verify tables are created correctly
