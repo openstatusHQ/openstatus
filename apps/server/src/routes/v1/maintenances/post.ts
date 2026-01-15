@@ -141,10 +141,21 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         },
       });
 
-      if (_page && subscribers.length > 0) {
+      const validSubscribers = subscribers.filter(
+        (s): s is typeof s & { token: string } =>
+          s.token !== null &&
+          s.acceptedAt !== null &&
+          s.unsubscribedAt === null,
+      );
+      if (_page && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({
-          to: subscribers.map((subscriber) => subscriber.email),
+          subscribers: validSubscribers.map((subscriber) => ({
+            email: subscriber.email,
+            token: subscriber.token,
+          })),
           pageTitle: _page.title,
+          pageSlug: _page.slug,
+          customDomain: _page.customDomain,
           reportTitle: _maintenance.title,
           status: "maintenance",
           message: _maintenance.message,
