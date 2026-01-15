@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { selectIncidentSchema } from "./incidents/validation";
 import { selectMaintenanceSchema } from "./maintenances";
-import { selectMonitorGroupSchema } from "./monitor_groups";
+import { selectPageGroupSchema } from "./page_groups";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
 import {
@@ -138,7 +138,7 @@ export const statusPageEventSchema = z.object({
 });
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
-  monitorGroups: selectMonitorGroupSchema.array().prefault([]),
+  monitorGroups: selectPageGroupSchema.array().prefault([]),
   // TODO: include status of the monitor
   monitors: selectPublicMonitorWithStatusSchema.array(),
   trackers: trackersSchema,

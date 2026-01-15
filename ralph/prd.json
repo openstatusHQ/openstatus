@@ -1,8 +1,245 @@
 [
   {
-    "category": "functional",
-    "description": "When a user is on wrong dashboard /status-pages/[id] redirect him to /status-pages",
-    "steps": ["Redirect user no access for page id", "Avoid throwing an error"],
+    "category": "Table Rename",
+    "description": "Rename monitor_group table to page_groups and update all references",
+    "steps": [
+      "Rename folder `packages/db/src/schema/monitor_groups/` to `page_groups/`",
+      "Rename file `monitor_group.ts` to `page_groups.ts`",
+      "Update table export name from `monitorGroup` to `pageGroup`",
+      "Update all imports across codebase that reference `monitorGroup`",
+      "Generate migration with `pnpm db:generate`",
+      "Verify migration SQL includes `ALTER TABLE monitor_group RENAME TO page_groups`"
+    ],
+    "passes": true
+  },
+  {
+    "category": "Schema Creation - page_component",
+    "description": "Create the new page_component table with all fields and foreign keys",
+    "steps": [
+      "Create folder `packages/db/src/schema/page_components/`",
+      "Create `page_components.ts` with SQLite table definition",
+      "Add integer primary key `id`",
+      "Add `workspace_id` with CASCADE delete",
+      "Add `page_id` with CASCADE delete",
+      "Add `type` field with enum ['external', 'monitor'] defaulting to 'monitor'",
+      "Add `monitor_id` with CASCADE delete (nullable)",
+      "Add `name` (required) and `description` (optional) fields",
+      "Add `order`, `group_id` (SET NULL on delete), and `group_order` fields",
+      "Add `created_at` and `updated_at` timestamp fields",
+      "Add UNIQUE constraint on (page_id, monitor_id)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Schema Creation - Junction Tables",
+    "description": "Create junction tables for status reports and maintenances linking to page_components",
+    "steps": [
+      "Create `status_reports_to_page_components.ts` in page_components folder",
+      "Add `status_report_id` and `page_component_id` with CASCADE delete",
+      "Add composite primary key on both columns",
+      "Add `created_at` timestamp field",
+      "Create `maintenances_to_page_components.ts` in page_components folder",
+      "Add `maintenance_id` and `page_component_id` with CASCADE delete",
+      "Add composite primary key on both columns",
+      "Add `created_at` timestamp field"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Relations Definition",
+    "description": "Define Drizzle relations for page_component and update existing relations",
+    "steps": [
+      "Add `pageComponentRelations` with workspace, page, monitor, group relations",
+      "Add `statusReportsToPageComponentsRelations` with statusReport and pageComponent",
+      "Add `maintenancesToPageComponentsRelations` with maintenance and pageComponent",
+      "Update `pageRelations` in `pages/page.ts` to include `pageComponents: many(pageComponent)`",
+      "Update `monitorRelation` in `monitors/monitor.ts` to include `pageComponents: many(pageComponent)`",
+      "Update `StatusReportRelations` in `status_reports/status_reports.ts` to include junction relation",
+      "Update `maintenanceRelations` in `maintenances/maintenance.ts` to include junction relation",
+      "Add `pageGroupRelations` in `page_groups/page_groups.ts` with workspace, page, pageComponents"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Validation Schema",
+    "description": "Create Zod validation schema for page_component inserts/updates",
+    "steps": [
+      "Create `validation.ts` in page_components folder",
+      "Define `insertPageComponentSchema` with all fields",
+      "Add refinement: monitorId must be set when type='monitor'",
+      "Add refinement: monitorId must be null when type='external'",
+      "Export `InsertPageComponent` type"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Schema Exports",
+    "description": "Export new tables and relations from schema index",
+    "steps": [
+      "Create `index.ts` in page_components folder with all exports",
+      "Update `packages/db/src/schema/index.ts` to export page_components",
+      "Update `packages/db/src/schema/index.ts` to export page_groups (renamed)",
+      "Verify all new tables are accessible via `@openstatus/db/src/schema`"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Database Migration",
+    "description": "Generate and run the database migration",
+    "steps": [
+      "Run `pnpm db:generate` to create migration file",
+      "Review generated SQL for correctness",
+      "Verify table rename is included",
+      "Verify new tables are created with correct constraints",
+      "Run `pnpm db:migrate` against development database",
+      "Verify migration completed successfully"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Data Migration Script",
+    "description": "Create and run script to migrate monitors_to_pages data to page_components",
+    "steps": [
+      "Create `migrate-monitors-to-page-components.ts` in scripts folder",
+      "Query all records from `monitors_to_pages`",
+      "For each record, fetch the associated monitor",
+      "Insert into `page_component` with type='monitor', preserving order/groupId/groupOrder",
+      "Query `status_reports_to_monitors` for each monitor and create junction entries",
+      "Query `maintenances_to_monitors` for each monitor and create junction entries",
+      "Add logging for progress tracking",
+      "Run migration script and verify completion"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Migration Verification",
+    "description": "Verify data migration accuracy",
+    "steps": [
+      "Compare record count: monitors_to_pages vs page_components (should match)",
+      "Verify all page_components have type='monitor'",
+      "Spot check: verify order values match original",
+      "Spot check: verify groupId values match original monitorGroupId",
+      "Spot check: verify name values match monitor names",
+      "Verify status_reports_to_page_components has correct fan-out (one per page_component)",
+      "Verify maintenances_to_page_components has correct fan-out"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Router Update - statusPage.ts",
+    "description": "Update statusPage router to use pageComponents instead of monitorsToPages",
+    "steps": [
+      "Update imports: replace `monitorsToPages` with `pageComponent`",
+      "Update `get` method: change `monitorsToPages` to `pageComponents` in query",
+      "Update `get` method: change `monitorGroup` relation to `group`",
+      "Update `get` method: add statusReportsToPageComponents and maintenancesToPageComponents relations",
+      "Update `get` method: map response to preserve `monitorGroupId` field name for backwards compat",
+      "Update `getUptime` method: change monitorsToPages to pageComponents",
+      "Update `getMonitors` method: change monitorsToPages to pageComponents",
+      "Update `getMonitor` method: change monitorsToPages to pageComponents"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Router Update - page.ts",
+    "description": "Update page router to use pageComponents for CRUD operations",
+    "steps": [
+      "Update imports: add pageComponent",
+      "Update `create` method: insert into pageComponent instead of monitorsToPages",
+      "Update `update` method: upsert pageComponent records",
+      "Update `updateMonitors` method: use pageComponent table",
+      "Update all queries to use pageComponents relation",
+      "Ensure workspaceId and name are set when creating components"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Router Update - monitor.ts",
+    "description": "Update monitor router to use pageComponents",
+    "steps": [
+      "Update imports: add pageComponent",
+      "Update `create` method: create pageComponent records for linked pages",
+      "Update `update` method: update pageComponent records when pages change",
+      "Update `updateStatusPages` method: use pageComponent table",
+      "Ensure component name syncs with monitor name"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Table Rename",
+    "description": "Verify monitor_group to page_groups rename works correctly",
+    "steps": [
+      "Verify `monitor_group` table renamed to `page_groups`",
+      "Verify existing group data is preserved",
+      "Verify foreign keys updated correctly",
+      "Verify queries using pageGroup work"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Data Migration",
+    "description": "Verify data migration from monitors_to_pages to page_components",
+    "steps": [
+      "Verify all monitors_to_pages records migrated to page_components",
+      "Verify type='monitor' set for all records",
+      "Verify order values preserved correctly",
+      "Verify groupId (from monitorGroupId) preserved correctly",
+      "Verify groupOrder preserved correctly",
+      "Verify workspaceId set correctly (from monitor)",
+      "Verify name set correctly (from monitor)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Status Reports & Maintenances",
+    "description": "Verify junction table migration and queries",
+    "steps": [
+      "Verify status_reports_to_page_components table created",
+      "Verify all monitor-linked status reports linked to corresponding page_components",
+      "Verify maintenances_to_page_components table created",
+      "Verify all monitor-linked maintenances linked to corresponding page_components",
+      "Verify queries use new junction tables",
+      "Verify status page displays correct status reports per component",
+      "Verify fan-out: monitor on 3 pages with status report creates 3 junction entries"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - API Behavior",
+    "description": "Verify API behavior is identical before and after migration",
+    "steps": [
+      "Test: Create page with monitors creates page_components records",
+      "Test: Update page monitors updates page_components records",
+      "Test: Delete page cascades to page_components",
+      "Test: Delete monitor cascades to page_components",
+      "Test: Delete group sets groupId to NULL (component remains)",
+      "Test: Get page returns monitors in same format (using monitorId)",
+      "Test: Status page displays monitors correctly with grouping/ordering",
+      "Test: Duplicate monitor on same page blocked by unique constraint"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Query Verification",
+    "description": "Compare old vs new query results",
+    "steps": [
+      "Compare old query results vs new query results for sample pages",
+      "Verify ordering is identical",
+      "Verify grouping is identical",
+      "Verify status reports are correctly associated",
+      "Verify maintenances are correctly associated"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Cleanup",
+    "description": "Deprecate old tables and finalize migration",
+    "steps": [
+      "Mark monitors_to_pages as deprecated in code comments",
+      "Remove old monitorsToPages queries (after verification period)",
+      "Update any remaining references to monitorsToPages",
+      "Document migration completion"
+    ],
     "passes": false
   }
 ]

@@ -9,7 +9,7 @@ import {
 import { monitorPeriodicity } from "../constants";
 import { incidentTable } from "../incidents/incident";
 import { maintenancesToMonitors } from "../maintenances";
-import { monitorGroup } from "../monitor_groups";
+import { pageGroup } from "../page_groups";
 import { monitorStatusTable } from "../monitor_status/monitor_status";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
@@ -103,7 +103,7 @@ export const monitorsToPages = sqliteTable(
     order: integer("order").default(0),
 
     monitorGroupId: integer("monitor_group_id").references(
-      () => monitorGroup.id,
+      () => pageGroup.id,
       { onDelete: "cascade" },
     ),
     groupOrder: integer("group_order").default(0),
@@ -124,9 +124,9 @@ export const monitorsToPagesRelation = relations(
       fields: [monitorsToPages.pageId],
       references: [page.id],
     }),
-    monitorGroup: one(monitorGroup, {
+    monitorGroup: one(pageGroup, {
       fields: [monitorsToPages.monitorGroupId],
-      references: [monitorGroup.id],
+      references: [pageGroup.id],
     }),
   }),
 );

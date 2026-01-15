@@ -18,13 +18,13 @@ import {
   legacy_selectPublicPageSchemaWithRelation,
   maintenance,
   monitor,
-  monitorGroup,
   monitorsToPages,
   page,
   pageAccessTypes,
+  pageGroup,
   selectMaintenanceSchema,
-  selectMonitorGroupSchema,
   selectMonitorSchema,
+  selectPageGroupSchema,
   selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
   statusReport,
@@ -511,7 +511,7 @@ export const pageRouter = createTRPCRouter({
               }),
             )
             .prefault([]),
-          monitorGroups: z.array(selectMonitorGroupSchema).prefault([]),
+          monitorGroups: z.array(selectPageGroupSchema).prefault([]),
           maintenances: z.array(selectMaintenanceSchema).prefault([]),
         })
         .parse({
@@ -952,12 +952,12 @@ export const pageRouter = createTRPCRouter({
           .delete(monitorsToPages)
           .where(eq(monitorsToPages.pageId, opts.input.id));
         await tx
-          .delete(monitorGroup)
-          .where(eq(monitorGroup.pageId, opts.input.id));
+          .delete(pageGroup)
+          .where(eq(pageGroup.pageId, opts.input.id));
 
         if (opts.input.groups.length > 0) {
-          const monitorGroups = await tx
-            .insert(monitorGroup)
+          const pageGroups = await tx
+            .insert(pageGroup)
             .values(
               opts.input.groups.map((g) => ({
                 workspaceId: opts.ctx.workspace.id,
@@ -973,7 +973,7 @@ export const pageRouter = createTRPCRouter({
                 pageId: opts.input.id,
                 monitorId: m.id,
                 order: g.order,
-                monitorGroupId: monitorGroups[i].id,
+                monitorGroupId: pageGroups[i].id,
                 groupOrder: m.order,
               })),
             ),

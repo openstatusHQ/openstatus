@@ -1,13 +1,26 @@
-## Completed Tasks
+## 2026-01-15: Table Rename Complete
 
-### Task 1: Redirect user with no access for status-pages/[id]
-- **PRD Item**: "When a user is on wrong dashboard /status-pages/[id] redirect him to /status-pages"
-- **Status**: COMPLETED
-- **Commit**: b72b1bf5
-- **Changes Made**:
-  - Modified `apps/dashboard/src/app/(dashboard)/status-pages/[id]/layout.tsx`
-  - Changed from `prefetchQuery` to `fetchQuery` to properly check page access
-  - Added try-catch block to handle errors when user doesn't have access to the page
-  - Redirects to `/status-pages` instead of throwing an error when:
-    - Page doesn't exist
-    - User doesn't have access to the page (wrong workspace)
+Completed the "Table Rename" task to rename `monitor_group` table to `page_groups`.
+
+### Changes Made:
+1. Updated table name in `packages/db/src/schema/page_groups/page_groups.ts` from `page_group` to `page_groups`
+2. Updated `packages/db/src/schema/shared.ts`:
+   - Changed import from `selectMonitorGroupSchema` (monitor_groups) to `selectPageGroupSchema` (page_groups)
+   - Updated usage in `selectPublicPageSchemaWithRelation`
+3. Updated `packages/db/src/schema/monitors/monitor.ts`:
+   - Changed relation reference from `monitorGroup` to `pageGroup` (the import was already correct)
+4. Updated `packages/api/src/router/page.ts`:
+   - Changed import from `monitorGroup` to `pageGroup`
+   - Changed import from `selectMonitorGroupSchema` to `selectPageGroupSchema`
+   - Updated delete/insert operations to use `pageGroup` instead of `monitorGroup`
+   - Updated variable name from `monitorGroups` to `pageGroups` in the transaction
+
+### Notes:
+- The folder `packages/db/src/schema/page_groups/` was already created with correct file structure
+- The `packages/db/src/schema/index.ts` already exports `page_groups`
+- Relation names like `monitorGroup` in queries are kept for backwards compatibility (they reference the Drizzle relation name)
+- The old `monitor_groups` folder still exists but is no longer imported by the main schema index
+
+### Next Steps:
+- Generate database migration with `pnpm db:generate`
+- The migration should include `ALTER TABLE monitor_group RENAME TO page_groups` or equivalent
