@@ -303,11 +303,15 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
       throw new Error("Subscriber unsubscribedAt is undefined");
     }
 
-    const unsubscribedTime = subscriber.unsubscribedAt.getTime();
-    expect(unsubscribedTime).toBeGreaterThanOrEqual(
-      beforeUnsubscribe.getTime(),
+    // SQLite stores timestamps in seconds, so we compare at second precision
+    const unsubscribedTime = Math.floor(
+      subscriber.unsubscribedAt.getTime() / 1000,
     );
-    expect(unsubscribedTime).toBeLessThanOrEqual(afterUnsubscribe.getTime());
+    const beforeTime = Math.floor(beforeUnsubscribe.getTime() / 1000);
+    const afterTime = Math.floor(afterUnsubscribe.getTime() / 1000);
+
+    expect(unsubscribedTime).toBeGreaterThanOrEqual(beforeTime);
+    expect(unsubscribedTime).toBeLessThanOrEqual(afterTime);
   });
 
   test("Subscriber state transitions correctly through the flow", async () => {
