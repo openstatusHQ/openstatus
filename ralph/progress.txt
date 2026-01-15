@@ -692,3 +692,79 @@ bun test src/router/page.query-verification.test.ts
 
 ### Next Steps:
 - Proceed with "Cleanup" task
+
+## 2026-01-15: Cleanup Complete
+
+Completed the "Cleanup" task to deprecate old tables and finalize migration.
+
+### Changes Made:
+
+**1. Added deprecation comments to schema files:**
+- `packages/db/src/schema/monitors/monitor.ts`:
+  - Added `@deprecated` JSDoc to `monitorsToPages` table definition
+  - Added `@deprecated` JSDoc to `monitorsToPagesRelation`
+  - Added `@deprecated` inline comment to `monitorsToPages` relation in `monitorRelation`
+- `packages/db/src/schema/pages/page.ts`:
+  - Added `@deprecated` inline comment to `monitorsToPages` relation in `pageRelations`
+- `packages/db/src/schema/monitors/validation.ts`:
+  - Added `@deprecated` JSDoc to `selectMonitorToPageSchema`
+  - Added `@deprecated` JSDoc to `MonitorToPage` type
+- `packages/db/src/schema/shared.ts`:
+  - Added `@deprecated` JSDoc to `selectPageSchemaWithMonitorsRelation`
+
+**2. Updated apps/server routes to use pageComponent:**
+- `apps/server/src/routes/public/status.ts`:
+  - Changed import from `monitorsToPages` to `pageComponent`
+  - Updated `getStatusPageData` to query `pageComponent` instead of `monitorsToPages`
+- `apps/server/src/routes/v1/pages/post.ts`:
+  - Changed import from `monitorsToPages` to `pageComponent`
+  - Updated monitor linking to use `pageComponent` with proper fields (workspaceId, type, name)
+- `apps/server/src/routes/v1/pages/put.ts`:
+  - Changed import from `monitorsToPages` to `pageComponent`
+  - Updated query and update operations to use `pageComponent` table
+- `apps/server/src/routes/v1/statusReports/post.ts`:
+  - Updated page query to use `pageComponents` relation instead of `monitorsToPages`
+- `apps/server/src/routes/v1/statusReportUpdates/post.ts`:
+  - Updated page query to use `pageComponents` relation instead of `monitorsToPages`
+- `apps/server/src/routes/v1/maintenances/post.ts`:
+  - Updated page query to use `pageComponents` relation instead of `monitorsToPages`
+  - Updated monitor name extraction to filter for type='monitor' components
+
+**3. Updated packages/api routers:**
+- `packages/api/src/router/page.ts`:
+  - Removed unused `monitorsToPages` import
+- `packages/api/src/router/email/index.ts`:
+  - Updated status report query to use `pageComponents` relation instead of `monitorsToPages`
+
+**4. Updated seed file:**
+- `packages/db/src/seed.mts`:
+  - Changed import from `monitorsToPages` to `pageComponent`
+  - Updated seed data to insert into `pageComponent` with required fields
+
+### Notes:
+- All active queries now use `pageComponent` table instead of `monitorsToPages`
+- The `monitorsToPages` table and relations are retained but marked as deprecated
+- Backwards compatibility is maintained through transformation layers in routers
+- Type checks pass (pre-existing errors in node_modules are unrelated)
+- The migration is now complete - all PRD tasks have passed
+
+### Migration Complete!
+All 17 tasks in the PRD have been completed:
+1. Table Rename - ✅
+2. Schema Creation - page_component - ✅
+3. Schema Creation - Junction Tables - ✅
+4. Relations Definition - ✅
+5. Validation Schema - ✅
+6. Schema Exports - ✅
+7. Database Migration - ✅
+8. Data Migration Script - ✅
+9. Migration Verification - ✅
+10. Router Update - statusPage.ts - ✅
+11. Router Update - page.ts - ✅
+12. Router Update - monitor.ts - ✅
+13. Testing - Table Rename - ✅
+14. Testing - Data Migration - ✅
+15. Testing - Status Reports & Maintenances - ✅
+16. Testing - API Behavior - ✅
+17. Testing - Query Verification - ✅
+18. Cleanup - ✅

@@ -7,11 +7,11 @@ import {
   maintenance,
   maintenancesToMonitors,
   monitor,
-  monitorsToPages,
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
+  pageComponent,
   privateLocation,
   privateLocationToMonitors,
   statusReport,
@@ -163,9 +163,17 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
+  // Use the new pageComponent table (replaces deprecated monitorsToPages)
   await db
-    .insert(monitorsToPages)
-    .values({ monitorId: 1, pageId: 1 })
+    .insert(pageComponent)
+    .values({
+      workspaceId: 1,
+      pageId: 1,
+      type: "monitor",
+      monitorId: 1,
+      name: "OpenStatus",
+      order: 0,
+    })
     .onConflictDoNothing()
     .run();
   await db

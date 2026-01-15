@@ -7,8 +7,8 @@ import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
-  monitorsToPages,
   page,
+  pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 import { isNumberArray } from "../utils";
@@ -176,36 +176,66 @@ export function registerPutPage(api: typeof pagesApi) {
       .returning()
       .get();
 
-    const currentMonitorsToPages = await db
+    // Use pageComponent instead of deprecated monitorsToPages
+    const currentPageComponents = await db
       .select()
-      .from(monitorsToPages)
-      .where(eq(monitorsToPages.pageId, _page.id));
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, _page.id),
+          eq(pageComponent.type, "monitor"),
+        ),
+      );
 
-    const removedMonitors = currentMonitorsToPages
-      .map(({ monitorId }) => monitorId)
-      .filter((x) => !monitorIds?.includes(x));
+    const currentMonitorIds = currentPageComponents
+      .map((c) => c.monitorId)
+      .filter((id): id is number => id !== null);
+
+    const removedMonitors = currentMonitorIds.filter(
+      (x) => !monitorIds?.includes(x),
+    );
 
     if (removedMonitors.length) {
       await db
-        .delete(monitorsToPages)
+        .delete(pageComponent)
         .where(
           and(
-            inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, newPage.id),
+            inArray(pageComponent.monitorId, removedMonitors),
+            eq(pageComponent.pageId, newPage.id),
           ),
         );
     }
 
     if (monitors) {
-      for (const monitor of monitors) {
+      // Fetch all monitors to get their names
+      const allMonitorIds = isNumberArray(monitors)
+        ? monitors
+        : monitors.map((m) => m.monitorId);
+      const monitorsData = await db
+        .select()
+        .from(monitor)
+        .where(inArray(monitor.id, allMonitorIds))
+        .all();
+      const monitorMap = new Map(monitorsData.map((m) => [m.id, m]));
+
+      for (let i = 0; i < monitors.length; i++) {
+        const mon = monitors[i];
         const values =
-          typeof monitor === "number" ? { monitorId: monitor } : monitor;
+          typeof mon === "number" ? { monitorId: mon } : mon;
+        const monitorInfo = monitorMap.get(values.monitorId);
 
         await db
-          .insert(monitorsToPages)
-          .values({ pageId: newPage.id, ...values })
+          .insert(pageComponent)
+          .values({
+            workspaceId,
+            pageId: newPage.id,
+            type: "monitor",
+            monitorId: values.monitorId,
+            name: monitorInfo?.name ?? "",
+            order: i,
+          })
           .onConflictDoUpdate({
-            target: [monitorsToPages.monitorId, monitorsToPages.pageId],
+            target: [pageComponent.monitorId, pageComponent.pageId],
             set: { order: sql.raw("excluded.`order`") },
           });
       }
@@ -214,7 +244,10 @@ export function registerPutPage(api: typeof pagesApi) {
     const data = transformPageData(
       PageSchema.parse({
         ...newPage,
-        monitors: monitors || currentMonitorsToPages,
+        monitors: monitors || currentPageComponents.map((c) => ({
+          monitorId: c.monitorId,
+          order: c.order,
+        })),
       }),
     );
 

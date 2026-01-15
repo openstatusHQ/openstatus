@@ -75,6 +75,7 @@ export const monitor = sqliteTable("monitor", {
 });
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
+  /** @deprecated Use pageComponents instead. Retained for backwards compatibility. */
   monitorsToPages: many(monitorsToPages),
   pageComponents: many(pageComponent),
   monitorsToStatusReports: many(monitorsToStatusReport),
@@ -90,6 +91,12 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
   privateLocationToMonitors: many(privateLocationToMonitors),
 }));
 
+/**
+ * @deprecated Use `pageComponent` from `@openstatus/db/src/schema/page_components` instead.
+ * This table is retained for backwards compatibility and data migration purposes.
+ * New code should use the `pageComponent` table which supports both monitor and external components.
+ * Migration path: monitors_to_pages -> page_component (type='monitor')
+ */
 export const monitorsToPages = sqliteTable(
   "monitors_to_pages",
   {
@@ -115,6 +122,10 @@ export const monitorsToPages = sqliteTable(
   }),
 );
 
+/**
+ * @deprecated Use `pageComponentRelations` from `@openstatus/db/src/schema/page_components` instead.
+ * This relation is retained for backwards compatibility during migration.
+ */
 export const monitorsToPagesRelation = relations(
   monitorsToPages,
   ({ one }) => ({

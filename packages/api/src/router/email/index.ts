@@ -26,6 +26,7 @@ export const emailRouter = createTRPCRouter({
       const limits = opts.ctx.workspace.limits;
 
       if (limits["status-subscribers"]) {
+        // Use pageComponents instead of deprecated monitorsToPages
         const _statusReportUpdate =
           await opts.ctx.db.query.statusReportUpdate.findFirst({
             where: eq(statusReportUpdate.id, opts.input.id),
@@ -42,7 +43,7 @@ export const emailRouter = createTRPCRouter({
                       pageSubscribers: {
                         where: isNotNull(pageSubscriber.acceptedAt),
                       },
-                      monitorsToPages: {
+                      pageComponents: {
                         with: {
                           monitor: true,
                         },

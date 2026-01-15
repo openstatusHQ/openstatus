@@ -62,6 +62,7 @@ export const page = sqliteTable("page", {
 });
 
 export const pageRelations = relations(page, ({ many, one }) => ({
+  /** @deprecated Use pageComponents instead. Retained for backwards compatibility. */
   monitorsToPages: many(monitorsToPages),
   pageComponents: many(pageComponent),
   maintenances: many(maintenance),

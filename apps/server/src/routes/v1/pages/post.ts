@@ -4,8 +4,8 @@ import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
-  monitorsToPages,
   page,
+  pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 
@@ -172,15 +172,36 @@ export function registerPostPage(api: typeof pagesApi) {
       .returning()
       .get();
 
-    // TODO: missing order
+    // Use pageComponent instead of deprecated monitorsToPages
     if (monitors?.length) {
-      for (const monitor of monitors) {
+      const monitorIds = isNumberArray(monitors)
+        ? monitors
+        : monitors.map((m) => m.monitorId);
+
+      // Fetch monitors to get their names
+      const monitorData = await db
+        .select()
+        .from(monitor)
+        .where(inArray(monitor.id, monitorIds))
+        .all();
+      const monitorMap = new Map(monitorData.map((m) => [m.id, m]));
+
+      for (let i = 0; i < monitors.length; i++) {
+        const mon = monitors[i];
         const values =
-          typeof monitor === "number" ? { monitorId: monitor } : monitor;
+          typeof mon === "number" ? { monitorId: mon } : mon;
+        const monitorInfo = monitorMap.get(values.monitorId);
 
         await db
-          .insert(monitorsToPages)
-          .values({ pageId: _page.id, ...values })
+          .insert(pageComponent)
+          .values({
+            workspaceId,
+            pageId: _page.id,
+            type: "monitor",
+            monitorId: values.monitorId,
+            name: monitorInfo?.name ?? "",
+            order: i,
+          })
           .run();
       }
     }

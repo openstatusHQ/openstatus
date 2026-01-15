@@ -147,10 +147,11 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         )
         .all();
 
+      // Use pageComponents instead of deprecated monitorsToPages
       const pageInfo = await db.query.page.findFirst({
         where: eq(page.id, _newStatusReport.pageId),
         with: {
-          monitorsToPages: {
+          pageComponents: {
             with: {
               monitor: true,
             },

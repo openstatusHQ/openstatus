@@ -18,7 +18,6 @@ import {
   legacy_selectPublicPageSchemaWithRelation,
   maintenance,
   monitor,
-  monitorsToPages,
   page,
   pageAccessTypes,
   pageComponent,

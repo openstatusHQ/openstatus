@@ -240,6 +240,6 @@
       "Update any remaining references to monitorsToPages",
       "Document migration completion"
     ],
-    "passes": false
+    "passes": true
   }
 ]

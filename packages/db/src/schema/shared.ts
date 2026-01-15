@@ -60,7 +60,12 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   statusReports: z.array(selectStatusReportPageSchema),
 });
 
+/**
+ * @deprecated This schema uses the legacy monitorsToPages format.
+ * Retained for backwards compatibility during migration to pageComponents.
+ */
 export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
+  /** @deprecated Use pageComponents instead */
   monitorsToPages: z.array(
     z.object({
       monitorId: z.number(),

@@ -127,13 +127,14 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         )
         .all();
 
+      // Use pageComponents instead of deprecated monitorsToPages
       const _page = await db.query.page.findFirst({
         where: and(
           eq(page.id, _maintenance.pageId),
           eq(page.workspaceId, workspaceId),
         ),
         with: {
-          monitorsToPages: {
+          pageComponents: {
             with: {
               monitor: true,
             },
@@ -149,9 +150,9 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
           status: "maintenance",
           message: _maintenance.message,
           date: _maintenance.from.toISOString(),
-          monitors: _page.monitorsToPages.map(
-            (i) => i.monitor.externalName || i.monitor.name,
-          ),
+          monitors: _page.pageComponents
+            .filter((c) => c.type === "monitor" && c.monitor)
+            .map((c) => c.monitor!.externalName || c.monitor!.name),
         });
       }
     }

@@ -6,9 +6,9 @@ import {
   incidentTable,
   maintenance,
   monitor,
-  monitorsToPages,
   monitorsToStatusReport,
   page,
+  pageComponent,
   statusReport,
 } from "@openstatus/db/src/schema";
 import { Status, Tracker } from "@openstatus/tracker";
@@ -78,25 +78,26 @@ status.get("/:slug", async (c) => {
 });
 
 async function getStatusPageData(pageId: number) {
-  const monitorData = await db
+  // Use pageComponent instead of deprecated monitorsToPages
+  const componentData = await db
     .select()
-    .from(monitorsToPages)
+    .from(pageComponent)
     .innerJoin(
       monitor,
       // REMINDER: query only active monitors as they are the ones that are displayed on the status page
       and(
-        eq(monitorsToPages.monitorId, monitor.id),
+        eq(pageComponent.monitorId, monitor.id),
         eq(monitor.active, true),
-        eq(monitorsToPages.pageId, pageId),
+        eq(pageComponent.pageId, pageId),
+        eq(pageComponent.type, "monitor"),
       ),
     )
-
     .all();
 
-  const monitorIds = monitorData.map((i) => i.monitor?.id).filter(notEmpty);
+  const monitorIds = componentData.map((i) => i.monitor?.id).filter(notEmpty);
   if (monitorIds.length === 0) {
     return {
-      monitorData,
+      monitorData: componentData,
       pageStatusReportData: [],
       monitorStatusReportData: [],
       ongoingIncidents: [],

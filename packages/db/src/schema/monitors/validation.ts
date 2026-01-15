@@ -83,10 +83,17 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
 });
 
+/**
+ * @deprecated Use `selectPageComponentSchema` from `@openstatus/db/src/schema/page_components/validation` instead.
+ * Retained for backwards compatibility during migration.
+ */
 export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
 
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;
 export type Monitor = z.infer<typeof selectMonitorSchema>;
+/**
+ * @deprecated Use `SelectPageComponent` from `@openstatus/db/src/schema/page_components/validation` instead.
+ */
 export type MonitorToPage = z.infer<typeof selectMonitorToPageSchema>;
 export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
