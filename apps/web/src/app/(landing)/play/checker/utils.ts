@@ -12,6 +12,14 @@ export type CheckerRow = {
   timing: Timing;
 };
 
+function escapeCSV(value: string): string {
+  // Escape values that contain commas, quotes, or newlines by wrapping in quotes
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export function convertToCSV(rows: CheckerRow[]): string {
   const headers = [
     "Region Code",
@@ -29,9 +37,9 @@ export function convertToCSV(rows: CheckerRow[]): string {
     const regionConfig = regionDict[row.region as Region];
     const timing = getTimingPhases(row.timing);
     return [
-      regionConfig.code,
-      regionConfig.location,
-      regionConfig.provider,
+      escapeCSV(regionConfig.code),
+      escapeCSV(regionConfig.location),
+      escapeCSV(regionConfig.provider),
       row.latency.toString(),
       row.status.toString(),
       timing?.dns.toString() ?? "",
