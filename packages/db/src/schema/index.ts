@@ -16,6 +16,7 @@ export * from "./maintenances";
 export * from "./check";
 export * from "./monitor_run";
 export * from "./private_locations";
-export * from "./monitor_groups";
+export * from "./page_groups";
+export * from "./page_components";
 export * from "./viewers";
 export * from "./api-keys";

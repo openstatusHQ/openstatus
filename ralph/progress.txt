@@ -24,3 +24,47 @@ Completed the "Table Rename" task to rename `monitor_group` table to `page_group
 ### Next Steps:
 - Generate database migration with `pnpm db:generate`
 - The migration should include `ALTER TABLE monitor_group RENAME TO page_groups` or equivalent
+
+## 2026-01-15: Schema Creation - page_component Complete
+
+Completed the "Schema Creation - page_component" task to create the new `page_component` table.
+
+### Changes Made:
+1. Created `packages/db/src/schema/page_components/` folder with:
+   - `page_components.ts` - SQLite table definition with all fields and relations
+   - `validation.ts` - Zod validation schemas with refinements
+   - `index.ts` - Export barrel file
+
+2. Table schema (`page_component`) includes:
+   - `id` - integer primary key
+   - `workspaceId` - foreign key to workspace with CASCADE delete
+   - `pageId` - foreign key to page with CASCADE delete
+   - `type` - enum ['external', 'monitor'] defaulting to 'monitor'
+   - `monitorId` - nullable foreign key to monitor with CASCADE delete
+   - `name` - required text field
+   - `description` - optional text field
+   - `order` - integer defaulting to 0
+   - `groupId` - foreign key to pageGroup with SET NULL on delete
+   - `groupOrder` - integer defaulting to 0
+   - `createdAt` / `updatedAt` - timestamp fields
+   - UNIQUE constraint on (pageId, monitorId)
+
+3. Relations defined (`pageComponentRelations`):
+   - workspace - one relation to workspace
+   - page - one relation to page
+   - monitor - one relation to monitor
+   - group - one relation to pageGroup
+
+4. Validation schema (`insertPageComponentSchema`):
+   - Refinement: monitorId must be set when type='monitor'
+   - Refinement: monitorId must be null when type='external'
+
+5. Updated `packages/db/src/schema/index.ts` to export page_components
+
+### Also Completed:
+- "Validation Schema" task (validation.ts with refinements)
+- "Schema Exports" task (index.ts and main schema index update)
+
+### Next Steps:
+- Create junction tables for status reports and maintenances (Schema Creation - Junction Tables)
+- Define relations in related tables (Relations Definition)

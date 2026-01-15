@@ -28,7 +28,7 @@
       "Add `created_at` and `updated_at` timestamp fields",
       "Add UNIQUE constraint on (page_id, monitor_id)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Schema Creation - Junction Tables",
@@ -70,7 +70,7 @@
       "Add refinement: monitorId must be null when type='external'",
       "Export `InsertPageComponent` type"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Schema Exports",
@@ -81,7 +81,7 @@
       "Update `packages/db/src/schema/index.ts` to export page_groups (renamed)",
       "Verify all new tables are accessible via `@openstatus/db/src/schema`"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Database Migration",
