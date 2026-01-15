@@ -122,10 +122,6 @@ export class EmailClient {
                 react: (
                   <StatusReportEmail {...req} unsubscribeUrl={unsubscribeUrl} />
                 ),
-                headers: {
-                  "List-Unsubscribe": `<${unsubscribeUrl}>`,
-                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-                },
               };
             }),
           ),
