@@ -156,7 +156,7 @@
       "Test clicking confirm sets unsubscribedAt",
       "Test unsubscribed user does not receive new emails"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Email Client Verification",

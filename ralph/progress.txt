@@ -218,3 +218,42 @@
       - Tests index-friendly query conditions execute quickly
     - Uses bun:test framework with beforeAll/afterAll for setup/teardown
     - Creates test page with multiple subscriber states (active, unsubscribed, pending)
+
+### Task 14: Testing - E2E Tests
+- **PRD Item**: "Add end-to-end tests for full unsubscribe flow"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Created `packages/api/src/router/statusPage.e2e.test.ts`:
+    - Test suite for full unsubscribe flow (subscribe -> verify -> receive email -> unsubscribe):
+      - Tests user subscribes to status page (creates subscriber with token)
+      - Tests user verifies their email subscription (sets acceptedAt)
+      - Tests verified subscriber is included in email recipient list
+      - Tests user clicks unsubscribe and sets unsubscribedAt timestamp
+      - Tests unsubscribed user is excluded from email recipient list
+    - Test suite for confirmation page displays correct information:
+      - Tests confirmation page displays correct page name from database
+      - Tests confirmation page displays masked email (first char + *** + @domain)
+      - Tests email masking works for single character local part
+      - Tests email masking works for long local part
+    - Test suite for clicking confirm sets unsubscribedAt timestamp:
+      - Tests before clicking confirm, unsubscribedAt is null
+      - Tests after clicking confirm, unsubscribedAt is set to current timestamp
+      - Tests timestamp is within expected time range
+      - Tests subscriber state transitions correctly through the flow
+    - Test suite for unsubscribed user does not receive new emails:
+      - Tests email query returns only active subscribers with valid tokens
+      - Tests unsubscribed users are filtered out even with acceptedAt set
+      - Tests pending users are filtered out (not verified)
+      - Tests email recipients list includes token for unsubscribe URL generation
+    - Test suite for re-subscription after unsubscribe flow:
+      - Tests complete subscribe -> unsubscribe -> resubscribe cycle
+      - Tests user is excluded from emails after unsubscribe
+      - Tests user is excluded while pending re-verification
+      - Tests user is included after re-verification
+      - Tests new token is generated on re-subscription
+    - Test suite for invalid token handling:
+      - Tests non-existent token returns no subscriber
+      - Tests invalid UUID format is handled gracefully
+      - Tests already unsubscribed token returns subscriber with unsubscribedAt set
+    - Uses bun:test framework with beforeAll/afterAll for setup/teardown
+    - Creates test page and multiple subscribers for comprehensive flow testing
