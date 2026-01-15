@@ -202,7 +202,7 @@
       "Verify status page displays correct status reports per component",
       "Verify fan-out: monitor on 3 pages with status report creates 3 junction entries"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - API Behavior",

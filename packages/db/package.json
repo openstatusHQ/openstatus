@@ -10,6 +10,7 @@
     "studio": "drizzle-kit studio",
     "env": "bun env.ts",
     "seed": "bun src/seed.mts",
+    "test": "bun test",
     "migrate:page-components": "bun src/migrate-monitors-to-page-components.mts",
     "verify:page-components": "bun src/verify-page-components-migration.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db"

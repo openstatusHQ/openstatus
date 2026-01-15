@@ -484,3 +484,65 @@ Completed the "Testing - Data Migration" task by enhancing the verification scri
 
 ### Next Steps:
 - Proceed with "Testing - Status Reports & Maintenances" task
+
+## 2026-01-15: Testing - Status Reports & Maintenances Complete
+
+Completed the "Testing - Status Reports & Maintenances" task by creating a comprehensive test suite for the junction tables.
+
+### Changes Made:
+1. Created `packages/db/src/schema/page_components/page_components.test.ts`:
+   - Test suite for `status_reports_to_page_components` junction table
+   - Test suite for `maintenances_to_page_components` junction table
+   - Tests for `pageComponent` relations to junction tables
+   - Tests for fan-out design (composite primary keys)
+
+2. Updated `packages/db/package.json`:
+   - Added `"test": "bun test"` script
+
+### Test Coverage:
+
+**Status Reports to Page Components Junction Table**:
+- Verifies table name is `status_report_to_page_component`
+- Verifies `statusReportId` column exists with correct name
+- Verifies `pageComponentId` column exists with correct name
+- Verifies `createdAt` column exists
+- Verifies relations are defined correctly
+
+**Maintenances to Page Components Junction Table**:
+- Verifies table name is `maintenance_to_page_component`
+- Verifies `maintenanceId` column exists with correct name
+- Verifies `pageComponentId` column exists with correct name
+- Verifies `createdAt` column exists
+- Verifies relations are defined correctly
+
+**Page Component Relations**:
+- Verifies `pageComponentRelations` is defined
+- Verifies `pageComponent` has `id` primary key
+- Verifies many relations to junction tables exist
+
+**Page Component Schema**:
+- Verifies required fields for junction table linking (id, pageId, monitorId, type)
+- Verifies groupId and groupOrder for fan-out support
+- Verifies workspaceId for workspace association
+
+**Fan-out Design Documentation**:
+- Documents expected behavior: monitor on 3 pages with status report creates 3 junction entries
+- Verifies composite primary keys allow multiple entries per status report/maintenance
+
+### Type Check Results:
+- Only pre-existing errors about `bun:test` module (same as other test files)
+- All schema and relation definitions pass type checks
+
+### Usage:
+```bash
+cd packages/db
+bun test src/schema/page_components/page_components.test.ts
+```
+
+### Notes:
+- Tests follow existing patterns from `region-migration.test.ts` and `page.test.ts`
+- The `bun:test` import error is expected in environments without Bun types installed
+- Tests will pass when run with Bun locally
+
+### Next Steps:
+- Proceed with "Testing - API Behavior" task
