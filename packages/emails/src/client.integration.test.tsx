@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@react-email/render";
 import StatusReportEmail from "../emails/status-report";
 
@@ -39,7 +39,9 @@ describe("Status Report Email - List-Unsubscribe Headers", () => {
     const subscriber = { email: "test@example.com", token: testToken };
     const unsubscribeUrl = `${customBaseUrl}/public/unsubscribe/${subscriber.token}`;
 
-    expect(unsubscribeUrl).toBe(`${customBaseUrl}/public/unsubscribe/${testToken}`);
+    expect(unsubscribeUrl).toBe(
+      `${customBaseUrl}/public/unsubscribe/${testToken}`,
+    );
   });
 
   test("should generate unique unsubscribe URLs per subscriber", () => {
@@ -50,7 +52,7 @@ describe("Status Report Email - List-Unsubscribe Headers", () => {
     ];
 
     const urls = subscribers.map(
-      (s) => `${baseUrl}/public/unsubscribe/${s.token}`
+      (s) => `${baseUrl}/public/unsubscribe/${s.token}`,
     );
 
     // Each URL should be unique
@@ -66,7 +68,8 @@ describe("Status Report Email - List-Unsubscribe Headers", () => {
 });
 
 describe("Status Report Email - Unsubscribe Link in Body", () => {
-  const unsubscribeUrl = "https://api.openstatus.dev/public/unsubscribe/test-token";
+  const unsubscribeUrl =
+    "https://api.openstatus.dev/public/unsubscribe/test-token";
 
   test("should include unsubscribe link in email body when URL is provided", async () => {
     const html = await render(
@@ -78,7 +81,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         message="Test message"
         monitors={["Monitor 1"]}
         unsubscribeUrl={unsubscribeUrl}
-      />
+      />,
     );
 
     expect(html).toContain(unsubscribeUrl);
@@ -94,7 +97,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         date={new Date().toISOString()}
         message="Test message"
         monitors={["Monitor 1"]}
-      />
+      />,
     );
 
     // Should not contain the unsubscribe text when no URL provided
@@ -111,7 +114,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         message="Test message"
         monitors={["Monitor 1"]}
         unsubscribeUrl={unsubscribeUrl}
-      />
+      />,
     );
 
     // Check that the URL is in an href attribute
@@ -128,7 +131,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         message="Test message"
         monitors={["Monitor 1"]}
         unsubscribeUrl={unsubscribeUrl}
-      />
+      />,
     );
 
     // Check for muted styling (gray color for footer)
@@ -177,7 +180,7 @@ describe("Status Report Email - Email Content Validation", () => {
           message="Test"
           monitors={[]}
           unsubscribeUrl="https://example.com/unsubscribe"
-        />
+        />,
       );
 
       // Should render without errors and contain the status

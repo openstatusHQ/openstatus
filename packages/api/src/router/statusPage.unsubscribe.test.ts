@@ -5,16 +5,24 @@ import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 // Test data setup
 let testPageId: number;
-let testSubscriberId: number;
+let _testSubscriberId: number;
 let testToken: string;
 const testWorkspaceId = 1; // Use existing test workspace from seed data
 
 beforeAll(async () => {
   // Clean up any existing test data
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe@example.com"));
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe-2@example.com"));
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe-3@example.com"));
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe-4@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe-2@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe-3@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe-4@example.com"));
   await db.delete(page).where(eq(page.slug, "test-unsubscribe-page"));
 
   // Create a test page
@@ -46,15 +54,23 @@ beforeAll(async () => {
     .returning()
     .get();
 
-  testSubscriberId = subscriber.id;
+  _testSubscriberId = subscriber.id;
 });
 
 afterAll(async () => {
   // Clean up test data
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe@example.com"));
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe-2@example.com"));
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe-3@example.com"));
-  await db.delete(pageSubscriber).where(eq(pageSubscriber.email, "test-unsubscribe-4@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe-2@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe-3@example.com"));
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.email, "test-unsubscribe-4@example.com"));
   await db.delete(page).where(eq(page.slug, "test-unsubscribe-page"));
 });
 
@@ -69,9 +85,10 @@ describe("getSubscriberByToken", () => {
     expect(subscriber?.page.title).toBe("Test Unsubscribe Page");
 
     // Manually mask the email to test the masking logic
-    const email = subscriber!.email;
+    const email = subscriber?.email;
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("t***@example.com");
   });
@@ -108,7 +125,8 @@ describe("getSubscriberByToken", () => {
   test("should properly mask emails with single character local part", async () => {
     const email = "a@example.com";
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("a***@example.com");
   });
@@ -116,7 +134,8 @@ describe("getSubscriberByToken", () => {
   test("should properly mask emails with long local part", async () => {
     const email = "verylongemail@example.com";
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("v***@example.com");
   });
@@ -211,11 +230,11 @@ describe("unsubscribe mutation", () => {
       const afterUnsubscribe = new Date();
 
       expect(updatedSubscriber?.unsubscribedAt).toBeDefined();
-      expect(updatedSubscriber?.unsubscribedAt!.getTime()).toBeGreaterThanOrEqual(
-        beforeUnsubscribe.getTime() - 1000
-      );
-      expect(updatedSubscriber?.unsubscribedAt!.getTime()).toBeLessThanOrEqual(
-        afterUnsubscribe.getTime() + 1000
+      expect(
+        updatedSubscriber?.unsubscribedAt?.getTime(),
+      ).toBeGreaterThanOrEqual(beforeUnsubscribe.getTime() - 1000);
+      expect(updatedSubscriber?.unsubscribedAt?.getTime()).toBeLessThanOrEqual(
+        afterUnsubscribe.getTime() + 1000,
       );
     }
   });
@@ -225,7 +244,8 @@ describe("email masking logic", () => {
   test("should mask email j***@example.com correctly", () => {
     const email = "john@example.com";
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("j***@example.com");
   });
@@ -234,7 +254,8 @@ describe("email masking logic", () => {
     // Edge case: if somehow we have @domain only
     const email = "@example.com";
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("***@example.com");
   });
@@ -242,7 +263,8 @@ describe("email masking logic", () => {
   test("should preserve domain in masked email", () => {
     const email = "user@custom-domain.io";
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("u***@custom-domain.io");
   });
@@ -250,7 +272,8 @@ describe("email masking logic", () => {
   test("should handle complex domain", () => {
     const email = "test@subdomain.example.co.uk";
     const [localPart, domain] = email.split("@");
-    const maskedEmail = localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    const maskedEmail =
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("t***@subdomain.example.co.uk");
   });
@@ -259,14 +282,16 @@ describe("email masking logic", () => {
 describe("token validation", () => {
   test("should validate UUID format for token", () => {
     const validToken = crypto.randomUUID();
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     expect(validToken).toMatch(uuidRegex);
   });
 
   test("should reject invalid UUID format", () => {
     const invalidToken = "not-a-valid-uuid";
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     expect(invalidToken).not.toMatch(uuidRegex);
   });

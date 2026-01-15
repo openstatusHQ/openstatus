@@ -1,7 +1,7 @@
 "use client";
 
-import { formatDate } from "@/lib/formatter";
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -25,11 +25,7 @@ export const columns: ColumnDef<Subscriber>[] = [
       const acceptedAt = row.original.acceptedAt;
 
       if (unsubscribedAt) {
-        return (
-          <Badge variant="destructive">
-            Unsubscribed {formatDate(unsubscribedAt)}
-          </Badge>
-        );
+        return <Badge variant="destructive">Unsubscribed</Badge>;
       }
 
       if (!acceptedAt) {
@@ -61,6 +57,21 @@ export const columns: ColumnDef<Subscriber>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const value = row.getValue("acceptedAt");
+      if (value instanceof Date) return formatDate(value);
+      if (!value) return "-";
+      return value;
+    },
+    meta: {
+      cellClassName: "font-mono",
+    },
+  },
+  {
+    accessorKey: "unsubscribedAt",
+    header: "Unsubscribed At",
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("unsubscribedAt");
       if (value instanceof Date) return formatDate(value);
       if (!value) return "-";
       return value;

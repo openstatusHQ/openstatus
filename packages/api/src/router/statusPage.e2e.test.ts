@@ -25,7 +25,9 @@ beforeAll(async () => {
   });
 
   if (!existingWorkspace) {
-    throw new Error("Test workspace not found. Please ensure seed data exists.");
+    throw new Error(
+      "Test workspace not found. Please ensure seed data exists.",
+    );
   }
 
   testWorkspaceId = existingWorkspace.id;
@@ -72,7 +74,11 @@ describe("Full unsubscribe flow: subscribe -> verify -> unsubscribe", () => {
     expect(subscriber.acceptedAt).toBeNull();
     expect(subscriber.unsubscribedAt).toBeNull();
 
-    subscriberToken = subscriber.token!;
+    if (!subscriber.token) {
+      throw new Error("Subscriber token is undefined");
+    }
+
+    subscriberToken = subscriber.token;
   });
 
   test("Step 2: User verifies their email subscription", async () => {
@@ -100,8 +106,8 @@ describe("Full unsubscribe flow: subscribe -> verify -> unsubscribe", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -135,8 +141,8 @@ describe("Full unsubscribe flow: subscribe -> verify -> unsubscribe", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -165,7 +171,11 @@ describe("Confirmation page displays correct information", () => {
       .returning()
       .get();
 
-    confirmPageToken = subscriber.token!;
+    if (!subscriber.token) {
+      throw new Error("Subscriber token is undefined");
+    }
+
+    confirmPageToken = subscriber.token;
   });
 
   afterAll(async () => {
@@ -190,15 +200,17 @@ describe("Confirmation page displays correct information", () => {
       where: eq(pageSubscriber.token, confirmPageToken),
     });
 
-    const email = subscriber?.email;
+    if (!subscriber) {
+      throw new Error("Subscriber not found");
+    }
+
+    const email = subscriber.email;
     expect(email).toBe("confirm-page-test@example.com");
 
     // Apply the same masking logic as in the API
-    const [localPart, domain] = email!.split("@");
+    const [localPart, domain] = email.split("@");
     const maskedEmail =
-      localPart.length > 0
-        ? `${localPart[0]}***@${domain}`
-        : `***@${domain}`;
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("c***@example.com");
   });
@@ -207,9 +219,7 @@ describe("Confirmation page displays correct information", () => {
     const email = "a@example.com";
     const [localPart, domain] = email.split("@");
     const maskedEmail =
-      localPart.length > 0
-        ? `${localPart[0]}***@${domain}`
-        : `***@${domain}`;
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("a***@example.com");
   });
@@ -218,9 +228,7 @@ describe("Confirmation page displays correct information", () => {
     const email = "verylongemailaddress@example.com";
     const [localPart, domain] = email.split("@");
     const maskedEmail =
-      localPart.length > 0
-        ? `${localPart[0]}***@${domain}`
-        : `***@${domain}`;
+      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
     expect(maskedEmail).toBe("v***@example.com");
   });
@@ -247,7 +255,11 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
       .returning()
       .get();
 
-    unsubscribeToken = subscriber.token!;
+    if (!subscriber.token) {
+      throw new Error("Subscriber token is undefined");
+    }
+
+    unsubscribeToken = subscriber.token;
   });
 
   afterAll(async () => {
@@ -279,12 +291,22 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
       where: eq(pageSubscriber.token, unsubscribeToken),
     });
 
-    expect(subscriber?.unsubscribedAt).not.toBeNull();
-    expect(subscriber?.unsubscribedAt).toBeInstanceOf(Date);
+    if (!subscriber) {
+      throw new Error("Subscriber not found");
+    }
+
+    expect(subscriber.unsubscribedAt).not.toBeNull();
+    expect(subscriber.unsubscribedAt).toBeInstanceOf(Date);
 
     // Verify the timestamp is within the expected range
-    const unsubscribedTime = subscriber?.unsubscribedAt?.getTime()!;
-    expect(unsubscribedTime).toBeGreaterThanOrEqual(beforeUnsubscribe.getTime());
+    if (!subscriber.unsubscribedAt) {
+      throw new Error("Subscriber unsubscribedAt is undefined");
+    }
+
+    const unsubscribedTime = subscriber.unsubscribedAt.getTime();
+    expect(unsubscribedTime).toBeGreaterThanOrEqual(
+      beforeUnsubscribe.getTime(),
+    );
     expect(unsubscribedTime).toBeLessThanOrEqual(afterUnsubscribe.getTime());
   });
 
@@ -306,7 +328,7 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
 });
 
 describe("Unsubscribed user does not receive new emails", () => {
-  let activeToken: string;
+  let _activeToken: string;
   let unsubscribedToken: string;
   let pendingToken: string;
 
@@ -335,7 +357,12 @@ describe("Unsubscribed user does not receive new emails", () => {
       })
       .returning()
       .get();
-    activeToken = active.token!;
+
+    if (!active.token) {
+      throw new Error("Active subscriber token is undefined");
+    }
+
+    _activeToken = active.token;
 
     // Unsubscribed subscriber
     const unsubscribed = await db
@@ -350,7 +377,12 @@ describe("Unsubscribed user does not receive new emails", () => {
       })
       .returning()
       .get();
-    unsubscribedToken = unsubscribed.token!;
+
+    if (!unsubscribed.token) {
+      throw new Error("Unsubscribed subscriber token is undefined");
+    }
+
+    unsubscribedToken = unsubscribed.token;
 
     // Pending (unverified) subscriber
     const pending = await db
@@ -365,7 +397,12 @@ describe("Unsubscribed user does not receive new emails", () => {
       })
       .returning()
       .get();
-    pendingToken = pending.token!;
+
+    if (!pending.token) {
+      throw new Error("Pending subscriber token is undefined");
+    }
+
+    pendingToken = pending.token;
   });
 
   afterAll(async () => {
@@ -392,8 +429,8 @@ describe("Unsubscribed user does not receive new emails", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -423,13 +460,13 @@ describe("Unsubscribed user does not receive new emails", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
     const foundUnsubscribed = subscribers.find(
-      (s) => s.email === "unsubscribed-user@example.com"
+      (s) => s.email === "unsubscribed-user@example.com",
     );
     expect(foundUnsubscribed).toBeUndefined();
   });
@@ -450,13 +487,13 @@ describe("Unsubscribed user does not receive new emails", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
     const foundPending = subscribers.find(
-      (s) => s.email === "pending-user@example.com"
+      (s) => s.email === "pending-user@example.com",
     );
     expect(foundPending).toBeUndefined();
   });
@@ -472,14 +509,14 @@ describe("Unsubscribed user does not receive new emails", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
     // Filter for valid tokens (as done in email sending routes)
     const validRecipients = emailRecipients.filter(
-      (r): r is { email: string; token: string } => r.token !== null
+      (r): r is { email: string; token: string } => r.token !== null,
     );
 
     expect(validRecipients.length).toBeGreaterThanOrEqual(1);
@@ -487,7 +524,7 @@ describe("Unsubscribed user does not receive new emails", () => {
     // Each valid recipient should have a UUID token
     for (const recipient of validRecipients) {
       expect(recipient.token).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
       );
     }
   });
@@ -516,7 +553,11 @@ describe("Re-subscription after unsubscribe flow", () => {
       .returning()
       .get();
 
-    resubscribeToken = subscriber.token!;
+    if (!subscriber.token) {
+      throw new Error("Subscriber token is undefined");
+    }
+
+    resubscribeToken = subscriber.token;
   });
 
   afterAll(async () => {
@@ -538,10 +579,10 @@ describe("Re-subscription after unsubscribe flow", () => {
     await db
       .update(pageSubscriber)
       .set({ unsubscribedAt: new Date() })
-      .where(eq(pageSubscriber.id, subscriber!.id));
+      .where(eq(pageSubscriber.id, subscriber?.id));
 
     subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, subscriber!.id),
+      where: eq(pageSubscriber.id, subscriber?.id),
     });
 
     expect(subscriber?.unsubscribedAt).not.toBeNull();
@@ -555,8 +596,8 @@ describe("Re-subscription after unsubscribe flow", () => {
           eq(pageSubscriber.pageId, testPageId),
           eq(pageSubscriber.email, "resubscribe-test@example.com"),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -572,7 +613,7 @@ describe("Re-subscription after unsubscribe flow", () => {
         token: newToken,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       })
-      .where(eq(pageSubscriber.id, subscriber!.id));
+      .where(eq(pageSubscriber.id, subscriber?.id));
 
     // Step 5: User is still excluded (not yet verified)
     const subscribersPendingVerify = await db
@@ -583,8 +624,8 @@ describe("Re-subscription after unsubscribe flow", () => {
           eq(pageSubscriber.pageId, testPageId),
           eq(pageSubscriber.email, "resubscribe-test@example.com"),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -605,8 +646,8 @@ describe("Re-subscription after unsubscribe flow", () => {
           eq(pageSubscriber.pageId, testPageId),
           eq(pageSubscriber.email, "resubscribe-test@example.com"),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -657,9 +698,13 @@ describe("Invalid token handling", () => {
       .returning()
       .get();
 
+    if (!subscriber.token) {
+      throw new Error("Subscriber token is undefined");
+    }
+
     // Query the subscriber
     const found = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, subscriber.token!),
+      where: eq(pageSubscriber.token, subscriber.token),
     });
 
     expect(found).toBeDefined();

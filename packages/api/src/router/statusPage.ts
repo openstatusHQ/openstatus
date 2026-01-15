@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   maintenance,
   monitorsToPages,
@@ -1059,13 +1059,21 @@ export const statusPageRouter = createTRPCRouter({
     }),
 
   getSubscriberByToken: publicProcedure
-    .input(z.object({ token: z.string().uuid() }))
+    .input(
+      z.object({ token: z.string().uuid(), domain: z.string().toLowerCase() }),
+    )
     .query(async (opts) => {
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.domain} OR  lower(${page.customDomain}) = ${opts.input.domain}`,
+      });
+
+      if (!_page) return null;
+
       const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: eq(pageSubscriber.token, opts.input.token),
-        with: {
-          page: true,
-        },
+        where: and(
+          eq(pageSubscriber.token, opts.input.token),
+          eq(pageSubscriber.pageId, _page.id),
+        ),
       });
 
       // Return null if not found or already unsubscribed
@@ -1081,24 +1089,30 @@ export const statusPageRouter = createTRPCRouter({
       const email = _pageSubscriber.email;
       const [localPart, domain] = email.split("@");
       const maskedEmail =
-        localPart.length > 0
-          ? `${localPart[0]}***@${domain}`
-          : `***@${domain}`;
+        localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
       return {
-        pageName: _pageSubscriber.page.title,
+        pageName: _page.title,
         maskedEmail,
       };
     }),
 
   unsubscribe: publicProcedure
-    .input(z.object({ token: z.string().uuid() }))
+    .input(
+      z.object({ token: z.string().uuid(), domain: z.string().toLowerCase() }),
+    )
     .mutation(async (opts) => {
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.domain} OR  lower(${page.customDomain}) = ${opts.input.domain}`,
+      });
+
+      if (!_page) return null;
+
       const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: eq(pageSubscriber.token, opts.input.token),
-        with: {
-          page: true,
-        },
+        where: and(
+          eq(pageSubscriber.token, opts.input.token),
+          eq(pageSubscriber.pageId, _page.id),
+        ),
       });
 
       if (!_pageSubscriber) {
@@ -1132,7 +1146,7 @@ export const statusPageRouter = createTRPCRouter({
 
       return {
         success: true,
-        pageName: _pageSubscriber.page.title,
+        pageName: _page.title,
       };
     }),
 });

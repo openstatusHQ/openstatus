@@ -17,7 +17,7 @@ export default function UnsubscribePage() {
   const { token, domain } = useParams<{ token: string; domain: string }>();
 
   const subscriberQuery = useQuery(
-    trpc.statusPage.getSubscriberByToken.queryOptions({ token }),
+    trpc.statusPage.getSubscriberByToken.queryOptions({ token, domain }),
   );
 
   const unsubscribeMutation = useMutation(
@@ -25,7 +25,7 @@ export default function UnsubscribePage() {
   );
 
   const handleUnsubscribe = () => {
-    unsubscribeMutation.mutate({ token });
+    unsubscribeMutation.mutate({ token, domain });
   };
 
   // Loading state
@@ -99,11 +99,14 @@ export default function UnsubscribePage() {
         <StatusBlankTitle>Unsubscribe from notifications</StatusBlankTitle>
         <StatusBlankDescription>
           You are about to unsubscribe{" "}
-          <span className="font-semibold">{subscriberQuery.data.maskedEmail}</span>{" "}
-          from <span className="font-semibold">{subscriberQuery.data.pageName}</span>{" "}
+          <span className="font-semibold">
+            {subscriberQuery.data.maskedEmail}
+          </span>{" "}
+          from{" "}
+          <span className="font-semibold">{subscriberQuery.data.pageName}</span>{" "}
           status updates.
         </StatusBlankDescription>
-        <div className="flex gap-2 pt-2">
+        <div className="flex justify-center gap-2">
           <StatusBlankLink href="../">Cancel</StatusBlankLink>
           <Button
             variant="destructive"
@@ -111,7 +114,7 @@ export default function UnsubscribePage() {
             onClick={handleUnsubscribe}
             disabled={unsubscribeMutation.isPending}
           >
-            {unsubscribeMutation.isPending ? "Unsubscribing..." : "Confirm Unsubscribe"}
+            {unsubscribeMutation.isPending ? "Unsubscribing..." : "Unsubscribe"}
           </Button>
         </div>
       </StatusBlankContent>

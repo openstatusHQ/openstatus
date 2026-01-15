@@ -114,7 +114,9 @@ export class EmailClient {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
                 subject: req.reportTitle,
                 to: subscriber.email,
-                react: <StatusReportEmail {...req} unsubscribeUrl={unsubscribeUrl} />,
+                react: (
+                  <StatusReportEmail {...req} unsubscribeUrl={unsubscribeUrl} />
+                ),
                 headers: {
                   "List-Unsubscribe": `<${unsubscribeUrl}>`,
                   "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

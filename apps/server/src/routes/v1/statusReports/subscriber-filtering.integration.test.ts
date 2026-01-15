@@ -94,8 +94,8 @@ describe("Subscriber filtering for email notifications", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -112,13 +112,13 @@ describe("Subscriber filtering for email notifications", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
     const pendingEmails = subscribers.filter(
-      (s) => s.email === "pending-sub@test.com"
+      (s) => s.email === "pending-sub@test.com",
     );
     expect(pendingEmails.length).toBe(0);
   });
@@ -131,13 +131,13 @@ describe("Subscriber filtering for email notifications", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
     const unsubscribedEmails = subscribers.filter(
-      (s) => s.email === "unsubscribed-sub@test.com"
+      (s) => s.email === "unsubscribed-sub@test.com",
     );
     expect(unsubscribedEmails.length).toBe(0);
   });
@@ -150,8 +150,8 @@ describe("Subscriber filtering for email notifications", () => {
       .where(
         and(
           eq(pageSubscriber.pageId, testPageId),
-          isNotNull(pageSubscriber.acceptedAt)
-        )
+          isNotNull(pageSubscriber.acceptedAt),
+        ),
       )
       .all();
 
@@ -171,20 +171,20 @@ describe("Subscriber filtering for email notifications", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
     // Filter for valid tokens (non-null)
     const validSubscribers = subscribers.filter(
-      (s): s is typeof s & { token: string } => s.token !== null
+      (s): s is typeof s & { token: string } => s.token !== null,
     );
 
     expect(validSubscribers.length).toBe(1);
     expect(validSubscribers[0].token).toBeDefined();
     expect(validSubscribers[0].token).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     );
   });
 });
@@ -206,14 +206,14 @@ describe("Subscriber state transitions", () => {
         acceptedAt: null, // Reset for re-verification
         token: crypto.randomUUID(), // Generate new token
       })
-      .where(eq(pageSubscriber.id, unsubscribedSub!.id));
+      .where(eq(pageSubscriber.id, unsubscribedSub?.id));
 
     // After re-subscription + verification, subscriber should be included
     // (we need to set acceptedAt for verification)
     await db
       .update(pageSubscriber)
       .set({ acceptedAt: new Date() })
-      .where(eq(pageSubscriber.id, unsubscribedSub!.id));
+      .where(eq(pageSubscriber.id, unsubscribedSub?.id));
 
     const subscribers = await db
       .select()
@@ -222,8 +222,8 @@ describe("Subscriber state transitions", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
@@ -234,7 +234,7 @@ describe("Subscriber state transitions", () => {
     await db
       .update(pageSubscriber)
       .set({ unsubscribedAt: new Date() })
-      .where(eq(pageSubscriber.id, unsubscribedSub!.id));
+      .where(eq(pageSubscriber.id, unsubscribedSub?.id));
   });
 
   test("should track unsubscription timestamp", async () => {
@@ -261,8 +261,8 @@ describe("Query performance considerations", () => {
         and(
           eq(pageSubscriber.pageId, testPageId),
           isNotNull(pageSubscriber.acceptedAt),
-          isNull(pageSubscriber.unsubscribedAt)
-        )
+          isNull(pageSubscriber.unsubscribedAt),
+        ),
       )
       .all();
 
