@@ -83,7 +83,7 @@
       "Add `isNull(pageSubscriber.unsubscribedAt)` to where clause",
       "Verify both queries now filter out unsubscribed subscribers"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Frontend - Unsubscribe Confirmation Page",

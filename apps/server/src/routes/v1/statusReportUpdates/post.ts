@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import { and, db, eq, isNotNull } from "@openstatus/db";
+import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
   page,
   pageSubscriber,
@@ -99,6 +99,7 @@ export function registerPostStatusReportUpdate(
           and(
             eq(pageSubscriber.pageId, _statusReport.pageId),
             isNotNull(pageSubscriber.acceptedAt),
+            isNull(pageSubscriber.unsubscribedAt),
           ),
         )
         .all();

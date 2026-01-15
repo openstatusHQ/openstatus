@@ -143,6 +143,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(pageSubscriber.pageId, _newStatusReport.pageId),
             isNotNull(pageSubscriber.acceptedAt),
+            isNull(pageSubscriber.unsubscribedAt),
           ),
         )
         .all();

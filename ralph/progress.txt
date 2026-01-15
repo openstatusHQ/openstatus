@@ -95,3 +95,15 @@
     - `apps/server/src/routes/v1/maintenances/post.ts`: Pass subscribers with email and token, filter out null tokens
     - `apps/server/src/routes/v1/statusReports/update/post.ts`: Pass subscribers with email and token, filter out null tokens
     - `packages/api/src/router/email/index.ts`: Updated `sendStatusReport` and `sendMaintenance` mutations to pass subscribers with tokens, filter out null tokens
+
+### Task 8: Query Updates - Filter Unsubscribed
+- **PRD Item**: "Update email-sending queries to exclude unsubscribed users"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `apps/server/src/routes/v1/statusReports/post.ts`:
+    - Added `isNull(pageSubscriber.unsubscribedAt)` to the where clause when fetching subscribers
+    - This ensures unsubscribed users are excluded from status report email notifications
+  - Modified `apps/server/src/routes/v1/statusReportUpdates/post.ts`:
+    - Added `isNull` import from `@openstatus/db`
+    - Added `isNull(pageSubscriber.unsubscribedAt)` to the where clause when fetching subscribers
+    - This ensures unsubscribed users are excluded from status report update email notifications
