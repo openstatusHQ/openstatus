@@ -180,3 +180,44 @@ Completed the "Database Migration" task by creating the migration file for page_
 
 ### Next Steps:
 - Create data migration script to migrate monitors_to_pages data to page_components
+
+## 2026-01-15: Data Migration Script Complete
+
+Completed the "Data Migration Script" task to create a script for migrating `monitors_to_pages` data to `page_components`.
+
+### Changes Made:
+1. Created `packages/db/src/migrate-monitors-to-page-components.mts`:
+   - Queries all records from `monitors_to_pages`
+   - Fetches associated monitors to get workspace_id and name (uses externalName if available)
+   - Inserts into `page_component` table with:
+     - `type='monitor'`
+     - `workspaceId` from monitor
+     - `name` from monitor (externalName or name)
+     - `order`, `groupId` (from monitorGroupId), `groupOrder` preserved from original
+   - Creates junction entries in `status_reports_to_page_components` for status reports linked to monitors
+   - Creates junction entries in `maintenances_to_page_components` for maintenances linked to monitors
+   - Uses `onConflictDoNothing()` to handle re-runs safely
+   - Includes detailed logging for progress tracking
+
+2. Updated `packages/db/package.json`:
+   - Added `migrate:page-components` script to run the migration
+
+### Script Features:
+- Safe to re-run (idempotent via conflict handling)
+- Handles missing monitors or missing workspaceId gracefully
+- Logs progress for each step with counts of created/skipped records
+- Provides summary at the end showing total records migrated
+
+### Usage:
+```bash
+cd packages/db
+bun run migrate:page-components
+```
+
+### Notes:
+- TypeScript type checks pass for the migration script
+- Pre-existing type errors in the codebase (Bun types, test files) are unrelated to this change
+
+### Next Steps:
+- Run migration script against development database
+- Verify migration with the "Migration Verification" task
