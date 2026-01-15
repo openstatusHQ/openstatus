@@ -302,3 +302,59 @@ Updated `packages/api/src/router/statusPage.ts`:
 
 ### Next Steps:
 - Proceed with "Router Update - page.ts" task
+
+## 2026-01-15: Router Update - page.ts Complete
+
+Completed the "Router Update - page.ts" task to update the page router to use `pageComponents` instead of `monitorsToPages` for CRUD operations.
+
+### Changes Made:
+Updated `packages/api/src/router/page.ts`:
+
+1. **Updated imports**:
+   - Added `pageComponent` import from `@openstatus/db/src/schema`
+
+2. **Updated `create` method**:
+   - Changed from inserting into `monitorsToPages` to `pageComponent`
+   - Added `workspaceId`, `type: "monitor"`, and `name` (from monitor) fields
+   - Created `monitorMap` for efficient monitor lookup
+
+3. **Updated `getPageById` method**:
+   - Changed query from `monitorsToPages` relation to `pageComponents`
+   - Added transformation to `monitorsToPages` format for backward compatibility
+   - Filtered for `type === "monitor"` components with valid monitors
+
+4. **Updated `update` method**:
+   - Changed from `monitorsToPages` to `pageComponent` table
+   - Updated delete logic to filter by `type === "monitor"`
+   - Updated insert/upsert to use `pageComponent` with all required fields
+   - Changed conflict target from `monitorsToPages` columns to `pageComponent` columns
+
+5. **Updated `getPagesByWorkspace` method**:
+   - Changed query from `monitorsToPages` to `pageComponents`
+   - Added transformation to `monitorsToPages` format for backward compatibility
+
+6. **Updated `getPageBySlug` method**:
+   - Changed from `monitorsToPages` join to `pageComponent` join
+   - Updated variable names from `monitorsToPagesResult` to `pageComponentsResult`
+   - Updated filtering to use `page_component` table fields
+   - Updated sorting to use `page_component.order`
+
+7. **Updated `get` method**:
+   - Changed query from `monitorsToPages` to `pageComponents` with `group` relation
+   - Updated response mapping to use `c.groupId` instead of `m.monitorGroupId`
+   - Updated `monitorGroups` extraction to use `c.group` instead of `m.monitorGroup`
+
+8. **Updated `updateMonitors` method**:
+   - Changed from `monitorsToPages` to `pageComponent` table
+   - Added `workspaceId`, `type: "monitor"`, and `name` fields to all inserts
+   - Created `monitorMap` for efficient monitor name lookup
+   - Changed `monitorGroupId` to `groupId` in group inserts
+
+### Notes:
+- TypeScript type checks pass for the modified file (pre-existing errors in schema types are unrelated)
+- All changes preserve backwards compatibility in API responses
+- Component filtering ensures only monitor-type components are processed
+- The `monitorsToPages` table still exists but is no longer used by the page router
+
+### Next Steps:
+- Proceed with "Router Update - monitor.ts" task

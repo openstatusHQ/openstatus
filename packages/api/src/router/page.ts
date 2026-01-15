@@ -21,6 +21,7 @@ import {
   monitorsToPages,
   page,
   pageAccessTypes,
+  pageComponent,
   pageGroup,
   selectMaintenanceSchema,
   selectMonitorSchema,
@@ -135,13 +136,22 @@ export const pageRouter = createTRPCRouter({
           });
         }
 
-        const values = monitors.map(({ monitorId }, index) => ({
-          pageId: newPage.id,
-          order: index,
-          monitorId,
-        }));
+        // Create a map for quick monitor lookup
+        const monitorMap = new Map(allMonitors.map((m) => [m.id, m]));
 
-        await opts.ctx.db.insert(monitorsToPages).values(values).run();
+        const values = monitors.map(({ monitorId }, index) => {
+          const mon = monitorMap.get(monitorId);
+          return {
+            workspaceId: opts.ctx.workspace.id,
+            pageId: newPage.id,
+            type: "monitor" as const,
+            monitorId,
+            name: mon?.name ?? "",
+            order: index,
+          };
+        });
+
+        await opts.ctx.db.insert(pageComponent).values(values).run();
       }
 
       return newPage;
@@ -155,13 +165,27 @@ export const pageRouter = createTRPCRouter({
           eq(page.workspaceId, opts.ctx.workspace.id),
         ),
         with: {
-          monitorsToPages: {
+          pageComponents: {
             with: { monitor: true },
-            orderBy: (monitorsToPages, { asc }) => [asc(monitorsToPages.order)],
+            orderBy: (pageComponents, { asc }) => [asc(pageComponents.order)],
           },
         },
       });
-      return selectPageSchemaWithMonitorsRelation.parse(firstPage);
+      // Transform pageComponents to monitorsToPages format for backward compat
+      const transformed = firstPage
+        ? {
+            ...firstPage,
+            monitorsToPages: firstPage.pageComponents
+              .filter((c) => c.type === "monitor" && c.monitor)
+              .map((c) => ({
+                pageId: c.pageId,
+                monitorId: c.monitorId!,
+                order: c.order ?? 0,
+                monitor: c.monitor,
+              })),
+          }
+        : firstPage;
+      return selectPageSchemaWithMonitorsRelation.parse(transformed);
     }),
 
   update: protectedProcedure
@@ -203,9 +227,11 @@ export const pageRouter = createTRPCRouter({
         .returning()
         .get();
 
+      // Fetch all monitors if there are any to validate
+      let allMonitors: Awaited<ReturnType<typeof opts.ctx.db.query.monitor.findMany>> = [];
       if (monitorIds.length) {
         // We should make sure the user has access to the monitors
-        const allMonitors = await opts.ctx.db.query.monitor.findMany({
+        allMonitors = await opts.ctx.db.query.monitor.findMany({
           where: and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
@@ -221,40 +247,58 @@ export const pageRouter = createTRPCRouter({
         }
       }
 
-      // TODO: check for monitor order!
-      const currentMonitorsToPages = await opts.ctx.db
+      // Get current page components
+      const currentPageComponents = await opts.ctx.db
         .select()
-        .from(monitorsToPages)
-        .where(eq(monitorsToPages.pageId, currentPage.id))
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.pageId, currentPage.id),
+            eq(pageComponent.type, "monitor"),
+          ),
+        )
         .all();
 
-      const removedMonitors = currentMonitorsToPages
-        .map(({ monitorId }) => monitorId)
-        .filter((x) => !monitorIds?.includes(x));
+      const currentMonitorIds = currentPageComponents
+        .map((c) => c.monitorId)
+        .filter((id): id is number => id !== null);
 
-      if (removedMonitors.length) {
+      const removedMonitorIds = currentMonitorIds.filter(
+        (x) => !monitorIds?.includes(x),
+      );
+
+      if (removedMonitorIds.length) {
         await opts.ctx.db
-          .delete(monitorsToPages)
+          .delete(pageComponent)
           .where(
             and(
-              inArray(monitorsToPages.monitorId, removedMonitors),
-              eq(monitorsToPages.pageId, currentPage.id),
+              inArray(pageComponent.monitorId, removedMonitorIds),
+              eq(pageComponent.pageId, currentPage.id),
             ),
           );
       }
 
-      const values = monitors.map(({ monitorId }, index) => ({
-        pageId: currentPage.id,
-        order: index,
-        monitorId,
-      }));
+      // Create a map for quick monitor lookup
+      const monitorMap = new Map(allMonitors.map((m) => [m.id, m]));
+
+      const values = monitors.map(({ monitorId }, index) => {
+        const mon = monitorMap.get(monitorId);
+        return {
+          workspaceId: opts.ctx.workspace.id,
+          pageId: currentPage.id,
+          type: "monitor" as const,
+          monitorId,
+          name: mon?.name ?? "",
+          order: index,
+        };
+      });
 
       if (values.length) {
         await opts.ctx.db
-          .insert(monitorsToPages)
+          .insert(pageComponent)
           .values(values)
           .onConflictDoUpdate({
-            target: [monitorsToPages.monitorId, monitorsToPages.pageId],
+            target: [pageComponent.monitorId, pageComponent.pageId],
             set: { order: sql.raw("excluded.`order`") },
           });
       }
@@ -278,7 +322,7 @@ export const pageRouter = createTRPCRouter({
     const allPages = await opts.ctx.db.query.page.findMany({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
       with: {
-        monitorsToPages: { with: { monitor: true } },
+        pageComponents: { with: { monitor: true } },
         maintenances: {
           where: and(
             lte(maintenance.from, new Date()),
@@ -295,7 +339,19 @@ export const pageRouter = createTRPCRouter({
         },
       },
     });
-    return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
+    // Transform pageComponents to monitorsToPages format for backward compat
+    const transformed = allPages.map((p) => ({
+      ...p,
+      monitorsToPages: p.pageComponents
+        .filter((c) => c.type === "monitor" && c.monitor)
+        .map((c) => ({
+          pageId: c.pageId,
+          monitorId: c.monitorId!,
+          order: c.order ?? 0,
+          monitor: c.monitor,
+        })),
+    }));
+    return z.array(selectPageSchemaWithMonitorsRelation).parse(transformed);
   }),
 
   // public if we use trpc hooks to get the page from the url
@@ -315,7 +371,7 @@ export const pageRouter = createTRPCRouter({
 
       if (!result) return;
 
-      const [workspaceResult, monitorsToPagesResult] = await Promise.all([
+      const [workspaceResult, pageComponentsResult] = await Promise.all([
         opts.ctx.db
           .select()
           .from(workspace)
@@ -323,23 +379,22 @@ export const pageRouter = createTRPCRouter({
           .get(),
         opts.ctx.db
           .select()
-          .from(monitorsToPages)
-          .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+          .from(pageComponent)
+          .leftJoin(monitor, eq(pageComponent.monitorId, monitor.id))
           .where(
-            // make sur only active monitors are returned!
+            // make sure only active monitors are returned!
             and(
-              eq(monitorsToPages.pageId, result.id),
+              eq(pageComponent.pageId, result.id),
+              eq(pageComponent.type, "monitor"),
               eq(monitor.active, true),
             ),
           )
           .all(),
       ]);
 
-      // FIXME: There is probably a better way to do this
-
-      const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
-      );
+      const monitorsId = pageComponentsResult
+        .map(({ page_component }) => page_component.monitorId)
+        .filter((id): id is number => id !== null);
 
       const statusReports = await opts.ctx.db.query.statusReport.findMany({
         where: eq(statusReport.pageId, result.id),
@@ -380,7 +435,7 @@ export const pageRouter = createTRPCRouter({
               .where(inArray(incidentTable.monitorId, monitorsId))
               .all()
           : [];
-      // TODO: monitorsToPagesResult has the result already, no need to query again
+      // TODO: pageComponentsResult has the result already, no need to query again
       const [monitors, maintenances, incidents] = await Promise.all([
         monitorQuery,
         maintenancesQuery,
@@ -392,11 +447,11 @@ export const pageRouter = createTRPCRouter({
         // TODO: improve performance and move into SQLite query
         monitors: monitors.sort((a, b) => {
           const aIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === a.id)
-              ?.monitors_to_pages.order || 0;
+            pageComponentsResult.find((c) => c.monitor?.id === a.id)
+              ?.page_component.order || 0;
           const bIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === b.id)
-              ?.monitors_to_pages.order || 0;
+            pageComponentsResult.find((c) => c.monitor?.id === b.id)
+              ?.page_component.order || 0;
           return aIndex - bIndex;
         }),
         incidents,
@@ -495,7 +550,7 @@ export const pageRouter = createTRPCRouter({
       const data = await opts.ctx.db.query.page.findFirst({
         where: and(...whereConditions),
         with: {
-          monitorsToPages: { with: { monitor: true, monitorGroup: true } },
+          pageComponents: { with: { monitor: true, group: true } },
           maintenances: true,
         },
       });
@@ -516,17 +571,19 @@ export const pageRouter = createTRPCRouter({
         })
         .parse({
           ...data,
-          monitors: data?.monitorsToPages.map((m) => ({
-            ...m.monitor,
-            order: m.order,
-            groupId: m.monitorGroupId,
-            groupOrder: m.groupOrder,
-          })),
+          monitors: data?.pageComponents
+            .filter((c) => c.type === "monitor" && c.monitor)
+            .map((c) => ({
+              ...c.monitor,
+              order: c.order,
+              groupId: c.groupId,
+              groupOrder: c.groupOrder,
+            })),
           monitorGroups: Array.from(
             new Map(
-              data?.monitorsToPages
-                .filter((m) => m.monitorGroup)
-                .map((m) => [m.monitorGroup?.id, m.monitorGroup]),
+              data?.pageComponents
+                .filter((c) => c.group)
+                .map((c) => [c.group?.id, c.group]),
             ).values(),
           ),
           maintenances: data?.maintenances,
@@ -946,14 +1003,20 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
+      // Create a map for quick monitor lookup
+      const monitorMap = new Map(monitors.map((m) => [m.id, m]));
+
       await opts.ctx.db.transaction(async (tx) => {
-        // Delete child records first to avoid foreign key constraint violation
+        // Delete page components (only monitor types) first to avoid foreign key constraint violation
         await tx
-          .delete(monitorsToPages)
-          .where(eq(monitorsToPages.pageId, opts.input.id));
-        await tx
-          .delete(pageGroup)
-          .where(eq(pageGroup.pageId, opts.input.id));
+          .delete(pageComponent)
+          .where(
+            and(
+              eq(pageComponent.pageId, opts.input.id),
+              eq(pageComponent.type, "monitor"),
+            ),
+          );
+        await tx.delete(pageGroup).where(eq(pageGroup.pageId, opts.input.id));
 
         if (opts.input.groups.length > 0) {
           const pageGroups = await tx
@@ -967,26 +1030,38 @@ export const pageRouter = createTRPCRouter({
             )
             .returning();
 
-          await tx.insert(monitorsToPages).values(
+          await tx.insert(pageComponent).values(
             opts.input.groups.flatMap((g, i) =>
-              g.monitors.map((m) => ({
-                pageId: opts.input.id,
-                monitorId: m.id,
-                order: g.order,
-                monitorGroupId: pageGroups[i].id,
-                groupOrder: m.order,
-              })),
+              g.monitors.map((m) => {
+                const mon = monitorMap.get(m.id);
+                return {
+                  workspaceId: opts.ctx.workspace.id,
+                  pageId: opts.input.id,
+                  type: "monitor" as const,
+                  monitorId: m.id,
+                  name: mon?.name ?? "",
+                  order: g.order,
+                  groupId: pageGroups[i].id,
+                  groupOrder: m.order,
+                };
+              }),
             ),
           );
         }
 
         if (opts.input.monitors.length > 0) {
-          await tx.insert(monitorsToPages).values(
-            opts.input.monitors.map((m) => ({
-              pageId: opts.input.id,
-              monitorId: m.id,
-              order: m.order,
-            })),
+          await tx.insert(pageComponent).values(
+            opts.input.monitors.map((m) => {
+              const mon = monitorMap.get(m.id);
+              return {
+                workspaceId: opts.ctx.workspace.id,
+                pageId: opts.input.id,
+                type: "monitor" as const,
+                monitorId: m.id,
+                name: mon?.name ?? "",
+                order: m.order,
+              };
+            }),
           );
         }
       });

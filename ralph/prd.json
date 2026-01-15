@@ -151,7 +151,7 @@
       "Update all queries to use pageComponents relation",
       "Ensure workspaceId and name are set when creating components"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Router Update - monitor.ts",
