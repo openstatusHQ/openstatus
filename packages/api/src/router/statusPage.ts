@@ -873,22 +873,59 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      const _alreadySubscribed =
+      // Check for existing subscriber (active or unsubscribed)
+      const _existingSubscriber =
         await opts.ctx.db.query.pageSubscriber.findFirst({
           where: and(
             eq(pageSubscriber.pageId, _page.id),
             eq(pageSubscriber.email, opts.input.email),
-            isNotNull(pageSubscriber.acceptedAt),
           ),
         });
 
-      if (_alreadySubscribed) {
+      // If already subscribed and verified (not unsubscribed), reject
+      if (
+        _existingSubscriber?.acceptedAt &&
+        !_existingSubscriber.unsubscribedAt
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Email already subscribed",
         });
       }
 
+      // Handle re-subscription: clear unsubscribedAt, regenerate token, reset acceptedAt
+      if (_existingSubscriber?.unsubscribedAt) {
+        const updatedSubscriber = await opts.ctx.db
+          .update(pageSubscriber)
+          .set({
+            unsubscribedAt: null,
+            acceptedAt: null,
+            token: crypto.randomUUID(),
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+          })
+          .where(eq(pageSubscriber.id, _existingSubscriber.id))
+          .returning()
+          .get();
+
+        return updatedSubscriber.id;
+      }
+
+      // Handle pending re-subscription (not yet verified): regenerate token
+      if (_existingSubscriber && !_existingSubscriber.acceptedAt) {
+        const updatedSubscriber = await opts.ctx.db
+          .update(pageSubscriber)
+          .set({
+            token: crypto.randomUUID(),
+            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+          })
+          .where(eq(pageSubscriber.id, _existingSubscriber.id))
+          .returning()
+          .get();
+
+        return updatedSubscriber.id;
+      }
+
+      // New subscription
       const _pageSubscriber = await opts.ctx.db
         .insert(pageSubscriber)
         .values({

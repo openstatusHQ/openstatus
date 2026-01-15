@@ -139,3 +139,21 @@
     - Displays "Active" badge (secondary variant) for verified, subscribed users
   - Modified `apps/dashboard/src/app/(dashboard)/status-pages/[id]/subscribers/page.tsx`:
     - Added `unsubscribedAt: null` field to `EXAMPLES` mock data array to satisfy TypeScript types
+
+### Task 11: Re-subscription Flow
+- **PRD Item**: "Handle re-subscription after unsubscribe"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `packages/api/src/router/statusPage.ts`:
+    - Updated `subscribe` mutation to handle re-subscription scenarios
+    - Changed from checking only active subscriptions to checking all existing subscribers by email
+    - When an unsubscribed user re-subscribes:
+      - Clears `unsubscribedAt` field (set to null)
+      - Resets `acceptedAt` to null to require re-verification
+      - Regenerates `token` for security
+      - Updates `expiresAt` for the new verification window
+    - When a pending (unverified) user re-subscribes:
+      - Regenerates `token` for security
+      - Updates `expiresAt` for the new verification window
+    - Active subscribed users still receive "Email already subscribed" error
+    - New subscriptions still create a fresh record

@@ -121,7 +121,7 @@
       "Reset `acceptedAt` to require re-verification",
       "Follow normal verification email flow"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Unit Tests",
