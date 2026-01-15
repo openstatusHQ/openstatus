@@ -1020,4 +1020,49 @@ export const statusPageRouter = createTRPCRouter({
 
       return true;
     }),
+
+  unsubscribe: publicProcedure
+    .input(z.object({ token: z.string().uuid() }))
+    .mutation(async (opts) => {
+      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.token, opts.input.token),
+        with: {
+          page: true,
+        },
+      });
+
+      if (!_pageSubscriber) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscription not found",
+        });
+      }
+
+      if (!_pageSubscriber.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Subscription not yet verified",
+        });
+      }
+
+      if (_pageSubscriber.unsubscribedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Already unsubscribed",
+        });
+      }
+
+      await opts.ctx.db
+        .update(pageSubscriber)
+        .set({
+          unsubscribedAt: new Date(),
+        })
+        .where(eq(pageSubscriber.id, _pageSubscriber.id))
+        .execute();
+
+      return {
+        success: true,
+        pageName: _pageSubscriber.page.title,
+      };
+    }),
 });

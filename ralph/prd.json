@@ -22,7 +22,7 @@
       "Set `unsubscribedAt` to current timestamp",
       "Return success response with page name"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "API - Get Subscriber By Token",

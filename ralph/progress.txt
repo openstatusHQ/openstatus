@@ -22,3 +22,16 @@
     - SQL: `ALTER TABLE page_subscriber ADD unsubscribed_at integer;`
   - Updated `packages/db/drizzle/meta/_journal.json` with new migration entry
   - Created snapshot file `packages/db/drizzle/meta/0053_snapshot.json` with updated schema
+
+### Task 3: API - Unsubscribe Mutation
+- **PRD Item**: "Create public unsubscribe mutation in statusPage router"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `packages/api/src/router/statusPage.ts`:
+    - Added `unsubscribe` publicProcedure mutation
+    - Accepts input: `z.object({ token: z.string().uuid() })`
+    - Finds subscriber by token with page relation
+    - Validates token exists and subscriber has `acceptedAt` set (verified)
+    - Validates subscriber is not already unsubscribed
+    - Sets `unsubscribedAt` to current timestamp
+    - Returns success response with page title
