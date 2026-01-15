@@ -11,3 +11,14 @@
   - Redirects to `/status-pages` instead of throwing an error when:
     - Page doesn't exist
     - User doesn't have access to the page (wrong workspace)
+
+### Task 2: Database Schema - Add unsubscribedAt timestamp field
+- **PRD Item**: "Add unsubscribedAt timestamp field to page_subscribers table"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `packages/db/src/schema/page_subscribers/page_subscribers.ts`:
+    - Added `unsubscribedAt: integer("unsubscribed_at", { mode: "timestamp" })` field
+  - Created migration file `packages/db/drizzle/0053_groovy_doctor_strange.sql`:
+    - SQL: `ALTER TABLE page_subscriber ADD unsubscribed_at integer;`
+  - Updated `packages/db/drizzle/meta/_journal.json` with new migration entry
+  - Created snapshot file `packages/db/drizzle/meta/0053_snapshot.json` with updated schema

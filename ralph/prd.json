@@ -1,8 +1,174 @@
 [
   {
-    "category": "functional",
-    "description": "When a user is on wrong dashboard /status-pages/[id] redirect him to /status-pages",
-    "steps": ["Redirect user no access for page id", "Avoid throwing an error"],
+    "category": "Database Schema",
+    "description": "Add unsubscribedAt timestamp field to page_subscribers table",
+    "steps": [
+      "Add `unsubscribedAt: timestamp('unsubscribed_at', { mode: 'date' })` to page_subscribers schema",
+      "Run `pnpm db:generate` to create migration file",
+      "Review generated SQL for `ALTER TABLE page_subscribers ADD COLUMN unsubscribed_at`",
+      "Run `pnpm db:migrate` against development database",
+      "Verify migration completed successfully"
+    ],
+    "passes": true
+  },
+  {
+    "category": "API - Unsubscribe Mutation",
+    "description": "Create public unsubscribe mutation in statusPage router",
+    "steps": [
+      "Add `unsubscribe` publicProcedure to `packages/api/src/router/statusPage.ts`",
+      "Accept input: `z.object({ token: z.string().uuid() })`",
+      "Find subscriber by token in database",
+      "Validate token exists and subscriber has `acceptedAt` set",
+      "Set `unsubscribedAt` to current timestamp",
+      "Return success response with page name"
+    ],
+    "passes": false
+  },
+  {
+    "category": "API - Get Subscriber By Token",
+    "description": "Create public query to get subscriber info for confirmation page",
+    "steps": [
+      "Add `getSubscriberByToken` publicProcedure to `packages/api/src/router/statusPage.ts`",
+      "Accept input: `z.object({ token: z.string().uuid() })`",
+      "Find subscriber by token with page relation",
+      "Return page name and masked email (j***@example.com)",
+      "Return null if not found or already unsubscribed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "API - One-Click Unsubscribe Endpoint",
+    "description": "Create POST endpoint for RFC 8058 one-click unsubscribe",
+    "steps": [
+      "Create `apps/server/src/routes/v1/pageSubscribers/unsubscribe.ts`",
+      "Handle POST request with form-urlencoded body",
+      "Accept `List-Unsubscribe=One-Click` in body",
+      "Extract token from query parameter",
+      "Set `unsubscribedAt` timestamp for subscriber",
+      "Return 200 OK on success, 404 for invalid token"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Email Template - Unsubscribe Link",
+    "description": "Add unsubscribe link footer to status report emails",
+    "steps": [
+      "Open `packages/emails/emails/status-report.tsx`",
+      "Add `unsubscribeUrl` prop to component interface",
+      "Add footer section at bottom of email",
+      "Include link: `<Link href={unsubscribeUrl}>Unsubscribe</Link> from these notifications.`",
+      "Style footer appropriately (small, muted text)"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Email Client - List-Unsubscribe Headers",
+    "description": "Add RFC 8058 headers for one-click unsubscribe in email clients",
+    "steps": [
+      "Open `packages/emails/src/client.tsx`",
+      "Update `sendStatusReportUpdate` method",
+      "Add `List-Unsubscribe` header with https URL",
+      "Add `List-Unsubscribe-Post: List-Unsubscribe=One-Click` header",
+      "Pass unsubscribe URL to status-report email template"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Query Updates - Filter Unsubscribed",
+    "description": "Update email-sending queries to exclude unsubscribed users",
+    "steps": [
+      "Open `apps/server/src/routes/v1/statusReports/post.ts`",
+      "Add `isNull(pageSubscriber.unsubscribedAt)` to where clause",
+      "Open `apps/server/src/routes/v1/statusReportUpdates/post.ts`",
+      "Add `isNull(pageSubscriber.unsubscribedAt)` to where clause",
+      "Verify both queries now filter out unsubscribed subscribers"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Frontend - Unsubscribe Confirmation Page",
+    "description": "Create unsubscribe confirmation page in status-page app",
+    "steps": [
+      "Create `apps/status-page/src/app/(status-page)/[domain]/(public)/unsubscribe/[token]/page.tsx`",
+      "Fetch subscriber info using `getSubscriberByToken` query",
+      "Display page name and masked email",
+      "Add 'Confirm Unsubscribe' button",
+      "Call `unsubscribe` mutation on button click",
+      "Show success state after unsubscription",
+      "Show error state for invalid/expired tokens"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Dashboard - Subscriber Table Update",
+    "description": "Show unsubscribed status in dashboard subscribers table",
+    "steps": [
+      "Open `apps/dashboard/src/components/data-table/subscribers/columns.tsx`",
+      "Add 'Status' or 'Unsubscribed At' column",
+      "Display formatted date if `unsubscribedAt` is set",
+      "Display '-' or 'Active' if null",
+      "Consider visual indicator (badge or grayed row) for unsubscribed"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Re-subscription Flow",
+    "description": "Handle re-subscription after unsubscribe",
+    "steps": [
+      "Update subscribe flow in `packages/api/src/router/statusPage.ts`",
+      "When existing subscriber re-subscribes: clear `unsubscribedAt` field",
+      "Regenerate token for security",
+      "Reset `acceptedAt` to require re-verification",
+      "Follow normal verification email flow"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Unit Tests",
+    "description": "Add unit tests for unsubscribe API endpoints",
+    "steps": [
+      "Test `unsubscribe` mutation with valid token",
+      "Test `unsubscribe` mutation with invalid token returns error",
+      "Test `unsubscribe` mutation with already unsubscribed returns appropriate message",
+      "Test `getSubscriberByToken` returns masked email",
+      "Test `getSubscriberByToken` returns null for invalid token"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Integration Tests",
+    "description": "Add integration tests for email headers and filtering",
+    "steps": [
+      "Test status report emails include List-Unsubscribe header",
+      "Test status report emails include List-Unsubscribe-Post header",
+      "Test email body contains unsubscribe link",
+      "Test unsubscribed users are excluded from email queries"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - E2E Tests",
+    "description": "Add end-to-end tests for full unsubscribe flow",
+    "steps": [
+      "Test full flow: subscribe -> verify -> receive email -> unsubscribe",
+      "Test confirmation page displays correct page name",
+      "Test confirmation page displays masked email",
+      "Test clicking confirm sets unsubscribedAt",
+      "Test unsubscribed user does not receive new emails"
+    ],
+    "passes": false
+  },
+  {
+    "category": "Testing - Email Client Verification",
+    "description": "Verify one-click unsubscribe works in major email clients",
+    "steps": [
+      "Send test email to Gmail account",
+      "Verify Gmail shows 'Unsubscribe' button in header",
+      "Test one-click unsubscribe in Gmail",
+      "Send test email to Outlook account",
+      "Verify Outlook shows unsubscribe option",
+      "Test one-click unsubscribe in Outlook"
+    ],
     "passes": false
   }
 ]
