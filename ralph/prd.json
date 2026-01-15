@@ -188,7 +188,7 @@
       "Verify workspaceId set correctly (from monitor)",
       "Verify name set correctly (from monitor)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Status Reports & Maintenances",

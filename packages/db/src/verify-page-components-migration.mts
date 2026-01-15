@@ -183,8 +183,54 @@ async function main() {
     details: groupIdDetails.length > 0 ? groupIdDetails : undefined,
   });
 
-  // Test 5: Spot check name values match monitor names
-  console.log("\n[Test 5] Spot checking name values match monitor names...");
+  // Test 5: Spot check groupOrder values
+  console.log("\n[Test 5] Spot checking groupOrder values...");
+  let groupOrderMismatches = 0;
+  const groupOrderDetails: Array<{
+    pageId: number;
+    monitorId: number;
+    expected: number | null;
+    actual: number | null;
+  }> = [];
+
+  for (const record of sampleMonitorsToPages) {
+    const component = await db
+      .select({ groupOrder: pageComponent.groupOrder })
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, record.pageId),
+          eq(pageComponent.monitorId, record.monitorId),
+        ),
+      )
+      .get();
+
+    const expectedGroupOrder = record.groupOrder ?? 0;
+    const actualGroupOrder = component?.groupOrder ?? 0;
+
+    if (expectedGroupOrder !== actualGroupOrder) {
+      groupOrderMismatches++;
+      groupOrderDetails.push({
+        pageId: record.pageId,
+        monitorId: record.monitorId,
+        expected: expectedGroupOrder,
+        actual: actualGroupOrder,
+      });
+    }
+  }
+
+  results.push({
+    name: "GroupOrder Values Match",
+    passed: groupOrderMismatches === 0,
+    message:
+      groupOrderMismatches === 0
+        ? `All ${sampleMonitorsToPages.length} sampled records have matching groupOrder values`
+        : `Found ${groupOrderMismatches} mismatches in groupOrder values`,
+    details: groupOrderDetails.length > 0 ? groupOrderDetails : undefined,
+  });
+
+  // Test 6: Spot check name values match monitor names
+  console.log("\n[Test 6] Spot checking name values match monitor names...");
   let nameMismatches = 0;
   const nameDetails: Array<{
     monitorId: number;
@@ -236,8 +282,60 @@ async function main() {
     details: nameDetails.length > 0 ? nameDetails : undefined,
   });
 
-  // Test 6: Verify status_reports_to_page_components has correct fan-out
-  console.log("\n[Test 6] Verifying status_reports_to_page_components fan-out...");
+  // Test 7: Spot check workspaceId values match monitor's workspaceId
+  console.log("\n[Test 7] Spot checking workspaceId values match monitor's workspaceId...");
+  let workspaceIdMismatches = 0;
+  const workspaceIdDetails: Array<{
+    monitorId: number;
+    expectedWorkspaceId: number | null;
+    actualWorkspaceId: number | null;
+  }> = [];
+
+  for (const record of sampleMonitorsToPages) {
+    const component = await db
+      .select({ workspaceId: pageComponent.workspaceId })
+      .from(pageComponent)
+      .where(
+        and(
+          eq(pageComponent.pageId, record.pageId),
+          eq(pageComponent.monitorId, record.monitorId),
+        ),
+      )
+      .get();
+
+    const monitorData = await db
+      .select({ workspaceId: monitor.workspaceId })
+      .from(monitor)
+      .where(eq(monitor.id, record.monitorId))
+      .get();
+
+    if (monitorData && component) {
+      const expectedWorkspaceId = monitorData.workspaceId;
+      const actualWorkspaceId = component.workspaceId;
+
+      if (expectedWorkspaceId !== actualWorkspaceId) {
+        workspaceIdMismatches++;
+        workspaceIdDetails.push({
+          monitorId: record.monitorId,
+          expectedWorkspaceId,
+          actualWorkspaceId,
+        });
+      }
+    }
+  }
+
+  results.push({
+    name: "WorkspaceId Values Match Monitor's WorkspaceId",
+    passed: workspaceIdMismatches === 0,
+    message:
+      workspaceIdMismatches === 0
+        ? `All ${sampleMonitorsToPages.length} sampled records have matching workspaceId values`
+        : `Found ${workspaceIdMismatches} mismatches in workspaceId values`,
+    details: workspaceIdDetails.length > 0 ? workspaceIdDetails : undefined,
+  });
+
+  // Test 8: Verify status_reports_to_page_components has correct fan-out
+  console.log("\n[Test 8] Verifying status_reports_to_page_components fan-out...");
 
   // Count unique status reports linked to monitors
   const statusReportsLinkedToMonitors = await db
@@ -261,8 +359,8 @@ async function main() {
     message: `status_reports_to_page_components has ${statusReportToPageComponentCount?.count} entries (${uniqueStatusReportIds.size} unique status reports linked to monitors)`,
   });
 
-  // Test 7: Verify maintenances_to_page_components has correct fan-out
-  console.log("\n[Test 7] Verifying maintenances_to_page_components fan-out...");
+  // Test 9: Verify maintenances_to_page_components has correct fan-out
+  console.log("\n[Test 9] Verifying maintenances_to_page_components fan-out...");
 
   const maintenancesLinkedToMonitors = await db
     .select({ maintenanceId: maintenancesToMonitors.maintenanceId })
@@ -283,8 +381,8 @@ async function main() {
     message: `maintenances_to_page_components has ${maintenanceToPageComponentCount?.count} entries (${uniqueMaintenanceIds.size} unique maintenances linked to monitors)`,
   });
 
-  // Test 8: Verify all page_components with monitorId have corresponding monitors_to_pages entry
-  console.log("\n[Test 8] Verifying all page_components have corresponding monitors_to_pages entries...");
+  // Test 10: Verify all page_components with monitorId have corresponding monitors_to_pages entry
+  console.log("\n[Test 10] Verifying all page_components have corresponding monitors_to_pages entries...");
 
   const allPageComponents = await db
     .select({

@@ -454,3 +454,33 @@ Completed the "Testing - Table Rename" task to verify the monitor_group to page_
 
 ### Next Steps:
 - Proceed with "Testing - Data Migration" task
+
+## 2026-01-15: Testing - Data Migration Complete
+
+Completed the "Testing - Data Migration" task by enhancing the verification script to cover all required verification steps.
+
+### Changes Made:
+1. Updated `packages/db/src/verify-page-components-migration.mts`:
+   - Added **Test 5**: Spot check `groupOrder` values match between `monitors_to_pages` and `page_components`
+   - Added **Test 7**: Spot check `workspaceId` values match monitor's `workspaceId`
+   - Renumbered existing tests (6->8, 7->9, 8->10) for proper sequencing
+
+### Verification Script Tests (10 total):
+1. **Record Count Match** - Verifies all `monitors_to_pages` records migrated to `page_components`
+2. **All Migrated Records Have type='monitor'** - Verifies `type='monitor'` set for all records
+3. **Order Values Match** - Verifies `order` values preserved correctly
+4. **GroupId Values Match** - Verifies `groupId` (from `monitorGroupId`) preserved correctly
+5. **GroupOrder Values Match** - Verifies `groupOrder` preserved correctly (NEW)
+6. **Name Values Match Monitor Names** - Verifies `name` set correctly (from monitor)
+7. **WorkspaceId Values Match Monitor's WorkspaceId** - Verifies `workspaceId` set correctly (NEW)
+8. **Status Reports Junction Populated** - Verifies `status_reports_to_page_components` entries
+9. **Maintenances Junction Populated** - Verifies `maintenances_to_page_components` entries
+10. **All Page Components Have Source Records** - Verifies bidirectional consistency
+
+### Notes:
+- Type checks show pre-existing errors in Bun types and env.ts files (unrelated to this change)
+- The verification script follows the same patterns as the existing migration script
+- Run with: `bun run verify:page-components` from `packages/db/`
+
+### Next Steps:
+- Proceed with "Testing - Status Reports & Maintenances" task
