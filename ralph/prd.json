@@ -144,7 +144,7 @@
       "Test email body contains unsubscribe link",
       "Test unsubscribed users are excluded from email queries"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - E2E Tests",

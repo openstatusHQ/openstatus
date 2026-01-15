@@ -185,3 +185,36 @@
       - Tests rejection of invalid UUID format
     - Uses bun:test framework with beforeAll/afterAll for setup/teardown
     - Creates test page and subscribers with proper cleanup
+
+### Task 13: Testing - Integration Tests
+- **PRD Item**: "Add integration tests for email headers and filtering"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Created `packages/emails/src/client.integration.test.tsx`:
+    - Test suite for List-Unsubscribe headers:
+      - Tests correct List-Unsubscribe header URL construction
+      - Tests List-Unsubscribe-Post header for RFC 8058 compliance
+      - Tests custom baseUrl support
+      - Tests unique unsubscribe URL generation per subscriber
+    - Test suite for unsubscribe link in email body:
+      - Tests unsubscribe link inclusion when URL is provided
+      - Tests no unsubscribe section when URL is not provided
+      - Tests unsubscribe link is rendered as clickable (href attribute)
+      - Tests proper styling (muted gray color #6b7280)
+    - Test suite for email content validation:
+      - Tests all required email fields are included
+      - Tests all status types render correctly (investigating, identified, monitoring, resolved, maintenance)
+  - Created `apps/server/src/routes/v1/statusReports/subscriber-filtering.integration.test.ts`:
+    - Test suite for subscriber filtering in email notifications:
+      - Tests excluding unsubscribed users from email queries
+      - Tests excluding pending (unverified) users from email queries
+      - Tests unsubscribed users with acceptedAt are still excluded
+      - Tests query without unsubscribedAt filter returns all verified subscribers
+      - Tests filtering subscribers with valid tokens
+    - Test suite for subscriber state transitions:
+      - Tests re-subscribing after unsubscription
+      - Tests unsubscription timestamp tracking
+    - Test suite for query performance:
+      - Tests index-friendly query conditions execute quickly
+    - Uses bun:test framework with beforeAll/afterAll for setup/teardown
+    - Creates test page with multiple subscriber states (active, unsubscribed, pending)
