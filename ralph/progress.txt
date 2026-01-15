@@ -126,3 +126,16 @@
     - Client layout component matching the verify page pattern
     - Fetches page info using `statusPage.get` query
     - Displays page title and description in Status header
+
+### Task 10: Dashboard - Subscriber Table Update
+- **PRD Item**: "Show unsubscribed status in dashboard subscribers table"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `apps/dashboard/src/components/data-table/subscribers/columns.tsx`:
+    - Added `Badge` component import from `@/components/ui/badge`
+    - Added new "Status" column after "Email" column
+    - Displays "Unsubscribed {date}" badge (destructive variant) if `unsubscribedAt` is set
+    - Displays "Pending" badge (outline variant) if `acceptedAt` is not set (unverified subscriber)
+    - Displays "Active" badge (secondary variant) for verified, subscribed users
+  - Modified `apps/dashboard/src/app/(dashboard)/status-pages/[id]/subscribers/page.tsx`:
+    - Added `unsubscribedAt: null` field to `EXAMPLES` mock data array to satisfy TypeScript types

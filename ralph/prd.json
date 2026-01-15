@@ -109,7 +109,7 @@
       "Display '-' or 'Active' if null",
       "Consider visual indicator (badge or grayed row) for unsubscribed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Re-subscription Flow",
