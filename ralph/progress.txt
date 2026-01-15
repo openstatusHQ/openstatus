@@ -259,3 +259,46 @@ bun run verify:page-components
 ### Next Steps:
 - Run the verification script after migration to confirm data integrity
 - Proceed with Router Update tasks (statusPage.ts, page.ts, monitor.ts)
+
+## 2026-01-15: Router Update - statusPage.ts Complete
+
+Completed the "Router Update - statusPage.ts" task to update the statusPage router to use `pageComponents` instead of `monitorsToPages`.
+
+### Changes Made:
+Updated `packages/api/src/router/statusPage.ts`:
+
+1. **Updated imports**:
+   - Replaced `monitorsToPages` import with `pageComponent`
+
+2. **Updated `get` method**:
+   - Changed query from `monitorsToPages` relation to `pageComponents`
+   - Changed `monitorGroup` relation to `group`
+   - Added `statusReportsToPageComponents` and `maintenancesToPageComponents` relations
+   - Added filter for `type === "monitor"` to handle monitor-type components
+   - Mapped `groupId` to `monitorGroupId` in response for backwards compatibility
+   - Updated `pageEvents` to use `pageComponents` with proper filtering
+   - Updated `monitorGroups` extraction to use `c.group` instead of `m.monitorGroup`
+
+3. **Updated `getUptime` method**:
+   - Changed query from `monitorsToPages` to `pageComponents` with `pageComponent.monitorId` filter
+   - Updated variable from `monitors` to `components`
+   - Added filtering for `type === "monitor"` and valid monitor presence
+   - Updated all references from `m.monitor` to `c.monitor!`
+
+4. **Updated `getMonitors` method**:
+   - Changed query from `monitorsToPages` to `pageComponents`
+   - Updated variable from `publicMonitors` to `publicComponents`
+   - Added filtering for `type === "monitor"` and public monitors
+   - Updated all monitor access patterns
+
+5. **Updated `getMonitor` method**:
+   - Changed query from `monitorsToPages` to `pageComponents` with `pageComponent.monitorId` filter
+   - Updated find logic to filter by component type and monitorId
+
+### Notes:
+- TypeScript type checks pass for the modified file (pre-existing errors in env.ts are unrelated)
+- All changes preserve backwards compatibility in API responses (e.g., `monitorGroupId` field name)
+- Component filtering ensures only monitor-type components are processed in queries
+
+### Next Steps:
+- Proceed with "Router Update - page.ts" task

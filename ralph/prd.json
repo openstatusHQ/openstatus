@@ -138,7 +138,7 @@
       "Update `getMonitors` method: change monitorsToPages to pageComponents",
       "Update `getMonitor` method: change monitorsToPages to pageComponents"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Router Update - page.ts",
