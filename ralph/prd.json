@@ -47,7 +47,7 @@
       "Set `unsubscribedAt` timestamp for subscriber",
       "Return 200 OK on success, 404 for invalid token"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Email Template - Unsubscribe Link",

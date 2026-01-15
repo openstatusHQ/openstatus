@@ -47,3 +47,20 @@
     - Returns `null` if subscriber not found or already unsubscribed
     - Returns `{ pageName, maskedEmail }` for valid subscribers
     - Masks email by showing first character + `***` + `@domain` (e.g., `j***@example.com`)
+
+### Task 5: API - One-Click Unsubscribe Endpoint
+- **PRD Item**: "Create POST endpoint for RFC 8058 one-click unsubscribe"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Created `apps/server/src/routes/public/unsubscribe.ts`:
+    - New public POST endpoint at `/public/unsubscribe/:token`
+    - Handles RFC 8058 one-click unsubscribe requests from email clients
+    - Validates token is a valid UUID format
+    - Finds subscriber by token in database
+    - Validates subscriber exists and has verified subscription (`acceptedAt` set)
+    - Returns 200 OK if already unsubscribed (idempotent behavior)
+    - Sets `unsubscribedAt` timestamp on successful unsubscribe
+    - Returns appropriate error codes: 400 for invalid token/unverified, 404 for not found
+  - Modified `apps/server/src/routes/public/index.ts`:
+    - Imported and registered the unsubscribe route
+    - Route available at `/public/unsubscribe/:token`
