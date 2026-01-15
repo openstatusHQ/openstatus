@@ -34,7 +34,7 @@
       "Return page name and masked email (j***@example.com)",
       "Return null if not found or already unsubscribed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "API - One-Click Unsubscribe Endpoint",

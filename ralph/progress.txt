@@ -35,3 +35,15 @@
     - Validates subscriber is not already unsubscribed
     - Sets `unsubscribedAt` to current timestamp
     - Returns success response with page title
+
+### Task 4: API - Get Subscriber By Token
+- **PRD Item**: "Create public query to get subscriber info for confirmation page"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `packages/api/src/router/statusPage.ts`:
+    - Added `getSubscriberByToken` publicProcedure query
+    - Accepts input: `z.object({ token: z.string().uuid() })`
+    - Finds subscriber by token with page relation
+    - Returns `null` if subscriber not found or already unsubscribed
+    - Returns `{ pageName, maskedEmail }` for valid subscribers
+    - Masks email by showing first character + `***` + `@domain` (e.g., `j***@example.com`)

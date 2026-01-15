@@ -1021,6 +1021,39 @@ export const statusPageRouter = createTRPCRouter({
       return true;
     }),
 
+  getSubscriberByToken: publicProcedure
+    .input(z.object({ token: z.string().uuid() }))
+    .query(async (opts) => {
+      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
+        where: eq(pageSubscriber.token, opts.input.token),
+        with: {
+          page: true,
+        },
+      });
+
+      // Return null if not found or already unsubscribed
+      if (!_pageSubscriber) {
+        return null;
+      }
+
+      if (_pageSubscriber.unsubscribedAt) {
+        return null;
+      }
+
+      // Mask email: show first character, then ***, then @domain
+      const email = _pageSubscriber.email;
+      const [localPart, domain] = email.split("@");
+      const maskedEmail =
+        localPart.length > 0
+          ? `${localPart[0]}***@${domain}`
+          : `***@${domain}`;
+
+      return {
+        pageName: _pageSubscriber.page.title,
+        maskedEmail,
+      };
+    }),
+
   unsubscribe: publicProcedure
     .input(z.object({ token: z.string().uuid() }))
     .mutation(async (opts) => {
