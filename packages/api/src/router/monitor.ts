@@ -23,11 +23,11 @@ import {
   monitorMethods,
   monitorTag,
   monitorTagsToMonitors,
-  monitorsToPages,
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
+  pageComponent,
   privateLocationToMonitors,
   selectIncidentSchema,
   selectMaintenanceSchema,
@@ -181,12 +181,15 @@ export const monitorRouter = createTRPCRouter({
           ),
         });
 
-        const values = allPages.map((page) => ({
+        const values = allPages.map((p) => ({
+          workspaceId: opts.ctx.workspace.id,
+          pageId: p.id,
+          type: "monitor" as const,
           monitorId: newMonitor.id,
-          pageId: page.id,
+          name: newMonitor.name,
         }));
 
-        await opts.ctx.db.insert(monitorsToPages).values(values).run();
+        await opts.ctx.db.insert(pageComponent).values(values).run();
       }
 
       return selectMonitorSchema.parse(newMonitor);
@@ -265,11 +268,11 @@ export const monitorRouter = createTRPCRouter({
       if (opts.input.slug) {
         const _page = await opts.ctx.db.query.page.findFirst({
           where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-          with: { monitorsToPages: true },
+          with: { pageComponents: true },
         });
 
-        const hasPageRelation = _page?.monitorsToPages.find(
-          ({ monitorId }) => _monitor.id === monitorId,
+        const hasPageRelation = _page?.pageComponents.find(
+          (c) => c.type === "monitor" && c.monitorId === _monitor.id,
         );
 
         if (!hasPageRelation) return undefined;
@@ -445,8 +448,13 @@ export const monitorRouter = createTRPCRouter({
 
       const currentMonitorPages = await opts.ctx.db
         .select()
-        .from(monitorsToPages)
-        .where(eq(monitorsToPages.monitorId, currentMonitor.id))
+        .from(pageComponent)
+        .where(
+          and(
+            eq(pageComponent.monitorId, currentMonitor.id),
+            eq(pageComponent.type, "monitor"),
+          ),
+        )
         .all();
 
       const addedPages = pages.filter(
@@ -455,11 +463,14 @@ export const monitorRouter = createTRPCRouter({
 
       if (addedPages.length > 0) {
         const values = addedPages.map((pageId) => ({
-          monitorId: currentMonitor.id,
+          workspaceId: opts.ctx.workspace.id,
           pageId,
+          type: "monitor" as const,
+          monitorId: currentMonitor.id,
+          name: currentMonitor.name,
         }));
 
-        await opts.ctx.db.insert(monitorsToPages).values(values).run();
+        await opts.ctx.db.insert(pageComponent).values(values).run();
       }
 
       const removedPages = currentMonitorPages
@@ -468,11 +479,11 @@ export const monitorRouter = createTRPCRouter({
 
       if (removedPages.length > 0) {
         await opts.ctx.db
-          .delete(monitorsToPages)
+          .delete(pageComponent)
           .where(
             and(
-              eq(monitorsToPages.monitorId, currentMonitor.id),
-              inArray(monitorsToPages.pageId, removedPages),
+              eq(pageComponent.monitorId, currentMonitor.id),
+              inArray(pageComponent.pageId, removedPages),
             ),
           )
           .run();
@@ -579,8 +590,8 @@ export const monitorRouter = createTRPCRouter({
 
       await opts.ctx.db.transaction(async (tx) => {
         await tx
-          .delete(monitorsToPages)
-          .where(eq(monitorsToPages.monitorId, monitorToDelete.id));
+          .delete(pageComponent)
+          .where(eq(pageComponent.monitorId, monitorToDelete.id));
         await tx
           .delete(monitorTagsToMonitors)
           .where(eq(monitorTagsToMonitors.monitorId, monitorToDelete.id));
@@ -625,8 +636,8 @@ export const monitorRouter = createTRPCRouter({
 
       await opts.ctx.db.transaction(async (tx) => {
         await tx
-          .delete(monitorsToPages)
-          .where(inArray(monitorsToPages.monitorId, opts.input.ids));
+          .delete(pageComponent)
+          .where(inArray(pageComponent.monitorId, opts.input.ids));
         await tx
           .delete(monitorTagsToMonitors)
           .where(inArray(monitorTagsToMonitors.monitorId, opts.input.ids));
@@ -684,8 +695,11 @@ export const monitorRouter = createTRPCRouter({
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
-          monitorsToPages: {
-            where: eq(monitorsToPages.pageId, _page.id),
+          pageComponents: {
+            where: and(
+              eq(pageComponent.pageId, _page.id),
+              eq(pageComponent.type, "monitor"),
+            ),
           },
         },
       });
@@ -700,7 +714,7 @@ export const monitorRouter = createTRPCRouter({
         )
         .parse(
           monitors.filter((monitor) =>
-            monitor.monitorsToPages
+            monitor.pageComponents
               .map(({ pageId }) => pageId)
               .includes(_page.id),
           ),
@@ -799,14 +813,16 @@ export const monitorRouter = createTRPCRouter({
         with: {
           monitorTagsToMonitors: true,
           monitorsToNotifications: true,
-          monitorsToPages: true,
+          pageComponents: {
+            where: eq(pageComponent.type, "monitor"),
+          },
         },
       });
 
       const parsedMonitorNotification = _monitor?.monitorsToNotifications.map(
         ({ notificationId }) => notificationId,
       );
-      const parsedPages = _monitor?.monitorsToPages.map((val) => val.pageId);
+      const parsedPages = _monitor?.pageComponents.map((val) => val.pageId);
       const parsedTags = _monitor?.monitorTagsToMonitors.map(
         ({ monitorTagId }) => monitorTagId,
       );
@@ -880,7 +896,8 @@ export const monitorRouter = createTRPCRouter({
           monitorsToNotifications: {
             with: { notification: true },
           },
-          monitorsToPages: {
+          pageComponents: {
+            where: eq(pageComponent.type, "monitor"),
             with: { page: true },
           },
           monitorTagsToMonitors: {
@@ -912,7 +929,7 @@ export const monitorRouter = createTRPCRouter({
           notifications: data.monitorsToNotifications.map(
             (m) => m.notification,
           ),
-          pages: data.monitorsToPages.map((p) => p.page),
+          pages: data.pageComponents.map((c) => c.page),
           tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
           maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
           incidents: data.incidents,
@@ -1220,13 +1237,35 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
+      // Get the monitor to use its name for component name
+      const currentMonitor = await ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, input.id),
+          eq(monitor.workspaceId, ctx.workspace.id),
+        ),
+      });
+
+      if (!currentMonitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
       await ctx.db.transaction(async (tx) => {
         // REMINDER: why do we need to do this complex logic instead of just deleting and inserting?
         // Because we need to preserve the group information when updating the status pages.
 
-        const existingEntries = await tx.query.monitorsToPages.findMany({
-          where: eq(monitorsToPages.monitorId, input.id),
-        });
+        const existingEntries = await tx
+          .select()
+          .from(pageComponent)
+          .where(
+            and(
+              eq(pageComponent.monitorId, input.id),
+              eq(pageComponent.type, "monitor"),
+            ),
+          )
+          .all();
 
         const existingPageIds = new Set(
           existingEntries.map((entry) => entry.pageId),
@@ -1243,20 +1282,23 @@ export const monitorRouter = createTRPCRouter({
 
         if (pageIdsToDelete.length > 0) {
           await tx
-            .delete(monitorsToPages)
+            .delete(pageComponent)
             .where(
               and(
-                eq(monitorsToPages.monitorId, input.id),
-                inArray(monitorsToPages.pageId, pageIdsToDelete),
+                eq(pageComponent.monitorId, input.id),
+                inArray(pageComponent.pageId, pageIdsToDelete),
               ),
             );
         }
 
         if (pageIdsToInsert.length > 0) {
-          await tx.insert(monitorsToPages).values(
+          await tx.insert(pageComponent).values(
             pageIdsToInsert.map((pageId) => ({
-              monitorId: input.id,
+              workspaceId: ctx.workspace.id,
               pageId,
+              type: "monitor" as const,
+              monitorId: input.id,
+              name: input.externalName || currentMonitor.name,
             })),
           );
         }

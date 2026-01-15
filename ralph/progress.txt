@@ -358,3 +358,61 @@ Updated `packages/api/src/router/page.ts`:
 
 ### Next Steps:
 - Proceed with "Router Update - monitor.ts" task
+
+## 2026-01-15: Router Update - monitor.ts Complete
+
+Completed the "Router Update - monitor.ts" task to update the monitor router to use `pageComponents` instead of `monitorsToPages`.
+
+### Changes Made:
+Updated `packages/api/src/router/monitor.ts`:
+
+1. **Updated imports**:
+   - Replaced `monitorsToPages` import with `pageComponent`
+
+2. **Updated `create` method**:
+   - Changed from inserting into `monitorsToPages` to `pageComponent`
+   - Added `workspaceId`, `type: "monitor"`, and `name` fields
+
+3. **Updated `getPublicMonitorById` method**:
+   - Changed query from `monitorsToPages` relation to `pageComponents`
+   - Added filter for `type === "monitor"` components
+
+4. **Updated `update` method**:
+   - Changed from `monitorsToPages` to `pageComponent` table
+   - Added filter for `type === "monitor"` components
+   - Updated insert/delete operations to use `pageComponent` with all required fields
+
+5. **Updated `delete` method**:
+   - Changed from `monitorsToPages` to `pageComponent` in transaction
+
+6. **Updated `deleteMonitors` method**:
+   - Changed from `monitorsToPages` to `pageComponent` in transaction
+
+7. **Updated `getMonitorsByPageId` method**:
+   - Changed query from `monitorsToPages` relation to `pageComponents`
+   - Added filter for `type === "monitor"` components
+
+8. **Updated `getMonitorRelationsById` method**:
+   - Changed query from `monitorsToPages` relation to `pageComponents`
+   - Added filter for `type === "monitor"` components
+
+9. **Updated `get` method**:
+   - Changed query from `monitorsToPages` relation to `pageComponents` with page relation
+   - Added filter for `type === "monitor"` components
+   - Updated response mapping to use `pageComponents`
+
+10. **Updated `updateStatusPages` method**:
+    - Changed from `monitorsToPages` to `pageComponent` table
+    - Added monitor lookup to get monitor name for component
+    - Added `workspaceId`, `type`, and `name` fields to inserts
+    - Uses `externalName` from input if provided, otherwise monitor name
+
+### Notes:
+- TypeScript type checks pass (pre-existing error in env.ts is unrelated)
+- All changes preserve backwards compatibility in API responses
+- Component filtering ensures only monitor-type components are processed
+- Component name syncs with monitor name (uses externalName when provided)
+- The `monitorsToPages` table is no longer referenced in the monitor router
+
+### Next Steps:
+- Proceed with Testing tasks to verify the migration works correctly

@@ -163,7 +163,7 @@
       "Update `updateStatusPages` method: use pageComponent table",
       "Ensure component name syncs with monitor name"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Table Rename",
