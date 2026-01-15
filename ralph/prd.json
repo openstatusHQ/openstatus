@@ -133,7 +133,7 @@
       "Test `getSubscriberByToken` returns masked email",
       "Test `getSubscriberByToken` returns null for invalid token"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Testing - Integration Tests",

@@ -157,3 +157,31 @@
       - Updates `expiresAt` for the new verification window
     - Active subscribed users still receive "Email already subscribed" error
     - New subscriptions still create a fresh record
+
+### Task 12: Testing - Unit Tests
+- **PRD Item**: "Add unit tests for unsubscribe API endpoints"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Created `packages/api/src/router/statusPage.unsubscribe.test.ts`:
+    - Test suite for `getSubscriberByToken` query:
+      - Tests returning subscriber info with masked email for valid token
+      - Tests returning null for non-existent token
+      - Tests returning null for already unsubscribed user
+      - Tests email masking with single character local part
+      - Tests email masking with long local part
+    - Test suite for `unsubscribe` mutation:
+      - Tests successful unsubscription of verified subscriber
+      - Tests failure for non-existent token
+      - Tests failure for unverified subscriber
+      - Tests failure for already unsubscribed user
+      - Tests that unsubscribedAt is set to current timestamp
+    - Test suite for email masking logic:
+      - Tests correct masking pattern (j***@example.com)
+      - Tests handling of empty local part
+      - Tests preservation of domain in masked email
+      - Tests handling of complex domains (subdomain.example.co.uk)
+    - Test suite for token validation:
+      - Tests UUID format validation for valid tokens
+      - Tests rejection of invalid UUID format
+    - Uses bun:test framework with beforeAll/afterAll for setup/teardown
+    - Creates test page and subscribers with proper cleanup
