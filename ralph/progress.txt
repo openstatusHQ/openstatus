@@ -64,3 +64,16 @@
   - Modified `apps/server/src/routes/public/index.ts`:
     - Imported and registered the unsubscribe route
     - Route available at `/public/unsubscribe/:token`
+
+### Task 6: Email Template - Unsubscribe Link
+- **PRD Item**: "Add unsubscribe link footer to status report emails"
+- **Status**: COMPLETED
+- **Changes Made**:
+  - Modified `packages/emails/emails/status-report.tsx`:
+    - Added `Link` and `Section` imports from `@react-email/components`
+    - Added `unsubscribeUrl: z.string().url().optional()` to `StatusReportSchema`
+    - Added `unsubscribeUrl` prop to component destructuring
+    - Added footer section with unsubscribe link (conditionally rendered when `unsubscribeUrl` is provided)
+    - Styled footer with small (12px), muted gray text (#6b7280) for appropriate visual hierarchy
+    - Updated `PreviewProps` to include sample `unsubscribeUrl` for email preview
+    - Removed the old `// TODO: add unsubscribe link!` comment

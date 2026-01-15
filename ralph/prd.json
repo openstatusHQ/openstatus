@@ -59,7 +59,7 @@
       "Include link: `<Link href={unsubscribeUrl}>Unsubscribe</Link> from these notifications.`",
       "Style footer appropriately (small, muted text)"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Email Client - List-Unsubscribe Headers",
