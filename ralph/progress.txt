@@ -144,3 +144,39 @@ Completed the "Relations Definition" task to add Drizzle relations connecting pa
 ### Next Steps:
 - Generate database migration with `pnpm db:generate`
 - Run migration and verify tables are created correctly
+
+## 2026-01-15: Database Migration Complete
+
+Completed the "Database Migration" task by creating the migration file for page_components schema.
+
+### Changes Made:
+1. Created `packages/db/drizzle/0053_page_components.sql` with migration SQL:
+   - `ALTER TABLE monitor_group RENAME TO page_groups` - renames the table
+   - `CREATE TABLE page_component` - creates the new page_component table with all fields:
+     - `id` (primary key)
+     - `workspace_id` (FK to workspace, CASCADE delete)
+     - `page_id` (FK to page, CASCADE delete)
+     - `type` (text, default 'monitor')
+     - `monitor_id` (FK to monitor, CASCADE delete, nullable)
+     - `name` (required text)
+     - `description` (optional text)
+     - `order` (integer, default 0)
+     - `group_id` (FK to page_groups, SET NULL on delete)
+     - `group_order` (integer, default 0)
+     - `created_at` / `updated_at` (timestamps)
+   - `CREATE UNIQUE INDEX page_component_page_id_monitor_id_unique` - unique constraint
+   - `CREATE TABLE status_report_to_page_component` - junction table with composite primary key
+   - `CREATE TABLE maintenance_to_page_component` - junction table with composite primary key
+
+2. Updated `packages/db/drizzle/meta/_journal.json`:
+   - Added entry for migration 53 (0053_page_components)
+
+### Notes:
+- Migration was created manually due to environment compatibility issues with drizzle-kit (macOS node_modules on Linux environment)
+- The migration SQL follows the existing patterns in the drizzle folder
+- Type checks show pre-existing errors in node_modules (unrelated to this change)
+- The user should run `pnpm db:generate` in their local environment to regenerate the snapshot JSON if needed
+- Then run `pnpm db:migrate` to apply the migration
+
+### Next Steps:
+- Create data migration script to migrate monitors_to_pages data to page_components

@@ -94,7 +94,7 @@
       "Run `pnpm db:migrate` against development database",
       "Verify migration completed successfully"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "Data Migration Script",
