@@ -395,3 +395,46 @@ export function DetailsButtonLink() {
     </Button>
   );
 }
+
+function convertToCSV(values: Values[]): string {
+  const headers = ["Region Code", "Location", "Provider", "Latency (ms)", "Status"];
+  const rows = values.map((value) => {
+    const regionConfig = regionDict[value.region as Region];
+    return [
+      regionConfig.code,
+      regionConfig.location,
+      regionConfig.provider,
+      value.latency.toString(),
+      value.status.toString(),
+    ].join(",");
+  });
+  return [headers.join(","), ...rows].join("\n");
+}
+
+export function CopyToCSVButton() {
+  const { values } = useCheckerContext();
+
+  if (values.length === 0) {
+    return null;
+  }
+
+  async function handleCopy() {
+    const csv = convertToCSV(values);
+    try {
+      await navigator.clipboard.writeText(csv);
+      toast.success("CSV copied to clipboard");
+    } catch {
+      toast.error("Failed to copy to clipboard");
+    }
+  }
+
+  return (
+    <Button
+      variant="outline"
+      className="h-full w-full rounded-none p-4 text-base"
+      onClick={handleCopy}
+    >
+      Copy to CSV
+    </Button>
+  );
+}
