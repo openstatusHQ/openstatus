@@ -124,6 +124,7 @@ export class EmailClient {
                 ),
                 headers: {
                   "List-Unsubscribe": `<${unsubscribeUrl}>`,
+                  "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
                 },
               };
             }),
