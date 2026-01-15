@@ -431,30 +431,34 @@ function convertToCSV(values: Values[]): string {
   return [headers.join(","), ...rows].join("\n");
 }
 
-export function CopyToCSVButton() {
+export function ExportToCSVButton() {
   const { values } = useCheckerContext();
 
   if (values.length === 0) {
     return null;
   }
 
-  async function handleCopy() {
+  function handleExport() {
     const csv = convertToCSV(values);
-    try {
-      await navigator.clipboard.writeText(csv);
-      toast.success("CSV copied to clipboard");
-    } catch {
-      toast.error("Failed to copy to clipboard");
-    }
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `checker-results-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported successfully");
   }
 
   return (
     <Button
       variant="outline"
       className="h-full w-full rounded-none p-4 text-base"
-      onClick={handleCopy}
+      onClick={handleExport}
     >
-      Copy to CSV
+      Export to CSV
     </Button>
   );
 }

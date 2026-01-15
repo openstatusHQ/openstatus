@@ -7,6 +7,7 @@ import {
   regionFormatter,
   timestampFormatter,
 } from "@/components/ping-response-analysis/utils";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui";
@@ -76,14 +77,68 @@ export function Table({ data }: TableProps) {
         : a.region.localeCompare(b.region);
     });
 
+  function handleExportCSV() {
+    const headers = [
+      "Region Code",
+      "Location",
+      "Provider",
+      "Latency (ms)",
+      "Status",
+      "DNS (ms)",
+      "Connect (ms)",
+      "TLS (ms)",
+      "TTFB (ms)",
+      "Transfer (ms)",
+    ];
+    const rows = checks.map((check) => {
+      const regionInfo = regionDict[check.region as Region];
+      const { dns, connection, tls, ttfb, transfer } = check.timingPhases;
+      return [
+        regionInfo.code,
+        regionInfo.location,
+        regionInfo.provider,
+        check.latency.toString(),
+        check.status.toString(),
+        dns.toString(),
+        connection.toString(),
+        tls.toString(),
+        ttfb.toString(),
+        transfer.toString(),
+      ].join(",");
+    });
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const sanitizedUrl = data.url
+      .replace(/^https?:\/\//, "")
+      .replace(/[^a-zA-Z0-9.-]/g, "_");
+    link.download = `checker-${sanitizedUrl}-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported successfully");
+  }
+
   return (
     <div>
-      <Input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Search by region, flag, location code, cloud provider or continent"
-        className="h-auto! rounded-none p-4 text-base md:text-base"
-      />
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Search by region, flag, location code, cloud provider or continent"
+          className="h-auto! flex-1 rounded-none p-4 text-base md:text-base"
+        />
+        <Button
+          variant="outline"
+          className="h-auto! rounded-none p-4 text-base"
+          onClick={handleExportCSV}
+        >
+          Export to CSV
+        </Button>
+      </div>
       <div className="table-wrapper">
         <table>
           <thead>

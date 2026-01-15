@@ -6,8 +6,8 @@ import type { Metadata } from "next";
 import { mockCheckAllRegions } from "./api/mock";
 import {
   CheckerProvider,
-  CopyToCSVButton,
   DetailsButtonLink,
+  ExportToCSVButton,
   Form,
   ResponseStatus,
   ResultTable,
@@ -44,7 +44,7 @@ export default async function Page(props: {
         <ResponseStatus />
         <ResultTable />
         <div className="flex gap-2">
-          <CopyToCSVButton />
+          <ExportToCSVButton />
           <DetailsButtonLink />
         </div>
       </CheckerProvider>
