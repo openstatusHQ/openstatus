@@ -1,4 +1,6 @@
+import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
+import { BillingAddons } from "@/components/content/billing-addons";
 import { DataTable } from "@/components/data-table/billing/data-table";
 import {
   Dialog,
@@ -16,7 +18,6 @@ import { getPlansForLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
-import { BillingAddons } from "../content/billing-addons";
 
 const PLANS = {
   free: ["starter", "team"],
@@ -57,7 +58,14 @@ export function UpgradeDialog(
           <DialogTitle>Upgrade Workspace</DialogTitle>
           <DialogDescription>
             Upgrade your workspace to support more monitors, status pages,
-            regions, and much more.
+            regions, and much more. Get an overview within your{" "}
+            <Link
+              onClick={() => props.onOpenChange?.(false)}
+              href="/settings/billing"
+            >
+              billing settings
+            </Link>
+            .
           </DialogDescription>
         </DialogHeader>
         {addon && planAddons[addon] ? (
