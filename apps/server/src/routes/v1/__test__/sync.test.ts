@@ -415,6 +415,7 @@ describe("API Sync: POST /v1/page - monitors_to_pages -> page_component", () => 
       },
       body: JSON.stringify({
         title: `${TEST_PREFIX} New Page`,
+        description: "Test page for sync",
         slug: `${TEST_PREFIX}-new-page`,
         monitors: [testMonitorId],
       }),
