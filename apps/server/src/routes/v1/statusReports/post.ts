@@ -143,6 +143,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(pageSubscriber.pageId, _newStatusReport.pageId),
             isNotNull(pageSubscriber.acceptedAt),
+            isNull(pageSubscriber.unsubscribedAt),
           ),
         )
         .all();
@@ -175,10 +176,21 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         });
       }
 
-      if (pageInfo && subscribers.length > 0) {
+      const validSubscribers = subscribers.filter(
+        (s): s is typeof s & { token: string } =>
+          s.token !== null &&
+          s.acceptedAt !== null &&
+          s.unsubscribedAt === null,
+      );
+      if (pageInfo && validSubscribers.length > 0) {
         await emailClient.sendStatusReportUpdate({
-          to: subscribers.map((subscriber) => subscriber.email),
+          subscribers: validSubscribers.map((subscriber) => ({
+            email: subscriber.email,
+            token: subscriber.token,
+          })),
           pageTitle: pageInfo.title,
+          pageSlug: pageInfo.slug,
+          customDomain: pageInfo.customDomain,
           reportTitle: _newStatusReport.title,
           status: _newStatusReportUpdate.status,
           message: _newStatusReportUpdate.message,

@@ -21,6 +21,7 @@ import {
 import { Input } from "@openstatus/ui";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 import { useState } from "react";
+import { handleExportCSV } from "../utils";
 
 const STATUS_CODES = {
   "1": "text-muted-foreground",
@@ -78,12 +79,21 @@ export function Table({ data }: TableProps) {
 
   return (
     <div>
-      <Input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Search by region, flag, location code, cloud provider or continent"
-        className="h-auto! rounded-none p-4 text-base md:text-base"
-      />
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Search by region, flag, location code, cloud provider or continent"
+          className="h-auto! flex-1 rounded-none p-4 text-base md:text-base"
+        />
+        <Button
+          variant="outline"
+          className="h-auto! rounded-none p-4 text-base"
+          onClick={() => handleExportCSV(checks, data.url)}
+        >
+          Export to CSV
+        </Button>
+      </div>
       <div className="table-wrapper">
         <table>
           <thead>

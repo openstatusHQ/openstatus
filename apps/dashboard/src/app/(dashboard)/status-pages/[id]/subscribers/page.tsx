@@ -39,6 +39,7 @@ const EXAMPLES = [
     token: null,
     acceptedAt: new Date(),
     expiresAt: new Date(),
+    unsubscribedAt: null,
   },
   {
     id: 2,
@@ -49,6 +50,7 @@ const EXAMPLES = [
     token: null,
     acceptedAt: new Date(),
     expiresAt: new Date(),
+    unsubscribedAt: null,
   },
 ];
 

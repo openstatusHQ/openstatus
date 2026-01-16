@@ -62,14 +62,23 @@ export const emailRouter = createTRPCRouter({
           opts.ctx.workspace.id
         )
           return;
-        if (!_statusReportUpdate.statusReport.page.pageSubscribers.length)
-          return;
+        const validSubscribers =
+          _statusReportUpdate.statusReport.page.pageSubscribers.filter(
+            (s): s is typeof s & { token: string } =>
+              s.token !== null &&
+              s.acceptedAt !== null &&
+              s.unsubscribedAt === null,
+          );
+        if (!validSubscribers.length) return;
 
         await emailClient.sendStatusReportUpdate({
-          to: _statusReportUpdate.statusReport.page.pageSubscribers.map(
-            (subscriber) => subscriber.email,
-          ),
+          subscribers: validSubscribers.map((subscriber) => ({
+            email: subscriber.email,
+            token: subscriber.token,
+          })),
           pageTitle: _statusReportUpdate.statusReport.page.title,
+          pageSlug: _statusReportUpdate.statusReport.page.slug,
+          customDomain: _statusReportUpdate.statusReport.page.customDomain,
           reportTitle: _statusReportUpdate.statusReport.title,
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
@@ -110,13 +119,22 @@ export const emailRouter = createTRPCRouter({
 
         if (!_maintenance) return;
         if (!_maintenance.page) return;
-        if (!_maintenance.page.pageSubscribers.length) return;
+        const validSubscribers = _maintenance.page.pageSubscribers.filter(
+          (s): s is typeof s & { token: string } =>
+            s.token !== null &&
+            s.acceptedAt !== null &&
+            s.unsubscribedAt === null,
+        );
+        if (!validSubscribers.length) return;
 
         await emailClient.sendStatusReportUpdate({
-          to: _maintenance.page.pageSubscribers.map(
-            (subscriber) => subscriber.email,
-          ),
+          subscribers: validSubscribers.map((subscriber) => ({
+            email: subscriber.email,
+            token: subscriber.token,
+          })),
           pageTitle: _maintenance.page.title,
+          pageSlug: _maintenance.page.slug,
+          customDomain: _maintenance.page.customDomain,
           reportTitle: _maintenance.title,
           status: "maintenance",
           message: _maintenance.message,

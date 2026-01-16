@@ -6,9 +6,11 @@ import {
   Head,
   Heading,
   Html,
+  Link,
   Markdown,
   Preview,
   Row,
+  Section,
   Text,
 } from "@react-email/components";
 import { z } from "zod";
@@ -29,6 +31,7 @@ export const StatusReportSchema = z.object({
   message: z.string(),
   reportTitle: z.string(),
   monitors: z.array(z.string()),
+  unsubscribeUrl: z.string().url().optional(),
 });
 
 export type StatusReportProps = z.infer<typeof StatusReportSchema>;
@@ -57,6 +60,7 @@ function StatusReportEmail({
   reportTitle,
   pageTitle,
   monitors,
+  unsubscribeUrl,
 }: StatusReportProps) {
   return (
     <Html>
@@ -110,13 +114,24 @@ function StatusReportEmail({
               <Markdown>{message}</Markdown>
             </Column>
           </Row>
+          {unsubscribeUrl && (
+            <Section style={{ marginTop: "24px", textAlign: "center" }}>
+              <Text style={{ fontSize: "12px", color: "#6b7280" }}>
+                <Link
+                  href={unsubscribeUrl}
+                  style={{ color: "#6b7280", textDecoration: "underline" }}
+                >
+                  Unsubscribe
+                </Link>{" "}
+                from these notifications.
+              </Text>
+            </Section>
+          )}
         </Layout>
       </Body>
     </Html>
   );
 }
-
-// TODO: add unsubscribe link!
 
 StatusReportEmail.PreviewProps = {
   pageTitle: "OpenStatus Status",
@@ -132,7 +147,7 @@ StatusReportEmail.PreviewProps = {
 
 ---
 
-### What’s Changed
+### What's Changed
 
 - All queued workflows are now being picked up and completed successfully.
 - Jobs are running normally on our GitHub App. ### Current Issue: Cache Action Unavailable Attempts to re-publish our action to GitHub Marketplace are returning 500 Internal Server Errors. This prevents the updated versions from going live.
@@ -143,9 +158,11 @@ StatusReportEmail.PreviewProps = {
 
 ### Next Update
 
-We’ll post another update by **19:00 UTC** today or sooner if critical developments occur. We apologize for the inconvenience and appreciate your patience as we restore full cache functionality.
+We'll post another update by **19:00 UTC** today or sooner if critical developments occur. We apologize for the inconvenience and appreciate your patience as we restore full cache functionality.
   `,
   monitors: ["OpenStatus API", "OpenStatus Webhook"],
+  unsubscribeUrl:
+    "https://status.openstatus.dev/unsubscribe/550e8400-e29b-41d4-a716-446655440000",
 };
 
 export default StatusReportEmail;
