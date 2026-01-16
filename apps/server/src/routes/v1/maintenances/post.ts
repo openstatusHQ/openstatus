@@ -3,7 +3,15 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
+import {
+  and,
+  db,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  syncMaintenanceToMonitorInsertMany,
+} from "@openstatus/db";
 import { monitor, page, pageSubscriber } from "@openstatus/db/src/schema";
 import {
   maintenance,
@@ -110,6 +118,12 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
             })),
           )
           .run();
+        // Sync to page components
+        await syncMaintenanceToMonitorInsertMany(
+          tx,
+          newMaintenance.id,
+          input.monitorIds,
+        );
       }
 
       return newMaintenance;

@@ -1,6 +1,14 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
+import {
+  and,
+  db,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  syncStatusReportToMonitorInsertMany,
+} from "@openstatus/db";
 import {
   monitor,
   monitorsToStatusReport,
@@ -133,6 +141,12 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           }),
         )
         .returning();
+      // Sync to page components
+      await syncStatusReportToMonitorInsertMany(
+        db,
+        _newStatusReport.id,
+        input.monitorIds,
+      );
     }
 
     if (limits["status-subscribers"] && _newStatusReport.pageId) {
