@@ -161,7 +161,7 @@ export const selectPageComponentWithMonitorRelation =
   selectPageComponentSchema.extend({
     monitor: selectPublicMonitorBaseSchema
       .extend({
-        incidents: selectIncidentSchema.array(),
+        incidents: selectIncidentSchema.array().nullish(),
       })
       .transform((data) => ({
         ...data,
