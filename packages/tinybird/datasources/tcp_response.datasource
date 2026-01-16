@@ -11,7 +11,7 @@ SCHEMA >
     `errorMessage` Nullable(String) `json:$.errorMessage`,
     `error` Int16 `json:$.error`,
     `trigger` Nullable(String) `json:$.trigger`,
-    `uri` Nullable(String) `json:$.uri`,
+    `uri` Nullable(String) `json:$.uri`
 
 
 ENGINE "MergeTree"
