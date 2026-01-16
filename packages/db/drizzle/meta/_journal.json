@@ -379,6 +379,13 @@
       "when": 1768490525276,
       "tag": "0053_dark_orphan",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1768564852930,
+      "tag": "0054_bitter_lilandra",
+      "breakpoints": true
     }
   ]
 }
