@@ -35,7 +35,11 @@ export function NavActions() {
           <Link href="/status-pages/create">Create Status Page</Link>
         </Button>
       )}
-      <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      <UpgradeDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        limit="status-pages"
+      />
     </div>
   );
 }

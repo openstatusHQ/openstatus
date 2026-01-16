@@ -190,6 +190,7 @@ export function NavStatusPages() {
       <UpgradeDialog
         open={openUpgradeDialog}
         onOpenChange={setOpenUpgradeDialog}
+        limit="status-pages"
       />
     </SidebarGroup>
   );

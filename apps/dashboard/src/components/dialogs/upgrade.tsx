@@ -7,13 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getPlansForLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock } from "lucide-react";
+import { BillingAddons } from "../content/billing-addons";
 
 const PLANS = {
   free: ["starter", "team"],
@@ -32,6 +35,8 @@ export function UpgradeDialog(
 
   if (!workspace) return null;
 
+  const planAddons = allPlans[workspace.plan].addons;
+
   const getRestrictTo = () => {
     if (props.restrictTo) return props.restrictTo;
     if (props.limit) return getPlansForLimit(workspace.plan, props.limit);
@@ -40,9 +45,14 @@ export function UpgradeDialog(
 
   const restrictTo = getRestrictTo();
 
+  const addon =
+    props.limit && Object.prototype.hasOwnProperty.call(planAddons, props.limit)
+      ? (props.limit as keyof Addons)
+      : null;
+
   return (
     <Dialog {...props}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Upgrade Workspace</DialogTitle>
           <DialogDescription>
@@ -50,6 +60,17 @@ export function UpgradeDialog(
             regions, and much more.
           </DialogDescription>
         </DialogHeader>
+        {addon && planAddons[addon] ? (
+          <>
+            <BillingAddons
+              label={planAddons[addon].title}
+              description={planAddons[addon].description}
+              addon={addon}
+              workspace={workspace}
+            />
+            <Separator />
+          </>
+        ) : null}
         {restrictTo.length === 0 ? (
           <Note>
             <CalendarClock />
