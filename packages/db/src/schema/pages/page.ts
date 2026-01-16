@@ -3,6 +3,8 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { maintenance } from "../maintenances";
 import { monitorsToPages } from "../monitors";
+import { pageComponentGroup } from "../page_component_groups";
+import { pageComponent } from "../page_components";
 import { pageSubscriber } from "../page_subscribers";
 import { statusReport } from "../status_reports";
 import { workspace } from "../workspaces";
@@ -69,4 +71,6 @@ export const pageRelations = relations(page, ({ many, one }) => ({
     references: [workspace.id],
   }),
   pageSubscribers: many(pageSubscriber),
+  pageComponents: many(pageComponent),
+  pageComponentGroups: many(pageComponentGroup),
 }));

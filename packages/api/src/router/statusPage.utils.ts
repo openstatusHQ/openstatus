@@ -1,9 +1,36 @@
 import type {
   Incident,
   Maintenance,
+  PageComponent,
+  PageComponentWithMonitorRelation,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
+
+/**
+ * Type for a monitor component with a non-null monitor relation
+ */
+export type MonitorComponentWithNonNullMonitor =
+  PageComponentWithMonitorRelation & {
+    type: "monitor";
+    monitor: NonNullable<PageComponentWithMonitorRelation["monitor"]>;
+  };
+
+/**
+ * Type guard to check if a pageComponent is a monitor type with a monitor relation
+ * Works with any object that has the shape of a pageComponent with a valid monitor relation
+ */
+export function isMonitorComponent(
+  component: PageComponentWithMonitorRelation,
+): component is MonitorComponentWithNonNullMonitor {
+  return (
+    component.type === "monitor" &&
+    component.monitor !== null &&
+    component.monitor !== undefined &&
+    component.monitor.active === true &&
+    component.monitor.deletedAt === null
+  );
+}
 
 type StatusData = {
   day: string;
@@ -104,11 +131,15 @@ export function getEvents({
   pastDays = 45,
 }: {
   maintenances: (Maintenance & {
-    maintenancesToMonitors: { monitorId: number }[];
+    maintenancesToPageComponents: {
+      pageComponent: PageComponent | null;
+    }[];
   })[];
   incidents: Incident[];
   reports: (StatusReport & {
-    monitorsToStatusReports: { monitorId: number }[];
+    statusReportsToPageComponents: {
+      pageComponent: PageComponent | null;
+    }[];
     statusReportUpdates: StatusReportUpdate[];
   })[];
   monitorId?: number;
@@ -118,12 +149,12 @@ export function getEvents({
   const pastThreshod = new Date();
   pastThreshod.setDate(pastThreshod.getDate() - pastDays);
 
-  // Filter maintenances - if monitorId is provided, filter by monitor, otherwise include all
+  // Filter maintenances - if monitorId is provided, filter by monitor via pageComponent, otherwise include all
   maintenances
     .filter((maintenance) =>
       monitorId
-        ? maintenance.maintenancesToMonitors.some(
-            (m) => m.monitorId === monitorId,
+        ? maintenance.maintenancesToPageComponents.some(
+            (m) => m.pageComponent?.monitorId === monitorId,
           )
         : true,
     )
@@ -154,11 +185,13 @@ export function getEvents({
       });
     });
 
-  // Filter reports - if monitorId is provided, filter by monitor, otherwise include all
+  // Filter reports - if monitorId is provided, filter by monitor via pageComponent, otherwise include all
   reports
     .filter((report) =>
       monitorId
-        ? report.monitorsToStatusReports.some((m) => m.monitorId === monitorId)
+        ? report.statusReportsToPageComponents.some(
+            (m) => m.pageComponent?.monitorId === monitorId,
+          )
         : true,
     )
     .map((report) => {

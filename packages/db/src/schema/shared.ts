@@ -4,6 +4,8 @@ import { selectIncidentSchema } from "./incidents/validation";
 import { selectMaintenanceSchema } from "./maintenances";
 import { selectMonitorGroupSchema } from "./monitor_groups";
 import { selectMonitorSchema } from "./monitors";
+import { selectPageComponentGroupSchema } from "./page_component_groups";
+import { selectPageComponentSchema } from "./page_components";
 import { selectPageSchema } from "./pages";
 import {
   selectStatusReportSchema,
@@ -154,6 +156,24 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
     .transform((val) => val ?? "free"),
   whiteLabel: z.boolean().prefault(false),
 });
+
+export const selectPageComponentWithMonitorRelation =
+  selectPageComponentSchema.extend({
+    monitor: selectPublicMonitorBaseSchema
+      .extend({
+        incidents: selectIncidentSchema.array(),
+      })
+      .transform((data) => ({
+        ...data,
+        name: data.externalName || data.name,
+      }))
+      .nullish(),
+    group: selectPageComponentGroupSchema.nullish(),
+  });
+
+export type PageComponentWithMonitorRelation = z.infer<
+  typeof selectPageComponentWithMonitorRelation
+>;
 
 export const selectPublicStatusReportSchemaWithRelation =
   selectStatusReportSchema.extend({
