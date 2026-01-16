@@ -1,5 +1,6 @@
 import { and, eq, inArray } from "drizzle-orm";
 
+import type { db } from "./db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -13,7 +14,9 @@ import {
 // Type that works with both LibSQLDatabase and SQLiteTransaction
 // Using any to allow both db instance and transaction to be passed
 // biome-ignore lint/suspicious/noExplicitAny: Compatible with both db and transaction
-type DB = any;
+type DB = typeof db;
+// Extract transaction type from the callback parameter of db.transaction()
+type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
 
 // ============================================================================
 // Monitor Group <-> Page Component Group Sync
@@ -23,7 +26,7 @@ type DB = any;
  * Syncs a monitor group insert to page_component_groups
  */
 export async function syncMonitorGroupInsert(
-  db: DB,
+  db: DB | Transaction,
   data: {
     id: number;
     workspaceId: number;
@@ -45,7 +48,10 @@ export async function syncMonitorGroupInsert(
 /**
  * Syncs a monitor group delete to page_component_groups
  */
-export async function syncMonitorGroupDelete(db: DB, monitorGroupId: number) {
+export async function syncMonitorGroupDelete(
+  db: DB | Transaction,
+  monitorGroupId: number,
+) {
   await db
     .delete(pageComponentGroup)
     .where(eq(pageComponentGroup.id, monitorGroupId));
@@ -55,7 +61,7 @@ export async function syncMonitorGroupDelete(db: DB, monitorGroupId: number) {
  * Syncs multiple monitor group deletes to page_component_groups
  */
 export async function syncMonitorGroupDeleteMany(
-  db: DB,
+  db: DB | Transaction,
   monitorGroupIds: number[],
 ) {
   if (monitorGroupIds.length === 0) return;
@@ -73,7 +79,7 @@ export async function syncMonitorGroupDeleteMany(
  * Requires monitor data to get name and workspace_id
  */
 export async function syncMonitorsToPageInsert(
-  db: DB,
+  db: DB | Transaction,
   data: {
     monitorId: number;
     pageId: number;
@@ -115,7 +121,7 @@ export async function syncMonitorsToPageInsert(
  * Syncs multiple monitors_to_pages inserts to page_component
  */
 export async function syncMonitorsToPageInsertMany(
-  db: DB,
+  db: DB | Transaction,
   items: Array<{
     monitorId: number;
     pageId: number;
@@ -166,7 +172,7 @@ export async function syncMonitorsToPageInsertMany(
  * Syncs a monitors_to_pages delete to page_component
  */
 export async function syncMonitorsToPageDelete(
-  db: DB,
+  db: DB | Transaction,
   data: { monitorId: number; pageId: number },
 ) {
   await db
@@ -182,7 +188,10 @@ export async function syncMonitorsToPageDelete(
 /**
  * Syncs monitors_to_pages deletes for a specific page to page_component
  */
-export async function syncMonitorsToPageDeleteByPage(db: DB, pageId: number) {
+export async function syncMonitorsToPageDeleteByPage(
+  db: DB | Transaction,
+  pageId: number,
+) {
   await db
     .delete(pageComponent)
     .where(
@@ -194,7 +203,7 @@ export async function syncMonitorsToPageDeleteByPage(db: DB, pageId: number) {
  * Syncs monitors_to_pages deletes for specific monitors to page_component
  */
 export async function syncMonitorsToPageDeleteByMonitors(
-  db: DB,
+  db: DB | Transaction,
   monitorIds: number[],
 ) {
   if (monitorIds.length === 0) return;
@@ -211,7 +220,7 @@ export async function syncMonitorsToPageDeleteByMonitors(
  * Syncs a status_report_to_monitors insert to status_report_to_page_component
  */
 export async function syncStatusReportToMonitorInsert(
-  db: DB,
+  db: DB | Transaction,
   data: { statusReportId: number; monitorId: number },
 ) {
   // Get the status report's page_id
@@ -252,7 +261,7 @@ export async function syncStatusReportToMonitorInsert(
  * Syncs multiple status_report_to_monitors inserts to status_report_to_page_component
  */
 export async function syncStatusReportToMonitorInsertMany(
-  db: DB,
+  db: DB | Transaction,
   statusReportId: number,
   monitorIds: number[],
 ) {
@@ -296,7 +305,7 @@ export async function syncStatusReportToMonitorInsertMany(
  * Syncs a status_report_to_monitors delete to status_report_to_page_component
  */
 export async function syncStatusReportToMonitorDelete(
-  db: DB,
+  db: DB | Transaction,
   data: { statusReportId: number; monitorId: number },
 ) {
   // Find page_components with this monitor
@@ -322,7 +331,7 @@ export async function syncStatusReportToMonitorDelete(
  * Syncs status_report_to_monitors deletes for a specific status report
  */
 export async function syncStatusReportToMonitorDeleteByStatusReport(
-  db: DB,
+  db: DB | Transaction,
   statusReportId: number,
 ) {
   await db
@@ -334,7 +343,7 @@ export async function syncStatusReportToMonitorDeleteByStatusReport(
  * Syncs status_report_to_monitors deletes for specific monitors
  */
 export async function syncStatusReportToMonitorDeleteByMonitors(
-  db: DB,
+  db: DB | Transaction,
   monitorIds: number[],
 ) {
   if (monitorIds.length === 0) return;
@@ -363,7 +372,7 @@ export async function syncStatusReportToMonitorDeleteByMonitors(
  * Syncs a maintenance_to_monitor insert to maintenance_to_page_component
  */
 export async function syncMaintenanceToMonitorInsert(
-  db: DB,
+  db: DB | Transaction,
   data: { maintenanceId: number; monitorId: number },
 ) {
   // Get the maintenance's page_id
@@ -403,7 +412,7 @@ export async function syncMaintenanceToMonitorInsert(
  * Syncs multiple maintenance_to_monitor inserts to maintenance_to_page_component
  */
 export async function syncMaintenanceToMonitorInsertMany(
-  db: DB,
+  db: DB | Transaction,
   maintenanceId: number,
   monitorIds: number[],
 ) {
@@ -446,7 +455,7 @@ export async function syncMaintenanceToMonitorInsertMany(
  * Syncs a maintenance_to_monitor delete to maintenance_to_page_component
  */
 export async function syncMaintenanceToMonitorDelete(
-  db: DB,
+  db: DB | Transaction,
   data: { maintenanceId: number; monitorId: number },
 ) {
   // Find page_components with this monitor
@@ -472,7 +481,7 @@ export async function syncMaintenanceToMonitorDelete(
  * Syncs maintenance_to_monitor deletes for a specific maintenance
  */
 export async function syncMaintenanceToMonitorDeleteByMaintenance(
-  db: DB,
+  db: DB | Transaction,
   maintenanceId: number,
 ) {
   await db
@@ -484,7 +493,7 @@ export async function syncMaintenanceToMonitorDeleteByMaintenance(
  * Syncs maintenance_to_monitor deletes for specific monitors
  */
 export async function syncMaintenanceToMonitorDeleteByMonitors(
-  db: DB,
+  db: DB | Transaction,
   monitorIds: number[],
 ) {
   if (monitorIds.length === 0) return;
