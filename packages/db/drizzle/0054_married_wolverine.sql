@@ -46,23 +46,3 @@ CREATE TABLE `maintenance_to_page_component` (
 	FOREIGN KEY (`maintenance_id`) REFERENCES `maintenance`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`page_component_id`) REFERENCES `page_component`(`id`) ON UPDATE no action ON DELETE cascade
 );
---> statement-breakpoint
-DROP TABLE `monitor_group`;--> statement-breakpoint
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
-CREATE TABLE `__new_monitors_to_pages` (
-	`monitor_id` integer NOT NULL,
-	`page_id` integer NOT NULL,
-	`created_at` integer DEFAULT (strftime('%s', 'now')),
-	`order` integer DEFAULT 0,
-	`monitor_group_id` integer,
-	`group_order` integer DEFAULT 0,
-	PRIMARY KEY(`monitor_id`, `page_id`),
-	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`monitor_group_id`) REFERENCES `page_groups`(`id`) ON UPDATE no action ON DELETE cascade
-);
---> statement-breakpoint
-INSERT INTO `__new_monitors_to_pages`("monitor_id", "page_id", "created_at", "order", "monitor_group_id", "group_order") SELECT "monitor_id", "page_id", "created_at", "order", "monitor_group_id", "group_order" FROM `monitors_to_pages`;--> statement-breakpoint
-DROP TABLE `monitors_to_pages`;--> statement-breakpoint
-ALTER TABLE `__new_monitors_to_pages` RENAME TO `monitors_to_pages`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;
