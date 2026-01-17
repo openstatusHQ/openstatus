@@ -56,8 +56,8 @@ function shouldSample(event: Record<string, unknown>): boolean {
     return true;
   }
 
-  // Random sample successful, fast requests at 5%
-  return Math.random() < 0.05;
+  // Random sample successful, fast requests at 20%
+  return Math.random() < 0.2;
 }
 
 const defaultLogger = getOpenTelemetrySink({
@@ -115,10 +115,10 @@ app.use("*", async (c, next) => {
 
   await withContext(
     {
-      requestId,
+      request_id: requestId,
       method: c.req.method,
       url: c.req.url,
-      userAgent: c.req.header("User-Agent"),
+      user_agent: c.req.header("User-Agent"),
       // ipAddress: c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For")
     },
     async () => {
