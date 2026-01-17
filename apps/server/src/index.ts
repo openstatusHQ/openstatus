@@ -37,8 +37,8 @@ function shouldSample(event: Record<string, any>): boolean {
   // Always keep slow requests (above p99)
   if (event.duration_ms > 2000) return true;
 
-  // Random sample the rest at 5%
-  return Math.random() < 0.05;
+  // Random sample the rest at 20%
+  return Math.random() < 0.2;
 }
 
 const defaultLogger = getOpenTelemetrySink({
@@ -97,10 +97,10 @@ app.use("*", async (c, next) => {
 
   await withContext(
     {
-      requestId,
+      request_id: requestId,
       method: c.req.method,
       url: c.req.url,
-      userAgent: c.req.header("User-Agent"),
+      user_agent: c.req.header("User-Agent"),
     },
     async () => {
       // Initialize wide event - one canonical log line per request
