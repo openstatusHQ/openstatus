@@ -3,7 +3,8 @@
   "include": ["src", "*.ts", "**/*.ts"],
   "compilerOptions": {
     "jsx": "react-jsx",
-    "module": "preserve",
+    "module": "ESNext",
+    "target": "ESNext",
     "moduleResolution": "bundler",
     "jsxImportSource": "react",
     "allowJs": true,
