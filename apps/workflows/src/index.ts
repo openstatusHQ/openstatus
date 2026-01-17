@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 // import * as Sentry from "@sentry/node";
 import { sentry } from "@hono/sentry";
 import {
-  configureSync,
+  configure,
   getConsoleSink,
   getLogger,
   jsonLinesFormatter,
@@ -74,7 +74,7 @@ const defaultLogger = getOpenTelemetrySink({
   }),
 });
 
-configureSync({
+await configure({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
     // sentry: getSentrySink(),
