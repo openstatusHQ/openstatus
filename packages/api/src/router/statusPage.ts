@@ -653,7 +653,7 @@ export const statusPageRouter = createTRPCRouter({
     const identifiedDate = new Date(date.setMinutes(date.getMinutes() - 32));
     const investigatingDate = new Date(date.setMinutes(date.getMinutes() - 4));
 
-    return {
+    return selectStatusReportPageSchema.parse({
       id: 1,
       pageId: 1,
       status: "investigating" as const,
@@ -730,7 +730,7 @@ export const statusPageRouter = createTRPCRouter({
           updatedAt: investigatingDate,
         },
       ],
-    };
+    });
   }),
 
   getMonitors: publicProcedure
