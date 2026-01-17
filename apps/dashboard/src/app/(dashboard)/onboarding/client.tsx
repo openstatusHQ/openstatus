@@ -31,7 +31,9 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
+import { useEffect } from "react";
 import { searchParamsParsers } from "./search-params";
 
 const moreActions = [
@@ -86,7 +88,9 @@ const moreActions = [
 ];
 
 export function Client() {
-  const [{ step }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const [{ step, callbackUrl }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
+  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: workspace, refetch } = useQuery(
@@ -123,6 +127,20 @@ export function Client() {
   const createFeedbackMutation = useMutation(
     trpc.feedback.submit.mutationOptions({}),
   );
+
+  useEffect(() => {
+    if (!callbackUrl) return;
+    // Ignore base URL redirects - only redirect for meaningful paths (e.g., /invite?token=...)
+    try {
+      const url = new URL(callbackUrl, window.location.origin);
+      if (url.pathname === "/" || url.pathname === "") return;
+      router.push(callbackUrl);
+    } catch {
+      // If callbackUrl is a relative path, check it directly
+      if (callbackUrl === "/" || callbackUrl === "") return;
+      router.push(callbackUrl);
+    }
+  }, [callbackUrl, router]);
 
   return (
     <SectionGroup>

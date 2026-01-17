@@ -83,8 +83,8 @@ export function NavStatusPages() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuAction
-                  data-disabled={limitReached}
-                  className="relative top-0 right-0 border data-[disabled=true]:opacity-50"
+                  data-limited={limitReached}
+                  className="relative top-0 right-0 border data-[limited=true]:opacity-80"
                   onClick={() => {
                     if (limitReached) {
                       setOpenUpgradeDialog(true);
@@ -190,6 +190,7 @@ export function NavStatusPages() {
       <UpgradeDialog
         open={openUpgradeDialog}
         onOpenChange={setOpenUpgradeDialog}
+        limit="status-pages"
       />
     </SidebarGroup>
   );

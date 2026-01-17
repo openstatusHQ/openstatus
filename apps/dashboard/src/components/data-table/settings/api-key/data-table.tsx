@@ -1,29 +1,77 @@
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
+  TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
+import { useMutation } from "@tanstack/react-query";
 
-type ApiKey = RouterOutputs["apiKey"]["get"];
+type ApiKey = RouterOutputs["apiKeyRouter"]["getAll"][number];
 
-export function DataTable({ apiKey }: { apiKey: ApiKey }) {
+export function DataTable({
+  apiKeys,
+  refetch,
+}: {
+  apiKeys: ApiKey[];
+  refetch: () => void;
+}) {
+  const trpc = useTRPC();
+  const revokeApiKeyMutation = useMutation(
+    trpc.apiKeyRouter.revoke.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
   return (
-    <Table>
-      <TableBody>
-        <TableRow className="[&>:not(:last-child)]:border-r">
-          <TableHead className="h-auto bg-muted/50">Created At</TableHead>
-          <TableCell>
-            {new Date(apiKey.createdAt).toLocaleDateString()}
-          </TableCell>
-        </TableRow>
-        <TableRow className="[&>:not(:last-child)]:border-r">
-          <TableHead className="h-auto bg-muted/50">Token</TableHead>
-          <TableCell>{apiKey.start}...</TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Prefix</TableHead>
+            <TableHead>Expires</TableHead>
+            <TableHead>
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {apiKeys.map((apiKey) => (
+            <TableRow key={apiKey.id}>
+              <TableCell className="font-medium">{apiKey.name}</TableCell>
+              <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                {apiKey.description ?? "-"}
+              </TableCell>
+              <TableCell>
+                <code className="text-xs">{apiKey.prefix}...</code>
+              </TableCell>
+              <TableCell className="text-sm">
+                {apiKey.expiresAt ? formatDate(apiKey.expiresAt) : "-"}
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-end">
+                  <QuickActions
+                    deleteAction={{
+                      confirmationValue: apiKey.name ?? "api key",
+                      submitAction: async () =>
+                        await revokeApiKeyMutation.mutateAsync({
+                          keyId: apiKey.id,
+                        }),
+                    }}
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

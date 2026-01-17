@@ -12,7 +12,7 @@ ignore:
   - /packages/tracker
 builders:
   install:
-    fromImage: oven/bun:1.3.5
+    fromImage: oven/bun:1.3.6
     workdir: /app/
     labels:
       org.opencontainers.image.stage: install
@@ -47,7 +47,7 @@ builders:
 
   # Stage 4: Build application (compile to binary)
   build:
-    fromImage: oven/bun:1.3.5
+    fromImage: oven/bun:1.3.6
     workdir: /app/apps/workflows
     labels:
       org.opencontainers.image.stage: build
@@ -63,14 +63,14 @@ builders:
     run: bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
 
   docker:
-    fromImage: oven/bun:1.3.5
+    fromImage: oven/bun:1.3.6
     workdir: /app/apps/workflows
     copy:
      - . /app/
     run: bun run src/build-docker.ts
 
   libsql:
-    fromImage: oven/bun:1.3.5
+    fromImage: oven/bun:1.3.6
     workdir: /app/
     copy:
       - fromBuilder: docker

@@ -1,6 +1,13 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  eq,
+  inArray,
+  isNull,
+  sql,
+  syncMonitorsToPageInsert,
+} from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
@@ -182,6 +189,12 @@ export function registerPostPage(api: typeof pagesApi) {
           .insert(monitorsToPages)
           .values({ pageId: _page.id, ...values })
           .run();
+        // Sync to page components
+        await syncMonitorsToPageInsert(db, {
+          monitorId: values.monitorId,
+          pageId: _page.id,
+          order: "order" in values ? values.order : undefined,
+        });
       }
     }
     const data = transformPageData(PageSchema.parse(_page));

@@ -18,3 +18,6 @@ export * from "./monitor_run";
 export * from "./private_locations";
 export * from "./monitor_groups";
 export * from "./viewers";
+export * from "./api-keys";
+export * from "./page_components";
+export * from "./page_component_groups";

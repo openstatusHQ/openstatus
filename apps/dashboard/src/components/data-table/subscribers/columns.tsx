@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -13,6 +14,26 @@ export const columns: ColumnDef<Subscriber>[] = [
     header: "Email",
     enableSorting: false,
     enableHiding: false,
+  },
+  {
+    id: "status",
+    header: "Status",
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const unsubscribedAt = row.original.unsubscribedAt;
+      const acceptedAt = row.original.acceptedAt;
+
+      if (unsubscribedAt) {
+        return <Badge variant="destructive">Unsubscribed</Badge>;
+      }
+
+      if (!acceptedAt) {
+        return <Badge variant="outline">Pending</Badge>;
+      }
+
+      return <Badge variant="secondary">Active</Badge>;
+    },
   },
   {
     accessorKey: "createdAt",
@@ -36,6 +57,21 @@ export const columns: ColumnDef<Subscriber>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const value = row.getValue("acceptedAt");
+      if (value instanceof Date) return formatDate(value);
+      if (!value) return "-";
+      return value;
+    },
+    meta: {
+      cellClassName: "font-mono",
+    },
+  },
+  {
+    accessorKey: "unsubscribedAt",
+    header: "Unsubscribed At",
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("unsubscribedAt");
       if (value instanceof Date) return formatDate(value);
       if (!value) return "-";
       return value;

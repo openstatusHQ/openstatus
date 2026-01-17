@@ -18,12 +18,14 @@
     "@openstatus/regions": "workspace:*",
     "@openstatus/theme-store": "workspace:*",
     "@t3-oss/env-core": "0.13.10",
+    "bcryptjs": "3.0.3",
     "drizzle-orm": "0.44.4",
     "drizzle-zod": "0.8.3",
     "zod": "4.1.13"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@types/bcryptjs": "3.0.0",
     "@types/node": "22.10.2",
     "drizzle-kit": "0.31.4",
     "next-auth": "5.0.0-beta.29",

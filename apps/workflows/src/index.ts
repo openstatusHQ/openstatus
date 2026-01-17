@@ -42,12 +42,18 @@ configureSync({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
     // sentry: getSentrySink(),
+    otel: defaultLogger,
   },
   loggers: [
     {
       category: "workflow",
       lowestLevel: "debug",
       sinks: ["console"],
+    },
+    {
+      category: "api-server-otel",
+      lowestLevel: "info",
+      sinks: ["otel"],
     },
   ],
   contextLocalStorage: new AsyncLocalStorage(),

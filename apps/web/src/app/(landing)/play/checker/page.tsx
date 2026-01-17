@@ -7,6 +7,7 @@ import { mockCheckAllRegions } from "./api/mock";
 import {
   CheckerProvider,
   DetailsButtonLink,
+  ExportToCSVButton,
   Form,
   ResponseStatus,
   ResultTable,
@@ -42,7 +43,10 @@ export default async function Page(props: {
         <Form defaultMethod={data?.method} defaultUrl={data?.url} />
         <ResponseStatus />
         <ResultTable />
-        <DetailsButtonLink />
+        <div className="flex gap-2">
+          <ExportToCSVButton />
+          <DetailsButtonLink />
+        </div>
       </CheckerProvider>
       <CustomMDX source={page.content} />
     </section>

@@ -1,3 +1,4 @@
+import { apiKeyRouter } from "./router/apiKey";
 import { emailRouter } from "./router/email";
 import { stripeRouter } from "./router/stripe";
 import { createTRPCRouter } from "./trpc";
@@ -5,6 +6,7 @@ import { createTRPCRouter } from "./trpc";
 export const lambdaRouter = createTRPCRouter({
   stripeRouter: stripeRouter,
   emailRouter: emailRouter,
+  apiKeyRouter: apiKeyRouter,
 });
 
 export { stripe } from "./router/stripe/shared";

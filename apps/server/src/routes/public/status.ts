@@ -12,13 +12,11 @@ import {
   statusReport,
 } from "@openstatus/db/src/schema";
 import { Status, Tracker } from "@openstatus/tracker";
-import { Redis } from "@openstatus/upstash";
 
+import { redis } from "@/libs/clients";
 import { notEmpty } from "@/utils/not-empty";
 
 // TODO: include ratelimiting
-
-const redis = Redis.fromEnv();
 
 export const status = new Hono();
 

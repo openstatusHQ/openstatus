@@ -14,6 +14,7 @@ export const pageSubscriber = sqliteTable("page_subscriber", {
   token: text("token"),
   acceptedAt: integer("accepted_at", { mode: "timestamp" }),
   expiresAt: integer("expires_at", { mode: "timestamp" }),
+  unsubscribedAt: integer("unsubscribed_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

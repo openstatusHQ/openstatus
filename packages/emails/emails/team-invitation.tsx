@@ -13,7 +13,7 @@ import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
-const BASE_URL = "https://openstatus.dev/app/invite";
+const BASE_URL = "https://app.openstatus.dev/invite";
 
 export const TeamInvitationSchema = z.object({
   invitedBy: z.string(),

@@ -13,7 +13,7 @@ ignore:
 builders:
   # Stage 1: Install production dependencies
   install:
-    fromImage: oven/bun:1.3.5
+    fromImage: oven/bun:1.3.6
     workdir: /app/
     labels:
       org.opencontainers.image.stage: install
@@ -39,7 +39,7 @@ builders:
 
   # Stage 2: Build application (compile to binary)
   build:
-    fromImage: oven/bun:1.3.5
+    fromImage: oven/bun:1.3.6
     workdir: /app/apps/server
     labels:
       org.opencontainers.image.stage: build

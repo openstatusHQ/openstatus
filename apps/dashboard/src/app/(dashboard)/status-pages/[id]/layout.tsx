@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import {
   AppHeader,
   AppHeaderActions,
@@ -19,9 +21,14 @@ export default async function Layout({
   const { id } = await params;
   const queryClient = getQueryClient();
 
-  await queryClient.prefetchQuery(
+  const pageData = await queryClient.fetchQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
+
+  if (!pageData?.id) {
+    redirect("/status-pages");
+  }
+
   await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
 
   return (
