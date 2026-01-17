@@ -61,7 +61,7 @@ function shouldSample(event: Record<string, unknown>): boolean {
 }
 
 const defaultLogger = getOpenTelemetrySink({
-  serviceName: "openstatus-server",
+  serviceName: "openstatus-workflows",
   otlpExporterConfig: {
     url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
     headers: {

@@ -80,7 +80,7 @@ builders:
 
   ca-certs:
     fromImage: debian:bullseye-slim
-    run: apt update && apt install -y ca-certificates && update-ca-certificates
+    run: apt update && apt install -y ca-certificates curl && update-ca-certificates
 
 fromImage: debian:bullseye-slim
 workdir: /app/
@@ -108,7 +108,9 @@ copy:
   - fromBuilder: ca-certs
     source: /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
+  - fromBuilder: ca-certs
+    source: /usr/bin/curl
+    target: /usr/bin/curl
 expose: "3000"
-run: apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
 
 entrypoint: /app/apps/workflows/app

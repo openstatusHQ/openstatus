@@ -33,7 +33,10 @@ export const triggerNotifications = async ({
   region?: Region;
   latency?: number;
 }) => {
-  logger.info("Triggering alerting", { monitor_id: monitorId, notification_type: notifType });
+  logger.info("Triggering alerting", {
+    monitor_id: monitorId,
+    notification_type: notifType,
+  });
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)
@@ -147,7 +150,7 @@ export const triggerNotifications = async ({
             monitor_id: monitorId,
             provider: notif.notification.provider,
             error_message: err instanceof Error ? err.message : String(err),
-          })
+          }),
         );
         break;
       case "recovery":
@@ -178,7 +181,7 @@ export const triggerNotifications = async ({
             monitor_id: monitorId,
             provider: notif.notification.provider,
             error_message: err instanceof Error ? err.message : String(err),
-          })
+          }),
         );
         break;
       case "degraded":
@@ -209,7 +212,7 @@ export const triggerNotifications = async ({
             monitor_id: monitorId,
             provider: notif.notification.provider,
             error_message: err instanceof Error ? err.message : String(err),
-          })
+          }),
         );
         break;
     }
