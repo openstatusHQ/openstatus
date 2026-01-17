@@ -11,10 +11,11 @@ import {
 import { getLogger } from "@logtape/logtape";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { env } from "../env";
+import type { Env } from "../index";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
 
-export const checkerRoute = new Hono();
+export const checkerRoute = new Hono<Env>();
 
 const payloadSchema = z.object({
   monitorId: z.string(),
@@ -35,6 +36,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     return c.text("Unauthorized", 401);
   }
 
+  const event = c.get("event");
   const json = await c.req.json();
 
   const result = payloadSchema.safeParse(json);
@@ -42,6 +44,15 @@ checkerRoute.post("/updateStatus", async (c) => {
   if (!result.success) {
     return c.text("Unprocessable Entity", 422);
   }
+  event.status_update = {
+    status: result.data.status,
+    message: result.data.message,
+    region: result.data.region,
+    status_code: result.data.statusCode,
+    cron_timestamp: result.data.cronTimestamp,
+    latency_ms: result.data.latency,
+  };
+
   const {
     monitorId,
     message,
@@ -52,7 +63,14 @@ checkerRoute.post("/updateStatus", async (c) => {
     latency,
   } = result.data;
 
-  logger.info("📝 update monitor status {*}", { ...result.data });
+  logger.info("Updating monitor status", {
+    monitor_id: monitorId,
+    region,
+    status,
+    status_code: statusCode,
+    cron_timestamp: cronTimestamp,
+    latency_ms: latency,
+  });
 
   // First we upsert the monitor status
   await upsertMonitorStatus({
@@ -139,7 +157,10 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
 
-        logger.info(`🔄 update monitorStatus ${monitor.id} status: ACTIVE`);
+        logger.info("Monitor status changed to active", {
+          monitor_id: monitor.id,
+          workspace_id: monitor.workspaceId,
+        });
         await db
           .update(schema.monitor)
           .set({ status: "active" })
@@ -167,7 +188,10 @@ checkerRoute.post("/updateStatus", async (c) => {
             // incident is already resolved
             break;
           }
-          logger.info(`🤓 recovering incident ${incident.id}`);
+          logger.info("Recovering incident", {
+            incident_id: incident.id,
+            monitor_id: monitorId,
+          });
 
           await db
             .update(incidentTable)
@@ -204,7 +228,10 @@ checkerRoute.post("/updateStatus", async (c) => {
           // already degraded let's return early
           break;
         }
-        logger.info(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
+        logger.info("Monitor status changed to degraded", {
+          monitor_id: monitor.id,
+          workspace_id: monitor.workspaceId,
+        });
 
         await db
           .update(schema.monitor)
@@ -229,7 +256,10 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
 
-        logger.info(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
+        logger.info("Monitor status changed to error", {
+          monitor_id: monitor.id,
+          workspace_id: monitor.workspaceId,
+        });
 
         await db
           .update(schema.monitor)

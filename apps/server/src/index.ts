@@ -27,7 +27,8 @@ type Env = {
     event: Record<string, unknown>;
   };
 };
-// @biome-ignore
+
+/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
 function shouldSample(event: Record<string, any>): boolean {
   // Always keep errors
   if (event.status_code >= 500) return true;
@@ -114,13 +115,10 @@ app.use("*", async (c, next) => {
         user_agent: c.req.header("User-Agent"),
         // Request metadata
         content_type: c.req.header("Content-Type"),
-
       };
       c.set("event", event);
 
       await next();
-
-
 
       // Performance
       const duration = Date.now() - startTime;
@@ -128,7 +126,6 @@ app.use("*", async (c, next) => {
 
       // Response context
       event.status_code = c.res.status;
-
 
       // Outcome
       if (c.error) {

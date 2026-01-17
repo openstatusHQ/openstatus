@@ -24,21 +24,39 @@ import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conven
 
 const { NODE_ENV, PORT } = env();
 
-type Env = {
+export type Env = {
   Variables: {
     event: Record<string, unknown>;
   };
 };
 
-function shouldSample(event: Record<string, any>): boolean {
-  // Always keep errors
-  if (event.status_code >= 500) return true;
+/**
+ * Tail sampling strategy based on loggingsucks.com best practices
+ * Makes sampling decisions post-request completion to capture:
+ * - All errors (5xx status codes, explicit errors)
+ * - Slow requests (above p99 threshold)
+ * - Client errors (4xx) at higher rate than successful requests
+ * - Random sample of remaining successful, fast requests
+ */
+function shouldSample(event: Record<string, unknown>): boolean {
+  const statusCode = event.status_code as number | undefined;
+  const durationMs = event.duration_ms as number | undefined;
+
+  // Always capture: server errors
+  if (statusCode && statusCode >= 500) return true;
+
+  // Always capture: explicit errors
   if (event.error) return true;
 
-  // Always keep slow requests (above p99)
-  if (event.duration_ms > 2000) return true;
+  // Always capture: slow requests (above p99 - 2s threshold)
+  if (durationMs && durationMs > 2000) return true;
 
-  // Random sample the rest at 5%
+  // Higher sampling for client errors (4xx) - 50%
+  if (statusCode && statusCode >= 400 && statusCode < 500) {
+    return true;
+  }
+
+  // Random sample successful, fast requests at 5%
   return Math.random() < 0.05;
 }
 
@@ -104,11 +122,15 @@ app.use("*", async (c, next) => {
       // ipAddress: c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For")
     },
     async () => {
-      logger.info("Request started", {
-        method: c.req.method,
-        url: c.req.url,
-        requestId,
-      });
+      // Build wide event context at request start
+      event.request_id = requestId;
+      event.method = c.req.method;
+      event.path = c.req.path;
+      event.url = c.req.url;
+      event.user_agent = c.req.header("User-Agent");
+      event.content_type = c.req.header("Content-Type");
+      event.cf_ray = c.req.header("CF-Ray");
+      event.cf_connecting_ip = c.req.header("CF-Connecting-IP");
 
       await next();
 
@@ -126,27 +148,28 @@ app.use("*", async (c, next) => {
         event.outcome = "success";
       }
       event.duration_ms = duration;
+      // Emit canonical log line with all context (wide event pattern)
       if (shouldSample(event)) {
-        otelLogger.info("request completed", { ...event });
+        otelLogger.info("request", event);
       }
-      logger.info("Request completed", {
-        status: c.res.status,
-        duration,
-        requestId,
+      logger.debug("Request completed", {
+        status_code: c.res.status,
+        duration_ms: duration,
+        request_id: requestId,
       });
     },
   );
 });
 
 app.onError((err, c) => {
-  logger.error("Request error", {
-    error: {
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-    },
+  logger.error("Unhandled request error", {
+    error_name: err.name,
+    error_message: err.message,
+    error_stack: err.stack,
     method: c.req.method,
+    path: c.req.path,
     url: c.req.url,
+    request_id: c.get("requestId"),
   });
   c.get("sentry").captureException(err);
 
@@ -171,7 +194,7 @@ if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
 
-console.log(`Starting server on port ${PORT}`);
+logger.info("Starting server", { port: PORT, environment: NODE_ENV });
 
 const server = { port: PORT, fetch: app.fetch };
 

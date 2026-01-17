@@ -93,7 +93,7 @@ export async function sendCheckerTasks(
     )
     .all();
 
-  logger.info(`Start cron for ${periodicity}`);
+  logger.info("Starting cron job", { periodicity, monitor_count: result.length });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
@@ -112,9 +112,10 @@ export async function sendCheckerTasks(
       .all();
     const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
     if (!monitorStatus.success) {
-      console.error(
-        `Error while fetching the monitor status ${monitorStatus.error}`,
-      );
+      logger.error("Failed to parse monitor status", {
+        monitor_id: row.id,
+        error_message: monitorStatus.error.message,
+      });
       continue;
     }
 
@@ -164,11 +165,18 @@ export async function sendCheckerTasks(
   const success = allRequests.filter((r) => r.status === "fulfilled").length;
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
-  logger.info(
-    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
-  );
+  logger.info("Completed cron job", {
+    periodicity,
+    total_tasks: allResult.length,
+    success_count: success,
+    failed_count: failed,
+  });
   if (failed > 0) {
-    logger.error("error with cron jobs");
+    logger.error("Cron job had failures", {
+      periodicity,
+      failed_count: failed,
+      success_count: success,
+    });
     getSentry(c).captureMessage(
       `sendCheckerTasks for ${periodicity} ended with ${failed} failed tasks`,
       "error",
