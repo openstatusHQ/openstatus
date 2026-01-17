@@ -5,6 +5,6 @@
     "jsxImportSource": "hono/jsx",
     "lib": ["ES2022"],
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "bundler"
   }
 }
