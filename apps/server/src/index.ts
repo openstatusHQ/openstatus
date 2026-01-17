@@ -14,7 +14,7 @@ import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import { SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from "@opentelemetry/semantic-conventions";
+import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { env } from "./env";
@@ -38,7 +38,7 @@ const defaultLogger = getOpenTelemetrySink({
     },
   },
   additionalResource: resourceFromAttributes({
-    [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
+    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
   }),
 });
 

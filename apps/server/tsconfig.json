@@ -4,6 +4,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "module": "ESNext",
+    "target": "ESNext",
     "moduleResolution": "bundler",
     "jsxImportSource": "react",
     "allowJs": true,

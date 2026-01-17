@@ -20,7 +20,7 @@ import { cronRouter } from "./cron";
 import { env } from "./env";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
-import { SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from "@opentelemetry/semantic-conventions";
+import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 
 const { NODE_ENV, PORT } = env();
 
@@ -29,12 +29,12 @@ const defaultLogger = getOpenTelemetrySink({
   otlpExporterConfig: {
     url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
     headers: {
-      Authorization: `Bearer ${env.AXIOM_TOKEN}`,
-      "X-Axiom-Dataset": env.AXIOM_DATASET,
+      Authorization: `Bearer ${env().AXIOM_TOKEN}`,
+      "X-Axiom-Dataset": env().AXIOM_DATASET,
     },
   },
   additionalResource: resourceFromAttributes({
-    [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
+    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: "production",
   }),
 });
 
@@ -51,7 +51,7 @@ configureSync({
       sinks: ["console"],
     },
     {
-      category: "api-server-otel",
+      category: "workflow-otel",
       lowestLevel: "info",
       sinks: ["otel"],
     },
