@@ -109,4 +109,6 @@ copy:
     source: /etc/ssl/certs/ca-certificates.crt
     target: /etc/ssl/certs/
 expose: "3000"
+run: apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
+
 entrypoint: /app/apps/workflows/app

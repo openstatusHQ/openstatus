@@ -116,6 +116,7 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
+RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
 USER 1000:1000
 EXPOSE 3000
 ENTRYPOINT ["/app/apps/workflows/app"]

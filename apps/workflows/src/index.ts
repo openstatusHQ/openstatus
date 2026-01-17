@@ -24,6 +24,24 @@ import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conven
 
 const { NODE_ENV, PORT } = env();
 
+type Env = {
+  Variables: {
+    event: Record<string, unknown>;
+  };
+};
+
+function shouldSample(event: Record<string, any>): boolean {
+  // Always keep errors
+  if (event.status_code >= 500) return true;
+  if (event.error) return true;
+
+  // Always keep slow requests (above p99)
+  if (event.duration_ms > 2000) return true;
+
+  // Random sample the rest at 5%
+  return Math.random() < 0.05;
+}
+
 const defaultLogger = getOpenTelemetrySink({
   serviceName: "openstatus-server",
   otlpExporterConfig: {
@@ -34,7 +52,7 @@ const defaultLogger = getOpenTelemetrySink({
     },
   },
   additionalResource: resourceFromAttributes({
-    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: "production",
+    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env().NODE_ENV,
   }),
 });
 
@@ -60,7 +78,9 @@ configureSync({
 });
 
 const logger = getLogger(["workflow"]);
-const app = new Hono({ strict: false });
+const otelLogger = getLogger(["workflow-otel"]);
+
+const app = new Hono<Env>({ strict: false });
 
 app.use("*", requestId());
 
@@ -69,6 +89,11 @@ app.use("*", sentry({ dsn: env().SENTRY_DSN }));
 app.use("*", async (c, next) => {
   const requestId = c.get("requestId");
   const startTime = Date.now();
+
+  const event: Record<string, unknown> = {
+    timestamp: new Date().toISOString(),
+  };
+  c.set("event", event);
 
   await withContext(
     {
@@ -88,6 +113,22 @@ app.use("*", async (c, next) => {
       await next();
 
       const duration = Date.now() - startTime;
+
+      event.status_code = c.res.status;
+      if (c.error) {
+        event.outcome = "error";
+        event.error = {
+          type: c.error.name,
+          message: c.error.message,
+          stack: c.error.stack,
+        };
+      } else {
+        event.outcome = "success";
+      }
+      event.duration_ms = duration;
+      if (shouldSample(event)) {
+        otelLogger.info("request completed", { ...event });
+      }
       logger.info("Request completed", {
         status: c.res.status,
         duration,

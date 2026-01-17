@@ -28,6 +28,18 @@ type Env = {
   };
 };
 
+function shouldSample(event: Record<string, any>): boolean {
+  // Always keep errors
+  if (event.status_code >= 500) return true;
+  if (event.error) return true;
+
+  // Always keep slow requests (above p99)
+  if (event.duration_ms > 2000) return true;
+
+  // Random sample the rest at 5%
+  return Math.random() < 0.05;
+}
+
 const defaultLogger = getOpenTelemetrySink({
   serviceName: "openstatus-server",
   otlpExporterConfig: {
@@ -118,7 +130,9 @@ app.use("*", async (c, next) => {
       const duration = Date.now() - startTime;
 
       event.duration_ms = duration;
-      otelLogger.info("request completed", { ...event });
+      if (shouldSample(event)) {
+        otelLogger.info("request completed", { ...event });
+      }
       logger.info("Request completed", {
         status: c.res.status,
         duration,
