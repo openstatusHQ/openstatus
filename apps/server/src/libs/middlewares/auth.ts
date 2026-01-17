@@ -14,7 +14,7 @@ import {
   verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
 
-const logger = getLogger("api-server");
+const logger = getLogger("api-server-otel");
 
 export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
@@ -59,7 +59,7 @@ export async function authMiddleware(
     .get();
 
   if (!_workspace) {
-    console.error("Workspace not found");
+    logger.error("Workspace not found for ownerId {ownerId}", { ownerId });
     throw new OpenStatusApiError({
       code: "NOT_FOUND",
       message: "Workspace not found, please contact support",
@@ -75,11 +75,15 @@ export async function authMiddleware(
     });
   }
 
+  // Enrich wide event with business context
   const event = c.get("event");
   event.workspace = {
     id: validation.data.id,
     name: validation.data.name,
+    plan: validation.data.plan,
+    stripe_id: validation.data.stripeId,
   };
+  event.auth_method = result.authMethod;
 
   c.set("workspace", validation.data);
 
@@ -87,7 +91,7 @@ export async function authMiddleware(
 }
 
 async function validateKey(key: string): Promise<{
-  result: { valid: boolean; ownerId?: string };
+  result: { valid: boolean; ownerId?: string; authMethod?: string };
   error?: { message: string };
 }> {
   if (env.NODE_ENV === "production") {
@@ -136,7 +140,11 @@ async function validateKey(key: string): Promise<{
             .where(eq(apiKey.id, customKey.id));
         }
         return {
-          result: { valid: true, ownerId: String(customKey.workspaceId) },
+          result: {
+            valid: true,
+            ownerId: String(customKey.workspaceId),
+            authMethod: "custom_key",
+          },
         };
       }
 
@@ -150,23 +158,18 @@ async function validateKey(key: string): Promise<{
           error: { message: "Invalid API verification" },
         };
       }
-      // Add deprecation header when Unkey key is used
-      if (res.value.data.valid) {
-        logger.info("Unkey key used  - Workspace: {workspaceId}", {
-          workspace: res.value.data.identity?.externalId,
-        });
-      }
       return {
         result: {
           valid: res.value.data.valid,
           ownerId: res.value.data.identity?.externalId,
+          authMethod: "unkey",
         },
         error: undefined,
       };
     }
     // Special bypass for our workspace
     if (key.startsWith("sa_") && key === env.SUPER_ADMIN_TOKEN) {
-      return { result: { valid: true, ownerId: "1" } };
+      return { result: { valid: true, ownerId: "1", authMethod: "super_admin" } };
     }
     // In production, we only accept Unkey keys
     throw new OpenStatusApiError({
@@ -176,5 +179,5 @@ async function validateKey(key: string): Promise<{
   }
 
   // In dev / test mode we can use the key as the ownerId
-  return { result: { valid: true, ownerId: key } };
+  return { result: { valid: true, ownerId: key, authMethod: "dev" } };
 }

@@ -27,7 +27,7 @@ type Env = {
     event: Record<string, unknown>;
   };
 };
-
+// @biome-ignore
 function shouldSample(event: Record<string, any>): boolean {
   // Always keep errors
   if (event.status_code >= 500) return true;
@@ -100,22 +100,37 @@ app.use("*", async (c, next) => {
       method: c.req.method,
       url: c.req.url,
       userAgent: c.req.header("User-Agent"),
-      // ipAddress: c.req.header("CF-Connecting-IP") || c.req.header("X-Forwarded-For")
     },
     async () => {
-      logger.info("Request started", {
-        method: c.req.method,
-        url: c.req.url,
-        requestId,
-      });
-
+      // Initialize wide event - one canonical log line per request
       const event: Record<string, unknown> = {
         timestamp: new Date().toISOString(),
+        request_id: requestId,
+        // Request context
+        method: c.req.method,
+        path: c.req.path,
+        url: c.req.url,
+        // Client context
+        user_agent: c.req.header("User-Agent"),
+        // Request metadata
+        content_type: c.req.header("Content-Type"),
+
       };
       c.set("event", event);
+
       await next();
 
+
+
+      // Performance
+      const duration = Date.now() - startTime;
+      event.duration_ms = duration;
+
+      // Response context
       event.status_code = c.res.status;
+
+
+      // Outcome
       if (c.error) {
         event.outcome = "error";
         event.error = {
@@ -124,20 +139,25 @@ app.use("*", async (c, next) => {
           stack: c.error.stack,
         };
       } else {
-        event.outcome = "success";
+        event.outcome = c.res.status < 400 ? "success" : "failure";
       }
 
-      const duration = Date.now() - startTime;
-
-      event.duration_ms = duration;
+      // Emit single canonical log line (sampled for otel, always for console in dev)
       if (shouldSample(event)) {
-        otelLogger.info("request completed", { ...event });
+        otelLogger.info("request", { ...event });
       }
-      logger.info("Request completed", {
-        status: c.res.status,
-        duration,
-        requestId,
-      });
+
+      // Console logging only for errors in production
+      if (env.NODE_ENV !== "production" || c.res.status >= 500) {
+        logger.info("request", {
+          request_id: requestId,
+          method: c.req.method,
+          path: c.req.path,
+          status_code: c.res.status,
+          duration_ms: duration,
+          outcome: event.outcome,
+        });
+      }
     },
   );
 });
