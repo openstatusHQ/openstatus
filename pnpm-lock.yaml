@@ -456,14 +456,14 @@ importers:
         specifier: 0.7.6
         version: 0.7.6(hono@4.11.3)(zod@4.1.13)
       '@logtape/logtape':
-        specifier: 1.4.0-dev.465
-        version: 1.4.0-dev.465
+        specifier: 2.0.0
+        version: 2.0.0
       '@logtape/otel':
-        specifier: 1.4.0-dev.465
-        version: 1.4.0-dev.465(@logtape/logtape@1.4.0-dev.465)
+        specifier: 2.0.0
+        version: 2.0.0(@logtape/logtape@2.0.0)
       '@logtape/sentry':
         specifier: 1.1.2
-        version: 1.1.2(@logtape/logtape@1.4.0-dev.465)
+        version: 1.1.2(@logtape/logtape@2.0.0)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -1098,11 +1098,14 @@ importers:
         specifier: 0.15.15
         version: 0.15.15
       '@logtape/logtape':
-        specifier: 1.1.2
-        version: 1.1.2
+        specifier: 2.0.0
+        version: 2.0.0
+      '@logtape/otel':
+        specifier: 2.0.0
+        version: 2.0.0(@logtape/logtape@2.0.0)
       '@logtape/sentry':
-        specifier: 1.1.2
-        version: 1.1.2(@logtape/logtape@1.1.2)
+        specifier: 2.0.0
+        version: 2.0.0(@logtape/logtape@2.0.0)(@sentry/core@10.31.0)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -3594,21 +3597,24 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@logtape/logtape@1.1.2':
-    resolution: {integrity: sha512-4QXa/5cwt3+cx01C1xm8iqvEXxNZMDTTbT5AFGZnwPkn2WDAyA6UP2khWBZ7FctMnvQqW3fnJ96kgBJ4ahorHw==}
+  '@logtape/logtape@2.0.0':
+    resolution: {integrity: sha512-z9Hp44mIRXAzgxSyQfFQiRuJ78EMnZa6g43UCxyGOO3RgHjn/7q+5OhdbhypkeHjiJRPxv6RmRsyF0S+OOYWnA==}
 
-  '@logtape/logtape@1.4.0-dev.465':
-    resolution: {integrity: sha512-R8csnH/6BK22fhSMVb6dLKha/96Q07XnipUlf/8Ch//TI4Aeg8DlyeOx6toChhA0ahWP8nRT1c4URBVoHhgKEw==}
-
-  '@logtape/otel@1.4.0-dev.465':
-    resolution: {integrity: sha512-YhqOzZ+DRVC3k4hoe3S0YcgthAxF5SDofHHbOpJCUCUXDlJjQz/qtTJGAN2Sn1BjXOpXXRfwI5z/mSdmk0w4Jg==}
+  '@logtape/otel@2.0.0':
+    resolution: {integrity: sha512-2lsip757ZwjMYkINJYcljYf7fd+Hvv3cstF4A3oI3Kbs5yw2f2h7eBhJbHCxKuTj5mJp1vWzuEFrxI94F9jdCA==}
     peerDependencies:
-      '@logtape/logtape': ^1.4.0-dev.465+a3cb852e
+      '@logtape/logtape': ^2.0.0
 
   '@logtape/sentry@1.1.2':
     resolution: {integrity: sha512-Hmt1traui55R6BvDh8Ug4yXUJVJst9guW3TyA5CyFjGUIvgxmV9uukN6q0rMVfjB1YGxMUPrRYI8ddtYu5RJDg==}
     peerDependencies:
       '@logtape/logtape': ^1.1.2
+
+  '@logtape/sentry@2.0.0':
+    resolution: {integrity: sha512-Z3Nlfd6KLGd9a8qVUSThsXR7H2Pxm3Wu2e3nPC2QIE0Q8eL5xQ/8+JN/wsqO99EiX88dJibvgkZOKeIuqFEtVQ==}
+    peerDependencies:
+      '@logtape/logtape': ^2.0.0
+      '@sentry/core': '>=8.0.0'
 
   '@mdx-js/mdx@3.1.1':
     resolution: {integrity: sha512-f6ZO2ifpwAQIpzGWaBQT2TXxPv6z3RBzQKpVftEWN78Vl/YweF1uwussDx8ECAXVtr3Rs89fKyG9YlzUs9DyGQ==}
@@ -13349,13 +13355,11 @@ snapshots:
   '@libsql/win32-x64-msvc@0.5.22':
     optional: true
 
-  '@logtape/logtape@1.1.2': {}
+  '@logtape/logtape@2.0.0': {}
 
-  '@logtape/logtape@1.4.0-dev.465': {}
-
-  '@logtape/otel@1.4.0-dev.465(@logtape/logtape@1.4.0-dev.465)':
+  '@logtape/otel@2.0.0(@logtape/logtape@2.0.0)':
     dependencies:
-      '@logtape/logtape': 1.4.0-dev.465
+      '@logtape/logtape': 2.0.0
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.208.0
       '@opentelemetry/exporter-logs-otlp-grpc': 0.208.0(@opentelemetry/api@1.9.0)
@@ -13366,15 +13370,15 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.208.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.38.0
 
-  '@logtape/sentry@1.1.2(@logtape/logtape@1.1.2)':
+  '@logtape/sentry@1.1.2(@logtape/logtape@2.0.0)':
     dependencies:
-      '@logtape/logtape': 1.1.2
+      '@logtape/logtape': 2.0.0
       '@sentry/core': 9.47.1
 
-  '@logtape/sentry@1.1.2(@logtape/logtape@1.4.0-dev.465)':
+  '@logtape/sentry@2.0.0(@logtape/logtape@2.0.0)(@sentry/core@10.31.0)':
     dependencies:
-      '@logtape/logtape': 1.4.0-dev.465
-      '@sentry/core': 9.47.1
+      '@logtape/logtape': 2.0.0
+      '@sentry/core': 10.31.0
 
   '@mdx-js/mdx@3.1.1':
     dependencies:

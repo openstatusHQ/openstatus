@@ -41,7 +41,8 @@ const defaultLogger = getOpenTelemetrySink({
     [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
   }),
 });
-configure({
+
+await configure({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
 

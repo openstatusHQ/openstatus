@@ -8,6 +8,8 @@ import {
   jsonLinesFormatter,
   withContext,
 } from "@logtape/logtape";
+import { getOpenTelemetrySink } from "@logtape/otel";
+
 // import { getSentrySink } from "@logtape/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
@@ -17,7 +19,24 @@ import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
 
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from "@opentelemetry/semantic-conventions";
+
 const { NODE_ENV, PORT } = env();
+
+const defaultLogger = getOpenTelemetrySink({
+  serviceName: "openstatus-server",
+  otlpExporterConfig: {
+    url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+    headers: {
+      Authorization: `Bearer ${env.AXIOM_TOKEN}`,
+      "X-Axiom-Dataset": env.AXIOM_DATASET,
+    },
+  },
+  additionalResource: resourceFromAttributes({
+    [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: "production",
+  }),
+});
 
 configureSync({
   sinks: {
