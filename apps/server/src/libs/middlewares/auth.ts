@@ -169,7 +169,9 @@ async function validateKey(key: string): Promise<{
     }
     // Special bypass for our workspace
     if (key.startsWith("sa_") && key === env.SUPER_ADMIN_TOKEN) {
-      return { result: { valid: true, ownerId: "1", authMethod: "super_admin" } };
+      return {
+        result: { valid: true, ownerId: "1", authMethod: "super_admin" },
+      };
     }
     // In production, we only accept Unkey keys
     throw new OpenStatusApiError({

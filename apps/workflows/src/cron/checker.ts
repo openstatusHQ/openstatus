@@ -93,7 +93,10 @@ export async function sendCheckerTasks(
     )
     .all();
 
-  logger.info("Starting cron job", { periodicity, monitor_count: result.length });
+  logger.info("Starting cron job", {
+    periodicity,
+    monitor_count: result.length,
+  });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
