@@ -140,7 +140,7 @@ export default async function Page() {
         <Note>
           <Terminal />
           Use Monitoring as Code to manage your monitors with our CLI.
-          <NoteButton variant="outline" asChild>
+          <NoteButton variant="default" asChild>
             <Link href="/cli">Learn more</Link>
           </NoteButton>
         </Note>
