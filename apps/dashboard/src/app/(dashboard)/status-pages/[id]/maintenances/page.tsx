@@ -63,7 +63,7 @@ export default function Page() {
           </SectionHeader>
           <div>
             <FormSheetMaintenance
-              monitors={statusPage.monitors}
+              pageComponents={statusPage.pageComponents}
               onSubmit={async (values) => {
                 await createStatusPageMutation.mutateAsync({
                   pageId: Number.parseInt(id),
@@ -71,7 +71,7 @@ export default function Page() {
                   message: values.message,
                   startDate: values.startDate,
                   endDate: values.endDate,
-                  monitors: values.monitors,
+                  pageComponents: values.pageComponents,
                   notifySubscribers: values.notifySubscribers,
                 });
               }}

@@ -3,8 +3,10 @@ import { and, eq, inArray } from "drizzle-orm";
 import type { db } from "./db";
 import {
   maintenance,
+  maintenancesToMonitors,
   maintenancesToPageComponents,
   monitor,
+  monitorsToStatusReport,
   pageComponent,
   pageComponentGroup,
   statusReport,
@@ -364,6 +366,68 @@ export async function syncStatusReportToMonitorDeleteByMonitors(
   );
 }
 
+/**
+ * Syncs status_report_to_page_component inserts to status_report_to_monitors
+ * This is the inverse of syncStatusReportToMonitorInsertMany
+ */
+export async function syncStatusReportToPageComponentInsertMany(
+  db: DB | Transaction,
+  statusReportId: number,
+  pageComponentIds: number[],
+) {
+  if (pageComponentIds.length === 0) return;
+
+  // Find monitor IDs from the page components
+  // Only get components that have a monitorId (not external components)
+  const components = await db
+    .select({ monitorId: pageComponent.monitorId })
+    .from(pageComponent)
+    .where(
+      and(
+        inArray(pageComponent.id, pageComponentIds),
+        eq(pageComponent.type, "monitor"),
+      ),
+    );
+
+  if (components.length === 0) return;
+
+  // Extract unique monitor IDs (filter out nulls)
+  const monitorIds = [
+    ...new Set(
+      components
+        .map((c) => c.monitorId)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+
+  if (monitorIds.length === 0) return;
+
+  // Insert into monitorsToStatusReport
+  await db
+    .insert(monitorsToStatusReport)
+    .values(
+      monitorIds.map((monitorId) => ({
+        statusReportId,
+        monitorId,
+      })),
+    )
+    .onConflictDoNothing();
+}
+
+/**
+ * Syncs status_report_to_page_component deletes to status_report_to_monitors
+ * This is the inverse of syncStatusReportToMonitorDeleteByStatusReport
+ * When page components are removed from a status report, remove the corresponding monitors
+ */
+export async function syncStatusReportToPageComponentDeleteByStatusReport(
+  db: DB | Transaction,
+  statusReportId: number,
+) {
+  await db
+    .delete(monitorsToStatusReport)
+    .where(eq(monitorsToStatusReport.statusReportId, statusReportId));
+}
+
 // ============================================================================
 // Maintenance to Monitor <-> Maintenance to Page Component Sync
 // ============================================================================
@@ -512,4 +576,66 @@ export async function syncMaintenanceToMonitorDeleteByMonitors(
       components.map((c) => c.id),
     ),
   );
+}
+
+/**
+ * Syncs maintenance_to_page_component inserts to maintenance_to_monitors
+ * This is the inverse of syncMaintenanceToMonitorInsertMany
+ */
+export async function syncMaintenanceToPageComponentInsertMany(
+  db: DB | Transaction,
+  maintenanceId: number,
+  pageComponentIds: number[],
+) {
+  if (pageComponentIds.length === 0) return;
+
+  // Find monitor IDs from the page components
+  // Only get components that have a monitorId (not external components)
+  const components = await db
+    .select({ monitorId: pageComponent.monitorId })
+    .from(pageComponent)
+    .where(
+      and(
+        inArray(pageComponent.id, pageComponentIds),
+        eq(pageComponent.type, "monitor"),
+      ),
+    );
+
+  if (components.length === 0) return;
+
+  // Extract unique monitor IDs (filter out nulls)
+  const monitorIds = [
+    ...new Set(
+      components
+        .map((c) => c.monitorId)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+
+  if (monitorIds.length === 0) return;
+
+  // Insert into maintenancesToMonitors
+  await db
+    .insert(maintenancesToMonitors)
+    .values(
+      monitorIds.map((monitorId) => ({
+        maintenanceId,
+        monitorId,
+      })),
+    )
+    .onConflictDoNothing();
+}
+
+/**
+ * Syncs maintenance_to_page_component deletes to maintenance_to_monitors
+ * This is the inverse of syncMaintenanceToMonitorDeleteByMaintenance
+ * When page components are removed from a maintenance, remove the corresponding monitors
+ */
+export async function syncMaintenanceToPageComponentDeleteByMaintenance(
+  db: DB | Transaction,
+  maintenanceId: number,
+) {
+  await db
+    .delete(maintenancesToMonitors)
+    .where(eq(maintenancesToMonitors.maintenanceId, maintenanceId));
 }

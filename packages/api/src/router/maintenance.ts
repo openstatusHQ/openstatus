@@ -9,14 +9,16 @@ import {
   gte,
   inArray,
   lte,
-  syncMaintenanceToMonitorDeleteByMaintenance,
-  syncMaintenanceToMonitorInsertMany,
+  syncMaintenanceToPageComponentDeleteByMaintenance,
+  syncMaintenanceToPageComponentInsertMany,
 } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToMonitors,
-  monitor,
+  maintenancesToPageComponents,
+  pageComponent,
   selectMaintenanceSchema,
+  selectPageComponentSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -151,17 +153,28 @@ export const maintenanceRouter = createTRPCRouter({
           opts.input?.order === "asc"
             ? asc(maintenance.createdAt)
             : desc(maintenance.createdAt),
-        with: { maintenancesToMonitors: true },
+        with: {
+          maintenancesToMonitors: true,
+          maintenancesToPageComponents: { with: { pageComponent: true } },
+        },
       });
 
       const result = await query;
 
-      return selectMaintenanceSchema.array().parse(
-        result.map((m) => ({
-          ...m,
-          monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
-        })),
-      );
+      return selectMaintenanceSchema
+        .extend({
+          pageComponents: z.array(selectPageComponentSchema).prefault([]),
+        })
+        .array()
+        .parse(
+          result.map((m) => ({
+            ...m,
+            monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
+            pageComponents: m.maintenancesToPageComponents.map(
+              ({ pageComponent }) => pageComponent,
+            ),
+          })),
+        );
     }),
 
   new: protectedProcedure
@@ -173,27 +186,27 @@ export const maintenanceRouter = createTRPCRouter({
         message: z.string(),
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
-        monitors: z.array(z.number()).optional(),
+        pageComponents: z.array(z.number()).optional(),
         notifySubscribers: z.boolean().nullish(),
       }),
     )
     .mutation(async (opts) => {
       // Check if the user has access to the monitors
-      if (opts.input.monitors?.length) {
+      if (opts.input.pageComponents?.length) {
         const whereConditions: SQL[] = [
-          eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.monitors),
+          eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+          inArray(pageComponent.id, opts.input.pageComponents),
         ];
-        const monitors = await opts.ctx.db
+        const pageComponents = await opts.ctx.db
           .select()
-          .from(monitor)
+          .from(pageComponent)
           .where(and(...whereConditions))
           .all();
 
-        if (monitors.length !== opts.input.monitors.length) {
+        if (pageComponents.length !== opts.input.pageComponents.length) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "You do not have access to all the monitors",
+            message: "You do not have access to all the page components",
           });
         }
       }
@@ -212,18 +225,18 @@ export const maintenanceRouter = createTRPCRouter({
           .returning()
           .get();
 
-        if (opts.input.monitors?.length) {
-          await tx.insert(maintenancesToMonitors).values(
-            opts.input.monitors.map((monitorId) => ({
+        if (opts.input.pageComponents?.length) {
+          await tx.insert(maintenancesToPageComponents).values(
+            opts.input.pageComponents.map((pageComponentId) => ({
               maintenanceId: newMaintenance.id,
-              monitorId,
+              pageComponentId,
             })),
           );
           // Sync to page components
-          await syncMaintenanceToMonitorInsertMany(
+          await syncMaintenanceToPageComponentInsertMany(
             tx,
             newMaintenance.id,
-            opts.input.monitors,
+            opts.input.pageComponents,
           );
         }
 
@@ -245,26 +258,26 @@ export const maintenanceRouter = createTRPCRouter({
         message: z.string(),
         startDate: z.coerce.date(),
         endDate: z.coerce.date(),
-        monitors: z.array(z.number()).optional(),
+        pageComponents: z.array(z.number()).optional(),
       }),
     )
     .mutation(async (opts) => {
       // Check if the user has access to the monitors
-      if (opts.input.monitors?.length) {
+      if (opts.input.pageComponents?.length) {
         const whereConditions: SQL[] = [
-          eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.monitors),
+          eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+          inArray(pageComponent.id, opts.input.pageComponents),
         ];
-        const monitors = await opts.ctx.db
+        const pageComponents = await opts.ctx.db
           .select()
-          .from(monitor)
+          .from(pageComponent)
           .where(and(...whereConditions))
           .all();
 
-        if (monitors.length !== opts.input.monitors.length) {
+        if (pageComponents.length !== opts.input.pageComponents.length) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "You do not have access to all the monitors",
+            message: "You do not have access to all the page components",
           });
         }
       }
@@ -292,25 +305,30 @@ export const maintenanceRouter = createTRPCRouter({
 
         // Delete all existing relations
         await tx
-          .delete(maintenancesToMonitors)
-          .where(eq(maintenancesToMonitors.maintenanceId, _maintenance.id))
+          .delete(maintenancesToPageComponents)
+          .where(
+            eq(maintenancesToPageComponents.maintenanceId, _maintenance.id),
+          )
           .run();
-        // Sync delete to page components
-        await syncMaintenanceToMonitorDeleteByMaintenance(tx, _maintenance.id);
+        // Sync delete to monitors (inverse sync)
+        await syncMaintenanceToPageComponentDeleteByMaintenance(
+          tx,
+          _maintenance.id,
+        );
 
-        // Create new relations if monitors are provided
-        if (opts.input.monitors?.length) {
-          await tx.insert(maintenancesToMonitors).values(
-            opts.input.monitors.map((monitorId) => ({
+        // Create new relations if page components are provided
+        if (opts.input.pageComponents?.length) {
+          await tx.insert(maintenancesToPageComponents).values(
+            opts.input.pageComponents.map((pageComponentId) => ({
               maintenanceId: _maintenance.id,
-              monitorId,
+              pageComponentId,
             })),
           );
-          // Sync to page components
-          await syncMaintenanceToMonitorInsertMany(
+          // Sync components to monitors (inverse sync)
+          await syncMaintenanceToPageComponentInsertMany(
             tx,
             _maintenance.id,
-            opts.input.monitors,
+            opts.input.pageComponents,
           );
         }
 

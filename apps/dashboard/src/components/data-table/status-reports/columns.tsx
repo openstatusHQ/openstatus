@@ -86,16 +86,16 @@ export const columns: ColumnDef<StatusReport>[] = [
     },
   },
   {
-    id: "monitors",
-    accessorFn: (row) => row.monitors,
+    id: "pageComponents",
+    accessorFn: (row) => row?.pageComponents,
     header: "Affected",
     cell: ({ row }) => {
-      const value = row.getValue("monitors");
+      const value = row.getValue("pageComponents");
       if (Array.isArray(value) && value.length > 0 && "name" in value[0]) {
         return (
           <div className="flex flex-wrap gap-1">
             {value.map((m) => (
-              <Link href={`/monitors/${m.id}`} key={m.id}>
+              <Link href={`/monitors/${m.id}/overview`} key={m.id}>
                 <TableCellBadge value={m.name} />
               </Link>
             ))}
