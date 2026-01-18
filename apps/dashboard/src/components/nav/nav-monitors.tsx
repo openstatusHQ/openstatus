@@ -33,7 +33,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-const STATUS = {
+export const STATUS = {
   degraded: "bg-warning border border-warning",
   error: "bg-destructive border border-destructive",
   inactive: "bg-muted-foreground/70 border border-muted-foreground/70",
