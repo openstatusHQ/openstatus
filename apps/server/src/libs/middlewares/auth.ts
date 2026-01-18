@@ -86,7 +86,7 @@ export async function authMiddleware(
   event.auth_method = result.authMethod;
 
   c.set("workspace", validation.data);
-
+  c.set("event", event);
   await next();
 }
 
