@@ -48,6 +48,7 @@ export function FormComponentsUpdate() {
         monitorId: c.monitorId,
         order: c.groupOrder ?? 0,
         name: c.name,
+        description: c.description ?? "",
         type: c.type,
       })),
     };
@@ -60,6 +61,7 @@ export function FormComponentsUpdate() {
       monitorId: c.monitorId,
       order: c.order ?? 0,
       name: c.name,
+      description: c.description ?? "",
       type: c.type,
     })),
     groups,

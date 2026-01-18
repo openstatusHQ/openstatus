@@ -11,7 +11,6 @@ import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
-import { FormMonitors } from "./form-monitors";
 import { FormPageAccess } from "./form-page-access";
 
 export function FormStatusPageUpdate() {
@@ -38,12 +37,6 @@ export function FormStatusPageUpdate() {
 
   const updatePasswordProtectionMutation = useMutation(
     trpc.page.updatePasswordProtection.mutationOptions({
-      onSuccess: () => refetch(),
-    }),
-  );
-
-  const updateMonitorsMutation = useMutation(
-    trpc.page.updateMonitors.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -124,43 +117,6 @@ export function FormStatusPageUpdate() {
             slug: values.slug,
             description: values.description ?? "",
             icon: values.icon ?? "",
-          });
-        }}
-      />
-      <FormMonitors
-        monitors={monitors ?? []}
-        defaultValues={{
-          monitors: statusPage.monitors
-            .filter((m) => !m.groupId)
-            .map((monitor) => ({
-              id: monitor.id,
-              order: monitor.order,
-              active: monitor.active ?? null,
-            })),
-          groups: statusPage.monitorGroups.map((group) => {
-            const order =
-              statusPage.monitors.find((m) => m.groupId === group.id)?.order ??
-              0;
-            return {
-              id: -1 * group.id, // negative id to avoid conflicts with monitors
-              order,
-              name: group.name,
-              monitors: statusPage.monitors
-                .filter((m) => m.groupId === group.id)
-                .map((monitor) => ({
-                  id: monitor.id,
-                  order: monitor.groupOrder,
-                  active: monitor.active ?? null,
-                })),
-            };
-          }),
-        }}
-        legacy={statusPage.legacyPage}
-        onSubmit={async (values) => {
-          await updateMonitorsMutation.mutateAsync({
-            id: Number.parseInt(id),
-            monitors: values.monitors,
-            groups: values.groups,
           });
         }}
       />

@@ -102,6 +102,7 @@ const componentSchema = z.object({
   monitorId: z.number().nullish(),
   order: z.number(),
   name: z.string().min(1, { message: "Name is required" }),
+  description: z.string().optional(),
   type: z.enum(["monitor", "external"]),
 });
 
@@ -332,6 +333,7 @@ export function FormComponents({
             monitorId: item.monitorId,
             order: index,
             name: existingComponent?.name ?? item.name,
+            description: existingComponent?.description ?? "",
             type: item.type,
           };
         });
@@ -483,7 +485,7 @@ export function FormComponents({
               Manage your page components
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <FormCardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <FormField
               control={form.control}
               name="components"
@@ -511,6 +513,7 @@ export function FormComponents({
                                 monitorId: null,
                                 order: watchComponents.length,
                                 name: "",
+                                description: "",
                                 type: "external" as const,
                               },
                             ]);
@@ -562,6 +565,7 @@ export function FormComponents({
                                                 monitorId: monitor.id,
                                                 order: watchComponents.length,
                                                 name: monitor.name,
+                                                description: "",
                                                 type: "monitor" as const,
                                               },
                                             ]);
@@ -660,7 +664,11 @@ export function FormComponents({
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
-              Learn more about <Link href="#">page components</Link>.
+              Learn more about{" "}
+              <Link href="https://docs.openstatus.dev/reference/status-page/#page-components">
+                page components
+              </Link>
+              .
             </FormCardFooterInfo>
             <Button type="submit" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}
@@ -696,7 +704,7 @@ function ComponentRow({
       className={cn("rounded-md", className)}
       {...props}
     >
-      <div className="grid h-9 grid-cols-3 gap-2">
+      <div className="grid h-9 grid-cols-4 gap-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
             <GripVertical
@@ -714,7 +722,7 @@ function ComponentRow({
                   <FormLabel className="sr-only">Component name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Component Name"
+                      placeholder="Name"
                       className="w-full bg-background"
                       {...field}
                     />
@@ -726,6 +734,35 @@ function ComponentRow({
           ) : (
             <span className="truncate rounded-md border border-transparent px-3 py-1 text-sm">
               {component.name}
+            </span>
+          )}
+        </div>
+        <div className="flex flex-row items-center gap-1 self-center">
+          {fieldNamePrefix ? (
+            <FormField
+              control={form.control}
+              name={
+                `${fieldNamePrefix}.description` as "components.0.description"
+              }
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel className="sr-only">
+                    Component description
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Description"
+                      className="w-full bg-background"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <span className="truncate rounded-md border border-transparent px-3 py-1 text-sm">
+              {component.description}
             </span>
           )}
         </div>
@@ -868,6 +905,7 @@ function ComponentGroupRow({
             monitorId: c.monitorId,
             order: index,
             name: existingComponent?.name ?? c.name,
+            description: existingComponent?.description ?? "",
             type: c.type,
           };
         }),
@@ -915,7 +953,7 @@ function ComponentGroupRow({
 
   return (
     <SortableItem value={group.id} className="rounded-md border bg-muted">
-      <div className="grid grid-cols-3 gap-2 px-2 pt-2">
+      <div className="grid grid-cols-4 gap-2 px-2 pt-2">
         <div className="flex flex-row items-center gap-1 self-center">
           <SortableItemHandle>
             <GripVertical
@@ -972,6 +1010,7 @@ function ComponentGroupRow({
                             monitorId: null,
                             order: current.length,
                             name: "",
+                            description: "",
                             type: "external" as const,
                           },
                         ]);
@@ -1023,6 +1062,7 @@ function ComponentGroupRow({
                                               monitorId: monitor.id,
                                               order: current.length,
                                               name: monitor.name,
+                                              description: "",
                                               type: "monitor" as const,
                                             },
                                           ],
@@ -1054,6 +1094,7 @@ function ComponentGroupRow({
             </FormItem>
           )}
         />
+        <div />
         <div className="flex justify-end">
           <AlertDialog>
             <AlertDialogTrigger asChild>
