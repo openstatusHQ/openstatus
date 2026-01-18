@@ -30,6 +30,7 @@ type Monitor struct {
 	OtelEndpoint    sql.NullString `db:"otel_endpoint" json:"-"`
 	OtelHeaders     sql.NullString `db:"otel_headers" json:"-"`
 	Name            string         `db:"name" json:"-"`
+	ExternalName    sql.NullString `db:"external_name" json:"-"`
 	Description     string         `db:"description" json:"-"`
 	CreatedAt       int            `db:"created_at" json:"-"`
 	UpdatedAt       int            `db:"updated_at" json:"-"`
