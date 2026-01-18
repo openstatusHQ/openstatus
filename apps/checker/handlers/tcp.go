@@ -86,6 +86,18 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		trigger = req.Trigger
 	}
 
+	e, f := c.Get("event")
+	if f {
+		t := e.(map[string]any)
+		t["checker"] = map[string]string{
+			"uri": req.URI,
+			"workspace_id": req.WorkspaceID,
+			"monitor_id":req.MonitorID,
+			"trigger": trigger,
+		}
+		c.Set("event", t)
+	}
+
 	var response checker.TCPResponse
 
 	var retry int
