@@ -11,6 +11,8 @@ jobs:
     name: Deploy Private Location
     runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
