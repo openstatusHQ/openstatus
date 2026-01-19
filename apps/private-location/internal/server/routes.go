@@ -84,7 +84,7 @@ func Logger() func(next http.Handler) http.Handler {
 			}
 
 			event["status_code"] = status
-			event["duration_ms"] = int(duration)
+			event["duration_ms"] = duration
 
 			if status >= 400 {
 				event["outcome"] = "error"
