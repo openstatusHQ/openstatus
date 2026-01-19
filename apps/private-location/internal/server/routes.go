@@ -59,7 +59,7 @@ func Logger() func(next http.Handler) http.Handler {
 			if r.TLS != nil {
 				scheme = "https"
 			}
-			fullURL := scheme + "://" + r.Host + r.RequestURI()
+			fullURL := scheme + "://" + r.Host + r.RequestURI
 
 			event := map[string]any{
 				"timestamp":    startTime.Format(time.RFC3339),
