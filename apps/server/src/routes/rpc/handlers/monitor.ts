@@ -2,70 +2,21 @@ import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import {
-  HttpAssertionComparator,
-  HttpAssertionType,
-  HttpMethod,
   type MonitorService,
-  MonitorStatus,
-  MonitorType,
+  NumberComparator,
+  StringComparator,
+  RecordComparator,
+  type HTTPMonitor,
+  type TCPMonitor,
+  type DNSMonitor,
+  type StatusCodeAssertion,
+  type BodyAssertion,
+  type HeaderAssertion,
+  type RecordAssertion,
+  type Headers,
 } from "@openstatus/proto/monitor/v1";
 
 import { getRpcContext } from "../interceptors";
-
-type HttpAssertion = {
-  type: HttpAssertionType;
-  comparator: HttpAssertionComparator;
-  expectedValue: string;
-  headerKey?: string;
-};
-
-type MonitorConfig =
-  | {
-      config: {
-        case: "http";
-        value: {
-          url: string;
-          method: HttpMethod;
-          headers: Record<string, string>;
-          body?: string;
-          timeoutMs: number;
-          followRedirects: boolean;
-          assertions: HttpAssertion[];
-        };
-      };
-    }
-  | {
-      config: {
-        case: "tcp";
-        value: {
-          host: string;
-          port: number;
-          timeoutMs: number;
-        };
-      };
-    }
-  | {
-      config: {
-        case: "dns";
-        value: {
-          domain: string;
-          recordType: number;
-          expectedValues: [] // replace with actual assertion;
-          timeoutMs: number;
-        };
-      };
-    };
-
-/**
- * Helper to create a protobuf Timestamp from a Date.
- */
-function dateToTimestamp(date: Date) {
-  const ms = date.getTime();
-  return {
-    seconds: BigInt(Math.floor(ms / 1000)),
-    nanos: (ms % 1000) * 1_000_000,
-  };
-}
 
 /**
  * Helper to get a monitor by ID with workspace scope.
@@ -85,60 +36,118 @@ async function getMonitorById(id: number, workspaceId: number) {
 }
 
 /**
- * Helper to convert database job type to proto MonitorType.
+ * Helper to convert database compare string to NumberComparator.
  */
-function jobTypeToProtoType(jobType: string): MonitorType {
-  switch (jobType) {
-    case "http":
-      return MonitorType.HTTP;
-    case "tcp":
-      return MonitorType.TCP;
-    case "dns":
-      return MonitorType.DNS;
-    default:
-      return MonitorType.UNSPECIFIED;
-  }
-}
-
-/**
- * Helper to convert database active status to proto MonitorStatus.
- */
-function activeToProtoStatus(active: boolean | null): MonitorStatus {
-  return active ? MonitorStatus.ACTIVE : MonitorStatus.PAUSED;
-}
-
-/**
- * Helper to convert assertion compare string to proto HttpAssertionComparator.
- */
-function compareToProtoComparator(compare: string): HttpAssertionComparator {
+function compareToNumberComparator(compare: string): NumberComparator {
   switch (compare) {
     case "eq":
-      return HttpAssertionComparator.EQUALS;
+      return NumberComparator.EQUAL;
     case "not_eq":
-      return HttpAssertionComparator.NOT_EQUALS;
-    case "contains":
-      return HttpAssertionComparator.CONTAINS;
-    case "not_contains":
-      return HttpAssertionComparator.NOT_CONTAINS;
+      return NumberComparator.NOT_EQUAL;
     case "gt":
-      return HttpAssertionComparator.GREATER_THAN;
+      return NumberComparator.GREATER_THAN;
     case "gte":
-        return HttpAssertionComparator.GREATER_THAN_EQUALS
+      return NumberComparator.GREATER_THAN_OR_EQUAL;
     case "lt":
-      return HttpAssertionComparator.LESS_THAN;
+      return NumberComparator.LESS_THAN;
     case "lte":
-      return HttpAssertionComparator.LESS_THAN_EQUALS;
+      return NumberComparator.LESS_THAN_OR_EQUAL;
     default:
-      return HttpAssertionComparator.UNSPECIFIED;
+      return NumberComparator.UNSPECIFIED;
   }
 }
 
 /**
- * Helper to parse database assertions JSON and convert to proto HttpAssertion array.
+ * Helper to convert database compare string to StringComparator.
  */
-function parseDbAssertions(assertionsJson: string | null): HttpAssertion[] {
-  if (!assertionsJson) {
+function compareToStringComparator(compare: string): StringComparator {
+  switch (compare) {
+    case "eq":
+      return StringComparator.EQUAL;
+    case "not_eq":
+      return StringComparator.NOT_EQUAL;
+    case "contains":
+      return StringComparator.CONTAINS;
+    case "not_contains":
+      return StringComparator.NOT_CONTAINS;
+    case "empty":
+      return StringComparator.EMPTY;
+    case "not_empty":
+      return StringComparator.NOT_EMPTY;
+    case "gt":
+      return StringComparator.GREATER_THAN;
+    case "gte":
+      return StringComparator.GREATER_THAN_OR_EQUAL;
+    case "lt":
+      return StringComparator.LESS_THAN;
+    case "lte":
+      return StringComparator.LESS_THAN_OR_EQUAL;
+    default:
+      return StringComparator.UNSPECIFIED;
+  }
+}
+
+/**
+ * Helper to convert database compare string to RecordComparator.
+ */
+function compareToRecordComparator(compare: string): RecordComparator {
+  switch (compare) {
+    case "eq":
+      return RecordComparator.EQUAL;
+    case "not_eq":
+      return RecordComparator.NOT_EQUAL;
+    case "contains":
+      return RecordComparator.CONTAINS;
+    case "not_contains":
+      return RecordComparator.NOT_CONTAINS;
+    default:
+      return RecordComparator.UNSPECIFIED;
+  }
+}
+
+/**
+ * Helper to parse database headers JSON and convert to proto Headers array.
+ */
+function parseDbHeaders(headersJson: string | null): Headers[] {
+  if (!headersJson) {
     return [];
+  }
+
+  try {
+    const headers = JSON.parse(headersJson) as Array<{
+      key: string;
+      value: string;
+    }>;
+    return headers.map((h) => ({
+      $typeName: "openstatus.monitor.v1.Headers" as const,
+      key: h.key,
+      value: h.value,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Helper to parse database assertions JSON for HTTP monitors.
+ */
+function parseHttpAssertions(assertionsJson: string | null): {
+  statusCodeAssertions: StatusCodeAssertion[];
+  bodyAssertions: BodyAssertion[];
+  headerAssertions: HeaderAssertion[];
+} {
+  const result: {
+    statusCodeAssertions: StatusCodeAssertion[];
+    bodyAssertions: BodyAssertion[];
+    headerAssertions: HeaderAssertion[];
+  } = {
+    statusCodeAssertions: [],
+    bodyAssertions: [],
+    headerAssertions: [],
+  };
+
+  if (!assertionsJson) {
+    return result;
   }
 
   try {
@@ -147,178 +156,129 @@ function parseDbAssertions(assertionsJson: string | null): HttpAssertion[] {
       compare: string;
       target: string | number;
       key?: string;
-      path?: string;
+    }>;
+
+    for (const a of assertions) {
+      switch (a.type) {
+        case "status":
+          result.statusCodeAssertions.push({
+            $typeName: "openstatus.monitor.v1.StatusCodeAssertion" as const,
+            target: BigInt(a.target),
+            comparator: compareToNumberComparator(a.compare),
+          });
+          break;
+        case "textBody":
+        case "jsonBody":
+          result.bodyAssertions.push({
+            $typeName: "openstatus.monitor.v1.BodyAssertion" as const,
+            target: String(a.target),
+            comparator: compareToStringComparator(a.compare),
+          });
+          break;
+        case "header":
+          result.headerAssertions.push({
+            $typeName: "openstatus.monitor.v1.HeaderAssertion" as const,
+            target: String(a.target),
+            comparator: compareToStringComparator(a.compare),
+            key: a.key ?? "",
+          });
+          break;
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  return result;
+}
+
+/**
+ * Helper to parse database assertions JSON for DNS monitors.
+ */
+function parseDnsAssertions(assertionsJson: string | null): RecordAssertion[] {
+  if (!assertionsJson) {
+    return [];
+  }
+
+  try {
+    const assertions = JSON.parse(assertionsJson) as Array<{
+      type: string;
+      compare: string;
+      target: string;
+      record?: string;
     }>;
 
     return assertions
-      .filter((a) =>
-        ["status", "header", "textBody", "jsonBody"].includes(a.type),
-      )
-      .map((a) => {
-        let type: HttpAssertionType;
-        let headerKey: string | undefined;
-
-        switch (a.type) {
-          case "status":
-            type = HttpAssertionType.STATUS_CODE;
-            break;
-          case "header":
-            type = HttpAssertionType.HEADER;
-            headerKey = a.key;
-            break;
-          case "textBody":
-          case "jsonBody":
-            type = HttpAssertionType.BODY;
-            break;
-          default:
-            type = HttpAssertionType.UNSPECIFIED;
-        }
-
-        return {
-          type,
-          comparator: compareToProtoComparator(a.compare),
-          expectedValue: String(a.target),
-          headerKey,
-        };
-      });
+      .filter((a) => a.type === "dns" || a.record)
+      .map((a) => ({
+        $typeName: "openstatus.monitor.v1.RecordAssertion" as const,
+        record: a.record ?? "",
+        target: String(a.target),
+        comparator: compareToRecordComparator(a.compare),
+      }));
   } catch {
     return [];
   }
 }
 
 /**
- * Helper to convert database method to proto HttpMethod.
+ * Helper to transform database HTTP monitor to proto HTTPMonitor.
  */
-function methodToProtoMethod(method: string | null): HttpMethod {
-  switch (method?.toUpperCase()) {
-    case "GET":
-      return HttpMethod.GET;
-    case "POST":
-      return HttpMethod.POST;
-    case "PUT":
-      return HttpMethod.PUT;
-    case "PATCH":
-      return HttpMethod.PATCH;
-    case "DELETE":
-      return HttpMethod.DELETE;
-    case "HEAD":
-      return HttpMethod.HEAD;
-    case "OPTIONS":
-      return HttpMethod.OPTIONS;
-    default:
-      return HttpMethod.GET;
-  }
-}
-
-/**
- * Helper to convert database periodicity string to seconds.
- */
-function periodicityToSeconds(periodicity: string): number {
-  switch (periodicity) {
-    case "30s":
-      return 30;
-    case "1m":
-      return 60;
-    case "5m":
-      return 300;
-    case "10m":
-      return 600;
-    case "30m":
-      return 1800;
-    case "1h":
-      return 3600;
-    default:
-      return 60; // Default to 1 minute
-  }
-}
-
-/**
- * Helper to transform database monitor to proto Monitor.
- */
-function dbMonitorToProto(
+function dbMonitorToHttpProto(
   dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
-) {
-  const monitorType = jobTypeToProtoType(dbMon.jobType);
-
-  // Build config based on job type
-  let config: MonitorConfig | undefined;
-  if (monitorType === MonitorType.HTTP) {
-    // Parse headers if present
-    let headers: { [key: string]: string } = {};
-    if (dbMon.headers) {
-      try {
-        const parsedHeaders = JSON.parse(dbMon.headers);
-        if (Array.isArray(parsedHeaders)) {
-          headers = parsedHeaders.reduce(
-            (
-              acc: { [key: string]: string },
-              h: { key: string; value: string },
-            ) => {
-              acc[h.key] = h.value;
-              return acc;
-            },
-            {},
-          );
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    }
-
-    config = {
-      config: {
-        case: "http" as const,
-        value: {
-          url: dbMon.url,
-          method: methodToProtoMethod(dbMon.method),
-          headers,
-          body: dbMon.body ?? undefined,
-          timeoutMs: dbMon.timeout,
-          followRedirects: dbMon.followRedirects ?? true,
-          assertions: parseDbAssertions(dbMon.assertions),
-        },
-      },
-    };
-  } else if (monitorType === MonitorType.TCP) {
-    // For TCP, URL contains "host:port"
-    const [host, portStr] = dbMon.url.split(":");
-    config = {
-      config: {
-        case: "tcp" as const,
-        value: {
-          host: host || dbMon.url,
-          port: portStr ? Number.parseInt(portStr, 10) : 80,
-          timeoutMs: dbMon.timeout,
-        },
-      },
-    };
-  } else if (monitorType === MonitorType.DNS) {
-    config = {
-      config: {
-        case: "dns" as const,
-        value: {
-          domain: dbMon.url,
-          recordType: 0, // TODO: Map from assertions
-          expectedValues: [],
-          timeoutMs: dbMon.timeout,
-        },
-      },
-    };
-  }
+): HTTPMonitor {
+  const assertions = parseHttpAssertions(dbMon.assertions);
 
   return {
+    $typeName: "openstatus.monitor.v1.HTTPMonitor",
     id: String(dbMon.id),
-    name: dbMon.name,
-    description: dbMon.description ?? "",
-    type: monitorType,
-    config,
-    periodicity: periodicityToSeconds(dbMon.periodicity),
-    regions: dbMon.regions?.split(",").filter(Boolean) ?? [],
-    status: activeToProtoStatus(dbMon.active),
-    createdAt: dbMon.createdAt ? dateToTimestamp(dbMon.createdAt) : undefined,
-    updatedAt: dbMon.updatedAt ? dateToTimestamp(dbMon.updatedAt) : undefined,
-    degradedAfterMs: dbMon.degradedAfter ?? undefined,
-    tags: [], // Tags are stored in a separate relation table
+    url: dbMon.url,
+    periodicity: dbMon.periodicity,
+    method: dbMon.method?.toUpperCase() ?? "GET",
+    body: dbMon.body ?? "",
+    timeout: BigInt(dbMon.timeout),
+    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
+    retry: BigInt(0),
+    followRedirects: dbMon.followRedirects ?? true,
+    headers: parseDbHeaders(dbMon.headers),
+    statusCodeAssertions: assertions.statusCodeAssertions,
+    bodyAssertions: assertions.bodyAssertions,
+    headerAssertions: assertions.headerAssertions,
+  };
+}
+
+/**
+ * Helper to transform database TCP monitor to proto TCPMonitor.
+ */
+function dbMonitorToTcpProto(
+  dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
+): TCPMonitor {
+  return {
+    $typeName: "openstatus.monitor.v1.TCPMonitor",
+    id: String(dbMon.id),
+    uri: dbMon.url,
+    periodicity: dbMon.periodicity,
+    timeout: BigInt(dbMon.timeout),
+    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
+    retry: BigInt(0),
+  };
+}
+
+/**
+ * Helper to transform database DNS monitor to proto DNSMonitor.
+ */
+function dbMonitorToDnsProto(
+  dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
+): DNSMonitor {
+  return {
+    $typeName: "openstatus.monitor.v1.DNSMonitor",
+    id: String(dbMon.id),
+    uri: dbMon.url,
+    periodicity: dbMon.periodicity,
+    timeout: BigInt(dbMon.timeout),
+    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
+    retry: BigInt(0),
+    recordAssertions: parseDnsAssertions(dbMon.assertions),
   };
 }
 
@@ -326,102 +286,34 @@ function dbMonitorToProto(
  * Monitor service implementation for ConnectRPC.
  */
 export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
-  async getMonitor(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-
-    if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
-    }
-
-    return {
-      monitor: dbMonitorToProto(dbMon),
-    };
-  },
-
-  async listMonitors(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    const pageSize = Math.min(Math.max(req.pageSize || 50, 1), 100);
-    const offset = req.pageToken ? Number.parseInt(req.pageToken, 10) : 0;
-
-    // Build query conditions
-    const conditions = [
-      eq(monitor.workspaceId, workspaceId),
-      isNull(monitor.deletedAt),
-    ];
-
-    // Apply status filter
-    if (
-      req.statusFilter !== undefined &&
-      req.statusFilter !== MonitorStatus.UNSPECIFIED
-    ) {
-      const isActive = req.statusFilter === MonitorStatus.ACTIVE;
-      conditions.push(eq(monitor.active, isActive));
-    }
-
-    // Apply type filter
-    if (
-      req.typeFilter !== undefined &&
-      req.typeFilter !== MonitorType.UNSPECIFIED
-    ) {
-      const jobType =
-        req.typeFilter === MonitorType.HTTP
-          ? "http"
-          : req.typeFilter === MonitorType.TCP
-            ? "tcp"
-            : req.typeFilter === MonitorType.DNS
-              ? "dns"
-              : null;
-      if (jobType) {
-        conditions.push(eq(monitor.jobType, jobType));
-      }
-    }
-
-    // Get total count
-    const countResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(monitor)
-      .where(and(...conditions))
-      .get();
-
-    const totalCount = countResult?.count ?? 0;
-
-    // Get monitors
-    const monitors = await db
-      .select()
-      .from(monitor)
-      .where(and(...conditions))
-      .limit(pageSize)
-      .offset(offset)
-      .all();
-
-    // Calculate next page token
-    const nextOffset = offset + monitors.length;
-    const nextPageToken = nextOffset < totalCount ? String(nextOffset) : "";
-
-    return {
-      monitors: monitors.map(dbMonitorToProto),
-      nextPageToken,
-      totalCount,
-    };
-  },
-
-  async createMonitor(_req, _ctx) {
+  async createHTTPMonitor(_req, _ctx) {
     // TODO: Implement with shared service layer
     throw new ConnectError(
-      "CreateMonitor not yet implemented",
+      "CreateHTTPMonitor not yet implemented",
       Code.Unimplemented,
     );
   },
 
-  async updateMonitor(_req, _ctx) {
+  async createTCPMonitor(_req, _ctx) {
     // TODO: Implement with shared service layer
     throw new ConnectError(
-      "UpdateMonitor not yet implemented",
+      "CreateTCPMonitor not yet implemented",
+      Code.Unimplemented,
+    );
+  },
+
+  async createDNSMonitor(_req, _ctx) {
+    // TODO: Implement with shared service layer
+    throw new ConnectError(
+      "CreateDNSMonitor not yet implemented",
+      Code.Unimplemented,
+    );
+  },
+
+  async triggerMonitor(_req, _ctx) {
+    // TODO: Implement with shared service layer
+    throw new ConnectError(
+      "TriggerMonitor not yet implemented",
       Code.Unimplemented,
     );
   },
@@ -448,57 +340,65 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     return { success: true };
   },
 
-  async triggerMonitor(_req, _ctx) {
-    // TODO: Implement with shared service layer
-    throw new ConnectError(
-      "TriggerMonitor not yet implemented",
-      Code.Unimplemented,
-    );
-  },
-
-  async pauseMonitor(req, ctx) {
+  async listMonitors(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
 
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    const pageSize = Math.min(Math.max(req.pageSize || 50, 1), 100);
+    const offset = req.pageToken ? Number.parseInt(req.pageToken, 10) : 0;
 
-    if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+    // Build query conditions
+    const conditions = [
+      eq(monitor.workspaceId, workspaceId),
+      isNull(monitor.deletedAt),
+    ];
+
+    // Get total count
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitor)
+      .where(and(...conditions))
+      .get();
+
+    const totalCount = countResult?.count ?? 0;
+
+    // Get monitors
+    const monitors = await db
+      .select()
+      .from(monitor)
+      .where(and(...conditions))
+      .limit(pageSize)
+      .offset(offset)
+      .all();
+
+    // Calculate next page token
+    const nextOffset = offset + monitors.length;
+    const nextPageToken = nextOffset < totalCount ? String(nextOffset) : "";
+
+    // Group monitors by type
+    const httpMonitors: HTTPMonitor[] = [];
+    const tcpMonitors: TCPMonitor[] = [];
+    const dnsMonitors: DNSMonitor[] = [];
+
+    for (const m of monitors) {
+      switch (m.jobType) {
+        case "http":
+          httpMonitors.push(dbMonitorToHttpProto(m));
+          break;
+        case "tcp":
+          tcpMonitors.push(dbMonitorToTcpProto(m));
+          break;
+        case "dns":
+          dnsMonitors.push(dbMonitorToDnsProto(m));
+          break;
+      }
     }
 
-    await db
-      .update(monitor)
-      .set({ active: false })
-      .where(eq(monitor.id, dbMon.id));
-
-    // Fetch updated monitor
-    const updated = await getMonitorById(dbMon.id, workspaceId);
-
     return {
-      monitor: updated ? dbMonitorToProto(updated) : undefined,
-    };
-  },
-
-  async resumeMonitor(req, ctx) {
-    const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    const dbMon = await getMonitorById(Number(req.id), workspaceId);
-
-    if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
-    }
-
-    await db
-      .update(monitor)
-      .set({ active: true })
-      .where(eq(monitor.id, dbMon.id));
-
-    // Fetch updated monitor
-    const updated = await getMonitorById(dbMon.id, workspaceId);
-
-    return {
-      monitor: updated ? dbMonitorToProto(updated) : undefined,
+      httpMonitors,
+      tcpMonitors,
+      dnsMonitors,
+      nextPageToken,
     };
   },
 };

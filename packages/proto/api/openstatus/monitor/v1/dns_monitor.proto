@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "openstatus/monitor/v1/assertions.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+message DNSMonitor {
+  string id = 1;
+  string uri = 2;
+  int64 timeout = 3;
+  optional int64 degraded_at = 4;
+  string periodicity = 5;
+  int64 retry = 6;
+
+  repeated RecordAssertion record_assertions = 13;
+
+}

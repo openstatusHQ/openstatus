@@ -7,6 +7,10 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
+import "openstatus/monitor/v1/dns_monitor.proto";
+import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/tcp_monitor.proto";
+
 // MonitorStatus represents the operational status of a monitor.
 enum MonitorStatus {
   // MONITOR_STATUS_UNSPECIFIED indicates an unknown status.
@@ -19,203 +23,15 @@ enum MonitorStatus {
   MONITOR_STATUS_ERROR = 3;
 }
 
-// MonitorType represents the type of monitor.
-enum MonitorType {
-  // MONITOR_TYPE_UNSPECIFIED indicates an unknown type.
-  MONITOR_TYPE_UNSPECIFIED = 0;
-  // MONITOR_TYPE_HTTP indicates an HTTP/HTTPS monitor.
-  MONITOR_TYPE_HTTP = 1;
-  // MONITOR_TYPE_TCP indicates a TCP monitor.
-  MONITOR_TYPE_TCP = 2;
-  // MONITOR_TYPE_DNS indicates a DNS monitor.
-  MONITOR_TYPE_DNS = 3;
-}
-
-// HttpMethod represents HTTP request methods.
-enum HttpMethod {
-  // HTTP_METHOD_UNSPECIFIED indicates an unspecified method.
-  HTTP_METHOD_UNSPECIFIED = 0;
-  // HTTP_METHOD_GET indicates HTTP GET.
-  HTTP_METHOD_GET = 1;
-  // HTTP_METHOD_POST indicates HTTP POST.
-  HTTP_METHOD_POST = 2;
-  // HTTP_METHOD_PUT indicates HTTP PUT.
-  HTTP_METHOD_PUT = 3;
-  // HTTP_METHOD_PATCH indicates HTTP PATCH.
-  HTTP_METHOD_PATCH = 4;
-  // HTTP_METHOD_DELETE indicates HTTP DELETE.
-  HTTP_METHOD_DELETE = 5;
-  // HTTP_METHOD_HEAD indicates HTTP HEAD.
-  HTTP_METHOD_HEAD = 6;
-  // HTTP_METHOD_OPTIONS indicates HTTP OPTIONS.
-  HTTP_METHOD_OPTIONS = 7;
-}
-
-// DnsRecordType represents DNS record types.
-enum DnsRecordType {
-  // DNS_RECORD_TYPE_UNSPECIFIED indicates an unspecified type.
-  DNS_RECORD_TYPE_UNSPECIFIED = 0;
-  // DNS_RECORD_TYPE_A indicates an A record.
-  DNS_RECORD_TYPE_A = 1;
-  // DNS_RECORD_TYPE_AAAA indicates an AAAA record.
-  DNS_RECORD_TYPE_AAAA = 2;
-  // DNS_RECORD_TYPE_CNAME indicates a CNAME record.
-  DNS_RECORD_TYPE_CNAME = 3;
-  // DNS_RECORD_TYPE_MX indicates an MX record.
-  DNS_RECORD_TYPE_MX = 4;
-  // DNS_RECORD_TYPE_NS indicates an NS record.
-  DNS_RECORD_TYPE_NS = 5;
-  // DNS_RECORD_TYPE_TXT indicates a TXT record.
-  DNS_RECORD_TYPE_TXT = 6;
-}
-
-// HttpAssertionType represents types of HTTP response assertions.
-enum HttpAssertionType {
-  // HTTP_ASSERTION_TYPE_UNSPECIFIED indicates an unspecified type.
-  HTTP_ASSERTION_TYPE_UNSPECIFIED = 0;
-  // HTTP_ASSERTION_TYPE_STATUS_CODE asserts on HTTP status code.
-  HTTP_ASSERTION_TYPE_STATUS_CODE = 1;
-  // HTTP_ASSERTION_TYPE_BODY asserts on response body content.
-  HTTP_ASSERTION_TYPE_BODY = 2;
-  // HTTP_ASSERTION_TYPE_HEADER asserts on response headers.
-  HTTP_ASSERTION_TYPE_HEADER = 3;
-}
-
-// HttpAssertionComparator represents comparison operators for assertions.
-enum HttpAssertionComparator {
-  // HTTP_ASSERTION_COMPARATOR_UNSPECIFIED indicates an unspecified comparator.
-  HTTP_ASSERTION_COMPARATOR_UNSPECIFIED = 0;
-  // HTTP_ASSERTION_COMPARATOR_EQUALS checks for exact equality.
-  HTTP_ASSERTION_COMPARATOR_EQUALS = 1;
-  // HTTP_ASSERTION_COMPARATOR_NOT_EQUALS checks for inequality.
-  HTTP_ASSERTION_COMPARATOR_NOT_EQUALS = 2;
-  // HTTP_ASSERTION_COMPARATOR_CONTAINS checks if value contains substring.
-  HTTP_ASSERTION_COMPARATOR_CONTAINS = 3;
-  // HTTP_ASSERTION_COMPARATOR_NOT_CONTAINS checks if value does not contain substring.
-  HTTP_ASSERTION_COMPARATOR_NOT_CONTAINS = 4;
-  // HTTP_ASSERTION_COMPARATOR_GREATER_THAN checks if value is greater than.
-  HTTP_ASSERTION_COMPARATOR_GREATER_THAN = 5;
-  // HTTP_ASSERTION_COMPARATOR_GREATER_THAN checks if value is greater than.
-  HTTP_ASSERTION_COMPARATOR_GREATER_THAN_EQUALS = 6;
-  // HTTP_ASSERTION_COMPARATOR_LESS_THAN checks if value is less than.
-  HTTP_ASSERTION_COMPARATOR_LESS_THAN = 7;
-  // HTTP_ASSERTION_COMPARATOR_LESS_THAN_EQUALS checks if value is less than or equal to.
-  HTTP_ASSERTION_COMPARATOR_LESS_THAN_EQUALS = 8;
-}
-
-// HttpAssertion defines an assertion to validate HTTP responses.
-message HttpAssertion {
-  // The type of assertion.
-  HttpAssertionType type = 1;
-
-  // The comparator to use for the assertion.
-  HttpAssertionComparator comparator = 2;
-
-  // The expected value to compare against.
-  string expected_value = 3;
-
-  // The header key (required for header assertions).
-  optional string header_key = 4;
-}
-
-// HttpMonitor configuration for HTTP/HTTPS endpoint monitoring.
-message HttpMonitor {
-  // The URL to monitor (required).
-  string url = 1 [(buf.validate.field).string.uri = true];
-
-  // HTTP method to use.
-  HttpMethod method = 2;
-
-  // Request headers to include.
-  map<string, string> headers = 3;
-
-  // Request body for POST/PUT/PATCH.
-  optional string body = 4;
-
-  // Timeout in milliseconds (default: 30000).
-  int32 timeout_ms = 5 [(buf.validate.field).int32 = {gte: 1000, lte: 60000}];
-
-  // Whether to follow redirects.
-  bool follow_redirects = 6;
-
-  // Assertions to validate the response.
-  repeated HttpAssertion assertions = 7;
-}
-
-// TcpMonitor configuration for TCP connection monitoring.
-message TcpMonitor {
-  // Host to connect to (required).
-  string host = 1 [(buf.validate.field).string.min_len = 1];
-
-  // Port number (required).
-  int32 port = 2 [(buf.validate.field).int32 = {gte: 1, lte: 65535}];
-
-  // Timeout in milliseconds (default: 30000).
-  int32 timeout_ms = 3 [(buf.validate.field).int32 = {gte: 1000, lte: 60000}];
-}
-
-// DnsMonitor configuration for DNS record monitoring.
-message DnsMonitor {
-  // Domain name to query (required).
-  string domain = 1 [(buf.validate.field).string.min_len = 1];
-
-  // DNS record type to check.
-  DnsRecordType record_type = 2;
-
-  // Expected values for the record.
-  repeated string expected_values = 3;
-
-  // Timeout in milliseconds (default: 30000).
-  int32 timeout_ms = 4 [(buf.validate.field).int32 = {gte: 1000, lte: 60000}];
-}
 
 // MonitorConfig represents the type-specific configuration for a monitor.
 message MonitorConfig {
   oneof config {
     // HTTP monitor configuration.
-    HttpMonitor http = 1;
+    HTTPMonitor http = 1;
     // TCP monitor configuration.
-    TcpMonitor tcp = 2;
+    TCPMonitor tcp = 2;
     // DNS monitor configuration.
-    DnsMonitor dns = 3;
+    DNSMonitor dns = 3;
   }
-}
-
-// Monitor represents a monitoring configuration.
-message Monitor {
-  // Unique identifier for the monitor.
-  string id = 1;
-
-  // Human-readable name for the monitor.
-  string name = 2;
-
-  // Optional description of the monitor.
-  string description = 3;
-
-  // The type of monitor.
-  MonitorType type = 4;
-
-  // Type-specific configuration.
-  MonitorConfig config = 5;
-
-  // Check interval in seconds (60, 300, 600, 1800, or 3600).
-  int32 periodicity = 6;
-
-  // Regions where the monitor runs.
-  repeated string regions = 7;
-
-  // Current operational status.
-  MonitorStatus status = 8;
-
-  // Timestamp when the monitor was created.
-  google.protobuf.Timestamp created_at = 9;
-
-  // Timestamp when the monitor was last updated.
-  google.protobuf.Timestamp updated_at = 10;
-
-  // Latency threshold in ms after which the monitor is considered degraded.
-  optional int32 degraded_after_ms = 11;
-
-  // Tags for categorization.
-  repeated string tags = 12;
 }

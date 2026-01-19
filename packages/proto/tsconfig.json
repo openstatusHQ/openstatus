@@ -10,7 +10,8 @@
     "rootDir": "gen/ts",
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": false
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions":true
   },
   "include": ["gen/ts/**/*.ts"],
   "exclude": ["node_modules"]
