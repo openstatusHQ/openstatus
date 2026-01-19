@@ -117,15 +117,18 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	}
 
 	var monitors []database.Monitor
-	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
+	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-
+	var workspaceId int
 	var httpMonitors []*private_locationv1.HTTPMonitor
 	for _, monitor := range monitors {
 		if monitor.JobType != "http" {
 			continue
+		}
+		if workspaceId == 0 {
+			workspaceId = monitor.WorkspaceID
 		}
 
 		var headers []*private_locationv1.Headers
@@ -150,6 +153,14 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 			HeaderAssertions:     headerAssertions,
 			BodyAssertions:       bodyAssertions,
 		})
+	}
+
+	event := ctx.Value("event")
+	if eventMap, ok := event.(map[string]any); ok && eventMap != nil {
+		eventMap["private_location"] = map[string]any{
+			"workspace_id": workspaceId,
+		}
+		ctx = context.WithValue(ctx, "event", eventMap)
 	}
 
 	return connect.NewResponse(&private_locationv1.MonitorsResponse{
