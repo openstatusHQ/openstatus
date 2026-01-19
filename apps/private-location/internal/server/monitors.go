@@ -117,43 +117,56 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	}
 
 	var monitors []database.Monitor
-	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
+	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions, monitor.workspace_id, monitor.retry FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	var workspaceId int
 	var httpMonitors []*private_locationv1.HTTPMonitor
+	var tcpMonitors []*private_locationv1.TCPMonitor
 	for _, monitor := range monitors {
-		if monitor.JobType != "http" {
-			continue
-		}
 		if workspaceId == 0 {
 			workspaceId = monitor.WorkspaceID
 		}
 
-		var headers []*private_locationv1.Headers
-		if err := json.Unmarshal([]byte(monitor.Headers), &headers); err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("unable to unmarshal headers")
-			headers = nil
+		switch monitor.JobType {
+		case database.JobTypeHTTP:
+			var headers []*private_locationv1.Headers
+			if err := json.Unmarshal([]byte(monitor.Headers), &headers); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("unable to unmarshal headers")
+				headers = nil
+			}
+
+			statusAssertions, headerAssertions, bodyAssertions := ParseAssertions(monitor.Assertions)
+
+			httpMonitors = append(httpMonitors, &private_locationv1.HTTPMonitor{
+				Url:                  monitor.URL,
+				Periodicity:          monitor.Periodicity,
+				Id:                   strconv.Itoa(monitor.ID),
+				Method:               monitor.Method,
+				Body:                 monitor.Body,
+				Timeout:              monitor.Timeout,
+				DegradedAt:           &monitor.DegradedAfter.Int64,
+				Retry:                int64(monitor.Retry),
+				FollowRedirects:      monitor.FollowRedirects,
+				Headers:              headers,
+				StatusCodeAssertions: statusAssertions,
+				HeaderAssertions:     headerAssertions,
+				BodyAssertions:       bodyAssertions,
+			})
+
+		case database.JobTypeTCP:
+			tcpMonitors = append(tcpMonitors, &private_locationv1.TCPMonitor{
+				Id:          strconv.Itoa(monitor.ID),
+				Uri:         monitor.URL,
+				Timeout:     monitor.Timeout,
+				DegradedAt:  &monitor.DegradedAfter.Int64,
+				Periodicity: monitor.Periodicity,
+				Retry:       int64(monitor.Retry),
+			})
 		}
-
-		statusAssertions, headerAssertions, bodyAssertions := ParseAssertions(monitor.Assertions)
-
-		httpMonitors = append(httpMonitors, &private_locationv1.HTTPMonitor{
-			Url:                  monitor.URL,
-			Periodicity:          monitor.Periodicity,
-			Id:                   strconv.Itoa(monitor.ID),
-			Method:               monitor.Method,
-			Body:                 monitor.Body,
-			Timeout:              monitor.Timeout,
-			DegradedAt:           &monitor.DegradedAfter.Int64,
-			FollowRedirects:      monitor.FollowRedirects,
-			Headers:              headers,
-			StatusCodeAssertions: statusAssertions,
-			HeaderAssertions:     headerAssertions,
-			BodyAssertions:       bodyAssertions,
-		})
 	}
+
 
 	event := ctx.Value("event")
 	if eventMap, ok := event.(map[string]any); ok && eventMap != nil {
@@ -165,5 +178,6 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 
 	return connect.NewResponse(&private_locationv1.MonitorsResponse{
 		HttpMonitors: httpMonitors,
+		TcpMonitors:  tcpMonitors,
 	}), nil
 }
