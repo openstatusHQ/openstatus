@@ -61,19 +61,21 @@ func Logger() func(next http.Handler) http.Handler {
 			}
 			fullURL := scheme + "://" + r.Host + r.RequestURI
 
-			event := map[string]any{
-				"timestamp":    startTime.Format(time.RFC3339),
-				"request_id":   requestID,
-				"method":       r.Method,
-				"path":         r.URL.Path,
-				"url":          fullURL,
-				"user_agent":   r.Header.Get("User-Agent"),
-				"content_type": r.Header.Get("Content-Type"),
+			holder := &EventHolder{
+				Event: map[string]any{
+					"timestamp":    startTime.Format(time.RFC3339),
+					"request_id":   requestID,
+					"method":       r.Method,
+					"path":         r.URL.Path,
+					"url":          fullURL,
+					"user_agent":   r.Header.Get("User-Agent"),
+					"content_type": r.Header.Get("Content-Type"),
+				},
 			}
 
 			// Store in context
 			ctx := context.WithValue(r.Context(), requestIDKey, requestID)
-			ctx = context.WithValue(ctx, eventKey, event)
+			ctx = context.WithValue(ctx, eventKey, holder)
 			r = r.WithContext(ctx)
 
 			// Wrap response writer to capture status code
@@ -89,17 +91,17 @@ func Logger() func(next http.Handler) http.Handler {
 				status = http.StatusOK
 			}
 
-			event["status_code"] = status
-			event["duration_ms"] = duration
+			holder.Event["status_code"] = status
+			holder.Event["duration_ms"] = duration
 
 			if status >= 400 {
-				event["outcome"] = "error"
+				holder.Event["outcome"] = "error"
 			} else {
-				event["outcome"] = "success"
+				holder.Event["outcome"] = "success"
 			}
 
-			if logs.ShouldSample(event) {
-				attrs := logs.MapToAttrs(event)
+			if logs.ShouldSample(holder.Event) {
+				attrs := logs.MapToAttrs(holder.Event)
 				slog.LogAttrs(r.Context(), slog.LevelInfo, "request done", attrs...)
 			}
 		})
@@ -114,10 +116,10 @@ func GetRequestID(ctx context.Context) string {
 	return ""
 }
 
-// GetEvent retrieves the event map from context
-func GetEvent(ctx context.Context) map[string]any {
-	if event, ok := ctx.Value(eventKey).(map[string]any); ok {
-		return event
+// GetEvent retrieves the event holder from context
+func GetEvent(ctx context.Context) *EventHolder {
+	if holder, ok := ctx.Value(eventKey).(*EventHolder); ok {
+		return holder
 	}
 	return nil
 }
