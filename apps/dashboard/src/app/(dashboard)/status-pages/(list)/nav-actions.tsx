@@ -24,8 +24,8 @@ export function NavActions() {
       {limitReached ? (
         <Button
           size="sm"
-          data-disabled={limitReached}
-          className="data-[disabled=true]:opacity-50"
+          data-limited={limitReached}
+          className="data-[limited=true]:opacity-80"
           onClick={() => setOpenDialog(true)}
         >
           Create Status Page
@@ -35,7 +35,11 @@ export function NavActions() {
           <Link href="/status-pages/create">Create Status Page</Link>
         </Button>
       )}
-      <UpgradeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      <UpgradeDialog
+        open={openDialog}
+        onOpenChange={setOpenDialog}
+        limit="status-pages"
+      />
     </div>
   );
 }

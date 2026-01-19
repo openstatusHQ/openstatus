@@ -1,0 +1,4 @@
+# Ignore PRD and progress files as they are specific to local development
+prd.json
+progress.txt
+

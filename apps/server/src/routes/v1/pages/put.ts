@@ -3,7 +3,15 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  eq,
+  inArray,
+  isNull,
+  sql,
+  syncMonitorsToPageDelete,
+  syncMonitorsToPageInsert,
+} from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
@@ -194,6 +202,10 @@ export function registerPutPage(api: typeof pagesApi) {
             eq(monitorsToPages.pageId, newPage.id),
           ),
         );
+      // Sync delete to page components
+      for (const monitorId of removedMonitors) {
+        await syncMonitorsToPageDelete(db, { monitorId, pageId: newPage.id });
+      }
     }
 
     if (monitors) {
@@ -208,6 +220,12 @@ export function registerPutPage(api: typeof pagesApi) {
             target: [monitorsToPages.monitorId, monitorsToPages.pageId],
             set: { order: sql.raw("excluded.`order`") },
           });
+        // Sync to page components (existing ones will be ignored due to onConflictDoNothing in sync)
+        await syncMonitorsToPageInsert(db, {
+          monitorId: values.monitorId,
+          pageId: newPage.id,
+          order: "order" in values ? values.order : undefined,
+        });
       }
     }
 

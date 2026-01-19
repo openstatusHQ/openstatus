@@ -20,5 +20,7 @@ export const env = () =>
       TWILLIO_AUTH_TOKEN: z.string().prefault(""),
       TWILLIO_ACCOUNT_ID: z.string().prefault(""),
       SENTRY_DSN: z.string().prefault(""),
+      AXIOM_TOKEN: z.string().prefault(""),
+      AXIOM_DATASET: z.string().prefault(""),
     })
     .parse(process.env);

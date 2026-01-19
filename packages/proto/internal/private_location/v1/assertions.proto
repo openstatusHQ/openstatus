@@ -55,5 +55,5 @@ message HeaderAssertion {
 message RecordAssertion {
   string record = 1;
   RecordComparator comparator = 2;
-  string targert = 3;
+  string target = 3;
 }

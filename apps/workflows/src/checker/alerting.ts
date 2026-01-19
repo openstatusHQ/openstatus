@@ -33,7 +33,10 @@ export const triggerNotifications = async ({
   region?: Region;
   latency?: number;
 }) => {
-  console.log(`💌 triggerAlerting for ${monitorId}`);
+  logger.info("Triggering alerting", {
+    monitor_id: monitorId,
+    notification_type: notifType,
+  });
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)
@@ -100,9 +103,12 @@ export const triggerNotifications = async ({
         continue;
       }
     }
-    logger.info(
-      `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
-    );
+    logger.info("Sending notification", {
+      monitor_id: monitorId,
+      provider: notif.notification.provider,
+      notification_type: notifType,
+      notification_id: notif.notification.id,
+    });
     const monitor = selectMonitorSchema.parse(notif.monitor);
     try {
       await insertNotificationTrigger({
@@ -139,7 +145,13 @@ export const triggerNotifications = async ({
             schedule: Schedule.exponential("1000 millis"),
           }),
         );
-        await Effect.runPromise(alertResult).catch(console.error);
+        await Effect.runPromise(alertResult).catch((err) =>
+          logger.error("Failed to send alert notification", {
+            monitor_id: monitorId,
+            provider: notif.notification.provider,
+            error_message: err instanceof Error ? err.message : String(err),
+          }),
+        );
         break;
       case "recovery":
         const recoveryResult = Effect.tryPromise({
@@ -164,7 +176,13 @@ export const triggerNotifications = async ({
             schedule: Schedule.exponential("1000 millis"),
           }),
         );
-        await Effect.runPromise(recoveryResult).catch(console.error);
+        await Effect.runPromise(recoveryResult).catch((err) =>
+          logger.error("Failed to send recovery notification", {
+            monitor_id: monitorId,
+            provider: notif.notification.provider,
+            error_message: err instanceof Error ? err.message : String(err),
+          }),
+        );
         break;
       case "degraded":
         const degradedResult = Effect.tryPromise({
@@ -189,7 +207,13 @@ export const triggerNotifications = async ({
             schedule: Schedule.exponential("1000 millis"),
           }),
         );
-        await Effect.runPromise(degradedResult).catch(console.error);
+        await Effect.runPromise(degradedResult).catch((err) =>
+          logger.error("Failed to send degraded notification", {
+            monitor_id: monitorId,
+            provider: notif.notification.provider,
+            error_message: err instanceof Error ? err.message : String(err),
+          }),
+        );
         break;
     }
     // ALPHA
@@ -246,6 +270,10 @@ export const upsertMonitorStatus = async ({
       set: { status, updatedAt: new Date() },
     })
     .returning();
-  logger.info(`📈 upsertMonitorStatus for ${monitorId} in region ${region}`);
-  logger.info("🤔 upsert monitor {*}", { ...newData });
+  logger.debug("Upserted monitor status", {
+    monitor_id: monitorId,
+    region,
+    status,
+    updated_at: newData[0]?.updatedAt,
+  });
 };

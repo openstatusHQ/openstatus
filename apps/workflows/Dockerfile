@@ -3,11 +3,11 @@
 # See https://github.com/lenra-io/dofigen
 
 # ca-certs
-FROM debian@sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b AS ca-certs
+FROM debian@sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734 AS ca-certs
 LABEL \
-    org.opencontainers.image.base.digest="sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b" \
+    org.opencontainers.image.base.digest="sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim"
-RUN apt update && apt install -y ca-certificates && update-ca-certificates
+RUN apt update && apt install -y ca-certificates curl && update-ca-certificates
 
 # docker
 FROM oven/bun@sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a AS docker
@@ -69,7 +69,7 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
-RUN bun build --compile --target bun  --sourcemap --format=cjs src/index.ts --outfile=app
+RUN bun build --compile --target bun  --sourcemap src/index.ts --outfile=app
 
 # libsql
 FROM oven/bun@sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a AS libsql
@@ -84,11 +84,11 @@ COPY \
 RUN bun install
 
 # runtime
-FROM debian@sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b AS runtime
+FROM debian@sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734 AS runtime
 LABEL \
     io.dofigen.version="2.6.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:530a3348fc4b5734ffe1a137ddbcee6850154285251b53c3425c386ea8fac77b" \
+    org.opencontainers.image.base.digest="sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="Background job processing and probe scheduling for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \
@@ -116,6 +116,11 @@ COPY \
     --chown=1000:1000 \
     --link \
     "/etc/ssl/certs/ca-certificates.crt" "/etc/ssl/certs/"
+COPY \
+    --from=ca-certs \
+    --chown=1000:1000 \
+    --link \
+    "/usr/bin/curl" "/usr/bin/curl"
 USER 1000:1000
 EXPOSE 3000
 ENTRYPOINT ["/app/apps/workflows/app"]

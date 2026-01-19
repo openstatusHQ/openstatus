@@ -1,4 +1,6 @@
+import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
+import { BillingAddons } from "@/components/content/billing-addons";
 import { DataTable } from "@/components/data-table/billing/data-table";
 import {
   Dialog,
@@ -7,9 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getPlansForLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +36,8 @@ export function UpgradeDialog(
 
   if (!workspace) return null;
 
+  const planAddons = allPlans[workspace.plan].addons;
+
   const getRestrictTo = () => {
     if (props.restrictTo) return props.restrictTo;
     if (props.limit) return getPlansForLimit(workspace.plan, props.limit);
@@ -40,16 +46,39 @@ export function UpgradeDialog(
 
   const restrictTo = getRestrictTo();
 
+  const addon =
+    props.limit && Object.prototype.hasOwnProperty.call(planAddons, props.limit)
+      ? (props.limit as keyof Addons)
+      : null;
+
   return (
     <Dialog {...props}>
-      <DialogContent className="max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Upgrade Workspace</DialogTitle>
           <DialogDescription>
             Upgrade your workspace to support more monitors, status pages,
-            regions, and much more.
+            regions, and much more. Get an overview within your{" "}
+            <Link
+              onClick={() => props.onOpenChange?.(false)}
+              href="/settings/billing"
+            >
+              billing settings
+            </Link>
+            .
           </DialogDescription>
         </DialogHeader>
+        {addon && planAddons[addon] ? (
+          <>
+            <BillingAddons
+              label={planAddons[addon].title}
+              description={planAddons[addon].description}
+              addon={addon}
+              workspace={workspace}
+            />
+            <Separator />
+          </>
+        ) : null}
         {restrictTo.length === 0 ? (
           <Note>
             <CalendarClock />

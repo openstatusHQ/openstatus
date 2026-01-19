@@ -14,7 +14,20 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import { type SQL, and, count, eq, inArray, isNull, sql } from "@openstatus/db";
+import {
+  type SQL,
+  and,
+  count,
+  eq,
+  inArray,
+  isNull,
+  sql,
+  syncMaintenanceToMonitorDeleteByMonitors,
+  syncMonitorsToPageDelete,
+  syncMonitorsToPageDeleteByMonitors,
+  syncMonitorsToPageInsertMany,
+  syncStatusReportToMonitorDeleteByMonitors,
+} from "@openstatus/db";
 import {
   insertMonitorSchema,
   maintenancesToMonitors,
@@ -187,6 +200,8 @@ export const monitorRouter = createTRPCRouter({
         }));
 
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
+        // Sync to page components
+        await syncMonitorsToPageInsertMany(opts.ctx.db, values);
       }
 
       return selectMonitorSchema.parse(newMonitor);
@@ -460,6 +475,8 @@ export const monitorRouter = createTRPCRouter({
         }));
 
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
+        // Sync to page components
+        await syncMonitorsToPageInsertMany(opts.ctx.db, values);
       }
 
       const removedPages = currentMonitorPages
@@ -476,6 +493,13 @@ export const monitorRouter = createTRPCRouter({
             ),
           )
           .run();
+        // Sync delete to page components
+        for (const pageId of removedPages) {
+          await syncMonitorsToPageDelete(opts.ctx.db, {
+            monitorId: currentMonitor.id,
+            pageId,
+          });
+        }
       }
     }),
 
@@ -593,6 +617,14 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(eq(maintenancesToMonitors.monitorId, monitorToDelete.id));
+        // Sync deletes to page components
+        await syncMonitorsToPageDeleteByMonitors(tx, [monitorToDelete.id]);
+        await syncStatusReportToMonitorDeleteByMonitors(tx, [
+          monitorToDelete.id,
+        ]);
+        await syncMaintenanceToMonitorDeleteByMonitors(tx, [
+          monitorToDelete.id,
+        ]);
       });
     }),
 
@@ -639,6 +671,10 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(inArray(maintenancesToMonitors.monitorId, opts.input.ids));
+        // Sync deletes to page components
+        await syncMonitorsToPageDeleteByMonitors(tx, opts.input.ids);
+        await syncStatusReportToMonitorDeleteByMonitors(tx, opts.input.ids);
+        await syncMaintenanceToMonitorDeleteByMonitors(tx, opts.input.ids);
       });
     }),
 
@@ -1250,15 +1286,20 @@ export const monitorRouter = createTRPCRouter({
                 inArray(monitorsToPages.pageId, pageIdsToDelete),
               ),
             );
+          // Sync delete to page components
+          for (const pageId of pageIdsToDelete) {
+            await syncMonitorsToPageDelete(tx, { monitorId: input.id, pageId });
+          }
         }
 
         if (pageIdsToInsert.length > 0) {
-          await tx.insert(monitorsToPages).values(
-            pageIdsToInsert.map((pageId) => ({
-              monitorId: input.id,
-              pageId,
-            })),
-          );
+          const values = pageIdsToInsert.map((pageId) => ({
+            monitorId: input.id,
+            pageId,
+          }));
+          await tx.insert(monitorsToPages).values(values);
+          // Sync to page components
+          await syncMonitorsToPageInsertMany(tx, values);
         }
 
         await tx

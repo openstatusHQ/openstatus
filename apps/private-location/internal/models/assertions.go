@@ -5,10 +5,11 @@ import "encoding/json"
 type AssertionType string
 
 const (
-	AssertionHeader   AssertionType = "header"
-	AssertionTextBody AssertionType = "textBody"
-	AssertionStatus   AssertionType = "status"
-	AssertionJsonBody AssertionType = "jsonBody"
+	AssertionHeader    AssertionType = "header"
+	AssertionTextBody  AssertionType = "textBody"
+	AssertionStatus    AssertionType = "status"
+	AssertionJsonBody  AssertionType = "jsonBody"
+	AssertionDnsRecord AssertionType = "dnsRecord"
 )
 
 type StringComparator string
@@ -73,4 +74,20 @@ type BodyString struct {
 	AssertionType AssertionType    `json:"type"`
 	Comparator    StringComparator `json:"compare"`
 	Target        string           `json:"target"`
+}
+
+type RecordComparator string
+
+const (
+	RecordEquals      RecordComparator = "eq"
+	RecordNotEquals   RecordComparator = "not_eq"
+	RecordContains    RecordComparator = "contains"
+	RecordNotContains RecordComparator = "not_contains"
+)
+
+type RecordTarget struct {
+	AssertionType AssertionType    `json:"type"`
+	Comparator    RecordComparator `json:"compare"`
+	Target        string           `json:"target"`
+	Key           string           `json:"key"`
 }

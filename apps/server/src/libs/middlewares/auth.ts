@@ -88,8 +88,8 @@ export async function authMiddleware(
   await next();
 }
 
-export async function validateKey(key: string): Promise<{
-  result: { valid: boolean; ownerId?: string };
+async function validateKey(key: string): Promise<{
+  result: { valid: boolean; ownerId?: string; authMethod?: string };
   error?: { message: string };
 }> {
   if (env.NODE_ENV === "production") {
@@ -98,13 +98,6 @@ export async function validateKey(key: string): Promise<{
      * Custom keys are checked first in the database, then falls back to Unkey.
      */
     if (key.startsWith("os_")) {
-      // Validate token format before database query
-      // if (!/^os_[a-f0-9]{32}$/.test(key)) {
-      //   return {
-      //     result: { valid: false },
-      //     error: { message: "Invalid API Key format" },
-      //   };
-      // }
 
       // 1. Try custom DB first
       const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
@@ -138,7 +131,11 @@ export async function validateKey(key: string): Promise<{
             .where(eq(apiKey.id, customKey.id));
         }
         return {
-          result: { valid: true, ownerId: String(customKey.workspaceId) },
+          result: {
+            valid: true,
+            ownerId: String(customKey.workspaceId),
+            authMethod: "custom_key",
+          },
         };
       }
 
@@ -152,23 +149,20 @@ export async function validateKey(key: string): Promise<{
           error: { message: "Invalid API verification" },
         };
       }
-      // Add deprecation header when Unkey key is used
-      if (res.value.data.valid) {
-        logger.info("Unkey key used  - Workspace: {workspaceId}", {
-          workspace: res.value.data.identity?.externalId,
-        });
-      }
       return {
         result: {
           valid: res.value.data.valid,
           ownerId: res.value.data.identity?.externalId,
+          authMethod: "unkey",
         },
         error: undefined,
       };
     }
     // Special bypass for our workspace
     if (key.startsWith("sa_") && key === env.SUPER_ADMIN_TOKEN) {
-      return { result: { valid: true, ownerId: "1" } };
+      return {
+        result: { valid: true, ownerId: "1", authMethod: "super_admin" },
+      };
     }
     // In production, we only accept Unkey keys
     throw new OpenStatusApiError({
@@ -178,5 +172,5 @@ export async function validateKey(key: string): Promise<{
   }
 
   // In dev / test mode we can use the key as the ownerId
-  return { result: { valid: true, ownerId: key } };
+  return { result: { valid: true, ownerId: key, authMethod: "dev" } };
 }
