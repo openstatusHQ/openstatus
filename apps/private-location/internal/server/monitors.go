@@ -53,6 +53,22 @@ func convertStringComparator(m models.StringComparator) private_locationv1.Strin
 	}
 }
 
+// Converts models.RecordComparator to proto RecordComparator
+func convertRecordComparator(m models.RecordComparator) private_locationv1.RecordComparator {
+	switch m {
+	case models.RecordEquals:
+		return private_locationv1.RecordComparator_RECORD_COMPARATOR_EQUAL
+	case models.RecordNotEquals:
+		return private_locationv1.RecordComparator_RECORD_COMPARATOR_NOT_EQUAL
+	case models.RecordContains:
+		return private_locationv1.RecordComparator_RECORD_COMPARATOR_CONTAINS
+	case models.RecordNotContains:
+		return private_locationv1.RecordComparator_RECORD_COMPARATOR_NOT_CONTAINS
+	default:
+		return private_locationv1.RecordComparator_RECORD_COMPARATOR_UNSPECIFIED
+	}
+}
+
 // Helper to parse assertions
 func ParseAssertions(assertions sql.NullString) (
 	statusAssertions []*private_locationv1.StatusCodeAssertion,
@@ -110,6 +126,39 @@ func ParseAssertions(assertions sql.NullString) (
 	return
 }
 
+// Helper to parse DNS record assertions
+func ParseRecordAssertions(assertions sql.NullString) []*private_locationv1.RecordAssertion {
+	if !assertions.Valid {
+		return nil
+	}
+	var rawAssertions []json.RawMessage
+	if err := json.Unmarshal([]byte(assertions.String), &rawAssertions); err != nil {
+		log.Error().Err(err).Msg("failed to unmarshal assertions")
+		return nil
+	}
+	var recordAssertions []*private_locationv1.RecordAssertion
+	for _, a := range rawAssertions {
+		var assert models.Assertion
+		if err := json.Unmarshal(a, &assert); err != nil {
+			log.Error().Err(err).Msg("failed to unmarshal assertion")
+			continue
+		}
+		if assert.AssertionType == models.AssertionDnsRecord {
+			var target models.RecordTarget
+			if err := json.Unmarshal(a, &target); err != nil {
+				log.Error().Err(err).Msg("failed to unmarshal record target")
+				continue
+			}
+			recordAssertions = append(recordAssertions, &private_locationv1.RecordAssertion{
+				Record:     target.Key,
+				Comparator: convertRecordComparator(target.Comparator),
+				Target:    target.Target,
+			})
+		}
+	}
+	return recordAssertions
+}
+
 func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Request[private_locationv1.MonitorsRequest]) (*connect.Response[private_locationv1.MonitorsResponse], error) {
 	token := req.Header().Get("openstatus-token")
 	if token == "" {
@@ -124,6 +173,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	var workspaceId int
 	var httpMonitors []*private_locationv1.HTTPMonitor
 	var tcpMonitors []*private_locationv1.TCPMonitor
+	var dnsMonitors []*private_locationv1.DNSMonitor
 	for _, monitor := range monitors {
 		if workspaceId == 0 {
 			workspaceId = monitor.WorkspaceID
@@ -164,6 +214,18 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 				Periodicity: monitor.Periodicity,
 				Retry:       int64(monitor.Retry),
 			})
+
+		case database.JobTypeDNS:
+			recordAssertions := ParseRecordAssertions(monitor.Assertions)
+			dnsMonitors = append(dnsMonitors, &private_locationv1.DNSMonitor{
+				Id:               strconv.Itoa(monitor.ID),
+				Uri:              monitor.URL,
+				Timeout:          monitor.Timeout,
+				DegradedAt:       &monitor.DegradedAfter.Int64,
+				Periodicity:      monitor.Periodicity,
+				Retry:            int64(monitor.Retry),
+				RecordAssertions: recordAssertions,
+			})
 		}
 	}
 
@@ -179,5 +241,6 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 	return connect.NewResponse(&private_locationv1.MonitorsResponse{
 		HttpMonitors: httpMonitors,
 		TcpMonitors:  tcpMonitors,
+		DnsMonitors:  dnsMonitors,
 	}), nil
 }
