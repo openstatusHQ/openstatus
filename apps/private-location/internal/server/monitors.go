@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"connectrpc.com/connect"
@@ -65,20 +64,20 @@ func ParseAssertions(assertions sql.NullString) (
 	}
 	var rawAssertions []json.RawMessage
 	if err := json.Unmarshal([]byte(assertions.String), &rawAssertions); err != nil {
-		log.Printf("Failed to unmarshal assertions: %v", err)
+		log.Error().Err(err).Msg("failed to unmarshal assertions")
 		return
 	}
 	for _, a := range rawAssertions {
 		var assert models.Assertion
 		if err := json.Unmarshal(a, &assert); err != nil {
-			log.Printf("Failed to unmarshal assertion: %v", err)
+			log.Error().Err(err).Msg("failed to unmarshal assertion")
 			continue
 		}
 		switch assert.AssertionType {
 		case models.AssertionStatus:
 			var target models.StatusTarget
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Printf("Failed to unmarshal status target: %v", err)
+				log.Error().Err(err).Msg("failed to unmarshal status target")
 				continue
 			}
 			statusAssertions = append(statusAssertions, &private_locationv1.StatusCodeAssertion{
@@ -88,7 +87,7 @@ func ParseAssertions(assertions sql.NullString) (
 		case models.AssertionHeader:
 			var target models.HeaderTarget
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Error().Err(err).Msg("unable to encode payload")
+				log.Error().Err(err).Msg("failed to unmarshal header target")
 				continue
 			}
 			headerAssertions = append(headerAssertions, &private_locationv1.HeaderAssertion{
@@ -99,7 +98,7 @@ func ParseAssertions(assertions sql.NullString) (
 		case models.AssertionTextBody:
 			var target models.BodyString
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Printf("Failed to unmarshal body target: %v", err)
+				log.Error().Err(err).Msg("failed to unmarshal body target")
 				continue
 			}
 			bodyAssertions = append(bodyAssertions, &private_locationv1.BodyAssertion{
@@ -114,11 +113,11 @@ func ParseAssertions(assertions sql.NullString) (
 func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Request[private_locationv1.MonitorsRequest]) (*connect.Response[private_locationv1.MonitorsResponse], error) {
 	token := req.Header().Get("openstatus-token")
 	if token == "" {
-		return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("missing token"))
+		return nil, connect.NewError(connect.CodeUnauthenticated, ErrMissingToken)
 	}
 
 	var monitors []database.Monitor
-	err := h.db.Select(&monitors, "SELECT monitor.* FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
+	err := h.db.Select(&monitors, "SELECT monitor.id, monitor.job_type, monitor.url, monitor.periodicity, monitor.method, monitor.body, monitor.timeout, monitor.degraded_after, monitor.follow_redirects, monitor.headers, monitor.assertions FROM monitor JOIN private_location_to_monitor a ON monitor.id = a.monitor_id JOIN private_location b ON a.private_location_id = b.id WHERE b.token = ? AND monitor.deleted_at IS NULL and monitor.active = 1", token)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}

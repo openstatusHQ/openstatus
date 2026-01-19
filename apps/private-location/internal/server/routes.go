@@ -161,9 +161,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 // healthHandler responds with the health status of the server.
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
+	status := "ok"
+	httpStatus := http.StatusOK
 
+	// Check database connection
+	if err := s.db.PingContext(r.Context()); err != nil {
+		status = "degraded"
+		httpStatus = http.StatusServiceUnavailable
+	}
+
+	render.Status(r, httpStatus)
 	render.JSON(w, r, map[string]any{
-		"status": "ok",
+		"status": status,
 	})
-	render.Status(r, http.StatusOK)
 }

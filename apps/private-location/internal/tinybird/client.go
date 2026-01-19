@@ -12,6 +12,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Datasource names for Tinybird events
+const (
+	DatasourceHTTP = "ping_response__v8"
+	DatasourceTCP  = "tcp_response__v0"
+	DatasourceDNS  = "tcp_dns__v0"
+)
+
 func getBaseURL() string {
 	// Use local Tinybird container if available (Docker/self-hosted)
 	// https://www.tinybird.co/docs/api-reference

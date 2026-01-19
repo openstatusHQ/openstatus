@@ -31,7 +31,15 @@ type Server struct {
 
 // NewServer returns an HTTP server and a cleanup function to shutdown the log provider.
 func NewServer() (*http.Server, func(context.Context)) {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
+	portStr := os.Getenv("PORT")
+	if portStr == "" {
+		portStr = "8080"
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "invalid PORT value %q: %v\n", portStr, err)
+		os.Exit(1)
+	}
 
 	logger, logProvider := setupLogger()
 
@@ -56,6 +64,7 @@ func NewServer() (*http.Server, func(context.Context)) {
 		if logProvider != nil {
 			logProvider.Shutdown(ctx)
 		}
+		database.Close()
 	}
 
 	return server, cleanup
