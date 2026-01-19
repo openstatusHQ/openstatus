@@ -28,6 +28,11 @@ type Env = {
   };
 };
 
+// Export app before any top-level await to avoid "Cannot access before initialization" errors in tests
+export const app = new Hono<Env>({
+  strict: false,
+});
+
 /* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
 function shouldSample(event: Record<string, any>): boolean {
   // Always keep errors
@@ -79,10 +84,6 @@ await configure({
 const logger = getLogger("api-server");
 
 const otelLogger = getLogger("api-server-otel");
-
-export const app = new Hono<Env>({
-  strict: false,
-});
 
 /**
  * Middleware
