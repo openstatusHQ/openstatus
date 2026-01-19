@@ -55,12 +55,18 @@ func Logger() func(next http.Handler) http.Handler {
 			}
 
 			// Build wide event context at request start
+			scheme := "http"
+			if r.TLS != nil {
+				scheme = "https"
+			}
+			fullURL := scheme + "://" + r.Host + r.RequestURI()
+
 			event := map[string]any{
 				"timestamp":    startTime.Format(time.RFC3339),
 				"request_id":   requestID,
 				"method":       r.Method,
 				"path":         r.URL.Path,
-				"url":          r.Host + r.URL.String(),
+				"url":          fullURL,
 				"user_agent":   r.Header.Get("User-Agent"),
 				"content_type": r.Header.Get("Content-Type"),
 			}
