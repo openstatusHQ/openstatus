@@ -88,7 +88,7 @@ export async function authMiddleware(
   await next();
 }
 
-async function validateKey(key: string): Promise<{
+export async function validateKey(key: string): Promise<{
   result: { valid: boolean; ownerId?: string; authMethod?: string };
   error?: { message: string };
 }> {

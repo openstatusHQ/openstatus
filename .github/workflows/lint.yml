@@ -14,7 +14,7 @@ permissions:
 jobs:
   autofix:
     name: autofix
-    runs-on: ubuntu-24.04-4
+    runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
