@@ -29,10 +29,59 @@ type Env = {
   };
 };
 
-// Lazy logger references - populated after configure() completes
-let logger: Logger | null = null;
-let otelLogger: Logger | null = null;
-let loggingConfigured = false;
+// Export app before any top-level await to avoid "Cannot access before initialization" errors in tests
+export const app = new Hono<Env>({
+  strict: false,
+});
+
+
+const logger = getLogger("api-server");
+const otelLogger = getLogger("api-server-otel");
+
+/**
+ * Configure logging asynchronously without blocking module initialization.
+ * This allows tests to import `app` immediately.
+ */
+// This allows tests to import `app` immediately
+(async () => {
+  const defaultLogger = getOpenTelemetrySink({
+    serviceName: "openstatus-server",
+    otlpExporterConfig: {
+      url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+      headers: {
+        Authorization: `Bearer ${env.AXIOM_TOKEN}`,
+        "X-Axiom-Dataset": env.AXIOM_DATASET,
+      },
+    },
+    additionalResource: resourceFromAttributes({
+      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
+    }),
+  });
+
+  await configure({
+    sinks: {
+      console: getConsoleSink({ formatter: jsonLinesFormatter }),
+      otel: defaultLogger,
+    },
+    loggers: [
+      {
+        category: "api-server",
+        lowestLevel: "error",
+        sinks: ["console"],
+      },
+      {
+        category: "api-server-otel",
+        lowestLevel: "info",
+        sinks: ["otel"],
+      },
+    ],
+    contextLocalStorage: new AsyncLocalStorage(),
+  });
+
+
+})()
+
+
 
 /* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
 function shouldSample(event: Record<string, any>): boolean {
@@ -47,10 +96,6 @@ function shouldSample(event: Record<string, any>): boolean {
   return Math.random() < 0.2;
 }
 
-// Export app before any top-level await to avoid "Cannot access before initialization" errors in tests
-export const app = new Hono<Env>({
-  strict: false,
-});
 
 /**
  * Middleware
@@ -62,12 +107,6 @@ app.use("*", prettyJSON());
 app.use("*", async (c, next) => {
   const reqId = c.get("requestId");
   const startTime = Date.now();
-
-  // If logging not configured yet, just pass through
-  if (!loggingConfigured) {
-    await next();
-    return;
-  }
 
   await withContext(
     {
@@ -114,14 +153,14 @@ app.use("*", async (c, next) => {
       }
 
       // Emit single canonical log line (sampled for otel, always for console in dev)
-      if (shouldSample(event) && otelLogger) {
+      if (shouldSample(event)) {
         otelLogger.info("request", { ...event });
       }
 
       // Console logging only for errors in production
-      if ((env.NODE_ENV !== "production" || c.res.status >= 500) && logger) {
+      if (env.NODE_ENV !== "production" || c.res.status >= 500) {
         logger.info("request", {
-          request_id: reqId,
+          request_id: requestId,
           method: c.req.method,
           path: c.req.path,
           status_code: c.res.status,
@@ -156,49 +195,11 @@ app.get("/ping", (c) => {
 app.route("/v1", api);
 
 /**
- * Configure logging asynchronously after routes are set up
+ * TODO: move to `workflows` app
+ * This route is used by our checker to update the status of the monitors,
+ * create incidents, and send notifications.
  */
-const defaultLogger = getOpenTelemetrySink({
-  serviceName: "openstatus-server",
-  otlpExporterConfig: {
-    url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-    headers: {
-      Authorization: `Bearer ${env.AXIOM_TOKEN}`,
-      "X-Axiom-Dataset": env.AXIOM_DATASET,
-    },
-  },
-  additionalResource: resourceFromAttributes({
-    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
-  }),
-});
 
-await configure({
-  sinks: {
-    console: getConsoleSink({ formatter: jsonLinesFormatter }),
-    otel: defaultLogger,
-  },
-  loggers: [
-    {
-      category: "api-server",
-      lowestLevel: "error",
-      sinks: ["console"],
-    },
-    {
-      category: "api-server-otel",
-      lowestLevel: "info",
-      sinks: ["otel"],
-    },
-  ],
-  contextLocalStorage: new AsyncLocalStorage(),
-});
-
-logger = getLogger("api-server");
-otelLogger = getLogger("api-server-otel");
-loggingConfigured = true;
-
-/**
- * Server startup
- */
 const isDev = process.env.NODE_ENV === "development";
 const port = 3000;
 
