@@ -2,6 +2,8 @@ import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import {
+  HttpAssertionComparator,
+  HttpAssertionType,
   HttpMethod,
   type MonitorService,
   MonitorStatus,
@@ -9,6 +11,13 @@ import {
 } from "@openstatus/proto/monitor/v1";
 
 import { getRpcContext } from "../interceptors";
+
+type HttpAssertion = {
+  type: HttpAssertionType;
+  comparator: HttpAssertionComparator;
+  expectedValue: string;
+  headerKey?: string;
+};
 
 type MonitorConfig =
   | {
@@ -21,7 +30,7 @@ type MonitorConfig =
           body?: string;
           timeoutMs: number;
           followRedirects: boolean;
-          assertions: []; // Replace with actual assertion type if available
+          assertions: HttpAssertion[];
         };
       };
     }
@@ -41,7 +50,7 @@ type MonitorConfig =
         value: {
           domain: string;
           recordType: number;
-          expectedValues: []; // Replace with actual type if available
+          expectedValues: [] // replace with actual assertion;
           timeoutMs: number;
         };
       };
@@ -96,6 +105,85 @@ function jobTypeToProtoType(jobType: string): MonitorType {
  */
 function activeToProtoStatus(active: boolean | null): MonitorStatus {
   return active ? MonitorStatus.ACTIVE : MonitorStatus.PAUSED;
+}
+
+/**
+ * Helper to convert assertion compare string to proto HttpAssertionComparator.
+ */
+function compareToProtoComparator(compare: string): HttpAssertionComparator {
+  switch (compare) {
+    case "eq":
+      return HttpAssertionComparator.EQUALS;
+    case "not_eq":
+      return HttpAssertionComparator.NOT_EQUALS;
+    case "contains":
+      return HttpAssertionComparator.CONTAINS;
+    case "not_contains":
+      return HttpAssertionComparator.NOT_CONTAINS;
+    case "gt":
+      return HttpAssertionComparator.GREATER_THAN;
+    case "gte":
+        return HttpAssertionComparator.GREATER_THAN_EQUALS
+    case "lt":
+      return HttpAssertionComparator.LESS_THAN;
+    case "lte":
+      return HttpAssertionComparator.LESS_THAN_EQUALS;
+    default:
+      return HttpAssertionComparator.UNSPECIFIED;
+  }
+}
+
+/**
+ * Helper to parse database assertions JSON and convert to proto HttpAssertion array.
+ */
+function parseDbAssertions(assertionsJson: string | null): HttpAssertion[] {
+  if (!assertionsJson) {
+    return [];
+  }
+
+  try {
+    const assertions = JSON.parse(assertionsJson) as Array<{
+      type: string;
+      compare: string;
+      target: string | number;
+      key?: string;
+      path?: string;
+    }>;
+
+    return assertions
+      .filter((a) =>
+        ["status", "header", "textBody", "jsonBody"].includes(a.type),
+      )
+      .map((a) => {
+        let type: HttpAssertionType;
+        let headerKey: string | undefined;
+
+        switch (a.type) {
+          case "status":
+            type = HttpAssertionType.STATUS_CODE;
+            break;
+          case "header":
+            type = HttpAssertionType.HEADER;
+            headerKey = a.key;
+            break;
+          case "textBody":
+          case "jsonBody":
+            type = HttpAssertionType.BODY;
+            break;
+          default:
+            type = HttpAssertionType.UNSPECIFIED;
+        }
+
+        return {
+          type,
+          comparator: compareToProtoComparator(a.compare),
+          expectedValue: String(a.target),
+          headerKey,
+        };
+      });
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -187,7 +275,7 @@ function dbMonitorToProto(
           body: dbMon.body ?? undefined,
           timeoutMs: dbMon.timeout,
           followRedirects: dbMon.followRedirects ?? true,
-          assertions: [], // TODO: Parse assertions from dbMon.assertions
+          assertions: parseDbAssertions(dbMon.assertions),
         },
       },
     };
