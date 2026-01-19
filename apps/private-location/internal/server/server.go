@@ -89,7 +89,7 @@ func setupLogger() (*slog.Logger, *sdklog.LoggerProvider) {
 		}),
 	)
 	if err != nil {
-		slog.Error("failed to create OTLP exporter", "error", err)
+		fmt.Fprintf(os.Stderr, "failed to create OTLP exporter: %v\n", err)
 		return slog.Default(), nil
 	}
 
