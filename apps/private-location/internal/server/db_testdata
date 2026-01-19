@@ -436,7 +436,9 @@ INSERT INTO "monitor" ("id", "job_type", "periodicity", "active", "url", "name",
 ('2', 'http', '10m', '0', 'https://www.google.com', '', '', '1', '', '', 'GET', '1760358329', 'gru', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, NULL, NULL, '3', '1'),
 ('3', 'http', '1m', '1', 'https://www.openstatus.dev', 'OpenStatus', 'OpenStatus website', '1', '[{"key":"key", "value":"value"}]', '{"hello":"world"}', 'GET', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '0', '45000', NULL, NULL, NULL, '3', '1'),
 ('4', 'http', '10m', '1', 'https://www.google.com', '', '', '1', '', '', 'GET', '1760358329', 'gru', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, 'https://otel.com:4337', '[{"key":"Authorization","value":"Basic"}]', '3', '1'),
-('5', 'http', '10m', '1', 'https://openstat.us', '', '', '3', '', '', 'GET', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, NULL, NULL, '3', '1');
+('5', 'http', '10m', '1', 'https://openstat.us', '', '', '3', '', '', 'GET', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '1', '45000', NULL, NULL, NULL, '3', '1'),
+('6', 'tcp', '5m', '1', 'tcp://db.example.com:5432', 'Database TCP', 'Database TCP check', '3', '', '', '', '1760358329', 'ams', '1760358329', 'active', NULL, NULL, '0', '30000', '5000', NULL, NULL, '2', '0'),
+('7', 'dns', '5m', '1', 'openstatus.dev', 'DNS Check', 'DNS check for openstatus.dev', '3', '', '', '', '1760358329', 'ams', '1760358329', 'active', '[{"version":"v1","type":"dnsRecord","key":"A","compare":"contains","target":"76.76.21.21"}]', NULL, '0', '30000', '3000', NULL, NULL, '2', '0');
 
 INSERT INTO "notification" ("id", "name", "provider", "data", "workspace_id", "created_at", "updated_at") VALUES
 ('1', 'sample test notification', 'email', '{"email":"ping@openstatus.dev"}', '1', '1760358329', '1760358329');
@@ -462,4 +464,6 @@ INSERT INTO "private_location" ("id", "name", "token", "last_seen_at", "workspac
 ('1', 'My Home', 'my-secret-key', NULL, '3', '1760358329', '1760358329');
 
 INSERT INTO "private_location_to_monitor" ("private_location_id", "monitor_id", "created_at", "deleted_at") VALUES
-('1', '5', '1760358329', NULL);
+('1', '5', '1760358329', NULL),
+('1', '6', '1760358329', NULL),
+('1', '7', '1760358329', NULL);
