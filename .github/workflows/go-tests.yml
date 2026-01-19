@@ -16,7 +16,7 @@ on:
 jobs:
   ci:
     name: Continuous Integration
-    runs-on: ubuntu-24.04-4
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4

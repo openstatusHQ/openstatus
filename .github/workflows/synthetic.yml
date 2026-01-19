@@ -14,7 +14,7 @@ on:
 
 jobs:
   synthetic_ci:
-    runs-on: ubuntu-24.04-4
+    runs-on: ubuntu-latest
     name: Run OpenStatus Synthetics CI
     steps:
       - name: Checkout
