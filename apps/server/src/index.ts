@@ -6,7 +6,6 @@ import {
   // configureSync,
   getConsoleSink,
   getLogger,
-  type Logger,
   jsonLinesFormatter,
   withContext,
 } from "@logtape/logtape";
@@ -33,7 +32,6 @@ type Env = {
 export const app = new Hono<Env>({
   strict: false,
 });
-
 
 const logger = getLogger("api-server");
 const otelLogger = getLogger("api-server-otel");
@@ -77,11 +75,7 @@ const otelLogger = getLogger("api-server-otel");
     ],
     contextLocalStorage: new AsyncLocalStorage(),
   });
-
-
-})()
-
-
+})();
 
 /* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
 function shouldSample(event: Record<string, any>): boolean {
@@ -95,7 +89,6 @@ function shouldSample(event: Record<string, any>): boolean {
   // Random sample the rest at 20%
   return Math.random() < 0.2;
 }
-
 
 /**
  * Middleware
