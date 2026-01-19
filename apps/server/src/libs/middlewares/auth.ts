@@ -98,7 +98,6 @@ export async function validateKey(key: string): Promise<{
      * Custom keys are checked first in the database, then falls back to Unkey.
      */
     if (key.startsWith("os_")) {
-
       // 1. Try custom DB first
       const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
       const customKey = await db

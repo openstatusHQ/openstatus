@@ -11,7 +11,7 @@
     "strict": true,
     "skipLibCheck": true,
     "emitDeclarationOnly": true,
-    "allowImportingTsExtensions":true
+    "allowImportingTsExtensions": true
   },
   "include": ["gen/ts/**/*.ts"],
   "exclude": ["node_modules"]

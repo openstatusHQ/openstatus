@@ -2,18 +2,18 @@ import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import {
+  type BodyAssertion,
+  type DNSMonitor,
+  type HTTPMonitor,
+  type HeaderAssertion,
+  type Headers,
   type MonitorService,
   NumberComparator,
-  StringComparator,
-  RecordComparator,
-  type HTTPMonitor,
-  type TCPMonitor,
-  type DNSMonitor,
-  type StatusCodeAssertion,
-  type BodyAssertion,
-  type HeaderAssertion,
   type RecordAssertion,
-  type Headers,
+  RecordComparator,
+  type StatusCodeAssertion,
+  StringComparator,
+  type TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 
 import { getRpcContext } from "../interceptors";

@@ -34,9 +34,7 @@ beforeAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
-  await db
-    .delete(monitor)
-    .where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
 
   // Create test HTTP monitor
   const httpMon = await db
@@ -55,7 +53,12 @@ beforeAll(async () => {
       assertions: JSON.stringify([
         { type: "status", compare: "eq", target: 200 },
         { type: "textBody", compare: "contains", target: "success" },
-        { type: "header", compare: "eq", target: "application/json", key: "content-type" },
+        {
+          type: "header",
+          compare: "eq",
+          target: "application/json",
+          key: "content-type",
+        },
       ]),
     })
     .returning()
@@ -121,16 +124,18 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
-  await db
-    .delete(monitor)
-    .where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
 });
 
 describe("MonitorService.ListMonitors", () => {
   test("returns monitors for authenticated workspace", async () => {
-    const res = await connectRequest("ListMonitors", {}, {
-      "x-openstatus-key": "1",
-    });
+    const res = await connectRequest(
+      "ListMonitors",
+      {},
+      {
+        "x-openstatus-key": "1",
+      },
+    );
 
     expect(res.status).toBe(200);
 
@@ -144,9 +149,13 @@ describe("MonitorService.ListMonitors", () => {
   });
 
   test("returns HTTP monitors with correct structure", async () => {
-    const res = await connectRequest("ListMonitors", {}, {
-      "x-openstatus-key": "1",
-    });
+    const res = await connectRequest(
+      "ListMonitors",
+      {},
+      {
+        "x-openstatus-key": "1",
+      },
+    );
 
     expect(res.status).toBe(200);
 
@@ -166,9 +175,13 @@ describe("MonitorService.ListMonitors", () => {
   });
 
   test("returns TCP monitors with correct structure", async () => {
-    const res = await connectRequest("ListMonitors", {}, {
-      "x-openstatus-key": "1",
-    });
+    const res = await connectRequest(
+      "ListMonitors",
+      {},
+      {
+        "x-openstatus-key": "1",
+      },
+    );
 
     expect(res.status).toBe(200);
 
@@ -183,9 +196,13 @@ describe("MonitorService.ListMonitors", () => {
   });
 
   test("returns DNS monitors with correct structure", async () => {
-    const res = await connectRequest("ListMonitors", {}, {
-      "x-openstatus-key": "1",
-    });
+    const res = await connectRequest(
+      "ListMonitors",
+      {},
+      {
+        "x-openstatus-key": "1",
+      },
+    );
 
     expect(res.status).toBe(200);
 
@@ -298,9 +315,13 @@ describe("MonitorService.ListMonitors", () => {
       .get();
 
     try {
-      const res = await connectRequest("ListMonitors", {}, {
-        "x-openstatus-key": "1",
-      });
+      const res = await connectRequest(
+        "ListMonitors",
+        {},
+        {
+          "x-openstatus-key": "1",
+        },
+      );
 
       expect(res.status).toBe(200);
 
@@ -447,9 +468,13 @@ describe("MonitorService - Unimplemented Methods", () => {
 
 describe("MonitorService - Authentication", () => {
   test("invalid API key returns 401", async () => {
-    const res = await connectRequest("ListMonitors", {}, {
-      "x-openstatus-key": "invalid-key",
-    });
+    const res = await connectRequest(
+      "ListMonitors",
+      {},
+      {
+        "x-openstatus-key": "invalid-key",
+      },
+    );
 
     expect(res.status).toBe(401);
   });
