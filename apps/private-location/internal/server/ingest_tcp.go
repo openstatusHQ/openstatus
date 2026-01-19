@@ -43,6 +43,14 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
+	event := ctx.Value("event")
+	if eventMap, ok := event.(map[string]any); ok && eventMap != nil {
+		eventMap["private_location"] = map[string]any{
+			"monitor_id": req.Msg.MonitorId,
+		}
+		ctx = context.WithValue(ctx, "event", eventMap)
+	}
+
 	data := TCPData{
 		ID:            req.Msg.Id,
 		WorkspaceID:   int64(ic.Monitor.WorkspaceID),
