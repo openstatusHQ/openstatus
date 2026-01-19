@@ -20,7 +20,7 @@ import (
 type contextKey string
 
 const (
-	requestIDKey contextKey = "requestId"
+	requestIDKey contextKey = "request_id"
 	eventKey     contextKey = "event"
 )
 
