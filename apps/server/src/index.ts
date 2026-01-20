@@ -40,42 +40,40 @@ const otelLogger = getLogger("api-server-otel");
  * Configure logging asynchronously without blocking module initialization.
  * This allows tests to import `app` immediately.
  */
-// This allows tests to import `app` immediately
-(async () => {
-  const defaultLogger = getOpenTelemetrySink({
-    serviceName: "openstatus-server",
-    otlpExporterConfig: {
-      url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
-      headers: {
-        Authorization: `Bearer ${env.AXIOM_TOKEN}`,
-        "X-Axiom-Dataset": env.AXIOM_DATASET,
-      },
-    },
-    additionalResource: resourceFromAttributes({
-      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
-    }),
-  });
 
-  await configure({
-    sinks: {
-      console: getConsoleSink({ formatter: jsonLinesFormatter }),
-      otel: defaultLogger,
+const defaultLogger = getOpenTelemetrySink({
+  serviceName: "openstatus-server",
+  otlpExporterConfig: {
+    url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
+    headers: {
+      Authorization: `Bearer ${env.AXIOM_TOKEN}`,
+      "X-Axiom-Dataset": env.AXIOM_DATASET,
     },
-    loggers: [
-      {
-        category: "api-server",
-        lowestLevel: "error",
-        sinks: ["console"],
-      },
-      {
-        category: "api-server-otel",
-        lowestLevel: "info",
-        sinks: ["otel"],
-      },
-    ],
-    contextLocalStorage: new AsyncLocalStorage(),
-  });
-})();
+  },
+  additionalResource: resourceFromAttributes({
+    [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env.NODE_ENV,
+  }),
+});
+
+await configure({
+  sinks: {
+    console: getConsoleSink({ formatter: jsonLinesFormatter }),
+    otel: defaultLogger,
+  },
+  loggers: [
+    {
+      category: "api-server",
+      lowestLevel: "error",
+      sinks: ["console"],
+    },
+    {
+      category: "api-server-otel",
+      lowestLevel: "info",
+      sinks: ["otel"],
+    },
+  ],
+  contextLocalStorage: new AsyncLocalStorage(),
+});
 
 /* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
 function shouldSample(event: Record<string, any>): boolean {
