@@ -453,14 +453,14 @@ importers:
         specifier: 0.7.6
         version: 0.7.6(hono@4.11.3)(zod@4.1.13)
       '@logtape/logtape':
-        specifier: 2.0.1-dev.481
-        version: 2.0.1-dev.481
+        specifier: 2.0.1
+        version: 2.0.1
       '@logtape/otel':
-        specifier: 2.0.1-dev.481
-        version: 2.0.1-dev.481(@logtape/logtape@2.0.1-dev.481)
+        specifier: 2.0.1
+        version: 2.0.1(@logtape/logtape@2.0.1)
       '@logtape/sentry':
-        specifier: 2.0.1-dev.481
-        version: 2.0.1-dev.481(@logtape/logtape@2.0.1-dev.481)(@sentry/core@10.31.0)
+        specifier: 2.0.1
+        version: 2.0.1(@logtape/logtape@2.0.1)(@sentry/core@10.31.0)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -1095,14 +1095,14 @@ importers:
         specifier: 0.15.15
         version: 0.15.15
       '@logtape/logtape':
-        specifier: 2.0.1-dev.481
-        version: 2.0.1-dev.481
+        specifier: 2.0.1
+        version: 2.0.1
       '@logtape/otel':
-        specifier: 2.0.1-dev.481
-        version: 2.0.1-dev.481(@logtape/logtape@2.0.1-dev.481)
+        specifier: 2.0.1
+        version: 2.0.1(@logtape/logtape@2.0.1)
       '@logtape/sentry':
-        specifier: 2.0.1-dev.481
-        version: 2.0.1-dev.481(@logtape/logtape@2.0.1-dev.481)(@sentry/core@10.31.0)
+        specifier: 2.0.1
+        version: 2.0.1(@logtape/logtape@2.0.1)(@sentry/core@10.31.0)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -3591,18 +3591,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@logtape/logtape@2.0.1-dev.481':
-    resolution: {integrity: sha512-KMiOi6IPpkwOIMB+BUB5Qz+o1bohNxAIVLfN/cbdTVsMuXUYPVBgRJ0f+5+p9iqXvIF4v3EX1fdEDXEH/6WFxg==}
+  '@logtape/logtape@2.0.1':
+    resolution: {integrity: sha512-NcxVG7HsG8+ykDmzHunp2bGvI45OvSCFp1MXr9hJFUNzOF02tEYpSjO5i9ghRfygiITmIPh+59uPVQSZmj5Rmg==}
 
-  '@logtape/otel@2.0.1-dev.481':
-    resolution: {integrity: sha512-w7yRk1kJ1aFbQ/kqYD/8nZsRuZlRIrFq/4yERZa3JrqavRSOQgGoduicNde56Rmf9JMVp4FMzCPrCWHTd43VhQ==}
+  '@logtape/otel@2.0.1':
+    resolution: {integrity: sha512-z3n4czT4nZu6hDmYkJiTtMbOaTHOXNjaQUgY+Co6UzD/wQ5xEAF1arAyGypBnV/8rcWwU62Vwo3buTSRwdYpZA==}
     peerDependencies:
-      '@logtape/logtape': ^2.0.1-dev.481+5155a5ef
+      '@logtape/logtape': ^2.0.1
 
-  '@logtape/sentry@2.0.1-dev.481':
-    resolution: {integrity: sha512-pi3WeFqWOB+qCRbiSabAr+ip7jXrLI1x3D8MTa1ux59jMO13l+WuwxpjWZtEqhKHaIaqDAxZU1u7QxUom9u1NA==}
+  '@logtape/sentry@2.0.1':
+    resolution: {integrity: sha512-gtHxnH6tGeI2tJqRXxYbuLhbd3blBYOpNOP40uEwiddyKZqUz9ZJA9xjXxpqhWJHhBl8Ynnj20dzZWEYdoHRKQ==}
     peerDependencies:
-      '@logtape/logtape': ^2.0.1-dev.481+5155a5ef
+      '@logtape/logtape': ^2.0.1
       '@sentry/core': '>=8.0.0'
 
   '@mdx-js/mdx@3.1.1':
@@ -13276,11 +13276,11 @@ snapshots:
   '@libsql/win32-x64-msvc@0.5.22':
     optional: true
 
-  '@logtape/logtape@2.0.1-dev.481': {}
+  '@logtape/logtape@2.0.1': {}
 
-  '@logtape/otel@2.0.1-dev.481(@logtape/logtape@2.0.1-dev.481)':
+  '@logtape/otel@2.0.1(@logtape/logtape@2.0.1)':
     dependencies:
-      '@logtape/logtape': 2.0.1-dev.481
+      '@logtape/logtape': 2.0.1
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/api-logs': 0.208.0
       '@opentelemetry/exporter-logs-otlp-grpc': 0.208.0(@opentelemetry/api@1.9.0)
@@ -13291,9 +13291,9 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.208.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.38.0
 
-  '@logtape/sentry@2.0.1-dev.481(@logtape/logtape@2.0.1-dev.481)(@sentry/core@10.31.0)':
+  '@logtape/sentry@2.0.1(@logtape/logtape@2.0.1)(@sentry/core@10.31.0)':
     dependencies:
-      '@logtape/logtape': 2.0.1-dev.481
+      '@logtape/logtape': 2.0.1
       '@sentry/core': 10.31.0
 
   '@mdx-js/mdx@3.1.1':
