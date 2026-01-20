@@ -44,12 +44,10 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	event := ctx.Value("event")
-	if eventMap, ok := event.(map[string]any); ok && eventMap != nil {
-		eventMap["private_location"] = map[string]any{
+	if holder, ok := ctx.Value(eventKey).(*EventHolder); ok && holder != nil {
+		holder.Event["private_location"] = map[string]any{
 			"monitor_id": req.Msg.MonitorId,
 		}
-		ctx = context.WithValue(ctx, "event", eventMap)
 	}
 
 	records := make(map[string][]string)

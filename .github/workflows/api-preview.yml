@@ -1,7 +1,7 @@
 name: Fly Preview API server
 on:
   pull_request:
-    types: [opened, reopened, synchronize, closed, ready_for_review]
+    types: [opened, reopened, synchronize, closed]
     paths:
       - "apps/server/**"
       - "packages/db/**"
@@ -20,7 +20,7 @@ env:
 
 jobs:
   review_app:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 15
     outputs:
       url: ${{ steps.deploy.outputs.url }}

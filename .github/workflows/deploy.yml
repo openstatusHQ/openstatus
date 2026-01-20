@@ -6,7 +6,7 @@ on:
 jobs:
   deploy:
     name: Deploy API
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04-4
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

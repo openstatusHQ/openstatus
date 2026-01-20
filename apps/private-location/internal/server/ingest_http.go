@@ -9,6 +9,10 @@ import (
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 )
 
+type EventHolder struct {
+	Event map[string]any
+}
+
 type PingData struct {
 	ID            string `json:"id"`
 	WorkspaceID   string `json:"workspaceId"`
@@ -31,12 +35,10 @@ type PingData struct {
 }
 
 func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Request[private_locationv1.IngestHTTPRequest]) (*connect.Response[private_locationv1.IngestHTTPResponse], error) {
-	event := ctx.Value("event")
-	if eventMap, ok := event.(map[string]any); ok && eventMap != nil {
-		eventMap["private_location"] = map[string]any{
+	if holder, ok := ctx.Value(eventKey).(*EventHolder); ok && holder != nil {
+		holder.Event["private_location"] = map[string]any{
 			"monitor_id": req.Msg.MonitorId,
 		}
-		ctx = context.WithValue(ctx, "event", eventMap)
 	}
 
 	token := req.Header().Get("openstatus-token")
