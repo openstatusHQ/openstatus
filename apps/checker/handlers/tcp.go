@@ -94,6 +94,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			"workspace_id": req.WorkspaceID,
 			"monitor_id":req.MonitorID,
 			"trigger": trigger,
+			"type": "tcp",
 		}
 		c.Set("event", t)
 	}
