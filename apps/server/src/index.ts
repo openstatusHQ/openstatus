@@ -28,18 +28,18 @@ type Env = {
   };
 };
 
-/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
-function shouldSample(event: Record<string, any>): boolean {
-  // Always keep errors
-  if (event.status_code >= 500) return true;
-  if (event.error) return true;
+// Export app before any top-level await to avoid "Cannot access before initialization" errors in tests
+export const app = new Hono<Env>({
+  strict: false,
+});
 
-  // Always keep slow requests (above p99)
-  if (event.duration_ms > 2000) return true;
+const logger = getLogger("api-server");
+const otelLogger = getLogger("api-server-otel");
 
-  // Random sample the rest at 20%
-  return Math.random() < 0.2;
-}
+/**
+ * Configure logging asynchronously without blocking module initialization.
+ * This allows tests to import `app` immediately.
+ */
 
 const defaultLogger = getOpenTelemetrySink({
   serviceName: "openstatus-server",
@@ -58,7 +58,6 @@ const defaultLogger = getOpenTelemetrySink({
 await configure({
   sinks: {
     console: getConsoleSink({ formatter: jsonLinesFormatter }),
-
     otel: defaultLogger,
   },
   loggers: [
@@ -76,13 +75,18 @@ await configure({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-const logger = getLogger("api-server");
+/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
+function shouldSample(event: Record<string, any>): boolean {
+  // Always keep errors
+  if (event.status_code >= 500) return true;
+  if (event.error) return true;
 
-const otelLogger = getLogger("api-server-otel");
+  // Always keep slow requests (above p99)
+  if (event.duration_ms > 2000) return true;
 
-export const app = new Hono<Env>({
-  strict: false,
-});
+  // Random sample the rest at 20%
+  return Math.random() < 0.2;
+}
 
 /**
  * Middleware
@@ -92,12 +96,12 @@ app.use("*", requestId());
 app.use("*", prettyJSON());
 
 app.use("*", async (c, next) => {
-  const requestId = c.get("requestId");
+  const reqId = c.get("requestId");
   const startTime = Date.now();
 
   await withContext(
     {
-      request_id: requestId,
+      request_id: reqId,
       method: c.req.method,
       url: c.req.url,
       user_agent: c.req.header("User-Agent"),
@@ -106,7 +110,7 @@ app.use("*", async (c, next) => {
       // Initialize wide event - one canonical log line per request
       const event: Record<string, unknown> = {
         timestamp: new Date().toISOString(),
-        request_id: requestId,
+        request_id: reqId,
         // Request context
         method: c.req.method,
         path: c.req.path,
