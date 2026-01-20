@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-checker:
-    runs-on: ubuntu-24.04-4
+    runs-on: ubuntu-24.04
     # Permissions to use OIDC token authentication
     permissions:
       contents: read
@@ -36,7 +36,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
   build-private-location:
-    runs-on: ubuntu-24.04-4
+    runs-on: ubuntu-24.04
     # Permissions to use OIDC token authentication
     permissions:
       contents: read

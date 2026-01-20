@@ -63,6 +63,12 @@ await configure({
   },
   loggers: [
     {
+      category: ["logtape", "meta"],
+      sinks: ["console"],
+      lowestLevel: "warning",
+    },
+
+    {
       category: "api-server",
       lowestLevel: "error",
       sinks: ["console"],
