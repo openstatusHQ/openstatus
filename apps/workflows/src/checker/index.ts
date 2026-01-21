@@ -29,6 +29,60 @@ const payloadSchema = z.object({
 
 const logger = getLogger(["workflow"]);
 
+/**
+ * Finds an open incident (not resolved and not acknowledged) for the given monitor.
+ */
+async function findOpenIncident(monitorId: number) {
+  return db
+    .select()
+    .from(incidentTable)
+    .where(
+      and(
+        eq(incidentTable.monitorId, monitorId),
+        isNull(incidentTable.resolvedAt),
+      ),
+    )
+    .get();
+}
+
+/**
+ * Resolves an open incident by setting resolvedAt and autoResolved flag.
+ */
+async function resolveIncident(params: {
+  monitorId: string;
+  cronTimestamp: number;
+}) {
+  const { monitorId, cronTimestamp } = params;
+  const incident = await findOpenIncident(Number(monitorId));
+
+  if (!incident || incident.resolvedAt) {
+    return null;
+  }
+
+  logger.info("Recovering incident", {
+    incident_id: incident.id,
+    monitor_id: monitorId,
+  });
+
+  await db
+    .update(incidentTable)
+    .set({
+      resolvedAt: new Date(cronTimestamp),
+      autoResolved: true,
+    })
+    .where(eq(incidentTable.id, incident.id))
+    .run();
+
+  await checkerAudit.publishAuditLog({
+    id: `monitor:${monitorId}`,
+    action: "incident.resolved",
+    targets: [{ id: monitorId, type: "monitor" }],
+    metadata: { cronTimestamp, incidentId: incident.id },
+  });
+
+  return incident;
+}
+
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env().CRON_SECRET}`) {
@@ -152,7 +206,6 @@ checkerRoute.post("/updateStatus", async (c) => {
   if (affectedRegion.count >= numberOfRegions / 2 || numberOfRegions === 1) {
     switch (status) {
       case "active": {
-        // it's been resolved
         if (monitor.status === "active") {
           break;
         }
@@ -166,48 +219,8 @@ checkerRoute.post("/updateStatus", async (c) => {
           .set({ status: "active" })
           .where(eq(schema.monitor.id, monitor.id));
 
-        // we can't have a monitor in error without an incident
         if (monitor.status === "error") {
-          const incident = await db
-            .select()
-            .from(incidentTable)
-            .where(
-              and(
-                eq(incidentTable.monitorId, Number(monitorId)),
-                isNull(incidentTable.resolvedAt),
-                isNull(incidentTable.acknowledgedAt),
-              ),
-            )
-            .get();
-
-          if (!incident) {
-            // it was just a single failure not a proper incident
-            break;
-          }
-          if (incident?.resolvedAt) {
-            // incident is already resolved
-            break;
-          }
-          logger.info("Recovering incident", {
-            incident_id: incident.id,
-            monitor_id: monitorId,
-          });
-
-          await db
-            .update(incidentTable)
-            .set({
-              resolvedAt: new Date(cronTimestamp),
-              autoResolved: true,
-            })
-            .where(eq(incidentTable.id, incident.id))
-            .run();
-
-          await checkerAudit.publishAuditLog({
-            id: `monitor:${monitorId}`,
-            action: "incident.resolved",
-            targets: [{ id: monitorId, type: "monitor" }],
-            metadata: { cronTimestamp, incidentId: incident.id },
-          });
+          await resolveIncident({ monitorId, cronTimestamp });
         }
 
         await triggerNotifications({
@@ -225,9 +238,9 @@ checkerRoute.post("/updateStatus", async (c) => {
       }
       case "degraded":
         if (monitor.status === "degraded") {
-          // already degraded let's return early
           break;
         }
+
         logger.info("Monitor status changed to degraded", {
           monitor_id: monitor.id,
           workspace_id: monitor.workspaceId,
@@ -237,7 +250,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           .update(schema.monitor)
           .set({ status: "degraded" })
           .where(eq(schema.monitor.id, monitor.id));
-        // figure how to send the notification once
+
         await triggerNotifications({
           monitorId,
           statusCode,
@@ -249,10 +262,12 @@ checkerRoute.post("/updateStatus", async (c) => {
           incidentId: `${cronTimestamp}`,
         });
 
+        if (monitor.status === "error") {
+          await resolveIncident({ monitorId, cronTimestamp });
+        }
         break;
       case "error":
         if (monitor.status === "error") {
-          // already in error let's return early
           break;
         }
 
@@ -267,21 +282,14 @@ checkerRoute.post("/updateStatus", async (c) => {
           .where(eq(schema.monitor.id, monitor.id));
 
         try {
-          const incident = await db
-            .select()
-            .from(incidentTable)
-            .where(
-              and(
-                eq(incidentTable.monitorId, Number(monitorId)),
-                isNull(incidentTable.resolvedAt),
-                isNull(incidentTable.acknowledgedAt),
-              ),
-            )
-            .get();
-          if (incident) {
-            logger.info("we are already in incident");
+          const existingIncident = await findOpenIncident(Number(monitorId));
+          if (existingIncident) {
+            logger.info("Already in incident", {
+              incident_id: existingIncident.id,
+            });
             break;
           }
+
           const [newIncident] = await db
             .insert(incidentTable)
             .values({
@@ -291,8 +299,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             })
             .returning();
 
-          if (!newIncident.id) {
-            return;
+          if (!newIncident?.id) {
+            break;
           }
 
           await checkerAudit.publishAuditLog({
@@ -312,13 +320,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             region,
             incidentId: String(newIncident.id),
           });
-
-          await db
-            .update(schema.monitor)
-            .set({ status: "error" })
-            .where(eq(schema.monitor.id, monitor.id));
-        } catch {
-          logger.warning("incident was already created");
+        } catch (error) {
+          logger.warning("Failed to create incident", { error });
         }
 
         break;
@@ -328,6 +331,5 @@ checkerRoute.post("/updateStatus", async (c) => {
     }
   }
 
-  // if we are in error
   return c.text("Ok", 200);
 });
