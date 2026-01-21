@@ -20,6 +20,7 @@ import {
 import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { getPeriodDate, periods } from "./utils";
 
 export const maintenanceRouter = createTRPCRouter({
   getById: protectedProcedure
@@ -118,11 +119,11 @@ export const maintenanceRouter = createTRPCRouter({
     .input(
       z
         .object({
-          createdAt: z
-            .object({
-              gte: z.date().optional(),
-            })
-            .optional(),
+          /**
+           * Time period for filtering maintenances (e.g., "1d", "7d", "14d")
+           * Takes precedence over createdAt if provided
+           */
+          period: z.enum(periods).optional(),
           pageId: z.number().optional(),
           order: z.enum(["asc", "desc"]).optional(),
         })
@@ -133,9 +134,10 @@ export const maintenanceRouter = createTRPCRouter({
         eq(maintenance.workspaceId, opts.ctx.workspace.id),
       ];
 
-      if (opts.input?.createdAt?.gte) {
+      // Use period if provided, otherwise fall back to createdAt
+      if (opts.input?.period) {
         whereConditions.push(
-          gte(maintenance.createdAt, opts.input.createdAt.gte),
+          gte(maintenance.createdAt, getPeriodDate(opts.input.period)),
         );
       }
 

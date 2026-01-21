@@ -27,7 +27,7 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { List, Search } from "lucide-react";
 import { Terminal } from "lucide-react";
 import Link from "next/link";
-import { DataTableStatusReports } from "./data-table-status-reports";
+import { StatusReportsSection } from "./status-reports-section";
 
 // FIXME: the page is server side
 // whenever I change the maintenances, the page is not updated
@@ -42,26 +42,17 @@ export default async function Page() {
   const pages = await queryClient.fetchQuery(trpc.page.list.queryOptions());
   const incidents = await queryClient.fetchQuery(
     trpc.incident.list.queryOptions({
-      order: "desc",
-      startedAt: {
-        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-      },
+      period: "7d",
     }),
   );
   const statusReports = await queryClient.fetchQuery(
     trpc.statusReport.list.queryOptions({
-      order: "desc",
-      createdAt: {
-        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-      },
+      period: "7d",
     }),
   );
   const maintenances = await queryClient.fetchQuery(
     trpc.maintenance.list.queryOptions({
-      order: "desc",
-      createdAt: {
-        gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-      },
+      period: "7d",
     }),
   );
 
@@ -187,21 +178,7 @@ export default async function Page() {
             </EmptyStateContainer>
           )}
         </Section>
-        <Section>
-          <SectionHeader>
-            <SectionTitle>Reports</SectionTitle>
-            <SectionDescription>
-              Reports over the last 7 days.
-            </SectionDescription>
-          </SectionHeader>
-          {statusReports.length > 0 ? (
-            <DataTableStatusReports statusReports={statusReports} />
-          ) : (
-            <EmptyStateContainer>
-              <EmptyStateTitle>No reports found</EmptyStateTitle>
-            </EmptyStateContainer>
-          )}
-        </Section>
+        <StatusReportsSection />
         <Section>
           <SectionHeader>
             <SectionTitle>Maintenance</SectionTitle>

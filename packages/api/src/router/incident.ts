@@ -19,6 +19,7 @@ import {
 import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { getPeriodDate, periods } from "./utils";
 
 export const incidentRouter = createTRPCRouter({
   // TODO: rename getIncidentsByWorkspace to make it consistent with the other methods
@@ -181,11 +182,11 @@ export const incidentRouter = createTRPCRouter({
     .input(
       z
         .object({
-          startedAt: z
-            .object({
-              gte: z.date().optional(),
-            })
-            .optional(),
+          /**
+           * Time period for filtering incidents (e.g., "1d", "7d", "14d")
+           * Takes precedence over startedAt if provided
+           */
+          period: z.enum(periods).optional(),
           monitorId: z.number().nullish(),
           order: z.enum(["asc", "desc"]).optional(),
         })
@@ -196,9 +197,10 @@ export const incidentRouter = createTRPCRouter({
         eq(incidentTable.workspaceId, opts.ctx.workspace.id),
       ];
 
-      if (opts.input?.startedAt?.gte) {
+      // Use period if provided, otherwise fall back to startedAt
+      if (opts.input?.period) {
         whereConditions.push(
-          gte(incidentTable.startedAt, opts.input.startedAt.gte),
+          gte(incidentTable.startedAt, getPeriodDate(opts.input.period)),
         );
       }
 

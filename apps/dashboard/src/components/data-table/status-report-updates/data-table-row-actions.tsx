@@ -6,7 +6,7 @@ import { getActions } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useRef } from "react";
 
 type StatusReportUpdate =
@@ -19,7 +19,6 @@ interface DataTableRowActionsProps {
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const updateStatusReportUpdateMutation = useMutation(
@@ -33,8 +32,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        // Refresh server components
-        router.refresh();
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
@@ -46,8 +48,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             pageId: Number.parseInt(id),
           }),
         });
-        // Refresh server components
-        router.refresh();
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
