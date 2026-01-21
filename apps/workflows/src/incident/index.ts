@@ -22,7 +22,6 @@ incidentRoute.get("/cleanup", async (c) => {
     .where(
       and(
         isNull(schema.incidentTable.resolvedAt),
-        isNotNull(schema.incidentTable.acknowledgedAt),
       ),
     );
 
