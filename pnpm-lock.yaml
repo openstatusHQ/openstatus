@@ -2046,15 +2046,9 @@ importers:
 
   packages/upstash:
     dependencies:
-      '@upstash/kafka':
-        specifier: 1.3.3
-        version: 1.3.3
       '@upstash/qstash':
         specifier: 2.6.2
         version: 2.6.2
-      '@upstash/ratelimit':
-        specifier: 0.4.4
-        version: 0.4.4
       '@upstash/redis':
         specifier: 1.22.1
         version: 1.22.1
@@ -6655,9 +6649,6 @@ packages:
 
   '@upstash/qstash@2.6.2':
     resolution: {integrity: sha512-aB/1yqMJTRyOt7Go2Db1ZIVnmTPpsc2KGY5jpLVcegNtjksaPTJF6fmITxos5HVvsQhS8IB3gvF/+gQfRQlPLQ==}
-
-  '@upstash/ratelimit@0.4.4':
-    resolution: {integrity: sha512-y3q6cNDdcRQ2MRPRf5UNWBN36IwnZ4kAEkGoH3i6OqdWwz4qlBxNsw4/Rpqn9h93+Nx1cqg5IOq7O2e2zMJY1w==}
 
   '@upstash/redis@1.22.1':
     resolution: {integrity: sha512-7ec2eCMkVxZzuHNb+hPKonX4b/Pu0BdDeSBsEy+jKIqiweXzCs5Dpu9642vJgf57YnEsfwgXnQMVEataarvyeQ==}
@@ -16479,28 +16470,10 @@ snapshots:
     dependencies:
       zod: 4.1.13
 
-  '@upstash/core-analytics@0.0.6':
-    dependencies:
-      '@upstash/redis': 1.22.1
-    transitivePeerDependencies:
-      - encoding
-
-  '@upstash/kafka@1.3.3':
-    dependencies:
-      isomorphic-fetch: 3.0.0
-    transitivePeerDependencies:
-      - encoding
-
   '@upstash/qstash@2.6.2':
     dependencies:
       crypto-js: 4.2.0
       jose: 5.10.0
-
-  '@upstash/ratelimit@0.4.4':
-    dependencies:
-      '@upstash/core-analytics': 0.0.6
-    transitivePeerDependencies:
-      - encoding
 
   '@upstash/redis@1.22.1':
     dependencies:
