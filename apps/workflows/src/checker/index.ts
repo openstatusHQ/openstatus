@@ -40,7 +40,6 @@ async function findOpenIncident(monitorId: number) {
       and(
         eq(incidentTable.monitorId, monitorId),
         isNull(incidentTable.resolvedAt),
-        isNull(incidentTable.acknowledgedAt),
       ),
     )
     .get();
@@ -285,7 +284,9 @@ checkerRoute.post("/updateStatus", async (c) => {
         try {
           const existingIncident = await findOpenIncident(Number(monitorId));
           if (existingIncident) {
-            logger.info("Already in incident", { incident_id: existingIncident.id });
+            logger.info("Already in incident", {
+              incident_id: existingIncident.id,
+            });
             break;
           }
 
