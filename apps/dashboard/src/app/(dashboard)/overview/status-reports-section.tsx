@@ -34,9 +34,7 @@ export function StatusReportsSection() {
     <Section>
       <SectionHeader>
         <SectionTitle>Reports</SectionTitle>
-        <SectionDescription>
-          Reports over the last 7 days.
-        </SectionDescription>
+        <SectionDescription>Reports over the last 7 days.</SectionDescription>
       </SectionHeader>
       {statusReports && statusReports.length > 0 ? (
         <DataTableStatusReports statusReports={statusReports} />
