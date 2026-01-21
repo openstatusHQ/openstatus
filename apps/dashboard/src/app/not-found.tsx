@@ -22,7 +22,7 @@ export default function NotFound() {
                 The page you are looking for doesn&apos;t exist.
               </p>
             </div>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row ">
               <Button
                 variant="outline"
                 size="lg"
