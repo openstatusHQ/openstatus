@@ -57,7 +57,6 @@ export const sendAlert = async ({
 
   await postToWebhook(
     {
-      text: `${monitor.name} is failing - ${monitor.url}`,
       attachments: [
         {
           color: COLORS.red,
@@ -97,7 +96,6 @@ export const sendRecovery = async ({
 
   await postToWebhook(
     {
-      text: `${monitor.name} is recovered - ${monitor.url}`,
       attachments: [
         {
           color: COLORS.green,
@@ -137,7 +135,6 @@ export const sendDegraded = async ({
 
   await postToWebhook(
     {
-      text: `${monitor.name} is degraded - ${monitor.url}`,
       attachments: [
         {
           color: COLORS.yellow,
@@ -153,7 +150,6 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
   try {
     await postToWebhook(
       {
-        text: "OpenStatus Test Notification",
         attachments: [
           {
             color: COLORS.green,
@@ -170,7 +166,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
                 type: "section",
                 text: {
                   type: "mrkdwn",
-                  text: "🧪 Your Slack webhook is configured correctly!",
+                  text: "`🧪 Your Slack webhook is configured correctly!`",
                 },
               },
               {
@@ -206,7 +202,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
                       text: "View Dashboard",
                       emoji: true,
                     },
-                    url: "https://www.openstatus.dev/app",
+                    url: "https://app.openstatus.dev",
                     action_id: "view_dashboard",
                   },
                 ],
