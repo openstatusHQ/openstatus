@@ -64,7 +64,7 @@ export const sendRecovery = async ({
         },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send SMS: ${res.statusText}`);
+    throw new Error(`Failed to send webhook notification: ${res.statusText}`);
   }
 };
 
@@ -97,7 +97,7 @@ export const sendDegraded = async ({
         },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send SMS: ${res.statusText}`);
+    throw new Error(`Failed to send webhook notification: ${res.statusText}`);
   }
 };
 

@@ -93,8 +93,8 @@ export const sendRecovery = async ({
 
   const url =
     opsgenie.region === "eu"
-      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incident?.id}/close`
-      : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incident?.id}/close`;
+      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}-${incident?.id}/close`
+      : `https://api.opsgenie.com/v2/alerts/${monitor.id}-${incident?.id}/close`;
 
   const event = OpsGeniePayloadAlert.parse({
     alias: `${monitor.id}-${incident?.id}`,
