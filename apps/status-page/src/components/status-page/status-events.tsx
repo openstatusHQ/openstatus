@@ -204,7 +204,9 @@ export function StatusEventTimelineReport({
         let durationText: string | undefined;
 
         if (index === 0) {
-          const startedAt = new Date(sortedUpdates[sortedUpdates.length - 1].date);
+          const startedAt = new Date(
+            sortedUpdates[sortedUpdates.length - 1].date,
+          );
           const duration = formatDistanceStrict(startedAt, updateDate);
 
           if (duration !== "0 seconds" && update.status === "resolved") {
