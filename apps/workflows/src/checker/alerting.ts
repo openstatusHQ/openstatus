@@ -29,7 +29,7 @@ export const triggerNotifications = async ({
   message?: string;
   notifType: "alert" | "recovery" | "degraded";
   cronTimestamp: number;
-  incidentId: string;
+  incidentId?: number;
   regions?: string[];
   latency?: number;
 }) => {
@@ -43,7 +43,7 @@ export const triggerNotifications = async ({
   if ((notifType === "recovery" || notifType === "degraded") && incidentId) {
     try {
       const result = await db.query.incidentTable.findFirst({
-        where: eq(schema.incidentTable.id, Number.parseInt(incidentId)),
+        where: eq(schema.incidentTable.id, incidentId),
       });
       if (result) {
         incident = result as Incident;

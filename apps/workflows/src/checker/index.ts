@@ -223,8 +223,9 @@ checkerRoute.post("/updateStatus", async (c) => {
           .set({ status: "active" })
           .where(eq(schema.monitor.id, monitor.id));
 
+        let incident = null;
         if (monitor.status === "error") {
-          await resolveIncident({ monitorId, cronTimestamp });
+          incident = await resolveIncident({ monitorId, cronTimestamp });
         }
 
         await triggerNotifications({
@@ -235,7 +236,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           cronTimestamp,
           regions: affectedRegionsList,
           latency,
-          incidentId: `${cronTimestamp}`,
+          incidentId: incident?.id,
         });
 
         break;
@@ -255,6 +256,14 @@ checkerRoute.post("/updateStatus", async (c) => {
           .set({ status: "degraded" })
           .where(eq(schema.monitor.id, monitor.id));
 
+        let incident = null;
+        if (monitor.status === "error") {
+          incident = await resolveIncident({
+            monitorId,
+            cronTimestamp,
+          });
+        }
+
         await triggerNotifications({
           monitorId,
           statusCode,
@@ -263,12 +272,9 @@ checkerRoute.post("/updateStatus", async (c) => {
           cronTimestamp,
           latency,
           regions: affectedRegionsList,
-          incidentId: `${cronTimestamp}`,
+          incidentId: incident?.id,
         });
 
-        if (monitor.status === "error") {
-          await resolveIncident({ monitorId, cronTimestamp });
-        }
         break;
       case "error":
         if (monitor.status === "error") {
@@ -322,7 +328,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             cronTimestamp,
             latency,
             regions: affectedRegionsList,
-            incidentId: String(newIncident.id),
+            incidentId: newIncident.id,
           });
         } catch (error) {
           logger.warning("Failed to create incident", { error });
