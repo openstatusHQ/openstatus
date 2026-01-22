@@ -1,4 +1,4 @@
-# GEMINI.md
+# Agent.md
 
 This file provides a comprehensive overview of the OpenStatus project, its architecture, and development conventions to be used as instructional context for future interactions.
 
@@ -77,6 +77,16 @@ The project can be run using Docker (recommended) or a manual setup.
 ### Running Tests
 
 To run the test suite, use the following command:
+
+Before running the test you should spin up the database with 
+```sh
+turso dev
+cd packages/db
+pnpm migrate 
+pnpm seed
+```
+
+Then run the tests with:
 
 ```sh
 pnpm test

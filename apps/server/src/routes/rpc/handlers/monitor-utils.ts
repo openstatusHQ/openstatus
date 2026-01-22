@@ -1,3 +1,5 @@
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import {
   type BodyAssertion,
   type DNSMonitor,
@@ -13,30 +15,28 @@ import {
   type TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 
+
+
 /**
- * Type for database monitor record.
+ * Default values for monitor fields.
  */
-export type DbMonitor = {
-  id: number;
-  name: string;
-  url: string;
-  periodicity: string;
-  method: string | null;
-  body: string | null;
-  timeout: number;
-  degradedAfter: number | null;
-  headers: string | null;
-  assertions: string | null;
-  followRedirects: boolean | null;
-  jobType: string;
-  description: string;
-  active: boolean | null;
-  public: boolean | null;
-  regions: string;
-  otelEndpoint: string | null;
-  otelHeaders: string | null;
-  retry: number | null;
-};
+export const MONITOR_DEFAULTS = {
+  timeout: 45000,
+  retry: 3,
+  followRedirects: true,
+  active: false,
+  public: false,
+  description: "",
+} as const;
+
+/**
+ * Validate that all regions are valid available regions.
+ * Returns an array of invalid region codes, or empty array if all valid.
+ */
+export function validateRegions(regions: string[]): string[] {
+  const availableSet = new Set(AVAILABLE_REGIONS);
+  return regions.filter((r) => !availableSet.has(r as typeof AVAILABLE_REGIONS[number]));
+}
 
 // ============================================================
 // DB to Proto Conversion Functions (for reads)
@@ -113,26 +113,18 @@ export function compareToRecordComparator(compare: string): RecordComparator {
 }
 
 /**
- * Parse database headers JSON and convert to proto Headers array.
+ * Convert headers array to proto Headers array.
  */
-export function parseDbHeaders(headersJson: string | null): Headers[] {
-  if (!headersJson) {
+export function toProtoHeaders(headers: Array<{ key: string; value: string }> | null | undefined): Headers[] {
+  if (!headers || headers.length === 0) {
     return [];
   }
 
-  try {
-    const headers = JSON.parse(headersJson) as Array<{
-      key: string;
-      value: string;
-    }>;
-    return headers.map((h) => ({
-      $typeName: "openstatus.monitor.v1.Headers" as const,
-      key: h.key,
-      value: h.value,
-    }));
-  } catch {
-    return [];
-  }
+  return headers.map((h) => ({
+    $typeName: "openstatus.monitor.v1.Headers" as const,
+    key: h.key,
+    value: h.value,
+  }));
 }
 
 /**
@@ -192,8 +184,8 @@ export function parseHttpAssertions(assertionsJson: string | null): {
           break;
       }
     }
-  } catch {
-    // Ignore parse errors
+  } catch (error) {
+    console.error("[monitor-utils] Failed to parse HTTP assertions JSON:", error);
   }
 
   return result;
@@ -225,19 +217,10 @@ export function parseDnsAssertions(
         target: String(a.target),
         comparator: compareToRecordComparator(a.compare),
       }));
-  } catch {
+  } catch (error) {
+    console.error("[monitor-utils] Failed to parse DNS assertions JSON:", error);
     return [];
   }
-}
-
-/**
- * Parse regions string to array.
- */
-export function parseRegions(regions: string | null): string[] {
-  if (!regions || regions.length === 0) {
-    return [];
-  }
-  return regions.split(",").filter((r) => r.length > 0);
 }
 
 /**
@@ -245,7 +228,7 @@ export function parseRegions(regions: string | null): string[] {
  */
 export function parseOpenTelemetry(
   endpoint: string | null,
-  headers: string | null,
+  headers: Array<{ key: string; value: string }> | null | undefined,
 ): OpenTelemetryConfig | undefined {
   if (!endpoint) {
     return undefined;
@@ -254,14 +237,14 @@ export function parseOpenTelemetry(
   return {
     $typeName: "openstatus.monitor.v1.OpenTelemetryConfig",
     endpoint,
-    headers: parseDbHeaders(headers),
+    headers: toProtoHeaders(headers),
   };
 }
 
 /**
  * Transform database HTTP monitor to proto HTTPMonitor.
  */
-export function dbMonitorToHttpProto(dbMon: DbMonitor): HTTPMonitor {
+export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
   const assertions = parseHttpAssertions(dbMon.assertions);
 
   return {
@@ -274,16 +257,16 @@ export function dbMonitorToHttpProto(dbMon: DbMonitor): HTTPMonitor {
     body: dbMon.body ?? "",
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(dbMon.retry ?? 3),
-    followRedirects: dbMon.followRedirects ?? true,
-    headers: parseDbHeaders(dbMon.headers),
+    retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
+    followRedirects: dbMon.followRedirects ?? MONITOR_DEFAULTS.followRedirects,
+    headers: toProtoHeaders(dbMon.headers),
     statusCodeAssertions: assertions.statusCodeAssertions,
     bodyAssertions: assertions.bodyAssertions,
     headerAssertions: assertions.headerAssertions,
     description: dbMon.description,
-    active: dbMon.active ?? false,
-    public: dbMon.public ?? false,
-    regions: parseRegions(dbMon.regions),
+    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    public: dbMon.public ?? MONITOR_DEFAULTS.public,
+    regions: dbMon.regions,
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
@@ -291,7 +274,7 @@ export function dbMonitorToHttpProto(dbMon: DbMonitor): HTTPMonitor {
 /**
  * Transform database TCP monitor to proto TCPMonitor.
  */
-export function dbMonitorToTcpProto(dbMon: DbMonitor): TCPMonitor {
+export function dbMonitorToTcpProto(dbMon: Monitor): TCPMonitor {
   return {
     $typeName: "openstatus.monitor.v1.TCPMonitor",
     id: String(dbMon.id),
@@ -300,11 +283,11 @@ export function dbMonitorToTcpProto(dbMon: DbMonitor): TCPMonitor {
     periodicity: dbMon.periodicity,
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(dbMon.retry ?? 3),
+    retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
     description: dbMon.description,
-    active: dbMon.active ?? false,
-    public: dbMon.public ?? false,
-    regions: parseRegions(dbMon.regions),
+    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    public: dbMon.public ?? MONITOR_DEFAULTS.public,
+    regions: dbMon.regions,
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
@@ -312,7 +295,7 @@ export function dbMonitorToTcpProto(dbMon: DbMonitor): TCPMonitor {
 /**
  * Transform database DNS monitor to proto DNSMonitor.
  */
-export function dbMonitorToDnsProto(dbMon: DbMonitor): DNSMonitor {
+export function dbMonitorToDnsProto(dbMon: Monitor): DNSMonitor {
   return {
     $typeName: "openstatus.monitor.v1.DNSMonitor",
     id: String(dbMon.id),
@@ -321,12 +304,12 @@ export function dbMonitorToDnsProto(dbMon: DbMonitor): DNSMonitor {
     periodicity: dbMon.periodicity,
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(dbMon.retry ?? 3),
+    retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
     recordAssertions: parseDnsAssertions(dbMon.assertions),
     description: dbMon.description,
-    active: dbMon.active ?? false,
-    public: dbMon.public ?? false,
-    regions: parseRegions(dbMon.regions),
+    active: dbMon.active ?? MONITOR_DEFAULTS.active,
+    public: dbMon.public ?? MONITOR_DEFAULTS.public,
+    regions: dbMon.regions,
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }

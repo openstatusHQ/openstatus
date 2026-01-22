@@ -13,6 +13,19 @@ import type {
   MonitorService,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
+import { getRpcContext } from "../interceptors";
+import {
+  dbMonitorToDnsProto,
+  dbMonitorToHttpProto,
+  dbMonitorToTcpProto,
+  dnsAssertionsToDbJson,
+  headersToDbJson,
+  httpAssertionsToDbJson,
+  MONITOR_DEFAULTS,
+  openTelemetryToDb,
+  regionsToDbString,
+  validateRegions,
+} from "./monitor-utils";
 
 type MonitorPeriodicity = (typeof monitorPeriodicity)[number];
 type MonitorMethod = (typeof monitorMethods)[number];
@@ -40,17 +53,60 @@ function toValidMethod(value: string | undefined): MonitorMethod {
   return "GET";
 }
 
-import { getRpcContext } from "../interceptors";
-import {
-  dbMonitorToDnsProto,
-  dbMonitorToHttpProto,
-  dbMonitorToTcpProto,
-  dnsAssertionsToDbJson,
-  headersToDbJson,
-  httpAssertionsToDbJson,
-  openTelemetryToDb,
-  regionsToDbString,
-} from "./monitor-utils";
+/**
+ * Validate required monitor fields common to all monitor types.
+ * Throws ConnectError if validation fails.
+ */
+function validateCommonMonitorFields(mon: {
+  name?: string;
+  regions?: string[];
+}): void {
+  if (!mon.name || mon.name.trim().length === 0) {
+    throw new ConnectError("Monitor name is required", Code.InvalidArgument);
+  }
+
+  if (mon.regions && mon.regions.length > 0) {
+    const invalidRegions = validateRegions(mon.regions);
+    if (invalidRegions.length > 0) {
+      throw new ConnectError(
+        `Invalid regions: ${invalidRegions.join(", ")}`,
+        Code.InvalidArgument,
+      );
+    }
+  }
+}
+
+/**
+ * Extract common database values for all monitor types.
+ */
+function getCommonDbValues(mon: {
+  name: string;
+  periodicity?: string;
+  timeout?: bigint;
+  degradedAt?: bigint;
+  active?: boolean;
+  description?: string;
+  public?: boolean;
+  regions?: string[];
+  retry?: bigint;
+  openTelemetry?: Parameters<typeof openTelemetryToDb>[0];
+}) {
+  const otelConfig = openTelemetryToDb(mon.openTelemetry);
+
+  return {
+    name: mon.name,
+    periodicity: toValidPeriodicity(mon.periodicity),
+    timeout: mon.timeout ? Number(mon.timeout) : MONITOR_DEFAULTS.timeout,
+    degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
+    active: mon.active ?? MONITOR_DEFAULTS.active,
+    description: mon.description || MONITOR_DEFAULTS.description,
+    public: mon.public ?? MONITOR_DEFAULTS.public,
+    regions: regionsToDbString(mon.regions ?? []),
+    retry: mon.retry ? Number(mon.retry) : MONITOR_DEFAULTS.retry,
+    otelEndpoint: otelConfig.otelEndpoint,
+    otelHeaders: otelConfig.otelHeaders,
+  };
+}
 
 /**
  * Helper to get a monitor by ID with workspace scope.
@@ -83,18 +139,23 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const mon = req.monitor;
 
-    // Convert headers to DB format
-    const headers = headersToDbJson(mon.headers);
+    // Validate required fields
+    validateCommonMonitorFields(mon);
 
-    // Convert assertions to DB format
+    if (!mon.url || mon.url.trim().length === 0) {
+      throw new ConnectError("Monitor URL is required", Code.InvalidArgument);
+    }
+
+    // Get common DB values
+    const commonValues = getCommonDbValues(mon);
+
+    // Convert headers and assertions to DB format
+    const headers = headersToDbJson(mon.headers);
     const assertions = httpAssertionsToDbJson(
       mon.statusCodeAssertions,
       mon.bodyAssertions,
       mon.headerAssertions,
     );
-
-    // Convert OpenTelemetry config to DB format
-    const otelConfig = openTelemetryToDb(mon.openTelemetry);
 
     // Insert into database
     const newMonitor = await db
@@ -102,23 +163,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .values({
         workspaceId,
         jobType: "http",
-        name: mon.name,
         url: mon.url,
-        periodicity: toValidPeriodicity(mon.periodicity),
         method: toValidMethod(mon.method),
         body: mon.body || undefined,
-        timeout: mon.timeout ? Number(mon.timeout) : 45000,
-        degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
         headers,
         assertions,
-        followRedirects: mon.followRedirects ?? true,
-        active: mon.active ?? false,
-        description: mon.description || "",
-        public: mon.public ?? false,
-        regions: regionsToDbString(mon.regions),
-        retry: mon.retry ? Number(mon.retry) : 3,
-        otelEndpoint: otelConfig.otelEndpoint,
-        otelHeaders: otelConfig.otelHeaders,
+        followRedirects: mon.followRedirects ?? MONITOR_DEFAULTS.followRedirects,
+        ...commonValues,
       })
       .returning()
       .get();
@@ -127,8 +178,14 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       throw new ConnectError("Failed to create monitor", Code.Internal);
     }
 
+    // Parse through schema to transform fields
+    const parsed = selectMonitorSchema.safeParse(newMonitor);
+    if (!parsed.success) {
+      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+    }
+
     return {
-      monitor: dbMonitorToHttpProto(newMonitor),
+      monitor: dbMonitorToHttpProto(parsed.data),
     };
   },
 
@@ -142,8 +199,15 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const mon = req.monitor;
 
-    // Convert OpenTelemetry config to DB format
-    const otelConfig = openTelemetryToDb(mon.openTelemetry);
+    // Validate required fields
+    validateCommonMonitorFields(mon);
+
+    if (!mon.uri || mon.uri.trim().length === 0) {
+      throw new ConnectError("Monitor URI is required", Code.InvalidArgument);
+    }
+
+    // Get common DB values
+    const commonValues = getCommonDbValues(mon);
 
     // Insert into database
     const newMonitor = await db
@@ -151,18 +215,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .values({
         workspaceId,
         jobType: "tcp",
-        name: mon.name,
         url: mon.uri,
-        periodicity: toValidPeriodicity(mon.periodicity),
-        timeout: mon.timeout ? Number(mon.timeout) : 45000,
-        degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
-        active: mon.active ?? false,
-        description: mon.description || "",
-        public: mon.public ?? false,
-        regions: regionsToDbString(mon.regions),
-        retry: mon.retry ? Number(mon.retry) : 3,
-        otelEndpoint: otelConfig.otelEndpoint,
-        otelHeaders: otelConfig.otelHeaders,
+        ...commonValues,
       })
       .returning()
       .get();
@@ -171,8 +225,14 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       throw new ConnectError("Failed to create monitor", Code.Internal);
     }
 
+    // Parse through schema to transform fields
+    const parsed = selectMonitorSchema.safeParse(newMonitor);
+    if (!parsed.success) {
+      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+    }
+
     return {
-      monitor: dbMonitorToTcpProto(newMonitor),
+      monitor: dbMonitorToTcpProto(parsed.data),
     };
   },
 
@@ -186,11 +246,18 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const mon = req.monitor;
 
+    // Validate required fields
+    validateCommonMonitorFields(mon);
+
+    if (!mon.uri || mon.uri.trim().length === 0) {
+      throw new ConnectError("Monitor URI is required", Code.InvalidArgument);
+    }
+
+    // Get common DB values
+    const commonValues = getCommonDbValues(mon);
+
     // Convert assertions to DB format
     const assertions = dnsAssertionsToDbJson(mon.recordAssertions);
-
-    // Convert OpenTelemetry config to DB format
-    const otelConfig = openTelemetryToDb(mon.openTelemetry);
 
     // Insert into database
     const newMonitor = await db
@@ -198,19 +265,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .values({
         workspaceId,
         jobType: "dns",
-        name: mon.name,
         url: mon.uri,
-        periodicity: toValidPeriodicity(mon.periodicity),
-        timeout: mon.timeout ? Number(mon.timeout) : 45000,
-        degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
         assertions,
-        active: mon.active ?? false,
-        description: mon.description || "",
-        public: mon.public ?? false,
-        regions: regionsToDbString(mon.regions),
-        retry: mon.retry ? Number(mon.retry) : 3,
-        otelEndpoint: otelConfig.otelEndpoint,
-        otelHeaders: otelConfig.otelHeaders,
+        ...commonValues,
       })
       .returning()
       .get();
@@ -219,8 +276,14 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       throw new ConnectError("Failed to create monitor", Code.Internal);
     }
 
+    // Parse through schema to transform fields
+    const parsed = selectMonitorSchema.safeParse(newMonitor);
+    if (!parsed.success) {
+      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+    }
+
     return {
-      monitor: dbMonitorToDnsProto(newMonitor),
+      monitor: dbMonitorToDnsProto(parsed.data),
     };
   },
 
@@ -290,28 +353,25 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       throw new ConnectError("Failed to create monitor run", Code.Internal);
     }
 
-    // Trigger checks for each region
-    const allResults = [];
-    for (const region of validateMonitor.data.regions) {
-      const statusEntry = monitorStatuses.find((m) => region === m.region);
-      const status = statusEntry?.status || "active";
-      const payload = getCheckerPayload(row, status);
-      const url = getCheckerUrl(row);
+    // Trigger checks for each region in parallel
+    await Promise.all(
+      validateMonitor.data.regions.map((region) => {
+        const statusEntry = monitorStatuses.find((m) => region === m.region);
+        const status = statusEntry?.status || "active";
+        const payload = getCheckerPayload(row, status);
+        const url = getCheckerUrl(row);
 
-      const result = fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          "fly-prefer-region": region,
-          Authorization: `Basic ${env.CRON_SECRET}`,
-        },
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-
-      allResults.push(result);
-    }
-
-    await Promise.all(allResults);
+        return fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            "fly-prefer-region": region,
+            Authorization: `Basic ${env.CRON_SECRET}`,
+          },
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }),
+    );
 
     return { success: true };
   },
@@ -379,15 +439,21 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const dnsMonitors: DNSMonitor[] = [];
 
     for (const m of monitors) {
-      switch (m.jobType) {
+      // Parse through schema to transform fields
+      const parsed = selectMonitorSchema.safeParse(m);
+      if (!parsed.success) {
+        continue; // Skip invalid monitors
+      }
+
+      switch (parsed.data.jobType) {
         case "http":
-          httpMonitors.push(dbMonitorToHttpProto(m));
+          httpMonitors.push(dbMonitorToHttpProto(parsed.data));
           break;
         case "tcp":
-          tcpMonitors.push(dbMonitorToTcpProto(m));
+          tcpMonitors.push(dbMonitorToTcpProto(parsed.data));
           break;
         case "dns":
-          dnsMonitors.push(dbMonitorToDnsProto(m));
+          dnsMonitors.push(dbMonitorToDnsProto(parsed.data));
           break;
       }
     }

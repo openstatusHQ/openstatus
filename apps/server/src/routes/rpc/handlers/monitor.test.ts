@@ -584,3 +584,353 @@ describe("MonitorService - Authentication", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("MonitorService - Validation", () => {
+  test("returns error when name is missing for HTTP monitor", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          url: "https://test.example.com",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("name");
+  });
+
+  test("returns error when name is empty for HTTP monitor", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "",
+          url: "https://test.example.com",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("name");
+  });
+
+  test("returns error when URL is missing for HTTP monitor", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-monitor",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("URL");
+  });
+
+  test("returns error when URI is missing for TCP monitor", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {
+        monitor: {
+          name: "test-tcp-monitor",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("URI");
+  });
+
+  test("returns error when URI is missing for DNS monitor", async () => {
+    const res = await connectRequest(
+      "CreateDNSMonitor",
+      {
+        monitor: {
+          name: "test-dns-monitor",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("URI");
+  });
+
+  test("returns error for invalid regions", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-monitor",
+          url: "https://test.example.com",
+          periodicity: "5m",
+          regions: ["invalid-region", "another-invalid"],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("Invalid regions");
+    expect(data.message).toContain("invalid-region");
+  });
+
+  test("accepts valid regions", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-valid-regions",
+          url: "https://test-valid-regions.example.com",
+          periodicity: "5m",
+          regions: ["ams", "iad", "sin"],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.regions).toEqual(["ams", "iad", "sin"]);
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+});
+
+describe("MonitorService - Assertions Round-trip", () => {
+  test("HTTP assertions are correctly stored and retrieved", async () => {
+    const createRes = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-assertions-roundtrip",
+          url: "https://test-assertions.example.com",
+          periodicity: "5m",
+          statusCodeAssertions: [
+            { target: "200", comparator: 1 },
+            { target: "201", comparator: 1 },
+          ],
+          bodyAssertions: [{ target: "success", comparator: 3 }],
+          headerAssertions: [
+            { key: "content-type", target: "application/json", comparator: 1 },
+          ],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(createRes.status).toBe(200);
+    const createData = await createRes.json();
+    const monitorId = createData.monitor.id;
+
+    try {
+      // List monitors to verify assertions are retrieved correctly
+      const listRes = await connectRequest(
+        "ListMonitors",
+        {},
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(listRes.status).toBe(200);
+      const listData = await listRes.json();
+
+      const foundMonitor = listData.httpMonitors.find(
+        (m: { id: string }) => m.id === monitorId,
+      );
+
+      expect(foundMonitor).toBeDefined();
+      expect(foundMonitor.statusCodeAssertions).toHaveLength(2);
+      expect(foundMonitor.bodyAssertions).toHaveLength(1);
+      expect(foundMonitor.headerAssertions).toHaveLength(1);
+      expect(foundMonitor.headerAssertions[0].key).toBe("content-type");
+    } finally {
+      // Clean up
+      await db.delete(monitor).where(eq(monitor.id, Number(monitorId)));
+    }
+  });
+
+  test("DNS record assertions are correctly stored and retrieved", async () => {
+    const createRes = await connectRequest(
+      "CreateDNSMonitor",
+      {
+        monitor: {
+          name: "test-dns-assertions",
+          uri: "test-dns-assertions.example.com",
+          periodicity: "5m",
+          recordAssertions: [
+            { record: "A", target: "93.184.216.34", comparator: 1 },
+            { record: "AAAA", target: "2606:2800:220:1::", comparator: 1 },
+          ],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(createRes.status).toBe(200);
+    const createData = await createRes.json();
+    const monitorId = createData.monitor.id;
+
+    try {
+      const listRes = await connectRequest(
+        "ListMonitors",
+        {},
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(listRes.status).toBe(200);
+      const listData = await listRes.json();
+
+      const foundMonitor = listData.dnsMonitors.find(
+        (m: { id: string }) => m.id === monitorId,
+      );
+
+      expect(foundMonitor).toBeDefined();
+      expect(foundMonitor.recordAssertions).toHaveLength(2);
+      expect(foundMonitor.recordAssertions[0].record).toBe("A");
+      expect(foundMonitor.recordAssertions[1].record).toBe("AAAA");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, Number(monitorId)));
+    }
+  });
+});
+
+describe("MonitorService - OpenTelemetry Configuration", () => {
+  test("OpenTelemetry config is correctly stored and retrieved", async () => {
+    const createRes = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-otel-config",
+          url: "https://test-otel.example.com",
+          periodicity: "5m",
+          openTelemetry: {
+            endpoint: "https://otel-collector.example.com/v1/traces",
+            headers: [
+              { key: "Authorization", value: "Bearer test-token" },
+              { key: "X-Custom-Header", value: "custom-value" },
+            ],
+          },
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(createRes.status).toBe(200);
+    const createData = await createRes.json();
+    const monitorId = createData.monitor.id;
+
+    try {
+      const listRes = await connectRequest(
+        "ListMonitors",
+        {},
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(listRes.status).toBe(200);
+      const listData = await listRes.json();
+
+      const foundMonitor = listData.httpMonitors.find(
+        (m: { id: string }) => m.id === monitorId,
+      );
+
+      expect(foundMonitor).toBeDefined();
+      expect(foundMonitor.openTelemetry).toBeDefined();
+      expect(foundMonitor.openTelemetry.endpoint).toBe(
+        "https://otel-collector.example.com/v1/traces",
+      );
+      expect(foundMonitor.openTelemetry.headers).toHaveLength(2);
+      expect(foundMonitor.openTelemetry.headers[0].key).toBe("Authorization");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, Number(monitorId)));
+    }
+  });
+
+  test("Monitor without OpenTelemetry config works correctly", async () => {
+    const createRes = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-no-otel",
+          url: "https://test-no-otel.example.com",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(createRes.status).toBe(200);
+    const createData = await createRes.json();
+    const monitorId = createData.monitor.id;
+
+    try {
+      const listRes = await connectRequest(
+        "ListMonitors",
+        {},
+        { "x-openstatus-key": "1" },
+      );
+
+      const listData = await listRes.json();
+      const foundMonitor = listData.httpMonitors.find(
+        (m: { id: string }) => m.id === monitorId,
+      );
+
+      expect(foundMonitor).toBeDefined();
+      // OpenTelemetry should be undefined when not configured
+      expect(foundMonitor.openTelemetry).toBeUndefined();
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, Number(monitorId)));
+    }
+  });
+});
+
+describe("MonitorService - Default Values", () => {
+  test("HTTP monitor uses default values when not specified", async () => {
+    const createRes = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-defaults",
+          url: "https://test-defaults.example.com",
+          periodicity: "5m",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(createRes.status).toBe(200);
+    const createData = await createRes.json();
+    const monitorId = createData.monitor.id;
+
+    try {
+      expect(createData.monitor.timeout).toBe("45000");
+      expect(createData.monitor.retry).toBe("3");
+      expect(createData.monitor.followRedirects).toBe(true);
+      expect(createData.monitor.active).toBe(false);
+      expect(createData.monitor.public).toBe(false);
+      expect(createData.monitor.method).toBe("GET");
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, Number(monitorId)));
+    }
+  });
+});
