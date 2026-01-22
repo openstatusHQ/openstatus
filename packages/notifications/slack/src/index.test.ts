@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { COLORS } from "@openstatus/notification-base";
 import {
   sendAlert,
   sendDegraded,
@@ -68,7 +69,7 @@ describe("Slack Notifications", () => {
 
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
-    expect(body.attachments[0].color).toBe("#ED4245");
+    expect(body.attachments[0].color).toBe(COLORS.red);
     expect(body.attachments[0].blocks).toBeDefined();
     expect(body.attachments[0].blocks.length).toBeGreaterThan(0);
     expect(body.attachments[0].blocks[0].text.text).toContain("is failing");
@@ -91,7 +92,7 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.attachments[0].color).toBe("#ED4245");
+    expect(body.attachments[0].color).toBe(COLORS.red);
     expect(body.attachments[0].blocks[3].fields[0].text).toContain("Unknown");
   });
 
@@ -114,7 +115,7 @@ describe("Slack Notifications", () => {
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
-    expect(body.attachments[0].color).toBe("#57F287");
+    expect(body.attachments[0].color).toBe(COLORS.green);
     expect(body.attachments[0].blocks[0].text.text).toContain("is recovered");
   });
 
@@ -137,7 +138,7 @@ describe("Slack Notifications", () => {
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
-    expect(body.attachments[0].color).toBe("#FEE75C");
+    expect(body.attachments[0].color).toBe(COLORS.yellow);
     expect(body.attachments[0].blocks[0].text.text).toContain("is degraded");
   });
 

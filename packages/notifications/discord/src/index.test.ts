@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { COLOR_DECIMALS } from "@openstatus/notification-base";
 import {
   sendAlert,
   sendDegraded,
@@ -73,7 +74,7 @@ describe("Discord Notifications", () => {
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is failing");
     expect(body.embeds[0].title).toContain("API Health Check");
-    expect(body.embeds[0].color).toBe(15548997); // Red color
+    expect(body.embeds[0].color).toBe(COLOR_DECIMALS.red);
     expect(body.username).toBe("OpenStatus Notifications");
     expect(body.avatar_url).toBeDefined();
   });
@@ -99,7 +100,7 @@ describe("Discord Notifications", () => {
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is recovered");
     expect(body.embeds[0].title).toContain("API Health Check");
-    expect(body.embeds[0].color).toBe(5763719); // Green color
+    expect(body.embeds[0].color).toBe(COLOR_DECIMALS.green);
   });
 
   test("Send Degraded", async () => {
@@ -123,7 +124,7 @@ describe("Discord Notifications", () => {
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is degraded");
     expect(body.embeds[0].title).toContain("API Health Check");
-    expect(body.embeds[0].color).toBe(16705372); // Yellow color
+    expect(body.embeds[0].color).toBe(COLOR_DECIMALS.yellow); // Yellow color
   });
 
   test("Send Test Discord Message", async () => {
