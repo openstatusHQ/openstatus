@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
 import { app } from "@/index";
+import { db, eq } from "@openstatus/db";
+import { maintenance } from "@openstatus/db/src/schema";
 import { MaintenanceSchema } from "./schema";
 
 test("create a valid maintenance without monitorIds", async () => {
@@ -26,6 +28,11 @@ test("create a valid maintenance without monitorIds", async () => {
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.monitorIds?.length).toBe(0);
+
+  // Cleanup: delete the created maintenance
+  if (result.success) {
+    await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
+  }
 });
 
 test("create a maintenance with `from` date after `to` date should return 400", async () => {
@@ -133,6 +140,11 @@ test("create a valid maintenance", async () => {
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.monitorIds?.length).toBe(1);
+
+  // Cleanup: delete the created maintenance
+  if (result.success) {
+    await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
+  }
 });
 
 test("create a maintenance with invalid dates should return 400", async () => {

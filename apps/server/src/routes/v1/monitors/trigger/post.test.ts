@@ -82,7 +82,8 @@ test("trigger monitor without auth key should return 401", async () => {
 });
 
 test("trigger monitor from different workspace should return 404", async () => {
-  const res = await app.request("/v1/monitor/99/trigger", {
+  // Monitor 5 belongs to workspace 3, API key 1 is workspace 1
+  const res = await app.request("/v1/monitor/5/trigger", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",

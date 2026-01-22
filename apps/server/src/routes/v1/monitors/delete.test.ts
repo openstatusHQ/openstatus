@@ -1,8 +1,32 @@
 import { expect, test } from "bun:test";
 import { app } from "@/index";
+import { MonitorSchema } from "./schema";
 
 test("delete the monitor", async () => {
-  const res = await app.request("/v1/monitor/3", {
+  // First create a monitor to delete
+  const createRes = await app.request("/v1/monitor/http", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      frequency: "10m",
+      name: "Monitor to delete",
+      regions: ["ams"],
+      request: {
+        url: "https://www.openstatus.dev",
+        method: "GET",
+      },
+    }),
+  });
+
+  const created = MonitorSchema.safeParse(await createRes.json());
+  expect(createRes.status).toBe(200);
+  expect(created.success).toBe(true);
+
+  // Now delete it
+  const res = await app.request(`/v1/monitor/${created.data?.id}`, {
     method: "DELETE",
     headers: {
       "x-openstatus-key": "1",

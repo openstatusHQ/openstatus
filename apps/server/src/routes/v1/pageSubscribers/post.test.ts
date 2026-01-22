@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+import { db, eq } from "@openstatus/db";
+import { pageSubscriber } from "@openstatus/db/src/schema";
 import { PageSubscriberSchema } from "./schema";
 
 test("create a page subscription", async () => {
@@ -17,6 +19,13 @@ test("create a page subscription", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created page subscriber
+  if (result.success) {
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, result.data.id));
+  }
 });
 
 test("create a scubscriber with invalid email should return a 400", async () => {

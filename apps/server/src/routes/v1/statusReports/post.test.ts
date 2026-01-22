@@ -29,6 +29,14 @@ test("create a valid status report", async () => {
   expect(result.success).toBe(true);
   expect(result.data?.statusReportUpdateIds?.length).toBeGreaterThan(0);
   expect(result.data?.monitorIds?.length).toBeGreaterThan(0);
+
+  // Cleanup: delete the created status report
+  if (result.success) {
+    await app.request(`/v1/status_report/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create a status report with invalid monitor should return 400", async () => {

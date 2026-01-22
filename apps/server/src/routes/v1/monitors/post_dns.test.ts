@@ -27,6 +27,14 @@ test("create a valid monitor", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create a status report with invalid payload should return 400", async () => {
