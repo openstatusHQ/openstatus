@@ -186,3 +186,27 @@
 - The `@openstatus/notification-base` dependency was already added in a previous task
 - All three notification functions now use the enhanced embed builders for rich formatting
 - Test message function updated to use embed format consistent with the new implementation
+
+## 2026-01-22: Verified unit tests for duration formatting
+
+### Completed Tasks:
+12. **Testing task**: Add unit tests for duration formatting
+
+### Files Verified:
+- `/packages/notification-base/src/utils/duration.test.ts` - Comprehensive unit tests already exist
+
+### Key Implementation Details:
+- Test file was already created in earlier session with complete coverage
+- Tests cover all PRD requirements:
+  - `formatDuration(30000)` → `'30s'`
+  - `formatDuration(135000)` → `'2m 15s'`
+  - `formatDuration(8130000)` → `'2h 15m 30s'`
+  - `formatDuration(90000000)` → `'1d 1h'`
+  - `formatDuration(0)` → `'0s'`
+  - Edge cases: negative values, sub-second durations, maxUnits option
+- Also includes tests for `calculateDuration()` utility
+- TypeScript type checking passes successfully
+
+### Notes:
+- Tests use bun:test framework (requires bun runtime)
+- PRD task marked as passes: true since all required test cases exist

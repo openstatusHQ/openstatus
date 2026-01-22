@@ -219,7 +219,7 @@
       "Test formatDuration with 0ms expects '0s' or similar",
       "Test edge cases for very long durations"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",
