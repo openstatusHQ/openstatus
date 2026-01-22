@@ -1,15 +1,22 @@
 import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
 import { discordDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import { buildCommonMessageData } from "@openstatus/notification-base";
+import {
+  buildAlertEmbed,
+  buildRecoveryEmbed,
+  buildDegradedEmbed,
+  type DiscordEmbed,
+} from "./embeds";
 
-const postToWebhook = async (content: string, webhookUrl: string) => {
+const postToWebhook = async (embeds: DiscordEmbed[], webhookUrl: string) => {
   const res = await fetch(webhookUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      content,
+      embeds,
       avatar_url:
         "https://img.stackshare.io/service/104872/default_dc6948366d9bae553adbb8f51252eafbc5d2043a.jpg",
       username: "OpenStatus Notifications",
@@ -28,6 +35,8 @@ export const sendAlert = async ({
   statusCode,
   message,
   cronTimestamp,
+  latency,
+  region,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -41,29 +50,33 @@ export const sendAlert = async ({
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
   );
-  const { discord: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { discord: webhookUrl } = notificationData;
 
-  try {
-    await postToWebhook(
-      `**🚨 Alert [${name}](<${monitor.url}>)**\nStatus Code: ${
-        statusCode || "_empty_"
-      }\nMessage: ${
-        message || "_empty_"
-      }\nCron Timestamp: ${cronTimestamp} (${new Date(
-        cronTimestamp,
-      ).toISOString()})\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
-      webhookUrl,
-    );
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    region,
+  };
+
+  const data = buildCommonMessageData(context);
+  const embed = buildAlertEmbed(data);
+
+  await postToWebhook([embed], webhookUrl);
 };
 
 export const sendRecovery = async ({
   monitor,
   notification,
+  statusCode,
+  message,
+  incident,
+  cronTimestamp,
+  latency,
+  region,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -77,23 +90,33 @@ export const sendRecovery = async ({
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
   );
-  const { discord: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { discord: webhookUrl } = notificationData;
 
-  try {
-    await postToWebhook(
-      `**✅ Recovered [${name}](<${monitor.url}>)**\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
-      webhookUrl,
-    );
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    region,
+  };
+
+  const data = buildCommonMessageData(context, { incident });
+  const embed = buildRecoveryEmbed(data);
+
+  await postToWebhook([embed], webhookUrl);
 };
 
 export const sendDegraded = async ({
   monitor,
   notification,
+  statusCode,
+  message,
+  incident,
+  cronTimestamp,
+  latency,
+  region,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -107,18 +130,22 @@ export const sendDegraded = async ({
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
   );
-  const { discord: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { discord: webhookUrl } = notificationData;
 
-  try {
-    await postToWebhook(
-      `**⚠️ Degraded [${name}](<${monitor.url}>)**\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
-      webhookUrl,
-    );
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    region,
+  };
+
+  const data = buildCommonMessageData(context, { incident });
+  const embed = buildDegradedEmbed(data);
+
+  await postToWebhook([embed], webhookUrl);
 };
 
 export const sendTestDiscordMessage = async (webhookUrl: string) => {
@@ -126,10 +153,18 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
     return false;
   }
   try {
-    await postToWebhook(
-      "**🧪 Test [OpenStatus](<https://www.openstatus.dev/>)**\nIf you can read this, your Discord webhook is functioning correctly!\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n",
-      webhookUrl,
-    );
+    const testEmbed: DiscordEmbed = {
+      title: "🧪 Test OpenStatus",
+      description: "If you can read this, your Discord webhook is functioning correctly!",
+      color: 5763719, // green
+      fields: [],
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: "OpenStatus",
+      },
+      url: "https://www.openstatus.dev/app/",
+    };
+    await postToWebhook([testEmbed], webhookUrl);
     return true;
   } catch (_err) {
     return false;

@@ -151,3 +151,38 @@
 - Discord embed colors follow official Discord documentation guidelines (decimal, not hex)
 - Inline fields create proper 3-column layout in Discord
 - Uses new Date().toISOString() for ISO 8601 timestamp format
+
+## 2026-01-22: Updated Discord provider to use enhanced embeds and incident data
+
+### Completed Tasks:
+11. **Functional task**: Update Discord provider to use enhanced embeds and incident data
+
+### Files Modified:
+- `/packages/notifications/discord/src/index.ts` - Updated to use buildCommonMessageData and embed builders
+
+### Key Implementation Details:
+- Imported `buildCommonMessageData` from `@openstatus/notification-base`
+- Imported `buildAlertEmbed`, `buildRecoveryEmbed`, `buildDegradedEmbed`, and `DiscordEmbed` type from `./embeds`
+- Updated `postToWebhook()` to accept `embeds: DiscordEmbed[]` parameter instead of plain `content` string
+- Webhook body now sends `{ embeds, avatar_url, username }` instead of `{ content, avatar_url, username }`
+- Updated `sendAlert()`:
+  - Now extracts all parameters (statusCode, message, cronTimestamp, latency, region) from function args
+  - Constructs context object with all notification parameters
+  - Calls `buildCommonMessageData(context)` to get formatted data
+  - Calls `buildAlertEmbed(data)` to generate Discord embed
+  - Sends embed array to webhook via `postToWebhook([embed], webhookUrl)`
+- Updated `sendRecovery()`:
+  - Now extracts all parameters including incident from function args
+  - Calls `buildCommonMessageData(context, { incident })` to include incident duration
+  - Calls `buildRecoveryEmbed(data)` to generate Discord embed with optional downtime
+- Updated `sendDegraded()`:
+  - Now extracts all parameters including incident from function args
+  - Calls `buildCommonMessageData(context, { incident })` to include previous incident duration
+  - Calls `buildDegradedEmbed(data)` to generate Discord embed with optional duration
+- Updated `sendTestDiscordMessage()` to send a test embed with green color instead of plain text
+
+### Notes:
+- TypeScript type checking passes for the Discord package (excluding pre-existing mock.ts errors)
+- The `@openstatus/notification-base` dependency was already added in a previous task
+- All three notification functions now use the enhanced embed builders for rich formatting
+- Test message function updated to use embed format consistent with the new implementation

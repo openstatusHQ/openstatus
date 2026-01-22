@@ -204,7 +204,7 @@
       "In sendDegraded: send { embeds: [embed] } to webhook",
       "Remove biome-ignore comments for incidentId since we now use incident"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "testing",
