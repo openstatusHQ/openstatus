@@ -423,46 +423,151 @@ describe("MonitorService.DeleteMonitor", () => {
   });
 });
 
-describe("MonitorService - Unimplemented Methods", () => {
-  test("CreateHTTPMonitor returns Unimplemented", async () => {
+describe("MonitorService.CreateHTTPMonitor", () => {
+  test("successfully creates HTTP monitor", async () => {
     const res = await connectRequest(
       "CreateHTTPMonitor",
-      { monitor: { url: "https://test.example.com" } },
+      {
+        monitor: {
+          url: "https://create-test.example.com",
+          periodicity: "5m",
+          method: "POST",
+          timeout: "30000",
+          followRedirects: true,
+          headers: [{ key: "X-Custom", value: "test" }],
+          statusCodeAssertions: [{ target: "200", comparator: 1 }],
+        },
+      },
       { "x-openstatus-key": "1" },
     );
 
-    // ConnectRPC returns a specific error code for Unimplemented
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.url).toBe("https://create-test.example.com");
+    expect(data.monitor.periodicity).toBe("5m");
+    expect(data.monitor.method).toBe("POST");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
   });
 
-  test("CreateTCPMonitor returns Unimplemented", async () => {
+  test("returns error when monitor is missing", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("CreateHTTPMonitor", {
+      monitor: { url: "https://test.example.com" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("MonitorService.CreateTCPMonitor", () => {
+  test("successfully creates TCP monitor", async () => {
     const res = await connectRequest(
       "CreateTCPMonitor",
-      { monitor: { uri: "tcp://test.example.com:443" } },
+      {
+        monitor: {
+          uri: "tcp://create-tcp-test.example.com:8080",
+          periodicity: "10m",
+          timeout: "15000",
+        },
+      },
       { "x-openstatus-key": "1" },
     );
 
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.uri).toBe("tcp://create-tcp-test.example.com:8080");
+    expect(data.monitor.periodicity).toBe("10m");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
   });
 
-  test("CreateDNSMonitor returns Unimplemented", async () => {
+  test("returns error when monitor is missing", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {},
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("MonitorService.CreateDNSMonitor", () => {
+  test("successfully creates DNS monitor", async () => {
     const res = await connectRequest(
       "CreateDNSMonitor",
-      { monitor: { uri: "example.com" } },
+      {
+        monitor: {
+          uri: "create-dns-test.example.com",
+          periodicity: "30m",
+          timeout: "5000",
+          recordAssertions: [
+            { record: "A", target: "1.2.3.4", comparator: 1 },
+          ],
+        },
+      },
       { "x-openstatus-key": "1" },
     );
 
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.uri).toBe("create-dns-test.example.com");
+    expect(data.monitor.periodicity).toBe("30m");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
   });
 
-  test("TriggerMonitor returns Unimplemented", async () => {
+  test("returns error when monitor is missing", async () => {
     const res = await connectRequest(
-      "TriggerMonitor",
-      { id: "1" },
+      "CreateDNSMonitor",
+      {},
       { "x-openstatus-key": "1" },
     );
 
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("MonitorService.TriggerMonitor", () => {
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "TriggerMonitor",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("TriggerMonitor", { id: "1" });
+
+    expect(res.status).toBe(401);
   });
 });
 

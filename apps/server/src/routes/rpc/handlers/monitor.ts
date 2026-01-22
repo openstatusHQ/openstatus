@@ -1,22 +1,54 @@
+import { env } from "@/env";
+import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq, isNull, sql } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
-import {
-  type BodyAssertion,
-  type DNSMonitor,
-  type HTTPMonitor,
-  type HeaderAssertion,
-  type Headers,
-  type MonitorService,
-  NumberComparator,
-  type RecordAssertion,
-  RecordComparator,
-  type StatusCodeAssertion,
-  StringComparator,
-  type TCPMonitor,
+import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
+import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
+import { monitor, monitorRun } from "@openstatus/db/src/schema";
+import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
+import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
+import type {
+  DNSMonitor,
+  HTTPMonitor,
+  MonitorService,
+  TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 
+type MonitorPeriodicity = (typeof monitorPeriodicity)[number];
+type MonitorMethod = (typeof monitorMethods)[number];
+
+/**
+ * Validate and convert periodicity string to enum type.
+ */
+function toValidPeriodicity(value: string | undefined): MonitorPeriodicity {
+  const valid = monitorPeriodicity as readonly string[];
+  if (value && valid.includes(value)) {
+    return value as MonitorPeriodicity;
+  }
+  return "1m";
+}
+
+/**
+ * Validate and convert method string to enum type.
+ */
+function toValidMethod(value: string | undefined): MonitorMethod {
+  const upper = value?.toUpperCase();
+  const valid = monitorMethods as readonly string[];
+  if (upper && valid.includes(upper)) {
+    return upper as MonitorMethod;
+  }
+  return "GET";
+}
+
 import { getRpcContext } from "../interceptors";
+import {
+  dbMonitorToDnsProto,
+  dbMonitorToHttpProto,
+  dbMonitorToTcpProto,
+  dnsAssertionsToDbJson,
+  headersToDbJson,
+  httpAssertionsToDbJson,
+} from "./monitor-utils";
 
 /**
  * Helper to get a monitor by ID with workspace scope.
@@ -36,286 +68,220 @@ async function getMonitorById(id: number, workspaceId: number) {
 }
 
 /**
- * Helper to convert database compare string to NumberComparator.
- */
-function compareToNumberComparator(compare: string): NumberComparator {
-  switch (compare) {
-    case "eq":
-      return NumberComparator.EQUAL;
-    case "not_eq":
-      return NumberComparator.NOT_EQUAL;
-    case "gt":
-      return NumberComparator.GREATER_THAN;
-    case "gte":
-      return NumberComparator.GREATER_THAN_OR_EQUAL;
-    case "lt":
-      return NumberComparator.LESS_THAN;
-    case "lte":
-      return NumberComparator.LESS_THAN_OR_EQUAL;
-    default:
-      return NumberComparator.UNSPECIFIED;
-  }
-}
-
-/**
- * Helper to convert database compare string to StringComparator.
- */
-function compareToStringComparator(compare: string): StringComparator {
-  switch (compare) {
-    case "eq":
-      return StringComparator.EQUAL;
-    case "not_eq":
-      return StringComparator.NOT_EQUAL;
-    case "contains":
-      return StringComparator.CONTAINS;
-    case "not_contains":
-      return StringComparator.NOT_CONTAINS;
-    case "empty":
-      return StringComparator.EMPTY;
-    case "not_empty":
-      return StringComparator.NOT_EMPTY;
-    case "gt":
-      return StringComparator.GREATER_THAN;
-    case "gte":
-      return StringComparator.GREATER_THAN_OR_EQUAL;
-    case "lt":
-      return StringComparator.LESS_THAN;
-    case "lte":
-      return StringComparator.LESS_THAN_OR_EQUAL;
-    default:
-      return StringComparator.UNSPECIFIED;
-  }
-}
-
-/**
- * Helper to convert database compare string to RecordComparator.
- */
-function compareToRecordComparator(compare: string): RecordComparator {
-  switch (compare) {
-    case "eq":
-      return RecordComparator.EQUAL;
-    case "not_eq":
-      return RecordComparator.NOT_EQUAL;
-    case "contains":
-      return RecordComparator.CONTAINS;
-    case "not_contains":
-      return RecordComparator.NOT_CONTAINS;
-    default:
-      return RecordComparator.UNSPECIFIED;
-  }
-}
-
-/**
- * Helper to parse database headers JSON and convert to proto Headers array.
- */
-function parseDbHeaders(headersJson: string | null): Headers[] {
-  if (!headersJson) {
-    return [];
-  }
-
-  try {
-    const headers = JSON.parse(headersJson) as Array<{
-      key: string;
-      value: string;
-    }>;
-    return headers.map((h) => ({
-      $typeName: "openstatus.monitor.v1.Headers" as const,
-      key: h.key,
-      value: h.value,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Helper to parse database assertions JSON for HTTP monitors.
- */
-function parseHttpAssertions(assertionsJson: string | null): {
-  statusCodeAssertions: StatusCodeAssertion[];
-  bodyAssertions: BodyAssertion[];
-  headerAssertions: HeaderAssertion[];
-} {
-  const result: {
-    statusCodeAssertions: StatusCodeAssertion[];
-    bodyAssertions: BodyAssertion[];
-    headerAssertions: HeaderAssertion[];
-  } = {
-    statusCodeAssertions: [],
-    bodyAssertions: [],
-    headerAssertions: [],
-  };
-
-  if (!assertionsJson) {
-    return result;
-  }
-
-  try {
-    const assertions = JSON.parse(assertionsJson) as Array<{
-      type: string;
-      compare: string;
-      target: string | number;
-      key?: string;
-    }>;
-
-    for (const a of assertions) {
-      switch (a.type) {
-        case "status":
-          result.statusCodeAssertions.push({
-            $typeName: "openstatus.monitor.v1.StatusCodeAssertion" as const,
-            target: BigInt(a.target),
-            comparator: compareToNumberComparator(a.compare),
-          });
-          break;
-        case "textBody":
-        case "jsonBody":
-          result.bodyAssertions.push({
-            $typeName: "openstatus.monitor.v1.BodyAssertion" as const,
-            target: String(a.target),
-            comparator: compareToStringComparator(a.compare),
-          });
-          break;
-        case "header":
-          result.headerAssertions.push({
-            $typeName: "openstatus.monitor.v1.HeaderAssertion" as const,
-            target: String(a.target),
-            comparator: compareToStringComparator(a.compare),
-            key: a.key ?? "",
-          });
-          break;
-      }
-    }
-  } catch {
-    // Ignore parse errors
-  }
-
-  return result;
-}
-
-/**
- * Helper to parse database assertions JSON for DNS monitors.
- */
-function parseDnsAssertions(assertionsJson: string | null): RecordAssertion[] {
-  if (!assertionsJson) {
-    return [];
-  }
-
-  try {
-    const assertions = JSON.parse(assertionsJson) as Array<{
-      type: string;
-      compare: string;
-      target: string;
-      record?: string;
-    }>;
-
-    return assertions
-      .filter((a) => a.type === "dns" || a.record)
-      .map((a) => ({
-        $typeName: "openstatus.monitor.v1.RecordAssertion" as const,
-        record: a.record ?? "",
-        target: String(a.target),
-        comparator: compareToRecordComparator(a.compare),
-      }));
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Helper to transform database HTTP monitor to proto HTTPMonitor.
- */
-function dbMonitorToHttpProto(
-  dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
-): HTTPMonitor {
-  const assertions = parseHttpAssertions(dbMon.assertions);
-
-  return {
-    $typeName: "openstatus.monitor.v1.HTTPMonitor",
-    id: String(dbMon.id),
-    url: dbMon.url,
-    periodicity: dbMon.periodicity,
-    method: dbMon.method?.toUpperCase() ?? "GET",
-    body: dbMon.body ?? "",
-    timeout: BigInt(dbMon.timeout),
-    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(0),
-    followRedirects: dbMon.followRedirects ?? true,
-    headers: parseDbHeaders(dbMon.headers),
-    statusCodeAssertions: assertions.statusCodeAssertions,
-    bodyAssertions: assertions.bodyAssertions,
-    headerAssertions: assertions.headerAssertions,
-  };
-}
-
-/**
- * Helper to transform database TCP monitor to proto TCPMonitor.
- */
-function dbMonitorToTcpProto(
-  dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
-): TCPMonitor {
-  return {
-    $typeName: "openstatus.monitor.v1.TCPMonitor",
-    id: String(dbMon.id),
-    uri: dbMon.url,
-    periodicity: dbMon.periodicity,
-    timeout: BigInt(dbMon.timeout),
-    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(0),
-  };
-}
-
-/**
- * Helper to transform database DNS monitor to proto DNSMonitor.
- */
-function dbMonitorToDnsProto(
-  dbMon: NonNullable<Awaited<ReturnType<typeof getMonitorById>>>,
-): DNSMonitor {
-  return {
-    $typeName: "openstatus.monitor.v1.DNSMonitor",
-    id: String(dbMon.id),
-    uri: dbMon.url,
-    periodicity: dbMon.periodicity,
-    timeout: BigInt(dbMon.timeout),
-    degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(0),
-    recordAssertions: parseDnsAssertions(dbMon.assertions),
-  };
-}
-
-/**
  * Monitor service implementation for ConnectRPC.
  */
 export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
-  async createHTTPMonitor(_req, _ctx) {
-    // TODO: Implement with shared service layer
-    throw new ConnectError(
-      "CreateHTTPMonitor not yet implemented",
-      Code.Unimplemented,
+  async createHTTPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    if (!req.monitor) {
+      throw new ConnectError("Monitor is required", Code.InvalidArgument);
+    }
+
+    const mon = req.monitor;
+
+    // Convert headers to DB format
+    const headers = headersToDbJson(mon.headers);
+
+    // Convert assertions to DB format
+    const assertions = httpAssertionsToDbJson(
+      mon.statusCodeAssertions,
+      mon.bodyAssertions,
+      mon.headerAssertions,
     );
+
+    // Insert into database
+    const newMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        jobType: "http",
+        url: mon.url,
+        periodicity: toValidPeriodicity(mon.periodicity),
+        method: toValidMethod(mon.method),
+        body: mon.body || undefined,
+        timeout: mon.timeout ? Number(mon.timeout) : 45000,
+        degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
+        headers,
+        assertions,
+        followRedirects: mon.followRedirects ?? true,
+        active: false,
+      })
+      .returning()
+      .get();
+
+    if (!newMonitor) {
+      throw new ConnectError("Failed to create monitor", Code.Internal);
+    }
+
+    return {
+      monitor: dbMonitorToHttpProto(newMonitor),
+    };
   },
 
-  async createTCPMonitor(_req, _ctx) {
-    // TODO: Implement with shared service layer
-    throw new ConnectError(
-      "CreateTCPMonitor not yet implemented",
-      Code.Unimplemented,
-    );
+  async createTCPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    if (!req.monitor) {
+      throw new ConnectError("Monitor is required", Code.InvalidArgument);
+    }
+
+    const mon = req.monitor;
+
+    // Insert into database
+    const newMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        jobType: "tcp",
+        url: mon.uri,
+        periodicity: toValidPeriodicity(mon.periodicity),
+        timeout: mon.timeout ? Number(mon.timeout) : 45000,
+        degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
+        active: false,
+      })
+      .returning()
+      .get();
+
+    if (!newMonitor) {
+      throw new ConnectError("Failed to create monitor", Code.Internal);
+    }
+
+    return {
+      monitor: dbMonitorToTcpProto(newMonitor),
+    };
   },
 
-  async createDNSMonitor(_req, _ctx) {
-    // TODO: Implement with shared service layer
-    throw new ConnectError(
-      "CreateDNSMonitor not yet implemented",
-      Code.Unimplemented,
-    );
+  async createDNSMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    if (!req.monitor) {
+      throw new ConnectError("Monitor is required", Code.InvalidArgument);
+    }
+
+    const mon = req.monitor;
+
+    // Convert assertions to DB format
+    const assertions = dnsAssertionsToDbJson(mon.recordAssertions);
+
+    // Insert into database
+    const newMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        jobType: "dns",
+        url: mon.uri,
+        periodicity: toValidPeriodicity(mon.periodicity),
+        timeout: mon.timeout ? Number(mon.timeout) : 45000,
+        degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
+        assertions,
+        active: false,
+      })
+      .returning()
+      .get();
+
+    if (!newMonitor) {
+      throw new ConnectError("Failed to create monitor", Code.Internal);
+    }
+
+    return {
+      monitor: dbMonitorToDnsProto(newMonitor),
+    };
   },
 
-  async triggerMonitor(_req, _ctx) {
-    // TODO: Implement with shared service layer
-    throw new ConnectError(
-      "TriggerMonitor not yet implemented",
-      Code.Unimplemented,
-    );
+  async triggerMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    // Check rate limits
+    const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitorRun)
+      .where(
+        and(
+          eq(monitorRun.workspaceId, workspaceId),
+          gte(monitorRun.createdAt, new Date(lastMonth)),
+        ),
+      )
+      .get();
+
+    const count = countResult?.count ?? 0;
+    if (count >= limits["synthetic-checks"]) {
+      throw new ConnectError(
+        "Upgrade for more checks",
+        Code.ResourceExhausted,
+      );
+    }
+
+    // Get the monitor
+    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    if (!dbMon) {
+      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+    }
+
+    // Validate monitor data
+    const validateMonitor = selectMonitorSchema.safeParse(dbMon);
+    if (!validateMonitor.success) {
+      throw new ConnectError(
+        "Invalid monitor data, please contact support",
+        Code.Internal,
+      );
+    }
+
+    const row = validateMonitor.data;
+
+    // Get monitor status for each region
+    const monitorStatuses = await db
+      .select()
+      .from(monitorStatusTable)
+      .where(eq(monitorStatusTable.monitorId, dbMon.id))
+      .all();
+
+    // Create a monitor run record
+    const timestamp = Date.now();
+    const newRun = await db
+      .insert(monitorRun)
+      .values({
+        monitorId: row.id,
+        workspaceId: row.workspaceId,
+        runnedAt: new Date(timestamp),
+      })
+      .returning()
+      .get();
+
+    if (!newRun) {
+      throw new ConnectError("Failed to create monitor run", Code.Internal);
+    }
+
+    // Trigger checks for each region
+    const allResults = [];
+    for (const region of validateMonitor.data.regions) {
+      const statusEntry = monitorStatuses.find((m) => region === m.region);
+      const status = statusEntry?.status || "active";
+      const payload = getCheckerPayload(row, status);
+      const url = getCheckerUrl(row);
+
+      const result = fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          "fly-prefer-region": region,
+          Authorization: `Basic ${env.CRON_SECRET}`,
+        },
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      allResults.push(result);
+    }
+
+    await Promise.all(allResults);
+
+    return { success: true };
   },
 
   async deleteMonitor(req, ctx) {
