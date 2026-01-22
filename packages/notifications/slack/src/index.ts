@@ -1,6 +1,12 @@
 import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
 import { slackDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import { buildCommonMessageData } from "@openstatus/notification-base";
+import {
+  buildAlertBlocks,
+  buildRecoveryBlocks,
+  buildDegradedBlocks,
+} from "./blocks";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
@@ -19,6 +25,8 @@ export const sendAlert = async ({
   statusCode,
   message,
   cronTimestamp,
+  latency,
+  region,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -30,45 +38,33 @@ export const sendAlert = async ({
   region?: Region;
 }) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
-  const { slack: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { slack: webhookUrl } = notificationData;
 
-  await postToWebhook(
-    {
-      blocks: [
-        {
-          type: "divider",
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `
-*🚨 Alert <${monitor.url}|${name}>*\n\n
-Status Code: ${statusCode || "_empty_"}\n
-Message: ${message || "_empty_"}\n
-Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
-`,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-            },
-          ],
-        },
-      ],
-    },
-    webhookUrl,
-  );
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    region,
+  };
+
+  const data = buildCommonMessageData(context);
+  const blocks = buildAlertBlocks(data);
+
+  await postToWebhook({ blocks }, webhookUrl);
 };
 
 export const sendRecovery = async ({
   monitor,
   notification,
+  statusCode,
+  message,
+  incident,
+  cronTimestamp,
+  region,
+  latency,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -80,40 +76,33 @@ export const sendRecovery = async ({
   latency?: number;
 }) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
-  const { slack: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { slack: webhookUrl } = notificationData;
 
-  await postToWebhook(
-    {
-      blocks: [
-        {
-          type: "divider",
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*✅ Recovered <${monitor.url}/|${name}>*`,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-            },
-          ],
-        },
-      ],
-    },
-    webhookUrl,
-  );
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    region,
+  };
+
+  const data = buildCommonMessageData(context, { incident });
+  const blocks = buildRecoveryBlocks(data);
+
+  await postToWebhook({ blocks }, webhookUrl);
 };
 
 export const sendDegraded = async ({
   monitor,
   notification,
+  statusCode,
+  message,
+  incident,
+  cronTimestamp,
+  region,
+  latency,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -125,35 +114,22 @@ export const sendDegraded = async ({
   latency?: number;
 }) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
-  const { slack: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { slack: webhookUrl } = notificationData;
 
-  await postToWebhook(
-    {
-      blocks: [
-        {
-          type: "divider",
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*⚠️ Degraded <${monitor.url}/|${name}>*`,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-            },
-          ],
-        },
-      ],
-    },
-    webhookUrl,
-  );
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    region,
+  };
+
+  const data = buildCommonMessageData(context, { incident });
+  const blocks = buildDegradedBlocks(data);
+
+  await postToWebhook({ blocks }, webhookUrl);
 };
 
 export const sendTestSlackMessage = async (webhookUrl: string) => {
