@@ -1,4 +1,8 @@
-import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Monitor,
+  Notification,
+} from "@openstatus/db/src/schema";
 
 import { ntfyDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";

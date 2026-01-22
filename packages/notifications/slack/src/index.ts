@@ -1,11 +1,15 @@
-import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Monitor,
+  Notification,
+} from "@openstatus/db/src/schema";
 import { slackDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { buildCommonMessageData } from "@openstatus/notification-base";
 import {
   buildAlertBlocks,
-  buildRecoveryBlocks,
   buildDegradedBlocks,
+  buildRecoveryBlocks,
 } from "./blocks";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>

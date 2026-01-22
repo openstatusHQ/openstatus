@@ -1,12 +1,16 @@
-import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Monitor,
+  Notification,
+} from "@openstatus/db/src/schema";
 import { discordDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { buildCommonMessageData } from "@openstatus/notification-base";
 import {
-  buildAlertEmbed,
-  buildRecoveryEmbed,
-  buildDegradedEmbed,
   type DiscordEmbed,
+  buildAlertEmbed,
+  buildDegradedEmbed,
+  buildRecoveryEmbed,
 } from "./embeds";
 
 const postToWebhook = async (embeds: DiscordEmbed[], webhookUrl: string) => {
@@ -155,7 +159,8 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   try {
     const testEmbed: DiscordEmbed = {
       title: "🧪 Test OpenStatus",
-      description: "If you can read this, your Discord webhook is functioning correctly!",
+      description:
+        "If you can read this, your Discord webhook is functioning correctly!",
       color: 5763719, // green
       fields: [],
       timestamp: new Date().toISOString(),

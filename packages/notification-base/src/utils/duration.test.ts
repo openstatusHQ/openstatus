@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
-import { formatDuration, calculateDuration } from "./duration";
+import { describe, expect, it } from "bun:test";
+import { calculateDuration, formatDuration } from "./duration";
 
 describe("formatDuration", () => {
   it("formats short durations (seconds only)", () => {

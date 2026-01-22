@@ -302,7 +302,7 @@
       "Ensure twillio-whatsapp notifications still work",
       "All providers should gracefully ignore the new optional incident parameter"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "validation",

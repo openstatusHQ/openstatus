@@ -16,7 +16,7 @@ export function formatDuration(
   durationMs: number,
   options?: {
     maxUnits?: number;
-  }
+  },
 ): string {
   const maxUnits = options?.maxUnits ?? 3;
 

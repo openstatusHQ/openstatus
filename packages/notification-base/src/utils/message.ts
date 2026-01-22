@@ -1,8 +1,8 @@
 import type { Incident } from "@openstatus/db/src/schema";
 import { getRegionInfo } from "@openstatus/regions";
-import type { NotificationContext, FormattedMessageData } from "../types";
-import { formatTimestamp } from "./timestamp";
+import type { FormattedMessageData, NotificationContext } from "../types";
 import { getIncidentDuration } from "./incident";
+import { formatTimestamp } from "./timestamp";
 
 /**
  * Common HTTP status descriptions
@@ -76,7 +76,7 @@ export function buildCommonMessageData(
   context: NotificationContext,
   options?: {
     incident?: Incident;
-  }
+  },
 ): FormattedMessageData {
   const { monitor, statusCode, message, cronTimestamp, region, latency } =
     context;
