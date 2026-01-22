@@ -2,10 +2,10 @@ import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
-import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
-import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
+import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
@@ -15,13 +15,13 @@ import type {
 } from "@openstatus/proto/monitor/v1";
 import { getRpcContext } from "../interceptors";
 import {
+  MONITOR_DEFAULTS,
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
   dnsAssertionsToDbJson,
   headersToDbJson,
   httpAssertionsToDbJson,
-  MONITOR_DEFAULTS,
   openTelemetryToDb,
   regionsToDbString,
   validateRegions,
@@ -168,7 +168,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         body: mon.body || undefined,
         headers,
         assertions,
-        followRedirects: mon.followRedirects ?? MONITOR_DEFAULTS.followRedirects,
+        followRedirects:
+          mon.followRedirects ?? MONITOR_DEFAULTS.followRedirects,
         ...commonValues,
       })
       .returning()
@@ -307,10 +308,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const count = countResult?.count ?? 0;
     if (count >= limits["synthetic-checks"]) {
-      throw new ConnectError(
-        "Upgrade for more checks",
-        Code.ResourceExhausted,
-      );
+      throw new ConnectError("Upgrade for more checks", Code.ResourceExhausted);
     }
 
     // Get the monitor

@@ -533,9 +533,7 @@ describe("MonitorService.CreateDNSMonitor", () => {
           uri: "create-dns-test.example.com",
           periodicity: "30m",
           timeout: "5000",
-          recordAssertions: [
-            { record: "A", target: "1.2.3.4", comparator: 1 },
-          ],
+          recordAssertions: [{ record: "A", target: "1.2.3.4", comparator: 1 }],
         },
       },
       { "x-openstatus-key": "1" },

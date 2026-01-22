@@ -1,4 +1,3 @@
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import {
   type BodyAssertion,
@@ -14,8 +13,7 @@ import {
   StringComparator,
   type TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
-
-
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
 
 /**
  * Default values for monitor fields.
@@ -35,7 +33,9 @@ export const MONITOR_DEFAULTS = {
  */
 export function validateRegions(regions: string[]): string[] {
   const availableSet = new Set(AVAILABLE_REGIONS);
-  return regions.filter((r) => !availableSet.has(r as typeof AVAILABLE_REGIONS[number]));
+  return regions.filter(
+    (r) => !availableSet.has(r as (typeof AVAILABLE_REGIONS)[number]),
+  );
 }
 
 // ============================================================
@@ -115,7 +115,9 @@ export function compareToRecordComparator(compare: string): RecordComparator {
 /**
  * Convert headers array to proto Headers array.
  */
-export function toProtoHeaders(headers: Array<{ key: string; value: string }> | null | undefined): Headers[] {
+export function toProtoHeaders(
+  headers: Array<{ key: string; value: string }> | null | undefined,
+): Headers[] {
   if (!headers || headers.length === 0) {
     return [];
   }
@@ -185,7 +187,10 @@ export function parseHttpAssertions(assertionsJson: string | null): {
       }
     }
   } catch (error) {
-    console.error("[monitor-utils] Failed to parse HTTP assertions JSON:", error);
+    console.error(
+      "[monitor-utils] Failed to parse HTTP assertions JSON:",
+      error,
+    );
   }
 
   return result;
@@ -218,7 +223,10 @@ export function parseDnsAssertions(
         comparator: compareToRecordComparator(a.compare),
       }));
   } catch (error) {
-    console.error("[monitor-utils] Failed to parse DNS assertions JSON:", error);
+    console.error(
+      "[monitor-utils] Failed to parse DNS assertions JSON:",
+      error,
+    );
     return [];
   }
 }

@@ -1,8 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(pnpm install:*)",
-      "Bash(jj describe:*)"
-    ]
+    "allow": ["Bash(pnpm install:*)", "Bash(jj describe:*)"]
   }
 }
