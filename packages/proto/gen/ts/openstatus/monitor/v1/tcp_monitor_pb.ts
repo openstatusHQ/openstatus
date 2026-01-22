@@ -4,44 +4,59 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/monitor/v1/tcp_monitor.proto.
  */
 export const file_openstatus_monitor_v1_tcp_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKEAQoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRILCgN1cmkYAiABKAkSDwoHdGltZW91dBgDIAEoAxIYCgtkZWdyYWRlZF9hdBgEIAEoA0gAiAEBEhMKC3BlcmlvZGljaXR5GAUgASgJEg0KBXJldHJ5GAYgASgDQg4KDF9kZWdyYWRlZF9hdEJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw");
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLXAQoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRIXCgN1cmkYAiABKAlCCrpIB3IFEAEYgBASHAoHdGltZW91dBgDIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBCABKANCC7pICCIGGMCpBygASACIAQESNQoLcGVyaW9kaWNpdHkYBSABKAlCILpIHXIbUgMzMHNSAjFtUgI1bVIDMTBtUgMzMG1SAjFoEhgKBXJldHJ5GAYgASgDQgm6SAYiBBgKKABCDgoMX2RlZ3JhZGVkX2F0QlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate]);
 
 /**
+ * TCPMonitor defines the configuration for a TCP monitor.
+ *
  * @generated from message openstatus.monitor.v1.TCPMonitor
  */
 export type TCPMonitor = Message<"openstatus.monitor.v1.TCPMonitor"> & {
   /**
+   * Unique identifier for the monitor (output only for create requests).
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   * URI to monitor in format "host:port" (required, max 2048 characters).
+   *
    * @generated from field: string uri = 2;
    */
   uri: string;
 
   /**
+   * Timeout in milliseconds (0-60000, defaults to 45000).
+   *
    * @generated from field: int64 timeout = 3;
    */
   timeout: bigint;
 
   /**
+   * Latency threshold for degraded status in milliseconds (optional, 0-60000).
+   *
    * @generated from field: optional int64 degraded_at = 4;
    */
   degradedAt?: bigint;
 
   /**
+   * Check periodicity (required).
+   *
    * @generated from field: string periodicity = 5;
    */
   periodicity: string;
 
   /**
+   * Number of retry attempts (0-10).
+   *
    * @generated from field: int64 retry = 6;
    */
   retry: bigint;

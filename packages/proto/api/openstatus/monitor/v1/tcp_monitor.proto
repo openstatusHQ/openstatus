@@ -2,17 +2,41 @@ syntax = "proto3";
 
 package openstatus.monitor.v1;
 
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
-
-
-
+// TCPMonitor defines the configuration for a TCP monitor.
 message TCPMonitor {
-    string id = 1;
-    string uri = 2;
-    int64 timeout = 3;
-    optional int64 degraded_at = 4;
-    string periodicity = 5;
-    int64 retry = 6;
+  // Unique identifier for the monitor (output only for create requests).
+  string id = 1;
 
+  // URI to monitor in format "host:port" (required, max 2048 characters).
+  string uri = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 2048
+  }];
+
+  // Timeout in milliseconds (0-60000, defaults to 45000).
+  int64 timeout = 3 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Latency threshold for degraded status in milliseconds (optional, 0-60000).
+  optional int64 degraded_at = 4 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Check periodicity (required).
+  string periodicity = 5 [(buf.validate.field).string = {
+    in: ["30s", "1m", "5m", "10m", "30m", "1h"]
+  }];
+
+  // Number of retry attempts (0-10).
+  int64 retry = 6 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 10
+  }];
 }

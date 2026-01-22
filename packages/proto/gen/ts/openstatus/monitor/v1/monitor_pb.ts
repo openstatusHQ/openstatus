@@ -4,8 +4,6 @@
 
 import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
-import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { DNSMonitor } from "./dns_monitor_pb.ts";
 import { file_openstatus_monitor_v1_dns_monitor } from "./dns_monitor_pb.ts";
 import type { HTTPMonitor } from "./http_monitor_pb.ts";
@@ -18,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/monitor.proto.
  */
 export const file_openstatus_monitor_v1_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIrEBCg1Nb25pdG9yQ29uZmlnEjIKBGh0dHAYASABKAsyIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1vbml0b3JIABIwCgN0Y3AYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckgAEjAKA2RucxgDIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9ySABCCAoGY29uZmlnKn8KDU1vbml0b3JTdGF0dXMSHgoaTU9OSVRPUl9TVEFUVVNfVU5TUEVDSUZJRUQQABIZChVNT05JVE9SX1NUQVRVU19BQ1RJVkUQARIZChVNT05JVE9SX1NUQVRVU19QQVVTRUQQAhIYChRNT05JVE9SX1NUQVRVU19FUlJPUhADQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_google_protobuf_timestamp, file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_tcp_monitor]);
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIrEBCg1Nb25pdG9yQ29uZmlnEjIKBGh0dHAYASABKAsyIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1vbml0b3JIABIwCgN0Y3AYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckgAEjAKA2RucxgDIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9ySABCCAoGY29uZmlnKn8KDU1vbml0b3JTdGF0dXMSHgoaTU9OSVRPUl9TVEFUVVNfVU5TUEVDSUZJRUQQABIZChVNT05JVE9SX1NUQVRVU19BQ1RJVkUQARIZChVNT05JVE9SX1NUQVRVU19QQVVTRUQQAhIYChRNT05JVE9SX1NUQVRVU19FUlJPUhADQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_tcp_monitor]);
 
 /**
  * MonitorConfig represents the type-specific configuration for a monitor.

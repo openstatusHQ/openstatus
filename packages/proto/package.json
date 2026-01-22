@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "2.10.2",
+    "@bufbuild/protovalidate": "^1.1.1",
     "@connectrpc/connect": "^2.1.1"
   },
   "devDependencies": {

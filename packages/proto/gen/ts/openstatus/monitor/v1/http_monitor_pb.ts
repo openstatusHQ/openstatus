@@ -2,8 +2,9 @@
 // @generated from file openstatus/monitor/v1/http_monitor.proto (package openstatus.monitor.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { BodyAssertion, HeaderAssertion, StatusCodeAssertion } from "./assertions_pb.ts";
 import { file_openstatus_monitor_v1_assertions } from "./assertions_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,9 +13,11 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/http_monitor.proto.
  */
 export const file_openstatus_monitor_v1_http_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiJQoHSGVhZGVycxILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAkivAMKC0hUVFBNb25pdG9yEgoKAmlkGAEgASgJEgsKA3VybBgCIAEoCRITCgtwZXJpb2RpY2l0eRgDIAEoCRIOCgZtZXRob2QYBCABKAkSDAoEYm9keRgFIAEoCRIPCgd0aW1lb3V0GAYgASgDEhgKC2RlZ3JhZGVkX2F0GAcgASgDSACIAQESDQoFcmV0cnkYCCABKAMSGAoQZm9sbG93X3JlZGlyZWN0cxgJIAEoCBIvCgdoZWFkZXJzGAogAygLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYWRlcnMSSgoWc3RhdHVzX2NvZGVfYXNzZXJ0aW9ucxgLIAMoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5TdGF0dXNDb2RlQXNzZXJ0aW9uEj0KD2JvZHlfYXNzZXJ0aW9ucxgMIAMoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Cb2R5QXNzZXJ0aW9uEkEKEWhlYWRlcl9hc3NlcnRpb25zGA0gAygLMiYub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYWRlckFzc2VydGlvbkIOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_openstatus_monitor_v1_assertions]);
+  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiLgoHSGVhZGVycxIUCgNrZXkYASABKAlCB7pIBHICEAESDQoFdmFsdWUYAiABKAkigQUKC0hUVFBNb25pdG9yEgoKAmlkGAEgASgJEhoKA3VybBgCIAEoCUINukgKcggQARiAEIgBARI1CgtwZXJpb2RpY2l0eRgDIAEoCUIgukgdchtSAzMwc1ICMW1SAjVtUgMxMG1SAzMwbVICMWgSVQoGbWV0aG9kGAQgASgJQkW6SEJyQFIAUgNHRVRSBFBPU1RSBEhFQURSA1BVVFIFUEFUQ0hSBkRFTEVURVIFVFJBQ0VSB0NPTk5FQ1RSB09QVElPTlMSDAoEYm9keRgFIAEoCRIcCgd0aW1lb3V0GAYgASgDQgu6SAgiBhjAqQcoABIlCgtkZWdyYWRlZF9hdBgHIAEoA0ILukgIIgYYwKkHKABIAIgBARIYCgVyZXRyeRgIIAEoA0IJukgGIgQYCigAEhgKEGZvbGxvd19yZWRpcmVjdHMYCSABKAgSOQoHaGVhZGVycxgKIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFBJUChZzdGF0dXNfY29kZV9hc3NlcnRpb25zGAsgAygLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLlN0YXR1c0NvZGVBc3NlcnRpb25CCLpIBZIBAhAKEkcKD2JvZHlfYXNzZXJ0aW9ucxgMIAMoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Cb2R5QXNzZXJ0aW9uQgi6SAWSAQIQChJLChFoZWFkZXJfYXNzZXJ0aW9ucxgNIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJBc3NlcnRpb25CCLpIBZIBAhAKQg4KDF9kZWdyYWRlZF9hdCr3AQoKSFRUUE1ldGhvZBIbChdIVFRQX01FVEhPRF9VTlNQRUNJRklFRBAAEhMKD0hUVFBfTUVUSE9EX0dFVBABEhQKEEhUVFBfTUVUSE9EX1BPU1QQAhIUChBIVFRQX01FVEhPRF9IRUFEEAMSEwoPSFRUUF9NRVRIT0RfUFVUEAQSFQoRSFRUUF9NRVRIT0RfUEFUQ0gQBRIWChJIVFRQX01FVEhPRF9ERUxFVEUQBhIVChFIVFRQX01FVEhPRF9UUkFDRRAHEhcKE0hUVFBfTUVUSE9EX0NPTk5FQ1QQCBIXChNIVFRQX01FVEhPRF9PUFRJT05TEAkqpQEKC1BlcmlvZGljaXR5EhsKF1BFUklPRElDSVRZX1VOU1BFQ0lGSUVEEAASEwoPUEVSSU9ESUNJVFlfMzBTEAESEgoOUEVSSU9ESUNJVFlfMU0QAhISCg5QRVJJT0RJQ0lUWV81TRADEhMKD1BFUklPRElDSVRZXzEwTRAEEhMKD1BFUklPRElDSVRZXzMwTRAFEhIKDlBFUklPRElDSVRZXzFIEAZCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions]);
 
 /**
+ * Headers represents a key-value pair for HTTP headers.
+ *
  * @generated from message openstatus.monitor.v1.Headers
  */
 export type Headers = Message<"openstatus.monitor.v1.Headers"> & {
@@ -37,70 +40,98 @@ export const HeadersSchema: GenMessage<Headers> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_http_monitor, 0);
 
 /**
+ * HTTPMonitor defines the configuration for an HTTP monitor.
+ *
  * @generated from message openstatus.monitor.v1.HTTPMonitor
  */
 export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
   /**
+   * Unique identifier for the monitor (output only for create requests).
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   * URL to monitor (required, max 2048 characters).
+   *
    * @generated from field: string url = 2;
    */
   url: string;
 
   /**
+   * Check periodicity (required).
+   *
    * @generated from field: string periodicity = 3;
    */
   periodicity: string;
 
   /**
+   * HTTP method to use (defaults to GET).
+   *
    * @generated from field: string method = 4;
    */
   method: string;
 
   /**
+   * Request body (optional).
+   *
    * @generated from field: string body = 5;
    */
   body: string;
 
   /**
+   * Timeout in milliseconds (0-60000, defaults to 45000).
+   *
    * @generated from field: int64 timeout = 6;
    */
   timeout: bigint;
 
   /**
+   * Latency threshold for degraded status in milliseconds (optional, 0-60000).
+   *
    * @generated from field: optional int64 degraded_at = 7;
    */
   degradedAt?: bigint;
 
   /**
+   * Number of retry attempts (0-10).
+   *
    * @generated from field: int64 retry = 8;
    */
   retry: bigint;
 
   /**
+   * Whether to follow HTTP redirects.
+   *
    * @generated from field: bool follow_redirects = 9;
    */
   followRedirects: boolean;
 
   /**
+   * Custom headers for the request.
+   *
    * @generated from field: repeated openstatus.monitor.v1.Headers headers = 10;
    */
   headers: Headers[];
 
   /**
+   * Status code assertions for the response.
+   *
    * @generated from field: repeated openstatus.monitor.v1.StatusCodeAssertion status_code_assertions = 11;
    */
   statusCodeAssertions: StatusCodeAssertion[];
 
   /**
+   * Body content assertions for the response.
+   *
    * @generated from field: repeated openstatus.monitor.v1.BodyAssertion body_assertions = 12;
    */
   bodyAssertions: BodyAssertion[];
 
   /**
+   * Header assertions for the response.
+   *
    * @generated from field: repeated openstatus.monitor.v1.HeaderAssertion header_assertions = 13;
    */
   headerAssertions: HeaderAssertion[];
@@ -112,4 +143,115 @@ export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
  */
 export const HTTPMonitorSchema: GenMessage<HTTPMonitor> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_http_monitor, 1);
+
+/**
+ * HTTP methods supported for monitors.
+ *
+ * @generated from enum openstatus.monitor.v1.HTTPMethod
+ */
+export enum HTTPMethod {
+  /**
+   * @generated from enum value: HTTP_METHOD_UNSPECIFIED = 0;
+   */
+  HTTP_METHOD_UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_GET = 1;
+   */
+  HTTP_METHOD_GET = 1,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_POST = 2;
+   */
+  HTTP_METHOD_POST = 2,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_HEAD = 3;
+   */
+  HTTP_METHOD_HEAD = 3,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_PUT = 4;
+   */
+  HTTP_METHOD_PUT = 4,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_PATCH = 5;
+   */
+  HTTP_METHOD_PATCH = 5,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_DELETE = 6;
+   */
+  HTTP_METHOD_DELETE = 6,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_TRACE = 7;
+   */
+  HTTP_METHOD_TRACE = 7,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_CONNECT = 8;
+   */
+  HTTP_METHOD_CONNECT = 8,
+
+  /**
+   * @generated from enum value: HTTP_METHOD_OPTIONS = 9;
+   */
+  HTTP_METHOD_OPTIONS = 9,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.HTTPMethod.
+ */
+export const HTTPMethodSchema: GenEnum<HTTPMethod> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_http_monitor, 0);
+
+/**
+ * Monitor periodicity options.
+ *
+ * @generated from enum openstatus.monitor.v1.Periodicity
+ */
+export enum Periodicity {
+  /**
+   * @generated from enum value: PERIODICITY_UNSPECIFIED = 0;
+   */
+  PERIODICITY_UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PERIODICITY_30S = 1;
+   */
+  PERIODICITY_30S = 1,
+
+  /**
+   * @generated from enum value: PERIODICITY_1M = 2;
+   */
+  PERIODICITY_1M = 2,
+
+  /**
+   * @generated from enum value: PERIODICITY_5M = 3;
+   */
+  PERIODICITY_5M = 3,
+
+  /**
+   * @generated from enum value: PERIODICITY_10M = 4;
+   */
+  PERIODICITY_10M = 4,
+
+  /**
+   * @generated from enum value: PERIODICITY_30M = 5;
+   */
+  PERIODICITY_30M = 5,
+
+  /**
+   * @generated from enum value: PERIODICITY_1H = 6;
+   */
+  PERIODICITY_1H = 6,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.Periodicity.
+ */
+export const PeriodicitySchema: GenEnum<Periodicity> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_http_monitor, 1);
 

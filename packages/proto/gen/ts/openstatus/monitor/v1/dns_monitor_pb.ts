@@ -4,6 +4,7 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { RecordAssertion } from "./assertions_pb.ts";
 import { file_openstatus_monitor_v1_assertions } from "./assertions_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
@@ -12,43 +13,59 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/dns_monitor.proto.
  */
 export const file_openstatus_monitor_v1_dns_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLHAQoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRILCgN1cmkYAiABKAkSDwoHdGltZW91dBgDIAEoAxIYCgtkZWdyYWRlZF9hdBgEIAEoA0gAiAEBEhMKC3BlcmlvZGljaXR5GAUgASgJEg0KBXJldHJ5GAYgASgDEkEKEXJlY29yZF9hc3NlcnRpb25zGA0gAygLMiYub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlY29yZEFzc2VydGlvbkIOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_openstatus_monitor_v1_assertions]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKkAgoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIXCgN1cmkYAiABKAlCCrpIB3IFEAEYgBASHAoHdGltZW91dBgDIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBCABKANCC7pICCIGGMCpBygASACIAQESNQoLcGVyaW9kaWNpdHkYBSABKAlCILpIHXIbUgMzMHNSAjFtUgI1bVIDMTBtUgMzMG1SAjFoEhgKBXJldHJ5GAYgASgDQgm6SAYiBBgKKAASSwoRcmVjb3JkX2Fzc2VydGlvbnMYDSADKAsyJi5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVjb3JkQXNzZXJ0aW9uQgi6SAWSAQIQCkIOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions]);
 
 /**
+ * DNSMonitor defines the configuration for a DNS monitor.
+ *
  * @generated from message openstatus.monitor.v1.DNSMonitor
  */
 export type DNSMonitor = Message<"openstatus.monitor.v1.DNSMonitor"> & {
   /**
+   * Unique identifier for the monitor (output only for create requests).
+   *
    * @generated from field: string id = 1;
    */
   id: string;
 
   /**
+   * Domain to resolve (required, max 2048 characters).
+   *
    * @generated from field: string uri = 2;
    */
   uri: string;
 
   /**
+   * Timeout in milliseconds (0-60000, defaults to 45000).
+   *
    * @generated from field: int64 timeout = 3;
    */
   timeout: bigint;
 
   /**
+   * Latency threshold for degraded status in milliseconds (optional, 0-60000).
+   *
    * @generated from field: optional int64 degraded_at = 4;
    */
   degradedAt?: bigint;
 
   /**
+   * Check periodicity (required).
+   *
    * @generated from field: string periodicity = 5;
    */
   periodicity: string;
 
   /**
+   * Number of retry attempts (0-10).
+   *
    * @generated from field: int64 retry = 6;
    */
   retry: bigint;
 
   /**
+   * DNS record assertions for validation.
+   *
    * @generated from field: repeated openstatus.monitor.v1.RecordAssertion record_assertions = 13;
    */
   recordAssertions: RecordAssertion[];

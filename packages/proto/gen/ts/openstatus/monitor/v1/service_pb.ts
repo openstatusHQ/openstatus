@@ -4,6 +4,7 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { DNSMonitor } from "./dns_monitor_pb.ts";
 import { file_openstatus_monitor_v1_dns_monitor } from "./dns_monitor_pb.ts";
 import type { HTTPMonitor } from "./http_monitor_pb.ts";
@@ -16,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/service.proto.
  */
 export const file_openstatus_monitor_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIk8KGENyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBIzCgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yIlAKGUNyZWF0ZUhUVFBNb25pdG9yUmVzcG9uc2USMwoHbW9uaXRvchgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvciJNChdDcmVhdGVUQ1BNb25pdG9yUmVxdWVzdBIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3IiTgoYQ3JlYXRlVENQTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvciJNChdDcmVhdGVETlNNb25pdG9yUmVxdWVzdBIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3IiTgoYQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvciIjChVUcmlnZ2VyTW9uaXRvclJlcXVlc3QSCgoCaWQYASABKAkiKQoWVHJpZ2dlck1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIiIKFERlbGV0ZU1vbml0b3JSZXF1ZXN0EgoKAmlkGAEgASgJIigKFURlbGV0ZU1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIImMKE0xpc3RNb25pdG9yc1JlcXVlc3QSFgoJcGFnZV9zaXplGAEgASgFSACIAQESFwoKcGFnZV90b2tlbhgCIAEoCUgBiAEBQgwKCl9wYWdlX3NpemVCDQoLX3BhZ2VfdG9rZW4i3AEKFExpc3RNb25pdG9yc1Jlc3BvbnNlEjkKDWh0dHBfbW9uaXRvcnMYASADKAsyIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1vbml0b3ISNwoMdGNwX21vbml0b3JzGAIgAygLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3ISNwoMZG5zX21vbml0b3JzGAMgAygLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3ISFwoPbmV4dF9wYWdlX3Rva2VuGAQgASgJMrYFCg5Nb25pdG9yU2VydmljZRJ2ChFDcmVhdGVIVFRQTW9uaXRvchIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVIVFRQTW9uaXRvclJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRJzChBDcmVhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBDcmVhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXNwb25zZRJtCg5UcmlnZ2VyTW9uaXRvchIsLm9wZW5zdGF0dXMubW9uaXRvci52MS5UcmlnZ2VyTW9uaXRvclJlcXVlc3QaLS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVHJpZ2dlck1vbml0b3JSZXNwb25zZRJqCg1EZWxldGVNb25pdG9yEisub3BlbnN0YXR1cy5tb25pdG9yLnYxLkRlbGV0ZU1vbml0b3JSZXF1ZXN0Giwub3BlbnN0YXR1cy5tb25pdG9yLnYxLkRlbGV0ZU1vbml0b3JSZXNwb25zZRJnCgxMaXN0TW9uaXRvcnMSKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JzUmVxdWVzdBorLm9wZW5zdGF0dXMubW9uaXRvci52MS5MaXN0TW9uaXRvcnNSZXNwb25zZUJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_tcp_monitor]);
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIlcKGENyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBI7Cgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yQga6SAPIAQEiUAoZQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRIzCgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yIlUKF0NyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0EjoKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckIGukgDyAEBIk4KGENyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3IiVQoXQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QSOgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9yQga6SAPIAQEiTgoYQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvciIsChVUcmlnZ2VyTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKQoWVHJpZ2dlck1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIisKFERlbGV0ZU1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIigKFURlbGV0ZU1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIm4KE0xpc3RNb25pdG9yc1JlcXVlc3QSIQoJcGFnZV9zaXplGAEgASgFQgm6SAYaBBhkKAFIAIgBARIXCgpwYWdlX3Rva2VuGAIgASgJSAGIAQFCDAoKX3BhZ2Vfc2l6ZUINCgtfcGFnZV90b2tlbiLcAQoUTGlzdE1vbml0b3JzUmVzcG9uc2USOQoNaHR0cF9tb25pdG9ycxgBIAMoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvchI3Cgx0Y3BfbW9uaXRvcnMYAiADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvchI3CgxkbnNfbW9uaXRvcnMYAyADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvchIXCg9uZXh0X3BhZ2VfdG9rZW4YBCABKAkytgUKDk1vbml0b3JTZXJ2aWNlEnYKEUNyZWF0ZUhUVFBNb25pdG9yEi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBowLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVIVFRQTW9uaXRvclJlc3BvbnNlEnMKEENyZWF0ZVRDUE1vbml0b3ISLi5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlVENQTW9uaXRvclJlcXVlc3QaLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlVENQTW9uaXRvclJlc3BvbnNlEnMKEENyZWF0ZUROU01vbml0b3ISLi5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QaLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEm0KDlRyaWdnZXJNb25pdG9yEiwub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRyaWdnZXJNb25pdG9yUmVxdWVzdBotLm9wZW5zdGF0dXMubW9uaXRvci52MS5UcmlnZ2VyTW9uaXRvclJlc3BvbnNlEmoKDURlbGV0ZU1vbml0b3ISKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuRGVsZXRlTW9uaXRvclJlcXVlc3QaLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuRGVsZXRlTW9uaXRvclJlc3BvbnNlEmcKDExpc3RNb25pdG9ycxIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5MaXN0TW9uaXRvcnNSZXF1ZXN0Gisub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yc1Jlc3BvbnNlQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_tcp_monitor]);
 
 /**
  * CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -25,6 +26,8 @@ export const file_openstatus_monitor_v1_service: GenFile = /*@__PURE__*/
  */
 export type CreateHTTPMonitorRequest = Message<"openstatus.monitor.v1.CreateHTTPMonitorRequest"> & {
   /**
+   * Monitor configuration (required).
+   *
    * @generated from field: openstatus.monitor.v1.HTTPMonitor monitor = 1;
    */
   monitor?: HTTPMonitor;
@@ -44,6 +47,8 @@ export const CreateHTTPMonitorRequestSchema: GenMessage<CreateHTTPMonitorRequest
  */
 export type CreateHTTPMonitorResponse = Message<"openstatus.monitor.v1.CreateHTTPMonitorResponse"> & {
   /**
+   * The created monitor with assigned ID.
+   *
    * @generated from field: openstatus.monitor.v1.HTTPMonitor monitor = 1;
    */
   monitor?: HTTPMonitor;
@@ -63,6 +68,8 @@ export const CreateHTTPMonitorResponseSchema: GenMessage<CreateHTTPMonitorRespon
  */
 export type CreateTCPMonitorRequest = Message<"openstatus.monitor.v1.CreateTCPMonitorRequest"> & {
   /**
+   * Monitor configuration (required).
+   *
    * @generated from field: openstatus.monitor.v1.TCPMonitor monitor = 1;
    */
   monitor?: TCPMonitor;
@@ -82,6 +89,8 @@ export const CreateTCPMonitorRequestSchema: GenMessage<CreateTCPMonitorRequest> 
  */
 export type CreateTCPMonitorResponse = Message<"openstatus.monitor.v1.CreateTCPMonitorResponse"> & {
   /**
+   * The created monitor with assigned ID.
+   *
    * @generated from field: openstatus.monitor.v1.TCPMonitor monitor = 1;
    */
   monitor?: TCPMonitor;
@@ -101,6 +110,8 @@ export const CreateTCPMonitorResponseSchema: GenMessage<CreateTCPMonitorResponse
  */
 export type CreateDNSMonitorRequest = Message<"openstatus.monitor.v1.CreateDNSMonitorRequest"> & {
   /**
+   * Monitor configuration (required).
+   *
    * @generated from field: openstatus.monitor.v1.DNSMonitor monitor = 1;
    */
   monitor?: DNSMonitor;
@@ -120,6 +131,8 @@ export const CreateDNSMonitorRequestSchema: GenMessage<CreateDNSMonitorRequest> 
  */
 export type CreateDNSMonitorResponse = Message<"openstatus.monitor.v1.CreateDNSMonitorResponse"> & {
   /**
+   * The created monitor with assigned ID.
+   *
    * @generated from field: openstatus.monitor.v1.DNSMonitor monitor = 1;
    */
   monitor?: DNSMonitor;
@@ -139,6 +152,8 @@ export const CreateDNSMonitorResponseSchema: GenMessage<CreateDNSMonitorResponse
  */
 export type TriggerMonitorRequest = Message<"openstatus.monitor.v1.TriggerMonitorRequest"> & {
   /**
+   * Monitor ID to trigger (required).
+   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -158,6 +173,8 @@ export const TriggerMonitorRequestSchema: GenMessage<TriggerMonitorRequest> = /*
  */
 export type TriggerMonitorResponse = Message<"openstatus.monitor.v1.TriggerMonitorResponse"> & {
   /**
+   * Whether the trigger was successful.
+   *
    * @generated from field: bool success = 1;
    */
   success: boolean;
@@ -177,6 +194,8 @@ export const TriggerMonitorResponseSchema: GenMessage<TriggerMonitorResponse> = 
  */
 export type DeleteMonitorRequest = Message<"openstatus.monitor.v1.DeleteMonitorRequest"> & {
   /**
+   * Monitor ID to delete (required).
+   *
    * @generated from field: string id = 1;
    */
   id: string;
@@ -196,6 +215,8 @@ export const DeleteMonitorRequestSchema: GenMessage<DeleteMonitorRequest> = /*@_
  */
 export type DeleteMonitorResponse = Message<"openstatus.monitor.v1.DeleteMonitorResponse"> & {
   /**
+   * Whether the deletion was successful.
+   *
    * @generated from field: bool success = 1;
    */
   success: boolean;
@@ -215,11 +236,15 @@ export const DeleteMonitorResponseSchema: GenMessage<DeleteMonitorResponse> = /*
  */
 export type ListMonitorsRequest = Message<"openstatus.monitor.v1.ListMonitorsRequest"> & {
   /**
+   * Maximum number of monitors to return (1-100, defaults to 50).
+   *
    * @generated from field: optional int32 page_size = 1;
    */
   pageSize?: number;
 
   /**
+   * Token for pagination.
+   *
    * @generated from field: optional string page_token = 2;
    */
   pageToken?: string;
@@ -239,21 +264,29 @@ export const ListMonitorsRequestSchema: GenMessage<ListMonitorsRequest> = /*@__P
  */
 export type ListMonitorsResponse = Message<"openstatus.monitor.v1.ListMonitorsResponse"> & {
   /**
+   * HTTP monitors in the workspace.
+   *
    * @generated from field: repeated openstatus.monitor.v1.HTTPMonitor http_monitors = 1;
    */
   httpMonitors: HTTPMonitor[];
 
   /**
+   * TCP monitors in the workspace.
+   *
    * @generated from field: repeated openstatus.monitor.v1.TCPMonitor tcp_monitors = 2;
    */
   tcpMonitors: TCPMonitor[];
 
   /**
+   * DNS monitors in the workspace.
+   *
    * @generated from field: repeated openstatus.monitor.v1.DNSMonitor dns_monitors = 3;
    */
   dnsMonitors: DNSMonitor[];
 
   /**
+   * Token for the next page of results.
+   *
    * @generated from field: string next_page_token = 4;
    */
   nextPageToken: string;

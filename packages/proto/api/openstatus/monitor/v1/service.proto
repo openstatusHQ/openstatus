@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package openstatus.monitor.v1;
 
+import "buf/validate/validate.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
 import "openstatus/monitor/v1/tcp_monitor.proto";
-
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
@@ -32,64 +32,87 @@ service MonitorService {
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
 message CreateHTTPMonitorRequest {
-  HTTPMonitor monitor = 1;
+  // Monitor configuration (required).
+  HTTPMonitor monitor = 1 [(buf.validate.field).required = true];
 }
 
 // CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
 message CreateHTTPMonitorResponse {
+  // The created monitor with assigned ID.
   HTTPMonitor monitor = 1;
 }
 
 // CreateTCPMonitorRequest is the request to create a new TCP monitor.
 message CreateTCPMonitorRequest {
-  TCPMonitor monitor = 1;
+  // Monitor configuration (required).
+  TCPMonitor monitor = 1 [(buf.validate.field).required = true];
 }
 
 // CreateTCPMonitorResponse is the response after creating a TCP monitor.
 message CreateTCPMonitorResponse {
+  // The created monitor with assigned ID.
   TCPMonitor monitor = 1;
 }
 
 // CreateDNSMonitorRequest is the request to create a new DNS monitor.
 message CreateDNSMonitorRequest {
-  DNSMonitor monitor = 1;
+  // Monitor configuration (required).
+  DNSMonitor monitor = 1 [(buf.validate.field).required = true];
 }
 
 // CreateDNSMonitorResponse is the response after creating a DNS monitor.
 message CreateDNSMonitorResponse {
+  // The created monitor with assigned ID.
   DNSMonitor monitor = 1;
 }
 
 // TriggerMonitorRequest is the request to trigger a monitor check.
 message TriggerMonitorRequest {
-  string id = 1;
+  // Monitor ID to trigger (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 // TriggerMonitorResponse is the response after triggering a monitor.
 message TriggerMonitorResponse {
+  // Whether the trigger was successful.
   bool success = 1;
 }
 
 // DeleteMonitorRequest is the request to delete a monitor.
 message DeleteMonitorRequest {
-  string id = 1;
+  // Monitor ID to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
 // DeleteMonitorResponse is the response after deleting a monitor.
 message DeleteMonitorResponse {
+  // Whether the deletion was successful.
   bool success = 1;
 }
 
 // ListMonitorsRequest is the request to list monitors.
 message ListMonitorsRequest {
-  optional int32 page_size = 1;
+  // Maximum number of monitors to return (1-100, defaults to 50).
+  optional int32 page_size = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Token for pagination.
   optional string page_token = 2;
 }
 
 // ListMonitorsResponse is the response containing a list of monitors.
 message ListMonitorsResponse {
+  // HTTP monitors in the workspace.
   repeated HTTPMonitor http_monitors = 1;
+
+  // TCP monitors in the workspace.
   repeated TCPMonitor tcp_monitors = 2;
+
+  // DNS monitors in the workspace.
   repeated DNSMonitor dns_monitors = 3;
+
+  // Token for the next page of results.
   string next_page_token = 4;
 }

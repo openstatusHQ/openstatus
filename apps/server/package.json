@@ -12,8 +12,11 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@bufbuild/protobuf": "2.10.2",
+    "@bufbuild/protovalidate": "^1.1.1",
     "@connectrpc/connect": "2.1.1",
     "@connectrpc/connect-node": "2.1.1",
+    "@connectrpc/validate": "^0.2.0",
     "@hono/sentry": "1.2.2",
     "@hono/zod-openapi": "1.1.5",
     "@hono/zod-validator": "0.7.6",

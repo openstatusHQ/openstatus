@@ -2,14 +2,11 @@ syntax = "proto3";
 
 package openstatus.monitor.v1;
 
-import "buf/validate/validate.proto";
-import "google/protobuf/timestamp.proto";
-
-option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
-
 import "openstatus/monitor/v1/dns_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
 import "openstatus/monitor/v1/tcp_monitor.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
 // MonitorStatus represents the operational status of a monitor.
 enum MonitorStatus {

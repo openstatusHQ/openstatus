@@ -2,31 +2,97 @@ syntax = "proto3";
 
 package openstatus.monitor.v1;
 
+import "buf/validate/validate.proto";
 import "openstatus/monitor/v1/assertions.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
-
-message Headers {
-    string key = 1;
-    string value = 2;
+// HTTP methods supported for monitors.
+enum HTTPMethod {
+  HTTP_METHOD_UNSPECIFIED = 0;
+  HTTP_METHOD_GET = 1;
+  HTTP_METHOD_POST = 2;
+  HTTP_METHOD_HEAD = 3;
+  HTTP_METHOD_PUT = 4;
+  HTTP_METHOD_PATCH = 5;
+  HTTP_METHOD_DELETE = 6;
+  HTTP_METHOD_TRACE = 7;
+  HTTP_METHOD_CONNECT = 8;
+  HTTP_METHOD_OPTIONS = 9;
 }
 
+// Monitor periodicity options.
+enum Periodicity {
+  PERIODICITY_UNSPECIFIED = 0;
+  PERIODICITY_30S = 1;
+  PERIODICITY_1M = 2;
+  PERIODICITY_5M = 3;
+  PERIODICITY_10M = 4;
+  PERIODICITY_30M = 5;
+  PERIODICITY_1H = 6;
+}
+
+// Headers represents a key-value pair for HTTP headers.
+message Headers {
+  string key = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2;
+}
+
+// HTTPMonitor defines the configuration for an HTTP monitor.
 message HTTPMonitor {
-    string id = 1;
-    string url = 2;
-    string periodicity = 3;
-    string method = 4;
-    string body = 5;
-    int64 timeout = 6;
-    optional int64 degraded_at = 7;
-    int64 retry = 8;
-    bool follow_redirects = 9;
+  // Unique identifier for the monitor (output only for create requests).
+  string id = 1;
 
-    repeated Headers headers = 10;
+  // URL to monitor (required, max 2048 characters).
+  string url = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 2048
+    uri: true
+  }];
 
-    repeated StatusCodeAssertion status_code_assertions = 11;
-    repeated BodyAssertion body_assertions = 12;
-    repeated HeaderAssertion header_assertions = 13;
+  // Check periodicity (required).
+  string periodicity = 3 [(buf.validate.field).string = {
+    in: ["30s", "1m", "5m", "10m", "30m", "1h"]
+  }];
 
+  // HTTP method to use (defaults to GET).
+  string method = 4 [(buf.validate.field).string = {
+    in: ["", "GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"]
+  }];
+
+  // Request body (optional).
+  string body = 5;
+
+  // Timeout in milliseconds (0-60000, defaults to 45000).
+  int64 timeout = 6 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Latency threshold for degraded status in milliseconds (optional, 0-60000).
+  optional int64 degraded_at = 7 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Number of retry attempts (0-10).
+  int64 retry = 8 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 10
+  }];
+
+  // Whether to follow HTTP redirects.
+  bool follow_redirects = 9;
+
+  // Custom headers for the request.
+  repeated Headers headers = 10 [(buf.validate.field).repeated.max_items = 20];
+
+  // Status code assertions for the response.
+  repeated StatusCodeAssertion status_code_assertions = 11 [(buf.validate.field).repeated.max_items = 10];
+
+  // Body content assertions for the response.
+  repeated BodyAssertion body_assertions = 12 [(buf.validate.field).repeated.max_items = 10];
+
+  // Header assertions for the response.
+  repeated HeaderAssertion header_assertions = 13 [(buf.validate.field).repeated.max_items = 10];
 }
