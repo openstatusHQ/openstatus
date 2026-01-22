@@ -21,6 +21,7 @@ import { env } from "./env";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
+import { incidentRoute } from "./incident";
 
 const { NODE_ENV, PORT } = env();
 
@@ -190,6 +191,7 @@ app.route("/cron", cronRouter);
 
 app.route("/", checkerRoute);
 
+app.route("/incident", incidentRoute);
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
