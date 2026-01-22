@@ -241,3 +241,28 @@
 - Tests require bun runtime to execute (not available in current environment)
 - Test file follows same patterns as duration.test.ts for consistency
 - PRD task marked as passes: true
+
+## 2026-01-22: Verified package dependencies and workspace configuration
+
+### Completed Tasks:
+14. **Documentation task**: Update package dependencies and workspace configuration
+
+### Verification Steps Completed:
+1. **Root package.json workspaces**: Already configured with `"packages/**/*"` pattern which covers `packages/notification-base`
+2. **pnpm install**: Ran successfully - all 38 workspace projects recognized and linked
+3. **@openstatus/notification-base imports verified**: Both slack and discord packages successfully import from the package
+4. **Slack package.json**: Already has `"@openstatus/notification-base": "workspace:*"` dependency
+5. **Discord package.json**: Already has `"@openstatus/notification-base": "workspace:*"` dependency
+6. **Workflows package.json**: Does not need direct dependency - uses notification-base transitively via notification providers
+
+### Type Checking Results:
+- `/packages/notification-base/` - All TypeScript checks pass
+- `/packages/notifications/slack/src/index.ts` and `blocks.ts` - Pass (excluding pre-existing mock.ts errors in node_modules)
+- `/packages/notifications/discord/src/index.ts` and `embeds.ts` - Pass (excluding pre-existing errors in dependencies)
+- Biome linting passes for all 14 notification-related files
+
+### Notes:
+- Tests require bun runtime which is not available in current environment
+- Pre-existing type errors in third-party dependencies (@auth/core, drizzle-orm) are unrelated to these changes
+- Pre-existing mock.ts errors in slack/discord packages are unrelated to notification-base integration
+- PRD task marked as passes: true

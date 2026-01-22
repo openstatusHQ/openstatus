@@ -284,7 +284,7 @@
       "Update /packages/notifications/discord/package.json to include @openstatus/notification-base dependency",
       "Update /apps/workflows/package.json to include @openstatus/notification-base dependency if needed"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "functional",
