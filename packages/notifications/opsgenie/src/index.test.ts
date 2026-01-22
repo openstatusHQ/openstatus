@@ -132,7 +132,7 @@ describe("OpsGenie Notifications", () => {
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.details.severity).toBe("degraded");
-    expect(body.message).toBe("API Health Check is down");
+    expect(body.message).toBe("API Health Check is degraded");
   });
 
   test("Handle fetch error gracefully", async () => {
