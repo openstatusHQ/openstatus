@@ -12,7 +12,7 @@ export const sendAlert = async ({
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incident?.id}`,
+    alias: `${monitor.id}-${incident?.id}`,
     message: `${name} is down`,
     description: message,
     details: {
@@ -53,7 +53,7 @@ export const sendDegraded = async ({
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incident?.id}`,
+    alias: `${monitor.id}-${incident?.id}`,
     message: `${name} is down`,
     description: message,
     details: {
@@ -97,7 +97,7 @@ export const sendRecovery = async ({
       : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incident?.id}/close`;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incident?.id}`,
+    alias: `${monitor.id}-${incident?.id}`,
     message: `${monitor.name} has recovered`,
     description: message,
     details: {
