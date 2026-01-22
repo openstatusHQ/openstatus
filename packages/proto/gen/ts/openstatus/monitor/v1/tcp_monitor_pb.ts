@@ -5,13 +5,15 @@
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
+import type { OpenTelemetryConfig } from "./http_monitor_pb.ts";
+import { file_openstatus_monitor_v1_http_monitor } from "./http_monitor_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/monitor/v1/tcp_monitor.proto.
  */
 export const file_openstatus_monitor_v1_tcp_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLXAQoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRIXCgN1cmkYAiABKAlCCrpIB3IFEAEYgBASHAoHdGltZW91dBgDIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBCABKANCC7pICCIGGMCpBygASACIAQESNQoLcGVyaW9kaWNpdHkYBSABKAlCILpIHXIbUgMzMHNSAjFtUgI1bVIDMTBtUgMzMG1SAjFoEhgKBXJldHJ5GAYgASgDQgm6SAYiBBgKKABCDgoMX2RlZ3JhZGVkX2F0QlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKPAwoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEhcKA3VyaRgDIAEoCUIKukgHcgUQARiAEBI1CgtwZXJpb2RpY2l0eRgEIAEoCUIgukgdchtSAzMwc1ICMW1SAjVtUgMxMG1SAzMwbVICMWgSHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABIdCgtkZXNjcmlwdGlvbhgIIAEoCUIIukgFcgMYgAgSDgoGYWN0aXZlGAkgASgIEg4KBnB1YmxpYxgKIAEoCBIZCgdyZWdpb25zGAsgAygJQgi6SAWSAQIQMhJCCg5vcGVuX3RlbGVtZXRyeRgMIAEoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5PcGVuVGVsZW1ldHJ5Q29uZmlnQg4KDF9kZWdyYWRlZF9hdEJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_openstatus_monitor_v1_http_monitor]);
 
 /**
  * TCPMonitor defines the configuration for a TCP monitor.
@@ -27,39 +29,81 @@ export type TCPMonitor = Message<"openstatus.monitor.v1.TCPMonitor"> & {
   id: string;
 
   /**
+   * Name of the monitor (required, max 256 characters).
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
    * URI to monitor in format "host:port" (required, max 2048 characters).
    *
-   * @generated from field: string uri = 2;
+   * @generated from field: string uri = 3;
    */
   uri: string;
 
   /**
-   * Timeout in milliseconds (0-60000, defaults to 45000).
-   *
-   * @generated from field: int64 timeout = 3;
-   */
-  timeout: bigint;
-
-  /**
-   * Latency threshold for degraded status in milliseconds (optional, 0-60000).
-   *
-   * @generated from field: optional int64 degraded_at = 4;
-   */
-  degradedAt?: bigint;
-
-  /**
    * Check periodicity (required).
    *
-   * @generated from field: string periodicity = 5;
+   * @generated from field: string periodicity = 4;
    */
   periodicity: string;
 
   /**
-   * Number of retry attempts (0-10).
+   * Timeout in milliseconds (0-120000, defaults to 45000).
    *
-   * @generated from field: int64 retry = 6;
+   * @generated from field: int64 timeout = 5;
+   */
+  timeout: bigint;
+
+  /**
+   * Latency threshold for degraded status in milliseconds (optional, 0-120000).
+   *
+   * @generated from field: optional int64 degraded_at = 6;
+   */
+  degradedAt?: bigint;
+
+  /**
+   * Number of retry attempts (0-10, defaults to 3).
+   *
+   * @generated from field: int64 retry = 7;
    */
   retry: bigint;
+
+  /**
+   * Description of the monitor (optional).
+   *
+   * @generated from field: string description = 8;
+   */
+  description: string;
+
+  /**
+   * Whether the monitor is active (defaults to false).
+   *
+   * @generated from field: bool active = 9;
+   */
+  active: boolean;
+
+  /**
+   * Whether the monitor is publicly visible (defaults to false).
+   *
+   * @generated from field: bool public = 10;
+   */
+  public: boolean;
+
+  /**
+   * Geographic regions to run checks from.
+   *
+   * @generated from field: repeated string regions = 11;
+   */
+  regions: string[];
+
+  /**
+   * OpenTelemetry configuration for exporting metrics.
+   *
+   * @generated from field: openstatus.monitor.v1.OpenTelemetryConfig open_telemetry = 12;
+   */
+  openTelemetry?: OpenTelemetryConfig;
 };
 
 /**

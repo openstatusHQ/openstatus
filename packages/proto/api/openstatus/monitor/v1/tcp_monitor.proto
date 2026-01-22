@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.monitor.v1;
 
 import "buf/validate/validate.proto";
+import "openstatus/monitor/v1/http_monitor.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
@@ -11,32 +12,53 @@ message TCPMonitor {
   // Unique identifier for the monitor (output only for create requests).
   string id = 1;
 
+  // Name of the monitor (required, max 256 characters).
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
   // URI to monitor in format "host:port" (required, max 2048 characters).
-  string uri = 2 [(buf.validate.field).string = {
+  string uri = 3 [(buf.validate.field).string = {
     min_len: 1
     max_len: 2048
   }];
 
-  // Timeout in milliseconds (0-60000, defaults to 45000).
-  int64 timeout = 3 [(buf.validate.field).int64 = {
-    gte: 0
-    lte: 120000
-  }];
-
-  // Latency threshold for degraded status in milliseconds (optional, 0-60000).
-  optional int64 degraded_at = 4 [(buf.validate.field).int64 = {
-    gte: 0
-    lte: 120000
-  }];
-
   // Check periodicity (required).
-  string periodicity = 5 [(buf.validate.field).string = {
+  string periodicity = 4 [(buf.validate.field).string = {
     in: ["30s", "1m", "5m", "10m", "30m", "1h"]
   }];
 
-  // Number of retry attempts (0-10).
-  int64 retry = 6 [(buf.validate.field).int64 = {
+  // Timeout in milliseconds (0-120000, defaults to 45000).
+  int64 timeout = 5 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Latency threshold for degraded status in milliseconds (optional, 0-120000).
+  optional int64 degraded_at = 6 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Number of retry attempts (0-10, defaults to 3).
+  int64 retry = 7 [(buf.validate.field).int64 = {
     gte: 0
     lte: 10
   }];
+
+  // Description of the monitor (optional).
+  string description = 8 [(buf.validate.field).string.max_len = 1024];
+
+  // Whether the monitor is active (defaults to false).
+  bool active = 9;
+
+  // Whether the monitor is publicly visible (defaults to false).
+  bool public = 10;
+
+  // Geographic regions to run checks from.
+  repeated string regions = 11 [(buf.validate.field).repeated.max_items = 50];
+
+  // OpenTelemetry configuration for exporting metrics.
+  OpenTelemetryConfig open_telemetry = 12;
 }

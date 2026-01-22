@@ -13,7 +13,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/http_monitor.proto.
  */
 export const file_openstatus_monitor_v1_http_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiLgoHSGVhZGVycxIUCgNrZXkYASABKAlCB7pIBHICEAESDQoFdmFsdWUYAiABKAkigQUKC0hUVFBNb25pdG9yEgoKAmlkGAEgASgJEhoKA3VybBgCIAEoCUINukgKcggQARiAEIgBARI1CgtwZXJpb2RpY2l0eRgDIAEoCUIgukgdchtSAzMwc1ICMW1SAjVtUgMxMG1SAzMwbVICMWgSVQoGbWV0aG9kGAQgASgJQkW6SEJyQFIAUgNHRVRSBFBPU1RSBEhFQURSA1BVVFIFUEFUQ0hSBkRFTEVURVIFVFJBQ0VSB0NPTk5FQ1RSB09QVElPTlMSDAoEYm9keRgFIAEoCRIcCgd0aW1lb3V0GAYgASgDQgu6SAgiBhjAqQcoABIlCgtkZWdyYWRlZF9hdBgHIAEoA0ILukgIIgYYwKkHKABIAIgBARIYCgVyZXRyeRgIIAEoA0IJukgGIgQYCigAEhgKEGZvbGxvd19yZWRpcmVjdHMYCSABKAgSOQoHaGVhZGVycxgKIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFBJUChZzdGF0dXNfY29kZV9hc3NlcnRpb25zGAsgAygLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLlN0YXR1c0NvZGVBc3NlcnRpb25CCLpIBZIBAhAKEkcKD2JvZHlfYXNzZXJ0aW9ucxgMIAMoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Cb2R5QXNzZXJ0aW9uQgi6SAWSAQIQChJLChFoZWFkZXJfYXNzZXJ0aW9ucxgNIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJBc3NlcnRpb25CCLpIBZIBAhAKQg4KDF9kZWdyYWRlZF9hdCr3AQoKSFRUUE1ldGhvZBIbChdIVFRQX01FVEhPRF9VTlNQRUNJRklFRBAAEhMKD0hUVFBfTUVUSE9EX0dFVBABEhQKEEhUVFBfTUVUSE9EX1BPU1QQAhIUChBIVFRQX01FVEhPRF9IRUFEEAMSEwoPSFRUUF9NRVRIT0RfUFVUEAQSFQoRSFRUUF9NRVRIT0RfUEFUQ0gQBRIWChJIVFRQX01FVEhPRF9ERUxFVEUQBhIVChFIVFRQX01FVEhPRF9UUkFDRRAHEhcKE0hUVFBfTUVUSE9EX0NPTk5FQ1QQCBIXChNIVFRQX01FVEhPRF9PUFRJT05TEAkqpQEKC1BlcmlvZGljaXR5EhsKF1BFUklPRElDSVRZX1VOU1BFQ0lGSUVEEAASEwoPUEVSSU9ESUNJVFlfMzBTEAESEgoOUEVSSU9ESUNJVFlfMU0QAhISCg5QRVJJT0RJQ0lUWV81TRADEhMKD1BFUklPRElDSVRZXzEwTRAEEhMKD1BFUklPRElDSVRZXzMwTRAFEhIKDlBFUklPRElDSVRZXzFIEAZCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions]);
+  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiLgoHSGVhZGVycxIUCgNrZXkYASABKAlCB7pIBHICEAESDQoFdmFsdWUYAiABKAkibAoTT3BlblRlbGVtZXRyeUNvbmZpZxIaCghlbmRwb2ludBgBIAEoCUIIukgFcgMYgBASOQoHaGVhZGVycxgCIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFCK5BgoLSFRUUE1vbml0b3ISCgoCaWQYASABKAkSGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAhIaCgN1cmwYAyABKAlCDbpICnIIEAEYgBCIAQESNQoLcGVyaW9kaWNpdHkYBCABKAlCILpIHXIbUgMzMHNSAjFtUgI1bVIDMTBtUgMzMG1SAjFoElUKBm1ldGhvZBgFIAEoCUJFukhCckBSAFIDR0VUUgRQT1NUUgRIRUFEUgNQVVRSBVBBVENIUgZERUxFVEVSBVRSQUNFUgdDT05ORUNUUgdPUFRJT05TEgwKBGJvZHkYBiABKAkSHAoHdGltZW91dBgHIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYCCABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYCSABKANCCbpIBiIEGAooABIYChBmb2xsb3dfcmVkaXJlY3RzGAogASgIEjkKB2hlYWRlcnMYCyADKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSGVhZGVyc0IIukgFkgECEBQSVAoWc3RhdHVzX2NvZGVfYXNzZXJ0aW9ucxgMIAMoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5TdGF0dXNDb2RlQXNzZXJ0aW9uQgi6SAWSAQIQChJHCg9ib2R5X2Fzc2VydGlvbnMYDSADKAsyJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuQm9keUFzc2VydGlvbkIIukgFkgECEAoSSwoRaGVhZGVyX2Fzc2VydGlvbnMYDiADKAsyJi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSGVhZGVyQXNzZXJ0aW9uQgi6SAWSAQIQChIdCgtkZXNjcmlwdGlvbhgPIAEoCUIIukgFcgMYgAgSDgoGYWN0aXZlGBAgASgIEg4KBnB1YmxpYxgRIAEoCBIZCgdyZWdpb25zGBIgAygJQgi6SAWSAQIQMhJCCg5vcGVuX3RlbGVtZXRyeRgTIAEoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5PcGVuVGVsZW1ldHJ5Q29uZmlnQg4KDF9kZWdyYWRlZF9hdCr3AQoKSFRUUE1ldGhvZBIbChdIVFRQX01FVEhPRF9VTlNQRUNJRklFRBAAEhMKD0hUVFBfTUVUSE9EX0dFVBABEhQKEEhUVFBfTUVUSE9EX1BPU1QQAhIUChBIVFRQX01FVEhPRF9IRUFEEAMSEwoPSFRUUF9NRVRIT0RfUFVUEAQSFQoRSFRUUF9NRVRIT0RfUEFUQ0gQBRIWChJIVFRQX01FVEhPRF9ERUxFVEUQBhIVChFIVFRQX01FVEhPRF9UUkFDRRAHEhcKE0hUVFBfTUVUSE9EX0NPTk5FQ1QQCBIXChNIVFRQX01FVEhPRF9PUFRJT05TEAkqpQEKC1BlcmlvZGljaXR5EhsKF1BFUklPRElDSVRZX1VOU1BFQ0lGSUVEEAASEwoPUEVSSU9ESUNJVFlfMzBTEAESEgoOUEVSSU9ESUNJVFlfMU0QAhISCg5QRVJJT0RJQ0lUWV81TRADEhMKD1BFUklPRElDSVRZXzEwTRAEEhMKD1BFUklPRElDSVRZXzMwTRAFEhIKDlBFUklPRElDSVRZXzFIEAZCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions]);
 
 /**
  * Headers represents a key-value pair for HTTP headers.
@@ -40,6 +40,34 @@ export const HeadersSchema: GenMessage<Headers> = /*@__PURE__*/
   messageDesc(file_openstatus_monitor_v1_http_monitor, 0);
 
 /**
+ * OpenTelemetry configuration for exporting metrics.
+ *
+ * @generated from message openstatus.monitor.v1.OpenTelemetryConfig
+ */
+export type OpenTelemetryConfig = Message<"openstatus.monitor.v1.OpenTelemetryConfig"> & {
+  /**
+   * OTEL endpoint URL.
+   *
+   * @generated from field: string endpoint = 1;
+   */
+  endpoint: string;
+
+  /**
+   * Custom headers for OTEL requests.
+   *
+   * @generated from field: repeated openstatus.monitor.v1.Headers headers = 2;
+   */
+  headers: Headers[];
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.OpenTelemetryConfig.
+ * Use `create(OpenTelemetryConfigSchema)` to create a new message.
+ */
+export const OpenTelemetryConfigSchema: GenMessage<OpenTelemetryConfig> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_http_monitor, 1);
+
+/**
  * HTTPMonitor defines the configuration for an HTTP monitor.
  *
  * @generated from message openstatus.monitor.v1.HTTPMonitor
@@ -53,88 +81,130 @@ export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
   id: string;
 
   /**
+   * Name of the monitor (required, max 256 characters).
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
    * URL to monitor (required, max 2048 characters).
    *
-   * @generated from field: string url = 2;
+   * @generated from field: string url = 3;
    */
   url: string;
 
   /**
    * Check periodicity (required).
    *
-   * @generated from field: string periodicity = 3;
+   * @generated from field: string periodicity = 4;
    */
   periodicity: string;
 
   /**
    * HTTP method to use (defaults to GET).
    *
-   * @generated from field: string method = 4;
+   * @generated from field: string method = 5;
    */
   method: string;
 
   /**
    * Request body (optional).
    *
-   * @generated from field: string body = 5;
+   * @generated from field: string body = 6;
    */
   body: string;
 
   /**
-   * Timeout in milliseconds (0-60000, defaults to 45000).
+   * Timeout in milliseconds (0-120000, defaults to 45000).
    *
-   * @generated from field: int64 timeout = 6;
+   * @generated from field: int64 timeout = 7;
    */
   timeout: bigint;
 
   /**
-   * Latency threshold for degraded status in milliseconds (optional, 0-60000).
+   * Latency threshold for degraded status in milliseconds (optional, 0-120000).
    *
-   * @generated from field: optional int64 degraded_at = 7;
+   * @generated from field: optional int64 degraded_at = 8;
    */
   degradedAt?: bigint;
 
   /**
-   * Number of retry attempts (0-10).
+   * Number of retry attempts (0-10, defaults to 3).
    *
-   * @generated from field: int64 retry = 8;
+   * @generated from field: int64 retry = 9;
    */
   retry: bigint;
 
   /**
-   * Whether to follow HTTP redirects.
+   * Whether to follow HTTP redirects (defaults to true).
    *
-   * @generated from field: bool follow_redirects = 9;
+   * @generated from field: bool follow_redirects = 10;
    */
   followRedirects: boolean;
 
   /**
    * Custom headers for the request.
    *
-   * @generated from field: repeated openstatus.monitor.v1.Headers headers = 10;
+   * @generated from field: repeated openstatus.monitor.v1.Headers headers = 11;
    */
   headers: Headers[];
 
   /**
    * Status code assertions for the response.
    *
-   * @generated from field: repeated openstatus.monitor.v1.StatusCodeAssertion status_code_assertions = 11;
+   * @generated from field: repeated openstatus.monitor.v1.StatusCodeAssertion status_code_assertions = 12;
    */
   statusCodeAssertions: StatusCodeAssertion[];
 
   /**
    * Body content assertions for the response.
    *
-   * @generated from field: repeated openstatus.monitor.v1.BodyAssertion body_assertions = 12;
+   * @generated from field: repeated openstatus.monitor.v1.BodyAssertion body_assertions = 13;
    */
   bodyAssertions: BodyAssertion[];
 
   /**
    * Header assertions for the response.
    *
-   * @generated from field: repeated openstatus.monitor.v1.HeaderAssertion header_assertions = 13;
+   * @generated from field: repeated openstatus.monitor.v1.HeaderAssertion header_assertions = 14;
    */
   headerAssertions: HeaderAssertion[];
+
+  /**
+   * Description of the monitor (optional).
+   *
+   * @generated from field: string description = 15;
+   */
+  description: string;
+
+  /**
+   * Whether the monitor is active (defaults to false).
+   *
+   * @generated from field: bool active = 16;
+   */
+  active: boolean;
+
+  /**
+   * Whether the monitor is publicly visible (defaults to false).
+   *
+   * @generated from field: bool public = 17;
+   */
+  public: boolean;
+
+  /**
+   * Geographic regions to run checks from.
+   *
+   * @generated from field: repeated string regions = 18;
+   */
+  regions: string[];
+
+  /**
+   * OpenTelemetry configuration for exporting metrics.
+   *
+   * @generated from field: openstatus.monitor.v1.OpenTelemetryConfig open_telemetry = 19;
+   */
+  openTelemetry?: OpenTelemetryConfig;
 };
 
 /**
@@ -142,7 +212,7 @@ export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
  * Use `create(HTTPMonitorSchema)` to create a new message.
  */
 export const HTTPMonitorSchema: GenMessage<HTTPMonitor> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_http_monitor, 1);
+  messageDesc(file_openstatus_monitor_v1_http_monitor, 2);
 
 /**
  * HTTP methods supported for monitors.

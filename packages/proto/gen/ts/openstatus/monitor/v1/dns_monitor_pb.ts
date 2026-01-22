@@ -7,13 +7,15 @@ import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { RecordAssertion } from "./assertions_pb.ts";
 import { file_openstatus_monitor_v1_assertions } from "./assertions_pb.ts";
+import type { OpenTelemetryConfig } from "./http_monitor_pb.ts";
+import { file_openstatus_monitor_v1_http_monitor } from "./http_monitor_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/monitor/v1/dns_monitor.proto.
  */
 export const file_openstatus_monitor_v1_dns_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKkAgoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIXCgN1cmkYAiABKAlCCrpIB3IFEAEYgBASHAoHdGltZW91dBgDIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBCABKANCC7pICCIGGMCpBygASACIAQESNQoLcGVyaW9kaWNpdHkYBSABKAlCILpIHXIbUgMzMHNSAjFtUgI1bVIDMTBtUgMzMG1SAjFoEhgKBXJldHJ5GAYgASgDQgm6SAYiBBgKKAASSwoRcmVjb3JkX2Fzc2VydGlvbnMYDSADKAsyJi5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVjb3JkQXNzZXJ0aW9uQgi6SAWSAQIQCkIOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLcAwoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEhcKA3VyaRgDIAEoCUIKukgHcgUQARiAEBI1CgtwZXJpb2RpY2l0eRgEIAEoCUIgukgdchtSAzMwc1ICMW1SAjVtUgMxMG1SAzMwbVICMWgSHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABJLChFyZWNvcmRfYXNzZXJ0aW9ucxgIIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWNvcmRBc3NlcnRpb25CCLpIBZIBAhAKEh0KC2Rlc2NyaXB0aW9uGAkgASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYCiABKAgSDgoGcHVibGljGAsgASgIEhkKB3JlZ2lvbnMYDCADKAlCCLpIBZIBAhAyEkIKDm9wZW5fdGVsZW1ldHJ5GA0gASgLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLk9wZW5UZWxlbWV0cnlDb25maWdCDgoMX2RlZ3JhZGVkX2F0QlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_http_monitor]);
 
 /**
  * DNSMonitor defines the configuration for a DNS monitor.
@@ -29,46 +31,88 @@ export type DNSMonitor = Message<"openstatus.monitor.v1.DNSMonitor"> & {
   id: string;
 
   /**
+   * Name of the monitor (required, max 256 characters).
+   *
+   * @generated from field: string name = 2;
+   */
+  name: string;
+
+  /**
    * Domain to resolve (required, max 2048 characters).
    *
-   * @generated from field: string uri = 2;
+   * @generated from field: string uri = 3;
    */
   uri: string;
 
   /**
-   * Timeout in milliseconds (0-60000, defaults to 45000).
-   *
-   * @generated from field: int64 timeout = 3;
-   */
-  timeout: bigint;
-
-  /**
-   * Latency threshold for degraded status in milliseconds (optional, 0-60000).
-   *
-   * @generated from field: optional int64 degraded_at = 4;
-   */
-  degradedAt?: bigint;
-
-  /**
    * Check periodicity (required).
    *
-   * @generated from field: string periodicity = 5;
+   * @generated from field: string periodicity = 4;
    */
   periodicity: string;
 
   /**
-   * Number of retry attempts (0-10).
+   * Timeout in milliseconds (0-120000, defaults to 45000).
    *
-   * @generated from field: int64 retry = 6;
+   * @generated from field: int64 timeout = 5;
+   */
+  timeout: bigint;
+
+  /**
+   * Latency threshold for degraded status in milliseconds (optional, 0-120000).
+   *
+   * @generated from field: optional int64 degraded_at = 6;
+   */
+  degradedAt?: bigint;
+
+  /**
+   * Number of retry attempts (0-10, defaults to 3).
+   *
+   * @generated from field: int64 retry = 7;
    */
   retry: bigint;
 
   /**
    * DNS record assertions for validation.
    *
-   * @generated from field: repeated openstatus.monitor.v1.RecordAssertion record_assertions = 13;
+   * @generated from field: repeated openstatus.monitor.v1.RecordAssertion record_assertions = 8;
    */
   recordAssertions: RecordAssertion[];
+
+  /**
+   * Description of the monitor (optional).
+   *
+   * @generated from field: string description = 9;
+   */
+  description: string;
+
+  /**
+   * Whether the monitor is active (defaults to false).
+   *
+   * @generated from field: bool active = 10;
+   */
+  active: boolean;
+
+  /**
+   * Whether the monitor is publicly visible (defaults to false).
+   *
+   * @generated from field: bool public = 11;
+   */
+  public: boolean;
+
+  /**
+   * Geographic regions to run checks from.
+   *
+   * @generated from field: repeated string regions = 12;
+   */
+  regions: string[];
+
+  /**
+   * OpenTelemetry configuration for exporting metrics.
+   *
+   * @generated from field: openstatus.monitor.v1.OpenTelemetryConfig open_telemetry = 13;
+   */
+  openTelemetry?: OpenTelemetryConfig;
 };
 
 /**

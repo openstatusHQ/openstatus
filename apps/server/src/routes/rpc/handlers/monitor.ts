@@ -48,6 +48,8 @@ import {
   dnsAssertionsToDbJson,
   headersToDbJson,
   httpAssertionsToDbJson,
+  openTelemetryToDb,
+  regionsToDbString,
 } from "./monitor-utils";
 
 /**
@@ -91,12 +93,16 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       mon.headerAssertions,
     );
 
+    // Convert OpenTelemetry config to DB format
+    const otelConfig = openTelemetryToDb(mon.openTelemetry);
+
     // Insert into database
     const newMonitor = await db
       .insert(monitor)
       .values({
         workspaceId,
         jobType: "http",
+        name: mon.name,
         url: mon.url,
         periodicity: toValidPeriodicity(mon.periodicity),
         method: toValidMethod(mon.method),
@@ -106,7 +112,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         headers,
         assertions,
         followRedirects: mon.followRedirects ?? true,
-        active: false,
+        active: mon.active ?? false,
+        description: mon.description || "",
+        public: mon.public ?? false,
+        regions: regionsToDbString(mon.regions),
+        retry: mon.retry ? Number(mon.retry) : 3,
+        otelEndpoint: otelConfig.otelEndpoint,
+        otelHeaders: otelConfig.otelHeaders,
       })
       .returning()
       .get();
@@ -130,17 +142,27 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const mon = req.monitor;
 
+    // Convert OpenTelemetry config to DB format
+    const otelConfig = openTelemetryToDb(mon.openTelemetry);
+
     // Insert into database
     const newMonitor = await db
       .insert(monitor)
       .values({
         workspaceId,
         jobType: "tcp",
+        name: mon.name,
         url: mon.uri,
         periodicity: toValidPeriodicity(mon.periodicity),
         timeout: mon.timeout ? Number(mon.timeout) : 45000,
         degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
-        active: false,
+        active: mon.active ?? false,
+        description: mon.description || "",
+        public: mon.public ?? false,
+        regions: regionsToDbString(mon.regions),
+        retry: mon.retry ? Number(mon.retry) : 3,
+        otelEndpoint: otelConfig.otelEndpoint,
+        otelHeaders: otelConfig.otelHeaders,
       })
       .returning()
       .get();
@@ -167,18 +189,28 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Convert assertions to DB format
     const assertions = dnsAssertionsToDbJson(mon.recordAssertions);
 
+    // Convert OpenTelemetry config to DB format
+    const otelConfig = openTelemetryToDb(mon.openTelemetry);
+
     // Insert into database
     const newMonitor = await db
       .insert(monitor)
       .values({
         workspaceId,
         jobType: "dns",
+        name: mon.name,
         url: mon.uri,
         periodicity: toValidPeriodicity(mon.periodicity),
         timeout: mon.timeout ? Number(mon.timeout) : 45000,
         degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
         assertions,
-        active: false,
+        active: mon.active ?? false,
+        description: mon.description || "",
+        public: mon.public ?? false,
+        regions: regionsToDbString(mon.regions),
+        retry: mon.retry ? Number(mon.retry) : 3,
+        otelEndpoint: otelConfig.otelEndpoint,
+        otelHeaders: otelConfig.otelHeaders,
       })
       .returning()
       .get();

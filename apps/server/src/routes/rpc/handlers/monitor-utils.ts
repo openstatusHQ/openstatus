@@ -5,6 +5,7 @@ import {
   type HeaderAssertion,
   type Headers,
   NumberComparator,
+  type OpenTelemetryConfig,
   type RecordAssertion,
   RecordComparator,
   type StatusCodeAssertion,
@@ -17,6 +18,7 @@ import {
  */
 export type DbMonitor = {
   id: number;
+  name: string;
   url: string;
   periodicity: string;
   method: string | null;
@@ -27,6 +29,13 @@ export type DbMonitor = {
   assertions: string | null;
   followRedirects: boolean | null;
   jobType: string;
+  description: string;
+  active: boolean | null;
+  public: boolean | null;
+  regions: string;
+  otelEndpoint: string | null;
+  otelHeaders: string | null;
+  retry: number | null;
 };
 
 // ============================================================
@@ -222,6 +231,34 @@ export function parseDnsAssertions(
 }
 
 /**
+ * Parse regions string to array.
+ */
+export function parseRegions(regions: string | null): string[] {
+  if (!regions || regions.length === 0) {
+    return [];
+  }
+  return regions.split(",").filter((r) => r.length > 0);
+}
+
+/**
+ * Parse OpenTelemetry configuration from database fields.
+ */
+export function parseOpenTelemetry(
+  endpoint: string | null,
+  headers: string | null,
+): OpenTelemetryConfig | undefined {
+  if (!endpoint) {
+    return undefined;
+  }
+
+  return {
+    $typeName: "openstatus.monitor.v1.OpenTelemetryConfig",
+    endpoint,
+    headers: parseDbHeaders(headers),
+  };
+}
+
+/**
  * Transform database HTTP monitor to proto HTTPMonitor.
  */
 export function dbMonitorToHttpProto(dbMon: DbMonitor): HTTPMonitor {
@@ -230,18 +267,24 @@ export function dbMonitorToHttpProto(dbMon: DbMonitor): HTTPMonitor {
   return {
     $typeName: "openstatus.monitor.v1.HTTPMonitor",
     id: String(dbMon.id),
+    name: dbMon.name,
     url: dbMon.url,
     periodicity: dbMon.periodicity,
     method: dbMon.method?.toUpperCase() ?? "GET",
     body: dbMon.body ?? "",
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(0),
+    retry: BigInt(dbMon.retry ?? 3),
     followRedirects: dbMon.followRedirects ?? true,
     headers: parseDbHeaders(dbMon.headers),
     statusCodeAssertions: assertions.statusCodeAssertions,
     bodyAssertions: assertions.bodyAssertions,
     headerAssertions: assertions.headerAssertions,
+    description: dbMon.description,
+    active: dbMon.active ?? false,
+    public: dbMon.public ?? false,
+    regions: parseRegions(dbMon.regions),
+    openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
 
@@ -252,11 +295,17 @@ export function dbMonitorToTcpProto(dbMon: DbMonitor): TCPMonitor {
   return {
     $typeName: "openstatus.monitor.v1.TCPMonitor",
     id: String(dbMon.id),
+    name: dbMon.name,
     uri: dbMon.url,
     periodicity: dbMon.periodicity,
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(0),
+    retry: BigInt(dbMon.retry ?? 3),
+    description: dbMon.description,
+    active: dbMon.active ?? false,
+    public: dbMon.public ?? false,
+    regions: parseRegions(dbMon.regions),
+    openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
 
@@ -267,12 +316,18 @@ export function dbMonitorToDnsProto(dbMon: DbMonitor): DNSMonitor {
   return {
     $typeName: "openstatus.monitor.v1.DNSMonitor",
     id: String(dbMon.id),
+    name: dbMon.name,
     uri: dbMon.url,
     periodicity: dbMon.periodicity,
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
-    retry: BigInt(0),
+    retry: BigInt(dbMon.retry ?? 3),
     recordAssertions: parseDnsAssertions(dbMon.assertions),
+    description: dbMon.description,
+    active: dbMon.active ?? false,
+    public: dbMon.public ?? false,
+    regions: parseRegions(dbMon.regions),
+    openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
 
@@ -422,4 +477,31 @@ export function dnsAssertionsToDbJson(
   }));
 
   return JSON.stringify(assertions);
+}
+
+/**
+ * Convert regions array to database string format.
+ */
+export function regionsToDbString(regions: string[]): string {
+  return regions.join(",");
+}
+
+/**
+ * Convert OpenTelemetry config to database fields.
+ */
+export function openTelemetryToDb(config: OpenTelemetryConfig | undefined): {
+  otelEndpoint: string | undefined;
+  otelHeaders: string | undefined;
+} {
+  if (!config || !config.endpoint) {
+    return {
+      otelEndpoint: undefined,
+      otelHeaders: undefined,
+    };
+  }
+
+  return {
+    otelEndpoint: config.endpoint,
+    otelHeaders: headersToDbJson(config.headers),
+  };
 }
