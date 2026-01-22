@@ -1,4 +1,4 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
 import { slackDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 
@@ -18,15 +18,13 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
   cronTimestamp,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -71,18 +69,12 @@ Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   region?: Region;
   latency?: number;
@@ -122,15 +114,12 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incident?: Incident;
   cronTimestamp: number;
   region?: Region;
   latency?: number;

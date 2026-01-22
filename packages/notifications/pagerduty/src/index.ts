@@ -1,4 +1,5 @@
 import {
+  type Incident,
   type Monitor,
   type Notification,
   pagerdutyDataSchema,
@@ -16,14 +17,14 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  incidentId,
+  incident,
   cronTimestamp,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -38,7 +39,7 @@ export const sendAlert = async ({
     const { integration_key } = integrationKey;
     const event = triggerEventPayloadSchema.parse({
       routing_key: integration_key,
-      dedup_key: `${monitor.id}}-${incidentId}`,
+      dedup_key: `${monitor.id}}-${incident?.id}`,
       event_action: "trigger",
       payload: {
         summary: `${name} is down`,
@@ -72,7 +73,7 @@ export const sendDegraded = async ({
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -115,13 +116,13 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  incidentId,
+  incident,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -133,7 +134,7 @@ export const sendRecovery = async ({
   for (const integrationKey of notificationData.integration_keys) {
     const event = resolveEventPayloadSchema.parse({
       routing_key: integrationKey.integration_key,
-      dedup_key: `${monitor.id}}-${incidentId}`,
+      dedup_key: `${monitor.id}}-${incident?.id}`,
       event_action: "resolve",
     });
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {

@@ -1,5 +1,5 @@
 import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
-import type { MonitorStatus } from "@openstatus/db/src/schema";
+import type { Incident, MonitorStatus } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
@@ -37,6 +37,25 @@ export const triggerNotifications = async ({
     monitor_id: monitorId,
     notification_type: notifType,
   });
+
+  // Fetch incident data for recovery and degraded notifications to include duration
+  let incident: Incident | undefined;
+  if ((notifType === "recovery" || notifType === "degraded") && incidentId) {
+    try {
+      const result = await db.query.incidentTable.findFirst({
+        where: eq(schema.incidentTable.id, Number.parseInt(incidentId)),
+      });
+      if (result) {
+        incident = result as Incident;
+      }
+    } catch (err) {
+      logger.warn("Failed to fetch incident data", {
+        incident_id: incidentId,
+        error_message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)
@@ -129,7 +148,7 @@ export const triggerNotifications = async ({
               notification: selectNotificationSchema.parse(notif.notification),
               statusCode,
               message,
-              incidentId,
+              incident,
               cronTimestamp,
               region,
               latency,
@@ -161,7 +180,7 @@ export const triggerNotifications = async ({
               notification: selectNotificationSchema.parse(notif.notification),
               statusCode,
               message,
-              incidentId,
+              incident,
               cronTimestamp,
               region,
               latency,
@@ -192,7 +211,7 @@ export const triggerNotifications = async ({
               notification: selectNotificationSchema.parse(notif.notification),
               statusCode,
               message,
-              incidentId,
+              incident,
               cronTimestamp,
               region,
               latency,

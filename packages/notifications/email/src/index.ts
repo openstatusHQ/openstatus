@@ -1,4 +1,5 @@
 import {
+  type Incident,
   type Monitor,
   type Notification,
   emailDataSchema,
@@ -22,7 +23,7 @@ export const sendAlert = async ({
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   region?: Region;
   latency?: number;
@@ -58,7 +59,7 @@ export const sendRecovery = async ({
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   region?: Region;
   latency?: number;
@@ -93,6 +94,7 @@ export const sendDegraded = async ({
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incident?: Incident;
   cronTimestamp: number;
   region?: Region;
   latency?: number;

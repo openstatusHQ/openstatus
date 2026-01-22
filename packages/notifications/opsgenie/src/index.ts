@@ -1,4 +1,4 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import type { Incident, Monitor, Notification } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema";
 
@@ -7,14 +7,13 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  incidentId,
-  cronTimestamp,
+  incident,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -23,7 +22,7 @@ export const sendAlert = async ({
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incidentId}`,
+    alias: `${monitor.id}}-${incident?.id}`,
     message: `${name} is down`,
     description: message,
     details: {
@@ -58,13 +57,13 @@ export const sendDegraded = async ({
   notification,
   statusCode,
   message,
-  incidentId,
+  incident,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -73,7 +72,7 @@ export const sendDegraded = async ({
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incidentId}`,
+    alias: `${monitor.id}}-${incident?.id}`,
     message: `${name} is down`,
     description: message,
     details: {
@@ -107,13 +106,13 @@ export const sendRecovery = async ({
   notification,
   statusCode,
   message,
-  incidentId,
+  incident,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
@@ -122,11 +121,11 @@ export const sendRecovery = async ({
 
   const url =
     opsgenie.region === "eu"
-      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
-      : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
+      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incident?.id}/close`
+      : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incident?.id}/close`;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incidentId}`,
+    alias: `${monitor.id}}-${incident?.id}`,
     message: `${monitor.name} has recovered`,
     description: message,
     details: {

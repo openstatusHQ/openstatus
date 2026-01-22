@@ -1,4 +1,5 @@
 import type {
+  Incident,
   Monitor,
   Notification,
   NotificationProvider,
@@ -65,7 +66,7 @@ type SendNotification = ({
   notification,
   statusCode,
   message,
-  incidentId,
+  incident,
   cronTimestamp,
   latency,
   region,
@@ -74,7 +75,7 @@ type SendNotification = ({
   notification: Notification;
   statusCode?: number;
   message?: string;
-  incidentId?: string;
+  incident?: Incident;
   cronTimestamp: number;
   latency?: number;
   region?: Region;
