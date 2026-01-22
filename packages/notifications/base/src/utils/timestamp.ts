@@ -1,13 +1,11 @@
-import { format } from "date-fns";
-
 /**
- * Format cron timestamp (epoch ms) to human-readable string
+ * Format cron timestamp (epoch ms) to ISO string
  *
  * @example
- * formatTimestamp(1737553800000) // "Jan 22, 2026 at 14:30 UTC"
+ * formatTimestamp(1737553800000) // "2026-01-22T14:30:00.000Z"
  *
  * @param cronTimestamp - Epoch timestamp in milliseconds
- * @returns Formatted timestamp string
+ * @returns Formatted timestamp string to ISO string
  */
 export function formatTimestamp(cronTimestamp: number): string {
   if (!cronTimestamp || !Number.isFinite(cronTimestamp)) {
@@ -20,5 +18,5 @@ export function formatTimestamp(cronTimestamp: number): string {
     return "Unknown";
   }
 
-  return format(date, "MMM dd, yyyy 'at' HH:mm 'UTC'");
+  return date.toISOString();
 }

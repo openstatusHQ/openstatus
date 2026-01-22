@@ -65,7 +65,7 @@ export const sendDegraded = async ({
 
     const event = triggerEventPayloadSchema.parse({
       routing_key: integration_key,
-      dedup_key: `${monitor.id}-${incident?.id}`,
+      dedup_key: `${monitor.id}-${incident?.id || new Date().getTime()}`,
       event_action: "trigger",
       payload: {
         summary: `${name} is degraded`,

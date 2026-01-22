@@ -86,7 +86,7 @@ type Notif = {
   sendDegraded: SendNotification;
 };
 
-export const providerToFunction = {
+export const providerToFunction: Record<NotificationProvider, Notif> = {
   discord: {
     sendAlert: sendDiscordAlert,
     sendRecovery: sendDiscordRecovery,
@@ -142,4 +142,4 @@ export const providerToFunction = {
     sendRecovery: sendTelegramRecovery,
     sendDegraded: sendTelegramDegraded,
   },
-} satisfies Record<NotificationProvider, Notif>;
+};

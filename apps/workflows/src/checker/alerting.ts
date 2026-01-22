@@ -40,14 +40,11 @@ export const triggerNotifications = async ({
 
   // Fetch incident data for recovery and degraded notifications to include duration
   let incident: Incident | undefined;
-  if ((notifType === "recovery" || notifType === "degraded") && incidentId) {
+  if (incidentId) {
     try {
-      const result = await db.query.incidentTable.findFirst({
+      incident = await db.query.incidentTable.findFirst({
         where: eq(schema.incidentTable.id, incidentId),
       });
-      if (result) {
-        incident = result as Incident;
-      }
     } catch (err) {
       logger.warn("Failed to fetch incident data", {
         incident_id: incidentId,

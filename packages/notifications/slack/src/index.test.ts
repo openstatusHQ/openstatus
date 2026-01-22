@@ -151,7 +151,6 @@ describe("Slack Notifications", () => {
     expect(callArgs[0]).toBe(webhookUrl);
 
     const body = JSON.parse(callArgs[1].body);
-    console.log(body);
     expect(body.attachments[0].blocks[0].text.text).toContain(
       "Test Notification",
     );
