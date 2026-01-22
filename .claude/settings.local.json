@@ -1,5 +1,0 @@
-{
-  "permissions": {
-    "allow": ["Bash(pnpm install:*)", "Bash(jj describe:*)"]
-  }
-}

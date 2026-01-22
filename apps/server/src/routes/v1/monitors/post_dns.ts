@@ -15,7 +15,7 @@ import { DNSMonitorSchema, MonitorSchema } from "./schema";
 const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
-  summary: "Create a  http monitor",
+  summary: "Create a  dns monitor",
   path: "/dns",
   middleware: [trackMiddleware(Events.CreateMonitor, ["url", "jobType"])],
   request: {
