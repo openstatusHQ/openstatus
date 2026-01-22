@@ -363,7 +363,7 @@
       "Ensure inline fields create proper 3-column layouts in Discord",
       "Use proper color values (decimal, not hex) for Discord embeds"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "validation",

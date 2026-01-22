@@ -255,7 +255,7 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
           action_id: "view_dashboard",
         },
       ],
-    }
+    },
   );
 
   return blocks;
@@ -359,7 +359,7 @@ export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
           action_id: "view_dashboard",
         },
       ],
-    }
+    },
   );
 
   return blocks;

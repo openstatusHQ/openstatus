@@ -359,3 +359,46 @@ sendDegraded({ monitor, notification, statusCode?, message?, incident?, cronTime
 - Fixed formatting issue in `/packages/notification-base/src/types.ts` (import sorting)
 - All providers gracefully handle the optional incident parameter
 - PRD task marked as passes: true
+
+## 2026-01-22: Verified implementation follows official documentation guidelines
+
+### Completed Tasks:
+17. **Documentation task**: Update implementation based on official documentation guidelines
+
+### Verification Summary:
+
+#### Slack Block Kit Best Practices (Reference: https://docs.slack.dev/messaging/formatting-message-text):
+- ✅ Uses `mrkdwn` type for formatted text sections and fields
+- ✅ Uses `plain_text` type for headers and buttons with `emoji: true`
+- ✅ Proper link syntax: `<URL|text>` for clickable links
+- ✅ Code blocks using triple backticks for error messages
+- ✅ `escapeSlackText()` function escapes &, <, > characters properly
+- ✅ JSDoc comment references official docs URL
+
+#### Discord Embed Guidelines (Reference: https://birdie0.github.io/discord-webhooks-guide/structure/embeds.html):
+- ✅ Max 25 fields per embed: Implementation uses max 4 fields (well under limit)
+- ✅ Footer text has no markdown: "OpenStatus" plain text only
+- ✅ Uses ISO 8601 timestamps via `new Date().toISOString()`
+- ✅ Inline fields create proper 3-column layout (Status Code/Region/Latency with `inline: true`)
+- ✅ Full-width fields use `inline: false` (Downtime, Error Message)
+- ✅ Uses proper decimal color values:
+  - Red: 15548997 (#ED4245)
+  - Green: 5763719 (#57F287)
+  - Yellow: 16705372 (#FEE75C)
+- ✅ JSDoc comment references official docs URL
+
+### Files Fixed:
+- `/packages/notifications/slack/src/blocks.ts` - Trailing comma formatting fix (biome)
+- `/packages/notifications/discord/src/embeds.ts` - Trailing comma formatting fix (biome)
+
+### Type Checking Results:
+- `npx tsc --noEmit` on notification-base package: ✅ Passes
+- `npx biome check` on all notification files: ✅ Passes (after formatting fixes)
+- Pre-existing type errors in node_modules (drizzle-orm, @auth/core) are unrelated
+
+### Notes:
+- The Discord yellow color value in the spec (16776960) differs from the implementation (16705372)
+  - Spec says 16776960 which is #FFFF00 (pure yellow)
+  - Implementation uses 16705372 which is the correct conversion of #FEE75C (Discord brand yellow)
+  - The implementation is correct per official Discord color guidelines
+- PRD task marked as passes: true

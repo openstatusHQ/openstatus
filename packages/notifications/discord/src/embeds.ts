@@ -155,7 +155,7 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
       name: "Latency",
       value: data.latencyDisplay,
       inline: true,
-    }
+    },
   );
 
   return {
@@ -227,7 +227,7 @@ export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
       name: "Latency",
       value: data.latencyDisplay,
       inline: true,
-    }
+    },
   );
 
   return {
