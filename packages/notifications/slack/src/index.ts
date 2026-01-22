@@ -183,7 +183,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
               type: "section",
               text: {
                 type: "mrkdwn",
-                text: "*Next Steps*\nYou will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
+                text: "*Next Steps*\nYou will receive notifications here when your monitors trigger fail, recover, or degrades.",
               },
             },
             {

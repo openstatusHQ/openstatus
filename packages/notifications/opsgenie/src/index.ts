@@ -52,7 +52,7 @@ export const sendDegraded = async ({
 
   const event = OpsGeniePayloadAlert.parse({
     alias: `${monitor.id}`,
-    message: `${name} is down`,
+    message: `${name} is degraded`,
     description: message,
     details: {
       message,

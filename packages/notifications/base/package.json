@@ -9,8 +9,7 @@
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
-    "@openstatus/regions": "workspace:*",
-    "date-fns": "4.1.0"
+    "@openstatus/regions": "workspace:*"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

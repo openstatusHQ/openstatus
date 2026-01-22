@@ -1,5 +1,5 @@
 import {
-  COLORS,
+  COLOR_DECIMALS,
   type FormattedMessageData,
 } from "@openstatus/notification-base";
 
@@ -65,7 +65,7 @@ export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
   return {
     title: `${data.monitorName} is failing`,
     description: `\`${description}\``,
-    color: COLORS.red,
+    color: COLOR_DECIMALS.red,
     fields: [
       {
         name: "Status Code",
@@ -174,7 +174,7 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
   return {
     title: `${data.monitorName} is recovered`,
     description: `\`${description}\``,
-    color: COLORS.green,
+    color: COLOR_DECIMALS.green,
     fields,
     timestamp: new Date().toISOString(),
     footer: {
@@ -257,7 +257,7 @@ export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
   return {
     title: `${data.monitorName} is degraded`,
     description: `\`${description}\``,
-    color: COLORS.yellow,
+    color: COLOR_DECIMALS.yellow,
     fields,
     timestamp: new Date().toISOString(),
     footer: {
