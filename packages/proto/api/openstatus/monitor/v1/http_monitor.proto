@@ -121,7 +121,19 @@ message HTTPMonitor {
   bool public = 17;
 
   // Geographic regions to run checks from.
-  repeated string regions = 18 [(buf.validate.field).repeated.max_items = 50];
+  repeated string regions = 18 [(buf.validate.field).repeated = {
+    max_items: 28
+    items: {
+      string: {
+        in: [
+          "ams", "arn", "bom", "cdg", "dfw", "ewr", "fra", "gru", "iad", "jnb",
+          "lax", "lhr", "nrt", "ord", "sjc", "sin", "syd", "yyz",
+          "koyeb_fra", "koyeb_par", "koyeb_sfo", "koyeb_sin", "koyeb_tyo", "koyeb_was",
+          "railway_us-west2", "railway_us-east4-eqdc4a", "railway_europe-west4-drams3a", "railway_asia-southeast1-eqsg3a"
+        ]
+      }
+    }
+  }];
 
   // OpenTelemetry configuration for exporting metrics.
   OpenTelemetryConfig open_telemetry = 19;
