@@ -146,6 +146,7 @@ export default function Page() {
                           <StatusEventTimelineReport
                             updates={report.statusReportUpdates}
                             withDot={false}
+                            maxUpdates={3}
                           />
                         </StatusBannerContent>
                       </StatusBannerContainer>
