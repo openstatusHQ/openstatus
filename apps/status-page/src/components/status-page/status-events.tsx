@@ -174,14 +174,15 @@ export function StatusEventTimelineReport({
   updates,
   withDot = true,
   maxUpdates,
+  reportId,
   ...props
 }: React.ComponentProps<"div"> & {
   // TODO: remove unused props
+  reportId: number;
   updates: {
     date: Date;
     message: string;
     status: "investigating" | "identified" | "monitoring" | "resolved";
-    statusReportId: number;
   }[];
   withDot?: boolean;
   maxUpdates?: number;
@@ -194,7 +195,6 @@ export function StatusEventTimelineReport({
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;
-  const reportId = displayedUpdates[displayedUpdates.length - 1].statusReportId;
 
   return (
     <div className={cn("text-muted-foreground text-sm", className)} {...props}>
