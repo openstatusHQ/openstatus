@@ -2,7 +2,7 @@ import { mock } from "bun:test";
 
 import { app } from "@/index";
 
-console.log(app)
+console.log(app);
 
 mock.module("@openstatus/upstash", () => ({
   Redis: {
