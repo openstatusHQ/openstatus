@@ -82,7 +82,6 @@ export async function authMiddleware(
     });
   }
 
-
   const workspaceData = await lookupWorkspace(ownerId);
 
   const event = c.get("event");
