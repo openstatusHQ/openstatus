@@ -1685,6 +1685,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../db
+      '@openstatus/notification-base':
+        specifier: workspace:*
+        version: link:../../notification-base
       zod:
         specifier: 4.1.13
         version: 4.1.13
