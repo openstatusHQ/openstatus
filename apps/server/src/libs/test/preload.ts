@@ -1,5 +1,9 @@
 import { mock } from "bun:test";
 
+import { app } from "@/index";
+
+console.log(app)
+
 mock.module("@openstatus/upstash", () => ({
   Redis: {
     fromEnv() {
