@@ -76,7 +76,7 @@ describe("PagerDuty Notifications", () => {
 
     const body = JSON.parse(callArgs[1].body);
     expect(body.routing_key).toBe("my_key");
-    expect(body.dedup_key).toBe("monitor-1-1");
+    expect(body.dedup_key).toBe("monitor-1");
     expect(body.event_action).toBe("trigger");
     expect(body.payload.summary).toBe("API Health Check is down");
     expect(body.payload.severity).toBe("error");
@@ -136,7 +136,7 @@ describe("PagerDuty Notifications", () => {
     const body = JSON.parse(callArgs[1].body);
     expect(body.payload.summary).toBe("API Health Check is degraded");
     expect(body.payload.severity).toBe("warning");
-    expect(body.dedup_key).toBe("monitor-1-1");
+    expect(body.dedup_key).toBe("monitor-1");
   });
 
   test("Send Recovery", async () => {
@@ -162,7 +162,7 @@ describe("PagerDuty Notifications", () => {
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     const body = JSON.parse(callArgs[1].body);
     expect(body.routing_key).toBe("my_key");
-    expect(body.dedup_key).toBe("monitor-1-1");
+    expect(body.dedup_key).toBe("monitor-1");
     expect(body.event_action).toBe("resolve");
   });
 

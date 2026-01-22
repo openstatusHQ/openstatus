@@ -38,7 +38,6 @@ export const triggerNotifications = async ({
     notification_type: notifType,
   });
 
-  // Fetch incident data for recovery and degraded notifications to include duration
   let incident: Incident | undefined;
   if (incidentId) {
     try {

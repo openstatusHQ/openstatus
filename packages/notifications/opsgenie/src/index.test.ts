@@ -83,7 +83,7 @@ describe("OpsGenie Notifications", () => {
 
     const body = JSON.parse(callArgs[1].body);
     expect(body.message).toBe("API Health Check is down");
-    expect(body.alias).toBe("monitor-1-1");
+    expect(body.alias).toBe("monitor-1");
     expect(body.details.severity).toBe("down");
     expect(body.details.status).toBe(500);
     expect(body.details.message).toBe("Something went wrong");
