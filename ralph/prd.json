@@ -349,7 +349,7 @@
       "Check that missing incidents don't cause notifications to fail",
       "Verify error handling when incident ID is invalid or incident doesn't exist"
     ],
-    "passes": false
+    "passes": true
   },
   {
     "category": "documentation",
