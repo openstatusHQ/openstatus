@@ -11,6 +11,10 @@ import {
 } from "./embeds";
 
 const postToWebhook = async (embeds: DiscordEmbed[], webhookUrl: string) => {
+  if (!webhookUrl || webhookUrl.trim() === "") {
+    throw new Error("Discord webhook URL is required");
+  }
+
   const res = await fetch(webhookUrl, {
     method: "POST",
     headers: {
@@ -123,41 +127,33 @@ export const sendDegraded = async ({
 };
 
 export const sendTestDiscordMessage = async (webhookUrl: string) => {
-  if (!webhookUrl) {
-    return false;
-  }
-  try {
-    const testEmbed: DiscordEmbed = {
-      title: "Test Notification",
-      description: "🧪 Your Discord webhook is configured correctly!",
-      color: 5763719, // green
-      fields: [
-        {
-          name: "Status",
-          value: "Webhook Connected",
-          inline: true,
-        },
-        {
-          name: "Type",
-          value: "Test Notification",
-          inline: true,
-        },
-        {
-          name: "Next Steps",
-          value:
-            "You will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
-          inline: false,
-        },
-      ],
-      timestamp: new Date().toISOString(),
-      footer: {
-        text: "openstatus",
+  const testEmbed: DiscordEmbed = {
+    title: "Test Notification",
+    description: "🧪 Your Discord webhook is configured correctly!",
+    color: 5763719, // green
+    fields: [
+      {
+        name: "Status",
+        value: "Webhook Connected",
+        inline: true,
       },
-      url: "https://www.openstatus.dev/app/",
-    };
-    await postToWebhook([testEmbed], webhookUrl);
-    return true;
-  } catch (_err) {
-    return false;
-  }
+      {
+        name: "Type",
+        value: "Test Notification",
+        inline: true,
+      },
+      {
+        name: "Next Steps",
+        value:
+          "You will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
+        inline: false,
+      },
+    ],
+    timestamp: new Date().toISOString(),
+    footer: {
+      text: "openstatus",
+    },
+    url: "https://www.openstatus.dev/app/",
+  };
+  await postToWebhook([testEmbed], webhookUrl);
 };

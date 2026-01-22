@@ -21,6 +21,10 @@ const COLORS = {
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
+  if (!webhookUrl || webhookUrl.trim() === "") {
+    throw new Error("Slack webhook URL is required");
+  }
+
   const res = await fetch(webhookUrl, {
     method: "POST",
     body: JSON.stringify(body),
@@ -147,74 +151,69 @@ export const sendDegraded = async ({
 };
 
 export const sendTestSlackMessage = async (webhookUrl: string) => {
-  try {
-    await postToWebhook(
-      {
-        attachments: [
-          {
-            color: COLORS.green,
-            blocks: [
-              {
-                type: "header",
-                text: {
-                  type: "plain_text",
-                  text: "Test Notification",
-                  emoji: false,
-                },
+  await postToWebhook(
+    {
+      attachments: [
+        {
+          color: COLORS.green,
+          blocks: [
+            {
+              type: "header",
+              text: {
+                type: "plain_text",
+                text: "Test Notification",
+                emoji: false,
               },
-              {
-                type: "section",
-                text: {
+            },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "`🧪 Your Slack webhook is configured correctly!`",
+              },
+            },
+            {
+              type: "divider",
+            },
+            {
+              type: "section",
+              fields: [
+                {
                   type: "mrkdwn",
-                  text: "`🧪 Your Slack webhook is configured correctly!`",
+                  text: "*Status*\nWebhook Connected",
                 },
-              },
-              {
-                type: "divider",
-              },
-              {
-                type: "section",
-                fields: [
-                  {
-                    type: "mrkdwn",
-                    text: "*Status*\nWebhook Connected",
-                  },
-                  {
-                    type: "mrkdwn",
-                    text: "*Type*\nTest Notification",
-                  },
-                ],
-              },
-              {
-                type: "section",
-                text: {
+                {
                   type: "mrkdwn",
-                  text: "*Next Steps*\nYou will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
+                  text: "*Type*\nTest Notification",
                 },
+              ],
+            },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "*Next Steps*\nYou will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
               },
-              {
-                type: "actions",
-                elements: [
-                  {
-                    type: "button",
-                    text: {
-                      type: "plain_text",
-                      text: "View Dashboard",
-                      emoji: true,
-                    },
-                    url: "https://app.openstatus.dev",
-                    action_id: "view_dashboard",
+            },
+            {
+              type: "actions",
+              elements: [
+                {
+                  type: "button",
+                  text: {
+                    type: "plain_text",
+                    text: "View Dashboard",
+                    emoji: true,
                   },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      webhookUrl,
-    );
-    return true;
-  } catch (_err) {
-    return false;
-  }
+                  url: "https://app.openstatus.dev",
+                  action_id: "view_dashboard",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };

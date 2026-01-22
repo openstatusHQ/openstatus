@@ -128,10 +128,8 @@ describe("Discord Notifications", () => {
 
   test("Send Test Discord Message", async () => {
     const webhookUrl = "https://discord.com/api/webhooks/123456789/abcdefgh";
+    await sendTestDiscordMessage(webhookUrl);
 
-    const result = await sendTestDiscordMessage(webhookUrl);
-
-    expect(result).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
@@ -141,9 +139,7 @@ describe("Discord Notifications", () => {
   });
 
   test("Send Test Discord Message with empty webhookUrl", async () => {
-    const result = await sendTestDiscordMessage("");
-
-    expect(result).toBe(false);
+    expect(sendTestDiscordMessage("")).rejects.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

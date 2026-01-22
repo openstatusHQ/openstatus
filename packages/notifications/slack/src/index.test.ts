@@ -144,9 +144,8 @@ describe("Slack Notifications", () => {
   test("Send Test Slack Message", async () => {
     const webhookUrl = "https://hooks.slack.com/services/test/url";
 
-    const result = await sendTestSlackMessage(webhookUrl);
+    await sendTestSlackMessage(webhookUrl);
 
-    expect(result).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
@@ -158,17 +157,13 @@ describe("Slack Notifications", () => {
     );
   });
 
-  test("Send Test Slack Message returns false on error", async () => {
+  test("Send Test Slack Message throws error on empty webhookUrl", async () => {
     fetchMock.mockImplementation(() =>
       Promise.reject(new Error("Network error")),
     );
 
-    const result = await sendTestSlackMessage(
-      "https://hooks.slack.com/services/test/url",
-    );
-
-    expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sendTestSlackMessage("")).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   test("Handle fetch error gracefully", async () => {
