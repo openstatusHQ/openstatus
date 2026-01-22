@@ -23,9 +23,6 @@ const COLORS = {
 const postToWebhook = async (body: any, webhookUrl: string) => {
   const res = await fetch(webhookUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -156,23 +153,63 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
   try {
     await postToWebhook(
       {
-        blocks: [
+        text: "OpenStatus Test Notification",
+        attachments: [
           {
-            type: "divider",
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: "*🧪 Test <https://www.openstatus.dev/|OpenStatus>*\n\nIf you can read this, your Slack webhook is functioning correctly!",
-            },
-          },
-          {
-            type: "context",
-            elements: [
+            color: COLORS.green,
+            blocks: [
               {
-                type: "mrkdwn",
-                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: "Test Notification",
+                  emoji: false,
+                },
+              },
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: "🧪 Your Slack webhook is configured correctly!",
+                },
+              },
+              {
+                type: "divider",
+              },
+              {
+                type: "section",
+                fields: [
+                  {
+                    type: "mrkdwn",
+                    text: "*Status*\nWebhook Connected",
+                  },
+                  {
+                    type: "mrkdwn",
+                    text: "*Type*\nTest Notification",
+                  },
+                ],
+              },
+              {
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: "*Next Steps*\nYou will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
+                },
+              },
+              {
+                type: "actions",
+                elements: [
+                  {
+                    type: "button",
+                    text: {
+                      type: "plain_text",
+                      text: "View Dashboard",
+                      emoji: true,
+                    },
+                    url: "https://www.openstatus.dev/app",
+                    action_id: "view_dashboard",
+                  },
+                ],
               },
             ],
           },

@@ -128,14 +128,30 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   }
   try {
     const testEmbed: DiscordEmbed = {
-      title: "🧪 Test OpenStatus",
-      description:
-        "If you can read this, your Discord webhook is functioning correctly!",
+      title: "Test Notification",
+      description: "🧪 Your Discord webhook is configured correctly!",
       color: 5763719, // green
-      fields: [],
+      fields: [
+        {
+          name: "Status",
+          value: "Webhook Connected",
+          inline: true,
+        },
+        {
+          name: "Type",
+          value: "Test Notification",
+          inline: true,
+        },
+        {
+          name: "Next Steps",
+          value:
+            "You will receive notifications here when your monitors trigger fails, recovers, or become degraded.",
+          inline: false,
+        },
+      ],
       timestamp: new Date().toISOString(),
       footer: {
-        text: "OpenStatus",
+        text: "openstatus",
       },
       url: "https://www.openstatus.dev/app/",
     };
