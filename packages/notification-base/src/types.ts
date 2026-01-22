@@ -1,4 +1,9 @@
-import type { Incident, Monitor, Notification, MonitorRegion } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Monitor,
+  MonitorRegion,
+  Notification,
+} from "@openstatus/db/src/schema";
 
 /**
  * Common context passed to all notification providers
