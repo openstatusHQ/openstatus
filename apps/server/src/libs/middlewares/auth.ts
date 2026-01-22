@@ -82,7 +82,17 @@ export async function authMiddleware(
     });
   }
 
+
   const workspaceData = await lookupWorkspace(ownerId);
+
+  const event = c.get("event");
+  event.workspace = {
+    id: workspaceData.id,
+    name: workspaceData.name,
+    plan: workspaceData.plan,
+    stripe_id: workspaceData.stripeId,
+  };
+  event.auth_method = result.authMethod;
   c.set("workspace", workspaceData);
 
   await next();
