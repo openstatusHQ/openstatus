@@ -1,0 +1,153 @@
+## 2026-01-22: Created @openstatus/notification-base package
+
+### Completed Tasks:
+1. **Setup task**: Create @openstatus/notification-base package with types and utilities
+2. **Functional task**: Implement duration formatting utilities in notification-base
+3. **Functional task**: Implement timestamp formatting utilities in notification-base
+4. **Functional task**: Implement incident duration calculation utilities in notification-base
+5. **Functional task**: Implement common message data builder in notification-base
+
+### Files Created:
+- `/packages/notification-base/package.json` - Package configuration with dependencies (date-fns, @openstatus/db, @openstatus/regions)
+- `/packages/notification-base/tsconfig.json` - TypeScript configuration extending base
+- `/packages/notification-base/src/index.ts` - Main exports file
+- `/packages/notification-base/src/types.ts` - Type definitions (NotificationContext, NotificationContextWithIncident, FormattedMessageData, NotificationType)
+- `/packages/notification-base/src/utils/duration.ts` - formatDuration(), calculateDuration() utilities
+- `/packages/notification-base/src/utils/timestamp.ts` - formatTimestamp() utility using date-fns
+- `/packages/notification-base/src/utils/incident.ts` - getIncidentDuration() utility
+- `/packages/notification-base/src/utils/message.ts` - formatStatusCode(), buildCommonMessageData() utilities
+- `/packages/notification-base/src/utils/duration.test.ts` - Unit tests for duration formatting
+
+### Key Implementation Details:
+- `formatDuration()` handles edge cases (0ms, negative values, sub-second durations) and supports maxUnits option
+- `formatTimestamp()` uses date-fns format() to produce "MMM dd, yyyy at HH:mm UTC" format
+- `getIncidentDuration()` only returns duration for resolved incidents (when resolvedAt is present)
+- `buildCommonMessageData()` centralizes message formatting for all notification providers
+- Types use imports from @openstatus/db/src/schema for Monitor, Notification, Incident
+- Uses getRegionInfo() from @openstatus/regions for region display formatting
+
+### Notes:
+- Package follows existing monorepo patterns (raw TypeScript exports, no build step)
+- Zod dependency was not needed - types are sufficient for this package
+- Test file uses bun:test - requires bun runtime to execute
+- TypeScript type checking passes successfully
+
+## 2026-01-22: Updated alerting to fetch and pass incident data
+
+### Completed Tasks:
+6. **Functional task**: Update checker/alerting to fetch and pass incident data
+7. **Functional task**: Update provider function type signatures in checker/utils
+
+### Files Modified:
+- `/apps/workflows/src/checker/alerting.ts` - Added Incident import, fetch logic for recovery/degraded notifications, and pass incident object to providers
+- `/apps/workflows/src/checker/utils.ts` - Updated SendNotification type to use `incident?: Incident` instead of `incidentId?: string`
+- `/packages/notifications/slack/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/discord/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/email/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/google-chat/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/ntfy/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/opsgenie/src/index.ts` - Updated function signatures and usage to accept `incident?: Incident`
+- `/packages/notifications/pagerduty/src/index.ts` - Updated function signatures and usage to accept `incident?: Incident`
+- `/packages/notifications/telegram/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/twillio-sms/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/twillio-whatsapp/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+- `/packages/notifications/webhook/src/index.ts` - Updated function signatures to accept `incident?: Incident`
+
+### Key Implementation Details:
+- In `alerting.ts`: Fetch incident data for recovery/degraded notifications using `db.query.incidentTable.findFirst()`
+- Incident is only fetched when `notifType === "recovery"` or `notifType === "degraded"` AND `incidentId` is present
+- Error handling added for failed incident fetches (logs warning but doesn't block notification)
+- All 11 notification providers updated to accept `incident?: Incident` parameter
+- Providers that use incidentId for dedup keys (opsgenie, pagerduty) now use `incident?.id`
+- Removed biome-ignore comments for unused incidentId parameters
+
+### Notes:
+- TypeScript type checking passes for the modified files
+- Tests require bun runtime which is not available in the current environment
+- Pre-existing type errors in mock.ts files are unrelated to these changes
+- Backward compatibility maintained - incident parameter is optional
+
+## 2026-01-22: Created Slack block builder utilities
+
+### Completed Tasks:
+8. **Functional task**: Create Slack block builder utilities
+
+### Files Created:
+- `/packages/notifications/slack/src/blocks.ts` - Slack block builder utilities with escapeSlackText(), buildAlertBlocks(), buildRecoveryBlocks(), buildDegradedBlocks()
+
+### Files Modified:
+- `/packages/notifications/slack/package.json` - Added @openstatus/notification-base workspace dependency
+
+### Key Implementation Details:
+- `escapeSlackText()` escapes &, <, > characters for Slack mrkdwn format
+- `buildAlertBlocks()` creates blocks with: header ("🔴 Monitor Down"), monitor link section, divider, 4-field grid (Status/Region/Latency/Time), error in code block, dashboard button
+- `buildRecoveryBlocks()` creates blocks with: header ("✅ Monitor Recovered"), monitor link, optional downtime duration section (if incidentDuration exists), divider, 4-field grid, dashboard button
+- `buildDegradedBlocks()` creates blocks with: header ("⚠️ Monitor Degraded"), monitor link, optional previous incident duration section, divider, 4-field grid, dashboard button
+- Uses proper Slack Block Kit format: plain_text with emoji:true for headers/buttons, mrkdwn for sections/fields
+- Uses Slack mrkdwn syntax: *bold*, <URL|text> for links, ``` for code blocks
+- Imports FormattedMessageData type from @openstatus/notification-base
+- JSDoc comments with examples added to all exported functions
+
+### Notes:
+- TypeScript type checking passes for the new file
+- Pre-existing mock.ts type errors remain unrelated to this task
+- Tests require bun runtime which is not available in the current environment
+
+## 2026-01-22: Updated Slack provider to use enhanced blocks and incident data
+
+### Completed Tasks:
+9. **Functional task**: Update Slack provider to use enhanced blocks and incident data
+
+### Files Modified:
+- `/packages/notifications/slack/src/index.ts` - Updated to use buildCommonMessageData and block builders
+
+### Key Implementation Details:
+- Imported `buildCommonMessageData` from `@openstatus/notification-base`
+- Imported `buildAlertBlocks`, `buildRecoveryBlocks`, `buildDegradedBlocks` from `./blocks`
+- Updated `sendAlert()`:
+  - Constructs context object with all notification parameters
+  - Calls `buildCommonMessageData(context)` to get formatted data
+  - Calls `buildAlertBlocks(data)` to generate Slack blocks
+  - Sends blocks to webhook
+- Updated `sendRecovery()`:
+  - Extracts incident parameter from function args
+  - Calls `buildCommonMessageData(context, { incident })` to include incident duration
+  - Calls `buildRecoveryBlocks(data)` to generate Slack blocks with optional downtime
+- Updated `sendDegraded()`:
+  - Extracts incident parameter from function args
+  - Calls `buildCommonMessageData(context, { incident })` to include previous incident duration
+  - Calls `buildDegradedBlocks(data)` to generate Slack blocks with optional duration
+- `sendTestSlackMessage()` remains unchanged (simple test message)
+
+### Notes:
+- TypeScript type checking passes for the Slack package (excluding pre-existing mock.ts errors)
+- The `@openstatus/notification-base` dependency was already added in a previous task
+- All three notification functions now use the enhanced block builders for rich formatting
+
+## 2026-01-22: Created Discord embed builder utilities
+
+### Completed Tasks:
+10. **Functional task**: Create Discord embed builder utilities
+
+### Files Created:
+- `/packages/notifications/discord/src/embeds.ts` - Discord embed builder utilities with buildAlertEmbed(), buildRecoveryEmbed(), buildDegradedEmbed()
+
+### Files Modified:
+- `/packages/notifications/discord/package.json` - Added @openstatus/notification-base workspace dependency
+
+### Key Implementation Details:
+- Defined `DiscordEmbed` interface with title, description, color, fields array, timestamp, footer, url properties
+- Defined `DiscordEmbedField` interface with name, value, and optional inline property
+- `buildAlertEmbed()` creates embed with: title ("🔴 Monitor Down"), description with markdown link, color red (15548997), inline fields (Status Code/Region/Latency), full-width Error Message field, ISO 8601 timestamp, "OpenStatus" footer, dashboard URL
+- `buildRecoveryEmbed()` creates embed with: title ("✅ Monitor Recovered"), description with markdown link, color green (5763719), optional "⏱️ Downtime" field (if incidentDuration exists), inline Status/Region/Latency fields, timestamp, footer, URL
+- `buildDegradedEmbed()` creates embed with: title ("⚠️ Monitor Degraded"), description with markdown link, color yellow (16705372), optional "⏱️ Previous Incident Duration" field, inline Status/Region/Latency fields, timestamp, footer, URL
+- Uses Discord decimal color values per documentation
+- Uses Discord markdown syntax: **bold**, [text](url) for links
+- Imports FormattedMessageData type from @openstatus/notification-base
+- JSDoc comments with examples and documentation reference added to all exported functions
+
+### Notes:
+- TypeScript type checking passes for the new file (excluding pre-existing mock.ts errors)
+- Discord embed colors follow official Discord documentation guidelines (decimal, not hex)
+- Inline fields create proper 3-column layout in Discord
+- Uses new Date().toISOString() for ISO 8601 timestamp format
