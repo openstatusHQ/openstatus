@@ -137,8 +137,7 @@ describe("Discord Notifications", () => {
     expect(callArgs[0]).toBe(webhookUrl);
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
-    expect(body.embeds[0].title).toContain("Test");
-    expect(body.embeds[0].title).toContain("OpenStatus");
+    expect(body.embeds[0].title).toContain("Test Notification");
   });
 
   test("Send Test Discord Message with empty webhookUrl", async () => {

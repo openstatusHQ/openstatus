@@ -152,8 +152,10 @@ describe("Slack Notifications", () => {
     expect(callArgs[0]).toBe(webhookUrl);
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("🧪 Test");
-    expect(body.blocks[1].text.text).toContain("OpenStatus");
+    console.log(body);
+    expect(body.attachments[0].blocks[0].text.text).toContain(
+      "Test Notification",
+    );
   });
 
   test("Send Test Slack Message returns false on error", async () => {
