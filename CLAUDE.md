@@ -78,9 +78,14 @@ The project can be run using Docker (recommended) or a manual setup.
 
 To run the test suite, use the following command:
 
-Before running the test you should spin up the database with 
+Before running the test you should launch turso dev in a separate terminal:
 ```sh
 turso dev
+```
+
+Then, seed the database with test data:
+
+```sh
 cd packages/db
 pnpm migrate 
 pnpm seed
