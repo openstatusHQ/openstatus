@@ -27,13 +27,8 @@ export const NotificationSchema = z
       description: "The name of the notification",
       example: "OpenStatus Discord",
     }),
-    provider: notificationProviderSchema.openapi({
-      description: "The provider of the notification",
-      example: "discord",
-    }),
-    payload: NotificationDataSchema.openapi({
-      description: "The data of the notification",
-    }),
+    provider: notificationProviderSchema,
+    payload: NotificationDataSchema,
     monitors: z
       .array(z.number())
       .nullish()

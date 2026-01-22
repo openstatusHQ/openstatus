@@ -16,10 +16,7 @@ import { ZodError } from "zod";
 const statusAssertion = z
   .object({
     type: z.literal("status"),
-    compare: numberCompare.openapi({
-      description: "The comparison to run",
-      example: "eq",
-    }),
+    compare: numberCompare,
     target: z.int().positive().openapi({ description: "The target value" }),
   })
   .openapi({
@@ -474,10 +471,7 @@ const dnsRequestSchema = z.object({
 const statusCodeAssertion = z
   .object({
     kind: z.literal("statusCode"),
-    compare: numberCompare.openapi({
-      description: "Comparison operator",
-      examples: ["eq", "not_eq", "gt", "gte", "lt", "lte"],
-    }),
+    compare: numberCompare,
     target: z.number().openapi({
       description: "Status code to assert",
       examples: [200, 404, 418, 500],
@@ -505,10 +499,7 @@ const statusCodeAssertion = z
 
 const headerAssertions = z.object({
   kind: z.literal("header"),
-  compare: stringCompare.openapi({
-    description: "Comparison operator",
-    examples: ["eq", "not_eq", "contains", "not_contains"],
-  }),
+  compare: stringCompare,
   key: z.string().openapi({
     description: "Header key to assert",
     examples: ["Content-Type", "X-Request-ID"],
@@ -521,10 +512,7 @@ const headerAssertions = z.object({
 
 const textBodyAssertions = z.object({
   kind: z.literal("textBody"),
-  compare: stringCompare.openapi({
-    description: "Comparison operator",
-    examples: ["eq", "not_eq", "contains", "not_contains"],
-  }),
+  compare: stringCompare,
   target: z.string().openapi({
     description: "Text body to assert",
     examples: ["Hello, world!", "404 Not Found"],
@@ -537,10 +525,7 @@ const dnsRecordAssertion = z.object({
     description: "Type of DNS record to check",
     examples: ["A", "CNAME"],
   }),
-  compare: recordCompare.openapi({
-    description: "Comparison operator",
-    examples: ["eq", "not_eq", "contains", "not_contains"],
-  }),
+  compare: recordCompare,
   target: z.string().openapi({
     description: "DNS record value to assert",
     examples: ["example.com"],
