@@ -4,7 +4,8 @@
   "description": "Shared types and utilities for OpenStatus notification providers",
   "main": "src/index.ts",
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",

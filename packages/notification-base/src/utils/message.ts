@@ -58,10 +58,12 @@ export function formatStatusCode(statusCode?: number): string {
  * // Returns: {
  * //   monitorName: "My API",
  * //   monitorUrl: "https://api.example.com",
+ * //   monitorMethod: "GET",
+ * //   monitorJobType: "http",
  * //   statusCodeFormatted: "503 Service Unavailable",
  * //   errorMessage: "Connection timeout",
  * //   timestampFormatted: "Jan 22, 2026 at 14:30 UTC",
- * //   regionDisplay: "ams (Amsterdam, Netherlands)",
+ * //   regionsDisplay: "ams, fra, syd",
  * //   latencyDisplay: "2,450ms",
  * //   dashboardUrl: "https://app.openstatus.dev/monitors/123",
  * //   incidentDuration: undefined
@@ -78,14 +80,23 @@ export function buildCommonMessageData(
     incident?: Incident;
   },
 ): FormattedMessageData {
-  const { monitor, statusCode, message, cronTimestamp, region, latency } =
+  const { monitor, statusCode, message, cronTimestamp, regions, latency } =
     context;
 
-  // Get region info with location name
-  const regionInfo = region ? getRegionInfo(region) : null;
-  const regionDisplay = regionInfo
-    ? `${regionInfo.code} (${regionInfo.location})`
-    : "Unknown";
+  // Format multiple regions as comma-separated list
+  let regionsDisplay = "Unknown";
+  if (regions && regions.length > 0) {
+    if (regions.length === 1) {
+      // Single region: show code and location
+      const regionInfo = getRegionInfo(regions[0]);
+      regionsDisplay = regionInfo
+        ? `${regionInfo.code} (${regionInfo.location})`
+        : regions[0];
+    } else {
+      // Multiple regions: show comma-separated codes
+      regionsDisplay = regions.join(", ");
+    }
+  }
 
   // Calculate incident duration only if incident is resolved
   let incidentDuration: string | undefined;
@@ -97,10 +108,12 @@ export function buildCommonMessageData(
   return {
     monitorName: monitor.name,
     monitorUrl: monitor.url,
+    monitorMethod: monitor.method ?? undefined,
+    monitorJobType: monitor.jobType,
     statusCodeFormatted: formatStatusCode(statusCode),
     errorMessage: message || "No error message available",
     timestampFormatted: formatTimestamp(cronTimestamp),
-    regionDisplay,
+    regionsDisplay,
     latencyDisplay: latency ? `${latency.toLocaleString()}ms` : "N/A",
     dashboardUrl: `https://app.openstatus.dev/monitors/${monitor.id}`,
     incidentDuration,

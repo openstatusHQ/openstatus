@@ -4,7 +4,8 @@
   "main": "src/index.ts",
   "description": "Log drains Vercel integration.",
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",

@@ -41,12 +41,12 @@ const COLORS = {
  * Builds Discord embed for alert notifications
  *
  * Layout:
- * - Title: "🔴 Monitor Down"
- * - Description: Monitor name as markdown link
+ * - Title: "{monitor.name} is failing"
+ * - Description: "METHOD URL" in code format (e.g., `GET https://api.example.com`)
  * - Color: Red (#ED4245 / 15548997)
- * - Fields: Status Code, Region, Latency (inline), Error Message (full width)
+ * - Fields: Status Code, Regions, Latency, Cron Timestamp (inline), Error Message in code block (full width)
  * - Timestamp: ISO 8601 format
- * - Footer: "OpenStatus"
+ * - Footer: "openstatus"
  * - URL: Dashboard link
  *
  * @param data - Formatted message data from buildCommonMessageData
@@ -65,9 +65,15 @@ const COLORS = {
  * });
  */
 export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
+  // Format description as "METHOD URL" or just "URL" for non-HTTP
+  const description =
+    data.monitorMethod && data.monitorJobType === "http"
+      ? `${data.monitorMethod} ${data.monitorUrl}`
+      : data.monitorUrl;
+
   return {
-    title: "🔴 Monitor Down",
-    description: `**[${data.monitorName}](${data.monitorUrl})**`,
+    title: `${data.monitorName} is failing`,
+    description: `\`${description}\``,
     color: COLORS.red,
     fields: [
       {
@@ -76,8 +82,8 @@ export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
         inline: true,
       },
       {
-        name: "Region",
-        value: data.regionDisplay,
+        name: "Regions",
+        value: data.regionsDisplay,
         inline: true,
       },
       {
@@ -86,14 +92,19 @@ export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
         inline: true,
       },
       {
+        name: "Cron Timestamp",
+        value: data.timestampFormatted,
+        inline: true,
+      },
+      {
         name: "Error Message",
-        value: data.errorMessage || "_No error message_",
+        value: `\`\`\`${data.errorMessage}\`\`\``,
         inline: false,
       },
     ],
     timestamp: new Date().toISOString(),
     footer: {
-      text: "OpenStatus",
+      text: "openstatus",
     },
     url: data.dashboardUrl,
   };
@@ -103,12 +114,12 @@ export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
  * Builds Discord embed for recovery notifications
  *
  * Layout:
- * - Title: "✅ Monitor Recovered"
- * - Description: Monitor name as markdown link
+ * - Title: "{monitor.name} is recovered"
+ * - Description: "METHOD URL" in code format (e.g., `GET https://api.example.com`)
  * - Color: Green (#57F287 / 5763719)
- * - Fields: Optional Downtime field (if incidentDuration exists), Status Code, Region, Latency (inline)
+ * - Fields: Optional Downtime field (if incidentDuration exists), Status Code, Regions, Latency, Cron Timestamp (inline)
  * - Timestamp: ISO 8601 format
- * - Footer: "OpenStatus"
+ * - Footer: "openstatus"
  * - URL: Dashboard link
  *
  * @param data - Formatted message data from buildCommonMessageData
@@ -130,6 +141,12 @@ export function buildAlertEmbed(data: FormattedMessageData): DiscordEmbed {
 export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
   const fields: DiscordEmbedField[] = [];
 
+  // Format description as "METHOD URL" or just "URL" for non-HTTP
+  const description =
+    data.monitorMethod && data.monitorJobType === "http"
+      ? `${data.monitorMethod} ${data.monitorUrl}`
+      : data.monitorUrl;
+
   // Add downtime field if incident duration is available
   if (data.incidentDuration) {
     fields.push({
@@ -147,8 +164,8 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
       inline: true,
     },
     {
-      name: "Region",
-      value: data.regionDisplay,
+      name: "Regions",
+      value: data.regionsDisplay,
       inline: true,
     },
     {
@@ -156,16 +173,21 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
       value: data.latencyDisplay,
       inline: true,
     },
+    {
+      name: "Cron Timestamp",
+      value: data.timestampFormatted,
+      inline: true,
+    },
   );
 
   return {
-    title: "✅ Monitor Recovered",
-    description: `**[${data.monitorName}](${data.monitorUrl})**`,
+    title: `${data.monitorName} is recovered`,
+    description: `\`${description}\``,
     color: COLORS.green,
     fields,
     timestamp: new Date().toISOString(),
     footer: {
-      text: "OpenStatus",
+      text: "openstatus",
     },
     url: data.dashboardUrl,
   };
@@ -175,12 +197,12 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
  * Builds Discord embed for degraded notifications
  *
  * Layout:
- * - Title: "⚠️ Monitor Degraded"
- * - Description: Monitor name as markdown link
+ * - Title: "{monitor.name} is degraded"
+ * - Description: "METHOD URL" in code format (e.g., `GET https://api.example.com`)
  * - Color: Yellow (#FEE75C / 16705372)
- * - Fields: Optional Previous Incident Duration field (if incidentDuration exists), Status Code, Region, Latency (inline)
+ * - Fields: Optional Previous Incident Duration field (if incidentDuration exists), Status Code, Regions, Latency, Cron Timestamp (inline)
  * - Timestamp: ISO 8601 format
- * - Footer: "OpenStatus"
+ * - Footer: "openstatus"
  * - URL: Dashboard link
  *
  * @param data - Formatted message data from buildCommonMessageData
@@ -202,6 +224,12 @@ export function buildRecoveryEmbed(data: FormattedMessageData): DiscordEmbed {
 export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
   const fields: DiscordEmbedField[] = [];
 
+  // Format description as "METHOD URL" or just "URL" for non-HTTP
+  const description =
+    data.monitorMethod && data.monitorJobType === "http"
+      ? `${data.monitorMethod} ${data.monitorUrl}`
+      : data.monitorUrl;
+
   // Add previous incident duration field if available
   if (data.incidentDuration) {
     fields.push({
@@ -219,8 +247,8 @@ export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
       inline: true,
     },
     {
-      name: "Region",
-      value: data.regionDisplay,
+      name: "Regions",
+      value: data.regionsDisplay,
       inline: true,
     },
     {
@@ -228,16 +256,21 @@ export function buildDegradedEmbed(data: FormattedMessageData): DiscordEmbed {
       value: data.latencyDisplay,
       inline: true,
     },
+    {
+      name: "Cron Timestamp",
+      value: data.timestampFormatted,
+      inline: true,
+    },
   );
 
   return {
-    title: "⚠️ Monitor Degraded",
-    description: `**[${data.monitorName}](${data.monitorUrl})**`,
+    title: `${data.monitorName} is degraded`,
+    description: `\`${description}\``,
     color: COLORS.yellow,
     fields,
     timestamp: new Date().toISOString(),
     footer: {
-      text: "OpenStatus",
+      text: "openstatus",
     },
     url: data.dashboardUrl,
   };

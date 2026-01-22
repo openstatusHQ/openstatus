@@ -4,7 +4,6 @@ import type {
   Notification,
   NotificationProvider,
 } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,
@@ -69,7 +68,7 @@ type SendNotification = ({
   incident,
   cronTimestamp,
   latency,
-  region,
+  regions,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -78,7 +77,7 @@ type SendNotification = ({
   incident?: Incident;
   cronTimestamp: number;
   latency?: number;
-  region?: Region;
+  regions?: string[];
 }) => Promise<void>;
 
 type Notif = {

@@ -1,7 +1,6 @@
 import type {
   Incident,
   Monitor,
-  MonitorRegion,
   Notification,
 } from "@openstatus/db/src/schema";
 
@@ -14,7 +13,7 @@ export interface NotificationContext {
   statusCode?: number;
   message?: string;
   cronTimestamp: number;
-  region?: MonitorRegion;
+  regions?: string[];
   latency?: number;
 }
 
@@ -31,10 +30,12 @@ export interface NotificationContextWithIncident extends NotificationContext {
 export interface FormattedMessageData {
   monitorName: string;
   monitorUrl: string;
+  monitorMethod?: string;
+  monitorJobType: string;
   statusCodeFormatted: string;
   errorMessage: string;
   timestampFormatted: string;
-  regionDisplay: string;
+  regionsDisplay: string;
   latencyDisplay: string;
   dashboardUrl: string;
   incidentDuration?: string;

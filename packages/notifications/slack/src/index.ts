@@ -4,7 +4,6 @@ import type {
   Notification,
 } from "@openstatus/db/src/schema";
 import { slackDataSchema } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { buildCommonMessageData } from "@openstatus/notification-base";
 import {
   buildAlertBlocks,
@@ -12,10 +11,23 @@ import {
   buildRecoveryBlocks,
 } from "./blocks";
 
+/**
+ * Slack attachment colors (hex values)
+ * Reference: https://api.slack.com/reference/messaging/attachments#color
+ */
+const COLORS = {
+  red: "#ED4245", // Alert/Error - red left border
+  yellow: "#FEE75C", // Degraded/Warning - yellow/orange left border
+  green: "#57F287", // Recovery/Success - green left border
+} as const;
+
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
   const res = await fetch(webhookUrl, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -30,7 +42,7 @@ export const sendAlert = async ({
   message,
   cronTimestamp,
   latency,
-  region,
+  regions,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -39,7 +51,7 @@ export const sendAlert = async ({
   incident?: Incident;
   cronTimestamp: number;
   latency?: number;
-  region?: Region;
+  regions?: string[];
 }) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData;
@@ -51,13 +63,24 @@ export const sendAlert = async ({
     message,
     cronTimestamp,
     latency,
-    region,
+    regions,
   };
 
   const data = buildCommonMessageData(context);
   const blocks = buildAlertBlocks(data);
 
-  await postToWebhook({ blocks }, webhookUrl);
+  await postToWebhook(
+    {
+      text: `${monitor.name} is failing - ${monitor.url}`,
+      attachments: [
+        {
+          color: COLORS.red,
+          blocks,
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };
 
 export const sendRecovery = async ({
@@ -67,7 +90,7 @@ export const sendRecovery = async ({
   message,
   incident,
   cronTimestamp,
-  region,
+  regions,
   latency,
 }: {
   monitor: Monitor;
@@ -76,7 +99,7 @@ export const sendRecovery = async ({
   message?: string;
   incident?: Incident;
   cronTimestamp: number;
-  region?: Region;
+  regions?: string[];
   latency?: number;
 }) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
@@ -89,13 +112,24 @@ export const sendRecovery = async ({
     message,
     cronTimestamp,
     latency,
-    region,
+    regions,
   };
 
   const data = buildCommonMessageData(context, { incident });
   const blocks = buildRecoveryBlocks(data);
 
-  await postToWebhook({ blocks }, webhookUrl);
+  await postToWebhook(
+    {
+      text: `${monitor.name} is recovered - ${monitor.url}`,
+      attachments: [
+        {
+          color: COLORS.green,
+          blocks,
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };
 
 export const sendDegraded = async ({
@@ -105,7 +139,7 @@ export const sendDegraded = async ({
   message,
   incident,
   cronTimestamp,
-  region,
+  regions,
   latency,
 }: {
   monitor: Monitor;
@@ -114,7 +148,7 @@ export const sendDegraded = async ({
   message?: string;
   incident?: Incident;
   cronTimestamp: number;
-  region?: Region;
+  regions?: string[];
   latency?: number;
 }) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
@@ -127,13 +161,24 @@ export const sendDegraded = async ({
     message,
     cronTimestamp,
     latency,
-    region,
+    regions,
   };
 
   const data = buildCommonMessageData(context, { incident });
   const blocks = buildDegradedBlocks(data);
 
-  await postToWebhook({ blocks }, webhookUrl);
+  await postToWebhook(
+    {
+      text: `${monitor.name} is degraded - ${monitor.url}`,
+      attachments: [
+        {
+          color: COLORS.yellow,
+          blocks,
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };
 
 export const sendTestSlackMessage = async (webhookUrl: string) => {

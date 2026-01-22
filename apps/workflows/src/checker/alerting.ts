@@ -21,7 +21,7 @@ export const triggerNotifications = async ({
   notifType,
   cronTimestamp,
   incidentId,
-  region,
+  regions,
   latency,
 }: {
   monitorId: string;
@@ -30,7 +30,7 @@ export const triggerNotifications = async ({
   notifType: "alert" | "recovery" | "degraded";
   cronTimestamp: number;
   incidentId: string;
-  region?: Region;
+  regions?: string[];
   latency?: number;
 }) => {
   logger.info("Triggering alerting", {
@@ -150,7 +150,7 @@ export const triggerNotifications = async ({
               message,
               incident,
               cronTimestamp,
-              region,
+              regions,
               latency,
             }),
 
@@ -182,7 +182,7 @@ export const triggerNotifications = async ({
               message,
               incident,
               cronTimestamp,
-              region,
+              regions,
               latency,
             }),
           catch: (_unknown) =>
@@ -213,7 +213,7 @@ export const triggerNotifications = async ({
               message,
               incident,
               cronTimestamp,
-              region,
+              regions,
               latency,
             }),
           catch: (_unknown) =>

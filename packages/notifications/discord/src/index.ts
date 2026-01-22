@@ -4,7 +4,6 @@ import type {
   Notification,
 } from "@openstatus/db/src/schema";
 import { discordDataSchema } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { buildCommonMessageData } from "@openstatus/notification-base";
 import {
   type DiscordEmbed,
@@ -40,7 +39,7 @@ export const sendAlert = async ({
   message,
   cronTimestamp,
   latency,
-  region,
+  regions,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -49,7 +48,7 @@ export const sendAlert = async ({
   incident?: Incident;
   cronTimestamp: number;
   latency?: number;
-  region?: Region;
+  regions?: string[];
 }) => {
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
@@ -63,7 +62,7 @@ export const sendAlert = async ({
     message,
     cronTimestamp,
     latency,
-    region,
+    regions,
   };
 
   const data = buildCommonMessageData(context);
@@ -80,7 +79,7 @@ export const sendRecovery = async ({
   incident,
   cronTimestamp,
   latency,
-  region,
+  regions,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -89,7 +88,7 @@ export const sendRecovery = async ({
   incident?: Incident;
   cronTimestamp: number;
   latency?: number;
-  region?: Region;
+  regions?: string[];
 }) => {
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
@@ -103,7 +102,7 @@ export const sendRecovery = async ({
     message,
     cronTimestamp,
     latency,
-    region,
+    regions,
   };
 
   const data = buildCommonMessageData(context, { incident });
@@ -120,7 +119,7 @@ export const sendDegraded = async ({
   incident,
   cronTimestamp,
   latency,
-  region,
+  regions,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -129,7 +128,7 @@ export const sendDegraded = async ({
   incident?: Incident;
   cronTimestamp: number;
   latency?: number;
-  region?: Region;
+  regions?: string[];
 }) => {
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
@@ -143,7 +142,7 @@ export const sendDegraded = async ({
     message,
     cronTimestamp,
     latency,
-    region,
+    regions,
   };
 
   const data = buildCommonMessageData(context, { incident });

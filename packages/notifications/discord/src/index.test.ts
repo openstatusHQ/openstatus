@@ -70,9 +70,10 @@ describe("Discord Notifications", () => {
     expect(callArgs[1].headers["Content-Type"]).toBe("application/json");
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("🚨 Alert");
-    expect(body.content).toContain("API Health Check");
-    expect(body.content).toContain("Something went wrong");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("is failing");
+    expect(body.embeds[0].title).toContain("API Health Check");
+    expect(body.embeds[0].color).toBe(15548997); // Red color
     expect(body.username).toBe("OpenStatus Notifications");
     expect(body.avatar_url).toBeDefined();
   });
@@ -95,8 +96,10 @@ describe("Discord Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("✅ Recovered");
-    expect(body.content).toContain("API Health Check");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("is recovered");
+    expect(body.embeds[0].title).toContain("API Health Check");
+    expect(body.embeds[0].color).toBe(5763719); // Green color
   });
 
   test("Send Degraded", async () => {
@@ -117,8 +120,10 @@ describe("Discord Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("⚠️ Degraded");
-    expect(body.content).toContain("API Health Check");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("is degraded");
+    expect(body.embeds[0].title).toContain("API Health Check");
+    expect(body.embeds[0].color).toBe(16705372); // Yellow color
   });
 
   test("Send Test Discord Message", async () => {
@@ -131,8 +136,9 @@ describe("Discord Notifications", () => {
     const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("🧪 Test");
-    expect(body.content).toContain("OpenStatus");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("Test");
+    expect(body.embeds[0].title).toContain("OpenStatus");
   });
 
   test("Send Test Discord Message with empty webhookUrl", async () => {

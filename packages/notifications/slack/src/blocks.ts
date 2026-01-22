@@ -66,10 +66,10 @@ export function escapeSlackText(text: string): string {
  * Builds Slack blocks for alert notifications
  *
  * Layout:
- * - Header: "🔴 Monitor Down"
- * - Section: Monitor name as clickable link
+ * - Header: "{monitor.name} is failing"
+ * - Section: "METHOD URL" in code format (e.g., `GET https://api.example.com`)
  * - Divider
- * - Section: 4 fields in 2x2 grid (Status, Region, Latency, Time)
+ * - Section: 4 fields in 2x2 grid (Status, Regions, Latency, Cron Timestamp)
  * - Section: Error message in code block
  * - Actions: Dashboard button
  *
@@ -80,10 +80,12 @@ export function escapeSlackText(text: string): string {
  * const blocks = buildAlertBlocks({
  *   monitorName: "API Health",
  *   monitorUrl: "https://api.example.com",
+ *   monitorMethod: "GET",
+ *   monitorJobType: "http",
  *   statusCodeFormatted: "503 Service Unavailable",
  *   errorMessage: "Connection timeout",
  *   timestampFormatted: "Jan 22, 2026 at 14:30 UTC",
- *   regionDisplay: "iad (Virginia)",
+ *   regionsDisplay: "iad, fra, syd",
  *   latencyDisplay: "1,234 ms",
  *   dashboardUrl: "https://app.openstatus.dev/monitors/123"
  * });
@@ -92,20 +94,26 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
   const escapedName = escapeSlackText(data.monitorName);
   const escapedError = escapeSlackText(data.errorMessage);
 
+  // Format description as "METHOD URL" or just "URL" for non-HTTP
+  const description =
+    data.monitorMethod && data.monitorJobType === "http"
+      ? `${data.monitorMethod} <${data.monitorUrl}|${data.monitorUrl}>`
+      : `<${data.monitorUrl}|${data.monitorUrl}>`;
+
   return [
     {
       type: "header",
       text: {
         type: "plain_text",
-        text: "🔴 Monitor Down",
-        emoji: true,
+        text: `${escapedName} is failing`,
+        emoji: false,
       },
     },
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*<${data.monitorUrl}|${escapedName}>*`,
+        text: `\`${description}\``,
       },
     },
     {
@@ -120,7 +128,7 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
         },
         {
           type: "mrkdwn",
-          text: `*Region*\n${data.regionDisplay}`,
+          text: `*Regions*\n${data.regionsDisplay}`,
         },
         {
           type: "mrkdwn",
@@ -128,7 +136,7 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
         },
         {
           type: "mrkdwn",
-          text: `*Time*\n${data.timestampFormatted}`,
+          text: `*Cron Timestamp*\n${data.timestampFormatted}`,
         },
       ],
     },
@@ -161,11 +169,11 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
  * Builds Slack blocks for recovery notifications
  *
  * Layout:
- * - Header: "✅ Monitor Recovered"
- * - Section: Monitor name as clickable link
+ * - Header: "{monitor.name} is recovered"
+ * - Section: "METHOD URL" in code format (e.g., `GET https://api.example.com`)
  * - Section: Downtime duration (optional, only if data.incidentDuration exists)
  * - Divider
- * - Section: 4 fields in 2x2 grid (Status, Region, Latency, Time)
+ * - Section: 4 fields in 2x2 grid (Status, Regions, Latency, Cron Timestamp)
  * - Actions: Dashboard button
  *
  * @param data - Formatted message data from buildCommonMessageData
@@ -175,10 +183,12 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
  * const blocks = buildRecoveryBlocks({
  *   monitorName: "API Health",
  *   monitorUrl: "https://api.example.com",
+ *   monitorMethod: "GET",
+ *   monitorJobType: "http",
  *   statusCodeFormatted: "200 OK",
  *   errorMessage: "",
  *   timestampFormatted: "Jan 22, 2026 at 14:35 UTC",
- *   regionDisplay: "iad (Virginia)",
+ *   regionsDisplay: "iad, fra, syd",
  *   latencyDisplay: "156 ms",
  *   dashboardUrl: "https://app.openstatus.dev/monitors/123",
  *   incidentDuration: "5m 30s"
@@ -187,20 +197,26 @@ export function buildAlertBlocks(data: FormattedMessageData): SlackBlock[] {
 export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
   const escapedName = escapeSlackText(data.monitorName);
 
+  // Format description as "METHOD URL" or just "URL" for non-HTTP
+  const description =
+    data.monitorMethod && data.monitorJobType === "http"
+      ? `${data.monitorMethod} <${data.monitorUrl}|${data.monitorUrl}>`
+      : `<${data.monitorUrl}|${data.monitorUrl}>`;
+
   const blocks: SlackBlock[] = [
     {
       type: "header",
       text: {
         type: "plain_text",
-        text: "✅ Monitor Recovered",
-        emoji: true,
+        text: `${escapedName} is recovered`,
+        emoji: false,
       },
     },
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*<${data.monitorUrl}|${escapedName}>*`,
+        text: `\`${description}\``,
       },
     },
   ];
@@ -229,7 +245,7 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
         },
         {
           type: "mrkdwn",
-          text: `*Region*\n${data.regionDisplay}`,
+          text: `*Regions*\n${data.regionsDisplay}`,
         },
         {
           type: "mrkdwn",
@@ -237,7 +253,7 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
         },
         {
           type: "mrkdwn",
-          text: `*Time*\n${data.timestampFormatted}`,
+          text: `*Cron Timestamp*\n${data.timestampFormatted}`,
         },
       ],
     },
@@ -265,11 +281,11 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
  * Builds Slack blocks for degraded notifications
  *
  * Layout:
- * - Header: "⚠️ Monitor Degraded"
- * - Section: Monitor name as clickable link
+ * - Header: "{monitor.name} is degraded"
+ * - Section: "METHOD URL" in code format (e.g., `GET https://api.example.com`)
  * - Section: Previous incident duration (optional, only if data.incidentDuration exists)
  * - Divider
- * - Section: 4 fields in 2x2 grid (Status, Region, Latency, Time)
+ * - Section: 4 fields in 2x2 grid (Status, Regions, Latency, Cron Timestamp)
  * - Actions: Dashboard button
  *
  * @param data - Formatted message data from buildCommonMessageData
@@ -279,10 +295,12 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
  * const blocks = buildDegradedBlocks({
  *   monitorName: "API Health",
  *   monitorUrl: "https://api.example.com",
+ *   monitorMethod: "GET",
+ *   monitorJobType: "http",
  *   statusCodeFormatted: "504 Gateway Timeout",
  *   errorMessage: "Slow response",
  *   timestampFormatted: "Jan 22, 2026 at 14:40 UTC",
- *   regionDisplay: "iad (Virginia)",
+ *   regionsDisplay: "iad, fra, syd",
  *   latencyDisplay: "5,234 ms",
  *   dashboardUrl: "https://app.openstatus.dev/monitors/123",
  *   incidentDuration: "2h 15m"
@@ -291,20 +309,26 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
 export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
   const escapedName = escapeSlackText(data.monitorName);
 
+  // Format description as "METHOD URL" or just "URL" for non-HTTP
+  const description =
+    data.monitorMethod && data.monitorJobType === "http"
+      ? `${data.monitorMethod} <${data.monitorUrl}|${data.monitorUrl}>`
+      : `<${data.monitorUrl}|${data.monitorUrl}>`;
+
   const blocks: SlackBlock[] = [
     {
       type: "header",
       text: {
         type: "plain_text",
-        text: "⚠️ Monitor Degraded",
-        emoji: true,
+        text: `${escapedName} is degraded`,
+        emoji: false,
       },
     },
     {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*<${data.monitorUrl}|${escapedName}>*`,
+        text: `\`${description}\``,
       },
     },
   ];
@@ -333,7 +357,7 @@ export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
         },
         {
           type: "mrkdwn",
-          text: `*Region*\n${data.regionDisplay}`,
+          text: `*Regions*\n${data.regionsDisplay}`,
         },
         {
           type: "mrkdwn",
@@ -341,7 +365,7 @@ export function buildDegradedBlocks(data: FormattedMessageData): SlackBlock[] {
         },
         {
           type: "mrkdwn",
-          text: `*Time*\n${data.timestampFormatted}`,
+          text: `*Cron Timestamp*\n${data.timestampFormatted}`,
         },
       ],
     },

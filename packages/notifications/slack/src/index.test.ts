@@ -67,11 +67,11 @@ describe("Slack Notifications", () => {
     expect(callArgs[1].method).toBe("POST");
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks).toBeDefined();
-    expect(body.blocks.length).toBeGreaterThan(0);
-    expect(body.blocks[1].text.text).toContain("🚨 Alert");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
-    expect(body.blocks[1].text.text).toContain("Something went wrong");
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].color).toBe("#ED4245");
+    expect(body.attachments[0].blocks).toBeDefined();
+    expect(body.attachments[0].blocks.length).toBeGreaterThan(0);
+    expect(body.attachments[0].blocks[0].text.text).toContain("is failing");
   });
 
   test("Send Alert without statusCode", async () => {
@@ -91,7 +91,8 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("_empty_");
+    expect(body.attachments[0].color).toBe("#ED4245");
+    expect(body.attachments[0].blocks[3].fields[0].text).toContain("Unknown");
   });
 
   test("Send Recovery", async () => {
@@ -112,8 +113,9 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("✅ Recovered");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].color).toBe("#57F287");
+    expect(body.attachments[0].blocks[0].text.text).toContain("is recovered");
   });
 
   test("Send Degraded", async () => {
@@ -134,8 +136,9 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("⚠️ Degraded");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].color).toBe("#FEE75C");
+    expect(body.attachments[0].blocks[0].text.text).toContain("is degraded");
   });
 
   test("Send Test Slack Message", async () => {

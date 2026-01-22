@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { and, count, db, eq, inArray, isNull, schema } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import {
   monitorStatusSchema,
@@ -142,8 +142,9 @@ checkerRoute.post("/updateStatus", async (c) => {
   const monitor = selectMonitorSchema.parse(currentMonitor);
   const numberOfRegions = monitor.regions.length;
 
-  const affectedRegion = await db
-    .select({ count: count() })
+  // Fetch all affected regions for notifications (single query)
+  const affectedRegions = await db
+    .select({ region: schema.monitorStatusTable.region })
     .from(schema.monitorStatusTable)
     .where(
       and(
@@ -152,9 +153,12 @@ checkerRoute.post("/updateStatus", async (c) => {
         inArray(schema.monitorStatusTable.region, monitor.regions),
       ),
     )
-    .get();
+    .all();
 
-  if (!affectedRegion?.count) {
+  const affectedRegionsList = affectedRegions.map((r) => r.region);
+  const affectedRegionCount = affectedRegionsList.length;
+
+  if (affectedRegionCount === 0) {
     return c.json({ success: true }, 200);
   }
 
@@ -203,7 +207,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       break;
   }
 
-  if (affectedRegion.count >= numberOfRegions / 2 || numberOfRegions === 1) {
+  if (affectedRegionCount >= numberOfRegions / 2 || numberOfRegions === 1) {
     switch (status) {
       case "active": {
         if (monitor.status === "active") {
@@ -229,7 +233,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           message,
           notifType: "recovery",
           cronTimestamp,
-          region,
+          regions: affectedRegionsList,
           latency,
           incidentId: `${cronTimestamp}`,
         });
@@ -258,7 +262,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           notifType: "degraded",
           cronTimestamp,
           latency,
-          region,
+          regions: affectedRegionsList,
           incidentId: `${cronTimestamp}`,
         });
 
@@ -317,7 +321,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             notifType: "alert",
             cronTimestamp,
             latency,
-            region,
+            regions: affectedRegionsList,
             incidentId: String(newIncident.id),
           });
         } catch (error) {
