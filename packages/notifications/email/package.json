@@ -10,6 +10,7 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/notification-base": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",

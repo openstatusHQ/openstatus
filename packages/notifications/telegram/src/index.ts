@@ -1,27 +1,12 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
 import { telegramDataSchema } from "@openstatus/db/src/schema";
-
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 
 export const sendAlert = async ({
   monitor,
   notification,
   statusCode,
   message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = telegramDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -40,16 +25,7 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = telegramDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -65,16 +41,7 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = telegramDataSchema.parse(
     JSON.parse(notification.data),
   );

@@ -1,12 +1,7 @@
-import {
-  type Incident,
-  type Monitor,
-  type Notification,
-  emailDataSchema,
-} from "@openstatus/db/src/schema";
-
+import { emailDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { EmailClient } from "@openstatus/emails/src/client";
+import type { NotificationContext } from "@openstatus/notification-base";
 import { regionDict } from "@openstatus/regions";
 import { env } from "../env";
 
@@ -17,17 +12,10 @@ export const sendAlert = async ({
   message,
   cronTimestamp,
   latency,
-  region,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  region?: Region;
-  latency?: number;
-}) => {
+  regions,
+}: NotificationContext) => {
+  // Convert regions array to single region for backwards compatibility
+  const region = regions?.[0] as Region | undefined;
   const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
@@ -52,18 +40,11 @@ export const sendRecovery = async ({
   notification,
   statusCode,
   cronTimestamp,
-  region,
+  regions,
   latency,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  region?: Region;
-  latency?: number;
-}) => {
+}: NotificationContext) => {
+  // Convert regions array to single region for backwards compatibility
+  const region = regions?.[0] as Region | undefined;
   const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
@@ -87,18 +68,11 @@ export const sendDegraded = async ({
   notification,
   statusCode,
   cronTimestamp,
-  region,
+  regions,
   latency,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  region?: Region;
-  latency?: number;
-}) => {
+}: NotificationContext) => {
+  // Convert regions array to single region for backwards compatibility
+  const region = regions?.[0] as Region | undefined;
   const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));

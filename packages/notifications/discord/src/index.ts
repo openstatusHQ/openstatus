@@ -1,10 +1,8 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
 import { discordDataSchema } from "@openstatus/db/src/schema";
-import { buildCommonMessageData } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  buildCommonMessageData,
+} from "@openstatus/notification-base";
 import {
   type DiscordEmbed,
   buildAlertEmbed,
@@ -40,16 +38,7 @@ export const sendAlert = async ({
   cronTimestamp,
   latency,
   regions,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  regions?: string[];
-}) => {
+}: NotificationContext) => {
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -80,16 +69,7 @@ export const sendRecovery = async ({
   cronTimestamp,
   latency,
   regions,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  regions?: string[];
-}) => {
+}: NotificationContext) => {
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -120,16 +100,7 @@ export const sendDegraded = async ({
   cronTimestamp,
   latency,
   regions,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  regions?: string[];
-}) => {
+}: NotificationContext) => {
   const notificationData = discordDataSchema.parse(
     JSON.parse(notification.data),
   );

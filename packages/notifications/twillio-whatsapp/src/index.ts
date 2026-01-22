@@ -1,25 +1,11 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
 import { whatsappDataSchema } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 import { env } from "./env";
 
 export const sendAlert = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -51,16 +37,7 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -92,16 +69,7 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = whatsappDataSchema.parse(
     JSON.parse(notification.data),
   );

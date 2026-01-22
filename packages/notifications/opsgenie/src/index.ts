@@ -1,9 +1,4 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema";
 
 export const sendAlert = async ({
@@ -12,16 +7,7 @@ export const sendAlert = async ({
   statusCode,
   message,
   incident,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
@@ -62,16 +48,7 @@ export const sendDegraded = async ({
   statusCode,
   message,
   incident,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
@@ -111,16 +88,7 @@ export const sendRecovery = async ({
   statusCode,
   message,
   incident,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
 
   const url =

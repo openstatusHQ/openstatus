@@ -1,10 +1,5 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
 import { googleChatDataSchema } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 
 const postToWebhook = async (content: string, webhookUrl: string) => {
   const res = await fetch(webhookUrl, {
@@ -29,16 +24,7 @@ export const sendAlert = async ({
   statusCode,
   message,
   cronTimestamp,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = googleChatDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -65,16 +51,7 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = googleChatDataSchema.parse(
     JSON.parse(notification.data),
   );
@@ -95,16 +72,7 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = googleChatDataSchema.parse(
     JSON.parse(notification.data),
   );

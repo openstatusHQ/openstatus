@@ -1,10 +1,4 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
-
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 import { transformHeaders } from "@openstatus/utils";
 import { PayloadSchema, WebhookSchema } from "./schema";
 
@@ -15,16 +9,7 @@ export const sendAlert = async ({
   statusCode,
   latency,
   message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
   const body = PayloadSchema.parse({
@@ -57,16 +42,7 @@ export const sendRecovery = async ({
   latency,
   statusCode,
   message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
   const body = PayloadSchema.parse({
@@ -99,16 +75,7 @@ export const sendDegraded = async ({
   latency,
   statusCode,
   message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
   const body = PayloadSchema.parse({

@@ -1,7 +1,6 @@
 // Types
 export type {
   NotificationContext,
-  NotificationContextWithIncident,
   FormattedMessageData,
   NotificationType,
 } from "./types";

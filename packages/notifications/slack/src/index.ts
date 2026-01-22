@@ -1,10 +1,8 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-} from "@openstatus/db/src/schema";
 import { slackDataSchema } from "@openstatus/db/src/schema";
-import { buildCommonMessageData } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  buildCommonMessageData,
+} from "@openstatus/notification-base";
 import {
   buildAlertBlocks,
   buildDegradedBlocks,
@@ -43,16 +41,7 @@ export const sendAlert = async ({
   cronTimestamp,
   latency,
   regions,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  regions?: string[];
-}) => {
+}: NotificationContext) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData;
 
@@ -92,16 +81,7 @@ export const sendRecovery = async ({
   cronTimestamp,
   regions,
   latency,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  regions?: string[];
-  latency?: number;
-}) => {
+}: NotificationContext) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData;
 
@@ -141,16 +121,7 @@ export const sendDegraded = async ({
   cronTimestamp,
   regions,
   latency,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  regions?: string[];
-  latency?: number;
-}) => {
+}: NotificationContext) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData;
 

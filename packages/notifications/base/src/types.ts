@@ -15,13 +15,7 @@ export interface NotificationContext {
   cronTimestamp: number;
   regions?: string[];
   latency?: number;
-}
-
-/**
- * Extended context with incident data for recovery/degraded
- */
-export interface NotificationContextWithIncident extends NotificationContext {
-  incident: Incident;
+  incident?: Incident;
 }
 
 /**
