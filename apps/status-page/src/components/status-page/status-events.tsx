@@ -188,7 +188,7 @@ export function StatusEventTimelineReport({
   maxUpdates?: number;
 }) {
   const prefix = usePathnamePrefix();
-  const sortedUpdates = updates.sort(
+  const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
   const hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
@@ -204,7 +204,7 @@ export function StatusEventTimelineReport({
         let durationText: string | undefined;
 
         if (index === 0) {
-          const startedAt = new Date(updates[updates.length - 1].date);
+          const startedAt = new Date(sortedUpdates[sortedUpdates.length - 1].date);
           const duration = formatDistanceStrict(startedAt, updateDate);
 
           if (duration !== "0 seconds" && update.status === "resolved") {
