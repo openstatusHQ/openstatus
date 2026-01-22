@@ -120,6 +120,10 @@ app.use("*", async (c, next) => {
         user_agent: c.req.header("User-Agent"),
         // Request metadata
         content_type: c.req.header("Content-Type"),
+        // Environment characteristics
+        service: "api-server",
+        environment: env.NODE_ENV,
+        region: env.FLY_REGION,
       };
       c.set("event", event);
 
@@ -202,7 +206,7 @@ const port = 3000;
 
 if (isDev) showRoutes(app, { verbose: true, colorize: true });
 
-console.log(`Starting server on port ${port}`);
+logger.info("Starting server", { port, environment: env.NODE_ENV });
 
 const server = { port, fetch: app.fetch };
 

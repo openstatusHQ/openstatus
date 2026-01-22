@@ -41,7 +41,13 @@ export const routes = createConnectRouter({
  *
  * @param app - The Hono app instance
  */
-export function mountRpcRoutes(app: Hono) {
+export function mountRpcRoutes(
+  app: Hono<{
+    Variables: {
+      event: Record<string, unknown>;
+    };
+  }>,
+) {
   // Handle all RPC routes at /rpc/* prefix
   app.all("/rpc/*", async (c) => {
     const url = new URL(c.req.url);

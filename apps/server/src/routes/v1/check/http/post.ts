@@ -1,4 +1,5 @@
 import { createRoute, type z } from "@hono/zod-openapi";
+import { getLogger } from "@logtape/logtape";
 
 import { env } from "@/env";
 import { openApiErrorResponses } from "@/libs/errors";
@@ -6,6 +7,8 @@ import { db } from "@openstatus/db";
 import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
 import type { checkApi } from "../index";
+
+const logger = getLogger("api-server");
 import {
   AggregatedResponseSchema,
   AggregatedResult,
@@ -107,8 +110,12 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
       const parsed = ResponseSchema.safeParse(json);
 
       if (!parsed.success) {
-        console.error(parsed.error.errors);
-        throw new Error(`Failed to parse response: ${parsed.error.errors}`);
+        logger.error("Failed to parse check response", {
+          check_id: newCheck.id,
+          workspace_id: workspaceId,
+          validation_errors: parsed.error,
+        });
+        throw new Error(`Failed to parse response: ${parsed.error}`);
       }
 
       fulfilledRequest.push(parsed.data);
@@ -188,8 +195,10 @@ function getAggregate(data: number[]) {
   });
 
   if (!parsed.success) {
-    console.error(parsed.error.errors);
-    throw new Error(`Failed to parse response: ${parsed.error.errors}`);
+    logger.error("Failed to parse aggregated response", {
+      validation_errors: parsed.error,
+    });
+    throw new Error(`Failed to parse response: ${parsed.error}`);
   }
 
   return parsed.data;

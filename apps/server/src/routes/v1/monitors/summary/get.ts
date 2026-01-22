@@ -65,11 +65,11 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
     const cache = await redis.get<SummarySchema[]>(`${id}-daily-stats`);
 
     if (cache) {
-      console.log("fetching from cache");
+      // c.get("event").cache_hit = true;
       return c.json({ data: cache }, 200);
     }
 
-    console.log("fetching from tinybird");
+    // c.get("event").cache_hit = false;
     const res =
       _monitor.jobType === "http"
         ? await tb.legacy_httpStatus45d({ monitorId: id })

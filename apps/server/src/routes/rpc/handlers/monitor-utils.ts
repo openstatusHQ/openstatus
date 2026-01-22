@@ -1,3 +1,4 @@
+import { getLogger } from "@logtape/logtape";
 import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import {
   type BodyAssertion,
@@ -14,6 +15,8 @@ import {
   type TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
+
+const logger = getLogger("api-server");
 
 /**
  * Default values for monitor fields.
@@ -187,10 +190,10 @@ export function parseHttpAssertions(assertionsJson: string | null): {
       }
     }
   } catch (error) {
-    console.error(
-      "[monitor-utils] Failed to parse HTTP assertions JSON:",
-      error,
-    );
+    logger.error("Failed to parse HTTP assertions JSON", {
+      error: error instanceof Error ? error.message : String(error),
+      assertions_json: assertionsJson,
+    });
   }
 
   return result;
@@ -223,10 +226,10 @@ export function parseDnsAssertions(
         comparator: compareToRecordComparator(a.compare),
       }));
   } catch (error) {
-    console.error(
-      "[monitor-utils] Failed to parse DNS assertions JSON:",
-      error,
-    );
+    logger.error("Failed to parse DNS assertions JSON", {
+      error: error instanceof Error ? error.message : String(error),
+      assertions_json: assertionsJson,
+    });
     return [];
   }
 }

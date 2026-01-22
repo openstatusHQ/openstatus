@@ -1,14 +1,15 @@
 import type { Interceptor } from "@connectrpc/connect";
 import { getLogger, withContext } from "@logtape/logtape";
 
+import { env } from "@/env";
 import { RPC_CONTEXT_KEY } from "./auth";
 
-const logger = getLogger("api-server");
+const logger = getLogger("api-server-otel");
 
 /**
  * Logging interceptor for ConnectRPC.
- * Integrates with LogTape for structured JSON logging.
- * Logs request start, completion, and errors with duration.
+ * Implements wide events pattern - emits ONE canonical log line per RPC request.
+ * All context is collected during execution and emitted at completion.
  */
 export function loggingInterceptor(): Interceptor {
   return (next) => async (req) => {
@@ -18,7 +19,20 @@ export function loggingInterceptor(): Interceptor {
     const methodName = req.method.name;
     const startTime = Date.now();
 
-    // Wrap in LogTape context for structured logging
+    // Initialize wide event - will be emitted once at completion
+    const event: Record<string, unknown> = {
+      timestamp: new Date().toISOString(),
+      request_id: rpcCtx?.requestId ?? "unknown",
+      protocol: "connectrpc",
+      service: serviceName,
+      method: methodName,
+      // Business context
+      // Environment characteristics
+      environment: env.NODE_ENV,
+      region: env.FLY_REGION,
+    };
+
+    // Wrap in LogTape context for correlation
     return withContext(
       {
         requestId: rpcCtx?.requestId ?? "unknown",
@@ -28,34 +42,27 @@ export function loggingInterceptor(): Interceptor {
         protocol: "connectrpc",
       },
       async () => {
-        logger.info("RPC request started", {
-          service: serviceName,
-          method: methodName,
-          requestId: rpcCtx?.requestId,
-        });
-
         try {
           const response = await next(req);
 
-          const duration = Date.now() - startTime;
-          logger.info("RPC request completed", {
-            service: serviceName,
-            method: methodName,
-            duration,
-            requestId: rpcCtx?.requestId,
-          });
+          event.duration_ms = Date.now() - startTime;
+          event.outcome = "success";
+          event.workspace_id = rpcCtx?.workspace.id;
+          event.workspace_plan = rpcCtx?.workspace.plan;
 
           return response;
         } catch (error) {
-          const duration = Date.now() - startTime;
-          logger.error("RPC request failed", {
-            service: serviceName,
-            method: methodName,
-            duration,
-            requestId: rpcCtx?.requestId,
-            error: error instanceof Error ? error.message : "Unknown error",
-          });
+          event.duration_ms = Date.now() - startTime;
+          event.outcome = "error";
+          event.error = {
+            type: error instanceof Error ? error.name : "UnknownError",
+            message: error instanceof Error ? error.message : String(error),
+          };
+
           throw error;
+        } finally {
+          // Emit single canonical log line
+          logger.info("rpc_request", { ...event });
         }
       },
     );
