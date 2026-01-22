@@ -1463,21 +1463,21 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
-  packages/notification-base:
+  packages/notifications/base:
     dependencies:
       '@openstatus/db':
         specifier: workspace:*
-        version: link:../db
+        version: link:../../db
       '@openstatus/regions':
         specifier: workspace:*
-        version: link:../regions
+        version: link:../../regions
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
-        version: link:../tsconfig
+        version: link:../../tsconfig
       '@types/node':
         specifier: 24.0.8
         version: 24.0.8
@@ -1495,7 +1495,7 @@ importers:
         version: link:../../db
       '@openstatus/notification-base':
         specifier: workspace:*
-        version: link:../../notification-base
+        version: link:../base
       zod:
         specifier: 4.1.13
         version: 4.1.13
@@ -1690,7 +1690,7 @@ importers:
         version: link:../../db
       '@openstatus/notification-base':
         specifier: workspace:*
-        version: link:../../notification-base
+        version: link:../base
       zod:
         specifier: 4.1.13
         version: 4.1.13
