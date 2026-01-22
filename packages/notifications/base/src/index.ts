@@ -10,3 +10,4 @@ export { formatDuration, calculateDuration } from "./utils/duration";
 export { formatTimestamp } from "./utils/timestamp";
 export { getIncidentDuration } from "./utils/incident";
 export { formatStatusCode, buildCommonMessageData } from "./utils/message";
+export { COLORS } from "./utils/colors";

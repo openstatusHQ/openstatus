@@ -1,5 +1,6 @@
 import { slackDataSchema } from "@openstatus/db/src/schema";
 import {
+  COLORS,
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
@@ -8,16 +9,6 @@ import {
   buildDegradedBlocks,
   buildRecoveryBlocks,
 } from "./blocks";
-
-/**
- * Slack attachment colors (hex values)
- * Reference: https://api.slack.com/reference/messaging/attachments#color
- */
-const COLORS = {
-  red: "#ED4245", // Alert/Error - red left border
-  yellow: "#FEE75C", // Degraded/Warning - yellow/orange left border
-  green: "#57F287", // Recovery/Success - green left border
-} as const;
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {

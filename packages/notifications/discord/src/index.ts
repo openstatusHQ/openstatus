@@ -1,5 +1,6 @@
 import { discordDataSchema } from "@openstatus/db/src/schema";
 import {
+  COLORS,
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
@@ -130,7 +131,7 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   const testEmbed: DiscordEmbed = {
     title: "Test Notification",
     description: "🧪 Your Discord webhook is configured correctly!",
-    color: 5763719, // green
+    color: COLORS.green,
     fields: [
       {
         name: "Status",

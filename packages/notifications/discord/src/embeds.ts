@@ -1,4 +1,7 @@
-import type { FormattedMessageData } from "@openstatus/notification-base";
+import {
+  COLORS,
+  type FormattedMessageData,
+} from "@openstatus/notification-base";
 
 /**
  * Discord Embed structure for webhook messages
@@ -24,18 +27,6 @@ export interface DiscordEmbed {
   footer: DiscordEmbedFooter;
   url: string;
 }
-
-/**
- * Discord embed colors (decimal values)
- * Red: #ED4245 = 15548997
- * Green: #57F287 = 5763719
- * Yellow: #FEE75C = 16705372
- */
-const COLORS = {
-  red: 15548997,
-  green: 5763719,
-  yellow: 16705372,
-} as const;
 
 /**
  * Builds Discord embed for alert notifications
