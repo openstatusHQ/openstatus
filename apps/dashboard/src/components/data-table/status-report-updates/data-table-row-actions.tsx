@@ -32,6 +32,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
@@ -41,6 +46,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: Number.parseInt(id),
+          }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
           }),
         });
       },
