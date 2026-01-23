@@ -18,8 +18,10 @@ import {
   StatusBannerTabsTrigger,
 } from "@/components/status-page/status-banner";
 import {
+  StatusEventAffected,
+  StatusEventAffectedBadge,
   StatusEventTimelineMaintenance,
-  StatusEventTimelineReport,
+  StatusEventTimelineReportUpdate,
 } from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
@@ -28,6 +30,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
@@ -136,21 +139,43 @@ export default function Page() {
                     (report) => report.id === e.id,
                   );
                   if (!report) return null;
+                  const lastUpdate = report.statusReportUpdates.sort(
+                    (a, b) => b.date.getTime() - a.date.getTime(),
+                  )[0];
+                  if (!lastUpdate) return null;
                   return (
                     <StatusBannerTabsContent
                       value={`${e.type}-${e.id}`}
                       key={`${e.type}-${e.id}`}
                     >
-                      <StatusBannerContainer status={e.status}>
-                        <StatusBannerContent>
-                          <StatusEventTimelineReport
-                            reportId={report.id}
-                            updates={report.statusReportUpdates}
-                            withDot={false}
-                            maxUpdates={3}
-                          />
-                        </StatusBannerContent>
-                      </StatusBannerContainer>
+                      <Link
+                        href={`./events/report/${report.id}`}
+                        className="rounded-lg"
+                      >
+                        <StatusBannerContainer status={e.status}>
+                          <StatusBannerContent>
+                            <StatusEventTimelineReportUpdate
+                              report={lastUpdate}
+                              withDot={false}
+                              isLast={true}
+                              withSeparator={false}
+                            />
+                            {report.monitorsToStatusReports.length > 0 ? (
+                              <StatusEventAffected>
+                                {report.monitorsToStatusReports.map(
+                                  (affected) => (
+                                    <StatusEventAffectedBadge
+                                      key={affected.monitor.id}
+                                    >
+                                      {affected.monitor.name}
+                                    </StatusEventAffectedBadge>
+                                  ),
+                                )}
+                              </StatusEventAffected>
+                            ) : null}
+                          </StatusBannerContent>
+                        </StatusBannerContainer>
+                      </Link>
                     </StatusBannerTabsContent>
                   );
                 }
@@ -164,14 +189,32 @@ export default function Page() {
                       value={`${e.type}-${e.id}`}
                       key={e.id}
                     >
-                      <StatusBannerContainer status={e.status}>
-                        <StatusBannerContent>
-                          <StatusEventTimelineMaintenance
-                            maintenance={maintenance}
-                            withDot={false}
-                          />
-                        </StatusBannerContent>
-                      </StatusBannerContainer>
+                      <Link
+                        href={`./events/maintenance/${maintenance.id}`}
+                        className="rounded-lg"
+                      >
+                        <StatusBannerContainer status={e.status}>
+                          <StatusBannerContent>
+                            <StatusEventTimelineMaintenance
+                              maintenance={maintenance}
+                              withDot={false}
+                            />
+                            {maintenance.maintenancesToMonitors.length > 0 ? (
+                              <StatusEventAffected>
+                                {maintenance.maintenancesToMonitors.map(
+                                  (affected) => (
+                                    <StatusEventAffectedBadge
+                                      key={affected.monitor.id}
+                                    >
+                                      {affected.monitor.name}
+                                    </StatusEventAffectedBadge>
+                                  ),
+                                )}
+                              </StatusEventAffected>
+                            ) : null}
+                          </StatusBannerContent>
+                        </StatusBannerContainer>
+                      </Link>
                     </StatusBannerTabsContent>
                   );
                 }

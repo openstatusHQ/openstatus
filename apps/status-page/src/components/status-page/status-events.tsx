@@ -106,7 +106,7 @@ export function StatusEventAffected({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex flex-wrap gap-px", className)} {...props}>
+    <div className={cn("flex flex-wrap gap-1", className)} {...props}>
       {children}
     </div>
   );
@@ -187,11 +187,11 @@ export function StatusEventTimelineReport({
   withDot?: boolean;
   maxUpdates?: number;
 }) {
-  const prefix = usePathnamePrefix();
+  const _prefix = usePathnamePrefix();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
-  const hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
+  const _hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;
@@ -223,25 +223,17 @@ export function StatusEventTimelineReport({
             key={index}
             report={update}
             duration={durationText}
-            withSeparator={
-              index !== displayedUpdates.length - 1 && !hasMoreUpdates
-            }
+            withSeparator={index !== displayedUpdates.length - 1}
             withDot={withDot}
-            isLast={index === displayedUpdates.length - 1 && !hasMoreUpdates}
+            isLast={index === displayedUpdates.length - 1}
           />
         );
       })}
-      {hasMoreUpdates && (
-        <StatusEventTimelineReadMore
-          href={`${prefix ? `/${prefix}` : ""}/events/report/${reportId}`}
-          withDot={withDot}
-        />
-      )}
     </div>
   );
 }
 
-function StatusEventTimelineReportUpdate({
+export function StatusEventTimelineReportUpdate({
   report,
   duration,
   withSeparator = true,
@@ -273,6 +265,7 @@ function StatusEventTimelineReportUpdate({
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
+              <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
                   <span>{formatDateTime(report.date)}</span>
@@ -360,6 +353,7 @@ export function StatusEventTimelineMaintenance({
           <div>
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
+              <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={maintenance.from} asChild>
                   <span>{from}</span>
