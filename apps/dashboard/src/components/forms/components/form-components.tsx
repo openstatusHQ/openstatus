@@ -505,6 +505,7 @@ export function FormComponents({
                     >
                       <DropdownMenuGroup>
                         <DropdownMenuItem
+                          disabled
                           onClick={() => {
                             form.setValue("components", [
                               ...field.value,
@@ -520,7 +521,7 @@ export function FormComponents({
                           }}
                         >
                           <Link2Off className="text-muted-foreground" />
-                          Add External
+                          Add External (soon)
                         </DropdownMenuItem>
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
@@ -1001,6 +1002,7 @@ function ComponentGroupRow({
                 >
                   <DropdownMenuGroup>
                     <DropdownMenuItem
+                      disabled
                       onClick={() => {
                         const current = field.value ?? [];
                         form.setValue(`groups.${groupIndex}.components`, [
@@ -1017,7 +1019,7 @@ function ComponentGroupRow({
                       }}
                     >
                       <Link2Off className="text-muted-foreground" />
-                      Add External
+                      Add External (soon)
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
