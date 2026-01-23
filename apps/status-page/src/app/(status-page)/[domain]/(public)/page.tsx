@@ -156,7 +156,7 @@ export default function Page() {
                           <StatusBannerContent>
                             <StatusEventTimelineReportUpdate
                               report={lastUpdate}
-                              withDot={true}
+                              withDot={false}
                               isLast={true}
                               withSeparator={false}
                             />
