@@ -1,5 +1,5 @@
 import { and, count, db, eq, gte, inArray, schema } from "@openstatus/db";
-import type { MonitorStatus } from "@openstatus/db/src/schema";
+import type { Incident, MonitorStatus } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
@@ -21,7 +21,7 @@ export const triggerNotifications = async ({
   notifType,
   cronTimestamp,
   incidentId,
-  region,
+  regions,
   latency,
 }: {
   monitorId: string;
@@ -29,14 +29,29 @@ export const triggerNotifications = async ({
   message?: string;
   notifType: "alert" | "recovery" | "degraded";
   cronTimestamp: number;
-  incidentId: string;
-  region?: Region;
+  incidentId?: number;
+  regions?: string[];
   latency?: number;
 }) => {
   logger.info("Triggering alerting", {
     monitor_id: monitorId,
     notification_type: notifType,
   });
+
+  let incident: Incident | undefined;
+  if (incidentId) {
+    try {
+      incident = await db.query.incidentTable.findFirst({
+        where: eq(schema.incidentTable.id, incidentId),
+      });
+    } catch (err) {
+      logger.warn("Failed to fetch incident data", {
+        incident_id: incidentId,
+        error_message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)
@@ -129,9 +144,9 @@ export const triggerNotifications = async ({
               notification: selectNotificationSchema.parse(notif.notification),
               statusCode,
               message,
-              incidentId,
+              incident,
               cronTimestamp,
-              region,
+              regions,
               latency,
             }),
 
@@ -161,9 +176,9 @@ export const triggerNotifications = async ({
               notification: selectNotificationSchema.parse(notif.notification),
               statusCode,
               message,
-              incidentId,
+              incident,
               cronTimestamp,
-              region,
+              regions,
               latency,
             }),
           catch: (_unknown) =>
@@ -192,9 +207,9 @@ export const triggerNotifications = async ({
               notification: selectNotificationSchema.parse(notif.notification),
               statusCode,
               message,
-              incidentId,
+              incident,
               cronTimestamp,
-              region,
+              regions,
               latency,
             }),
           catch: (_unknown) =>

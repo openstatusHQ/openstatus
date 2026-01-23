@@ -19,7 +19,7 @@ incidentRoute.get("/cleanup", async (c) => {
   const unresolvedIncidentMonitorIds = db
     .select({ monitorId: schema.incidentTable.monitorId })
     .from(schema.incidentTable)
-    .where(and(isNull(schema.incidentTable.resolvedAt)));
+    .where(isNull(schema.incidentTable.resolvedAt));
 
   const activeMonitorsWithUnresolvedIncidents = await db
     .select({ id: schema.monitor.id })

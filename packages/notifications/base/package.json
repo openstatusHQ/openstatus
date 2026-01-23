@@ -1,6 +1,7 @@
 {
-  "name": "@openstatus/notification-ntfy",
-  "version": "1.0.0",
+  "name": "@openstatus/notification-base",
+  "version": "0.0.1",
+  "description": "Shared types and utilities for OpenStatus notification providers",
   "main": "src/index.ts",
   "scripts": {
     "test": "bun test",
@@ -8,13 +9,15 @@
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
-    "@openstatus/notification-base": "workspace:*",
-    "zod": "4.1.13"
+    "@openstatus/regions": "workspace:*"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "24.0.8",
     "bun-types": "1.3.1",
     "typescript": "5.9.3"
-  }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

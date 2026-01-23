@@ -1,9 +1,5 @@
-import type {
-  Monitor,
-  Notification,
-  NotificationProvider,
-} from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationProvider } from "@openstatus/db/src/schema";
+import type { NotificationContext } from "@openstatus/notification-base";
 import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,
@@ -60,25 +56,7 @@ import {
   sendRecovery as sendWebhookRecovery,
 } from "@openstatus/notification-webhook";
 
-type SendNotification = ({
-  monitor,
-  notification,
-  statusCode,
-  message,
-  incidentId,
-  cronTimestamp,
-  latency,
-  region,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => Promise<void>;
+type SendNotification = (props: NotificationContext) => Promise<void>;
 
 type Notif = {
   sendAlert: SendNotification;
@@ -86,7 +64,7 @@ type Notif = {
   sendDegraded: SendNotification;
 };
 
-export const providerToFunction = {
+export const providerToFunction: Record<NotificationProvider, Notif> = {
   discord: {
     sendAlert: sendDiscordAlert,
     sendRecovery: sendDiscordRecovery,
@@ -142,4 +120,4 @@ export const providerToFunction = {
     sendRecovery: sendTelegramRecovery,
     sendDegraded: sendTelegramDegraded,
   },
-} satisfies Record<NotificationProvider, Notif>;
+};
