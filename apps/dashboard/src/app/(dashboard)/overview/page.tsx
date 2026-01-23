@@ -130,85 +130,89 @@ export default function Page() {
   ];
 
   return (
-    <SectionGroup>
-      <Note>
-        <Terminal />
-        Use Monitoring as Code to manage your monitors with our CLI.
-        <NoteButton variant="outline" asChild>
-          <Link href="/cli">Learn more</Link>
-        </NoteButton>
-      </Note>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Overview</SectionTitle>
-          <SectionDescription>
-            Welcome to your OpenStatus dashboard.
-          </SectionDescription>
-        </SectionHeader>
-        <MetricCardGroup>
-          {metrics.map((metric) => (
-            <Link
-              href={metric.href}
-              key={metric.title}
-              className={cn(metric.disabled && "pointer-events-none")}
-              aria-disabled={metric.disabled}
-            >
-              <MetricCard variant={metric.variant}>
-                <MetricCardHeader className="flex items-center justify-between gap-2">
-                  <MetricCardTitle className="truncate">
-                    {metric.title}
-                  </MetricCardTitle>
-                  <metric.icon className="size-4" />
-                </MetricCardHeader>
-                <MetricCardValue>{metric.value}</MetricCardValue>
-              </MetricCard>
-            </Link>
-          ))}
-        </MetricCardGroup>
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Incidents</SectionTitle>
-          <SectionDescription>
-            Incidents over the last 7 days.
-          </SectionDescription>
-        </SectionHeader>
-        {incidents.length > 0 ? (
-          <DataTable columns={incidentsColumns} data={incidents} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No incidents found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Reports</SectionTitle>
-          <SectionDescription>Reports over the last 7 days.</SectionDescription>
-        </SectionHeader>
-        {statusReports && statusReports.length > 0 ? (
-          <DataTableStatusReports statusReports={statusReports} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No reports found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Maintenance</SectionTitle>
-          <SectionDescription>
-            Maintenance over the last 7 days.
-          </SectionDescription>
-        </SectionHeader>
-        {maintenances.length > 0 ? (
-          <DataTable columns={maintenancesColumns} data={maintenances} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No maintenances found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
-    </SectionGroup>
+    <HydrateClient>
+      <SectionGroup>
+        <Note>
+          <Terminal />
+          Use Monitoring as Code to manage your monitors with our CLI.
+          <NoteButton variant="default" asChild>
+            <Link href="/cli">Learn more</Link>
+          </NoteButton>
+        </Note>
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Overview</SectionTitle>
+            <SectionDescription>
+              Welcome to your OpenStatus dashboard.
+            </SectionDescription>
+          </SectionHeader>
+          <MetricCardGroup>
+            {metrics.map((metric) => (
+              <Link
+                href={metric.href}
+                key={metric.title}
+                className={cn(metric.disabled && "pointer-events-none")}
+                aria-disabled={metric.disabled}
+              >
+                <MetricCard variant={metric.variant}>
+                  <MetricCardHeader className="flex items-center justify-between gap-2">
+                    <MetricCardTitle className="truncate">
+                      {metric.title}
+                    </MetricCardTitle>
+                    <metric.icon className="size-4" />
+                  </MetricCardHeader>
+                  <MetricCardValue>{metric.value}</MetricCardValue>
+                </MetricCard>
+              </Link>
+            ))}
+          </MetricCardGroup>
+        </Section>
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Incidents</SectionTitle>
+            <SectionDescription>
+              Incidents over the last 7 days.
+            </SectionDescription>
+          </SectionHeader>
+          {incidents.length > 0 ? (
+            <DataTable columns={incidentsColumns} data={incidents} />
+          ) : (
+            <EmptyStateContainer>
+              <EmptyStateTitle>No incidents found</EmptyStateTitle>
+            </EmptyStateContainer>
+          )}
+        </Section>
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Reports</SectionTitle>
+            <SectionDescription>
+              Reports over the last 7 days.
+            </SectionDescription>
+          </SectionHeader>
+          {statusReports.length > 0 ? (
+            <DataTableStatusReports statusReports={statusReports} />
+          ) : (
+            <EmptyStateContainer>
+              <EmptyStateTitle>No reports found</EmptyStateTitle>
+            </EmptyStateContainer>
+          )}
+        </Section>
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Maintenance</SectionTitle>
+            <SectionDescription>
+              Maintenance over the last 7 days.
+            </SectionDescription>
+          </SectionHeader>
+          {maintenances.length > 0 ? (
+            <DataTable columns={maintenancesColumns} data={maintenances} />
+          ) : (
+            <EmptyStateContainer>
+              <EmptyStateTitle>No maintenances found</EmptyStateTitle>
+            </EmptyStateContainer>
+          )}
+        </Section>
+      </SectionGroup>
+    </HydrateClient>
   );
 }

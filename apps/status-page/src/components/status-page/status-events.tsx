@@ -8,10 +8,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import { formatDistanceStrict } from "date-fns";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { status } from "./messages";
 
 export function StatusEventGroup({
@@ -171,52 +173,70 @@ export function StatusEventTimelineReport({
   className,
   updates,
   withDot = true,
+  maxUpdates,
+  reportId,
   ...props
 }: React.ComponentProps<"div"> & {
   // TODO: remove unused props
+  reportId: number;
   updates: {
     date: Date;
     message: string;
     status: "investigating" | "identified" | "monitoring" | "resolved";
   }[];
   withDot?: boolean;
+  maxUpdates?: number;
 }) {
+  const prefix = usePathnamePrefix();
+  const sortedUpdates = [...updates].sort(
+    (a, b) => b.date.getTime() - a.date.getTime(),
+  );
+  const hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
+  const displayedUpdates = maxUpdates
+    ? sortedUpdates.slice(0, maxUpdates)
+    : sortedUpdates;
+
   return (
     <div className={cn("text-muted-foreground text-sm", className)} {...props}>
       {/* NOTE: make sure they are sorted by date */}
-      {updates
-        .sort((a, b) => b.date.getTime() - a.date.getTime())
-        .map((update, index) => {
-          const updateDate = new Date(update.date);
-          let durationText: string | undefined;
+      {displayedUpdates.map((update, index) => {
+        const updateDate = new Date(update.date);
+        let durationText: string | undefined;
 
-          if (index === 0) {
-            const startedAt = new Date(updates[updates.length - 1].date);
-            const duration = formatDistanceStrict(startedAt, updateDate);
-
-            if (duration !== "0 seconds" && update.status === "resolved") {
-              durationText = `(in ${duration})`;
-            }
-          } else {
-            const lastUpdateDate = new Date(updates[index - 1].date);
-            const timeFromLast = formatDistanceStrict(
-              updateDate,
-              lastUpdateDate,
-            );
-            durationText = `(${timeFromLast} earlier)`;
-          }
-
-          return (
-            <StatusEventTimelineReportUpdate
-              key={index}
-              report={update}
-              duration={durationText}
-              withSeparator={index !== updates.length - 1}
-              withDot={withDot}
-              isLast={index === updates.length - 1}
-            />
+        if (index === 0) {
+          const startedAt = new Date(
+            sortedUpdates[sortedUpdates.length - 1].date,
           );
-        })}
+          const duration = formatDistanceStrict(startedAt, updateDate);
+
+          if (duration !== "0 seconds" && update.status === "resolved") {
+            durationText = `(in ${duration})`;
+          }
+        } else {
+          const lastUpdateDate = new Date(displayedUpdates[index - 1].date);
+          const timeFromLast = formatDistanceStrict(updateDate, lastUpdateDate);
+          durationText = `(${timeFromLast} earlier)`;
+        }
+
+        return (
+          <StatusEventTimelineReportUpdate
+            key={index}
+            report={update}
+            duration={durationText}
+            withSeparator={
+              index !== displayedUpdates.length - 1 && !hasMoreUpdates
+            }
+            withDot={withDot}
+            isLast={index === displayedUpdates.length - 1 && !hasMoreUpdates}
+          />
+        );
+      })}
+      {hasMoreUpdates && (
+        <StatusEventTimelineReadMore
+          href={`${prefix ? `/${prefix}` : ""}/events/report/${reportId}`}
+          withDot={withDot}
+        />
+      )}
     </div>
   );
 }
@@ -272,6 +292,37 @@ function StatusEventTimelineReportUpdate({
               )}
             </StatusEventTimelineMessage>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusEventTimelineReadMore({
+  href,
+  withDot = true,
+}: {
+  href: string;
+  withDot?: boolean;
+}) {
+  return (
+    <div className="group">
+      <div className="flex flex-row items-center justify-between gap-2">
+        <div className="flex flex-row gap-4">
+          {withDot ? (
+            <div className="flex flex-col">
+              <div className="flex h-5 flex-col items-center justify-center">
+                <div className="size-2.5 shrink-0 rounded-full bg-muted" />
+              </div>
+            </div>
+          ) : null}
+          <Link
+            href={href}
+            className="flex items-center gap-1 font-medium text-muted-foreground text-sm hover:text-foreground hover:underline"
+          >
+            View full report
+            <ChevronRight className="size-4" />
+          </Link>
         </div>
       </div>
     </div>

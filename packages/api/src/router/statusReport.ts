@@ -9,6 +9,8 @@ import {
   gte,
   inArray,
   sql,
+  syncStatusReportToMonitorDeleteByStatusReport,
+  syncStatusReportToMonitorInsertMany,
 } from "@openstatus/db";
 import {
   insertStatusReportSchema,
@@ -58,6 +60,12 @@ export const statusReportRouter = createTRPCRouter({
           )
           .returning()
           .get();
+        // Sync to page components
+        await syncStatusReportToMonitorInsertMany(
+          opts.ctx.db,
+          newStatusReport.id,
+          monitors,
+        );
       }
 
       return newStatusReport;
@@ -144,6 +152,12 @@ export const statusReportRouter = createTRPCRouter({
         }));
 
         await opts.ctx.db.insert(monitorsToStatusReport).values(values).run();
+        // Sync to page components
+        await syncStatusReportToMonitorInsertMany(
+          opts.ctx.db,
+          currentStatusReport.id,
+          addedMonitors,
+        );
       }
 
       const removedMonitors = currentMonitorsToStatusReport
@@ -160,6 +174,7 @@ export const statusReportRouter = createTRPCRouter({
             ),
           )
           .run();
+        // Sync delete is handled by cascade on page_component deletion
       }
 
       return currentStatusReport;
@@ -478,6 +493,12 @@ export const statusReportRouter = createTRPCRouter({
             )
             .returning()
             .get();
+          // Sync to page components
+          await syncStatusReportToMonitorInsertMany(
+            tx,
+            newStatusReport.id,
+            opts.input.monitors,
+          );
         }
 
         return {
@@ -518,6 +539,8 @@ export const statusReportRouter = createTRPCRouter({
           .delete(monitorsToStatusReport)
           .where(eq(monitorsToStatusReport.statusReportId, opts.input.id))
           .run();
+        // Sync delete to page components
+        await syncStatusReportToMonitorDeleteByStatusReport(tx, opts.input.id);
 
         if (opts.input.monitors.length > 0) {
           await tx
@@ -529,6 +552,12 @@ export const statusReportRouter = createTRPCRouter({
               })),
             )
             .run();
+          // Sync to page components
+          await syncStatusReportToMonitorInsertMany(
+            tx,
+            opts.input.id,
+            opts.input.monitors,
+          );
         }
       });
     }),

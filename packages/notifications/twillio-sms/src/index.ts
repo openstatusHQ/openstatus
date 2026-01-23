@@ -1,7 +1,5 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
-
 import { phoneDataSchema } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 import { env } from "./env";
 
 export const sendAlert = async ({
@@ -9,18 +7,7 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
@@ -54,22 +41,7 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
@@ -98,20 +70,7 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const notificationData = phoneDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 

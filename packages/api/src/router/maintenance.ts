@@ -9,6 +9,8 @@ import {
   gte,
   inArray,
   lte,
+  syncMaintenanceToMonitorDeleteByMaintenance,
+  syncMaintenanceToMonitorInsertMany,
 } from "@openstatus/db";
 import {
   maintenance,
@@ -219,6 +221,12 @@ export const maintenanceRouter = createTRPCRouter({
               monitorId,
             })),
           );
+          // Sync to page components
+          await syncMaintenanceToMonitorInsertMany(
+            tx,
+            newMaintenance.id,
+            opts.input.monitors,
+          );
         }
 
         return newMaintenance;
@@ -289,6 +297,8 @@ export const maintenanceRouter = createTRPCRouter({
           .delete(maintenancesToMonitors)
           .where(eq(maintenancesToMonitors.maintenanceId, _maintenance.id))
           .run();
+        // Sync delete to page components
+        await syncMaintenanceToMonitorDeleteByMaintenance(tx, _maintenance.id);
 
         // Create new relations if monitors are provided
         if (opts.input.monitors?.length) {
@@ -297,6 +307,12 @@ export const maintenanceRouter = createTRPCRouter({
               maintenanceId: _maintenance.id,
               monitorId,
             })),
+          );
+          // Sync to page components
+          await syncMaintenanceToMonitorInsertMany(
+            tx,
+            _maintenance.id,
+            opts.input.monitors,
           );
         }
 

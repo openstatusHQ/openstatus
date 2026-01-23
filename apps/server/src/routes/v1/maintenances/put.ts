@@ -2,7 +2,15 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import { and, db, eq, inArray, isNull } from "@openstatus/db";
+import {
+  and,
+  db,
+  eq,
+  inArray,
+  isNull,
+  syncMaintenanceToMonitorDeleteByMaintenance,
+  syncMaintenanceToMonitorInsertMany,
+} from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import {
   maintenance,
@@ -128,6 +136,8 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
           .delete(maintenancesToMonitors)
           .where(eq(maintenancesToMonitors.maintenanceId, Number(id)))
           .run();
+        // Sync delete to page components
+        await syncMaintenanceToMonitorDeleteByMaintenance(tx, Number(id));
 
         // Add new monitor associations
         if (monitorIds.length > 0) {
@@ -140,6 +150,8 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
               })),
             )
             .run();
+          // Sync to page components
+          await syncMaintenanceToMonitorInsertMany(tx, Number(id), monitorIds);
         }
       }
 

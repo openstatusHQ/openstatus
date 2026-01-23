@@ -247,12 +247,27 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				Region:        h.Region,
 				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
+				Latency:       res.Latency,
 			})
 			data.RequestStatus = "success"
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+		}
+
+
+		e, f := c.Get("event")
+		if f {
+			t := e.(map[string]any)
+			t["checker"] = map[string]string{
+				"uri": req.URL,
+				"workspace_id": req.WorkspaceID,
+				"monitor_id":req.MonitorID,
+				"trigger": trigger,
+				"type": "http",
+			}
+			c.Set("event", t)
 		}
 
 		return nil

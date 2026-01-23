@@ -203,6 +203,19 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 	}
 
+	event, f := c.Get("event")
+	if f {
+		t := event.(map[string]any)
+		t["checker"] = map[string]string{
+			"uri": req.URI,
+			"workspace_id": req.WorkspaceID,
+			"monitor_id":req.MonitorID,
+			"trigger": trigger,
+			"type": "dns",
+		}
+		c.Set("event", t)
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 

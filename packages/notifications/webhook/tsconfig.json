@@ -1,4 +1,5 @@
 {
-  "extends": "@openstatus/tsconfig/nextjs.json",
-  "include": ["src", "*.ts"]
+  "extends": "@openstatus/tsconfig/base.json",
+  "include": ["src", "*.ts"],
+  "exclude": ["**/*.test.ts", "**/*.spec.ts"]
 }

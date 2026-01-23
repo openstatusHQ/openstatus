@@ -98,13 +98,6 @@ export const webhookRouter = createTRPCRouter({
         .where(eq(user.email, customer.email))
         .get();
       if (!userResult) return;
-
-      const analytics = await setupAnalytics({
-        userId: `usr_${userResult.id}`,
-        email: userResult.email || undefined,
-        workspaceId: String(result.id),
-      });
-      await analytics.track(Events.AddFeature);
     }
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {

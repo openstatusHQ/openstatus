@@ -126,7 +126,10 @@ export function StatusFeed({
                       ))}
                     </StatusEventAffected>
                   )}
-                  <StatusEventTimelineReport updates={report.updates} />
+                  <StatusEventTimelineReport
+                    updates={report.updates}
+                    reportId={report.id}
+                  />
                 </StatusEventContent>
               </Link>
             </StatusEvent>

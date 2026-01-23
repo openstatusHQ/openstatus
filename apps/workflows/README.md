@@ -30,6 +30,8 @@ The Dockerfile is generated thanks to [Dofigen](https://github.com/lenra-io/dofi
 To generate the Dockerfile, run the following command from the `apps/workflows` directory:
 
 ```bash
+# Install Dofigen
+cargo install dofigen
 # Update the dependent image versions
 dofigen update
 # Generate the Dockerfile

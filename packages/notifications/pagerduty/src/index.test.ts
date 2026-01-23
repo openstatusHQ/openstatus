@@ -31,6 +31,16 @@ describe("PagerDuty Notifications", () => {
     region: "us-east-1",
   });
 
+  const createMockIncident = () => ({
+    id: 1,
+    title: "API Health Check is down",
+    summary: "API Health Check is down",
+    status: "triage" as const,
+    monitorId: "monitor-1",
+    workspaceId: 1,
+    startedAt: Date.now(),
+  });
+
   const createMockNotification = () => ({
     id: 1,
     name: "PagerDuty Notification",
@@ -46,14 +56,16 @@ describe("PagerDuty Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
+    const incident = createMockIncident();
 
     await sendAlert({
       // @ts-expect-error
       monitor,
       notification,
+      // @ts-expect-error
+      incident,
       statusCode: 500,
       message: "Something went wrong",
-      incidentId: "incident-123",
       cronTimestamp: Date.now(),
     });
 
@@ -64,7 +76,7 @@ describe("PagerDuty Notifications", () => {
 
     const body = JSON.parse(callArgs[1].body);
     expect(body.routing_key).toBe("my_key");
-    expect(body.dedup_key).toBe("monitor-1}-incident-123");
+    expect(body.dedup_key).toBe("monitor-1");
     expect(body.event_action).toBe("trigger");
     expect(body.payload.summary).toBe("API Health Check is down");
     expect(body.payload.severity).toBe("error");
@@ -83,6 +95,7 @@ describe("PagerDuty Notifications", () => {
       updatedAt: new Date(),
       data: '{"pagerduty":"{\\"integration_keys\\":[{\\"integration_key\\":\\"key1\\",\\"name\\":\\"Service 1\\",\\"id\\":\\"ABCD\\",\\"type\\":\\"service\\"},{\\"integration_key\\":\\"key2\\",\\"name\\":\\"Service 2\\",\\"id\\":\\"EFGH\\",\\"type\\":\\"service\\"}],\\"account\\":{\\"subdomain\\":\\"test\\",\\"name\\":\\"test\\"}}"}',
     });
+    const incident = createMockIncident();
 
     await sendAlert({
       // @ts-expect-error
@@ -90,7 +103,8 @@ describe("PagerDuty Notifications", () => {
       notification,
       statusCode: 500,
       message: "Error",
-      incidentId: "incident-456",
+      // @ts-expect-error
+      incident,
       cronTimestamp: Date.now(),
     });
 
@@ -104,6 +118,7 @@ describe("PagerDuty Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
+    const incident = createMockIncident();
 
     await sendDegraded({
       // @ts-expect-error
@@ -111,6 +126,8 @@ describe("PagerDuty Notifications", () => {
       notification,
       statusCode: 503,
       message: "Service degraded",
+      // @ts-expect-error
+      incident,
       cronTimestamp: Date.now(),
     });
 
@@ -119,7 +136,7 @@ describe("PagerDuty Notifications", () => {
     const body = JSON.parse(callArgs[1].body);
     expect(body.payload.summary).toBe("API Health Check is degraded");
     expect(body.payload.severity).toBe("warning");
-    expect(body.dedup_key).toBe("monitor-1}");
+    expect(body.dedup_key).toBe("monitor-1");
   });
 
   test("Send Recovery", async () => {
@@ -127,6 +144,7 @@ describe("PagerDuty Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
+    const incident = createMockIncident();
 
     await sendRecovery({
       // @ts-expect-error
@@ -134,7 +152,8 @@ describe("PagerDuty Notifications", () => {
       notification,
       statusCode: 200,
       message: "Service recovered",
-      incidentId: "incident-123",
+      // @ts-expect-error
+      incident,
       cronTimestamp: Date.now(),
     });
 
@@ -143,7 +162,7 @@ describe("PagerDuty Notifications", () => {
     expect(callArgs[0]).toBe("https://events.pagerduty.com/v2/enqueue");
     const body = JSON.parse(callArgs[1].body);
     expect(body.routing_key).toBe("my_key");
-    expect(body.dedup_key).toBe("monitor-1}-incident-123");
+    expect(body.dedup_key).toBe("monitor-1");
     expect(body.event_action).toBe("resolve");
   });
 
@@ -189,6 +208,7 @@ describe("PagerDuty Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
+    const incident = createMockIncident();
 
     expect(
       sendAlert({
@@ -197,6 +217,8 @@ describe("PagerDuty Notifications", () => {
         notification,
         statusCode: 500,
         message: "Error",
+        // @ts-expect-error
+        incident,
         cronTimestamp: Date.now(),
       }),
     ).rejects.toThrow();
