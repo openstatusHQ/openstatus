@@ -28,7 +28,6 @@ export function getPeriodDate(period: Period): Date {
     case "1d":
       return new Date(now - 1 * 24 * 60 * 60 * 1000);
     case "7d":
-      console.log("7d serever", new Date(now - 7 * 24 * 60 * 60 * 1000));
       return new Date(now - 7 * 24 * 60 * 60 * 1000);
     case "14d":
       return new Date(now - 14 * 24 * 60 * 60 * 1000);

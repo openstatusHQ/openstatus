@@ -182,10 +182,6 @@ export const incidentRouter = createTRPCRouter({
     .input(
       z
         .object({
-          /**
-           * Time period for filtering incidents (e.g., "1d", "7d", "14d")
-           * Takes precedence over startedAt if provided
-           */
           period: z.enum(periods).optional(),
           monitorId: z.number().nullish(),
           order: z.enum(["asc", "desc"]).optional(),
@@ -197,7 +193,6 @@ export const incidentRouter = createTRPCRouter({
         eq(incidentTable.workspaceId, opts.ctx.workspace.id),
       ];
 
-      // Use period if provided, otherwise fall back to startedAt
       if (opts.input?.period) {
         whereConditions.push(
           gte(incidentTable.startedAt, getPeriodDate(opts.input.period)),

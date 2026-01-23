@@ -388,10 +388,6 @@ export const statusReportRouter = createTRPCRouter({
   list: protectedProcedure
     .input(
       z.object({
-        /**
-         * Time period for filtering status reports (e.g., "1d", "7d", "14d")
-         * Takes precedence over createdAt if provided
-         */
         period: z.enum(periods).optional(),
         order: z.enum(["asc", "desc"]).optional(),
         pageId: z.number().optional(),
@@ -402,7 +398,6 @@ export const statusReportRouter = createTRPCRouter({
         eq(statusReport.workspaceId, opts.ctx.workspace.id),
       ];
 
-      // Use period if provided, otherwise fall back to createdAt
       if (opts.input?.period) {
         whereConditions.push(
           gte(statusReport.createdAt, getPeriodDate(opts.input.period)),
