@@ -64,9 +64,7 @@ export const maintenancesToMonitorsRelations = relations(
 );
 
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
-  // Legacy relation - will be deprecated after migration is complete
   maintenancesToMonitors: many(maintenancesToMonitors),
-  // New relation using pageComponents architecture
   maintenancesToPageComponents: many(maintenancesToPageComponents),
   page: one(page, {
     fields: [maintenance.pageId],
