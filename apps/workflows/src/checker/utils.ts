@@ -1,9 +1,5 @@
-import type {
-  Incident,
-  Monitor,
-  Notification,
-  NotificationProvider,
-} from "@openstatus/db/src/schema";
+import type { NotificationProvider } from "@openstatus/db/src/schema";
+import type { NotificationContext } from "@openstatus/notification-base";
 import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,
@@ -60,25 +56,7 @@ import {
   sendRecovery as sendWebhookRecovery,
 } from "@openstatus/notification-webhook";
 
-type SendNotification = ({
-  monitor,
-  notification,
-  statusCode,
-  message,
-  incident,
-  cronTimestamp,
-  latency,
-  regions,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incident?: Incident;
-  cronTimestamp: number;
-  latency?: number;
-  regions?: string[];
-}) => Promise<void>;
+type SendNotification = (props: NotificationContext) => Promise<void>;
 
 type Notif = {
   sendAlert: SendNotification;
