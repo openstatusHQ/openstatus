@@ -309,7 +309,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				Region:        h.Region,
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
-			å})
+			})
 		}
 	}
 
