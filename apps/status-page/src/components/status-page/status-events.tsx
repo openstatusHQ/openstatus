@@ -106,7 +106,7 @@ export function StatusEventAffected({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex flex-wrap gap-px", className)} {...props}>
+    <div className={cn("flex flex-wrap gap-1", className)} {...props}>
       {children}
     </div>
   );
@@ -265,6 +265,7 @@ export function StatusEventTimelineReportUpdate({
           <div className={cn(isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
+              <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
                   <span>{formatDateTime(report.date)}</span>
@@ -352,6 +353,7 @@ export function StatusEventTimelineMaintenance({
           <div>
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
+              <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
                 <TimestampHoverCard date={maintenance.from} asChild>
                   <span>{from}</span>
