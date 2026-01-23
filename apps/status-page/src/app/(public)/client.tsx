@@ -352,7 +352,10 @@ function ThemePlaygroundEvents({
                 ))}
               </StatusEventAffected>
             ) : null}
-            <StatusEventTimelineReport updates={report.statusReportUpdates} />
+            <StatusEventTimelineReport
+              updates={report.statusReportUpdates}
+              reportId={report.id}
+            />
           </StatusEventContent>
         </StatusEvent>
       </Status>

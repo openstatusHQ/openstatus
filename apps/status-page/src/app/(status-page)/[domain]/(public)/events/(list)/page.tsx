@@ -88,6 +88,7 @@ export default function Page() {
                       ) : null}
                       <StatusEventTimelineReport
                         updates={report.statusReportUpdates}
+                        reportId={report.id}
                       />
                     </StatusEventContent>
                   </Link>
