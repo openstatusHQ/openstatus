@@ -56,7 +56,9 @@ export const statusReportUpdate = sqliteTable("status_report_update", {
 export const StatusReportRelations = relations(
   statusReport,
   ({ one, many }) => ({
+    // Legacy relation - will be deprecated after migration is complete
     monitorsToStatusReports: many(monitorsToStatusReport),
+    // New relation using pageComponents architecture
     statusReportsToPageComponents: many(statusReportsToPageComponents),
     page: one(page, {
       fields: [statusReport.pageId],
