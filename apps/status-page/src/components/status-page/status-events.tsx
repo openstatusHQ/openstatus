@@ -187,11 +187,11 @@ export function StatusEventTimelineReport({
   withDot?: boolean;
   maxUpdates?: number;
 }) {
-  const prefix = usePathnamePrefix();
+  const _prefix = usePathnamePrefix();
   const sortedUpdates = [...updates].sort(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
-  const hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
+  const _hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
   const displayedUpdates = maxUpdates
     ? sortedUpdates.slice(0, maxUpdates)
     : sortedUpdates;
@@ -223,25 +223,17 @@ export function StatusEventTimelineReport({
             key={index}
             report={update}
             duration={durationText}
-            withSeparator={
-              index !== displayedUpdates.length - 1 && !hasMoreUpdates
-            }
+            withSeparator={index !== displayedUpdates.length - 1}
             withDot={withDot}
-            isLast={index === displayedUpdates.length - 1 && !hasMoreUpdates}
+            isLast={index === displayedUpdates.length - 1}
           />
         );
       })}
-      {hasMoreUpdates && (
-        <StatusEventTimelineReadMore
-          href={`${prefix ? `/${prefix}` : ""}/events/report/${reportId}`}
-          withDot={withDot}
-        />
-      )}
     </div>
   );
 }
 
-function StatusEventTimelineReportUpdate({
+export function StatusEventTimelineReportUpdate({
   report,
   duration,
   withSeparator = true,

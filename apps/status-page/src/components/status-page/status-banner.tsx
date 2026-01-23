@@ -111,7 +111,10 @@ export function StatusBannerContent({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("px-3 py-2 sm:px-4 sm:py-3", className)} {...props}>
+    <div
+      className={cn("flex flex-col gap-2 px-3 py-2 sm:px-4 sm:py-3", className)}
+      {...props}
+    >
       {children}
     </div>
   );
