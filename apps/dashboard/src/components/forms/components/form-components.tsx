@@ -566,7 +566,8 @@ export function FormComponents({
                                                 monitorId: monitor.id,
                                                 order: watchComponents.length,
                                                 name: monitor.name,
-                                                description: "",
+                                                description:
+                                                  monitor.description,
                                                 type: "monitor" as const,
                                               },
                                             ]);
@@ -1064,7 +1065,7 @@ function ComponentGroupRow({
                                               monitorId: monitor.id,
                                               order: current.length,
                                               name: monitor.name,
-                                              description: "",
+                                              description: monitor.description,
                                               type: "monitor" as const,
                                             },
                                           ],
