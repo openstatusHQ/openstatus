@@ -1009,6 +1009,20 @@ export const pageRouter = createTRPCRouter({
           }
         }
 
+        // Clear monitorGroupId from all monitorsToPages before deleting groups
+        // This prevents foreign key constraint errors
+        if (existingGroupIds.length > 0) {
+          await tx
+            .update(monitorsToPages)
+            .set({ monitorGroupId: null })
+            .where(
+              and(
+                eq(monitorsToPages.pageId, opts.input.id),
+                inArray(monitorsToPages.monitorGroupId, existingGroupIds),
+              ),
+            );
+        }
+
         // Handle groups: delete old groups and create new ones
         if (existingGroupIds.length > 0) {
           await tx
