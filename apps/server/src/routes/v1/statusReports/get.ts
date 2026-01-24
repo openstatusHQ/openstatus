@@ -63,11 +63,9 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       ..._statusUpdate,
       message,
       date,
-      monitorIds: statusReportsToPageComponents.length
-        ? statusReportsToPageComponents
-            .map((sr) => sr.pageComponent.monitorId)
-            .filter(notEmpty)
-        : null,
+      monitorIds: statusReportsToPageComponents
+        .map((sr) => sr.pageComponent.monitorId)
+        .filter(notEmpty),
 
       statusReportUpdateIds: statusReportUpdates.map((update) => update.id),
     });
