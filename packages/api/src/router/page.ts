@@ -30,6 +30,7 @@ import {
   selectMaintenanceSchema,
   selectMonitorGroupSchema,
   selectMonitorSchema,
+  selectPageComponentSchema,
   selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
   statusReport,
@@ -513,6 +514,7 @@ export const pageRouter = createTRPCRouter({
         with: {
           monitorsToPages: { with: { monitor: true, monitorGroup: true } },
           maintenances: true,
+          pageComponents: true,
         },
       });
 
@@ -529,6 +531,7 @@ export const pageRouter = createTRPCRouter({
             .prefault([]),
           monitorGroups: z.array(selectMonitorGroupSchema).prefault([]),
           maintenances: z.array(selectMaintenanceSchema).prefault([]),
+          pageComponents: z.array(selectPageComponentSchema).prefault([]),
         })
         .parse({
           ...data,
@@ -546,6 +549,7 @@ export const pageRouter = createTRPCRouter({
             ).values(),
           ),
           maintenances: data?.maintenances,
+          pageComponents: data?.pageComponents,
         });
     }),
 

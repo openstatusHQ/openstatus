@@ -22,11 +22,11 @@ export function FormSheetMaintenance({
   children,
   defaultValues,
   onSubmit,
-  monitors,
+  pageComponents,
   ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
-  monitors: { id: number; name: string; url: string }[];
+  pageComponents: { id: number; name: string }[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
@@ -46,7 +46,7 @@ export function FormSheetMaintenance({
         <FormCardGroup className="overflow-y-auto">
           <FormCard className="overflow-auto rounded-none border-none">
             <FormMaintenance
-              monitors={monitors}
+              pageComponents={pageComponents}
               onSubmit={async (values) => {
                 await onSubmit(values);
                 setOpen(false);

@@ -16,18 +16,19 @@ import {
 } from "@/components/forms/status-report/form";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import type { PageComponent } from "@openstatus/db/src/schema";
 import { useState } from "react";
 
 export function FormSheetStatusReport({
   children,
   defaultValues,
   onSubmit,
-  monitors,
+  pageComponents,
   warning,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  monitors: { id: number; name: string }[];
+  pageComponents: Pick<PageComponent, "id" | "name" | "type">[];
   warning?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -58,7 +59,7 @@ export function FormSheetStatusReport({
                 setOpen(false);
               }}
               defaultValues={defaultValues}
-              monitors={monitors}
+              pageComponents={pageComponents}
             />
           </FormCard>
         </FormCardGroup>

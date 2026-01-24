@@ -10,8 +10,9 @@ import {
   inArray,
   sql,
   syncStatusReportToMonitorDelete,
-  syncStatusReportToMonitorDeleteByStatusReport,
   syncStatusReportToMonitorInsertMany,
+  syncStatusReportToPageComponentDeleteByStatusReport,
+  syncStatusReportToPageComponentInsertMany,
 } from "@openstatus/db";
 import {
   insertStatusReportSchema,
@@ -19,6 +20,7 @@ import {
   monitorsToStatusReport,
   page,
   selectMonitorSchema,
+  selectPageComponentSchema,
   selectPageSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -27,6 +29,7 @@ import {
   statusReportStatus,
   statusReportStatusSchema,
   statusReportUpdate,
+  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -420,7 +423,8 @@ export const statusReportRouter = createTRPCRouter({
         with: {
           statusReportUpdates: true,
           monitorsToStatusReports: { with: { monitor: true } },
-          page: true,
+          statusReportsToPageComponents: { with: { pageComponent: true } },
+          page: { with: { pageComponents: true } },
         },
         orderBy: (statusReport) => [
           opts.input.order === "asc"
@@ -433,7 +437,10 @@ export const statusReportRouter = createTRPCRouter({
         .extend({
           updates: z.array(selectStatusReportUpdateSchema).prefault([]),
           monitors: z.array(selectMonitorSchema).prefault([]),
-          page: selectPageSchema,
+          pageComponents: z.array(selectPageComponentSchema).prefault([]),
+          page: selectPageSchema.extend({
+            pageComponents: z.array(selectPageComponentSchema).prefault([]),
+          }),
         })
         .array()
         .parse(
@@ -442,6 +449,9 @@ export const statusReportRouter = createTRPCRouter({
             updates: report.statusReportUpdates,
             monitors: report.monitorsToStatusReports.map(
               ({ monitor }) => monitor,
+            ),
+            pageComponents: report.statusReportsToPageComponents.map(
+              ({ pageComponent }) => pageComponent,
             ),
           })),
         );
@@ -454,7 +464,7 @@ export const statusReportRouter = createTRPCRouter({
         title: z.string(),
         status: z.enum(statusReportStatus),
         pageId: z.number(),
-        monitors: z.array(z.number()),
+        pageComponents: z.array(z.number()),
         date: z.coerce.date(),
         message: z.string(),
         notifySubscribers: z.boolean().nullish(),
@@ -484,22 +494,21 @@ export const statusReportRouter = createTRPCRouter({
           .returning()
           .get();
 
-        if (opts.input.monitors.length > 0) {
+        if (opts.input.pageComponents.length > 0) {
           await tx
-            .insert(monitorsToStatusReport)
+            .insert(statusReportsToPageComponents)
             .values(
-              opts.input.monitors.map((monitor) => ({
-                monitorId: monitor,
+              opts.input.pageComponents.map((pageComponent) => ({
+                pageComponentId: pageComponent,
                 statusReportId: newStatusReport.id,
               })),
             )
-            .returning()
-            .get();
-          // Sync to page components
-          await syncStatusReportToMonitorInsertMany(
+            .run();
+          // Reverse sync: page components -> monitors (for backward compatibility)
+          await syncStatusReportToPageComponentInsertMany(
             tx,
             newStatusReport.id,
-            opts.input.monitors,
+            opts.input.pageComponents,
           );
         }
 
@@ -515,7 +524,7 @@ export const statusReportRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        monitors: z.array(z.number()),
+        pageComponents: z.array(z.number()),
         title: z.string(),
         status: z.enum(statusReportStatus),
       }),
@@ -538,27 +547,32 @@ export const statusReportRouter = createTRPCRouter({
           .run();
 
         await tx
-          .delete(monitorsToStatusReport)
-          .where(eq(monitorsToStatusReport.statusReportId, opts.input.id))
+          .delete(statusReportsToPageComponents)
+          .where(
+            eq(statusReportsToPageComponents.statusReportId, opts.input.id),
+          )
           .run();
-        // Sync delete to page components
-        await syncStatusReportToMonitorDeleteByStatusReport(tx, opts.input.id);
+        // Reverse sync: delete from monitors (for backward compatibility)
+        await syncStatusReportToPageComponentDeleteByStatusReport(
+          tx,
+          opts.input.id,
+        );
 
-        if (opts.input.monitors.length > 0) {
+        if (opts.input.pageComponents.length > 0) {
           await tx
-            .insert(monitorsToStatusReport)
+            .insert(statusReportsToPageComponents)
             .values(
-              opts.input.monitors.map((monitor) => ({
-                monitorId: monitor,
+              opts.input.pageComponents.map((pageComponent) => ({
+                pageComponentId: pageComponent,
                 statusReportId: opts.input.id,
               })),
             )
             .run();
-          // Sync to page components
-          await syncStatusReportToMonitorInsertMany(
+          // Reverse sync: page components -> monitors (for backward compatibility)
+          await syncStatusReportToPageComponentInsertMany(
             tx,
             opts.input.id,
-            opts.input.monitors,
+            opts.input.pageComponents,
           );
         }
       });

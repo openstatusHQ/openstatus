@@ -52,7 +52,7 @@ const schema = z
     message: z.string(),
     startDate: z.date(),
     endDate: z.date(),
-    monitors: z.array(z.number()),
+    pageComponents: z.array(z.number()),
     notifySubscribers: z.boolean().optional(),
   })
   .refine((data) => data.endDate > data.startDate, {
@@ -66,11 +66,11 @@ export function FormMaintenance({
   defaultValues,
   onSubmit,
   className,
-  monitors,
+  pageComponents,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  monitors: { id: number; name: string; url: string }[];
+  pageComponents: { id: number; name: string }[];
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
@@ -86,7 +86,7 @@ export function FormMaintenance({
       message: "",
       startDate: new Date(),
       endDate: addDays(new Date(), 1),
-      monitors: [],
+      pageComponents: [],
       notifySubscribers: true,
     },
   });
@@ -416,31 +416,33 @@ export function FormMaintenance({
         <FormCardContent>
           <FormField
             control={form.control}
-            name="monitors"
+            name="pageComponents"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Monitors</FormLabel>
+                <FormLabel>Page Components</FormLabel>
                 <FormDescription>
-                  Connected monitors will be automatically deactivated for the
-                  period of time.
+                  Connected page components will be affected for the period of
+                  time.
                 </FormDescription>
-                {monitors.length ? (
+                {pageComponents.length ? (
                   <div className="grid gap-3">
                     <div className="flex items-center gap-2">
                       <FormControl>
                         <Checkbox
                           id="all"
-                          checked={field.value?.length === monitors.length}
+                          checked={
+                            field.value?.length === pageComponents.length
+                          }
                           onCheckedChange={(checked) => {
                             field.onChange(
-                              checked ? monitors.map((m) => m.id) : [],
+                              checked ? pageComponents.map((c) => c.id) : [],
                             );
                           }}
                         />
                       </FormControl>
                       <Label htmlFor="all">Select all</Label>
                     </div>
-                    {monitors.map((item) => (
+                    {pageComponents.map((item) => (
                       <div key={item.id} className="flex items-center gap-2">
                         <FormControl>
                           <Checkbox
@@ -460,7 +462,7 @@ export function FormMaintenance({
                   </div>
                 ) : (
                   <EmptyStateContainer>
-                    <EmptyStateTitle>No monitors found</EmptyStateTitle>
+                    <EmptyStateTitle>No page components found</EmptyStateTitle>
                   </EmptyStateContainer>
                 )}
                 <FormMessage />
