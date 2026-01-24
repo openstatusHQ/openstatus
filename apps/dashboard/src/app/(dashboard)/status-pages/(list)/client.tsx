@@ -1,5 +1,6 @@
 "use client";
 
+import { Note, NoteButton } from "@/components/common/note";
 import {
   SectionDescription,
   SectionGroup,
@@ -11,6 +12,8 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { Palette } from "lucide-react";
+import Link from "next/link";
 
 export function Client() {
   const trpc = useTRPC();
@@ -21,6 +24,15 @@ export function Client() {
 
   return (
     <SectionGroup>
+      <Note>
+        <Palette />
+        Create your own custom themes for your status pages.
+        <NoteButton variant="default" asChild>
+          <Link href="https://themes.openstatus.dev" target="_blank">
+            Learn more
+          </Link>
+        </NoteButton>
+      </Note>
       <SectionHeader>
         <SectionTitle>Status Pages</SectionTitle>
         <SectionDescription>

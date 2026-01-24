@@ -1,20 +1,14 @@
 package database
 
 import (
-	// "database/sql"
 	"database/sql"
 	"fmt"
-
-	// "log"
 	"os"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/joho/godotenv/autoload"
-	// "github.com/tursodatabase/go-libsql"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
-
-var DB *sqlx.DB
 
 var (
 	dbUrl      = os.Getenv("DB_URL")
@@ -22,6 +16,7 @@ var (
 	dbInstance *sqlx.DB
 )
 
+// New returns a database connection, reusing an existing connection if available.
 func New() *sqlx.DB {
 	// Reuse Connection
 	if dbInstance != nil {
@@ -36,6 +31,17 @@ func New() *sqlx.DB {
 	}
 
 	db := sqlx.NewDb(c, "sqlite3")
+	dbInstance = db
 
 	return db
+}
+
+// Close closes the database connection.
+func Close() error {
+	if dbInstance != nil {
+		err := dbInstance.Close()
+		dbInstance = nil
+		return err
+	}
+	return nil
 }

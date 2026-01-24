@@ -81,6 +81,8 @@ func TestIngestHTTP_DBError(t *testing.T) {
 	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{})
 	req.Header().Set("openstatus-token", "token123")
 	req.Msg.Id = "monitor1"
+	req.Msg.MonitorId = "nonexistent"
+	req.Msg.Timestamp = 1234567890
 	resp, err := h.IngestHTTP(context.Background(), req)
 	if err == nil {
 		t.Fatalf("expected error for db failure, got nil")
@@ -99,6 +101,8 @@ func TestIngestHTTP_MonitorNotExist(t *testing.T) {
 	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{})
 	req.Header().Set("openstatus-token", "my-secret-key")
 	req.Msg.Id = "monitor1"
+	req.Msg.MonitorId = "nonexistent"
+	req.Msg.Timestamp = 1234567890
 	resp, err := h.IngestHTTP(context.Background(), req)
 	if err == nil {
 		t.Fatalf("expected error for db failure, got nil")
@@ -118,12 +122,127 @@ func TestIngestHTTP_MonitorExist(t *testing.T) {
 	req.Header().Set("openstatus-token", "my-secret-key")
 	req.Msg.Id = "monitor1"
 	req.Msg.MonitorId = "5"
+	req.Msg.Timestamp = 1234567890
 	resp, err := h.IngestHTTP(context.Background(), req)
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)
 	}
 
 	if resp == nil {
-		t.Errorf("expected not  response, got %v", resp)
+		t.Errorf("expected not nil response, got %v", resp)
+	}
+}
+
+func TestIngestHTTP_ValidationError_EmptyMonitorID(t *testing.T) {
+	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		MonitorId: "",
+		Timestamp: 1234567890,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	resp, err := h.IngestHTTP(context.Background(), req)
+	if err == nil {
+		t.Fatalf("expected error for validation failure, got nil")
+	}
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("expected invalid argument code, got %v", connect.CodeOf(err))
+	}
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+}
+
+func TestIngestHTTP_ValidationError_InvalidTimestamp(t *testing.T) {
+	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		MonitorId: "5",
+		Timestamp: 0,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	resp, err := h.IngestHTTP(context.Background(), req)
+	if err == nil {
+		t.Fatalf("expected error for validation failure, got nil")
+	}
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("expected invalid argument code, got %v", connect.CodeOf(err))
+	}
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+}
+
+func TestIngestHTTP_ValidationError_NegativeLatency(t *testing.T) {
+	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		MonitorId: "5",
+		Latency:   -100,
+		Timestamp: 1234567890,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	resp, err := h.IngestHTTP(context.Background(), req)
+	if err == nil {
+		t.Fatalf("expected error for validation failure, got nil")
+	}
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("expected invalid argument code, got %v", connect.CodeOf(err))
+	}
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+}
+
+func TestIngestHTTP_WithFullData(t *testing.T) {
+	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		Id:            "request-1",
+		MonitorId:     "5",
+		Timestamp:     1234567890,
+		Latency:       150,
+		CronTimestamp: 1234567800,
+		Url:           "https://example.com/api",
+		StatusCode:    200,
+		Timing:        "150ms",
+		Body:          `{"status": "ok"}`,
+		Headers:       `{"Content-Type": "application/json"}`,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	resp, err := h.IngestHTTP(context.Background(), req)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if resp == nil {
+		t.Errorf("expected not nil response, got nil")
+	}
+}
+
+func TestIngestHTTP_WithError(t *testing.T) {
+	h := server.NewPrivateLocationServer(testDB(), getTBClient(context.Background()))
+
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		Id:            "request-1",
+		MonitorId:     "5",
+		Timestamp:     1234567890,
+		Latency:       0,
+		CronTimestamp: 1234567800,
+		Url:           "https://example.com/api",
+		Error:         1,
+		Message:       "Connection timeout",
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	resp, err := h.IngestHTTP(context.Background(), req)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if resp == nil {
+		t.Errorf("expected not nil response, got nil")
 	}
 }

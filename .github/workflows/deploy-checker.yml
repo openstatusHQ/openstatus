@@ -8,7 +8,7 @@ on:
 jobs:
   deploy-checker:
     name: Deploy Checker
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

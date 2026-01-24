@@ -34,6 +34,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             pageId: row.original.pageId ?? undefined,
           }),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.maintenance.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
@@ -44,6 +49,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.refetchQueries({
           queryKey: trpc.maintenance.list.queryKey({
             pageId: row.original.pageId ?? undefined,
+          }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.maintenance.list.queryKey({
+            period: "7d",
           }),
         });
       },

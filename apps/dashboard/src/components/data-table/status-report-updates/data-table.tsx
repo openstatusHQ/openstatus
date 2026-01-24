@@ -60,6 +60,11 @@ export function DataTable({
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );

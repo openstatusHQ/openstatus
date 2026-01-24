@@ -7,7 +7,13 @@ type PlanConfig = {
   id: WorkspacePlan;
   description: string;
   price: Price;
-  addons: Partial<Addons>;
+  addons: Partial<{
+    [K in keyof Addons]: {
+      title: string;
+      description: string;
+      price: Price;
+    };
+  }>;
   limits: PlanLimits;
 };
 
@@ -66,6 +72,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     },
     addons: {
       "email-domain-protection": {
+        title: "Magic Link (Auth)",
+        description:
+          "Only allow user with a given email domain to access the status page.",
         price: {
           USD: 100,
           EUR: 100,
@@ -73,6 +82,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         },
       },
       "white-label": {
+        title: "White Label",
+        description:
+          "Remove the 'powered by openstatus.dev' footer from your status pages.",
         price: {
           USD: 300,
           EUR: 300,
@@ -80,6 +92,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         },
       },
       "status-pages": {
+        title: "Status Pages",
+        description: "Create and manage status pages for your workspace.",
         price: {
           USD: 20,
           EUR: 20,
@@ -130,6 +144,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
     },
     addons: {
       "email-domain-protection": {
+        title: "Magic Link (Auth)",
+        description:
+          "Only allow user with a given email domain to access the status page.",
         price: {
           USD: 100,
           EUR: 100,
@@ -137,6 +154,9 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         },
       },
       "white-label": {
+        title: "White Label",
+        description:
+          "Remove the 'powered by openstatus.dev' footer from your status pages.",
         price: {
           USD: 300,
           EUR: 300,
@@ -144,6 +164,8 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
         },
       },
       "status-pages": {
+        title: "Status Pages",
+        description: "Create and manage status pages for your workspace.",
         price: {
           USD: 20,
           EUR: 20,

@@ -181,24 +181,26 @@ export function Client() {
               <div className="flex flex-col gap-2 pt-4">
                 {planAddons["email-domain-protection"] ? (
                   <BillingAddons
-                    label="Magic Link (Auth)"
-                    description="Only allow user with a given email domain to access the status page."
+                    label={planAddons["email-domain-protection"].title}
+                    description={
+                      planAddons["email-domain-protection"].description
+                    }
                     addon="email-domain-protection"
                     workspace={workspace}
                   />
                 ) : null}
                 {planAddons["white-label"] ? (
                   <BillingAddons
-                    label="White Label"
-                    description="Remove the 'powered by openstatus.dev' footer from your status pages."
+                    label={planAddons["white-label"].title}
+                    description={planAddons["white-label"].description}
                     addon="white-label"
                     workspace={workspace}
                   />
                 ) : null}
                 {planAddons["status-pages"] ? (
                   <BillingAddons
-                    label="Status Pages"
-                    description="Create and manage status pages for your workspace."
+                    label={planAddons["status-pages"].title}
+                    description={planAddons["status-pages"].description}
                     addon="status-pages"
                     workspace={workspace}
                   />

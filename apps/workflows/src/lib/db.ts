@@ -5,7 +5,7 @@ import { schema } from "@openstatus/db";
 import { env } from "../env";
 
 const file =
-  env().NODE_ENV === "development" ? "dev.db" : "/app/data/replica.db";
+  env().NODE_ENV === "development" ? "./dev.db" : "///app/data/replica.db";
 const client = createClient({
   url: `file:${file}`,
   syncUrl: env().DATABASE_URL,

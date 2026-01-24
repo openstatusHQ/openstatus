@@ -13,6 +13,7 @@ import type {
 export type MonitorComponentWithNonNullMonitor =
   PageComponentWithMonitorRelation & {
     type: "monitor";
+    monitorId: number;
     monitor: NonNullable<PageComponentWithMonitorRelation["monitor"]>;
   };
 
@@ -30,6 +31,102 @@ export function isMonitorComponent(
     component.monitor.active === true &&
     component.monitor.deletedAt === null
   );
+}
+
+/**
+ * Transforms pageComponents to legacy monitorsToStatusReports format
+ */
+export function transformToMonitorsToStatusReports(
+  statusReportId: number,
+  pageComponents: PageComponentWithMonitorRelation[],
+) {
+  const monitors = pageComponents.filter(isMonitorComponent);
+  return monitors.map((m) => ({
+    statusReportId,
+    monitorId: m.monitor.id,
+    monitor: m.monitor,
+  }));
+}
+
+/**
+ * Transforms pageComponents to legacy maintenancesToMonitors format
+ */
+export function transformToMaintenancesToMonitors(
+  maintenanceId: number,
+  pageComponents: PageComponentWithMonitorRelation[],
+) {
+  const monitors = pageComponents.filter(isMonitorComponent);
+  return monitors.map((m) => ({
+    maintenanceId,
+    monitorId: m.monitor.id,
+    monitor: m.monitor,
+  }));
+}
+
+/**
+ * Transforms statusReportsToPageComponents relations using a monitorByIdMap for performance
+ */
+export function transformStatusReportWithPageComponents<
+  T extends {
+    id: number;
+    statusReportsToPageComponents: Array<{
+      pageComponent: PageComponent | null;
+    }>;
+  },
+>(
+  report: T,
+  monitorByIdMap: Map<
+    number,
+    NonNullable<PageComponentWithMonitorRelation["monitor"]>
+  >,
+) {
+  return {
+    ...report,
+    monitorsToStatusReports: report.statusReportsToPageComponents.flatMap(
+      (r) => {
+        const pc = r.pageComponent;
+        if (!pc?.monitorId) return [];
+        const monitor = monitorByIdMap.get(pc.monitorId);
+        if (!monitor) return [];
+        return [
+          { statusReportId: report.id, monitorId: pc.monitorId, monitor },
+        ];
+      },
+    ),
+  };
+}
+
+/**
+ * Transforms maintenancesToPageComponents relations using a monitorByIdMap for performance
+ */
+export function transformMaintenanceWithPageComponents<
+  T extends {
+    id: number;
+    maintenancesToPageComponents: Array<{
+      pageComponent: PageComponent | null;
+    }>;
+  },
+>(
+  maintenance: T,
+  monitorByIdMap: Map<
+    number,
+    NonNullable<PageComponentWithMonitorRelation["monitor"]>
+  >,
+) {
+  return {
+    ...maintenance,
+    maintenancesToMonitors: maintenance.maintenancesToPageComponents.flatMap(
+      (mp) => {
+        const pc = mp.pageComponent;
+        if (!pc?.monitorId) return [];
+        const monitor = monitorByIdMap.get(pc.monitorId);
+        if (!monitor) return [];
+        return [
+          { maintenanceId: maintenance.id, monitorId: pc.monitorId, monitor },
+        ];
+      },
+    ),
+  };
 }
 
 type StatusData = {

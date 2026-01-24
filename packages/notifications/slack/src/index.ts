@@ -1,9 +1,21 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
 import { slackDataSchema } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import {
+  COLORS,
+  type NotificationContext,
+  buildCommonMessageData,
+} from "@openstatus/notification-base";
+import {
+  buildAlertBlocks,
+  buildDegradedBlocks,
+  buildRecoveryBlocks,
+} from "./blocks";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
+  if (!webhookUrl || webhookUrl.trim() === "") {
+    throw new Error("Slack webhook URL is required");
+  }
+
   const res = await fetch(webhookUrl, {
     method: "POST",
     body: JSON.stringify(body),
@@ -18,49 +30,32 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
   cronTimestamp,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+  latency,
+  regions,
+}: NotificationContext) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
-  const { slack: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { slack: webhookUrl } = notificationData;
+
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    regions,
+  };
+
+  const data = buildCommonMessageData(context);
+  const blocks = buildAlertBlocks(data);
 
   await postToWebhook(
     {
-      blocks: [
+      attachments: [
         {
-          type: "divider",
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `
-*🚨 Alert <${monitor.url}|${name}>*\n\n
-Status Code: ${statusCode || "_empty_"}\n
-Message: ${message || "_empty_"}\n
-Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
-`,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-            },
-          ],
+          color: COLORS.red,
+          blocks,
         },
       ],
     },
@@ -71,47 +66,35 @@ Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  region?: Region;
-  latency?: number;
-}) => {
+  incident,
+  cronTimestamp,
+  regions,
+  latency,
+}: NotificationContext) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
-  const { slack: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { slack: webhookUrl } = notificationData;
+
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    regions,
+  };
+
+  const data = buildCommonMessageData(context, { incident });
+  const blocks = buildRecoveryBlocks(data);
 
   await postToWebhook(
     {
-      blocks: [
+      attachments: [
         {
-          type: "divider",
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*✅ Recovered <${monitor.url}/|${name}>*`,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-            },
-          ],
+          color: COLORS.green,
+          blocks,
         },
       ],
     },
@@ -122,44 +105,35 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  cronTimestamp: number;
-  region?: Region;
-  latency?: number;
-}) => {
+  incident,
+  cronTimestamp,
+  regions,
+  latency,
+}: NotificationContext) => {
   const notificationData = slackDataSchema.parse(JSON.parse(notification.data));
-  const { slack: webhookUrl } = notificationData; // webhook url
-  const { name } = monitor;
+  const { slack: webhookUrl } = notificationData;
+
+  const context = {
+    monitor,
+    notification,
+    statusCode,
+    message,
+    cronTimestamp,
+    latency,
+    regions,
+  };
+
+  const data = buildCommonMessageData(context, { incident });
+  const blocks = buildDegradedBlocks(data);
 
   await postToWebhook(
     {
-      blocks: [
+      attachments: [
         {
-          type: "divider",
-        },
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*⚠️ Degraded <${monitor.url}/|${name}>*`,
-          },
-        },
-        {
-          type: "context",
-          elements: [
-            {
-              type: "mrkdwn",
-              text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
-            },
-          ],
+          color: COLORS.yellow,
+          blocks,
         },
       ],
     },
@@ -168,35 +142,69 @@ export const sendDegraded = async ({
 };
 
 export const sendTestSlackMessage = async (webhookUrl: string) => {
-  try {
-    await postToWebhook(
-      {
-        blocks: [
-          {
-            type: "divider",
-          },
-          {
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: "*🧪 Test <https://www.openstatus.dev/|OpenStatus>*\n\nIf you can read this, your Slack webhook is functioning correctly!",
-            },
-          },
-          {
-            type: "context",
-            elements: [
-              {
-                type: "mrkdwn",
-                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
+  await postToWebhook(
+    {
+      attachments: [
+        {
+          color: COLORS.green,
+          blocks: [
+            {
+              type: "header",
+              text: {
+                type: "plain_text",
+                text: "Test Notification",
+                emoji: false,
               },
-            ],
-          },
-        ],
-      },
-      webhookUrl,
-    );
-    return true;
-  } catch (_err) {
-    return false;
-  }
+            },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "`🧪 Your Slack webhook is configured correctly!`",
+              },
+            },
+            {
+              type: "divider",
+            },
+            {
+              type: "section",
+              fields: [
+                {
+                  type: "mrkdwn",
+                  text: "*Status*\nWebhook Connected",
+                },
+                {
+                  type: "mrkdwn",
+                  text: "*Type*\nTest Notification",
+                },
+              ],
+            },
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "*Next Steps*\nYou will receive notifications here when your monitors trigger fail, recover, or degrades.",
+              },
+            },
+            {
+              type: "actions",
+              elements: [
+                {
+                  type: "button",
+                  text: {
+                    type: "plain_text",
+                    text: "View Dashboard",
+                    emoji: true,
+                  },
+                  url: "https://app.openstatus.dev",
+                  action_id: "view_dashboard",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+    webhookUrl,
+  );
 };

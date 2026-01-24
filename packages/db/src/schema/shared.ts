@@ -101,7 +101,7 @@ const selectPublicMonitorWithStatusSchema = selectPublicMonitorBaseSchema
       .prefault("success"),
     monitorGroupId: z.number().nullable().optional(),
     order: z.number().default(0).optional(),
-    groupOrder: z.number().default(0).optional(),
+    groupOrder: z.number().default(0).nullish(),
   })
   .transform((data) => ({
     ...data,

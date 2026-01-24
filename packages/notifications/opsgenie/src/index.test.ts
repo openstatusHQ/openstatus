@@ -46,11 +46,22 @@ describe("OpsGenie Notifications", () => {
     }),
   });
 
+  const createMockIncident = () => ({
+    id: 1,
+    title: "API Health Check is down",
+    summary: "API Health Check is down",
+    status: "triage" as const,
+    monitorId: "monitor-1",
+    workspaceId: 1,
+    startedAt: Date.now(),
+  });
+
   test("Send Alert with US region", async () => {
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
       createMockNotification("us"),
     );
+    const incident = createMockIncident();
 
     await sendAlert({
       // @ts-expect-error
@@ -58,7 +69,8 @@ describe("OpsGenie Notifications", () => {
       notification,
       statusCode: 500,
       message: "Something went wrong",
-      incidentId: "incident-123",
+      // @ts-expect-error
+      incident,
       cronTimestamp: Date.now(),
     });
 
@@ -71,7 +83,7 @@ describe("OpsGenie Notifications", () => {
 
     const body = JSON.parse(callArgs[1].body);
     expect(body.message).toBe("API Health Check is down");
-    expect(body.alias).toBe("monitor-1}-incident-123");
+    expect(body.alias).toBe("monitor-1");
     expect(body.details.severity).toBe("down");
     expect(body.details.status).toBe(500);
     expect(body.details.message).toBe("Something went wrong");
@@ -82,14 +94,15 @@ describe("OpsGenie Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification("eu"),
     );
-
+    const incident = createMockIncident();
     await sendAlert({
       // @ts-expect-error
       monitor,
       notification,
       statusCode: 500,
       message: "Error",
-      incidentId: "incident-456",
+      // @ts-expect-error
+      incident,
       cronTimestamp: Date.now(),
     });
 
@@ -103,14 +116,15 @@ describe("OpsGenie Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
-
+    const incident = createMockIncident();
     await sendDegraded({
       // @ts-expect-error
       monitor,
       notification,
       statusCode: 503,
       message: "Service degraded",
-      incidentId: "incident-789",
+      // @ts-expect-error
+      incident,
       cronTimestamp: Date.now(),
     });
 
@@ -118,7 +132,7 @@ describe("OpsGenie Notifications", () => {
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.details.severity).toBe("degraded");
-    expect(body.message).toBe("API Health Check is down");
+    expect(body.message).toBe("API Health Check is degraded");
   });
 
   test("Handle fetch error gracefully", async () => {
@@ -130,7 +144,7 @@ describe("OpsGenie Notifications", () => {
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
-
+    const incident = createMockIncident();
     expect(
       sendAlert({
         // @ts-expect-error
@@ -138,6 +152,8 @@ describe("OpsGenie Notifications", () => {
         notification,
         statusCode: 500,
         message: "Error",
+        // @ts-expect-error
+        incident,
         cronTimestamp: Date.now(),
       }),
     ).rejects.toThrow();

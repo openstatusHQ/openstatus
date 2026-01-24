@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { COLORS } from "@openstatus/notification-base";
 import {
   sendAlert,
   sendDegraded,
@@ -67,11 +68,11 @@ describe("Slack Notifications", () => {
     expect(callArgs[1].method).toBe("POST");
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks).toBeDefined();
-    expect(body.blocks.length).toBeGreaterThan(0);
-    expect(body.blocks[1].text.text).toContain("🚨 Alert");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
-    expect(body.blocks[1].text.text).toContain("Something went wrong");
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].color).toBe(COLORS.red);
+    expect(body.attachments[0].blocks).toBeDefined();
+    expect(body.attachments[0].blocks.length).toBeGreaterThan(0);
+    expect(body.attachments[0].blocks[0].text.text).toContain("is failing");
   });
 
   test("Send Alert without statusCode", async () => {
@@ -91,7 +92,8 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("_empty_");
+    expect(body.attachments[0].color).toBe(COLORS.red);
+    expect(body.attachments[0].blocks[3].fields[0].text).toContain("Unknown");
   });
 
   test("Send Recovery", async () => {
@@ -112,8 +114,9 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("✅ Recovered");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].color).toBe(COLORS.green);
+    expect(body.attachments[0].blocks[0].text.text).toContain("is recovered");
   });
 
   test("Send Degraded", async () => {
@@ -134,36 +137,33 @@ describe("Slack Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("⚠️ Degraded");
-    expect(body.blocks[1].text.text).toContain("API Health Check");
+    expect(body.attachments).toBeDefined();
+    expect(body.attachments[0].color).toBe(COLORS.yellow);
+    expect(body.attachments[0].blocks[0].text.text).toContain("is degraded");
   });
 
   test("Send Test Slack Message", async () => {
     const webhookUrl = "https://hooks.slack.com/services/test/url";
 
-    const result = await sendTestSlackMessage(webhookUrl);
+    await sendTestSlackMessage(webhookUrl);
 
-    expect(result).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.blocks[1].text.text).toContain("🧪 Test");
-    expect(body.blocks[1].text.text).toContain("OpenStatus");
+    expect(body.attachments[0].blocks[0].text.text).toContain(
+      "Test Notification",
+    );
   });
 
-  test("Send Test Slack Message returns false on error", async () => {
+  test("Send Test Slack Message throws error on empty webhookUrl", async () => {
     fetchMock.mockImplementation(() =>
       Promise.reject(new Error("Network error")),
     );
 
-    const result = await sendTestSlackMessage(
-      "https://hooks.slack.com/services/test/url",
-    );
-
-    expect(result).toBe(false);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sendTestSlackMessage("")).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   test("Handle fetch error gracefully", async () => {
