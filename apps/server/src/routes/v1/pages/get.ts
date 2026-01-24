@@ -1,6 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page } from "@openstatus/db/src/schema";
@@ -33,11 +34,12 @@ export function registerGetPage(api: typeof pagesApi) {
     const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
-    const _page = await db
-      .select()
-      .from(page)
-      .where(and(eq(page.workspaceId, workspaceId), eq(page.id, Number(id))))
-      .get();
+    const _page = await db.query.page.findFirst({
+      where: and(eq(page.workspaceId, workspaceId), eq(page.id, Number(id))),
+      with: {
+        pageComponents: true,
+      },
+    });
 
     if (!_page) {
       throw new OpenStatusApiError({
@@ -46,7 +48,16 @@ export function registerGetPage(api: typeof pagesApi) {
       });
     }
 
-    const data = transformPageData(PageSchema.parse(_page));
+    const monitorIds = _page.pageComponents
+      .map((pc) => pc.monitorId)
+      .filter(notEmpty);
+
+    const data = transformPageData(
+      PageSchema.parse({
+        ..._page,
+        monitors: monitorIds.length > 0 ? monitorIds : undefined,
+      }),
+    );
 
     return c.json(data, 200);
   });

@@ -4,6 +4,7 @@ import { db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
 import { openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
 
@@ -33,7 +34,7 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
     const _statusReports = await db.query.statusReport.findMany({
       with: {
         statusReportUpdates: true,
-        monitorsToStatusReports: true,
+        statusReportsToPageComponents: { with: { pageComponent: true } },
       },
       where: eq(statusReport.workspaceId, workspaceId),
     });
@@ -42,7 +43,9 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
       _statusReports.map((r) => ({
         ...r,
         statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
-        monitorIds: r.monitorsToStatusReports.map((m) => m.monitorId),
+        monitorIds: r.statusReportsToPageComponents
+          .map((sr) => sr.pageComponent.monitorId)
+          .filter(notEmpty),
       })),
     );
 

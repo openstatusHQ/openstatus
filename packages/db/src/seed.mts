@@ -6,16 +6,19 @@ import {
   incidentTable,
   maintenance,
   maintenancesToMonitors,
+  maintenancesToPageComponents,
   monitor,
   monitorsToPages,
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
+  pageComponent,
   privateLocation,
   privateLocationToMonitors,
   statusReport,
   statusReportUpdate,
+  statusReportsToPageComponents,
   user,
   usersToWorkspaces,
   workspace,
@@ -168,6 +171,35 @@ async function main() {
     .values({ monitorId: 1, pageId: 1 })
     .onConflictDoNothing()
     .run();
+
+  // Page Components - representing monitors on the status page
+  await db
+    .insert(pageComponent)
+    .values([
+      {
+        id: 1,
+        workspaceId: 1,
+        pageId: 1,
+        type: "monitor",
+        monitorId: 1,
+        name: "OpenStatus Monitor",
+        description: "Main website monitoring",
+        order: 0,
+      },
+      {
+        id: 2,
+        workspaceId: 1,
+        pageId: 1,
+        type: "monitor",
+        monitorId: 2,
+        name: "Google Monitor",
+        description: "Google.com monitoring",
+        order: 1,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+
   await db
     .insert(notification)
     .values({
@@ -354,6 +386,34 @@ async function main() {
       {
         monitorId: 1,
         statusReportId: 2,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+
+  // Link status reports to page components
+  await db
+    .insert(statusReportsToPageComponents)
+    .values([
+      {
+        statusReportId: 1,
+        pageComponentId: 1,
+      },
+      {
+        statusReportId: 2,
+        pageComponentId: 1,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+
+  // Link maintenances to page components
+  await db
+    .insert(maintenancesToPageComponents)
+    .values([
+      {
+        maintenanceId: 1,
+        pageComponentId: 1,
       },
     ])
     .onConflictDoNothing()
