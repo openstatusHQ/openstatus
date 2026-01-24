@@ -14,8 +14,8 @@ import {
   syncMonitorGroupDeleteMany,
   syncMonitorGroupInsert,
   syncMonitorsToPageDelete,
-  syncMonitorsToPageDeleteByPage,
   syncMonitorsToPageInsertMany,
+  syncMonitorsToPageUpsertMany,
 } from "@openstatus/db";
 import {
   incidentTable,
@@ -967,28 +967,76 @@ export const pageRouter = createTRPCRouter({
       }
 
       await opts.ctx.db.transaction(async (tx) => {
-        // Get existing monitor groups to delete from page components
+        // Get existing state
+        const existingMonitorsToPages = await tx
+          .select()
+          .from(monitorsToPages)
+          .where(eq(monitorsToPages.pageId, opts.input.id))
+          .all();
+
         const existingGroups = await tx.query.monitorGroup.findMany({
           where: eq(monitorGroup.pageId, opts.input.id),
         });
         const existingGroupIds = existingGroups.map((g) => g.id);
 
-        // Delete child records first to avoid foreign key constraint violation
-        await tx
-          .delete(monitorsToPages)
-          .where(eq(monitorsToPages.pageId, opts.input.id));
-        await tx
-          .delete(monitorGroup)
-          .where(eq(monitorGroup.pageId, opts.input.id));
+        // Calculate what monitors are in the new input vs existing
+        const existingMonitorIds = existingMonitorsToPages.map(
+          (m) => m.monitorId,
+        );
 
-        // Sync deletes to page components
-        await syncMonitorsToPageDeleteByPage(tx, opts.input.id);
+        // Find monitors that are being removed (in DB but not in input)
+        const removedMonitorIds = existingMonitorIds.filter(
+          (id) => !allMonitorIds.includes(id),
+        );
+
+        // Delete removed monitors from monitorsToPages and page components
+        if (removedMonitorIds.length > 0) {
+          await tx
+            .delete(monitorsToPages)
+            .where(
+              and(
+                eq(monitorsToPages.pageId, opts.input.id),
+                inArray(monitorsToPages.monitorId, removedMonitorIds),
+              ),
+            );
+
+          // Sync delete to page components
+          for (const monitorId of removedMonitorIds) {
+            await syncMonitorsToPageDelete(tx, {
+              monitorId,
+              pageId: opts.input.id,
+            });
+          }
+        }
+
+        // Clear monitorGroupId from all monitorsToPages before deleting groups
+        // This prevents foreign key constraint errors
         if (existingGroupIds.length > 0) {
+          await tx
+            .update(monitorsToPages)
+            .set({ monitorGroupId: null })
+            .where(
+              and(
+                eq(monitorsToPages.pageId, opts.input.id),
+                inArray(monitorsToPages.monitorGroupId, existingGroupIds),
+              ),
+            );
+        }
+
+        // Handle groups: delete old groups and create new ones
+        if (existingGroupIds.length > 0) {
+          await tx
+            .delete(monitorGroup)
+            .where(eq(monitorGroup.pageId, opts.input.id));
+
+          // Sync delete page component groups
           await syncMonitorGroupDeleteMany(tx, existingGroupIds);
         }
 
+        // Create new monitor groups
+        let monitorGroups: Array<{ id: number; name: string }> = [];
         if (opts.input.groups.length > 0) {
-          const monitorGroups = await tx
+          monitorGroups = await tx
             .insert(monitorGroup)
             .values(
               opts.input.groups.map((g) => ({
@@ -1008,32 +1056,45 @@ export const pageRouter = createTRPCRouter({
               name: group.name,
             });
           }
-
-          const groupMonitorValues = opts.input.groups.flatMap((g, i) =>
-            g.monitors.map((m) => ({
-              pageId: opts.input.id,
-              monitorId: m.id,
-              order: g.order,
-              monitorGroupId: monitorGroups[i].id,
-              groupOrder: m.order,
-            })),
-          );
-
-          await tx.insert(monitorsToPages).values(groupMonitorValues);
-          // Sync to page components
-          await syncMonitorsToPageInsertMany(tx, groupMonitorValues);
         }
 
-        if (opts.input.monitors.length > 0) {
-          const monitorValues = opts.input.monitors.map((m) => ({
+        // Prepare values for upsert - both grouped and ungrouped monitors
+        const groupMonitorValues = opts.input.groups.flatMap((g, i) =>
+          g.monitors.map((m) => ({
             pageId: opts.input.id,
             monitorId: m.id,
-            order: m.order,
-          }));
+            order: g.order,
+            monitorGroupId: monitorGroups[i].id,
+            groupOrder: m.order,
+          })),
+        );
 
-          await tx.insert(monitorsToPages).values(monitorValues);
-          // Sync to page components
-          await syncMonitorsToPageInsertMany(tx, monitorValues);
+        const monitorValues = opts.input.monitors.map((m) => ({
+          pageId: opts.input.id,
+          monitorId: m.id,
+          order: m.order,
+          monitorGroupId: null as number | null,
+          groupOrder: 0,
+        }));
+
+        const allValues = [...groupMonitorValues, ...monitorValues];
+
+        // Upsert all monitors (update existing, insert new)
+        if (allValues.length > 0) {
+          await tx
+            .insert(monitorsToPages)
+            .values(allValues)
+            .onConflictDoUpdate({
+              target: [monitorsToPages.monitorId, monitorsToPages.pageId],
+              set: {
+                order: sql.raw("excluded.`order`"),
+                monitorGroupId: sql.raw("excluded.`monitor_group_id`"),
+                groupOrder: sql.raw("excluded.`group_order`"),
+              },
+            });
+
+          // Sync upsert to page components (updates existing, inserts new)
+          await syncMonitorsToPageUpsertMany(tx, allValues);
         }
       });
     }),
