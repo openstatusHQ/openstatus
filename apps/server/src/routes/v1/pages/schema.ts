@@ -69,7 +69,17 @@ export const PageSchema = z
       example: "hidden-password",
     }),
     authEmailDomains: z
-      .array(z.string())
+      .preprocess((val) => {
+        let parsedDomains: Array<unknown> = [];
+        if (!val) return parsedDomains;
+        if (Array.isArray(val)) {
+          parsedDomains = val;
+        }
+        if (String(val).length > 0) {
+          parsedDomains = String(val).split(",");
+        }
+        return parsedDomains;
+      }, z.array(z.string()))
       .optional()
       .nullish()
       .openapi({
