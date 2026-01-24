@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import type { db } from "./db";
 import {
@@ -168,6 +168,70 @@ export async function syncMonitorsToPageInsertMany(
   if (values.length === 0) return;
 
   await db.insert(pageComponent).values(values).onConflictDoNothing();
+}
+
+/**
+ * Syncs multiple monitors_to_pages upserts to page_component
+ * Updates order, groupId, groupOrder for existing components, inserts new ones
+ */
+export async function syncMonitorsToPageUpsertMany(
+  db: DB | Transaction,
+  items: Array<{
+    monitorId: number;
+    pageId: number;
+    order?: number;
+    monitorGroupId?: number | null;
+    groupOrder?: number;
+  }>,
+) {
+  if (items.length === 0) return;
+
+  // Get all monitor data in one query
+  const monitorIds = [...new Set(items.map((item) => item.monitorId))];
+  const monitors = await db
+    .select({
+      id: monitor.id,
+      name: monitor.name,
+      externalName: monitor.externalName,
+      workspaceId: monitor.workspaceId,
+    })
+    .from(monitor)
+    .where(inArray(monitor.id, monitorIds));
+
+  const monitorMap = new Map(monitors.map((m) => [m.id, m]));
+
+  const values = items
+    .map((item) => {
+      const m = monitorMap.get(item.monitorId);
+      if (!m || !m.workspaceId) return null;
+      return {
+        workspaceId: m.workspaceId,
+        pageId: item.pageId,
+        type: "monitor" as const,
+        monitorId: item.monitorId,
+        name: m.externalName || m.name,
+        order: item.order ?? 0,
+        groupId: item.monitorGroupId ?? null,
+        groupOrder: item.groupOrder ?? 0,
+      };
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
+
+  if (values.length === 0) return;
+
+  // Use onConflictDoUpdate to update existing page components
+  // The unique constraint is on (pageId, monitorId)
+  await db
+    .insert(pageComponent)
+    .values(values)
+    .onConflictDoUpdate({
+      target: [pageComponent.pageId, pageComponent.monitorId],
+      set: {
+        order: sql.raw("excluded.`order`"),
+        groupId: sql.raw("excluded.`group_id`"),
+        groupOrder: sql.raw("excluded.`group_order`"),
+      },
+    });
 }
 
 /**
