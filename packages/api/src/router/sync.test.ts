@@ -63,6 +63,7 @@ function getTestContext(limits?: unknown) {
 const TEST_PREFIX = "sync-test";
 let testPageId: number;
 let testMonitorId: number;
+let testPageComponentId: number;
 
 const monitorData = {
   name: `${TEST_PREFIX}-monitor`,
@@ -109,6 +110,19 @@ beforeAll(async () => {
   const caller = appRouter.createCaller(ctx);
   const createdMonitor = await caller.monitor.create(monitorData);
   testMonitorId = createdMonitor.id;
+
+  const createdPageComponent = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: 1,
+      pageId: testPageId,
+      monitorId: testMonitorId,
+      type: "monitor",
+      name: `${TEST_PREFIX}-monitor`,
+    })
+    .returning()
+    .get();
+  testPageComponentId = createdPageComponent.id;
 });
 
 afterAll(async () => {
@@ -377,7 +391,7 @@ describe("Sync: maintenance_to_monitor -> maintenance_to_page_component", () => 
       startDate: from,
       endDate: to,
       pageId: testPageId,
-      monitors: [testMonitorId],
+      pageComponents: [testPageComponentId],
     });
     testMaintenanceId = createdMaintenance.id;
 
@@ -428,7 +442,7 @@ describe("Sync: maintenance_to_monitor -> maintenance_to_page_component", () => 
       message: "Updated maintenance",
       startDate: from,
       endDate: to,
-      monitors: [],
+      pageComponents: [],
     });
 
     // Verify maintenance_to_monitor was deleted
@@ -496,7 +510,7 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
       status: "investigating",
       message: "Test status report for sync",
       pageId: testPageId,
-      monitors: [testMonitorId],
+      pageComponents: [testPageComponentId],
       date: new Date(),
     });
     testStatusReportId = createdReport.statusReportId;
@@ -544,7 +558,7 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
     await caller.statusReport.updateStatus({
       id: testStatusReportId,
       status: "resolved",
-      monitors: [],
+      pageComponents: [],
       title: `${TEST_PREFIX} Status Report`,
     });
 

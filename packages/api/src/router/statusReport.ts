@@ -504,7 +504,7 @@ export const statusReportRouter = createTRPCRouter({
               })),
             )
             .run();
-          // Sync to page components
+          // Reverse sync: page components -> monitors (for backward compatibility)
           await syncStatusReportToPageComponentInsertMany(
             tx,
             newStatusReport.id,
@@ -552,7 +552,7 @@ export const statusReportRouter = createTRPCRouter({
             eq(statusReportsToPageComponents.statusReportId, opts.input.id),
           )
           .run();
-        // Sync delete to monitors (inverse sync)
+        // Reverse sync: delete from monitors (for backward compatibility)
         await syncStatusReportToPageComponentDeleteByStatusReport(
           tx,
           opts.input.id,
@@ -568,7 +568,7 @@ export const statusReportRouter = createTRPCRouter({
               })),
             )
             .run();
-          // Sync components to monitors
+          // Reverse sync: page components -> monitors (for backward compatibility)
           await syncStatusReportToPageComponentInsertMany(
             tx,
             opts.input.id,
