@@ -9,6 +9,7 @@ import {
   gte,
   inArray,
   sql,
+  syncStatusReportToMonitorDelete,
   syncStatusReportToMonitorDeleteByStatusReport,
   syncStatusReportToMonitorInsertMany,
 } from "@openstatus/db";
@@ -174,7 +175,13 @@ export const statusReportRouter = createTRPCRouter({
             ),
           )
           .run();
-        // Sync delete is handled by cascade on page_component deletion
+        // Sync delete to page components for each removed monitor
+        for (const monitorId of removedMonitors) {
+          await syncStatusReportToMonitorDelete(opts.ctx.db, {
+            statusReportId: currentStatusReport.id,
+            monitorId,
+          });
+        }
       }
 
       return currentStatusReport;
