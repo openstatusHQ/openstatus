@@ -3,11 +3,12 @@ import { z } from "zod";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   maintenance,
-  monitorsToPages,
   page,
+  pageComponent,
   pageConfigurationSchema,
   pageSubscriber,
   selectMaintenancePageSchema,
+  selectPageComponentWithMonitorRelation,
   selectPublicMonitorSchema,
   selectPublicPageSchemaWithRelation,
   selectStatusReportPageSchema,
@@ -25,7 +26,12 @@ import {
   getEvents,
   getUptime,
   getWorstVariant,
+  isMonitorComponent,
   setDataByType,
+  transformMaintenanceWithPageComponents,
+  transformStatusReportWithPageComponents,
+  transformToMaintenancesToMonitors,
+  transformToMonitorsToStatusReports,
 } from "./statusPage.utils";
 import {
   getMetricsLatencyMultiProcedure,
@@ -77,32 +83,36 @@ export const statusPageRouter = createTRPCRouter({
               statusReportUpdates: {
                 orderBy: (reports, { desc }) => desc(reports.date),
               },
-              monitorsToStatusReports: { with: { monitor: true } },
+              statusReportsToPageComponents: { with: { pageComponent: true } },
             },
           },
           maintenances: {
             with: {
-              maintenancesToMonitors: { with: { monitor: true } },
+              maintenancesToPageComponents: { with: { pageComponent: true } },
             },
             orderBy: (maintenances, { desc }) => desc(maintenances.from),
           },
-          monitorsToPages: {
+          pageComponents: {
             with: {
               monitor: {
                 with: {
                   incidents: true,
                 },
               },
-              monitorGroup: true,
+              group: true,
             },
-            orderBy: (monitorsToPages, { asc }) => asc(monitorsToPages.order),
+            orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
           },
+          pageComponentGroups: true,
         },
       });
 
       if (!_page) return null;
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
+      const pageComponents = selectPageComponentWithMonitorRelation
+        .array()
+        .parse(_page.pageComponents);
 
       const configuration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -116,40 +126,39 @@ export const statusPageRouter = createTRPCRouter({
       const barType = opts.input.barType ?? configuration.data.type;
       // const cardType = opts.input.cardType ?? configuration.data.value;
 
-      const monitors = _page.monitorsToPages
-        // NOTE: we cannot nested `where` in drizzle to filter active monitors
-        .filter((m) => !m.monitor.deletedAt && m.monitor.active)
-        .map((m) => {
-          const events = getEvents({
-            maintenances: _page.maintenances,
-            incidents: m.monitor.incidents,
-            reports: _page.statusReports,
-            monitorId: m.monitor.id,
-          });
-          const status =
-            events.some((e) => e.type === "incident" && !e.to) &&
-            barType !== "manual"
-              ? "error"
-              : events.some((e) => e.type === "report" && !e.to)
-                ? "degraded"
-                : events.some(
-                      (e) =>
-                        e.type === "maintenance" &&
-                        e.to &&
-                        e.from.getTime() <= new Date().getTime() &&
-                        e.to.getTime() >= new Date().getTime(),
-                    )
-                  ? "info"
-                  : "success";
-          return {
-            ...m.monitor,
-            status,
-            events,
-            monitorGroupId: m.monitorGroupId,
-            order: m.order,
-            groupOrder: m.groupOrder,
-          };
+      const monitorComponents = pageComponents.filter(isMonitorComponent);
+
+      const monitors = monitorComponents.map((c) => {
+        const events = getEvents({
+          maintenances: _page.maintenances,
+          incidents: c.monitor.incidents ?? [],
+          reports: _page.statusReports,
+          monitorId: c.monitor.id,
         });
+        const status =
+          events.some((e) => e.type === "incident" && !e.to) &&
+          barType !== "manual"
+            ? "error"
+            : events.some((e) => e.type === "report" && !e.to)
+              ? "degraded"
+              : events.some(
+                    (e) =>
+                      e.type === "maintenance" &&
+                      e.to &&
+                      e.from.getTime() <= new Date().getTime() &&
+                      e.to.getTime() >= new Date().getTime(),
+                  )
+                ? "info"
+                : "success";
+        return {
+          ...c.monitor,
+          status,
+          events,
+          monitorGroupId: c.groupId,
+          order: c.order,
+          groupOrder: c.groupOrder,
+        };
+      });
 
       const status =
         monitors.some((m) => m.status === "error") && barType !== "manual"
@@ -163,8 +172,7 @@ export const statusPageRouter = createTRPCRouter({
       // Get page-wide events (not tied to specific monitors)
       const pageEvents = getEvents({
         maintenances: _page.maintenances,
-        incidents:
-          _page.monitorsToPages.flatMap((m) => m.monitor.incidents) ?? [],
+        incidents: monitorComponents.flatMap((c) => c.monitor.incidents ?? []),
         reports: _page.statusReports,
         // No monitorId provided, so we get all events for the page
       });
@@ -198,16 +206,7 @@ export const statusPageRouter = createTRPCRouter({
         return false;
       });
 
-      const monitorGroups = Array.from(
-        new Map(
-          _page.monitorsToPages.map((m) => [
-            m.monitorGroup?.id,
-            m.monitorGroup,
-          ]),
-        )
-          .values()
-          .filter(Boolean),
-      );
+      const monitorGroups = _page.pageComponentGroups;
 
       // Create trackers array with grouped and ungrouped monitors
       const groupedMap = new Map<
@@ -298,27 +297,50 @@ export const statusPageRouter = createTRPCRouter({
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
 
+      // Pre-build a Map for O(1) lookups to avoid N+1 query problem
+      const monitorByIdMap = new Map(
+        pageComponents
+          .filter(isMonitorComponent)
+          .map((c) => [c.monitorId, c.monitor]),
+      );
+
+      // Transform statusReports to include monitorsToStatusReports format
+      const statusReports = _page.statusReports
+        .sort((a, b) => {
+          // Sort reports without updates to the beginning
+          if (
+            a.statusReportUpdates.length === 0 &&
+            b.statusReportUpdates.length === 0
+          )
+            return 0;
+          if (a.statusReportUpdates.length === 0) return -1;
+          if (b.statusReportUpdates.length === 0) return -1;
+          return (
+            b.statusReportUpdates[
+              b.statusReportUpdates.length - 1
+            ].date.getTime() -
+            a.statusReportUpdates[
+              a.statusReportUpdates.length - 1
+            ].date.getTime()
+          );
+        })
+        .map((report) =>
+          transformStatusReportWithPageComponents(report, monitorByIdMap),
+        );
+
+      // Transform maintenances to include maintenancesToMonitors format
+      const maintenances = _page.maintenances.map((m) =>
+        transformMaintenanceWithPageComponents(m, monitorByIdMap),
+      );
+
       return selectPublicPageSchemaWithRelation.parse({
         ..._page,
         monitors,
         monitorGroups,
         trackers,
         incidents: monitors.flatMap((m) => m.incidents) ?? [],
-        statusReports:
-          // NOTE: we need to sort the status reports by the first update date
-          _page.statusReports.sort((a, b) => {
-            if (a.statusReportUpdates.length === 0) return -1;
-            if (b.statusReportUpdates.length === 0) return -1;
-            return (
-              b.statusReportUpdates[
-                b.statusReportUpdates.length - 1
-              ].date.getTime() -
-              a.statusReportUpdates[
-                a.statusReportUpdates.length - 1
-              ].date.getTime()
-            );
-          }) ?? [],
-        maintenances: _page.maintenances ?? [],
+        statusReports,
+        maintenances,
         workspacePlan: _page.workspace.plan,
         status,
         lastEvents,
@@ -347,12 +369,31 @@ export const statusPageRouter = createTRPCRouter({
           eq(maintenance.id, opts.input.id),
           eq(maintenance.pageId, _page.id),
         ),
-        with: { maintenancesToMonitors: { with: { monitor: true } } },
+        with: {
+          maintenancesToPageComponents: {
+            with: { pageComponent: { with: { monitor: true } } },
+          },
+        },
       });
 
       if (!_maintenance) return null;
 
-      return selectMaintenancePageSchema.parse(_maintenance);
+      const pageComponents = selectPageComponentWithMonitorRelation
+        .array()
+        .parse(
+          _maintenance.maintenancesToPageComponents.map((m) => m.pageComponent),
+        );
+
+      // Transform to expected format (maintenancesToMonitors)
+      const maintenancesToMonitors = transformToMaintenancesToMonitors(
+        _maintenance.id,
+        pageComponents,
+      );
+
+      return selectMaintenancePageSchema.parse({
+        ..._maintenance,
+        maintenancesToMonitors,
+      });
     }),
 
   getUptime: publicProcedure
@@ -376,18 +417,18 @@ export const statusPageRouter = createTRPCRouter({
         with: {
           maintenances: {
             with: {
-              maintenancesToMonitors: true,
+              maintenancesToPageComponents: { with: { pageComponent: true } },
             },
           },
           statusReports: {
             with: {
-              monitorsToStatusReports: true,
+              statusReportsToPageComponents: { with: { pageComponent: true } },
               statusReportUpdates: true,
             },
           },
-          monitorsToPages: {
+          pageComponents: {
             where: inArray(
-              monitorsToPages.monitorId,
+              pageComponent.monitorId,
               opts.input.monitorIds.map(Number),
             ),
             with: {
@@ -403,16 +444,18 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_page) return null;
 
-      const monitors = _page.monitorsToPages.filter(
-        (m) => !m.monitor.deletedAt && m.monitor.active,
-      );
+      const pageComponents = selectPageComponentWithMonitorRelation
+        .array()
+        .parse(_page.pageComponents);
+
+      const monitors = pageComponents.filter(isMonitorComponent);
 
       if (monitors.length !== opts.input.monitorIds.length) return null;
 
       const monitorsByType = {
-        http: monitors.filter((m) => m.monitor.jobType === "http"),
-        tcp: monitors.filter((m) => m.monitor.jobType === "tcp"),
-        dns: monitors.filter((m) => m.monitor.jobType === "dns"),
+        http: monitors.filter((c) => c.monitor.jobType === "http"),
+        tcp: monitors.filter((c) => c.monitor.jobType === "tcp"),
+        dns: monitors.filter((c) => c.monitor.jobType === "dns"),
       };
 
       const proceduresByType = {
@@ -425,7 +468,7 @@ export const statusPageRouter = createTRPCRouter({
         Object.entries(proceduresByType).map(([type, procedure]) => {
           const monitorIds = monitorsByType[
             type as keyof typeof proceduresByType
-          ].map((m) => m.monitor.id.toString());
+          ].map((c) => c.monitor.id.toString());
           if (monitorIds.length === 0) return null;
           // NOTE: if manual mode, don't fetch data from tinybird
           return opts.input.barType === "manual"
@@ -475,13 +518,13 @@ export const statusPageRouter = createTRPCRouter({
         ? 30
         : 45;
 
-      return monitors.map((m) => {
-        const monitorId = m.monitor.id.toString();
+      return monitors.map((c) => {
+        const monitorId = c.monitor.id.toString();
         const events = getEvents({
           maintenances: _page.maintenances,
-          incidents: m.monitor.incidents,
+          incidents: c.monitor.incidents ?? [],
           reports: _page.statusReports,
-          monitorId: m.monitor.id,
+          monitorId: c.monitor.id,
         });
         const rawData = statusDataByMonitorId.get(monitorId) || [];
         const filledData =
@@ -506,7 +549,7 @@ export const statusPageRouter = createTRPCRouter({
         });
 
         return {
-          ...selectPublicMonitorSchema.parse(m.monitor),
+          ...c.monitor,
           data: processedData,
           uptime,
         };
@@ -561,7 +604,9 @@ export const statusPageRouter = createTRPCRouter({
           eq(statusReport.pageId, _page.id),
         ),
         with: {
-          monitorsToStatusReports: { with: { monitor: true } },
+          statusReportsToPageComponents: {
+            with: { pageComponent: { with: { monitor: true } } },
+          },
           statusReportUpdates: {
             orderBy: (reports, { desc }) => desc(reports.date),
           },
@@ -570,7 +615,22 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_report) return null;
 
-      return selectStatusReportPageSchema.parse(_report);
+      const pageComponents = selectPageComponentWithMonitorRelation
+        .array()
+        .parse(
+          _report.statusReportsToPageComponents.map((r) => r.pageComponent),
+        );
+
+      // Transform to expected format (monitorsToStatusReports)
+      const monitorsToStatusReports = transformToMonitorsToStatusReports(
+        _report.id,
+        pageComponents,
+      );
+
+      return selectStatusReportPageSchema.parse({
+        ..._report,
+        monitorsToStatusReports,
+      });
     }),
 
   getNoopReport: publicProcedure.query(async () => {
@@ -581,7 +641,7 @@ export const statusPageRouter = createTRPCRouter({
     const identifiedDate = new Date(date.setMinutes(date.getMinutes() - 32));
     const investigatingDate = new Date(date.setMinutes(date.getMinutes() - 4));
 
-    return {
+    return selectStatusReportPageSchema.parse({
       id: 1,
       pageId: 1,
       status: "investigating" as const,
@@ -658,7 +718,7 @@ export const statusPageRouter = createTRPCRouter({
           updatedAt: investigatingDate,
         },
       ],
-    };
+    });
   }),
 
   getMonitors: publicProcedure
@@ -667,10 +727,10 @@ export const statusPageRouter = createTRPCRouter({
       if (!opts.input.slug) return null;
 
       // NOTE: revalidate the public monitors first
-      const data = await opts.ctx.db.query.page.findFirst({
+      const _page = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
-          monitorsToPages: {
+          pageComponents: {
             with: {
               monitor: true,
             },
@@ -678,16 +738,20 @@ export const statusPageRouter = createTRPCRouter({
         },
       });
 
-      if (!data) return null;
+      if (!_page) return null;
 
-      const publicMonitors = data.monitorsToPages.filter(
-        (m) => m.monitor.public,
-      );
+      const pageComponents = selectPageComponentWithMonitorRelation
+        .array()
+        .parse(_page.pageComponents);
+
+      const publicMonitors = pageComponents
+        .filter(isMonitorComponent)
+        .filter((c) => c.monitor?.public);
 
       const monitorsByType = {
-        http: publicMonitors.filter((m) => m.monitor.jobType === "http"),
-        tcp: publicMonitors.filter((m) => m.monitor.jobType === "tcp"),
-        dns: publicMonitors.filter((m) => m.monitor.jobType === "dns"),
+        http: publicMonitors.filter((c) => c.monitor.jobType === "http"),
+        tcp: publicMonitors.filter((c) => c.monitor.jobType === "tcp"),
+        dns: publicMonitors.filter((c) => c.monitor.jobType === "dns"),
       };
 
       const proceduresByType = {
@@ -704,7 +768,7 @@ export const statusPageRouter = createTRPCRouter({
         Object.entries(proceduresByType).map(([type, procedure]) => {
           const monitorIds = monitorsByType[
             type as keyof typeof proceduresByType
-          ].map((m) => m.monitor.id.toString());
+          ].map((c) => c.monitor.id.toString());
           if (monitorIds.length === 0) return null;
           return procedure({ monitorIds });
         }),
@@ -747,12 +811,12 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      return publicMonitors.map((m) => {
-        const monitorId = m.monitor.id.toString();
+      return publicMonitors.map((c) => {
+        const monitorId = c.monitor.id.toString();
         const data = metricsDataByMonitorId.get(monitorId) || [];
 
         return {
-          ...selectPublicMonitorSchema.parse(m.monitor),
+          ...selectPublicMonitorSchema.parse(c.monitor),
           data,
         };
       });
@@ -766,8 +830,8 @@ export const statusPageRouter = createTRPCRouter({
       const _page = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
-          monitorsToPages: {
-            where: eq(monitorsToPages.monitorId, opts.input.id),
+          pageComponents: {
+            where: eq(pageComponent.monitorId, opts.input.id),
             with: {
               monitor: true,
             },
@@ -777,8 +841,14 @@ export const statusPageRouter = createTRPCRouter({
 
       if (!_page) return null;
 
-      const _monitor = _page.monitorsToPages.find(
-        (m) => m.monitorId === opts.input.id && m.monitor.active,
+      const pageComponents = selectPageComponentWithMonitorRelation
+        .array()
+        .parse(_page.pageComponents);
+
+      const monitorComponents = pageComponents.filter(isMonitorComponent);
+
+      const _monitor = monitorComponents.find(
+        (c) => c.monitor.id === opts.input.id,
       )?.monitor;
 
       if (!_monitor) return null;
