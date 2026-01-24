@@ -229,7 +229,7 @@ export const maintenanceRouter = createTRPCRouter({
               pageComponentId,
             })),
           );
-          // Sync to page components
+          // Sync to monitors (inverse sync for backward compatibility)
           await syncMaintenanceToPageComponentInsertMany(
             tx,
             newMaintenance.id,
@@ -307,7 +307,7 @@ export const maintenanceRouter = createTRPCRouter({
             eq(maintenancesToPageComponents.maintenanceId, _maintenance.id),
           )
           .run();
-        // Sync delete to monitors (inverse sync)
+        // Sync to monitors (inverse sync for backward compatibility)
         await syncMaintenanceToPageComponentDeleteByMaintenance(
           tx,
           _maintenance.id,
@@ -321,7 +321,7 @@ export const maintenanceRouter = createTRPCRouter({
               pageComponentId,
             })),
           );
-          // Sync components to monitors (inverse sync)
+          // Sync to monitors (inverse sync for backward compatibility)
           await syncMaintenanceToPageComponentInsertMany(
             tx,
             _maintenance.id,
