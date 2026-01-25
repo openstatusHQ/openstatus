@@ -28,6 +28,7 @@ import {
   syncStatusReportToMonitorDeleteByMonitors,
 } from "@openstatus/db";
 import {
+  insertMonitorSchema,
   maintenancesToMonitors,
   monitor,
   monitorJobTypes,
@@ -157,6 +158,26 @@ export const monitorRouter = createTRPCRouter({
         await syncStatusReportToMonitorDeleteByMonitors(tx, opts.input.ids);
         await syncMaintenanceToMonitorDeleteByMonitors(tx, opts.input.ids);
       });
+    }),
+
+  updateMonitors: protectedProcedure
+    .input(
+      insertMonitorSchema
+        .pick({ public: true, active: true })
+        .partial() // batched updates
+        .extend({ ids: z.number().array() }), // array of monitor ids to update
+    )
+    .mutation(async (opts) => {
+      await opts.ctx.db
+        .update(monitor)
+        .set(opts.input)
+        .where(
+          and(
+            inArray(monitor.id, opts.input.ids),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNull(monitor.deletedAt),
+          ),
+        );
     }),
 
   list: protectedProcedure
