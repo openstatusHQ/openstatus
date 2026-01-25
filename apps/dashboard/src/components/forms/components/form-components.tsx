@@ -834,7 +834,7 @@ function ComponentRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to delete this group and all its components.
+                  You are about to delete this component.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
