@@ -345,6 +345,8 @@ export const statusPageRouter = createTRPCRouter({
         status,
         lastEvents,
         openEvents,
+        pageComponents,
+        pageComponentGroups: _page.pageComponentGroups,
         whiteLabel,
       });
     }),
