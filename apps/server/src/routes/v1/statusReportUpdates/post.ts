@@ -58,9 +58,9 @@ export function registerPostStatusReportUpdate(
         eq(statusReport.workspaceId, workspaceId),
       ),
       with: {
-        monitorsToStatusReports: {
+        statusReportsToPageComponents: {
           with: {
-            monitor: true,
+            pageComponent: true,
           },
         },
       },
@@ -134,8 +134,8 @@ export function registerPostStatusReportUpdate(
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
-          monitors: _statusReport.monitorsToStatusReports.map(
-            (i) => i.monitor.externalName || i.monitor.name,
+          pageComponents: _statusReport.statusReportsToPageComponents.map(
+            (i) => i.pageComponent.name,
           ),
         });
       }
