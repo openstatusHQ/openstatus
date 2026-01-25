@@ -32,7 +32,7 @@ export const selectPublicMonitorSchema =
 
 export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
   statusReportUpdates: z.array(selectStatusReportUpdateSchema).prefault([]),
-  pageComponentsToStatusReports: z
+  statusReportsToPageComponents: z
     .array(
       z.object({
         pageComponentId: z.number(),
