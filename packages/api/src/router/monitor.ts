@@ -22,9 +22,7 @@ import {
   inArray,
   isNull,
   syncMaintenanceToMonitorDeleteByMonitors,
-  syncMonitorsToPageDelete,
   syncMonitorsToPageDeleteByMonitors,
-  syncMonitorsToPageInsertMany,
   syncStatusReportToMonitorDeleteByMonitors,
 } from "@openstatus/db";
 import {
@@ -39,14 +37,12 @@ import {
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
-  page,
   privateLocationToMonitors,
   selectIncidentSchema,
   selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
-  selectPageSchema,
   selectPrivateLocationSchema,
 } from "@openstatus/db/src/schema";
 
@@ -240,9 +236,6 @@ export const monitorRouter = createTRPCRouter({
           monitorsToNotifications: {
             with: { notification: true },
           },
-          monitorsToPages: {
-            with: { page: true },
-          },
           monitorTagsToMonitors: {
             with: { monitorTag: true },
           },
@@ -261,7 +254,6 @@ export const monitorRouter = createTRPCRouter({
       return selectMonitorSchema
         .extend({
           notifications: z.array(selectNotificationSchema).prefault([]),
-          pages: z.array(selectPageSchema).prefault([]),
           tags: z.array(selectMonitorTagSchema).prefault([]),
           maintenances: z.array(selectMaintenanceSchema).prefault([]),
           incidents: z.array(selectIncidentSchema).prefault([]),
@@ -272,7 +264,6 @@ export const monitorRouter = createTRPCRouter({
           notifications: data.monitorsToNotifications.map(
             (m) => m.notification,
           ),
-          pages: data.monitorsToPages.map((p) => p.page),
           tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
           maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
           incidents: data.incidents,
@@ -552,88 +543,6 @@ export const monitorRouter = createTRPCRouter({
             })),
           );
         }
-      });
-    }),
-
-  updateStatusPages: protectedProcedure
-    .meta({ track: Events.UpdateMonitor })
-    .input(
-      z.object({
-        id: z.number(),
-        statusPages: z.array(z.number()),
-        description: z.string().optional(),
-        externalName: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const allPages = await ctx.db.query.page.findMany({
-        where: and(
-          eq(page.workspaceId, ctx.workspace.id),
-          inArray(page.id, input.statusPages),
-        ),
-      });
-
-      if (allPages.length !== input.statusPages.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to this status page.",
-        });
-      }
-
-      await ctx.db.transaction(async (tx) => {
-        // REMINDER: why do we need to do this complex logic instead of just deleting and inserting?
-        // Because we need to preserve the group information when updating the status pages.
-
-        const existingEntries = await tx.query.monitorsToPages.findMany({
-          where: eq(monitorsToPages.monitorId, input.id),
-        });
-
-        const existingPageIds = new Set(
-          existingEntries.map((entry) => entry.pageId),
-        );
-        const inputPageIds = new Set(input.statusPages);
-
-        const pageIdsToDelete = existingEntries
-          .filter((entry) => !inputPageIds.has(entry.pageId))
-          .map((entry) => entry.pageId);
-
-        const pageIdsToInsert = input.statusPages.filter(
-          (pageId) => !existingPageIds.has(pageId),
-        );
-
-        if (pageIdsToDelete.length > 0) {
-          await tx
-            .delete(monitorsToPages)
-            .where(
-              and(
-                eq(monitorsToPages.monitorId, input.id),
-                inArray(monitorsToPages.pageId, pageIdsToDelete),
-              ),
-            );
-          // Sync delete to page components
-          for (const pageId of pageIdsToDelete) {
-            await syncMonitorsToPageDelete(tx, { monitorId: input.id, pageId });
-          }
-        }
-
-        if (pageIdsToInsert.length > 0) {
-          const values = pageIdsToInsert.map((pageId) => ({
-            monitorId: input.id,
-            pageId,
-          }));
-          await tx.insert(monitorsToPages).values(values);
-          // Sync to page components
-          await syncMonitorsToPageInsertMany(tx, values);
-        }
-
-        await tx
-          .update(monitor)
-          .set({
-            description: input.description,
-            externalName: input.externalName,
-            updatedAt: new Date(),
-          })
-          .where(and(eq(monitor.id, input.id)));
       });
     }),
 

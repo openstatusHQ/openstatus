@@ -62,22 +62,6 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   statusReports: z.array(selectStatusReportPageSchema),
 });
 
-export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
-  monitorsToPages: z.array(
-    z.object({
-      monitorId: z.number(),
-      pageId: z.number(),
-      order: z.number().prefault(0).optional(),
-      monitor: selectMonitorSchema,
-    }),
-  ),
-  maintenances: selectMaintenanceSchema.array().prefault([]),
-  statusReports: selectStatusReportSchema
-    .extend({ statusReportUpdates: selectStatusReportUpdateSchema.array() })
-    .array()
-    .prefault([]),
-});
-
 export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema).prefault([]),

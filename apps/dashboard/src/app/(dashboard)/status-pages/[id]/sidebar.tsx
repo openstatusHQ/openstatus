@@ -111,20 +111,20 @@ export function Sidebar() {
         },
         {
           label: "Monitors",
-          items: statusPage.monitors.flatMap((monitor) => {
+          items: statusPage.pageComponents.flatMap((component) => {
             const arr = [];
             arr.push({
               label: "Name",
               value: (
                 <TableCellLink
-                  href={`/monitors/${monitor.id}/overview`}
-                  value={monitor.name}
+                  href={`status-pages/${statusPage.id}/components`}
+                  value={component.name}
                 />
               ),
             });
             arr.push({
-              label: "URL",
-              value: monitor.url,
+              label: "Type",
+              value: component.type,
               isNested: true,
             });
             return arr;

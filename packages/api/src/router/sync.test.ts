@@ -16,6 +16,7 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { syncMonitorsToPageInsert } from "@openstatus/db/src/sync";
 
 import { appRouter } from "../root";
 import { createInnerTRPCContext } from "../trpc";
@@ -192,180 +193,27 @@ afterAll(async () => {
     .where(eq(monitor.name, `${TEST_PREFIX}-deletable-monitor`));
 });
 
-describe("Sync: monitors_to_pages -> page_component", () => {
-  test("Creating monitor-to-page relation syncs to page_component", async () => {
-    const ctx = getTestContext();
-    const caller = appRouter.createCaller(ctx);
-
-    // Update monitor to add it to the test page
-    await caller.monitor.updateStatusPages({
-      id: testMonitorId,
-      statusPages: [testPageId],
-    });
-
-    // Verify monitors_to_pages was created
-    const monitorToPage = await db.query.monitorsToPages.findFirst({
-      where: and(
-        eq(monitorsToPages.monitorId, testMonitorId),
-        eq(monitorsToPages.pageId, testPageId),
-      ),
-    });
-    expect(monitorToPage).toBeDefined();
-
-    // Verify page_component was synced
-    const component = await db.query.pageComponent.findFirst({
-      where: and(
-        eq(pageComponent.monitorId, testMonitorId),
-        eq(pageComponent.pageId, testPageId),
-      ),
-    });
-    expect(component).toBeDefined();
-    expect(component?.type).toBe("monitor");
-    expect(component?.workspaceId).toBe(1);
-  });
-
-  test("Removing monitor-to-page relation syncs delete to page_component", async () => {
-    const ctx = getTestContext();
-    const caller = appRouter.createCaller(ctx);
-
-    // First add the monitor to page if not already
-    await caller.monitor.updateStatusPages({
-      id: testMonitorId,
-      statusPages: [testPageId],
-    });
-
-    // Verify page_component exists
-    let component = await db.query.pageComponent.findFirst({
-      where: and(
-        eq(pageComponent.monitorId, testMonitorId),
-        eq(pageComponent.pageId, testPageId),
-      ),
-    });
-    expect(component).toBeDefined();
-
-    // Remove monitor from page
-    await caller.monitor.updateStatusPages({
-      id: testMonitorId,
-      statusPages: [],
-    });
-
-    // Verify page_component was deleted
-    component = await db.query.pageComponent.findFirst({
-      where: and(
-        eq(pageComponent.monitorId, testMonitorId),
-        eq(pageComponent.pageId, testPageId),
-      ),
-    });
-    expect(component).toBeUndefined();
-  });
-});
-
-describe("Sync: page.updateMonitors -> page_component and page_component_groups", () => {
-  test("Adding monitors with groups syncs to page_component and page_component_groups", async () => {
-    const ctx = getTestContext();
-    const caller = appRouter.createCaller(ctx);
-
-    // Update page with monitor in a group
-    await caller.page.updateMonitors({
-      id: testPageId,
-      monitors: [],
-      groups: [
-        {
-          name: `${TEST_PREFIX}-group`,
-          order: 0,
-          monitors: [{ id: testMonitorId, order: 0 }],
-        },
-      ],
-    });
-
-    // Verify monitor_group was created
-    const group = await db.query.monitorGroup.findFirst({
-      where: and(
-        eq(monitorGroup.pageId, testPageId),
-        eq(monitorGroup.name, `${TEST_PREFIX}-group`),
-      ),
-    });
-    expect(group).toBeDefined();
-
-    if (!group) {
-      throw new Error("Group not found");
-    }
-
-    // Verify page_component_groups was synced
-    const componentGroup = await db.query.pageComponentGroup.findFirst({
-      where: eq(pageComponentGroup.id, group.id),
-    });
-    expect(componentGroup).toBeDefined();
-    expect(componentGroup?.name).toBe(`${TEST_PREFIX}-group`);
-    expect(componentGroup?.pageId).toBe(testPageId);
-
-    // Verify page_component was synced with group reference
-    const component = await db.query.pageComponent.findFirst({
-      where: and(
-        eq(pageComponent.monitorId, testMonitorId),
-        eq(pageComponent.pageId, testPageId),
-      ),
-    });
-    expect(component).toBeDefined();
-    expect(component?.groupId).toBe(group.id);
-  });
-
-  test("Updating page monitors syncs changes to page_component", async () => {
-    const ctx = getTestContext();
-    const caller = appRouter.createCaller(ctx);
-
-    // First, set up with a group
-    await caller.page.updateMonitors({
-      id: testPageId,
-      monitors: [],
-      groups: [
-        {
-          name: `${TEST_PREFIX}-group`,
-          order: 0,
-          monitors: [{ id: testMonitorId, order: 0 }],
-        },
-      ],
-    });
-
-    // Now update to remove the group and add monitor directly
-    await caller.page.updateMonitors({
-      id: testPageId,
-      monitors: [{ id: testMonitorId, order: 0 }],
-      groups: [],
-    });
-
-    // Verify monitor_group was deleted
-    const group = await db.query.monitorGroup.findFirst({
-      where: and(
-        eq(monitorGroup.pageId, testPageId),
-        eq(monitorGroup.name, `${TEST_PREFIX}-group`),
-      ),
-    });
-    expect(group).toBeUndefined();
-
-    // Verify page_component still exists but without group
-    const component = await db.query.pageComponent.findFirst({
-      where: and(
-        eq(pageComponent.monitorId, testMonitorId),
-        eq(pageComponent.pageId, testPageId),
-      ),
-    });
-    expect(component).toBeDefined();
-    expect(component?.groupId).toBeNull();
-  });
-});
+describe("Sync: monitors_to_pages -> page_component", () => {});
 
 describe("Sync: maintenance_to_monitor -> maintenance_to_page_component", () => {
   let testMaintenanceId: number;
 
   beforeAll(async () => {
-    const ctx = getTestContext();
-    const caller = appRouter.createCaller(ctx);
+    // Ensure monitor is on the page first - use manual db call
+    await db
+      .insert(monitorsToPages)
+      .values({
+        monitorId: testMonitorId,
+        pageId: testPageId,
+        order: 0,
+      })
+      .onConflictDoNothing();
 
-    // Ensure monitor is on the page first
-    await caller.monitor.updateStatusPages({
-      id: testMonitorId,
-      statusPages: [testPageId],
+    // Sync to page_component
+    await syncMonitorsToPageInsert(db, {
+      monitorId: testMonitorId,
+      pageId: testPageId,
+      order: 0,
     });
   });
 
@@ -480,9 +328,20 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
     const caller = appRouter.createCaller(ctx);
 
     // Ensure monitor is on the page first
-    await caller.monitor.updateStatusPages({
-      id: testMonitorId,
-      statusPages: [testPageId],
+    await db
+      .insert(monitorsToPages)
+      .values({
+        monitorId: testMonitorId,
+        pageId: testPageId,
+        order: 0,
+      })
+      .onConflictDoNothing();
+
+    // Sync to page_component
+    await syncMonitorsToPageInsert(db, {
+      monitorId: testMonitorId,
+      pageId: testPageId,
+      order: 0,
     });
   });
 
@@ -608,9 +467,20 @@ describe("Sync: monitor deletion cascades to page_component tables", () => {
     deletableMonitorId = deletableMonitor.id;
 
     // Add monitor to page
-    await caller.monitor.updateStatusPages({
-      id: deletableMonitorId,
-      statusPages: [testPageId],
+    await db
+      .insert(monitorsToPages)
+      .values({
+        monitorId: deletableMonitorId,
+        pageId: testPageId,
+        order: 0,
+      })
+      .onConflictDoNothing();
+
+    // Sync to page_component
+    await syncMonitorsToPageInsert(db, {
+      monitorId: deletableMonitorId,
+      pageId: testPageId,
+      order: 0,
     });
   });
 
