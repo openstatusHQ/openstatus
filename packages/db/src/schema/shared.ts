@@ -37,15 +37,7 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
       z.object({
         pageComponentId: z.number(),
         statusReportId: z.number(),
-      }),
-    )
-    .prefault([]),
-  monitorsToStatusReports: z
-    .array(
-      z.object({
-        monitorId: z.number(),
-        statusReportId: z.number(),
-        monitor: selectPublicMonitorSchema,
+        pageComponent: selectPageComponentSchema,
       }),
     )
     .prefault([]),
@@ -57,15 +49,7 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
       z.object({
         pageComponentId: z.number(),
         maintenanceId: z.number(),
-      }),
-    )
-    .prefault([]),
-  maintenancesToMonitors: z
-    .array(
-      z.object({
-        monitorId: z.number(),
-        maintenanceId: z.number(),
-        monitor: selectPublicMonitorSchema,
+        pageComponent: selectPageComponentSchema,
       }),
     )
     .prefault([]),
@@ -124,28 +108,6 @@ const selectPublicMonitorWithStatusSchema = selectPublicMonitorBaseSchema
     name: data.externalName || data.name,
   }));
 
-const trackersSchema = z
-  .array(
-    z.discriminatedUnion("type", [
-      z.object({
-        type: z.literal("monitor"),
-        monitor: selectPublicMonitorWithStatusSchema,
-        order: z.number(),
-      }),
-      z.object({
-        type: z.literal("group"),
-        groupId: z.number(),
-        groupName: z.string(),
-        monitors: z.array(selectPublicMonitorWithStatusSchema),
-        status: z
-          .enum(["success", "degraded", "error", "info"])
-          .prefault("success"),
-        order: z.number(),
-      }),
-    ]),
-  )
-  .prefault([]);
-
 export const statusPageEventSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -154,6 +116,43 @@ export const statusPageEventSchema = z.object({
   status: z.enum(["success", "degraded", "error", "info"]).prefault("success"),
   type: z.enum(["maintenance", "incident", "report"]),
 });
+
+// Page component with status - used for new tracker system
+const selectPublicPageComponentWithStatusSchema =
+  selectPageComponentSchema.extend({
+    status: z
+      .enum(["success", "degraded", "error", "info"])
+      .prefault("success"),
+    events: z.array(statusPageEventSchema).prefault([]),
+    // For monitor-type components - omit status since it's now at component level
+    monitor: selectPublicMonitorBaseSchema
+      .extend({
+        incidents: selectIncidentSchema.array().nullish(),
+      })
+      .nullish(),
+  });
+
+const trackersSchema = z
+  .array(
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("component"),
+        component: selectPublicPageComponentWithStatusSchema,
+        order: z.number(),
+      }),
+      z.object({
+        type: z.literal("group"),
+        groupId: z.number(),
+        groupName: z.string(),
+        components: z.array(selectPublicPageComponentWithStatusSchema),
+        status: z
+          .enum(["success", "degraded", "error", "info"])
+          .prefault("success"),
+        order: z.number(),
+      }),
+    ]),
+  )
+  .prefault([]);
 
 export const selectPageComponentWithMonitorRelation =
   selectPageComponentSchema.extend({
@@ -213,4 +212,7 @@ export type StatusReportWithUpdates = z.infer<
 export type PublicMonitor = z.infer<typeof selectPublicMonitorSchema>;
 export type PublicPage = z.infer<
   typeof legacy_selectPublicPageSchemaWithRelation
+>;
+export type PublicPageComponentWithStatus = z.infer<
+  typeof selectPublicPageComponentWithStatusSchema
 >;

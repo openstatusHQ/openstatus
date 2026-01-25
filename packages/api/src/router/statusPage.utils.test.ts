@@ -1,6 +1,14 @@
 import { describe, expect, it } from "bun:test";
+import type {
+  Incident,
+  Maintenance,
+  PageComponent,
+  StatusReport,
+  StatusReportUpdate,
+} from "@openstatus/db/src/schema";
 import {
   fillStatusDataFor45Days,
+  getEvents,
   getUptime,
   setDataByType,
 } from "./statusPage.utils";
@@ -894,5 +902,264 @@ describe("getUptime", () => {
 
       expect(uptime).toBe("100%");
     });
+  });
+});
+
+describe("getEvents - pageComponent filtering", () => {
+  // Helper to create a mock page component
+  function createMockPageComponent(
+    id: number,
+    monitorId?: number,
+  ): PageComponent {
+    return {
+      id,
+      workspaceId: 1,
+      pageId: 1,
+      type: monitorId ? ("monitor" as const) : ("external" as const),
+      monitorId: monitorId ?? null,
+      name: `Component ${id}`,
+      description: null,
+      order: 0,
+      groupId: null,
+      groupOrder: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  // Helper to create a mock maintenance
+  function createMockMaintenance(
+    id: number,
+    pageComponentIds: number[],
+  ): Maintenance & {
+    maintenancesToPageComponents: {
+      pageComponent: PageComponent | null;
+    }[];
+  } {
+    const now = new Date();
+    const from = new Date(now.getTime() - 1000 * 60 * 60); // 1 hour ago
+    const to = new Date(now.getTime() + 1000 * 60 * 60); // 1 hour from now
+
+    return {
+      id,
+      title: `Maintenance ${id}`,
+      message: "Test maintenance",
+      from,
+      to,
+      workspaceId: 1,
+      pageId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      maintenancesToPageComponents: pageComponentIds.map((pcId) => ({
+        pageComponent: createMockPageComponent(pcId, pcId * 10),
+      })),
+    };
+  }
+
+  // Helper to create a mock status report
+  function createMockStatusReport(
+    id: number,
+    pageComponentIds: number[],
+    status: "investigating" | "resolved" = "investigating",
+  ): StatusReport & {
+    statusReportsToPageComponents: {
+      pageComponent: PageComponent | null;
+    }[];
+    statusReportUpdates: StatusReportUpdate[];
+  } {
+    const now = new Date();
+    const updateDate = new Date(now.getTime() - 1000 * 60 * 60); // 1 hour ago
+
+    return {
+      id,
+      title: `Status Report ${id}`,
+      status,
+      workspaceId: 1,
+      pageId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      statusReportsToPageComponents: pageComponentIds.map((pcId) => ({
+        pageComponent: createMockPageComponent(pcId, pcId * 10),
+      })),
+      statusReportUpdates: [
+        {
+          id: id * 100,
+          statusReportId: id,
+          date: updateDate,
+          status: "investigating",
+          message: "Investigating the issue",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+    };
+  }
+
+  // Helper to create a mock incident
+  function createMockIncident(id: number, monitorId: number): Incident {
+    const now = new Date();
+    const startedAt = new Date(now.getTime() - 1000 * 60 * 60); // 1 hour ago
+
+    return {
+      id,
+      title: `Incident ${id}`,
+      summary: "Test incident",
+      status: "investigating",
+      monitorId,
+      workspaceId: 1,
+      startedAt,
+      acknowledgedAt: null,
+      acknowledgedBy: null,
+      resolvedAt: null,
+      resolvedBy: null,
+      incidentScreenshotUrl: null,
+      recoveryScreenshotUrl: null,
+      autoResolved: false,
+      createdAt: startedAt,
+      updatedAt: new Date(),
+    };
+  }
+
+  it("should filter maintenances by pageComponentId", () => {
+    const maintenances = [
+      createMockMaintenance(1, [1, 2]),
+      createMockMaintenance(2, [3, 4]),
+      createMockMaintenance(3, [1, 5]),
+    ];
+
+    const events = getEvents({
+      maintenances,
+      incidents: [],
+      reports: [],
+      pageComponentId: 1,
+      pastDays: 365,
+    });
+
+    const maintenanceEvents = events.filter((e) => e.type === "maintenance");
+    expect(maintenanceEvents).toHaveLength(2);
+    expect(maintenanceEvents.map((e) => e.id).sort()).toEqual([1, 3]);
+  });
+
+  it("should filter status reports by pageComponentId", () => {
+    const reports = [
+      createMockStatusReport(1, [1, 2]),
+      createMockStatusReport(2, [3, 4]),
+      createMockStatusReport(3, [1, 5]),
+    ];
+
+    const events = getEvents({
+      maintenances: [],
+      incidents: [],
+      reports,
+      pageComponentId: 1,
+      pastDays: 365,
+    });
+
+    const reportEvents = events.filter((e) => e.type === "report");
+    expect(reportEvents).toHaveLength(2);
+    expect(reportEvents.map((e) => e.id).sort()).toEqual([1, 3]);
+  });
+
+  it("should exclude incidents for external components", () => {
+    const incidents = [createMockIncident(1, 10), createMockIncident(2, 20)];
+
+    const events = getEvents({
+      maintenances: [],
+      incidents,
+      reports: [],
+      componentType: "external",
+      pastDays: 365,
+    });
+
+    const incidentEvents = events.filter((e) => e.type === "incident");
+    expect(incidentEvents).toHaveLength(0);
+  });
+
+  it("should include incidents for monitor components", () => {
+    const incidents = [createMockIncident(1, 10), createMockIncident(2, 20)];
+
+    const events = getEvents({
+      maintenances: [],
+      incidents,
+      reports: [],
+      monitorId: 10,
+      componentType: "monitor",
+      pastDays: 365,
+    });
+
+    const incidentEvents = events.filter((e) => e.type === "incident");
+    expect(incidentEvents).toHaveLength(1);
+    expect(incidentEvents[0].id).toBe(1);
+  });
+
+  it("should maintain backward compatibility with monitorId filtering", () => {
+    const maintenances = [
+      createMockMaintenance(1, [1]),
+      createMockMaintenance(2, [2]),
+    ];
+
+    const events = getEvents({
+      maintenances,
+      incidents: [],
+      reports: [],
+      monitorId: 10,
+      pastDays: 365,
+    });
+
+    const maintenanceEvents = events.filter((e) => e.type === "maintenance");
+    expect(maintenanceEvents).toHaveLength(1);
+    expect(maintenanceEvents[0].id).toBe(1);
+  });
+
+  it("should prioritize pageComponentId over monitorId", () => {
+    const maintenances = [
+      createMockMaintenance(1, [1]),
+      createMockMaintenance(2, [2]),
+    ];
+
+    const events = getEvents({
+      maintenances,
+      incidents: [],
+      reports: [],
+      pageComponentId: 1,
+      monitorId: 20,
+      pastDays: 365,
+    });
+
+    const maintenanceEvents = events.filter((e) => e.type === "maintenance");
+    expect(maintenanceEvents).toHaveLength(1);
+    expect(maintenanceEvents[0].id).toBe(1);
+  });
+
+  it("should return success status for resolved reports", () => {
+    const reports = [createMockStatusReport(1, [1], "resolved")];
+
+    const events = getEvents({
+      maintenances: [],
+      incidents: [],
+      reports,
+      pageComponentId: 1,
+      pastDays: 365,
+    });
+
+    const reportEvents = events.filter((e) => e.type === "report");
+    expect(reportEvents).toHaveLength(1);
+    expect(reportEvents[0].status).toBe("success");
+  });
+
+  it("should return degraded status for unresolved reports", () => {
+    const reports = [createMockStatusReport(1, [1], "investigating")];
+
+    const events = getEvents({
+      maintenances: [],
+      incidents: [],
+      reports,
+      pageComponentId: 1,
+      pastDays: 365,
+    });
+
+    const reportEvents = events.filter((e) => e.type === "report");
+    expect(reportEvents).toHaveLength(1);
+    expect(reportEvents[0].status).toBe("degraded");
   });
 });

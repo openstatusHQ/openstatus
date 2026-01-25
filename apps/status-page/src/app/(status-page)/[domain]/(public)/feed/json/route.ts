@@ -73,10 +73,10 @@ export async function GET(
         from: maintenance.from,
         to: maintenance.to,
         updatedAt: maintenance.updatedAt,
-        // @deprecated Use components instead
-        monitors: maintenance.maintenancesToMonitors.map(
-          (item) => item.monitor.id,
-        ),
+        // @deprecated Use components instead - returning monitor IDs for backwards compatibility
+        monitors: maintenance.maintenancesToPageComponents
+          .map((item) => item.pageComponent.monitorId)
+          .filter((id): id is number => id !== undefined),
         // New field - references page component IDs
         pageComponents: maintenance.maintenancesToPageComponents.map(
           (item) => item.pageComponentId,
@@ -87,8 +87,10 @@ export async function GET(
         title: report.title,
         updatedAt: report.updatedAt,
         status: report.status,
-        // @deprecated Use components instead
-        monitors: report.monitorsToStatusReports.map((item) => item.monitor.id),
+        // @deprecated Use components instead - returning monitor IDs for backwards compatibility
+        monitors: report.statusReportsToPageComponents
+          .map((item) => item.pageComponent.monitorId)
+          .filter((id): id is number => id !== undefined),
         // New field - references page component IDs
         pageComponents: report.statusReportsToPageComponents.map(
           (item) => item.pageComponentId,

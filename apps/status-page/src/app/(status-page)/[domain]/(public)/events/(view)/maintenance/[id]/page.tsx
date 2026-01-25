@@ -50,9 +50,9 @@ export default function MaintenancePage() {
         <StatusEventContent hoverable={false}>
           <StatusEventTitle>{maintenance.title}</StatusEventTitle>
           <StatusEventAffected>
-            {maintenance.maintenancesToMonitors.map((affected) => (
-              <StatusEventAffectedBadge key={affected.monitor.id}>
-                {affected.monitor.name}
+            {maintenance.maintenancesToPageComponents.map((affected) => (
+              <StatusEventAffectedBadge key={affected.pageComponent.id}>
+                {affected.pageComponent.name}
               </StatusEventAffectedBadge>
             ))}
           </StatusEventAffected>
