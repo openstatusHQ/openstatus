@@ -367,7 +367,7 @@ export const statusPageRouter = createTRPCRouter({
       });
 
       const maintenances = _page.maintenances.sort(
-        (a, b) => a.from.getTime() - b.from.getTime(),
+        (a, b) => b.from.getTime() - a.from.getTime(),
       );
 
       return selectPublicPageSchemaWithRelation.parse({
