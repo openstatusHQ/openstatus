@@ -7,74 +7,28 @@ import {
   desc,
   eq,
   gte,
-  inArray,
-  sql,
-  syncStatusReportToMonitorDelete,
-  syncStatusReportToMonitorInsertMany,
   syncStatusReportToPageComponentDeleteByStatusReport,
   syncStatusReportToPageComponentInsertMany,
 } from "@openstatus/db";
 import {
-  insertStatusReportSchema,
   insertStatusReportUpdateSchema,
-  monitorsToStatusReport,
-  page,
   selectMonitorSchema,
   selectPageComponentSchema,
   selectPageSchema,
-  selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
   selectStatusReportUpdateSchema,
   statusReport,
   statusReportStatus,
-  statusReportStatusSchema,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { getPeriodDate, periods } from "./utils";
 
 export const statusReportRouter = createTRPCRouter({
-  createStatusReport: protectedProcedure
-    .meta({ track: Events.CreateReport })
-    .input(insertStatusReportSchema)
-    .mutation(async (opts) => {
-      const { id, monitors, date, message, ...statusReportInput } = opts.input;
-
-      const newStatusReport = await opts.ctx.db
-        .insert(statusReport)
-        .values({
-          workspaceId: opts.ctx.workspace.id,
-          ...statusReportInput,
-        })
-        .returning()
-        .get();
-
-      if (monitors.length > 0) {
-        await opts.ctx.db
-          .insert(monitorsToStatusReport)
-          .values(
-            monitors.map((monitor) => ({
-              monitorId: monitor,
-              statusReportId: newStatusReport.id,
-            })),
-          )
-          .returning()
-          .get();
-        // Sync to page components
-        await syncStatusReportToMonitorInsertMany(
-          opts.ctx.db,
-          newStatusReport.id,
-          monitors,
-        );
-      }
-
-      return newStatusReport;
-    }),
-
   createStatusReportUpdate: protectedProcedure
     .meta({ track: Events.CreateReportUpdate })
     .input(
@@ -112,84 +66,6 @@ export const statusReportRouter = createTRPCRouter({
       };
     }),
 
-  updateStatusReport: protectedProcedure
-    .meta({ track: Events.UpdateReport })
-    .input(insertStatusReportSchema)
-    .mutation(async (opts) => {
-      const { monitors, ...statusReportInput } = opts.input;
-
-      if (!statusReportInput.id) return;
-
-      const { title, status } = statusReportInput;
-
-      const currentStatusReport = await opts.ctx.db
-        .update(statusReport)
-        .set({ title, status, updatedAt: new Date() })
-        .where(
-          and(
-            eq(statusReport.id, statusReportInput.id),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .returning()
-        .get();
-
-      const currentMonitorsToStatusReport = await opts.ctx.db
-        .select()
-        .from(monitorsToStatusReport)
-        .where(
-          eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
-        )
-        .all();
-
-      const addedMonitors = monitors.filter(
-        (x) =>
-          !currentMonitorsToStatusReport
-            .map(({ monitorId }) => monitorId)
-            .includes(x),
-      );
-
-      if (addedMonitors.length) {
-        const values = addedMonitors.map((monitorId) => ({
-          monitorId: monitorId,
-          statusReportId: currentStatusReport.id,
-        }));
-
-        await opts.ctx.db.insert(monitorsToStatusReport).values(values).run();
-        // Sync to page components
-        await syncStatusReportToMonitorInsertMany(
-          opts.ctx.db,
-          currentStatusReport.id,
-          addedMonitors,
-        );
-      }
-
-      const removedMonitors = currentMonitorsToStatusReport
-        .map(({ monitorId }) => monitorId)
-        .filter((x) => !monitors?.includes(x));
-
-      if (removedMonitors.length) {
-        await opts.ctx.db
-          .delete(monitorsToStatusReport)
-          .where(
-            and(
-              eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
-              inArray(monitorsToStatusReport.monitorId, removedMonitors),
-            ),
-          )
-          .run();
-        // Sync delete to page components for each removed monitor
-        for (const monitorId of removedMonitors) {
-          await syncStatusReportToMonitorDelete(opts.ctx.db, {
-            statusReportId: currentStatusReport.id,
-            monitorId,
-          });
-        }
-      }
-
-      return currentStatusReport;
-    }),
-
   updateStatusReportUpdate: protectedProcedure
     .meta({ track: Events.UpdateReportUpdate })
     .input(insertStatusReportUpdateSchema)
@@ -207,193 +83,6 @@ export const statusReportRouter = createTRPCRouter({
 
       return selectStatusReportUpdateSchema.parse(currentStatusReportUpdate);
     }),
-
-  deleteStatusReport: protectedProcedure
-    .meta({ track: Events.DeleteReport })
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const statusReportToDelete = await opts.ctx.db
-        .select()
-        .from(statusReport)
-        .where(
-          and(
-            eq(statusReport.id, opts.input.id),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-      if (!statusReportToDelete) return;
-
-      await opts.ctx.db
-        .delete(statusReport)
-        .where(eq(statusReport.id, statusReportToDelete.id))
-        .run();
-    }),
-
-  deleteStatusReportUpdate: protectedProcedure
-    .meta({ track: Events.DeleteReportUpdate })
-    .input(z.object({ id: z.number() }))
-    .mutation(async (opts) => {
-      const statusReportUpdateToDelete = await opts.ctx.db
-        .select()
-        .from(statusReportUpdate)
-        .where(and(eq(statusReportUpdate.id, opts.input.id)))
-        .get();
-
-      if (!statusReportUpdateToDelete) return;
-
-      await opts.ctx.db
-        .delete(statusReportUpdate)
-        .where(eq(statusReportUpdate.id, opts.input.id))
-        .run();
-    }),
-
-  getStatusReportById: protectedProcedure
-    .input(z.object({ id: z.number(), pageId: z.number().optional() }))
-    .query(async (opts) => {
-      const selectPublicStatusReportSchemaWithRelation =
-        selectStatusReportSchema.extend({
-          status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
-          monitorsToStatusReports: z
-            .array(
-              z.object({
-                statusReportId: z.number(),
-                monitorId: z.number(),
-                monitor: selectMonitorSchema,
-              }),
-            )
-            .prefault([]),
-          statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-          date: z.date().prefault(new Date()),
-        });
-
-      const data = await opts.ctx.db.query.statusReport.findFirst({
-        where: and(
-          eq(statusReport.id, opts.input.id),
-          eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          // only allow to fetch status report if it belongs to the page
-          opts.input.pageId
-            ? eq(statusReport.pageId, opts.input.pageId)
-            : undefined,
-        ),
-        with: {
-          monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: {
-            orderBy: (statusReportUpdate, { desc }) => [
-              desc(statusReportUpdate.createdAt),
-            ],
-          },
-        },
-      });
-
-      return selectPublicStatusReportSchemaWithRelation.parse(data);
-    }),
-
-  getStatusReportUpdateById: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      const data = await opts.ctx.db.query.statusReportUpdate.findFirst({
-        where: and(eq(statusReportUpdate.id, opts.input.id)),
-      });
-      return selectStatusReportUpdateSchema.parse(data);
-    }),
-
-  getStatusReportByWorkspace: protectedProcedure.query(async (opts) => {
-    // FIXME: can we get rid of that?
-    const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
-      status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
-      monitorsToStatusReports: z
-        .array(
-          z.object({
-            statusReportId: z.number(),
-            monitorId: z.number(),
-            monitor: selectMonitorSchema,
-          }),
-        )
-        .prefault([]),
-      statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-    });
-
-    const result = await opts.ctx.db.query.statusReport.findMany({
-      where: eq(statusReport.workspaceId, opts.ctx.workspace.id),
-      with: {
-        monitorsToStatusReports: { with: { monitor: true } },
-        statusReportUpdates: {
-          orderBy: (statusReportUpdate, { desc }) => [
-            desc(statusReportUpdate.createdAt),
-          ],
-        },
-      },
-      orderBy: (statusReport, { desc }) => [desc(statusReport.updatedAt)],
-    });
-    return z.array(selectStatusSchemaWithRelation).parse(result);
-  }),
-
-  getStatusReportByPageId: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      // FIXME: can we get rid of that?
-      const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
-        status: statusReportStatusSchema.prefault("investigating"), // TODO: remove!
-        monitorsToStatusReports: z
-          .array(
-            z.object({
-              statusReportId: z.number(),
-              monitorId: z.number(),
-              monitor: selectMonitorSchema,
-            }),
-          )
-          .prefault([]),
-        statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-      });
-
-      const result = await opts.ctx.db.query.statusReport.findMany({
-        where: and(
-          eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          eq(statusReport.pageId, opts.input.id),
-        ),
-        with: {
-          monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: {
-            orderBy: (statusReportUpdate, { desc }) => [
-              desc(statusReportUpdate.createdAt),
-            ],
-          },
-        },
-        orderBy: (statusReport, { desc }) => [desc(statusReport.updatedAt)],
-      });
-      return z.array(selectStatusSchemaWithRelation).parse(result);
-    }),
-
-  getPublicStatusReportById: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
-    .query(async (opts) => {
-      const result = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-      });
-
-      if (!result) return;
-
-      const _statusReport = await opts.ctx.db.query.statusReport.findFirst({
-        where: and(
-          eq(statusReport.id, opts.input.id),
-          eq(statusReport.pageId, result.id),
-          eq(statusReport.workspaceId, result.workspaceId),
-        ),
-        with: {
-          monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: {
-            orderBy: (reports, { desc }) => desc(reports.date),
-          },
-        },
-      });
-
-      if (!_statusReport) return;
-
-      return selectPublicStatusReportSchemaWithRelation.parse(_statusReport);
-    }),
-
-  // DASHBOARD
 
   list: protectedProcedure
     .input(
