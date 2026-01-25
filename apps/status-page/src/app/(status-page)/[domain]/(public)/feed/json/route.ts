@@ -76,7 +76,7 @@ export async function GET(
         // @deprecated Use components instead - returning monitor IDs for backwards compatibility
         monitors: maintenance.maintenancesToPageComponents
           .map((item) => item.pageComponent.monitorId)
-          .filter((id): id is number => id !== undefined),
+          .filter((id): id is number => id !== null),
         // New field - references page component IDs
         pageComponents: maintenance.maintenancesToPageComponents.map(
           (item) => item.pageComponentId,
@@ -90,7 +90,7 @@ export async function GET(
         // @deprecated Use components instead - returning monitor IDs for backwards compatibility
         monitors: report.statusReportsToPageComponents
           .map((item) => item.pageComponent.monitorId)
-          .filter((id): id is number => id !== undefined),
+          .filter((id): id is number => id !== null),
         // New field - references page component IDs
         pageComponents: report.statusReportsToPageComponents.map(
           (item) => item.pageComponentId,
