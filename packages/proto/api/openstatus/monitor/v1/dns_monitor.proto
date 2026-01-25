@@ -5,6 +5,7 @@ package openstatus.monitor.v1;
 import "buf/validate/validate.proto";
 import "openstatus/monitor/v1/assertions.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/monitor.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
@@ -26,8 +27,8 @@ message DNSMonitor {
   }];
 
   // Check periodicity (required).
-  string periodicity = 4 [(buf.validate.field).string = {
-    in: ["30s", "1m", "5m", "10m", "30m", "1h"]
+  Periodicity periodicity = 4 [(buf.validate.field).enum = {
+    not_in: [0]
   }];
 
   // Timeout in milliseconds (0-120000, defaults to 45000).
@@ -61,16 +62,11 @@ message DNSMonitor {
   bool public = 11;
 
   // Geographic regions to run checks from.
-  repeated string regions = 12 [(buf.validate.field).repeated = {
+  repeated Region regions = 12 [(buf.validate.field).repeated = {
     max_items: 28
     items: {
-      string: {
-        in: [
-          "ams", "arn", "bom", "cdg", "dfw", "ewr", "fra", "gru", "iad", "jnb",
-          "lax", "lhr", "nrt", "ord", "sjc", "sin", "syd", "yyz",
-          "koyeb_fra", "koyeb_par", "koyeb_sfo", "koyeb_sin", "koyeb_tyo", "koyeb_was",
-          "railway_us-west2", "railway_us-east4-eqdc4a", "railway_europe-west4-drams3a", "railway_asia-southeast1-eqsg3a"
-        ]
+      enum: {
+        not_in: [0]
       }
     }
   }];

@@ -7,13 +7,15 @@ import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { BodyAssertion, HeaderAssertion, StatusCodeAssertion } from "./assertions_pb.ts";
 import { file_openstatus_monitor_v1_assertions } from "./assertions_pb.ts";
+import type { Periodicity, Region } from "./monitor_pb.ts";
+import { file_openstatus_monitor_v1_monitor } from "./monitor_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/monitor/v1/http_monitor.proto.
  */
 export const file_openstatus_monitor_v1_http_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiLgoHSGVhZGVycxIUCgNrZXkYASABKAlCB7pIBHICEAESDQoFdmFsdWUYAiABKAkibAoTT3BlblRlbGVtZXRyeUNvbmZpZxIaCghlbmRwb2ludBgBIAEoCUIIukgFcgMYgBASOQoHaGVhZGVycxgCIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFCLICAoLSFRUUE1vbml0b3ISCgoCaWQYASABKAkSGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAhIaCgN1cmwYAyABKAlCDbpICnIIEAEYgBCIAQESNQoLcGVyaW9kaWNpdHkYBCABKAlCILpIHXIbUgMzMHNSAjFtUgI1bVIDMTBtUgMzMG1SAjFoElUKBm1ldGhvZBgFIAEoCUJFukhCckBSAFIDR0VUUgRQT1NUUgRIRUFEUgNQVVRSBVBBVENIUgZERUxFVEVSBVRSQUNFUgdDT05ORUNUUgdPUFRJT05TEgwKBGJvZHkYBiABKAkSHAoHdGltZW91dBgHIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYCCABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYCSABKANCCbpIBiIEGAooABIYChBmb2xsb3dfcmVkaXJlY3RzGAogASgIEjkKB2hlYWRlcnMYCyADKAsyHi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSGVhZGVyc0IIukgFkgECEBQSVAoWc3RhdHVzX2NvZGVfYXNzZXJ0aW9ucxgMIAMoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5TdGF0dXNDb2RlQXNzZXJ0aW9uQgi6SAWSAQIQChJHCg9ib2R5X2Fzc2VydGlvbnMYDSADKAsyJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuQm9keUFzc2VydGlvbkIIukgFkgECEAoSSwoRaGVhZGVyX2Fzc2VydGlvbnMYDiADKAsyJi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSGVhZGVyQXNzZXJ0aW9uQgi6SAWSAQIQChIdCgtkZXNjcmlwdGlvbhgPIAEoCUIIukgFcgMYgAgSDgoGYWN0aXZlGBAgASgIEg4KBnB1YmxpYxgRIAEoCBKnAgoHcmVnaW9ucxgSIAMoCUKVArpIkQKSAY0CEBwiiAJyhQJSA2Ftc1IDYXJuUgNib21SA2NkZ1IDZGZ3UgNld3JSA2ZyYVIDZ3J1UgNpYWRSA2puYlIDbGF4UgNsaHJSA25ydFIDb3JkUgNzamNSA3NpblIDc3lkUgN5eXpSCWtveWViX2ZyYVIJa295ZWJfcGFyUglrb3llYl9zZm9SCWtveWViX3NpblIJa295ZWJfdHlvUglrb3llYl93YXNSEHJhaWx3YXlfdXMtd2VzdDJSF3JhaWx3YXlfdXMtZWFzdDQtZXFkYzRhUhxyYWlsd2F5X2V1cm9wZS13ZXN0NC1kcmFtczNhUh5yYWlsd2F5X2FzaWEtc291dGhlYXN0MS1lcXNnM2ESQgoOb3Blbl90ZWxlbWV0cnkYEyABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZ0IOCgxfZGVncmFkZWRfYXQq9wEKCkhUVFBNZXRob2QSGwoXSFRUUF9NRVRIT0RfVU5TUEVDSUZJRUQQABITCg9IVFRQX01FVEhPRF9HRVQQARIUChBIVFRQX01FVEhPRF9QT1NUEAISFAoQSFRUUF9NRVRIT0RfSEVBRBADEhMKD0hUVFBfTUVUSE9EX1BVVBAEEhUKEUhUVFBfTUVUSE9EX1BBVENIEAUSFgoSSFRUUF9NRVRIT0RfREVMRVRFEAYSFQoRSFRUUF9NRVRIT0RfVFJBQ0UQBxIXChNIVFRQX01FVEhPRF9DT05ORUNUEAgSFwoTSFRUUF9NRVRIT0RfT1BUSU9OUxAJKqUBCgtQZXJpb2RpY2l0eRIbChdQRVJJT0RJQ0lUWV9VTlNQRUNJRklFRBAAEhMKD1BFUklPRElDSVRZXzMwUxABEhIKDlBFUklPRElDSVRZXzFNEAISEgoOUEVSSU9ESUNJVFlfNU0QAxITCg9QRVJJT0RJQ0lUWV8xME0QBBITCg9QRVJJT0RJQ0lUWV8zME0QBRISCg5QRVJJT0RJQ0lUWV8xSBAGQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions]);
+  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiLgoHSGVhZGVycxIUCgNrZXkYASABKAlCB7pIBHICEAESDQoFdmFsdWUYAiABKAkibAoTT3BlblRlbGVtZXRyeUNvbmZpZxIaCghlbmRwb2ludBgBIAEoCUIIukgFcgMYgBASOQoHaGVhZGVycxgCIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFCLRBgoLSFRUUE1vbml0b3ISCgoCaWQYASABKAkSGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAhIaCgN1cmwYAyABKAlCDbpICnIIEAEYgBCIAQESQQoLcGVyaW9kaWNpdHkYBCABKA4yIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuUGVyaW9kaWNpdHlCCLpIBYIBAiAAEjsKBm1ldGhvZBgFIAEoDjIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTWV0aG9kQgi6SAWCAQIgABIMCgRib2R5GAYgASgJEhwKB3RpbWVvdXQYByABKANCC7pICCIGGMCpBygAEiUKC2RlZ3JhZGVkX2F0GAggASgDQgu6SAgiBhjAqQcoAEgAiAEBEhgKBXJldHJ5GAkgASgDQgm6SAYiBBgKKAASGAoQZm9sbG93X3JlZGlyZWN0cxgKIAEoCBI5CgdoZWFkZXJzGAsgAygLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYWRlcnNCCLpIBZIBAhAUElQKFnN0YXR1c19jb2RlX2Fzc2VydGlvbnMYDCADKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuU3RhdHVzQ29kZUFzc2VydGlvbkIIukgFkgECEAoSRwoPYm9keV9hc3NlcnRpb25zGA0gAygLMiQub3BlbnN0YXR1cy5tb25pdG9yLnYxLkJvZHlBc3NlcnRpb25CCLpIBZIBAhAKEksKEWhlYWRlcl9hc3NlcnRpb25zGA4gAygLMiYub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYWRlckFzc2VydGlvbkIIukgFkgECEAoSHQoLZGVzY3JpcHRpb24YDyABKAlCCLpIBXIDGIAIEg4KBmFjdGl2ZRgQIAEoCBIOCgZwdWJsaWMYESABKAgSPwoHcmVnaW9ucxgSIAMoDjIdLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb25CD7pIDJIBCRAcIgWCAQIgABJCCg5vcGVuX3RlbGVtZXRyeRgTIAEoCzIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5PcGVuVGVsZW1ldHJ5Q29uZmlnQg4KDF9kZWdyYWRlZF9hdCr3AQoKSFRUUE1ldGhvZBIbChdIVFRQX01FVEhPRF9VTlNQRUNJRklFRBAAEhMKD0hUVFBfTUVUSE9EX0dFVBABEhQKEEhUVFBfTUVUSE9EX1BPU1QQAhIUChBIVFRQX01FVEhPRF9IRUFEEAMSEwoPSFRUUF9NRVRIT0RfUFVUEAQSFQoRSFRUUF9NRVRIT0RfUEFUQ0gQBRIWChJIVFRQX01FVEhPRF9ERUxFVEUQBhIVChFIVFRQX01FVEhPRF9UUkFDRRAHEhcKE0hUVFBfTUVUSE9EX0NPTk5FQ1QQCBIXChNIVFRQX01FVEhPRF9PUFRJT05TEAlCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_monitor]);
 
 /**
  * Headers represents a key-value pair for HTTP headers.
@@ -97,16 +99,16 @@ export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
   /**
    * Check periodicity (required).
    *
-   * @generated from field: string periodicity = 4;
+   * @generated from field: openstatus.monitor.v1.Periodicity periodicity = 4;
    */
-  periodicity: string;
+  periodicity: Periodicity;
 
   /**
    * HTTP method to use (defaults to GET).
    *
-   * @generated from field: string method = 5;
+   * @generated from field: openstatus.monitor.v1.HTTPMethod method = 5;
    */
-  method: string;
+  method: HTTPMethod;
 
   /**
    * Request body (optional).
@@ -195,9 +197,9 @@ export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
   /**
    * Geographic regions to run checks from.
    *
-   * @generated from field: repeated string regions = 18;
+   * @generated from field: repeated openstatus.monitor.v1.Region regions = 18;
    */
-  regions: string[];
+  regions: Region[];
 
   /**
    * OpenTelemetry configuration for exporting metrics.
@@ -276,52 +278,4 @@ export enum HTTPMethod {
  */
 export const HTTPMethodSchema: GenEnum<HTTPMethod> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_http_monitor, 0);
-
-/**
- * Monitor periodicity options.
- *
- * @generated from enum openstatus.monitor.v1.Periodicity
- */
-export enum Periodicity {
-  /**
-   * @generated from enum value: PERIODICITY_UNSPECIFIED = 0;
-   */
-  PERIODICITY_UNSPECIFIED = 0,
-
-  /**
-   * @generated from enum value: PERIODICITY_30S = 1;
-   */
-  PERIODICITY_30S = 1,
-
-  /**
-   * @generated from enum value: PERIODICITY_1M = 2;
-   */
-  PERIODICITY_1M = 2,
-
-  /**
-   * @generated from enum value: PERIODICITY_5M = 3;
-   */
-  PERIODICITY_5M = 3,
-
-  /**
-   * @generated from enum value: PERIODICITY_10M = 4;
-   */
-  PERIODICITY_10M = 4,
-
-  /**
-   * @generated from enum value: PERIODICITY_30M = 5;
-   */
-  PERIODICITY_30M = 5,
-
-  /**
-   * @generated from enum value: PERIODICITY_1H = 6;
-   */
-  PERIODICITY_1H = 6,
-}
-
-/**
- * Describes the enum openstatus.monitor.v1.Periodicity.
- */
-export const PeriodicitySchema: GenEnum<Periodicity> = /*@__PURE__*/
-  enumDesc(file_openstatus_monitor_v1_http_monitor, 1);
 

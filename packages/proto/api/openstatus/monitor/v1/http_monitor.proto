@@ -4,6 +4,7 @@ package openstatus.monitor.v1;
 
 import "buf/validate/validate.proto";
 import "openstatus/monitor/v1/assertions.proto";
+import "openstatus/monitor/v1/monitor.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
@@ -19,17 +20,6 @@ enum HTTPMethod {
   HTTP_METHOD_TRACE = 7;
   HTTP_METHOD_CONNECT = 8;
   HTTP_METHOD_OPTIONS = 9;
-}
-
-// Monitor periodicity options.
-enum Periodicity {
-  PERIODICITY_UNSPECIFIED = 0;
-  PERIODICITY_30S = 1;
-  PERIODICITY_1M = 2;
-  PERIODICITY_5M = 3;
-  PERIODICITY_10M = 4;
-  PERIODICITY_30M = 5;
-  PERIODICITY_1H = 6;
 }
 
 // Headers represents a key-value pair for HTTP headers.
@@ -66,13 +56,13 @@ message HTTPMonitor {
   }];
 
   // Check periodicity (required).
-  string periodicity = 4 [(buf.validate.field).string = {
-    in: ["30s", "1m", "5m", "10m", "30m", "1h"]
+  Periodicity periodicity = 4 [(buf.validate.field).enum = {
+    not_in: [0]
   }];
 
   // HTTP method to use (defaults to GET).
-  string method = 5 [(buf.validate.field).string = {
-    in: ["", "GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"]
+  HTTPMethod method = 5 [(buf.validate.field).enum = {
+      not_in: [0]
   }];
 
   // Request body (optional).
@@ -121,16 +111,11 @@ message HTTPMonitor {
   bool public = 17;
 
   // Geographic regions to run checks from.
-  repeated string regions = 18 [(buf.validate.field).repeated = {
+  repeated Region regions = 18 [(buf.validate.field).repeated = {
     max_items: 28
     items: {
-      string: {
-        in: [
-          "ams", "arn", "bom", "cdg", "dfw", "ewr", "fra", "gru", "iad", "jnb",
-          "lax", "lhr", "nrt", "ord", "sjc", "sin", "syd", "yyz",
-          "koyeb_fra", "koyeb_par", "koyeb_sfo", "koyeb_sin", "koyeb_tyo", "koyeb_was",
-          "railway_us-west2", "railway_us-east4-eqdc4a", "railway_europe-west4-drams3a", "railway_asia-southeast1-eqsg3a"
-        ]
+      enum: {
+        not_in: [0]
       }
     }
   }];

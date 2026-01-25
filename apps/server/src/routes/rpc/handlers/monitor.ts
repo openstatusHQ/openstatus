@@ -11,6 +11,8 @@ import type {
   DNSMonitor,
   HTTPMonitor,
   MonitorService,
+  Periodicity,
+  Region,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 import { getRpcContext } from "../interceptors";
@@ -22,8 +24,11 @@ import {
   dnsAssertionsToDbJson,
   headersToDbJson,
   httpAssertionsToDbJson,
+  httpMethodToString,
   openTelemetryToDb,
+  periodicityToString,
   regionsToDbString,
+  regionsToStrings,
   validateRegions,
 } from "./monitor-utils";
 
@@ -59,14 +64,15 @@ function toValidMethod(value: string | undefined): MonitorMethod {
  */
 function validateCommonMonitorFields(mon: {
   name?: string;
-  regions?: string[];
+  regions?: Region[];
 }): void {
   if (!mon.name || mon.name.trim().length === 0) {
     throw new ConnectError("Monitor name is required", Code.InvalidArgument);
   }
 
   if (mon.regions && mon.regions.length > 0) {
-    const invalidRegions = validateRegions(mon.regions);
+    const regionStrings = regionsToStrings(mon.regions);
+    const invalidRegions = validateRegions(regionStrings);
     if (invalidRegions.length > 0) {
       throw new ConnectError(
         `Invalid regions: ${invalidRegions.join(", ")}`,
@@ -81,27 +87,31 @@ function validateCommonMonitorFields(mon: {
  */
 function getCommonDbValues(mon: {
   name: string;
-  periodicity?: string;
+  periodicity?: Periodicity;
   timeout?: bigint;
   degradedAt?: bigint;
   active?: boolean;
   description?: string;
   public?: boolean;
-  regions?: string[];
+  regions?: Region[];
   retry?: bigint;
   openTelemetry?: Parameters<typeof openTelemetryToDb>[0];
 }) {
   const otelConfig = openTelemetryToDb(mon.openTelemetry);
+  const periodicityStr = mon.periodicity
+    ? periodicityToString(mon.periodicity)
+    : undefined;
+  const regionStrings = mon.regions ? regionsToStrings(mon.regions) : [];
 
   return {
     name: mon.name,
-    periodicity: toValidPeriodicity(mon.periodicity),
+    periodicity: toValidPeriodicity(periodicityStr),
     timeout: mon.timeout ? Number(mon.timeout) : MONITOR_DEFAULTS.timeout,
     degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
     active: mon.active ?? MONITOR_DEFAULTS.active,
     description: mon.description || MONITOR_DEFAULTS.description,
     public: mon.public ?? MONITOR_DEFAULTS.public,
-    regions: regionsToDbString(mon.regions ?? []),
+    regions: regionsToDbString(regionStrings),
     retry: mon.retry ? Number(mon.retry) : MONITOR_DEFAULTS.retry,
     otelEndpoint: otelConfig.otelEndpoint,
     otelHeaders: otelConfig.otelHeaders,
@@ -164,7 +174,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         workspaceId,
         jobType: "http",
         url: mon.url,
-        method: toValidMethod(mon.method),
+        method: toValidMethod(httpMethodToString(mon.method)),
         body: mon.body || undefined,
         headers,
         assertions,

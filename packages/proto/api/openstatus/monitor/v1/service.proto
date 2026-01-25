@@ -115,4 +115,19 @@ message ListMonitorsResponse {
 
   // Token for the next page of results.
   string next_page_token = 4;
+
+  // Total number of monitors across all pages.
+  int32 total_size = 5;
+}
+
+// MonitorConfig represents the type-specific configuration for a monitor.
+message MonitorConfig {
+  oneof config {
+    // HTTP monitor configuration.
+    HTTPMonitor http = 1;
+    // TCP monitor configuration.
+    TCPMonitor tcp = 2;
+    // DNS monitor configuration.
+    DNSMonitor dns = 3;
+  }
 }

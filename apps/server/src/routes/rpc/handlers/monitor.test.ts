@@ -168,8 +168,8 @@ describe("MonitorService.ListMonitors", () => {
 
     expect(httpMon).toBeDefined();
     expect(httpMon.url).toBe("https://example.com");
-    expect(httpMon.periodicity).toBe("1m");
-    expect(httpMon.method).toBe("GET");
+    expect(httpMon.periodicity).toBe("PERIODICITY_1M");
+    expect(httpMon.method).toBe("HTTP_METHOD_GET");
     expect(httpMon.headers).toBeDefined();
     expect(httpMon.statusCodeAssertions).toBeDefined();
     expect(httpMon.bodyAssertions).toBeDefined();
@@ -196,7 +196,7 @@ describe("MonitorService.ListMonitors", () => {
 
     expect(tcpMon).toBeDefined();
     expect(tcpMon.uri).toBe("tcp://example.com:443");
-    expect(tcpMon.periodicity).toBe("5m");
+    expect(tcpMon.periodicity).toBe("PERIODICITY_5M");
   });
 
   test("returns DNS monitors with correct structure", async () => {
@@ -219,7 +219,7 @@ describe("MonitorService.ListMonitors", () => {
 
     expect(dnsMon).toBeDefined();
     expect(dnsMon.uri).toBe("example.com");
-    expect(dnsMon.periodicity).toBe("10m");
+    expect(dnsMon.periodicity).toBe("PERIODICITY_10M");
     expect(dnsMon.recordAssertions).toBeDefined();
   });
 
@@ -440,8 +440,8 @@ describe("MonitorService.CreateHTTPMonitor", () => {
         monitor: {
           name: "test-create-http",
           url: "https://create-test.example.com",
-          periodicity: "5m",
-          method: "POST",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_POST",
           timeout: "30000",
           followRedirects: true,
           headers: [{ key: "X-Custom", value: "test" }],
@@ -456,8 +456,8 @@ describe("MonitorService.CreateHTTPMonitor", () => {
     const data = await res.json();
     expect(data.monitor).toBeDefined();
     expect(data.monitor.url).toBe("https://create-test.example.com");
-    expect(data.monitor.periodicity).toBe("5m");
-    expect(data.monitor.method).toBe("POST");
+    expect(data.monitor.periodicity).toBe("PERIODICITY_5M");
+    expect(data.monitor.method).toBe("HTTP_METHOD_POST");
 
     // Clean up
     if (data.monitor.id) {
@@ -492,7 +492,7 @@ describe("MonitorService.CreateTCPMonitor", () => {
         monitor: {
           name: "test-create-tcp",
           uri: "tcp://create-tcp-test.example.com:8080",
-          periodicity: "10m",
+          periodicity: "PERIODICITY_10M",
           timeout: "15000",
         },
       },
@@ -504,7 +504,7 @@ describe("MonitorService.CreateTCPMonitor", () => {
     const data = await res.json();
     expect(data.monitor).toBeDefined();
     expect(data.monitor.uri).toBe("tcp://create-tcp-test.example.com:8080");
-    expect(data.monitor.periodicity).toBe("10m");
+    expect(data.monitor.periodicity).toBe("PERIODICITY_10M");
 
     // Clean up
     if (data.monitor.id) {
@@ -531,7 +531,7 @@ describe("MonitorService.CreateDNSMonitor", () => {
         monitor: {
           name: "test-create-dns",
           uri: "create-dns-test.example.com",
-          periodicity: "30m",
+          periodicity: "PERIODICITY_30M",
           timeout: "5000",
           recordAssertions: [{ record: "A", target: "1.2.3.4", comparator: 1 }],
         },
@@ -544,7 +544,7 @@ describe("MonitorService.CreateDNSMonitor", () => {
     const data = await res.json();
     expect(data.monitor).toBeDefined();
     expect(data.monitor.uri).toBe("create-dns-test.example.com");
-    expect(data.monitor.periodicity).toBe("30m");
+    expect(data.monitor.periodicity).toBe("PERIODICITY_30M");
 
     // Clean up
     if (data.monitor.id) {
@@ -602,7 +602,7 @@ describe("MonitorService - Validation", () => {
       {
         monitor: {
           url: "https://test.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
         },
       },
       { "x-openstatus-key": "1" },
@@ -620,7 +620,7 @@ describe("MonitorService - Validation", () => {
         monitor: {
           name: "",
           url: "https://test.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
         },
       },
       { "x-openstatus-key": "1" },
@@ -637,7 +637,7 @@ describe("MonitorService - Validation", () => {
       {
         monitor: {
           name: "test-monitor",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
         },
       },
       { "x-openstatus-key": "1" },
@@ -655,7 +655,7 @@ describe("MonitorService - Validation", () => {
       {
         monitor: {
           name: "test-tcp-monitor",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
         },
       },
       { "x-openstatus-key": "1" },
@@ -673,7 +673,7 @@ describe("MonitorService - Validation", () => {
       {
         monitor: {
           name: "test-dns-monitor",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
         },
       },
       { "x-openstatus-key": "1" },
@@ -685,25 +685,33 @@ describe("MonitorService - Validation", () => {
     expect(data.message.toLowerCase()).toContain("uri");
   });
 
-  test("returns error for invalid regions", async () => {
+  test("invalid region strings are filtered out", async () => {
     const res = await connectRequest(
       "CreateHTTPMonitor",
       {
         monitor: {
-          name: "test-monitor",
+          name: "test-invalid-regions",
           url: "https://test.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
           regions: ["invalid-region", "another-invalid"],
         },
       },
       { "x-openstatus-key": "1" },
     );
 
-    expect(res.status).toBe(400);
+    // Invalid region strings are parsed as UNSPECIFIED and filtered out
+    // Monitor is created with empty regions
+    expect(res.status).toBe(200);
     const data = await res.json();
-    // protovalidate returns error in format "monitor.regions[0]: value must be in list..."
-    expect(data.message).toContain("regions");
-    expect(data.message).toContain("value must be in list");
+    expect(data.monitor).toBeDefined();
+    // Proto3 may omit empty arrays
+    expect(data.monitor.regions || []).toEqual([]);
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
   });
 
   test("accepts valid regions", async () => {
@@ -713,8 +721,9 @@ describe("MonitorService - Validation", () => {
         monitor: {
           name: "test-valid-regions",
           url: "https://test-valid-regions.example.com",
-          periodicity: "5m",
-          regions: ["ams", "iad", "sin"],
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
+          regions: ["REGION_AMS", "REGION_IAD", "REGION_SIN"],
         },
       },
       { "x-openstatus-key": "1" },
@@ -723,7 +732,7 @@ describe("MonitorService - Validation", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.monitor).toBeDefined();
-    expect(data.monitor.regions).toEqual(["ams", "iad", "sin"]);
+    expect(data.monitor.regions).toEqual(["REGION_AMS", "REGION_IAD", "REGION_SIN"]);
 
     // Clean up
     if (data.monitor.id) {
@@ -740,7 +749,8 @@ describe("MonitorService - Assertions Round-trip", () => {
         monitor: {
           name: "test-assertions-roundtrip",
           url: "https://test-assertions.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
           statusCodeAssertions: [
             { target: "200", comparator: 1 },
             { target: "201", comparator: 1 },
@@ -793,7 +803,7 @@ describe("MonitorService - Assertions Round-trip", () => {
         monitor: {
           name: "test-dns-assertions",
           uri: "test-dns-assertions.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
           recordAssertions: [
             { record: "A", target: "93.184.216.34", comparator: 1 },
             { record: "AAAA", target: "2606:2800:220:1::", comparator: 1 },
@@ -841,7 +851,8 @@ describe("MonitorService - OpenTelemetry Configuration", () => {
         monitor: {
           name: "test-otel-config",
           url: "https://test-otel.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
           openTelemetry: {
             endpoint: "https://otel-collector.example.com/v1/traces",
             headers: [
@@ -893,7 +904,8 @@ describe("MonitorService - OpenTelemetry Configuration", () => {
         monitor: {
           name: "test-no-otel",
           url: "https://test-no-otel.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
         },
       },
       { "x-openstatus-key": "1" },
@@ -934,7 +946,8 @@ describe("MonitorService - Default Values", () => {
         monitor: {
           name: "test-defaults",
           url: "https://test-defaults.example.com",
-          periodicity: "5m",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
         },
       },
       { "x-openstatus-key": "1" },
@@ -952,7 +965,7 @@ describe("MonitorService - Default Values", () => {
       expect(createData.monitor.followRedirects ?? false).toBe(false);
       expect(createData.monitor.active ?? false).toBe(false);
       expect(createData.monitor.public ?? false).toBe(false);
-      expect(createData.monitor.method).toBe("GET");
+      expect(createData.monitor.method).toBe("HTTP_METHOD_GET");
     } finally {
       await db.delete(monitor).where(eq(monitor.id, Number(monitorId)));
     }

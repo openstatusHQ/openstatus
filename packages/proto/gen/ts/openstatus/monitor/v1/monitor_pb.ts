@@ -2,64 +2,14 @@
 // @generated from file openstatus/monitor/v1/monitor.proto (package openstatus.monitor.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import type { DNSMonitor } from "./dns_monitor_pb.ts";
-import { file_openstatus_monitor_v1_dns_monitor } from "./dns_monitor_pb.ts";
-import type { HTTPMonitor } from "./http_monitor_pb.ts";
-import { file_openstatus_monitor_v1_http_monitor } from "./http_monitor_pb.ts";
-import type { TCPMonitor } from "./tcp_monitor_pb.ts";
-import { file_openstatus_monitor_v1_tcp_monitor } from "./tcp_monitor_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
+import type { GenEnum, GenFile } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc } from "@bufbuild/protobuf/codegenv2";
 
 /**
  * Describes the file openstatus/monitor/v1/monitor.proto.
  */
 export const file_openstatus_monitor_v1_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIrEBCg1Nb25pdG9yQ29uZmlnEjIKBGh0dHAYASABKAsyIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1vbml0b3JIABIwCgN0Y3AYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckgAEjAKA2RucxgDIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9ySABCCAoGY29uZmlnKn8KDU1vbml0b3JTdGF0dXMSHgoaTU9OSVRPUl9TVEFUVVNfVU5TUEVDSUZJRUQQABIZChVNT05JVE9SX1NUQVRVU19BQ1RJVkUQARIZChVNT05JVE9SX1NUQVRVU19QQVVTRUQQAhIYChRNT05JVE9SX1NUQVRVU19FUlJPUhADQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_tcp_monitor]);
-
-/**
- * MonitorConfig represents the type-specific configuration for a monitor.
- *
- * @generated from message openstatus.monitor.v1.MonitorConfig
- */
-export type MonitorConfig = Message<"openstatus.monitor.v1.MonitorConfig"> & {
-  /**
-   * @generated from oneof openstatus.monitor.v1.MonitorConfig.config
-   */
-  config: {
-    /**
-     * HTTP monitor configuration.
-     *
-     * @generated from field: openstatus.monitor.v1.HTTPMonitor http = 1;
-     */
-    value: HTTPMonitor;
-    case: "http";
-  } | {
-    /**
-     * TCP monitor configuration.
-     *
-     * @generated from field: openstatus.monitor.v1.TCPMonitor tcp = 2;
-     */
-    value: TCPMonitor;
-    case: "tcp";
-  } | {
-    /**
-     * DNS monitor configuration.
-     *
-     * @generated from field: openstatus.monitor.v1.DNSMonitor dns = 3;
-     */
-    value: DNSMonitor;
-    case: "dns";
-  } | { case: undefined; value?: undefined };
-};
-
-/**
- * Describes the message openstatus.monitor.v1.MonitorConfig.
- * Use `create(MonitorConfigSchema)` to create a new message.
- */
-export const MonitorConfigSchema: GenMessage<MonitorConfig> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_monitor, 0);
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxKoEBCg1Nb25pdG9yU3RhdHVzEh4KGk1PTklUT1JfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVTU9OSVRPUl9TVEFUVVNfQUNUSVZFEAESGwoXTU9OSVRPUl9TVEFUVVNfREVHUkFERUQQAhIYChRNT05JVE9SX1NUQVRVU19FUlJPUhADKqUBCgtQZXJpb2RpY2l0eRIbChdQRVJJT0RJQ0lUWV9VTlNQRUNJRklFRBAAEhMKD1BFUklPRElDSVRZXzMwUxABEhIKDlBFUklPRElDSVRZXzFNEAISEgoOUEVSSU9ESUNJVFlfNU0QAxITCg9QRVJJT0RJQ0lUWV8xME0QBBITCg9QRVJJT0RJQ0lUWV8zME0QBRISCg5QRVJJT0RJQ0lUWV8xSBAGKsMECgZSZWdpb24SFgoSUkVHSU9OX1VOU1BFQ0lGSUVEEAASDgoKUkVHSU9OX0FNUxABEg4KClJFR0lPTl9BUk4QAhIOCgpSRUdJT05fQk9NEAMSDgoKUkVHSU9OX0NERxAEEg4KClJFR0lPTl9ERlcQBRIOCgpSRUdJT05fRVdSEAYSDgoKUkVHSU9OX0ZSQRAHEg4KClJFR0lPTl9HUlUQCBIOCgpSRUdJT05fSUFEEAkSDgoKUkVHSU9OX0pOQhAKEg4KClJFR0lPTl9MQVgQCxIOCgpSRUdJT05fTEhSEAwSDgoKUkVHSU9OX05SVBANEg4KClJFR0lPTl9PUkQQDhIOCgpSRUdJT05fU0pDEA8SDgoKUkVHSU9OX1NJThAQEg4KClJFR0lPTl9TWUQQERIOCgpSRUdJT05fWVlaEBISFAoQUkVHSU9OX0tPWUVCX0ZSQRATEhQKEFJFR0lPTl9LT1lFQl9QQVIQFBIUChBSRUdJT05fS09ZRUJfU0ZPEBUSFAoQUkVHSU9OX0tPWUVCX1NJThAWEhQKEFJFR0lPTl9LT1lFQl9UWU8QFxIUChBSRUdJT05fS09ZRUJfV0FTEBgSGwoXUkVHSU9OX1JBSUxXQVlfVVNfV0VTVDIQGRIbChdSRUdJT05fUkFJTFdBWV9VU19FQVNUNBAaEh8KG1JFR0lPTl9SQUlMV0FZX0VVUk9QRV9XRVNUNBAbEiIKHlJFR0lPTl9SQUlMV0FZX0FTSUFfU09VVEhFQVNUMRAcQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z");
 
 /**
  * MonitorStatus represents the operational status of a monitor.
@@ -82,11 +32,11 @@ export enum MonitorStatus {
   ACTIVE = 1,
 
   /**
-   * MONITOR_STATUS_PAUSED indicates the monitor is paused.
+   * MONITOR_STATUS_DEGRADED indicates the monitor is paused.
    *
-   * @generated from enum value: MONITOR_STATUS_PAUSED = 2;
+   * @generated from enum value: MONITOR_STATUS_DEGRADED = 2;
    */
-  PAUSED = 2,
+  DEGRADED = 2,
 
   /**
    * MONITOR_STATUS_ERROR indicates the monitor is in an error state.
@@ -101,4 +51,272 @@ export enum MonitorStatus {
  */
 export const MonitorStatusSchema: GenEnum<MonitorStatus> = /*@__PURE__*/
   enumDesc(file_openstatus_monitor_v1_monitor, 0);
+
+/**
+ * Monitor periodicity options.
+ *
+ * @generated from enum openstatus.monitor.v1.Periodicity
+ */
+export enum Periodicity {
+  /**
+   * @generated from enum value: PERIODICITY_UNSPECIFIED = 0;
+   */
+  PERIODICITY_UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: PERIODICITY_30S = 1;
+   */
+  PERIODICITY_30S = 1,
+
+  /**
+   * @generated from enum value: PERIODICITY_1M = 2;
+   */
+  PERIODICITY_1M = 2,
+
+  /**
+   * @generated from enum value: PERIODICITY_5M = 3;
+   */
+  PERIODICITY_5M = 3,
+
+  /**
+   * @generated from enum value: PERIODICITY_10M = 4;
+   */
+  PERIODICITY_10M = 4,
+
+  /**
+   * @generated from enum value: PERIODICITY_30M = 5;
+   */
+  PERIODICITY_30M = 5,
+
+  /**
+   * @generated from enum value: PERIODICITY_1H = 6;
+   */
+  PERIODICITY_1H = 6,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.Periodicity.
+ */
+export const PeriodicitySchema: GenEnum<Periodicity> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_monitor, 1);
+
+/**
+ * Geographic regions where monitors can run checks from.
+ *
+ * @generated from enum openstatus.monitor.v1.Region
+ */
+export enum Region {
+  /**
+   * @generated from enum value: REGION_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * Fly.io regions
+   *
+   * Amsterdam, Netherlands
+   *
+   * @generated from enum value: REGION_AMS = 1;
+   */
+  AMS = 1,
+
+  /**
+   * Stockholm, Sweden
+   *
+   * @generated from enum value: REGION_ARN = 2;
+   */
+  ARN = 2,
+
+  /**
+   * Mumbai, India
+   *
+   * @generated from enum value: REGION_BOM = 3;
+   */
+  BOM = 3,
+
+  /**
+   * Paris, France
+   *
+   * @generated from enum value: REGION_CDG = 4;
+   */
+  CDG = 4,
+
+  /**
+   * Dallas, USA
+   *
+   * @generated from enum value: REGION_DFW = 5;
+   */
+  DFW = 5,
+
+  /**
+   * Newark, USA
+   *
+   * @generated from enum value: REGION_EWR = 6;
+   */
+  EWR = 6,
+
+  /**
+   * Frankfurt, Germany
+   *
+   * @generated from enum value: REGION_FRA = 7;
+   */
+  FRA = 7,
+
+  /**
+   * São Paulo, Brazil
+   *
+   * @generated from enum value: REGION_GRU = 8;
+   */
+  GRU = 8,
+
+  /**
+   * Ashburn, USA
+   *
+   * @generated from enum value: REGION_IAD = 9;
+   */
+  IAD = 9,
+
+  /**
+   * Johannesburg, South Africa
+   *
+   * @generated from enum value: REGION_JNB = 10;
+   */
+  JNB = 10,
+
+  /**
+   * Los Angeles, USA
+   *
+   * @generated from enum value: REGION_LAX = 11;
+   */
+  LAX = 11,
+
+  /**
+   * London, UK
+   *
+   * @generated from enum value: REGION_LHR = 12;
+   */
+  LHR = 12,
+
+  /**
+   * Tokyo, Japan
+   *
+   * @generated from enum value: REGION_NRT = 13;
+   */
+  NRT = 13,
+
+  /**
+   * Chicago, USA
+   *
+   * @generated from enum value: REGION_ORD = 14;
+   */
+  ORD = 14,
+
+  /**
+   * San Jose, USA
+   *
+   * @generated from enum value: REGION_SJC = 15;
+   */
+  SJC = 15,
+
+  /**
+   * Singapore
+   *
+   * @generated from enum value: REGION_SIN = 16;
+   */
+  SIN = 16,
+
+  /**
+   * Sydney, Australia
+   *
+   * @generated from enum value: REGION_SYD = 17;
+   */
+  SYD = 17,
+
+  /**
+   * Toronto, Canada
+   *
+   * @generated from enum value: REGION_YYZ = 18;
+   */
+  YYZ = 18,
+
+  /**
+   * Koyeb regions
+   *
+   * Koyeb Frankfurt
+   *
+   * @generated from enum value: REGION_KOYEB_FRA = 19;
+   */
+  KOYEB_FRA = 19,
+
+  /**
+   * Koyeb Paris
+   *
+   * @generated from enum value: REGION_KOYEB_PAR = 20;
+   */
+  KOYEB_PAR = 20,
+
+  /**
+   * Koyeb San Francisco
+   *
+   * @generated from enum value: REGION_KOYEB_SFO = 21;
+   */
+  KOYEB_SFO = 21,
+
+  /**
+   * Koyeb Singapore
+   *
+   * @generated from enum value: REGION_KOYEB_SIN = 22;
+   */
+  KOYEB_SIN = 22,
+
+  /**
+   * Koyeb Tokyo
+   *
+   * @generated from enum value: REGION_KOYEB_TYO = 23;
+   */
+  KOYEB_TYO = 23,
+
+  /**
+   * Koyeb Washington
+   *
+   * @generated from enum value: REGION_KOYEB_WAS = 24;
+   */
+  KOYEB_WAS = 24,
+
+  /**
+   * Railway regions
+   *
+   * Railway US West
+   *
+   * @generated from enum value: REGION_RAILWAY_US_WEST2 = 25;
+   */
+  RAILWAY_US_WEST2 = 25,
+
+  /**
+   * Railway US East
+   *
+   * @generated from enum value: REGION_RAILWAY_US_EAST4 = 26;
+   */
+  RAILWAY_US_EAST4 = 26,
+
+  /**
+   * Railway Europe West
+   *
+   * @generated from enum value: REGION_RAILWAY_EUROPE_WEST4 = 27;
+   */
+  RAILWAY_EUROPE_WEST4 = 27,
+
+  /**
+   * Railway Asia Southeast
+   *
+   * @generated from enum value: REGION_RAILWAY_ASIA_SOUTHEAST1 = 28;
+   */
+  RAILWAY_ASIA_SOUTHEAST1 = 28,
+}
+
+/**
+ * Describes the enum openstatus.monitor.v1.Region.
+ */
+export const RegionSchema: GenEnum<Region> = /*@__PURE__*/
+  enumDesc(file_openstatus_monitor_v1_monitor, 2);
 

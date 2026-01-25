@@ -256,7 +256,7 @@ importers:
         version: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 5.0.0-beta.29(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -731,7 +731,7 @@ importers:
         version: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 5.0.0-beta.29(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-plausible:
         specifier: 3.12.5
         version: 3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -987,7 +987,7 @@ importers:
         version: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 5.0.0-beta.29(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-mdx-remote:
         specifier: 5.0.0
         version: 5.0.0(@types/react@19.2.2)(react@19.2.3)
@@ -1377,7 +1377,7 @@ importers:
         version: 0.31.4
       next-auth:
         specifier: 5.0.0-beta.29
-        version: 5.0.0-beta.29(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 5.0.0-beta.29(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -19770,7 +19770,7 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next-auth@5.0.0-beta.29(next@16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
+  next-auth@5.0.0-beta.29(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
     dependencies:
       '@auth/core': 0.40.0
       next: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

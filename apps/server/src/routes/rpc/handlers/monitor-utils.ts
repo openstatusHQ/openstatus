@@ -3,13 +3,16 @@ import type { Monitor } from "@openstatus/db/src/schema/monitors/validation";
 import {
   type BodyAssertion,
   type DNSMonitor,
+  HTTPMethod,
   type HTTPMonitor,
   type HeaderAssertion,
   type Headers,
   NumberComparator,
   type OpenTelemetryConfig,
+  Periodicity,
   type RecordAssertion,
   RecordComparator,
+  Region,
   type StatusCodeAssertion,
   StringComparator,
   type TCPMonitor,
@@ -253,6 +256,260 @@ export function parseOpenTelemetry(
 }
 
 /**
+ * Convert database periodicity string to proto Periodicity enum.
+ */
+export function stringToPeriodicity(value: string): Periodicity {
+  switch (value) {
+    case "30s":
+      return Periodicity.PERIODICITY_30S;
+    case "1m":
+      return Periodicity.PERIODICITY_1M;
+    case "5m":
+      return Periodicity.PERIODICITY_5M;
+    case "10m":
+      return Periodicity.PERIODICITY_10M;
+    case "30m":
+      return Periodicity.PERIODICITY_30M;
+    case "1h":
+      return Periodicity.PERIODICITY_1H;
+    default:
+      return Periodicity.PERIODICITY_UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert proto Periodicity enum to database string.
+ */
+export function periodicityToString(value: Periodicity): string {
+  switch (value) {
+    case Periodicity.PERIODICITY_30S:
+      return "30s";
+    case Periodicity.PERIODICITY_1M:
+      return "1m";
+    case Periodicity.PERIODICITY_5M:
+      return "5m";
+    case Periodicity.PERIODICITY_10M:
+      return "10m";
+    case Periodicity.PERIODICITY_30M:
+      return "30m";
+    case Periodicity.PERIODICITY_1H:
+      return "1h";
+    default:
+      return "1m";
+  }
+}
+
+/**
+ * Convert database HTTP method string to proto HTTPMethod enum.
+ */
+export function stringToHttpMethod(value: string | undefined): HTTPMethod {
+  switch (value?.toUpperCase()) {
+    case "GET":
+      return HTTPMethod.HTTP_METHOD_GET;
+    case "POST":
+      return HTTPMethod.HTTP_METHOD_POST;
+    case "HEAD":
+      return HTTPMethod.HTTP_METHOD_HEAD;
+    case "PUT":
+      return HTTPMethod.HTTP_METHOD_PUT;
+    case "PATCH":
+      return HTTPMethod.HTTP_METHOD_PATCH;
+    case "DELETE":
+      return HTTPMethod.HTTP_METHOD_DELETE;
+    case "TRACE":
+      return HTTPMethod.HTTP_METHOD_TRACE;
+    case "CONNECT":
+      return HTTPMethod.HTTP_METHOD_CONNECT;
+    case "OPTIONS":
+      return HTTPMethod.HTTP_METHOD_OPTIONS;
+    default:
+      return HTTPMethod.HTTP_METHOD_UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert proto HTTPMethod enum to database string.
+ */
+export function httpMethodToString(value: HTTPMethod): string {
+  switch (value) {
+    case HTTPMethod.HTTP_METHOD_GET:
+      return "GET";
+    case HTTPMethod.HTTP_METHOD_POST:
+      return "POST";
+    case HTTPMethod.HTTP_METHOD_HEAD:
+      return "HEAD";
+    case HTTPMethod.HTTP_METHOD_PUT:
+      return "PUT";
+    case HTTPMethod.HTTP_METHOD_PATCH:
+      return "PATCH";
+    case HTTPMethod.HTTP_METHOD_DELETE:
+      return "DELETE";
+    case HTTPMethod.HTTP_METHOD_TRACE:
+      return "TRACE";
+    case HTTPMethod.HTTP_METHOD_CONNECT:
+      return "CONNECT";
+    case HTTPMethod.HTTP_METHOD_OPTIONS:
+      return "OPTIONS";
+    default:
+      return "GET";
+  }
+}
+
+/**
+ * Convert database region string to proto Region enum.
+ * Note: Only regions defined in the proto are supported.
+ * Other regions will return UNSPECIFIED.
+ */
+export function stringToRegion(value: string): Region {
+  switch (value.toLowerCase()) {
+    // Fly.io regions
+    case "ams":
+      return Region.AMS;
+    case "arn":
+      return Region.ARN;
+    case "bom":
+      return Region.BOM;
+    case "cdg":
+      return Region.CDG;
+    case "dfw":
+      return Region.DFW;
+    case "ewr":
+      return Region.EWR;
+    case "fra":
+      return Region.FRA;
+    case "gru":
+      return Region.GRU;
+    case "iad":
+      return Region.IAD;
+    case "jnb":
+      return Region.JNB;
+    case "lax":
+      return Region.LAX;
+    case "lhr":
+      return Region.LHR;
+    case "nrt":
+      return Region.NRT;
+    case "ord":
+      return Region.ORD;
+    case "sjc":
+      return Region.SJC;
+    case "sin":
+      return Region.SIN;
+    case "syd":
+      return Region.SYD;
+    case "yyz":
+      return Region.YYZ;
+    // Koyeb regions
+    case "koyeb_fra":
+      return Region.KOYEB_FRA;
+    case "koyeb_par":
+      return Region.KOYEB_PAR;
+    case "koyeb_sfo":
+      return Region.KOYEB_SFO;
+    case "koyeb_sin":
+      return Region.KOYEB_SIN;
+    case "koyeb_tyo":
+      return Region.KOYEB_TYO;
+    case "koyeb_was":
+      return Region.KOYEB_WAS;
+    // Railway regions
+    case "railway_us-west2":
+      return Region.RAILWAY_US_WEST2;
+    case "railway_us-east4":
+      return Region.RAILWAY_US_EAST4;
+    case "railway_europe-west4":
+      return Region.RAILWAY_EUROPE_WEST4;
+    case "railway_asia-southeast1":
+      return Region.RAILWAY_ASIA_SOUTHEAST1;
+    default:
+      return Region.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert proto Region enum to database string.
+ */
+export function regionToString(value: Region): string {
+  switch (value) {
+    // Fly.io regions
+    case Region.AMS:
+      return "ams";
+    case Region.ARN:
+      return "arn";
+    case Region.BOM:
+      return "bom";
+    case Region.CDG:
+      return "cdg";
+    case Region.DFW:
+      return "dfw";
+    case Region.EWR:
+      return "ewr";
+    case Region.FRA:
+      return "fra";
+    case Region.GRU:
+      return "gru";
+    case Region.IAD:
+      return "iad";
+    case Region.JNB:
+      return "jnb";
+    case Region.LAX:
+      return "lax";
+    case Region.LHR:
+      return "lhr";
+    case Region.NRT:
+      return "nrt";
+    case Region.ORD:
+      return "ord";
+    case Region.SJC:
+      return "sjc";
+    case Region.SIN:
+      return "sin";
+    case Region.SYD:
+      return "syd";
+    case Region.YYZ:
+      return "yyz";
+    // Koyeb regions
+    case Region.KOYEB_FRA:
+      return "koyeb_fra";
+    case Region.KOYEB_PAR:
+      return "koyeb_par";
+    case Region.KOYEB_SFO:
+      return "koyeb_sfo";
+    case Region.KOYEB_SIN:
+      return "koyeb_sin";
+    case Region.KOYEB_TYO:
+      return "koyeb_tyo";
+    case Region.KOYEB_WAS:
+      return "koyeb_was";
+    // Railway regions
+    case Region.RAILWAY_US_WEST2:
+      return "railway_us-west2";
+    case Region.RAILWAY_US_EAST4:
+      return "railway_us-east4";
+    case Region.RAILWAY_EUROPE_WEST4:
+      return "railway_europe-west4";
+    case Region.RAILWAY_ASIA_SOUTHEAST1:
+      return "railway_asia-southeast1";
+    default:
+      return "";
+  }
+}
+
+/**
+ * Convert database regions array to proto Region enum array.
+ */
+export function stringsToRegions(values: string[]): Region[] {
+  return values.map(stringToRegion).filter((r) => r !== Region.UNSPECIFIED);
+}
+
+/**
+ * Convert proto Region enum array to database strings.
+ */
+export function regionsToStrings(values: Region[]): string[] {
+  return values.map(regionToString).filter((r) => r !== "");
+}
+
+/**
  * Transform database HTTP monitor to proto HTTPMonitor.
  */
 export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
@@ -263,8 +520,8 @@ export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
     id: String(dbMon.id),
     name: dbMon.name,
     url: dbMon.url,
-    periodicity: dbMon.periodicity,
-    method: dbMon.method?.toUpperCase() ?? "GET",
+    periodicity: stringToPeriodicity(dbMon.periodicity),
+    method: stringToHttpMethod(dbMon.method),
     body: dbMon.body ?? "",
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
@@ -277,7 +534,7 @@ export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
     description: dbMon.description,
     active: dbMon.active ?? MONITOR_DEFAULTS.active,
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
-    regions: dbMon.regions,
+    regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
@@ -291,14 +548,14 @@ export function dbMonitorToTcpProto(dbMon: Monitor): TCPMonitor {
     id: String(dbMon.id),
     name: dbMon.name,
     uri: dbMon.url,
-    periodicity: dbMon.periodicity,
+    periodicity: stringToPeriodicity(dbMon.periodicity),
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
     retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
     description: dbMon.description,
     active: dbMon.active ?? MONITOR_DEFAULTS.active,
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
-    regions: dbMon.regions,
+    regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
@@ -312,7 +569,7 @@ export function dbMonitorToDnsProto(dbMon: Monitor): DNSMonitor {
     id: String(dbMon.id),
     name: dbMon.name,
     uri: dbMon.url,
-    periodicity: dbMon.periodicity,
+    periodicity: stringToPeriodicity(dbMon.periodicity),
     timeout: BigInt(dbMon.timeout),
     degradedAt: dbMon.degradedAfter ? BigInt(dbMon.degradedAfter) : undefined,
     retry: BigInt(dbMon.retry ?? MONITOR_DEFAULTS.retry),
@@ -320,7 +577,7 @@ export function dbMonitorToDnsProto(dbMon: Monitor): DNSMonitor {
     description: dbMon.description,
     active: dbMon.active ?? MONITOR_DEFAULTS.active,
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
-    regions: dbMon.regions,
+    regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
   };
 }
