@@ -85,12 +85,12 @@ export async function GET(
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
         title: report.title,
-        updateAt: report.updatedAt,
+        updatedAt: report.updatedAt,
         status: report.status,
         // @deprecated Use components instead
         monitors: report.monitorsToStatusReports.map((item) => item.monitor.id),
         // New field - references page component IDs
-        pageComponents: report.pageComponentsToStatusReports.map(
+        pageComponents: report.statusReportsToPageComponents.map(
           (item) => item.pageComponentId,
         ),
         statusReportUpdates: report.statusReportUpdates.map((update) => ({
