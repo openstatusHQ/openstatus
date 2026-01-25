@@ -348,13 +348,6 @@ export const statusPageRouter = createTRPCRouter({
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
 
-      // Pre-build a Map for O(1) lookups to avoid N+1 query problem
-      const monitorByIdMap = new Map(
-        pageComponents
-          .filter(isMonitorComponent)
-          .map((c) => [c.monitorId, c.monitor]),
-      );
-
       // Transform statusReports to include monitorsToStatusReports format
       const statusReports = _page.statusReports.sort((a, b) => {
         // Sort reports without updates to the beginning
