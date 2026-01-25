@@ -24,26 +24,31 @@ export async function GET(
 
     if (!["rss", "atom"].includes(type)) return notFound();
 
-    const page = await queryClient.fetchQuery(
+    const _page = await queryClient.fetchQuery(
       trpc.page.getPageBySlug.queryOptions({ slug: domain }),
     );
-    if (!page) return notFound();
+    if (!_page) return notFound();
 
-    if (page.accessType === "password") {
+    if (_page.accessType === "password") {
       const url = new URL(_request.url);
       const password = url.searchParams.get("pw");
-      console.log({ url, page, password });
-      if (password !== page.password) return unauthorized();
+      console.log({ url, _page, password });
+      if (password !== _page.password) return unauthorized();
     }
 
-    if (page.accessType === "email-domain") {
+    if (_page.accessType === "email-domain") {
       const session = await auth();
       const user = session?.user;
-      const allowedDomains = page.authEmailDomains ?? [];
+      const allowedDomains = _page.authEmailDomains ?? [];
       if (!user || !user.email) return unauthorized();
       if (!allowedDomains.includes(user.email.split("@")[1]))
         return unauthorized();
     }
+
+    const page = await queryClient.fetchQuery(
+      trpc.statusPage.get.queryOptions({ slug: domain }),
+    );
+    if (!page) return notFound();
 
     const baseUrl = getBaseUrl({
       slug: page.slug,
