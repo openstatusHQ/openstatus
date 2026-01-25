@@ -6,6 +6,7 @@ import {
   maintenancesToMonitors,
   maintenancesToPageComponents,
   monitor,
+  monitorsToPages,
   monitorsToStatusReport,
   pageComponent,
   pageComponentGroup,
@@ -90,19 +91,21 @@ export async function syncMonitorsToPageInsert(
     groupOrder?: number;
   },
 ) {
-  // Get monitor data for name and workspace_id
+  // Get monitor data for name and workspace_id (only active monitors)
   const monitorData = await db
     .select({
       id: monitor.id,
       name: monitor.name,
       externalName: monitor.externalName,
       workspaceId: monitor.workspaceId,
+      active: monitor.active,
     })
     .from(monitor)
     .where(eq(monitor.id, data.monitorId))
     .get();
 
-  if (!monitorData || !monitorData.workspaceId) return;
+  // Skip if monitor doesn't exist, has no workspace, or is inactive
+  if (!monitorData || !monitorData.workspaceId || !monitorData.active) return;
 
   await db
     .insert(pageComponent)
@@ -134,7 +137,7 @@ export async function syncMonitorsToPageInsertMany(
 ) {
   if (items.length === 0) return;
 
-  // Get all monitor data in one query
+  // Get all monitor data in one query (only active monitors)
   const monitorIds = [...new Set(items.map((item) => item.monitorId))];
   const monitors = await db
     .select({
@@ -142,16 +145,18 @@ export async function syncMonitorsToPageInsertMany(
       name: monitor.name,
       externalName: monitor.externalName,
       workspaceId: monitor.workspaceId,
+      active: monitor.active,
     })
     .from(monitor)
-    .where(inArray(monitor.id, monitorIds));
+    .where(and(inArray(monitor.id, monitorIds), eq(monitor.active, true)));
 
   const monitorMap = new Map(monitors.map((m) => [m.id, m]));
 
   const values = items
     .map((item) => {
       const m = monitorMap.get(item.monitorId);
-      if (!m || !m.workspaceId) return null;
+      // Skip if monitor doesn't exist, has no workspace, or is inactive
+      if (!m || !m.workspaceId || !m.active) return null;
       return {
         workspaceId: m.workspaceId,
         pageId: item.pageId,
@@ -186,7 +191,7 @@ export async function syncMonitorsToPageUpsertMany(
 ) {
   if (items.length === 0) return;
 
-  // Get all monitor data in one query
+  // Get all monitor data in one query (only active monitors)
   const monitorIds = [...new Set(items.map((item) => item.monitorId))];
   const monitors = await db
     .select({
@@ -194,16 +199,18 @@ export async function syncMonitorsToPageUpsertMany(
       name: monitor.name,
       externalName: monitor.externalName,
       workspaceId: monitor.workspaceId,
+      active: monitor.active,
     })
     .from(monitor)
-    .where(inArray(monitor.id, monitorIds));
+    .where(and(inArray(monitor.id, monitorIds), eq(monitor.active, true)));
 
   const monitorMap = new Map(monitors.map((m) => [m.id, m]));
 
   const values = items
     .map((item) => {
       const m = monitorMap.get(item.monitorId);
-      if (!m || !m.workspaceId) return null;
+      // Skip if monitor doesn't exist, has no workspace, or is inactive
+      if (!m || !m.workspaceId || !m.active) return null;
       return {
         workspaceId: m.workspaceId,
         pageId: item.pageId,
@@ -276,6 +283,36 @@ export async function syncMonitorsToPageDeleteByMonitors(
   await db
     .delete(pageComponent)
     .where(inArray(pageComponent.monitorId, monitorIds));
+}
+
+/**
+ * REVERSE SYNC: Syncs page_component inserts to monitors_to_pages
+ * Used when pageComponents is the primary table and monitorsToPages is kept for backwards compatibility
+ */
+export async function syncPageComponentToMonitorsToPageInsertMany(
+  db: DB | Transaction,
+  items: Array<{
+    monitorId: number;
+    pageId: number;
+    order?: number;
+    monitorGroupId?: number | null;
+    groupOrder?: number;
+  }>,
+) {
+  if (items.length === 0) return;
+
+  await db
+    .insert(monitorsToPages)
+    .values(
+      items.map((item) => ({
+        monitorId: item.monitorId,
+        pageId: item.pageId,
+        order: item.order ?? 0,
+        monitorGroupId: item.monitorGroupId ?? null,
+        groupOrder: item.groupOrder ?? 0,
+      })),
+    )
+    .onConflictDoNothing();
 }
 
 // ============================================================================

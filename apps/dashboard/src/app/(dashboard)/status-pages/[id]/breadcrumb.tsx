@@ -3,7 +3,14 @@
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { Cog, Hammer, Megaphone, PanelTop, Users } from "lucide-react";
+import {
+  Cog,
+  Hammer,
+  LayoutTemplate,
+  Megaphone,
+  PanelTop,
+  Users,
+} from "lucide-react";
 import { useParams } from "next/navigation";
 
 export function Breadcrumb() {
@@ -35,6 +42,7 @@ export function Breadcrumb() {
             },
             { value: "maintenances", label: "Maintenances", icon: Hammer },
             { value: "subscribers", label: "Subscribers", icon: Users },
+            { value: "components", label: "Components", icon: LayoutTemplate },
             { value: "edit", label: "Settings", icon: Cog },
           ],
         },

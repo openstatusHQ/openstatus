@@ -105,7 +105,7 @@ beforeAll(async () => {
     .get();
   testPageId = testPage.id;
 
-  // Create test monitor using tRPC
+  // Create test monitor using tRPC (must be active for sync to work)
   const ctx = getTestContext();
   const caller = appRouter.createCaller(ctx);
   const createdMonitor = await caller.monitor.new({
@@ -115,7 +115,7 @@ beforeAll(async () => {
     method: monitorData.method,
     headers: [],
     assertions: [],
-    active: false,
+    active: true, // Changed to true - sync functions only sync active monitors
     skipCheck: true,
   });
   testMonitorId = createdMonitor.id;
@@ -594,7 +594,7 @@ describe("Sync: monitor deletion cascades to page_component tables", () => {
     const ctx = getTestContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Create a monitor specifically for deletion tests
+    // Create a monitor specifically for deletion tests (must be active for sync)
     const deletableMonitor = await caller.monitor.new({
       name: `${TEST_PREFIX}-deletable-monitor`,
       url: "https://delete-test.example.com",
@@ -602,7 +602,7 @@ describe("Sync: monitor deletion cascades to page_component tables", () => {
       method: "GET" as const,
       headers: [],
       assertions: [],
-      active: false,
+      active: true, // Changed to true - sync functions only sync active monitors
       skipCheck: true,
     });
     deletableMonitorId = deletableMonitor.id;

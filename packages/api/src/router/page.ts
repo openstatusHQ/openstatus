@@ -12,8 +12,8 @@ import {
   syncMonitorGroupDeleteMany,
   syncMonitorGroupInsert,
   syncMonitorsToPageDelete,
-  syncMonitorsToPageInsertMany,
   syncMonitorsToPageUpsertMany,
+  syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
 import {
   incidentTable,
@@ -25,9 +25,11 @@ import {
   monitorsToPages,
   page,
   pageAccessTypes,
+  pageComponent,
   selectMaintenanceSchema,
   selectMonitorGroupSchema,
   selectMonitorSchema,
+  selectPageComponentGroupSchema,
   selectPageComponentSchema,
   selectPageSchema,
   statusReport,
@@ -122,11 +124,12 @@ export const pageRouter = createTRPCRouter({
         .get();
 
       if (monitorIds.length) {
-        // We should make sure the user has access to the monitors
+        // We should make sure the user has access to the monitors AND they are active
         const allMonitors = await opts.ctx.db.query.monitor.findMany({
           where: and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
+            eq(monitor.active, true), // Only allow active monitors
             isNull(monitor.deletedAt),
           ),
         });
@@ -134,19 +137,50 @@ export const pageRouter = createTRPCRouter({
         if (allMonitors.length !== monitorIds.length) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You don't have access to all the monitors.",
+            message:
+              "You don't have access to all the monitors or some monitors are inactive.",
           });
         }
 
-        const values = monitors.map(({ monitorId }, index) => ({
+        // Build a map for quick lookup
+        const monitorMap = new Map(allMonitors.map((m) => [m.id, m]));
+
+        // Build pageComponent values (primary table)
+        const pageComponentValues = monitors
+          .map(({ monitorId }, index) => {
+            const m = monitorMap.get(monitorId);
+            if (!m || !m.workspaceId) return null;
+            return {
+              workspaceId: m.workspaceId,
+              pageId: newPage.id,
+              type: "monitor" as const,
+              monitorId,
+              name: m.externalName || m.name,
+              order: index,
+              groupId: null,
+              groupOrder: 0,
+            };
+          })
+          .filter((v): v is NonNullable<typeof v> => v !== null);
+
+        // Insert into pageComponents (primary table)
+        await opts.ctx.db
+          .insert(pageComponent)
+          .values(pageComponentValues)
+          .run();
+
+        // Build values for reverse sync to monitorsToPages
+        const monitorsToPageValues = monitors.map(({ monitorId }, index) => ({
           pageId: newPage.id,
           order: index,
           monitorId,
         }));
 
-        await opts.ctx.db.insert(monitorsToPages).values(values).run();
-        // Sync to page components
-        await syncMonitorsToPageInsertMany(opts.ctx.db, values);
+        // Reverse sync to monitorsToPages (for backwards compatibility)
+        await syncPageComponentToMonitorsToPageInsertMany(
+          opts.ctx.db,
+          monitorsToPageValues,
+        );
       }
 
       return newPage;
@@ -353,6 +387,7 @@ export const pageRouter = createTRPCRouter({
           monitorsToPages: { with: { monitor: true, monitorGroup: true } },
           maintenances: true,
           pageComponents: true,
+          pageComponentGroups: true,
         },
       });
 
@@ -368,6 +403,9 @@ export const pageRouter = createTRPCRouter({
             )
             .prefault([]),
           monitorGroups: z.array(selectMonitorGroupSchema).prefault([]),
+          pageComponentGroups: z
+            .array(selectPageComponentGroupSchema)
+            .prefault([]),
           maintenances: z.array(selectMaintenanceSchema).prefault([]),
           pageComponents: z.array(selectPageComponentSchema).prefault([]),
         })
@@ -386,6 +424,7 @@ export const pageRouter = createTRPCRouter({
                 .map((m) => [m.monitorGroup?.id, m.monitorGroup]),
             ).values(),
           ),
+          pageComponentGroups: data?.pageComponentGroups ?? [],
           maintenances: data?.maintenances,
           pageComponents: data?.pageComponents,
         });

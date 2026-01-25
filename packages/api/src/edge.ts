@@ -11,6 +11,7 @@ import { monitorRouter } from "./router/monitor";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
 import { pageRouter } from "./router/page";
+import { pageComponentRouter } from "./router/pageComponent";
 import { pageSubscriberRouter } from "./router/pageSubscriber";
 import { privateLocationRouter } from "./router/privateLocation";
 import { statusPageRouter } from "./router/statusPage";
@@ -25,6 +26,7 @@ export const edgeRouter = createTRPCRouter({
   workspace: workspaceRouter,
   monitor: monitorRouter,
   page: pageRouter,
+  pageComponent: pageComponentRouter,
   statusReport: statusReportRouter,
   domain: domainRouter,
   integration: integrationRouter,
