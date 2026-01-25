@@ -473,8 +473,6 @@ export function FormComponents({
     });
   }
 
-  console.log(data, form.getValues());
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>

@@ -1,28 +1,16 @@
 import { z } from "zod";
 
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
-import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
+import {
+  page,
+  pageComponent,
+  pageComponentGroup,
+} from "@openstatus/db/src/schema";
 
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const pageComponentRouter = createTRPCRouter({
-  getById: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      const _pageComponent = await opts.ctx.db
-        .select()
-        .from(pageComponent)
-        .where(
-          and(
-            eq(pageComponent.id, opts.input.id),
-            eq(pageComponent.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-
-      return _pageComponent;
-    }),
-
   list: protectedProcedure
     .input(
       z
@@ -85,6 +73,17 @@ export const pageComponentRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: and(
+          eq(page.id, opts.input.pageId),
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!_page) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
+      }
+
       const newPageComponent = await opts.ctx.db
         .insert(pageComponent)
         .values({
