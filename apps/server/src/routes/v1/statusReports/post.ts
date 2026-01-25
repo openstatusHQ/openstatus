@@ -179,6 +179,9 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           monitorsToStatusReports: {
             with: { monitor: true },
           },
+          statusReportsToPageComponents: {
+            with: { pageComponent: true },
+          },
         },
       });
 
@@ -208,8 +211,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           status: _newStatusReportUpdate.status,
           message: _newStatusReportUpdate.message,
           date: _newStatusReportUpdate.date.toISOString(),
-          monitors: _statusReport.monitorsToStatusReports.map(
-            (i) => i.monitor.externalName || i.monitor.name,
+          pageComponents: _statusReport.statusReportsToPageComponents.map(
+            (i) => i.pageComponent.name,
           ),
         });
       }

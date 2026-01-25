@@ -32,24 +32,24 @@ export const selectPublicMonitorSchema =
 
 export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
   statusReportUpdates: z.array(selectStatusReportUpdateSchema).prefault([]),
-  monitorsToStatusReports: z
+  statusReportsToPageComponents: z
     .array(
       z.object({
-        monitorId: z.number(),
+        pageComponentId: z.number(),
         statusReportId: z.number(),
-        monitor: selectPublicMonitorSchema,
+        pageComponent: selectPageComponentSchema,
       }),
     )
     .prefault([]),
 });
 
 export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
-  maintenancesToMonitors: z
+  maintenancesToPageComponents: z
     .array(
       z.object({
-        monitorId: z.number(),
+        pageComponentId: z.number(),
         maintenanceId: z.number(),
-        monitor: selectPublicMonitorSchema,
+        pageComponent: selectPageComponentSchema,
       }),
     )
     .prefault([]),
@@ -108,28 +108,6 @@ const selectPublicMonitorWithStatusSchema = selectPublicMonitorBaseSchema
     name: data.externalName || data.name,
   }));
 
-const trackersSchema = z
-  .array(
-    z.discriminatedUnion("type", [
-      z.object({
-        type: z.literal("monitor"),
-        monitor: selectPublicMonitorWithStatusSchema,
-        order: z.number(),
-      }),
-      z.object({
-        type: z.literal("group"),
-        groupId: z.number(),
-        groupName: z.string(),
-        monitors: z.array(selectPublicMonitorWithStatusSchema),
-        status: z
-          .enum(["success", "degraded", "error", "info"])
-          .prefault("success"),
-        order: z.number(),
-      }),
-    ]),
-  )
-  .prefault([]);
-
 export const statusPageEventSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -139,23 +117,42 @@ export const statusPageEventSchema = z.object({
   type: z.enum(["maintenance", "incident", "report"]),
 });
 
-export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
-  monitorGroups: selectMonitorGroupSchema.array().prefault([]),
-  // TODO: include status of the monitor
-  monitors: selectPublicMonitorWithStatusSchema.array(),
-  trackers: trackersSchema,
-  lastEvents: z.array(statusPageEventSchema),
-  openEvents: z.array(statusPageEventSchema),
-  statusReports: z.array(selectStatusReportPageSchema),
-  incidents: z.array(selectIncidentSchema),
-  maintenances: z.array(selectMaintenancePageSchema),
-  status: z.enum(["success", "degraded", "error", "info"]).prefault("success"),
-  workspacePlan: workspacePlanSchema
-    .nullable()
-    .prefault("free")
-    .transform((val) => val ?? "free"),
-  whiteLabel: z.boolean().prefault(false),
-});
+// Page component with status - used for new tracker system
+const selectPublicPageComponentWithStatusSchema =
+  selectPageComponentSchema.extend({
+    status: z
+      .enum(["success", "degraded", "error", "info"])
+      .prefault("success"),
+    events: z.array(statusPageEventSchema).prefault([]),
+    // For monitor-type components - omit status since it's now at component level
+    monitor: selectPublicMonitorBaseSchema
+      .extend({
+        incidents: selectIncidentSchema.array().nullish(),
+      })
+      .nullish(),
+  });
+
+const trackersSchema = z
+  .array(
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("component"),
+        component: selectPublicPageComponentWithStatusSchema,
+        order: z.number(),
+      }),
+      z.object({
+        type: z.literal("group"),
+        groupId: z.number(),
+        groupName: z.string(),
+        components: z.array(selectPublicPageComponentWithStatusSchema),
+        status: z
+          .enum(["success", "degraded", "error", "info"])
+          .prefault("success"),
+        order: z.number(),
+      }),
+    ]),
+  )
+  .prefault([]);
 
 export const selectPageComponentWithMonitorRelation =
   selectPageComponentSchema.extend({
@@ -174,6 +171,26 @@ export const selectPageComponentWithMonitorRelation =
 export type PageComponentWithMonitorRelation = z.infer<
   typeof selectPageComponentWithMonitorRelation
 >;
+
+export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
+  monitorGroups: selectMonitorGroupSchema.array().prefault([]),
+  // TODO: include status of the monitor
+  monitors: selectPublicMonitorWithStatusSchema.array(),
+  pageComponents: selectPageComponentWithMonitorRelation.array().prefault([]),
+  pageComponentGroups: selectPageComponentGroupSchema.array().prefault([]),
+  trackers: trackersSchema,
+  lastEvents: z.array(statusPageEventSchema),
+  openEvents: z.array(statusPageEventSchema),
+  statusReports: z.array(selectStatusReportPageSchema),
+  incidents: z.array(selectIncidentSchema),
+  maintenances: z.array(selectMaintenancePageSchema),
+  status: z.enum(["success", "degraded", "error", "info"]).prefault("success"),
+  workspacePlan: workspacePlanSchema
+    .nullable()
+    .prefault("free")
+    .transform((val) => val ?? "free"),
+  whiteLabel: z.boolean().prefault(false),
+});
 
 export const selectPublicStatusReportSchemaWithRelation =
   selectStatusReportSchema.extend({
@@ -195,4 +212,7 @@ export type StatusReportWithUpdates = z.infer<
 export type PublicMonitor = z.infer<typeof selectPublicMonitorSchema>;
 export type PublicPage = z.infer<
   typeof legacy_selectPublicPageSchemaWithRelation
+>;
+export type PublicPageComponentWithStatus = z.infer<
+  typeof selectPublicPageComponentWithStatusSchema
 >;

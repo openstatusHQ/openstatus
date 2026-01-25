@@ -77,13 +77,17 @@ export default function Page() {
                           <StatusEventTitleCheck />
                         ) : null}
                       </StatusEventTitle>
-                      {report.monitorsToStatusReports.length > 0 ? (
+                      {report.statusReportsToPageComponents.length > 0 ? (
                         <StatusEventAffected>
-                          {report.monitorsToStatusReports.map((affected) => (
-                            <StatusEventAffectedBadge key={affected.monitor.id}>
-                              {affected.monitor.name}
-                            </StatusEventAffectedBadge>
-                          ))}
+                          {report.statusReportsToPageComponents.map(
+                            (affected) => (
+                              <StatusEventAffectedBadge
+                                key={affected.pageComponent.id}
+                              >
+                                {affected.pageComponent.name}
+                              </StatusEventAffectedBadge>
+                            ),
+                          )}
                         </StatusEventAffected>
                       ) : null}
                       <StatusEventTimelineReport
@@ -115,14 +119,14 @@ export default function Page() {
                   >
                     <StatusEventContent>
                       <StatusEventTitle>{maintenance.title}</StatusEventTitle>
-                      {maintenance.maintenancesToMonitors.length > 0 ? (
+                      {maintenance.maintenancesToPageComponents.length > 0 ? (
                         <StatusEventAffected>
-                          {maintenance.maintenancesToMonitors.map(
+                          {maintenance.maintenancesToPageComponents.map(
                             (affected) => (
                               <StatusEventAffectedBadge
-                                key={affected.monitor.id}
+                                key={affected.pageComponent.id}
                               >
-                                {affected.monitor.name}
+                                {affected.pageComponent.name}
                               </StatusEventAffectedBadge>
                             ),
                           )}

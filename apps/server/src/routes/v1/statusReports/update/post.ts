@@ -86,13 +86,13 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .returning()
       .get();
 
-    if (limits.notifications && _statusReport.pageId) {
+    if (limits["status-subscribers"] && _statusReport.pageId) {
       const _statusReportWithRelations = await db.query.statusReport.findFirst({
         where: eq(statusReport.id, Number(id)),
         with: {
-          monitorsToStatusReports: {
+          statusReportsToPageComponents: {
             with: {
-              monitor: true,
+              pageComponent: true,
             },
           },
           page: true,
@@ -129,9 +129,10 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
-          monitors: _statusReportWithRelations.monitorsToStatusReports.map(
-            (monitor) => monitor.monitor.externalName || monitor.monitor.name,
-          ),
+          pageComponents:
+            _statusReportWithRelations.statusReportsToPageComponents.map(
+              (i) => i.pageComponent.name,
+            ),
         });
       }
     }

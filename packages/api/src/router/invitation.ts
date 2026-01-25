@@ -8,12 +8,11 @@ import {
   invitation,
   selectInvitationSchema,
   selectWorkspaceSchema,
-  user,
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const invitationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -83,94 +82,6 @@ export const invitationRouter = createTRPCRouter({
         )
         .run();
     }),
-
-  getWorkspaceOpenInvitations: protectedProcedure.query(async (opts) => {
-    const _invitations = await opts.ctx.db.query.invitation.findMany({
-      where: and(
-        eq(invitation.workspaceId, opts.ctx.workspace.id),
-        gte(invitation.expiresAt, new Date()),
-        isNull(invitation.acceptedAt),
-      ),
-    });
-    return _invitations;
-  }),
-
-  getInvitationByToken: protectedProcedure
-    .input(z.object({ token: z.string() }))
-    .query(async (opts) => {
-      const _invitation = await opts.ctx.db.query.invitation.findFirst({
-        where: and(eq(invitation.token, opts.input.token)),
-        with: {
-          workspace: true,
-        },
-      });
-      return _invitation;
-    }),
-
-  /**
-   * REMINDER: we are not using a protected procedure here of the `/invite` url
-   * instead of `/app/workspace-slug/invite` as the user is not allowed to it yet.
-   * We validate the auth token in the `acceptInvitation` procedure
-   */
-  acceptInvitation: publicProcedure
-    .input(z.object({ token: z.string() }))
-    .meta({ track: Events.AcceptInvite })
-    .output(
-      z.object({
-        message: z.string(),
-        data: selectWorkspaceSchema.optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const _invitation = await opts.ctx.db.query.invitation.findFirst({
-        where: and(
-          eq(invitation.token, opts.input.token),
-          isNull(invitation.acceptedAt),
-        ),
-        with: {
-          workspace: true,
-        },
-      });
-
-      if (!opts.ctx.session?.user?.id) return { message: "Missing user." };
-
-      const _user = await opts.ctx.db.query.user.findFirst({
-        where: eq(user.id, Number(opts.ctx.session.user.id)),
-      });
-
-      if (!_user) return { message: "Invalid user." };
-
-      if (!_invitation) return { message: "Invalid invitation token." };
-
-      if (_invitation.email !== _user.email)
-        return { message: "You are not invited to this workspace." };
-
-      if (_invitation.expiresAt.getTime() < new Date().getTime()) {
-        return { message: "Invitation expired." };
-      }
-
-      await opts.ctx.db
-        .update(invitation)
-        .set({ acceptedAt: new Date() })
-        .where(eq(invitation.id, _invitation.id))
-        .run();
-
-      await opts.ctx.db
-        .insert(usersToWorkspaces)
-        .values({
-          userId: _user.id,
-          workspaceId: _invitation.workspaceId,
-          role: _invitation.role,
-        })
-        .run();
-
-      return {
-        message: "Invitation accepted.",
-        data: _invitation.workspace,
-      };
-    }),
-
-  // DASHBOARD
 
   list: protectedProcedure.query(async (opts) => {
     const whereConditions: SQL[] = [

@@ -32,9 +32,9 @@ export const emailRouter = createTRPCRouter({
             with: {
               statusReport: {
                 with: {
-                  monitorsToStatusReports: {
+                  statusReportsToPageComponents: {
                     with: {
-                      monitor: true,
+                      pageComponent: true,
                     },
                   },
                   page: {
@@ -82,9 +82,9 @@ export const emailRouter = createTRPCRouter({
           status: _statusReportUpdate.status,
           message: _statusReportUpdate.message,
           date: new Date(_statusReportUpdate.date).toISOString(),
-          monitors:
-            _statusReportUpdate.statusReport.monitorsToStatusReports.map(
-              (i) => i.monitor.externalName || i.monitor.name,
+          pageComponents:
+            _statusReportUpdate.statusReport.statusReportsToPageComponents.map(
+              (i) => i.pageComponent.name,
             ),
         });
       }
@@ -101,9 +101,9 @@ export const emailRouter = createTRPCRouter({
             eq(maintenance.workspaceId, opts.ctx.workspace.id),
           ),
           with: {
-            maintenancesToMonitors: {
+            maintenancesToPageComponents: {
               with: {
-                monitor: true,
+                pageComponent: true,
               },
             },
             page: {
@@ -138,8 +138,8 @@ export const emailRouter = createTRPCRouter({
           status: "maintenance",
           message: _maintenance.message,
           date: new Date(_maintenance.from).toISOString(),
-          monitors: _maintenance.maintenancesToMonitors.map(
-            (i) => i.monitor.externalName || i.monitor.name,
+          pageComponents: _maintenance.maintenancesToPageComponents.map(
+            (i) => i.pageComponent.name,
           ),
         });
       }
