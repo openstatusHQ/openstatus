@@ -715,6 +715,7 @@ function ComponentRow({
           </SortableItemHandle>
           {fieldNamePrefix ? (
             <FormField
+              key={`${component.id}-name-${fieldNamePrefix}`}
               control={form.control}
               name={`${fieldNamePrefix}.name` as "components.0.name"}
               render={({ field }) => (
@@ -740,6 +741,7 @@ function ComponentRow({
         <div className="flex flex-row items-center gap-1 self-center">
           {fieldNamePrefix ? (
             <FormField
+              key={`${component.id}-description-${fieldNamePrefix}`}
               control={form.control}
               name={
                 `${fieldNamePrefix}.description` as "components.0.description"
