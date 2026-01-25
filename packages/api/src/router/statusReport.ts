@@ -12,7 +12,6 @@ import {
 } from "@openstatus/db";
 import {
   insertStatusReportUpdateSchema,
-  selectMonitorSchema,
   selectPageComponentSchema,
   selectPageSchema,
   selectStatusReportSchema,
@@ -111,7 +110,6 @@ export const statusReportRouter = createTRPCRouter({
         where: and(...whereConditions),
         with: {
           statusReportUpdates: true,
-          monitorsToStatusReports: { with: { monitor: true } },
           statusReportsToPageComponents: { with: { pageComponent: true } },
           page: { with: { pageComponents: true } },
         },
@@ -125,7 +123,6 @@ export const statusReportRouter = createTRPCRouter({
       return selectStatusReportSchema
         .extend({
           updates: z.array(selectStatusReportUpdateSchema).prefault([]),
-          monitors: z.array(selectMonitorSchema).prefault([]),
           pageComponents: z.array(selectPageComponentSchema).prefault([]),
           page: selectPageSchema.extend({
             pageComponents: z.array(selectPageComponentSchema).prefault([]),
@@ -136,9 +133,6 @@ export const statusReportRouter = createTRPCRouter({
           result.map((report) => ({
             ...report,
             updates: report.statusReportUpdates,
-            monitors: report.monitorsToStatusReports.map(
-              ({ monitor }) => monitor,
-            ),
             pageComponents: report.statusReportsToPageComponents.map(
               ({ pageComponent }) => pageComponent,
             ),

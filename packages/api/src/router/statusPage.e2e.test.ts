@@ -823,20 +823,28 @@ describe("statusPage.get endpoint validation", () => {
       expect(tracker).toHaveProperty("type");
       expect(tracker).toHaveProperty("order");
 
-      if (tracker.type === "monitor") {
-        expect(tracker).toHaveProperty("monitor");
-        expect(tracker.monitor).toHaveProperty("id");
-        expect(tracker.monitor).toHaveProperty("name");
-        expect(tracker.monitor).toHaveProperty("status");
+      if (tracker.type === "component") {
+        expect(tracker).toHaveProperty("component");
+        expect(tracker.component).toHaveProperty("id");
+        expect(tracker.component).toHaveProperty("name");
+        expect(tracker.component).toHaveProperty("status");
+        expect(tracker.component).toHaveProperty("type");
+        expect(["monitor", "external"]).toContain(tracker.component.type);
         expect(["success", "degraded", "error", "info"]).toContain(
-          tracker.monitor.status,
+          tracker.component.status,
         );
+
+        // Monitor-type components should have monitor relation
+        if (tracker.component.type === "monitor") {
+          expect(tracker.component).toHaveProperty("monitor");
+          expect(tracker.component.monitor).toBeDefined();
+        }
       } else if (tracker.type === "group") {
         expect(tracker).toHaveProperty("groupId");
         expect(tracker).toHaveProperty("groupName");
-        expect(tracker).toHaveProperty("monitors");
+        expect(tracker).toHaveProperty("components");
         expect(tracker).toHaveProperty("status");
-        expect(Array.isArray(tracker.monitors)).toBe(true);
+        expect(Array.isArray(tracker.components)).toBe(true);
         expect(["success", "degraded", "error", "info"]).toContain(
           tracker.status,
         );
