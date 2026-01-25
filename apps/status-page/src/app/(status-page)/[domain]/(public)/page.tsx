@@ -27,6 +27,7 @@ import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 import { Separator } from "@/components/ui/separator";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +36,7 @@ import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
 export default function Page() {
+  const prefix = usePathnamePrefix();
   const { domain } = useParams<{ domain: string }>();
   const { cardType, barType, showUptime } = useStatusPage();
   const trpc = useTRPC();
@@ -149,7 +151,7 @@ export default function Page() {
                       key={`${e.type}-${e.id}`}
                     >
                       <Link
-                        href={`./events/report/${report.id}`}
+                        href={`${prefix ? `/${prefix}` : ""}/events/report/${report.id}`}
                         className="rounded-lg"
                       >
                         <StatusBannerContainer status={e.status}>
@@ -190,7 +192,7 @@ export default function Page() {
                       key={e.id}
                     >
                       <Link
-                        href={`./events/maintenance/${maintenance.id}`}
+                        href={`${prefix ? `/${prefix}` : ""}/events/maintenance/${maintenance.id}`}
                         className="rounded-lg"
                       >
                         <StatusBannerContainer status={e.status}>
