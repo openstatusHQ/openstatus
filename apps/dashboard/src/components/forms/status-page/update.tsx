@@ -89,18 +89,12 @@ export function FormStatusPageUpdate() {
 
   return (
     <FormCardGroup>
-      <Note color="info">
+      <Note color="warning">
         <Info />
         <p className="text-sm">
-          We've enabled the new version of the status page. Read more about the{" "}
-          <Link
-            href="https://docs.openstatus.dev/tutorial/how-to-configure-status-page/"
-            rel="noreferrer"
-            target="_blank"
-          >
-            configuration
-          </Link>
-          .
+          Looking for connecting monitors to your status page? The setup has now
+          a separate page{" "}
+          <Link href={`/status-pages/${id}/components`}>components</Link>.
         </p>
       </Note>
       <FormGeneral
