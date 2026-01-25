@@ -348,7 +348,6 @@ export const statusPageRouter = createTRPCRouter({
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
 
-      // Transform statusReports to include monitorsToStatusReports format
       const statusReports = _page.statusReports.sort((a, b) => {
         // Sort reports without updates to the beginning
         if (

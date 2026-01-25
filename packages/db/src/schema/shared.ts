@@ -176,20 +176,6 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   whiteLabel: z.boolean().prefault(false),
 });
 
-export const selectPublicStatusReportSchemaWithRelation =
-  selectStatusReportSchema.extend({
-    monitorsToStatusReports: z
-      .array(
-        z.object({
-          monitorId: z.number(),
-          statusReportId: z.number(),
-          monitor: selectPublicMonitorSchema,
-        }),
-      )
-      .prefault([]),
-    statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-  });
-
 export type StatusReportWithUpdates = z.infer<
   typeof selectStatusReportPageSchema
 >;

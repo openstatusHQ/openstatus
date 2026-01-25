@@ -325,7 +325,7 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
 
   beforeAll(async () => {
     const ctx = getTestContext();
-    const caller = appRouter.createCaller(ctx);
+    const _caller = appRouter.createCaller(ctx);
 
     // Ensure monitor is on the page first
     await db
