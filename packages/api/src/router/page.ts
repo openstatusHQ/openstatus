@@ -12,7 +12,6 @@ import {
   syncMonitorGroupDeleteMany,
   syncMonitorGroupInsert,
   syncMonitorsToPageDelete,
-  syncMonitorsToPageInsertMany,
   syncMonitorsToPageUpsertMany,
   syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
