@@ -92,8 +92,8 @@ export function FormStatusPageUpdate() {
       <Note color="warning">
         <Info />
         <p className="text-sm">
-          Looking for connecting monitors to your status page? The setup has now
-          a separate page{" "}
+          Looking to connect monitors to your status page? The setup now has a
+          separate components page{" "}
           <Link href={`/status-pages/${id}/components`}>components</Link>.
         </p>
       </Note>
