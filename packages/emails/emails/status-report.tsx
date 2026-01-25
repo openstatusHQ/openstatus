@@ -30,7 +30,7 @@ export const StatusReportSchema = z.object({
   date: z.string(),
   message: z.string(),
   reportTitle: z.string(),
-  monitors: z.array(z.string()),
+  pageComponents: z.array(z.string()),
   unsubscribeUrl: z.string().url().optional(),
 });
 
@@ -59,7 +59,7 @@ function StatusReportEmail({
   message,
   reportTitle,
   pageTitle,
-  monitors,
+  pageComponents,
   unsubscribeUrl,
 }: StatusReportProps) {
   return (
@@ -105,7 +105,7 @@ function StatusReportEmail({
             </Column>
             <Column style={{ textAlign: "right" }}>
               <Text style={{ flexWrap: "wrap", wordWrap: "break-word" }}>
-                {monitors.length > 0 ? monitors.join(", ") : "N/A"}
+                {pageComponents.length > 0 ? pageComponents.join(", ") : "N/A"}
               </Text>
             </Column>
           </Row>
@@ -160,7 +160,7 @@ StatusReportEmail.PreviewProps = {
 
 We'll post another update by **19:00 UTC** today or sooner if critical developments occur. We apologize for the inconvenience and appreciate your patience as we restore full cache functionality.
   `,
-  monitors: ["OpenStatus API", "OpenStatus Webhook"],
+  pageComponents: ["OpenStatus API", "OpenStatus Webhook"],
   unsubscribeUrl:
     "https://status.openstatus.dev/unsubscribe/550e8400-e29b-41d4-a716-446655440000",
 };
