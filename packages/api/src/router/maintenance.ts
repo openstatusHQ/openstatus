@@ -8,13 +8,11 @@ import {
   eq,
   gte,
   inArray,
-  lte,
   syncMaintenanceToPageComponentDeleteByMaintenance,
   syncMaintenanceToPageComponentInsertMany,
 } from "@openstatus/db";
 import {
   maintenance,
-  maintenancesToMonitors,
   maintenancesToPageComponents,
   pageComponent,
   selectMaintenanceSchema,
@@ -27,81 +25,6 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { getPeriodDate, periods } from "./utils";
 
 export const maintenanceRouter = createTRPCRouter({
-  getById: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      const _maintenance = await opts.ctx.db
-        .select()
-        .from(maintenance)
-        .where(
-          and(
-            eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
-
-      if (!_maintenance) return undefined;
-      // TODO: make it work with `with: { maintenacesToMonitors: true }`
-      const _monitors = await opts.ctx.db
-        .select()
-        .from(maintenancesToMonitors)
-        .where(eq(maintenancesToMonitors.maintenanceId, _maintenance.id))
-        .all();
-      return { ..._maintenance, monitors: _monitors.map((m) => m.monitorId) };
-    }),
-  getByWorkspace: protectedProcedure.query(async (opts) => {
-    const _maintenances = await opts.ctx.db
-      .select()
-      .from(maintenance)
-      .where(eq(maintenance.workspaceId, opts.ctx.workspace.id))
-      .all();
-    return _maintenances;
-  }),
-  getLast7DaysByWorkspace: protectedProcedure.query(async (opts) => {
-    const _maintenances = await opts.ctx.db.query.maintenance.findMany({
-      where: and(
-        eq(maintenance.workspaceId, opts.ctx.workspace.id),
-        gte(maintenance.from, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
-      ),
-      with: { maintenancesToMonitors: true },
-    });
-    return _maintenances.map((m) => ({
-      ...m,
-      monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
-    }));
-  }),
-  getByPage: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      const _maintenances = await opts.ctx.db
-        .select()
-        .from(maintenance)
-        .where(
-          and(
-            eq(maintenance.pageId, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .all();
-      // TODO:
-      return _maintenances;
-    }),
-  getActiveByWorkspace: protectedProcedure.query(async (opts) => {
-    const _maintenances = await opts.ctx.db
-      .select()
-      .from(maintenance)
-      .where(
-        and(
-          eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          gte(maintenance.to, new Date()),
-          lte(maintenance.from, new Date()),
-        ),
-      )
-      .all();
-    return _maintenances;
-  }),
-
   delete: protectedProcedure
     .meta({ track: Events.DeleteMaintenance })
     .input(z.object({ id: z.number() }))
@@ -116,8 +39,6 @@ export const maintenanceRouter = createTRPCRouter({
         )
         .returning();
     }),
-
-  // DASHBOARD
 
   list: protectedProcedure
     .input(

@@ -5,7 +5,6 @@ import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 // Test data setup
 let testPageId: number;
-let _testSubscriberId: number;
 let testToken: string;
 const testWorkspaceId = 1; // Use existing test workspace from seed data
 
@@ -42,7 +41,7 @@ beforeAll(async () => {
 
   // Create a verified subscriber for testing
   testToken = crypto.randomUUID();
-  const subscriber = await db
+  await db
     .insert(pageSubscriber)
     .values({
       pageId: testPageId,
@@ -53,8 +52,6 @@ beforeAll(async () => {
     })
     .returning()
     .get();
-
-  _testSubscriberId = subscriber.id;
 });
 
 afterAll(async () => {
@@ -86,11 +83,14 @@ describe("getSubscriberByToken", () => {
 
     // Manually mask the email to test the masking logic
     const email = subscriber?.email;
-    const [localPart, domain] = email.split("@");
-    const maskedEmail =
-      localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
+    expect(email).toBeDefined();
+    if (email) {
+      const [localPart, domain] = email.split("@");
+      const maskedEmail =
+        localPart.length > 0 ? `${localPart[0]}***@${domain}` : `***@${domain}`;
 
-    expect(maskedEmail).toBe("t***@example.com");
+      expect(maskedEmail).toBe("t***@example.com");
+    }
   });
 
   test("should return null for non-existent token", async () => {

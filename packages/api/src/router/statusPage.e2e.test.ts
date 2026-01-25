@@ -332,7 +332,6 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
 });
 
 describe("Unsubscribed user does not receive new emails", () => {
-  let _activeToken: string;
   let unsubscribedToken: string;
   let pendingToken: string;
 
@@ -365,8 +364,6 @@ describe("Unsubscribed user does not receive new emails", () => {
     if (!active.token) {
       throw new Error("Active subscriber token is undefined");
     }
-
-    _activeToken = active.token;
 
     // Unsubscribed subscriber
     const unsubscribed = await db

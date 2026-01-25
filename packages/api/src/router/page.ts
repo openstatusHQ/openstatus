@@ -6,10 +6,8 @@ import {
   and,
   desc,
   eq,
-  gte,
   inArray,
   isNull,
-  lte,
   sql,
   syncMonitorGroupDeleteMany,
   syncMonitorGroupInsert,
@@ -32,7 +30,6 @@ import {
   selectMonitorSchema,
   selectPageComponentSchema,
   selectPageSchema,
-  selectPageSchemaWithMonitorsRelation,
   statusReport,
   subdomainSafeList,
   workspace,
@@ -154,128 +151,7 @@ export const pageRouter = createTRPCRouter({
 
       return newPage;
     }),
-  getPageById: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      const firstPage = await opts.ctx.db.query.page.findFirst({
-        where: and(
-          eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
-        ),
-        with: {
-          monitorsToPages: {
-            with: { monitor: true },
-            orderBy: (monitorsToPages, { asc }) => [asc(monitorsToPages.order)],
-          },
-        },
-      });
-      return selectPageSchemaWithMonitorsRelation.parse(firstPage);
-    }),
 
-  update: protectedProcedure
-    .meta({ track: Events.UpdatePage })
-    .input(insertPageSchema)
-    .mutation(async (opts) => {
-      const { monitors, ...pageInput } = opts.input;
-      if (!pageInput.id) return;
-
-      const monitorIds = monitors?.map((item) => item.monitorId) || [];
-
-      const limit = opts.ctx.workspace.limits;
-
-      // the user is not eligible for password protection
-      if (
-        limit["password-protection"] === false &&
-        opts.input.passwordProtected === true
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Password protection is not available for your current plan.",
-        });
-      }
-
-      const currentPage = await opts.ctx.db
-        .update(page)
-        .set({
-          ...pageInput,
-          updatedAt: new Date(),
-          authEmailDomains: pageInput.authEmailDomains?.join(","),
-        })
-        .where(
-          and(
-            eq(page.id, pageInput.id),
-            eq(page.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .returning()
-        .get();
-
-      if (monitorIds.length) {
-        // We should make sure the user has access to the monitors
-        const allMonitors = await opts.ctx.db.query.monitor.findMany({
-          where: and(
-            inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
-        });
-
-        if (allMonitors.length !== monitorIds.length) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You don't have access to all the monitors.",
-          });
-        }
-      }
-
-      // TODO: check for monitor order!
-      const currentMonitorsToPages = await opts.ctx.db
-        .select()
-        .from(monitorsToPages)
-        .where(eq(monitorsToPages.pageId, currentPage.id))
-        .all();
-
-      const removedMonitors = currentMonitorsToPages
-        .map(({ monitorId }) => monitorId)
-        .filter((x) => !monitorIds?.includes(x));
-
-      if (removedMonitors.length) {
-        await opts.ctx.db
-          .delete(monitorsToPages)
-          .where(
-            and(
-              inArray(monitorsToPages.monitorId, removedMonitors),
-              eq(monitorsToPages.pageId, currentPage.id),
-            ),
-          );
-        // Sync delete to page components
-        for (const monitorId of removedMonitors) {
-          await syncMonitorsToPageDelete(opts.ctx.db, {
-            monitorId,
-            pageId: currentPage.id,
-          });
-        }
-      }
-
-      const values = monitors.map(({ monitorId }, index) => ({
-        pageId: currentPage.id,
-        order: index,
-        monitorId,
-      }));
-
-      if (values.length) {
-        await opts.ctx.db
-          .insert(monitorsToPages)
-          .values(values)
-          .onConflictDoUpdate({
-            target: [monitorsToPages.monitorId, monitorsToPages.pageId],
-            set: { order: sql.raw("excluded.`order`") },
-          });
-        // Sync new monitors to page components (existing ones will be ignored due to onConflictDoNothing)
-        await syncMonitorsToPageInsertMany(opts.ctx.db, values);
-      }
-    }),
   delete: protectedProcedure
     .meta({ track: Events.DeletePage })
     .input(z.object({ id: z.number() }))
@@ -290,31 +166,6 @@ export const pageRouter = createTRPCRouter({
         .where(and(...whereConditions))
         .run();
     }),
-
-  getPagesByWorkspace: protectedProcedure.query(async (opts) => {
-    const allPages = await opts.ctx.db.query.page.findMany({
-      where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
-      with: {
-        monitorsToPages: { with: { monitor: true } },
-        maintenances: {
-          where: and(
-            lte(maintenance.from, new Date()),
-            gte(maintenance.to, new Date()),
-          ),
-        },
-        statusReports: {
-          orderBy: (reports, { desc }) => desc(reports.updatedAt),
-          with: {
-            statusReportUpdates: {
-              orderBy: (updates, { desc }) => desc(updates.date),
-            },
-          },
-        },
-      },
-    });
-    return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
-  }),
-
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
@@ -459,19 +310,6 @@ export const pageRouter = createTRPCRouter({
         .returning()
         .get();
     }),
-
-  isPageLimitReached: protectedProcedure.query(async (opts) => {
-    const pageLimit = opts.ctx.workspace.limits["status-pages"];
-    const pageNumbers = (
-      await opts.ctx.db.query.page.findMany({
-        where: eq(monitor.workspaceId, opts.ctx.workspace.id),
-      })
-    ).length;
-
-    return pageNumbers >= pageLimit;
-  }),
-
-  // DASHBOARD
 
   list: protectedProcedure
     .input(
