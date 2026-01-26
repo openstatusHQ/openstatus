@@ -19,13 +19,13 @@ const DB_TO_PERIODICITY: Record<string, Periodicity> = {
 };
 
 const PERIODICITY_TO_DB: Record<Periodicity, string> = {
-  [Periodicity.PERIODICITY_30S]: "30s",
-  [Periodicity.PERIODICITY_1M]: "1m",
-  [Periodicity.PERIODICITY_5M]: "5m",
-  [Periodicity.PERIODICITY_10M]: "10m",
-  [Periodicity.PERIODICITY_30M]: "30m",
-  [Periodicity.PERIODICITY_1H]: "1h",
-  [Periodicity.PERIODICITY_UNSPECIFIED]: "1m",
+  [Periodicity.PERIODICITY_30S]: "30s" as const,
+  [Periodicity.PERIODICITY_1M]: "1m" as const,
+  [Periodicity.PERIODICITY_5M]: "5m" as const,
+  [Periodicity.PERIODICITY_10M]: "10m" as const,
+  [Periodicity.PERIODICITY_30M]: "30m" as const,
+  [Periodicity.PERIODICITY_1H]: "1h" as const,
+  [Periodicity.PERIODICITY_UNSPECIFIED]: "1m" as const,
 };
 
 export function stringToPeriodicity(value: string): Periodicity {

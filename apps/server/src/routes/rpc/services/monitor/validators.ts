@@ -96,3 +96,69 @@ export function getCommonDbValues(mon: {
     otelHeaders: otelConfig.otelHeaders,
   };
 }
+
+/**
+ * Extract common database values for update operations.
+ * Only includes fields that are explicitly provided (not undefined).
+ * This enables partial updates where only specified fields are changed.
+ */
+export function getCommonDbValuesForUpdate(mon: {
+  name?: string;
+  periodicity?: Periodicity;
+  timeout?: bigint;
+  degradedAt?: bigint;
+  active?: boolean;
+  description?: string;
+  public?: boolean;
+  regions?: Region[];
+  retry?: bigint;
+  openTelemetry?: Parameters<typeof openTelemetryToDb>[0];
+}) {
+  const result: Record<string, unknown> = {};
+
+  if (mon.name !== undefined && mon.name !== "") {
+    result.name = mon.name;
+  }
+
+  if (mon.periodicity !== undefined && mon.periodicity !== 0) {
+    const periodicityStr = periodicityToString(mon.periodicity);
+    result.periodicity = toValidPeriodicity(periodicityStr);
+  }
+
+  if (mon.timeout !== undefined && mon.timeout !== BigInt(0)) {
+    result.timeout = Number(mon.timeout);
+  }
+
+  if (mon.degradedAt !== undefined) {
+    result.degradedAfter = Number(mon.degradedAt);
+  }
+
+  if (mon.active !== undefined) {
+    result.active = mon.active;
+  }
+
+  if (mon.description !== undefined) {
+    result.description = mon.description;
+  }
+
+  if (mon.public !== undefined) {
+    result.public = mon.public;
+  }
+
+  if (mon.regions !== undefined && mon.regions.length > 0) {
+    const regionStrings = regionsToStrings(mon.regions);
+    result.regions = regionsToDbString(regionStrings);
+  }
+
+  if (mon.retry !== undefined && mon.retry !== BigInt(0)) {
+    result.retry = Number(mon.retry);
+  }
+
+  if (mon.openTelemetry !== undefined) {
+    const otelConfig = openTelemetryToDb(mon.openTelemetry);
+    result.otelEndpoint = otelConfig.otelEndpoint;
+    result.otelHeaders = otelConfig.otelHeaders;
+  }
+
+  return result;
+}

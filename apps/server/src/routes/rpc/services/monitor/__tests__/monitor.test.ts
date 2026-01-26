@@ -600,6 +600,425 @@ describe("MonitorService.CreateDNSMonitor", () => {
   });
 });
 
+describe("MonitorService.UpdateHTTPMonitor", () => {
+  test("successfully updates HTTP monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: {
+          name: "updated-http-name",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.name).toBe("updated-http-name");
+    // Original URL should be preserved
+    expect(data.monitor.url).toBe("https://example.com");
+
+    // Restore original name
+    await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: {
+          name: `${TEST_PREFIX}-http`,
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates HTTP monitor URL", async () => {
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: {
+          url: "https://updated-example.com",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.url).toBe("https://updated-example.com");
+
+    // Restore original URL
+    await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: {
+          url: "https://example.com",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates HTTP method", async () => {
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: {
+          method: "HTTP_METHOD_POST",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.method).toBe("HTTP_METHOD_POST");
+
+    // Restore original method
+    await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: {
+          method: "HTTP_METHOD_GET",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("returns current monitor when no monitor data provided", async () => {
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testHttpMonitorId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.id).toBe(String(testHttpMonitorId));
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: "99999",
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when trying to update TCP monitor as HTTP", async () => {
+    const res = await connectRequest(
+      "UpdateHTTPMonitor",
+      {
+        id: String(testTcpMonitorId),
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("type mismatch");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("UpdateHTTPMonitor", {
+      id: String(testHttpMonitorId),
+      monitor: { name: "test" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("MonitorService.UpdateTCPMonitor", () => {
+  test("successfully updates TCP monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: String(testTcpMonitorId),
+        monitor: {
+          name: "updated-tcp-name",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.name).toBe("updated-tcp-name");
+    // Original URI should be preserved
+    expect(data.monitor.uri).toBe("tcp://example.com:443");
+
+    // Restore original name
+    await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: String(testTcpMonitorId),
+        monitor: {
+          name: `${TEST_PREFIX}-tcp`,
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates TCP monitor URI", async () => {
+    const res = await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: String(testTcpMonitorId),
+        monitor: {
+          uri: "tcp://updated-example.com:8080",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("tcp://updated-example.com:8080");
+
+    // Restore original URI
+    await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: String(testTcpMonitorId),
+        monitor: {
+          uri: "tcp://example.com:443",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("returns current monitor when no monitor data provided", async () => {
+    const res = await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: String(testTcpMonitorId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.id).toBe(String(testTcpMonitorId));
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: "99999",
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when trying to update HTTP monitor as TCP", async () => {
+    const res = await connectRequest(
+      "UpdateTCPMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("type mismatch");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("UpdateTCPMonitor", {
+      id: String(testTcpMonitorId),
+      monitor: { name: "test" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("MonitorService.UpdateDNSMonitor", () => {
+  test("successfully updates DNS monitor with partial data", async () => {
+    const res = await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+        monitor: {
+          name: "updated-dns-name",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.name).toBe("updated-dns-name");
+    // Original URI should be preserved
+    expect(data.monitor.uri).toBe("example.com");
+
+    // Restore original name
+    await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+        monitor: {
+          name: `${TEST_PREFIX}-dns`,
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates DNS monitor URI", async () => {
+    const res = await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+        monitor: {
+          uri: "updated-example.com",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.uri).toBe("updated-example.com");
+
+    // Restore original URI
+    await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+        monitor: {
+          uri: "example.com",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("successfully updates DNS record assertions", async () => {
+    const res = await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+        monitor: {
+          recordAssertions: [
+            { record: "A", target: "1.2.3.4", comparator: 1 },
+            { record: "AAAA", target: "2001:db8::1", comparator: 1 },
+          ],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor.recordAssertions).toHaveLength(2);
+
+    // Restore original assertions
+    await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+        monitor: {
+          recordAssertions: [
+            { record: "A", target: "93.184.216.34", comparator: 1 },
+          ],
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("returns current monitor when no monitor data provided", async () => {
+    const res = await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testDnsMonitorId),
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.id).toBe(String(testDnsMonitorId));
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: "99999",
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns error when trying to update HTTP monitor as DNS", async () => {
+    const res = await connectRequest(
+      "UpdateDNSMonitor",
+      {
+        id: String(testHttpMonitorId),
+        monitor: { name: "test" },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("type mismatch");
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("UpdateDNSMonitor", {
+      id: String(testDnsMonitorId),
+      monitor: { name: "test" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("MonitorService.TriggerMonitor", () => {
   test("returns 404 for non-existent monitor", async () => {
     const res = await connectRequest(
