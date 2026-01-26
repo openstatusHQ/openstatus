@@ -1,4 +1,7 @@
-import type { Headers, OpenTelemetryConfig } from "@openstatus/proto/monitor/v1";
+import type {
+  Headers,
+  OpenTelemetryConfig,
+} from "@openstatus/proto/monitor/v1";
 
 // ============================================================
 // DB to Proto (for reads)

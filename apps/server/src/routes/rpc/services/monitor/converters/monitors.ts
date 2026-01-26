@@ -7,7 +7,11 @@ import type {
 
 import { parseDnsAssertions, parseHttpAssertions } from "./assertions";
 import { MONITOR_DEFAULTS } from "./defaults";
-import { stringToMonitorStatus, stringToPeriodicity, stringToHttpMethod } from "./enums";
+import {
+  stringToHttpMethod,
+  stringToMonitorStatus,
+  stringToPeriodicity,
+} from "./enums";
 import { parseOpenTelemetry, toProtoHeaders } from "./headers";
 import { stringsToRegions } from "./regions";
 
