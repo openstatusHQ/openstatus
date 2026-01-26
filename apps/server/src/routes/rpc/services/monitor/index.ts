@@ -1,7 +1,7 @@
 import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
+import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
@@ -9,6 +9,7 @@ import type {
   DNSMonitor,
   HTTPMonitor,
   MonitorService,
+  RegionStatus,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
 
@@ -22,6 +23,8 @@ import {
   headersToDbJson,
   httpAssertionsToDbJson,
   httpMethodToString,
+  stringToMonitorStatus,
+  stringToRegion,
 } from "./converters";
 import { checkMonitorLimits } from "./limits";
 import {
@@ -395,6 +398,47 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       tcpMonitors,
       dnsMonitors,
       nextPageToken,
+    };
+  },
+
+  async getMonitorStatus(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    // Get the monitor
+    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    if (!dbMon) {
+      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+    }
+
+    // Parse monitor to get configured regions
+    const parsed = selectMonitorSchema.safeParse(dbMon);
+    if (!parsed.success) {
+      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+    }
+
+    // Get monitor status only for configured regions
+    const monitorStatuses = await db
+      .select()
+      .from(monitorStatusTable)
+      .where(
+        and(
+          eq(monitorStatusTable.monitorId, dbMon.id),
+          inArray(monitorStatusTable.region, parsed.data.regions),
+        ),
+      )
+      .all();
+
+    // Map to proto format
+    const regions: RegionStatus[] = monitorStatuses.map((s) => ({
+      $typeName: "openstatus.monitor.v1.RegionStatus" as const,
+      region: stringToRegion(s.region),
+      status: stringToMonitorStatus(s.status),
+    }));
+
+    return {
+      id: String(dbMon.id),
+      regions,
     };
   },
 };

@@ -5,6 +5,7 @@ package openstatus.monitor.v1;
 import "buf/validate/validate.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/monitor.proto";
 import "openstatus/monitor/v1/tcp_monitor.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
@@ -28,6 +29,9 @@ service MonitorService {
 
   // ListMonitors returns a list of monitors.
   rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse);
+
+  // GetMonitorStatus returns the status of all regions for a monitor.
+  rpc GetMonitorStatus(GetMonitorStatusRequest) returns (GetMonitorStatusResponse);
 }
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -118,6 +122,30 @@ message ListMonitorsResponse {
 
   // Total number of monitors across all pages.
   int32 total_size = 5;
+}
+
+// GetMonitorStatusRequest is the request to get the status of all regions for a monitor.
+message GetMonitorStatusRequest {
+  // Monitor ID to get status for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// RegionStatus represents the status of a monitor in a specific region.
+message RegionStatus {
+  // The region identifier.
+  Region region = 1;
+
+  // The status of the monitor in this region.
+  MonitorStatus status = 2;
+}
+
+// GetMonitorStatusResponse is the response containing the status of all regions for a monitor.
+message GetMonitorStatusResponse {
+  // Monitor ID.
+  string id = 1;
+
+  // Status for each region.
+  repeated RegionStatus regions = 2;
 }
 
 // MonitorConfig represents the type-specific configuration for a monitor.

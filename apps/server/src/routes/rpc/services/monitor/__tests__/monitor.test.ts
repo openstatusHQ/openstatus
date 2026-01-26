@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
+import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 
 import { app } from "@/index";
 
@@ -28,6 +29,7 @@ let testHttpMonitorId: number;
 let testTcpMonitorId: number;
 let testDnsMonitorId: number;
 let testMonitorToDeleteId: number;
+let testMonitorWithStatusId: number;
 
 beforeAll(async () => {
   // Clean up any existing test data
@@ -35,6 +37,7 @@ beforeAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
 
   // Create test HTTP monitor
   const httpMon = await db
@@ -95,7 +98,7 @@ beforeAll(async () => {
       jobType: "dns",
       timeout: 5000,
       assertions: JSON.stringify([
-        { type: "dns", compare: "eq", target: "93.184.216.34", record: "A" },
+        { type: "dnsRecord", compare: "eq", target: "93.184.216.34", key: "A" },
       ]),
     })
     .returning()
@@ -117,14 +120,44 @@ beforeAll(async () => {
     .returning()
     .get();
   testMonitorToDeleteId = deleteMon.id;
+
+  // Create monitor with status entries for GetMonitorStatus tests
+  const statusMon = await db
+    .insert(monitor)
+    .values({
+      workspaceId: 1,
+      name: `${TEST_PREFIX}-with-status`,
+      url: "https://with-status.example.com",
+      periodicity: "1m",
+      active: true,
+      regions: "ams,iad,fra",
+      jobType: "http",
+    })
+    .returning()
+    .get();
+  testMonitorWithStatusId = statusMon.id;
+
+  // Create status entries for the monitor
+  await db.insert(monitorStatusTable).values([
+    { monitorId: statusMon.id, region: "ams", status: "active" },
+    { monitorId: statusMon.id, region: "iad", status: "error" },
+    { monitorId: statusMon.id, region: "fra", status: "degraded" },
+    // Add a stale region entry that is not in the monitor's configured regions
+    { monitorId: statusMon.id, region: "lhr", status: "active" },
+  ]);
 });
 
 afterAll(async () => {
+  // Clean up monitor status entries first (due to foreign key)
+  await db
+    .delete(monitorStatusTable)
+    .where(eq(monitorStatusTable.monitorId, testMonitorWithStatusId));
   // Clean up test data
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-http`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
+  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
 });
 
 describe("MonitorService.ListMonitors", () => {
@@ -1230,6 +1263,160 @@ describe("MonitorService - Status Field", () => {
     // Clean up
     if (data.monitor.id) {
       await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+});
+
+describe("MonitorService.GetMonitorStatus", () => {
+  test("returns status for all configured regions", async () => {
+    const res = await connectRequest(
+      "GetMonitorStatus",
+      { id: String(testMonitorWithStatusId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.id).toBe(String(testMonitorWithStatusId));
+    expect(data.regions).toBeDefined();
+    expect(Array.isArray(data.regions)).toBe(true);
+    // Should have 3 regions (ams, iad, fra) - not lhr which is stale
+    expect(data.regions).toHaveLength(3);
+  });
+
+  test("returns correct status values for each region", async () => {
+    const res = await connectRequest(
+      "GetMonitorStatus",
+      { id: String(testMonitorWithStatusId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const regions = data.regions || [];
+
+    // Find each region and verify status
+    const amsRegion = regions.find(
+      (r: { region: string }) => r.region === "REGION_AMS",
+    );
+    const iadRegion = regions.find(
+      (r: { region: string }) => r.region === "REGION_IAD",
+    );
+    const fraRegion = regions.find(
+      (r: { region: string }) => r.region === "REGION_FRA",
+    );
+
+    expect(amsRegion).toBeDefined();
+    expect(amsRegion.status).toBe("MONITOR_STATUS_ACTIVE");
+
+    expect(iadRegion).toBeDefined();
+    expect(iadRegion.status).toBe("MONITOR_STATUS_ERROR");
+
+    expect(fraRegion).toBeDefined();
+    expect(fraRegion.status).toBe("MONITOR_STATUS_DEGRADED");
+  });
+
+  test("does not return stale regions not in monitor configuration", async () => {
+    const res = await connectRequest(
+      "GetMonitorStatus",
+      { id: String(testMonitorWithStatusId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const regions = data.regions || [];
+
+    // lhr has a status entry but is not in the monitor's configured regions
+    const lhrRegion = regions.find(
+      (r: { region: string }) => r.region === "REGION_LHR",
+    );
+    expect(lhrRegion).toBeUndefined();
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "GetMonitorStatus",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetMonitorStatus", {
+      id: String(testMonitorWithStatusId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("cannot get status from another workspace", async () => {
+    // Create a monitor for workspace 2
+    const otherWorkspaceMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-status-other-ws`,
+        url: "https://other-ws-status.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      // Try to get status with workspace 1's key
+      const res = await connectRequest(
+        "GetMonitorStatus",
+        { id: String(otherWorkspaceMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      // Should return 404 (not found in this workspace)
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
+    }
+  });
+
+  test("returns empty regions array when monitor has no status entries", async () => {
+    // Create a monitor without status entries
+    const noStatusMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-no-status`,
+        url: "https://no-status.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams,iad",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetMonitorStatus",
+        { id: String(noStatusMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      expect(data.id).toBe(String(noStatusMon.id));
+      // Proto3 may omit empty arrays
+      expect(data.regions || []).toEqual([]);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, noStatusMon.id));
     }
   });
 });
