@@ -332,7 +332,6 @@ describe("Clicking confirm sets unsubscribedAt timestamp", () => {
 });
 
 describe("Unsubscribed user does not receive new emails", () => {
-  let _activeToken: string;
   let unsubscribedToken: string;
   let pendingToken: string;
 
@@ -365,8 +364,6 @@ describe("Unsubscribed user does not receive new emails", () => {
     if (!active.token) {
       throw new Error("Active subscriber token is undefined");
     }
-
-    _activeToken = active.token;
 
     // Unsubscribed subscriber
     const unsubscribed = await db
@@ -576,6 +573,10 @@ describe("Re-subscription after unsubscribe flow", () => {
       where: eq(pageSubscriber.email, "resubscribe-test@example.com"),
     });
 
+    if (!subscriber) {
+      throw new Error("Subscriber ID is undefined");
+    }
+
     expect(subscriber?.acceptedAt).not.toBeNull();
     expect(subscriber?.unsubscribedAt).toBeNull();
 
@@ -583,10 +584,10 @@ describe("Re-subscription after unsubscribe flow", () => {
     await db
       .update(pageSubscriber)
       .set({ unsubscribedAt: new Date() })
-      .where(eq(pageSubscriber.id, subscriber?.id));
+      .where(eq(pageSubscriber.id, subscriber.id));
 
     subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, subscriber?.id),
+      where: eq(pageSubscriber.id, subscriber.id),
     });
 
     expect(subscriber?.unsubscribedAt).not.toBeNull();
@@ -607,6 +608,10 @@ describe("Re-subscription after unsubscribe flow", () => {
 
     expect(subscribersAfterUnsub.length).toBe(0);
 
+    if (!subscriber) {
+      throw new Error("Subscriber is undefined");
+    }
+
     // Step 4: User re-subscribes (simulating the re-subscription flow)
     const newToken = crypto.randomUUID();
     await db
@@ -617,7 +622,7 @@ describe("Re-subscription after unsubscribe flow", () => {
         token: newToken,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       })
-      .where(eq(pageSubscriber.id, subscriber?.id));
+      .where(eq(pageSubscriber.id, subscriber.id));
 
     // Step 5: User is still excluded (not yet verified)
     const subscribersPendingVerify = await db
@@ -718,5 +723,204 @@ describe("Invalid token handling", () => {
     await db
       .delete(pageSubscriber)
       .where(eq(pageSubscriber.email, "already-unsub@example.com"));
+  });
+});
+
+describe("statusPage.get endpoint validation", () => {
+  test("Returns all required output fields with correct types", async () => {
+    // Use the edgeRouter to call the statusPage.get endpoint
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: testSlug });
+
+    // Validate that result is not null
+    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
+
+    if (!result) {
+      throw new Error("Result should not be null");
+    }
+
+    // Validate core page fields with specific types
+    expect(typeof result.slug).toBe("string");
+    expect(typeof result.title).toBe("string");
+    expect(typeof result.description).toBe("string");
+    expect(result.createdAt).toBeInstanceOf(Date);
+    expect(result.updatedAt).toBeInstanceOf(Date);
+
+    // Validate slug matches what we requested
+    expect(result.slug).toBe(testSlug);
+
+    // Validate all array fields exist and are arrays
+    expect(Array.isArray(result.monitors)).toBe(true);
+    expect(Array.isArray(result.monitorGroups)).toBe(true);
+    expect(Array.isArray(result.pageComponents)).toBe(true);
+    expect(Array.isArray(result.pageComponentGroups)).toBe(true);
+    expect(Array.isArray(result.trackers)).toBe(true);
+    expect(Array.isArray(result.lastEvents)).toBe(true);
+    expect(Array.isArray(result.openEvents)).toBe(true);
+    expect(Array.isArray(result.statusReports)).toBe(true);
+    expect(Array.isArray(result.incidents)).toBe(true);
+    expect(Array.isArray(result.maintenances)).toBe(true);
+
+    // Validate status field is one of the allowed values
+    expect(["success", "degraded", "error", "info"]).toContain(result.status);
+
+    // Validate workspacePlan field
+    expect(result.workspacePlan).toBeDefined();
+    expect(typeof result.workspacePlan).toBe("string");
+
+    // Validate whiteLabel field
+    expect(typeof result.whiteLabel).toBe("boolean");
+  });
+
+  test("Returns null for non-existent slug", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({
+      slug: "non-existent-slug-12345",
+    });
+
+    expect(result).toBeNull();
+  });
+
+  test("Tracker objects have correct discriminated union types", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: testSlug });
+
+    if (!result) {
+      // If no result, skip this test as there are no trackers to validate
+      return;
+    }
+
+    // Validate each tracker has the correct structure
+    for (const tracker of result.trackers) {
+      expect(tracker).toHaveProperty("type");
+      expect(tracker).toHaveProperty("order");
+
+      if (tracker.type === "component") {
+        expect(tracker).toHaveProperty("component");
+        expect(tracker.component).toHaveProperty("id");
+        expect(tracker.component).toHaveProperty("name");
+        expect(tracker.component).toHaveProperty("status");
+        expect(tracker.component).toHaveProperty("type");
+        expect(["monitor", "external"]).toContain(tracker.component.type);
+        expect(["success", "degraded", "error", "info"]).toContain(
+          tracker.component.status,
+        );
+
+        // Monitor-type components should have monitor relation
+        if (tracker.component.type === "monitor") {
+          expect(tracker.component).toHaveProperty("monitor");
+          expect(tracker.component.monitor).toBeDefined();
+        }
+      } else if (tracker.type === "group") {
+        expect(tracker).toHaveProperty("groupId");
+        expect(tracker).toHaveProperty("groupName");
+        expect(tracker).toHaveProperty("components");
+        expect(tracker).toHaveProperty("status");
+        expect(Array.isArray(tracker.components)).toBe(true);
+        expect(["success", "degraded", "error", "info"]).toContain(
+          tracker.status,
+        );
+      }
+    }
+  });
+
+  test("Event objects have required fields", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: testSlug });
+
+    if (!result) {
+      return;
+    }
+
+    // Validate lastEvents structure
+    for (const event of result.lastEvents) {
+      expect(event).toMatchObject({
+        id: expect.any(Number),
+        name: expect.any(String),
+        from: expect.any(Date),
+        status: expect.any(String),
+        type: expect.any(String),
+      });
+      expect(["maintenance", "incident", "report"]).toContain(event.type);
+      expect(["success", "degraded", "error", "info"]).toContain(event.status);
+    }
+
+    // Validate openEvents structure
+    for (const event of result.openEvents) {
+      expect(event).toMatchObject({
+        id: expect.any(Number),
+        name: expect.any(String),
+        from: expect.any(Date),
+        status: expect.any(String),
+        type: expect.any(String),
+      });
+      expect(["maintenance", "incident", "report"]).toContain(event.type);
+      expect(["success", "degraded", "error", "info"]).toContain(event.status);
+    }
+  });
+
+  test("Monitor objects contain status field", async () => {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+
+    const ctx = createInnerTRPCContext({
+      req: undefined,
+      // @ts-expect-error - auth not required for public procedure
+      auth: undefined,
+    });
+
+    const caller = edgeRouter.createCaller(ctx);
+    const result = await caller.statusPage.get({ slug: testSlug });
+
+    if (!result || result.monitors.length === 0) {
+      return;
+    }
+
+    // Validate each monitor has status field
+    for (const monitor of result.monitors) {
+      expect(monitor).toHaveProperty("status");
+      expect(["success", "degraded", "error", "info"]).toContain(
+        monitor.status,
+      );
+      expect(monitor).toHaveProperty("id");
+      expect(monitor).toHaveProperty("name");
+    }
   });
 });

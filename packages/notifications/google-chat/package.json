@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
+    "@openstatus/notification-base": "workspace:*",
     "zod": "4.1.13"
   },
   "devDependencies": {

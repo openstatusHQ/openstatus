@@ -29,8 +29,9 @@ const monitor: Monitor = {
   deletedAt: null,
   otelEndpoint: null,
   otelHeaders: [],
-  retry: null,
-  followRedirects: null,
+  retry: 3,
+  followRedirects: false,
+  externalName: null,
 };
 
 const notification: Notification = {

@@ -16,7 +16,7 @@ test.todo("should send email notification", async () => {
     statusCode: 400,
     notifType: "alert",
     cronTimestamp: 123456,
-    incidentId: "1",
+    incidentId: 1,
   });
   expect(fn).toHaveBeenCalled();
 });

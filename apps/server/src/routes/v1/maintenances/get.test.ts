@@ -14,6 +14,20 @@ test("return the maintenance", async () => {
   expect(result.success).toBe(true);
 });
 
+test("return the maintenance with monitorIds", async () => {
+  const res = await app.request("/v1/maintenance/1", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+  const result = MaintenanceSchema.safeParse(await res.json());
+
+  expect(res.status).toBe(200);
+  expect(result.success).toBe(true);
+  expect(result.data?.monitorIds).toBeDefined();
+  expect(Array.isArray(result.data?.monitorIds)).toBe(true);
+});
+
 test("no auth key should return 401", async () => {
   const res = await app.request("/v1/maintenance/1");
 

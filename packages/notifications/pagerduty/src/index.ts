@@ -1,10 +1,5 @@
-import {
-  type Monitor,
-  type Notification,
-  pagerdutyDataSchema,
-} from "@openstatus/db/src/schema";
-
-import type { Region } from "@openstatus/db/src/schema/constants";
+import { pagerdutyDataSchema } from "@openstatus/db/src/schema";
+import type { NotificationContext } from "@openstatus/notification-base";
 import {
   PagerDutySchema,
   resolveEventPayloadSchema,
@@ -16,18 +11,8 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  incidentId,
   cronTimestamp,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
@@ -38,7 +23,7 @@ export const sendAlert = async ({
     const { integration_key } = integrationKey;
     const event = triggerEventPayloadSchema.parse({
       routing_key: integration_key,
-      dedup_key: `${monitor.id}}-${incidentId}`,
+      dedup_key: `${monitor.id}`,
       event_action: "trigger",
       payload: {
         summary: `${name} is down`,
@@ -67,16 +52,7 @@ export const sendDegraded = async ({
   notification,
   statusCode,
   message,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
@@ -87,7 +63,7 @@ export const sendDegraded = async ({
 
     const event = triggerEventPayloadSchema.parse({
       routing_key: integration_key,
-      dedup_key: `${monitor.id}}`,
+      dedup_key: `${monitor.id}`,
       event_action: "trigger",
       payload: {
         summary: `${name} is degraded`,
@@ -115,17 +91,8 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  incidentId,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+  incident,
+}: NotificationContext) => {
   const data = pagerdutyDataSchema.parse(JSON.parse(notification.data));
 
   const notificationData = PagerDutySchema.parse(JSON.parse(data.pagerduty));
@@ -133,7 +100,7 @@ export const sendRecovery = async ({
   for (const integrationKey of notificationData.integration_keys) {
     const event = resolveEventPayloadSchema.parse({
       routing_key: integrationKey.integration_key,
-      dedup_key: `${monitor.id}}-${incidentId}`,
+      dedup_key: `${monitor.id}`,
       event_action: "resolve",
     });
     const res = await fetch("https://events.pagerduty.com/v2/enqueue", {

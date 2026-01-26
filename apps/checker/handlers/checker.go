@@ -247,6 +247,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				Region:        h.Region,
 				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
+				Latency:       res.Latency,
 			})
 			data.RequestStatus = "success"
 		}

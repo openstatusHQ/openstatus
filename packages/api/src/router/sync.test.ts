@@ -63,6 +63,7 @@ function getTestContext(limits?: unknown) {
 const TEST_PREFIX = "sync-test";
 let testPageId: number;
 let testMonitorId: number;
+let testPageComponentId: number;
 
 const monitorData = {
   name: `${TEST_PREFIX}-monitor`,
@@ -104,11 +105,33 @@ beforeAll(async () => {
     .get();
   testPageId = testPage.id;
 
-  // Create test monitor using tRPC
+  // Create test monitor using tRPC (must be active for sync to work)
   const ctx = getTestContext();
   const caller = appRouter.createCaller(ctx);
-  const createdMonitor = await caller.monitor.create(monitorData);
+  const createdMonitor = await caller.monitor.new({
+    name: monitorData.name,
+    url: monitorData.url,
+    jobType: monitorData.jobType,
+    method: monitorData.method,
+    headers: [],
+    assertions: [],
+    active: true, // Changed to true - sync functions only sync active monitors
+    skipCheck: true,
+  });
   testMonitorId = createdMonitor.id;
+
+  const createdPageComponent = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: 1,
+      pageId: testPageId,
+      monitorId: testMonitorId,
+      type: "monitor",
+      name: `${TEST_PREFIX}-monitor`,
+    })
+    .returning()
+    .get();
+  testPageComponentId = createdPageComponent.id;
 });
 
 afterAll(async () => {
@@ -175,10 +198,9 @@ describe("Sync: monitors_to_pages -> page_component", () => {
     const caller = appRouter.createCaller(ctx);
 
     // Update monitor to add it to the test page
-    await caller.monitor.update({
-      ...monitorData,
+    await caller.monitor.updateStatusPages({
       id: testMonitorId,
-      pages: [testPageId],
+      statusPages: [testPageId],
     });
 
     // Verify monitors_to_pages was created
@@ -207,10 +229,9 @@ describe("Sync: monitors_to_pages -> page_component", () => {
     const caller = appRouter.createCaller(ctx);
 
     // First add the monitor to page if not already
-    await caller.monitor.update({
-      ...monitorData,
+    await caller.monitor.updateStatusPages({
       id: testMonitorId,
-      pages: [testPageId],
+      statusPages: [testPageId],
     });
 
     // Verify page_component exists
@@ -223,10 +244,9 @@ describe("Sync: monitors_to_pages -> page_component", () => {
     expect(component).toBeDefined();
 
     // Remove monitor from page
-    await caller.monitor.update({
-      ...monitorData,
+    await caller.monitor.updateStatusPages({
       id: testMonitorId,
-      pages: [],
+      statusPages: [],
     });
 
     // Verify page_component was deleted
@@ -343,10 +363,9 @@ describe("Sync: maintenance_to_monitor -> maintenance_to_page_component", () => 
     const caller = appRouter.createCaller(ctx);
 
     // Ensure monitor is on the page first
-    await caller.monitor.update({
-      ...monitorData,
+    await caller.monitor.updateStatusPages({
       id: testMonitorId,
-      pages: [testPageId],
+      statusPages: [testPageId],
     });
   });
 
@@ -377,7 +396,7 @@ describe("Sync: maintenance_to_monitor -> maintenance_to_page_component", () => 
       startDate: from,
       endDate: to,
       pageId: testPageId,
-      monitors: [testMonitorId],
+      pageComponents: [testPageComponentId],
     });
     testMaintenanceId = createdMaintenance.id;
 
@@ -428,7 +447,7 @@ describe("Sync: maintenance_to_monitor -> maintenance_to_page_component", () => 
       message: "Updated maintenance",
       startDate: from,
       endDate: to,
-      monitors: [],
+      pageComponents: [],
     });
 
     // Verify maintenance_to_monitor was deleted
@@ -461,10 +480,9 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
     const caller = appRouter.createCaller(ctx);
 
     // Ensure monitor is on the page first
-    await caller.monitor.update({
-      ...monitorData,
+    await caller.monitor.updateStatusPages({
       id: testMonitorId,
-      pages: [testPageId],
+      statusPages: [testPageId],
     });
   });
 
@@ -496,7 +514,7 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
       status: "investigating",
       message: "Test status report for sync",
       pageId: testPageId,
-      monitors: [testMonitorId],
+      pageComponents: [testPageComponentId],
       date: new Date(),
     });
     testStatusReportId = createdReport.statusReportId;
@@ -544,7 +562,7 @@ describe("Sync: status_report_to_monitors -> status_report_to_page_component", (
     await caller.statusReport.updateStatus({
       id: testStatusReportId,
       status: "resolved",
-      monitors: [],
+      pageComponents: [],
       title: `${TEST_PREFIX} Status Report`,
     });
 
@@ -576,14 +594,24 @@ describe("Sync: monitor deletion cascades to page_component tables", () => {
     const ctx = getTestContext();
     const caller = appRouter.createCaller(ctx);
 
-    // Create a monitor specifically for deletion tests
-    const deletableMonitor = await caller.monitor.create({
-      ...monitorData,
+    // Create a monitor specifically for deletion tests (must be active for sync)
+    const deletableMonitor = await caller.monitor.new({
       name: `${TEST_PREFIX}-deletable-monitor`,
       url: "https://delete-test.example.com",
-      pages: [testPageId],
+      jobType: "http" as const,
+      method: "GET" as const,
+      headers: [],
+      assertions: [],
+      active: true, // Changed to true - sync functions only sync active monitors
+      skipCheck: true,
     });
     deletableMonitorId = deletableMonitor.id;
+
+    // Add monitor to page
+    await caller.monitor.updateStatusPages({
+      id: deletableMonitorId,
+      statusPages: [testPageId],
+    });
   });
 
   test("Deleting monitor removes related page_component entries", async () => {

@@ -98,7 +98,7 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
       });
     }
 
-    const _maintenance = await db.transaction(async (tx) => {
+    const _newMaintenance = await db.transaction(async (tx) => {
       const newMaintenance = await tx
         .insert(maintenance)
         .values({
@@ -129,13 +129,13 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
       return newMaintenance;
     });
 
-    if (limits["status-subscribers"] && _maintenance.pageId) {
+    if (limits["status-subscribers"] && _newMaintenance.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)
         .where(
           and(
-            eq(pageSubscriber.pageId, _maintenance.pageId),
+            eq(pageSubscriber.pageId, _newMaintenance.pageId),
             isNotNull(pageSubscriber.acceptedAt),
           ),
         )
@@ -143,17 +143,28 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
 
       const _page = await db.query.page.findFirst({
         where: and(
-          eq(page.id, _maintenance.pageId),
+          eq(page.id, _newMaintenance.pageId),
           eq(page.workspaceId, workspaceId),
         ),
+      });
+
+      const _maintenance = await db.query.maintenance.findFirst({
+        where: eq(maintenance.id, _newMaintenance.id),
         with: {
-          monitorsToPages: {
+          maintenancesToPageComponents: {
             with: {
-              monitor: true,
+              pageComponent: true,
             },
           },
         },
       });
+
+      if (!_maintenance) {
+        throw new OpenStatusApiError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Maintenance not found",
+        });
+      }
 
       const validSubscribers = subscribers.filter(
         (s): s is typeof s & { token: string } =>
@@ -174,15 +185,15 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
           status: "maintenance",
           message: _maintenance.message,
           date: _maintenance.from.toISOString(),
-          monitors: _page.monitorsToPages.map(
-            (i) => i.monitor.externalName || i.monitor.name,
+          pageComponents: _maintenance.maintenancesToPageComponents.map(
+            (i) => i.pageComponent.name,
           ),
         });
       }
     }
 
     const data = MaintenanceSchema.parse({
-      ..._maintenance,
+      ..._newMaintenance,
       monitorIds: input.monitorIds,
     });
 

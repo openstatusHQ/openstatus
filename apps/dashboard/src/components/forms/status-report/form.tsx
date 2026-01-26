@@ -45,7 +45,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { statusReportStatus } from "@openstatus/db/src/schema";
+import {
+  type PageComponent,
+  statusReportStatus,
+} from "@openstatus/db/src/schema";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
@@ -60,7 +63,7 @@ const schema = z.object({
   title: z.string(),
   message: z.string(),
   date: z.date(),
-  monitors: z.array(z.number()),
+  pageComponents: z.array(z.number()),
   notifySubscribers: z.boolean().optional(),
 });
 
@@ -76,12 +79,12 @@ export function FormStatusReport({
   defaultValues,
   onSubmit,
   className,
-  monitors,
+  pageComponents,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  monitors: { id: number; name: string }[];
+  pageComponents: Pick<PageComponent, "id" | "name" | "type">[];
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(
@@ -96,7 +99,7 @@ export function FormStatusReport({
       title: "",
       message: "",
       date: new Date(),
-      monitors: [],
+      pageComponents: [],
       notifySubscribers: true,
     },
   });
@@ -349,30 +352,32 @@ export function FormStatusReport({
         <FormCardContent>
           <FormField
             control={form.control}
-            name="monitors"
+            name="pageComponents"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Monitors</FormLabel>
+                <FormLabel>Page Components</FormLabel>
                 <FormDescription>
-                  Select the monitors you want to notify.
+                  Select the page components you want to notify.
                 </FormDescription>
-                {monitors.length ? (
+                {pageComponents.length ? (
                   <div className="grid gap-3">
                     <div className="flex items-center gap-2">
                       <FormControl>
                         <Checkbox
                           id="all"
-                          checked={field.value?.length === monitors.length}
+                          checked={
+                            field.value?.length === pageComponents.length
+                          }
                           onCheckedChange={(checked) => {
                             field.onChange(
-                              checked ? monitors.map((m) => m.id) : [],
+                              checked ? pageComponents.map((c) => c.id) : [],
                             );
                           }}
                         />
                       </FormControl>
                       <Label htmlFor="all">Select all</Label>
                     </div>
-                    {monitors.map((item) => (
+                    {pageComponents.map((item) => (
                       <div key={item.id} className="flex items-center gap-2">
                         <FormControl>
                           <Checkbox
@@ -392,7 +397,7 @@ export function FormStatusReport({
                   </div>
                 ) : (
                   <EmptyStateContainer>
-                    <EmptyStateTitle>No monitors found</EmptyStateTitle>
+                    <EmptyStateTitle>No page components found</EmptyStateTitle>
                   </EmptyStateContainer>
                 )}
                 <FormMessage />

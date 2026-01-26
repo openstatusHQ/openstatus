@@ -60,6 +60,16 @@ Provides a machine-readable JSON representation of your status page data. This f
 
 **Example:** `https://status.openstatus.dev/feed/json`
 
+**Deprecation Notice:**
+
+The following fields are deprecated and will be removed in a future version:
+
+- **`monitors`** (top-level): Use `pageComponents` instead, which provides a more flexible component-based structure that supports both monitors and external services.
+- **`maintenances[].monitors`**: Use `maintenances[].pageComponents` instead, which references page component IDs rather than monitor IDs.
+- **`statusReports[].monitors`**: Use `statusReports[].pageComponents` instead, which references page component IDs rather than monitor IDs.
+
+These deprecated fields are currently maintained for backward compatibility but may be removed in future versions.
+
 ### SSH Command
 
 **Type:** Command-line utility

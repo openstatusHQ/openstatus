@@ -18,6 +18,30 @@ test("return all status reports", async () => {
   expect(result.data?.length).toBeGreaterThan(0);
 });
 
+test("return all status reports with monitorIds", async () => {
+  const res = await app.request("/v1/status_report", {
+    method: "GET",
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+
+  const result = StatusReportSchema.array().safeParse(await res.json());
+
+  expect(res.status).toBe(200);
+  expect(result.success).toBe(true);
+  expect(result.data?.length).toBeGreaterThan(0);
+  // Each status report should have monitorIds defined
+  for (const statusReport of result.data || []) {
+    expect(statusReport.monitorIds).toBeDefined();
+    expect(Array.isArray(statusReport.monitorIds)).toBe(true);
+    // Ensure each monitorId is a number
+    for (const monitorId of statusReport.monitorIds || []) {
+      expect(typeof monitorId).toBe("number");
+    }
+  }
+});
+
 test("return empty status reports", async () => {
   const res = await app.request("/v1/status_report", {
     method: "GET",

@@ -1,5 +1,4 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
-import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NotificationContext } from "@openstatus/notification-base";
 import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema";
 
 export const sendAlert = async ({
@@ -7,23 +6,12 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  incidentId,
-  cronTimestamp,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incidentId}`,
+    alias: `${monitor.id}`,
     message: `${name} is down`,
     description: message,
     details: {
@@ -58,23 +46,13 @@ export const sendDegraded = async ({
   notification,
   statusCode,
   message,
-  incidentId,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incidentId}`,
-    message: `${name} is down`,
+    alias: `${monitor.id}`,
+    message: `${name} is degraded`,
     description: message,
     details: {
       message,
@@ -107,26 +85,16 @@ export const sendRecovery = async ({
   notification,
   statusCode,
   message,
-  incidentId,
-}: {
-  monitor: Monitor;
-  notification: Notification;
-  statusCode?: number;
-  message?: string;
-  incidentId?: string;
-  cronTimestamp: number;
-  latency?: number;
-  region?: Region;
-}) => {
+}: NotificationContext) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
 
   const url =
     opsgenie.region === "eu"
-      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
-      : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
+      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}/close`
+      : `https://api.opsgenie.com/v2/alerts/${monitor.id}/close`;
 
   const event = OpsGeniePayloadAlert.parse({
-    alias: `${monitor.id}}-${incidentId}`,
+    alias: `${monitor.id}`,
     message: `${monitor.name} has recovered`,
     description: message,
     details: {

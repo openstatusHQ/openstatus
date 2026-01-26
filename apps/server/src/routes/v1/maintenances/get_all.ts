@@ -1,4 +1,5 @@
 import { openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
 import { createRoute } from "@hono/zod-openapi";
 import { db, desc, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema/maintenances";
@@ -30,7 +31,7 @@ export function registerGetAllMaintenances(api: typeof maintenancesApi) {
 
     const _maintenances = await db.query.maintenance.findMany({
       with: {
-        maintenancesToMonitors: true,
+        maintenancesToPageComponents: { with: { pageComponent: true } },
       },
       where: eq(maintenance.workspaceId, workspaceId),
       orderBy: desc(maintenance.createdAt),
@@ -39,7 +40,9 @@ export function registerGetAllMaintenances(api: typeof maintenancesApi) {
     const data = MaintenanceSchema.array().parse(
       _maintenances.map((m) => ({
         ...m,
-        monitorIds: m.maintenancesToMonitors.map((mtm) => mtm.monitorId),
+        monitorIds: m.maintenancesToPageComponents
+          .map((mtm) => mtm.pageComponent.monitorId)
+          .filter(notEmpty),
       })),
     );
 

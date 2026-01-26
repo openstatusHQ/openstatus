@@ -59,16 +59,19 @@ export default function ReportPage() {
             {report.title}
             {isReportResolvedOnly ? <StatusEventTitleCheck /> : null}
           </StatusEventTitle>
-          {report.monitorsToStatusReports.length > 0 ? (
+          {report.statusReportsToPageComponents.length > 0 ? (
             <StatusEventAffected>
-              {report.monitorsToStatusReports.map((affected) => (
-                <StatusEventAffectedBadge key={affected.monitor.id}>
-                  {affected.monitor.name}
+              {report.statusReportsToPageComponents.map((affected) => (
+                <StatusEventAffectedBadge key={affected.pageComponent.id}>
+                  {affected.pageComponent.name}
                 </StatusEventAffectedBadge>
               ))}
             </StatusEventAffected>
           ) : null}
-          <StatusEventTimelineReport updates={report.statusReportUpdates} />
+          <StatusEventTimelineReport
+            updates={report.statusReportUpdates}
+            reportId={report.id}
+          />
         </StatusEventContent>
       </StatusEvent>
     </div>

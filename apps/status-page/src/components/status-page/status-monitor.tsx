@@ -43,7 +43,7 @@ export function StatusMonitor({
   uptime?: string;
   monitor: {
     name: string;
-    description: string;
+    description?: string | null;
   };
   data?: Data;
   isLoading?: boolean;

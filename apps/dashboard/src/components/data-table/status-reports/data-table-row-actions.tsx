@@ -57,6 +57,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
@@ -76,6 +81,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
@@ -89,6 +99,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         });
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({
+            period: "7d",
+          }),
         });
       },
     }),
@@ -108,16 +123,16 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
       <FormSheetStatusReport
-        monitors={page?.monitors ?? []}
+        pageComponents={page?.pageComponents ?? []}
         defaultValues={{
           title: row.original.title,
           status: row.original.status,
-          monitors: row.original.monitors.map((m) => m.id),
+          pageComponents: row.original.pageComponents?.map((c) => c.id) ?? [],
         }}
         onSubmit={async (values) => {
           await updateStatusReportMutation.mutateAsync({
             id: row.original.id,
-            monitors: values.monitors,
+            pageComponents: values.pageComponents,
             title: values.title,
             status: values.status,
           });
