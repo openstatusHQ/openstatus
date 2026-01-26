@@ -66,7 +66,10 @@ const HTTP_METHOD_TO_DB: Record<HTTPMethod, string> = {
 };
 
 export function stringToHttpMethod(value: string | undefined): HTTPMethod {
-  return DB_TO_HTTP_METHOD[value?.toUpperCase() ?? ""] ?? HTTPMethod.HTTP_METHOD_UNSPECIFIED;
+  return (
+    DB_TO_HTTP_METHOD[value?.toUpperCase() ?? ""] ??
+    HTTPMethod.HTTP_METHOD_UNSPECIFIED
+  );
 }
 
 export function httpMethodToString(value: HTTPMethod): string {

@@ -1,5 +1,5 @@
 import { schema } from "@openstatus/db";
-import { and, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { env } from "../env";
 import { db } from "../lib/db";

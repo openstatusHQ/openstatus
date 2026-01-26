@@ -37,7 +37,9 @@ beforeAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
-  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
+  await db
+    .delete(monitor)
+    .where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
 
   // Create test HTTP monitor
   const httpMon = await db
@@ -157,7 +159,9 @@ afterAll(async () => {
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-tcp`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-dns`));
   await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-to-delete`));
-  await db.delete(monitor).where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
+  await db
+    .delete(monitor)
+    .where(eq(monitor.name, `${TEST_PREFIX}-with-status`));
 });
 
 describe("MonitorService.ListMonitors", () => {
@@ -765,7 +769,11 @@ describe("MonitorService - Validation", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.monitor).toBeDefined();
-    expect(data.monitor.regions).toEqual(["REGION_AMS", "REGION_IAD", "REGION_SIN"]);
+    expect(data.monitor.regions).toEqual([
+      "REGION_AMS",
+      "REGION_IAD",
+      "REGION_SIN",
+    ]);
 
     // Clean up
     if (data.monitor.id) {
@@ -1142,7 +1150,12 @@ describe("MonitorService - Status Field", () => {
     expect(httpMon).toBeDefined();
     // Status should be present and be a valid MonitorStatus enum value
     expect(httpMon.status).toBeDefined();
-    expect(["MONITOR_STATUS_ACTIVE", "MONITOR_STATUS_DEGRADED", "MONITOR_STATUS_ERROR", "MONITOR_STATUS_UNSPECIFIED"]).toContain(httpMon.status);
+    expect([
+      "MONITOR_STATUS_ACTIVE",
+      "MONITOR_STATUS_DEGRADED",
+      "MONITOR_STATUS_ERROR",
+      "MONITOR_STATUS_UNSPECIFIED",
+    ]).toContain(httpMon.status);
   });
 
   test("TCP monitor includes status field in response", async () => {
@@ -1163,7 +1176,12 @@ describe("MonitorService - Status Field", () => {
     expect(tcpMon).toBeDefined();
     // Status should be present and be a valid MonitorStatus enum value
     expect(tcpMon.status).toBeDefined();
-    expect(["MONITOR_STATUS_ACTIVE", "MONITOR_STATUS_DEGRADED", "MONITOR_STATUS_ERROR", "MONITOR_STATUS_UNSPECIFIED"]).toContain(tcpMon.status);
+    expect([
+      "MONITOR_STATUS_ACTIVE",
+      "MONITOR_STATUS_DEGRADED",
+      "MONITOR_STATUS_ERROR",
+      "MONITOR_STATUS_UNSPECIFIED",
+    ]).toContain(tcpMon.status);
   });
 
   test("DNS monitor includes status field in response", async () => {
@@ -1184,7 +1202,12 @@ describe("MonitorService - Status Field", () => {
     expect(dnsMon).toBeDefined();
     // Status should be present and be a valid MonitorStatus enum value
     expect(dnsMon.status).toBeDefined();
-    expect(["MONITOR_STATUS_ACTIVE", "MONITOR_STATUS_DEGRADED", "MONITOR_STATUS_ERROR", "MONITOR_STATUS_UNSPECIFIED"]).toContain(dnsMon.status);
+    expect([
+      "MONITOR_STATUS_ACTIVE",
+      "MONITOR_STATUS_DEGRADED",
+      "MONITOR_STATUS_ERROR",
+      "MONITOR_STATUS_UNSPECIFIED",
+    ]).toContain(dnsMon.status);
   });
 
   test("newly created HTTP monitor has active status by default", async () => {

@@ -35,11 +35,12 @@ export interface HttpAssertions {
   headerAssertions: HeaderAssertion[];
 }
 
-
 /**
  * Parse database assertions JSON for HTTP monitors using @openstatus/assertions package.
  */
-export function parseHttpAssertions(assertionsJson: string | null): HttpAssertions {
+export function parseHttpAssertions(
+  assertionsJson: string | null,
+): HttpAssertions {
   const result: HttpAssertions = {
     statusCodeAssertions: [],
     bodyAssertions: [],
@@ -101,7 +102,9 @@ export function parseHttpAssertions(assertionsJson: string | null): HttpAssertio
 /**
  * Parse database assertions JSON for DNS monitors using @openstatus/assertions package.
  */
-export function parseDnsAssertions(assertionsJson: string | null): RecordAssertion[] {
+export function parseDnsAssertions(
+  assertionsJson: string | null,
+): RecordAssertion[] {
   if (!assertionsJson) {
     return [];
   }
@@ -111,8 +114,9 @@ export function parseDnsAssertions(assertionsJson: string | null): RecordAsserti
     const assertions = deserialize(assertionsJson);
 
     return assertions
-      .filter((a): a is Assertion & { schema: { type: "dnsRecord" } } =>
-        a.schema.type === "dnsRecord"
+      .filter(
+        (a): a is Assertion & { schema: { type: "dnsRecord" } } =>
+          a.schema.type === "dnsRecord",
       )
       .map((a) => {
         const parsed = recordAssertion.parse(a.schema);
