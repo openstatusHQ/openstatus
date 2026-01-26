@@ -5,6 +5,9 @@ import {
   TimeRange,
 } from "@openstatus/proto/monitor/v1";
 
+import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import type { z } from "zod";
+
 // ============================================================
 // Periodicity Conversions
 // ============================================================
@@ -18,7 +21,10 @@ const DB_TO_PERIODICITY: Record<string, Periodicity> = {
   "1h": Periodicity.PERIODICITY_1H,
 };
 
-const PERIODICITY_TO_DB: Record<Periodicity, string> = {
+const PERIODICITY_TO_DB: Record<
+  Periodicity,
+  z.infer<typeof monitorPeriodicitySchema>
+> = {
   [Periodicity.PERIODICITY_30S]: "30s",
   [Periodicity.PERIODICITY_1M]: "1m",
   [Periodicity.PERIODICITY_5M]: "5m",
@@ -32,7 +38,7 @@ export function stringToPeriodicity(value: string): Periodicity {
   return DB_TO_PERIODICITY[value] ?? Periodicity.PERIODICITY_UNSPECIFIED;
 }
 
-export function periodicityToString(value: Periodicity): string {
+export function periodicityToString(value: Periodicity) {
   return PERIODICITY_TO_DB[value] ?? "1m";
 }
 

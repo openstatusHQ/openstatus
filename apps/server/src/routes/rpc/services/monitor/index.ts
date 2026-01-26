@@ -35,16 +35,20 @@ import {
 } from "./converters";
 import {
   monitorCreateFailedError,
+  monitorIdRequiredError,
   monitorInvalidDataError,
   monitorNotFoundError,
   monitorParseFailedError,
   monitorRequiredError,
   monitorRunCreateFailedError,
+  monitorTypeMismatchError,
+  monitorUpdateFailedError,
   rateLimitExceededError,
 } from "./errors";
 import { checkMonitorLimits } from "./limits";
 import {
   getCommonDbValues,
+  getCommonDbValuesForUpdate,
   toValidMethod,
   validateCommonMonitorFields,
 } from "./validators";
@@ -64,6 +68,63 @@ async function getMonitorById(id: number, workspaceId: number) {
       ),
     )
     .get();
+}
+
+type DBMonitor = NonNullable<Awaited<ReturnType<typeof getMonitorById>>>;
+
+/**
+ * Helper to validate and get a monitor for update operations.
+ * Validates ID, fetches the monitor, and verifies the job type.
+ */
+async function validateAndGetMonitor(
+  id: string | undefined,
+  workspaceId: number,
+  expectedJobType: "http" | "tcp" | "dns",
+): Promise<DBMonitor> {
+  if (!id || id.trim() === "") {
+    throw monitorIdRequiredError();
+  }
+
+  const dbMon = await getMonitorById(Number(id), workspaceId);
+  if (!dbMon) {
+    throw monitorNotFoundError(id);
+  }
+
+  if (dbMon.jobType !== expectedJobType) {
+    throw monitorTypeMismatchError(id, expectedJobType, dbMon.jobType);
+  }
+
+  return dbMon;
+}
+
+type ParsedMonitor = ReturnType<typeof selectMonitorSchema.parse>;
+
+/**
+ * Helper to perform update and return the updated monitor.
+ */
+async function performUpdateAndReturn<T>(
+  monitorId: number,
+  requestId: string,
+  updateValues: Record<string, unknown>,
+  converter: (data: ParsedMonitor) => T,
+): Promise<{ monitor: T }> {
+  const updatedMonitor = await db
+    .update(monitor)
+    .set(updateValues)
+    .where(eq(monitor.id, monitorId))
+    .returning()
+    .get();
+
+  if (!updatedMonitor) {
+    throw monitorUpdateFailedError(requestId);
+  }
+
+  const parsed = selectMonitorSchema.safeParse(updatedMonitor);
+  if (!parsed.success) {
+    throw monitorParseFailedError(requestId);
+  }
+
+  return { monitor: converter(parsed.data) };
 }
 
 /**
@@ -227,6 +288,184 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     return {
       monitor: dbMonitorToDnsProto(parsed.data),
     };
+  },
+
+  async updateHTTPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "http");
+
+    // If no monitor data provided, return current monitor
+    if (!req.monitor) {
+      const parsed = selectMonitorSchema.safeParse(dbMon);
+      if (!parsed.success) {
+        throw monitorParseFailedError(req.id);
+      }
+      return { monitor: dbMonitorToHttpProto(parsed.data) };
+    }
+
+    const mon = req.monitor;
+
+    // Validate regions if provided
+    validateCommonMonitorFields(mon);
+
+    // Check workspace limits if periodicity or regions are changing
+    if (mon.periodicity || (mon.regions && mon.regions.length > 0)) {
+      await checkMonitorLimits(
+        workspaceId,
+        limits,
+        mon.periodicity || undefined,
+        mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+      );
+    }
+
+    // Build update values - only include fields that are provided
+    const updateValues: Record<string, unknown> =
+      getCommonDbValuesForUpdate(mon);
+
+    // Handle HTTP-specific fields
+    if (mon.url !== undefined && mon.url !== "") {
+      updateValues.url = mon.url;
+    }
+
+    if (mon.method !== undefined && mon.method !== 0) {
+      updateValues.method = toValidMethod(httpMethodToString(mon.method));
+    }
+
+    if (mon.body !== undefined) {
+      updateValues.body = mon.body || undefined;
+    }
+
+    if (mon.followRedirects !== undefined) {
+      updateValues.followRedirects = mon.followRedirects;
+    }
+
+    if (mon.headers !== undefined) {
+      updateValues.headers = headersToDbJson(mon.headers);
+    }
+
+    // Handle assertions - update if any assertion type is provided
+    if (
+      mon.statusCodeAssertions !== undefined ||
+      mon.bodyAssertions !== undefined ||
+      mon.headerAssertions !== undefined
+    ) {
+      updateValues.assertions = httpAssertionsToDbJson(
+        mon.statusCodeAssertions ?? [],
+        mon.bodyAssertions ?? [],
+        mon.headerAssertions ?? [],
+      );
+    }
+
+    return performUpdateAndReturn(
+      dbMon.id,
+      req.id,
+      updateValues,
+      dbMonitorToHttpProto,
+    );
+  },
+
+  async updateTCPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "tcp");
+
+    // If no monitor data provided, return current monitor
+    if (!req.monitor) {
+      const parsed = selectMonitorSchema.safeParse(dbMon);
+      if (!parsed.success) {
+        throw monitorParseFailedError(req.id);
+      }
+      return { monitor: dbMonitorToTcpProto(parsed.data) };
+    }
+
+    const mon = req.monitor;
+
+    // Validate regions if provided
+    validateCommonMonitorFields(mon);
+
+    // Check workspace limits if periodicity or regions are changing
+    if (mon.periodicity || (mon.regions && mon.regions.length > 0)) {
+      await checkMonitorLimits(
+        workspaceId,
+        limits,
+        mon.periodicity || undefined,
+        mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+      );
+    }
+
+    // Build update values - only include fields that are provided
+    const updateValues: Record<string, unknown> =
+      getCommonDbValuesForUpdate(mon);
+
+    // Handle TCP-specific fields
+    if (mon.uri !== undefined && mon.uri !== "") {
+      updateValues.url = mon.uri;
+    }
+
+    return performUpdateAndReturn(
+      dbMon.id,
+      req.id,
+      updateValues,
+      dbMonitorToTcpProto,
+    );
+  },
+
+  async updateDNSMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    const dbMon = await validateAndGetMonitor(req.id, workspaceId, "dns");
+
+    // If no monitor data provided, return current monitor
+    if (!req.monitor) {
+      const parsed = selectMonitorSchema.safeParse(dbMon);
+      if (!parsed.success) {
+        throw monitorParseFailedError(req.id);
+      }
+      return { monitor: dbMonitorToDnsProto(parsed.data) };
+    }
+
+    const mon = req.monitor;
+
+    // Validate regions if provided
+    validateCommonMonitorFields(mon);
+
+    // Check workspace limits if periodicity or regions are changing
+    if (mon.periodicity || (mon.regions && mon.regions.length > 0)) {
+      await checkMonitorLimits(
+        workspaceId,
+        limits,
+        mon.periodicity || undefined,
+        mon.regions && mon.regions.length > 0 ? mon.regions : undefined,
+      );
+    }
+
+    // Build update values - only include fields that are provided
+    const updateValues: Record<string, unknown> =
+      getCommonDbValuesForUpdate(mon);
+
+    // Handle DNS-specific fields
+    if (mon.uri !== undefined && mon.uri !== "") {
+      updateValues.url = mon.uri;
+    }
+
+    // Handle DNS assertions
+    if (mon.recordAssertions !== undefined) {
+      updateValues.assertions = dnsAssertionsToDbJson(mon.recordAssertions);
+    }
+
+    return performUpdateAndReturn(
+      dbMon.id,
+      req.id,
+      updateValues,
+      dbMonitorToDnsProto,
+    );
   },
 
   async triggerMonitor(req, ctx) {

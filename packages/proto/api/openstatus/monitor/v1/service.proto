@@ -33,6 +33,15 @@ service MonitorService {
   // CreateDNSMonitor creates a new DNS monitor.
   rpc CreateDNSMonitor(CreateDNSMonitorRequest) returns (CreateDNSMonitorResponse);
 
+  // UpdateHTTPMonitor updates an existing HTTP monitor.
+  rpc UpdateHTTPMonitor(UpdateHTTPMonitorRequest) returns (UpdateHTTPMonitorResponse);
+
+  // UpdateTCPMonitor updates an existing TCP monitor.
+  rpc UpdateTCPMonitor(UpdateTCPMonitorRequest) returns (UpdateTCPMonitorResponse);
+
+  // UpdateDNSMonitor updates an existing DNS monitor.
+  rpc UpdateDNSMonitor(UpdateDNSMonitorRequest) returns (UpdateDNSMonitorResponse);
+
   // TriggerMonitor initiates an immediate check for a monitor.
   rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse);
 
@@ -82,6 +91,51 @@ message CreateDNSMonitorRequest {
 // CreateDNSMonitorResponse is the response after creating a DNS monitor.
 message CreateDNSMonitorResponse {
   // The created monitor with assigned ID.
+  DNSMonitor monitor = 1;
+}
+
+// UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
+message UpdateHTTPMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional HTTPMonitor monitor = 2;
+}
+
+// UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
+message UpdateHTTPMonitorResponse {
+  // The updated monitor.
+  HTTPMonitor monitor = 1;
+}
+
+// UpdateTCPMonitorRequest is the request to update an existing TCP monitor.
+message UpdateTCPMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional TCPMonitor monitor = 2;
+}
+
+// UpdateTCPMonitorResponse is the response after updating a TCP monitor.
+message UpdateTCPMonitorResponse {
+  // The updated monitor.
+  TCPMonitor monitor = 1;
+}
+
+// UpdateDNSMonitorRequest is the request to update an existing DNS monitor.
+message UpdateDNSMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional DNSMonitor monitor = 2;
+}
+
+// UpdateDNSMonitorResponse is the response after updating a DNS monitor.
+message UpdateDNSMonitorResponse {
+  // The updated monitor.
   DNSMonitor monitor = 1;
 }
 

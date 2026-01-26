@@ -19,7 +19,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/service.proto.
  */
 export const file_openstatus_monitor_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIlcKGENyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBI7Cgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yQga6SAPIAQEiUAoZQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRIzCgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yIlUKF0NyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0EjoKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckIGukgDyAEBIk4KGENyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3IiVQoXQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QSOgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9yQga6SAPIAQEiTgoYQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvciIsChVUcmlnZ2VyTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKQoWVHJpZ2dlck1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIisKFERlbGV0ZU1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIigKFURlbGV0ZU1vbml0b3JSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIm4KE0xpc3RNb25pdG9yc1JlcXVlc3QSIQoJcGFnZV9zaXplGAEgASgFQgm6SAYaBBhkKAFIAIgBARIXCgpwYWdlX3Rva2VuGAIgASgJSAGIAQFCDAoKX3BhZ2Vfc2l6ZUINCgtfcGFnZV90b2tlbiLwAQoUTGlzdE1vbml0b3JzUmVzcG9uc2USOQoNaHR0cF9tb25pdG9ycxgBIAMoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvchI3Cgx0Y3BfbW9uaXRvcnMYAiADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvchI3CgxkbnNfbW9uaXRvcnMYAyADKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvchIXCg9uZXh0X3BhZ2VfdG9rZW4YBCABKAkSEgoKdG90YWxfc2l6ZRgFIAEoBSIuChdHZXRNb25pdG9yU3RhdHVzUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJzCgxSZWdpb25TdGF0dXMSLQoGcmVnaW9uGAEgASgOMh0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvbhI0CgZzdGF0dXMYAiABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1cyJcChhHZXRNb25pdG9yU3RhdHVzUmVzcG9uc2USCgoCaWQYASABKAkSNAoHcmVnaW9ucxgCIAMoCzIjLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb25TdGF0dXMisQEKDU1vbml0b3JDb25maWcSMgoEaHR0cBgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvckgAEjAKA3RjcBgCIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5UQ1BNb25pdG9ySAASMAoDZG5zGAMgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3JIAEIICgZjb25maWcinwEKGEdldE1vbml0b3JTdW1tYXJ5UmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARI0Cgp0aW1lX3JhbmdlGAIgASgOMiAub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRpbWVSYW5nZRI4CgdyZWdpb25zGAMgAygOMh0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvbkIIukgFkgECEBwirAIKGUdldE1vbml0b3JTdW1tYXJ5UmVzcG9uc2USCgoCaWQYASABKAkSFAoMbGFzdF9waW5nX2F0GAIgASgJEhgKEHRvdGFsX3N1Y2Nlc3NmdWwYAyABKAMSFgoOdG90YWxfZGVncmFkZWQYBCABKAMSFAoMdG90YWxfZmFpbGVkGAUgASgDEgsKA3A1MBgGIAEoAxILCgNwNzUYByABKAMSCwoDcDkwGAggASgDEgsKA3A5NRgJIAEoAxILCgNwOTkYCiABKAMSNAoKdGltZV9yYW5nZRgLIAEoDjIgLm9wZW5zdGF0dXMubW9uaXRvci52MS5UaW1lUmFuZ2USLgoHcmVnaW9ucxgMIAMoDjIdLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb24qYQoJVGltZVJhbmdlEhoKFlRJTUVfUkFOR0VfVU5TUEVDSUZJRUQQABIRCg1USU1FX1JBTkdFXzFEEAESEQoNVElNRV9SQU5HRV83RBACEhIKDlRJTUVfUkFOR0VfMTREEAMyowcKDk1vbml0b3JTZXJ2aWNlEnYKEUNyZWF0ZUhUVFBNb25pdG9yEi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBowLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVIVFRQTW9uaXRvclJlc3BvbnNlEnMKEENyZWF0ZVRDUE1vbml0b3ISLi5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlVENQTW9uaXRvclJlcXVlc3QaLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlVENQTW9uaXRvclJlc3BvbnNlEnMKEENyZWF0ZUROU01vbml0b3ISLi5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QaLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEm0KDlRyaWdnZXJNb25pdG9yEiwub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRyaWdnZXJNb25pdG9yUmVxdWVzdBotLm9wZW5zdGF0dXMubW9uaXRvci52MS5UcmlnZ2VyTW9uaXRvclJlc3BvbnNlEmoKDURlbGV0ZU1vbml0b3ISKy5vcGVuc3RhdHVzLm1vbml0b3IudjEuRGVsZXRlTW9uaXRvclJlcXVlc3QaLC5vcGVuc3RhdHVzLm1vbml0b3IudjEuRGVsZXRlTW9uaXRvclJlc3BvbnNlEmcKDExpc3RNb25pdG9ycxIqLm9wZW5zdGF0dXMubW9uaXRvci52MS5MaXN0TW9uaXRvcnNSZXF1ZXN0Gisub3BlbnN0YXR1cy5tb25pdG9yLnYxLkxpc3RNb25pdG9yc1Jlc3BvbnNlEnMKEEdldE1vbml0b3JTdGF0dXMSLi5vcGVuc3RhdHVzLm1vbml0b3IudjEuR2V0TW9uaXRvclN0YXR1c1JlcXVlc3QaLy5vcGVuc3RhdHVzLm1vbml0b3IudjEuR2V0TW9uaXRvclN0YXR1c1Jlc3BvbnNlEnYKEUdldE1vbml0b3JTdW1tYXJ5Ei8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdW1tYXJ5UmVxdWVzdBowLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yU3VtbWFyeVJlc3BvbnNlQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor, file_openstatus_monitor_v1_tcp_monitor]);
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvc2VydmljZS5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxIlcKGENyZWF0ZUhUVFBNb25pdG9yUmVxdWVzdBI7Cgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yQga6SAPIAQEiUAoZQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRIzCgdtb25pdG9yGAEgASgLMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhUVFBNb25pdG9yIlUKF0NyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0EjoKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckIGukgDyAEBIk4KGENyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3IiVQoXQ3JlYXRlRE5TTW9uaXRvclJlcXVlc3QSOgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9yQga6SAPIAQEiTgoYQ3JlYXRlRE5TTW9uaXRvclJlc3BvbnNlEjIKB21vbml0b3IYASABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvciJ1ChhVcGRhdGVIVFRQTW9uaXRvclJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESOAoHbW9uaXRvchgCIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvckgAiAEBQgoKCF9tb25pdG9yIlAKGVVwZGF0ZUhUVFBNb25pdG9yUmVzcG9uc2USMwoHbW9uaXRvchgBIAEoCzIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5IVFRQTW9uaXRvciJzChdVcGRhdGVUQ1BNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARI3Cgdtb25pdG9yGAIgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3JIAIgBAUIKCghfbW9uaXRvciJOChhVcGRhdGVUQ1BNb25pdG9yUmVzcG9uc2USMgoHbW9uaXRvchgBIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5UQ1BNb25pdG9yInMKF1VwZGF0ZUROU01vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEjcKB21vbml0b3IYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuRE5TTW9uaXRvckgAiAEBQgoKCF9tb25pdG9yIk4KGFVwZGF0ZUROU01vbml0b3JSZXNwb25zZRIyCgdtb25pdG9yGAEgASgLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3IiLAoVVHJpZ2dlck1vbml0b3JSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIikKFlRyaWdnZXJNb25pdG9yUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCIrChREZWxldGVNb25pdG9yUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASIoChVEZWxldGVNb25pdG9yUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJuChNMaXN0TW9uaXRvcnNSZXF1ZXN0EiEKCXBhZ2Vfc2l6ZRgBIAEoBUIJukgGGgQYZCgBSACIAQESFwoKcGFnZV90b2tlbhgCIAEoCUgBiAEBQgwKCl9wYWdlX3NpemVCDQoLX3BhZ2VfdG9rZW4i8AEKFExpc3RNb25pdG9yc1Jlc3BvbnNlEjkKDWh0dHBfbW9uaXRvcnMYASADKAsyIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1vbml0b3ISNwoMdGNwX21vbml0b3JzGAIgAygLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLlRDUE1vbml0b3ISNwoMZG5zX21vbml0b3JzGAMgAygLMiEub3BlbnN0YXR1cy5tb25pdG9yLnYxLkROU01vbml0b3ISFwoPbmV4dF9wYWdlX3Rva2VuGAQgASgJEhIKCnRvdGFsX3NpemUYBSABKAUiLgoXR2V0TW9uaXRvclN0YXR1c1JlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEicwoMUmVnaW9uU3RhdHVzEi0KBnJlZ2lvbhgBIAEoDjIdLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb24SNAoGc3RhdHVzGAIgASgOMiQub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3JTdGF0dXMiXAoYR2V0TW9uaXRvclN0YXR1c1Jlc3BvbnNlEgoKAmlkGAEgASgJEjQKB3JlZ2lvbnMYAiADKAsyIy5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uU3RhdHVzIrEBCg1Nb25pdG9yQ29uZmlnEjIKBGh0dHAYASABKAsyIi5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1vbml0b3JIABIwCgN0Y3AYAiABKAsyIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVENQTW9uaXRvckgAEjAKA2RucxgDIAEoCzIhLm9wZW5zdGF0dXMubW9uaXRvci52MS5ETlNNb25pdG9ySABCCAoGY29uZmlnIp8BChhHZXRNb25pdG9yU3VtbWFyeVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESNAoKdGltZV9yYW5nZRgCIAEoDjIgLm9wZW5zdGF0dXMubW9uaXRvci52MS5UaW1lUmFuZ2USOAoHcmVnaW9ucxgDIAMoDjIdLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWdpb25CCLpIBZIBAhAcIqwCChlHZXRNb25pdG9yU3VtbWFyeVJlc3BvbnNlEgoKAmlkGAEgASgJEhQKDGxhc3RfcGluZ19hdBgCIAEoCRIYChB0b3RhbF9zdWNjZXNzZnVsGAMgASgDEhYKDnRvdGFsX2RlZ3JhZGVkGAQgASgDEhQKDHRvdGFsX2ZhaWxlZBgFIAEoAxILCgNwNTAYBiABKAMSCwoDcDc1GAcgASgDEgsKA3A5MBgIIAEoAxILCgNwOTUYCSABKAMSCwoDcDk5GAogASgDEjQKCnRpbWVfcmFuZ2UYCyABKA4yIC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVGltZVJhbmdlEi4KB3JlZ2lvbnMYDCADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uKmEKCVRpbWVSYW5nZRIaChZUSU1FX1JBTkdFX1VOU1BFQ0lGSUVEEAASEQoNVElNRV9SQU5HRV8xRBABEhEKDVRJTUVfUkFOR0VfN0QQAhISCg5USU1FX1JBTkdFXzE0RBADMoUKCg5Nb25pdG9yU2VydmljZRJ2ChFDcmVhdGVIVFRQTW9uaXRvchIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5DcmVhdGVIVFRQTW9uaXRvclJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuQ3JlYXRlSFRUUE1vbml0b3JSZXNwb25zZRJzChBDcmVhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBDcmVhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkNyZWF0ZUROU01vbml0b3JSZXNwb25zZRJ2ChFVcGRhdGVIVFRQTW9uaXRvchIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5VcGRhdGVIVFRQTW9uaXRvclJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuVXBkYXRlSFRUUE1vbml0b3JSZXNwb25zZRJzChBVcGRhdGVUQ1BNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZVRDUE1vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZVRDUE1vbml0b3JSZXNwb25zZRJzChBVcGRhdGVETlNNb25pdG9yEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZUROU01vbml0b3JSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlVwZGF0ZUROU01vbml0b3JSZXNwb25zZRJtCg5UcmlnZ2VyTW9uaXRvchIsLm9wZW5zdGF0dXMubW9uaXRvci52MS5UcmlnZ2VyTW9uaXRvclJlcXVlc3QaLS5vcGVuc3RhdHVzLm1vbml0b3IudjEuVHJpZ2dlck1vbml0b3JSZXNwb25zZRJqCg1EZWxldGVNb25pdG9yEisub3BlbnN0YXR1cy5tb25pdG9yLnYxLkRlbGV0ZU1vbml0b3JSZXF1ZXN0Giwub3BlbnN0YXR1cy5tb25pdG9yLnYxLkRlbGV0ZU1vbml0b3JSZXNwb25zZRJnCgxMaXN0TW9uaXRvcnMSKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuTGlzdE1vbml0b3JzUmVxdWVzdBorLm9wZW5zdGF0dXMubW9uaXRvci52MS5MaXN0TW9uaXRvcnNSZXNwb25zZRJzChBHZXRNb25pdG9yU3RhdHVzEi4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdGF0dXNSZXF1ZXN0Gi8ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkdldE1vbml0b3JTdGF0dXNSZXNwb25zZRJ2ChFHZXRNb25pdG9yU3VtbWFyeRIvLm9wZW5zdGF0dXMubW9uaXRvci52MS5HZXRNb25pdG9yU3VtbWFyeVJlcXVlc3QaMC5vcGVuc3RhdHVzLm1vbml0b3IudjEuR2V0TW9uaXRvclN1bW1hcnlSZXNwb25zZUJTWlFnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbW9uaXRvci92MTttb25pdG9ydjFiBnByb3RvMw", [file_buf_validate_validate, file_openstatus_monitor_v1_dns_monitor, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor, file_openstatus_monitor_v1_tcp_monitor]);
 
 /**
  * CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -148,6 +148,153 @@ export const CreateDNSMonitorResponseSchema: GenMessage<CreateDNSMonitorResponse
   messageDesc(file_openstatus_monitor_v1_service, 5);
 
 /**
+ * UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
+ *
+ * @generated from message openstatus.monitor.v1.UpdateHTTPMonitorRequest
+ */
+export type UpdateHTTPMonitorRequest = Message<"openstatus.monitor.v1.UpdateHTTPMonitorRequest"> & {
+  /**
+   * Monitor ID to update (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Updated monitor configuration (all fields optional for partial updates).
+   *
+   * @generated from field: optional openstatus.monitor.v1.HTTPMonitor monitor = 2;
+   */
+  monitor?: HTTPMonitor;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.UpdateHTTPMonitorRequest.
+ * Use `create(UpdateHTTPMonitorRequestSchema)` to create a new message.
+ */
+export const UpdateHTTPMonitorRequestSchema: GenMessage<UpdateHTTPMonitorRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 6);
+
+/**
+ * UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
+ *
+ * @generated from message openstatus.monitor.v1.UpdateHTTPMonitorResponse
+ */
+export type UpdateHTTPMonitorResponse = Message<"openstatus.monitor.v1.UpdateHTTPMonitorResponse"> & {
+  /**
+   * The updated monitor.
+   *
+   * @generated from field: openstatus.monitor.v1.HTTPMonitor monitor = 1;
+   */
+  monitor?: HTTPMonitor;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.UpdateHTTPMonitorResponse.
+ * Use `create(UpdateHTTPMonitorResponseSchema)` to create a new message.
+ */
+export const UpdateHTTPMonitorResponseSchema: GenMessage<UpdateHTTPMonitorResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 7);
+
+/**
+ * UpdateTCPMonitorRequest is the request to update an existing TCP monitor.
+ *
+ * @generated from message openstatus.monitor.v1.UpdateTCPMonitorRequest
+ */
+export type UpdateTCPMonitorRequest = Message<"openstatus.monitor.v1.UpdateTCPMonitorRequest"> & {
+  /**
+   * Monitor ID to update (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Updated monitor configuration (all fields optional for partial updates).
+   *
+   * @generated from field: optional openstatus.monitor.v1.TCPMonitor monitor = 2;
+   */
+  monitor?: TCPMonitor;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.UpdateTCPMonitorRequest.
+ * Use `create(UpdateTCPMonitorRequestSchema)` to create a new message.
+ */
+export const UpdateTCPMonitorRequestSchema: GenMessage<UpdateTCPMonitorRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 8);
+
+/**
+ * UpdateTCPMonitorResponse is the response after updating a TCP monitor.
+ *
+ * @generated from message openstatus.monitor.v1.UpdateTCPMonitorResponse
+ */
+export type UpdateTCPMonitorResponse = Message<"openstatus.monitor.v1.UpdateTCPMonitorResponse"> & {
+  /**
+   * The updated monitor.
+   *
+   * @generated from field: openstatus.monitor.v1.TCPMonitor monitor = 1;
+   */
+  monitor?: TCPMonitor;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.UpdateTCPMonitorResponse.
+ * Use `create(UpdateTCPMonitorResponseSchema)` to create a new message.
+ */
+export const UpdateTCPMonitorResponseSchema: GenMessage<UpdateTCPMonitorResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 9);
+
+/**
+ * UpdateDNSMonitorRequest is the request to update an existing DNS monitor.
+ *
+ * @generated from message openstatus.monitor.v1.UpdateDNSMonitorRequest
+ */
+export type UpdateDNSMonitorRequest = Message<"openstatus.monitor.v1.UpdateDNSMonitorRequest"> & {
+  /**
+   * Monitor ID to update (required).
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * Updated monitor configuration (all fields optional for partial updates).
+   *
+   * @generated from field: optional openstatus.monitor.v1.DNSMonitor monitor = 2;
+   */
+  monitor?: DNSMonitor;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.UpdateDNSMonitorRequest.
+ * Use `create(UpdateDNSMonitorRequestSchema)` to create a new message.
+ */
+export const UpdateDNSMonitorRequestSchema: GenMessage<UpdateDNSMonitorRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 10);
+
+/**
+ * UpdateDNSMonitorResponse is the response after updating a DNS monitor.
+ *
+ * @generated from message openstatus.monitor.v1.UpdateDNSMonitorResponse
+ */
+export type UpdateDNSMonitorResponse = Message<"openstatus.monitor.v1.UpdateDNSMonitorResponse"> & {
+  /**
+   * The updated monitor.
+   *
+   * @generated from field: openstatus.monitor.v1.DNSMonitor monitor = 1;
+   */
+  monitor?: DNSMonitor;
+};
+
+/**
+ * Describes the message openstatus.monitor.v1.UpdateDNSMonitorResponse.
+ * Use `create(UpdateDNSMonitorResponseSchema)` to create a new message.
+ */
+export const UpdateDNSMonitorResponseSchema: GenMessage<UpdateDNSMonitorResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_monitor_v1_service, 11);
+
+/**
  * TriggerMonitorRequest is the request to trigger a monitor check.
  *
  * @generated from message openstatus.monitor.v1.TriggerMonitorRequest
@@ -166,7 +313,7 @@ export type TriggerMonitorRequest = Message<"openstatus.monitor.v1.TriggerMonito
  * Use `create(TriggerMonitorRequestSchema)` to create a new message.
  */
 export const TriggerMonitorRequestSchema: GenMessage<TriggerMonitorRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 6);
+  messageDesc(file_openstatus_monitor_v1_service, 12);
 
 /**
  * TriggerMonitorResponse is the response after triggering a monitor.
@@ -187,7 +334,7 @@ export type TriggerMonitorResponse = Message<"openstatus.monitor.v1.TriggerMonit
  * Use `create(TriggerMonitorResponseSchema)` to create a new message.
  */
 export const TriggerMonitorResponseSchema: GenMessage<TriggerMonitorResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 7);
+  messageDesc(file_openstatus_monitor_v1_service, 13);
 
 /**
  * DeleteMonitorRequest is the request to delete a monitor.
@@ -208,7 +355,7 @@ export type DeleteMonitorRequest = Message<"openstatus.monitor.v1.DeleteMonitorR
  * Use `create(DeleteMonitorRequestSchema)` to create a new message.
  */
 export const DeleteMonitorRequestSchema: GenMessage<DeleteMonitorRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 8);
+  messageDesc(file_openstatus_monitor_v1_service, 14);
 
 /**
  * DeleteMonitorResponse is the response after deleting a monitor.
@@ -229,7 +376,7 @@ export type DeleteMonitorResponse = Message<"openstatus.monitor.v1.DeleteMonitor
  * Use `create(DeleteMonitorResponseSchema)` to create a new message.
  */
 export const DeleteMonitorResponseSchema: GenMessage<DeleteMonitorResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 9);
+  messageDesc(file_openstatus_monitor_v1_service, 15);
 
 /**
  * ListMonitorsRequest is the request to list monitors.
@@ -257,7 +404,7 @@ export type ListMonitorsRequest = Message<"openstatus.monitor.v1.ListMonitorsReq
  * Use `create(ListMonitorsRequestSchema)` to create a new message.
  */
 export const ListMonitorsRequestSchema: GenMessage<ListMonitorsRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 10);
+  messageDesc(file_openstatus_monitor_v1_service, 16);
 
 /**
  * ListMonitorsResponse is the response containing a list of monitors.
@@ -306,7 +453,7 @@ export type ListMonitorsResponse = Message<"openstatus.monitor.v1.ListMonitorsRe
  * Use `create(ListMonitorsResponseSchema)` to create a new message.
  */
 export const ListMonitorsResponseSchema: GenMessage<ListMonitorsResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 11);
+  messageDesc(file_openstatus_monitor_v1_service, 17);
 
 /**
  * GetMonitorStatusRequest is the request to get the status of all regions for a monitor.
@@ -327,7 +474,7 @@ export type GetMonitorStatusRequest = Message<"openstatus.monitor.v1.GetMonitorS
  * Use `create(GetMonitorStatusRequestSchema)` to create a new message.
  */
 export const GetMonitorStatusRequestSchema: GenMessage<GetMonitorStatusRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 12);
+  messageDesc(file_openstatus_monitor_v1_service, 18);
 
 /**
  * RegionStatus represents the status of a monitor in a specific region.
@@ -355,7 +502,7 @@ export type RegionStatus = Message<"openstatus.monitor.v1.RegionStatus"> & {
  * Use `create(RegionStatusSchema)` to create a new message.
  */
 export const RegionStatusSchema: GenMessage<RegionStatus> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 13);
+  messageDesc(file_openstatus_monitor_v1_service, 19);
 
 /**
  * GetMonitorStatusResponse is the response containing the status of all regions for a monitor.
@@ -383,7 +530,7 @@ export type GetMonitorStatusResponse = Message<"openstatus.monitor.v1.GetMonitor
  * Use `create(GetMonitorStatusResponseSchema)` to create a new message.
  */
 export const GetMonitorStatusResponseSchema: GenMessage<GetMonitorStatusResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 14);
+  messageDesc(file_openstatus_monitor_v1_service, 20);
 
 /**
  * MonitorConfig represents the type-specific configuration for a monitor.
@@ -426,7 +573,7 @@ export type MonitorConfig = Message<"openstatus.monitor.v1.MonitorConfig"> & {
  * Use `create(MonitorConfigSchema)` to create a new message.
  */
 export const MonitorConfigSchema: GenMessage<MonitorConfig> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 15);
+  messageDesc(file_openstatus_monitor_v1_service, 21);
 
 /**
  * GetMonitorSummaryRequest is the request to get aggregated metrics for a monitor.
@@ -461,7 +608,7 @@ export type GetMonitorSummaryRequest = Message<"openstatus.monitor.v1.GetMonitor
  * Use `create(GetMonitorSummaryRequestSchema)` to create a new message.
  */
 export const GetMonitorSummaryRequestSchema: GenMessage<GetMonitorSummaryRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 16);
+  messageDesc(file_openstatus_monitor_v1_service, 22);
 
 /**
  * GetMonitorSummaryResponse is the response containing aggregated metrics for a monitor.
@@ -559,7 +706,7 @@ export type GetMonitorSummaryResponse = Message<"openstatus.monitor.v1.GetMonito
  * Use `create(GetMonitorSummaryResponseSchema)` to create a new message.
  */
 export const GetMonitorSummaryResponseSchema: GenMessage<GetMonitorSummaryResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_service, 17);
+  messageDesc(file_openstatus_monitor_v1_service, 23);
 
 /**
  * TimeRange represents the time period for metrics aggregation.
@@ -637,6 +784,36 @@ export const MonitorService: GenService<{
     methodKind: "unary";
     input: typeof CreateDNSMonitorRequestSchema;
     output: typeof CreateDNSMonitorResponseSchema;
+  },
+  /**
+   * UpdateHTTPMonitor updates an existing HTTP monitor.
+   *
+   * @generated from rpc openstatus.monitor.v1.MonitorService.UpdateHTTPMonitor
+   */
+  updateHTTPMonitor: {
+    methodKind: "unary";
+    input: typeof UpdateHTTPMonitorRequestSchema;
+    output: typeof UpdateHTTPMonitorResponseSchema;
+  },
+  /**
+   * UpdateTCPMonitor updates an existing TCP monitor.
+   *
+   * @generated from rpc openstatus.monitor.v1.MonitorService.UpdateTCPMonitor
+   */
+  updateTCPMonitor: {
+    methodKind: "unary";
+    input: typeof UpdateTCPMonitorRequestSchema;
+    output: typeof UpdateTCPMonitorResponseSchema;
+  },
+  /**
+   * UpdateDNSMonitor updates an existing DNS monitor.
+   *
+   * @generated from rpc openstatus.monitor.v1.MonitorService.UpdateDNSMonitor
+   */
+  updateDNSMonitor: {
+    methodKind: "unary";
+    input: typeof UpdateDNSMonitorRequestSchema;
+    output: typeof UpdateDNSMonitorResponseSchema;
   },
   /**
    * TriggerMonitor initiates an immediate check for a monitor.

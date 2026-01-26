@@ -32,7 +32,7 @@ export enum MonitorStatus {
   ACTIVE = 1,
 
   /**
-   * MONITOR_STATUS_DEGRADED indicates the monitor is paused.
+   * MONITOR_STATUS_DEGRADED indicates the monitor is degraded.
    *
    * @generated from enum value: MONITOR_STATUS_DEGRADED = 2;
    */
