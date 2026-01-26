@@ -1,40 +1,15 @@
-import { createConnectRouter } from "@connectrpc/connect";
 import {
   universalServerRequestFromFetch,
   universalServerResponseToFetch,
 } from "@connectrpc/connect/protocol";
 import type { Hono } from "hono";
 
-import { HealthService } from "@openstatus/proto/health/v1";
-import { MonitorService } from "@openstatus/proto/monitor/v1";
+import { routes } from "./router";
 
-import { healthServiceImpl } from "./handlers/health";
-import { monitorServiceImpl } from "./handlers/monitor";
-import {
-  authInterceptor,
-  errorInterceptor,
-  loggingInterceptor,
-  validationInterceptor,
-} from "./interceptors";
-
-/**
- * Create ConnectRPC router with services.
- * Interceptors are applied in order (outermost to innermost):
- * 1. errorInterceptor - Catches all errors and maps to ConnectError
- * 2. loggingInterceptor - Logs requests/responses with duration
- * 3. authInterceptor - Validates API key and sets workspace context
- * 4. validationInterceptor - Validates request messages using protovalidate
- */
-export const routes = createConnectRouter({
-  interceptors: [
-    errorInterceptor(),
-    loggingInterceptor(),
-    authInterceptor(),
-    validationInterceptor(),
-  ],
-})
-  .service(MonitorService, monitorServiceImpl)
-  .service(HealthService, healthServiceImpl);
+// Re-export for external use
+export { routes } from "./router";
+export { getRpcContext } from "./interceptors";
+export type { RpcContext } from "./interceptors";
 
 /**
  * Mount ConnectRPC routes on a Hono app at /rpc prefix.

@@ -3,20 +3,16 @@ import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, isNull, sql } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
-import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
-import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
   HTTPMonitor,
   MonitorService,
-  Periodicity,
-  Region,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
-import { getRpcContext } from "../interceptors";
+
+import { getRpcContext } from "../../interceptors";
 import {
   MONITOR_DEFAULTS,
   dbMonitorToDnsProto,
@@ -26,158 +22,13 @@ import {
   headersToDbJson,
   httpAssertionsToDbJson,
   httpMethodToString,
-  openTelemetryToDb,
-  periodicityToString,
-  regionsToDbString,
-  regionsToStrings,
-  validateRegions,
-} from "./monitor-utils";
-
-type MonitorPeriodicity = (typeof monitorPeriodicity)[number];
-type MonitorMethod = (typeof monitorMethods)[number];
-
-/**
- * Validate and convert periodicity string to enum type.
- */
-function toValidPeriodicity(value: string | undefined): MonitorPeriodicity {
-  const valid = monitorPeriodicity as readonly string[];
-  if (value && valid.includes(value)) {
-    return value as MonitorPeriodicity;
-  }
-  return "1m";
-}
-
-/**
- * Validate and convert method string to enum type.
- */
-function toValidMethod(value: string | undefined): MonitorMethod {
-  const upper = value?.toUpperCase();
-  const valid = monitorMethods as readonly string[];
-  if (upper && valid.includes(upper)) {
-    return upper as MonitorMethod;
-  }
-  return "GET";
-}
-
-/**
- * Check workspace limits for creating a new monitor.
- * Throws ConnectError with RESOURCE_EXHAUSTED if any limit is exceeded.
- */
-async function checkMonitorLimits(
-  workspaceId: number,
-  limits: Limits,
-  periodicity: Periodicity | undefined,
-  regions: Region[] | undefined,
-): Promise<void> {
-  // Check monitor count limit
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(monitor)
-    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
-    .get();
-
-  const count = countResult?.count ?? 0;
-  if (count >= limits.monitors) {
-    throw new ConnectError(
-      "Upgrade for more monitors",
-      Code.PermissionDenied,
-    );
-  }
-
-  // Check periodicity limit
-  if (periodicity) {
-    const periodicityStr = periodicityToString(periodicity);
-    if (!limits.periodicity.includes(periodicityStr)) {
-      throw new ConnectError(
-        "Upgrade for more periodicity options",
-        Code.PermissionDenied,
-      );
-    }
-  }
-
-  // Check regions limits
-  if (regions && regions.length > 0) {
-    const regionStrings = regionsToStrings(regions);
-
-    // Check max regions limit
-    if (regionStrings.length > limits["max-regions"]) {
-      throw new ConnectError(
-        "Upgrade for more regions",
-        Code.PermissionDenied,
-      );
-    }
-
-    // Check if each region is allowed
-    for (const region of regionStrings) {
-      if (!limits.regions.includes(region)) {
-        throw new ConnectError(
-          `Region '${region}' is not available on your plan. Upgrade for more regions`,
-          Code.PermissionDenied,
-        );
-      }
-    }
-  }
-}
-
-/**
- * Validate required monitor fields common to all monitor types.
- * Throws ConnectError if validation fails.
- */
-function validateCommonMonitorFields(mon: {
-  name?: string;
-  regions?: Region[];
-}): void {
-  if (!mon.name || mon.name.trim().length === 0) {
-    throw new ConnectError("Monitor name is required", Code.InvalidArgument);
-  }
-
-  if (mon.regions && mon.regions.length > 0) {
-    const regionStrings = regionsToStrings(mon.regions);
-    const invalidRegions = validateRegions(regionStrings);
-    if (invalidRegions.length > 0) {
-      throw new ConnectError(
-        `Invalid regions: ${invalidRegions.join(", ")}`,
-        Code.InvalidArgument,
-      );
-    }
-  }
-}
-
-/**
- * Extract common database values for all monitor types.
- */
-function getCommonDbValues(mon: {
-  name: string;
-  periodicity?: Periodicity;
-  timeout?: bigint;
-  degradedAt?: bigint;
-  active?: boolean;
-  description?: string;
-  public?: boolean;
-  regions?: Region[];
-  retry?: bigint;
-  openTelemetry?: Parameters<typeof openTelemetryToDb>[0];
-}) {
-  const otelConfig = openTelemetryToDb(mon.openTelemetry);
-  const periodicityStr = mon.periodicity
-    ? periodicityToString(mon.periodicity)
-    : undefined;
-  const regionStrings = mon.regions ? regionsToStrings(mon.regions) : [];
-
-  return {
-    name: mon.name,
-    periodicity: toValidPeriodicity(periodicityStr),
-    timeout: mon.timeout ? Number(mon.timeout) : MONITOR_DEFAULTS.timeout,
-    degradedAfter: mon.degradedAt ? Number(mon.degradedAt) : undefined,
-    active: mon.active ?? MONITOR_DEFAULTS.active,
-    description: mon.description || MONITOR_DEFAULTS.description,
-    public: mon.public ?? MONITOR_DEFAULTS.public,
-    regions: regionsToDbString(regionStrings),
-    retry: mon.retry ? Number(mon.retry) : MONITOR_DEFAULTS.retry,
-    otelEndpoint: otelConfig.otelEndpoint,
-    otelHeaders: otelConfig.otelHeaders,
-  };
-}
+} from "./converters";
+import { checkMonitorLimits } from "./limits";
+import {
+  getCommonDbValues,
+  toValidMethod,
+  validateCommonMonitorFields,
+} from "./validators";
 
 /**
  * Helper to get a monitor by ID with workspace scope.
