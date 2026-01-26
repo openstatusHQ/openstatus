@@ -1,0 +1,227 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/monitor/v1/dns_monitor.proto";
+import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/monitor.proto";
+import "openstatus/monitor/v1/tcp_monitor.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+// TimeRange represents the time period for metrics aggregation.
+enum TimeRange {
+  // Unspecified time range.
+  TIME_RANGE_UNSPECIFIED = 0;
+  // Last 24 hours.
+  TIME_RANGE_1D = 1;
+  // Last 7 days.
+  TIME_RANGE_7D = 2;
+  // Last 14 days.
+  TIME_RANGE_14D = 3;
+}
+
+// MonitorService provides CRUD and operational commands for monitors.
+service MonitorService {
+  // CreateHTTPMonitor creates a new HTTP monitor.
+  rpc CreateHTTPMonitor(CreateHTTPMonitorRequest) returns (CreateHTTPMonitorResponse);
+
+  // CreateTCPMonitor creates a new TCP monitor.
+  rpc CreateTCPMonitor(CreateTCPMonitorRequest) returns (CreateTCPMonitorResponse);
+
+  // CreateDNSMonitor creates a new DNS monitor.
+  rpc CreateDNSMonitor(CreateDNSMonitorRequest) returns (CreateDNSMonitorResponse);
+
+  // TriggerMonitor initiates an immediate check for a monitor.
+  rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse);
+
+  // DeleteMonitor removes a monitor.
+  rpc DeleteMonitor(DeleteMonitorRequest) returns (DeleteMonitorResponse);
+
+  // ListMonitors returns a list of monitors.
+  rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse);
+
+  // GetMonitorStatus returns the status of all regions for a monitor.
+  rpc GetMonitorStatus(GetMonitorStatusRequest) returns (GetMonitorStatusResponse);
+
+  // GetMonitorSummary returns aggregated metrics and statistics for a monitor.
+  rpc GetMonitorSummary(GetMonitorSummaryRequest) returns (GetMonitorSummaryResponse);
+}
+
+// CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
+message CreateHTTPMonitorRequest {
+  // Monitor configuration (required).
+  HTTPMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
+message CreateHTTPMonitorResponse {
+  // The created monitor with assigned ID.
+  HTTPMonitor monitor = 1;
+}
+
+// CreateTCPMonitorRequest is the request to create a new TCP monitor.
+message CreateTCPMonitorRequest {
+  // Monitor configuration (required).
+  TCPMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateTCPMonitorResponse is the response after creating a TCP monitor.
+message CreateTCPMonitorResponse {
+  // The created monitor with assigned ID.
+  TCPMonitor monitor = 1;
+}
+
+// CreateDNSMonitorRequest is the request to create a new DNS monitor.
+message CreateDNSMonitorRequest {
+  // Monitor configuration (required).
+  DNSMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateDNSMonitorResponse is the response after creating a DNS monitor.
+message CreateDNSMonitorResponse {
+  // The created monitor with assigned ID.
+  DNSMonitor monitor = 1;
+}
+
+// TriggerMonitorRequest is the request to trigger a monitor check.
+message TriggerMonitorRequest {
+  // Monitor ID to trigger (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// TriggerMonitorResponse is the response after triggering a monitor.
+message TriggerMonitorResponse {
+  // Whether the trigger was successful.
+  bool success = 1;
+}
+
+// DeleteMonitorRequest is the request to delete a monitor.
+message DeleteMonitorRequest {
+  // Monitor ID to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteMonitorResponse is the response after deleting a monitor.
+message DeleteMonitorResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// ListMonitorsRequest is the request to list monitors.
+message ListMonitorsRequest {
+  // Maximum number of monitors to return (1-100, defaults to 50).
+  optional int32 page_size = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Token for pagination.
+  optional string page_token = 2;
+}
+
+// ListMonitorsResponse is the response containing a list of monitors.
+message ListMonitorsResponse {
+  // HTTP monitors in the workspace.
+  repeated HTTPMonitor http_monitors = 1;
+
+  // TCP monitors in the workspace.
+  repeated TCPMonitor tcp_monitors = 2;
+
+  // DNS monitors in the workspace.
+  repeated DNSMonitor dns_monitors = 3;
+
+  // Token for the next page of results.
+  string next_page_token = 4;
+
+  // Total number of monitors across all pages.
+  int32 total_size = 5;
+}
+
+// GetMonitorStatusRequest is the request to get the status of all regions for a monitor.
+message GetMonitorStatusRequest {
+  // Monitor ID to get status for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// RegionStatus represents the status of a monitor in a specific region.
+message RegionStatus {
+  // The region identifier.
+  Region region = 1;
+
+  // The status of the monitor in this region.
+  MonitorStatus status = 2;
+}
+
+// GetMonitorStatusResponse is the response containing the status of all regions for a monitor.
+message GetMonitorStatusResponse {
+  // Monitor ID.
+  string id = 1;
+
+  // Status for each region.
+  repeated RegionStatus regions = 2;
+}
+
+// MonitorConfig represents the type-specific configuration for a monitor.
+message MonitorConfig {
+  oneof config {
+    // HTTP monitor configuration.
+    HTTPMonitor http = 1;
+    // TCP monitor configuration.
+    TCPMonitor tcp = 2;
+    // DNS monitor configuration.
+    DNSMonitor dns = 3;
+  }
+}
+
+// GetMonitorSummaryRequest is the request to get aggregated metrics for a monitor.
+message GetMonitorSummaryRequest {
+  // Monitor ID to get summary for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Time range for metrics aggregation (defaults to 1 day if unspecified).
+  TimeRange time_range = 2;
+
+  // Optional filter by regions. If empty, returns metrics for all regions.
+  repeated Region regions = 3 [(buf.validate.field).repeated.max_items = 28];
+}
+
+// GetMonitorSummaryResponse is the response containing aggregated metrics for a monitor.
+message GetMonitorSummaryResponse {
+  // Monitor ID.
+  string id = 1;
+
+  // Timestamp of the last check in RFC 3339 format.
+  string last_ping_at = 2;
+
+  // Total number of successful requests.
+  int64 total_successful = 3;
+
+  // Total number of degraded requests.
+  int64 total_degraded = 4;
+
+  // Total number of failed requests.
+  int64 total_failed = 5;
+
+  // 50th percentile (median) latency in milliseconds.
+  int64 p50 = 6;
+
+  // 75th percentile latency in milliseconds.
+  int64 p75 = 7;
+
+  // 90th percentile latency in milliseconds.
+  int64 p90 = 8;
+
+  // 95th percentile latency in milliseconds.
+  int64 p95 = 9;
+
+  // 99th percentile latency in milliseconds.
+  int64 p99 = 10;
+
+  // Time range used for the metrics.
+  TimeRange time_range = 11;
+
+  // Regions included in the metrics.
+  repeated Region regions = 12;
+}

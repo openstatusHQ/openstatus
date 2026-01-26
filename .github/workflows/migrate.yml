@@ -8,7 +8,7 @@ on:
 jobs:
   migrate:
     name: 🗃️ Migrate DB
-    runs-on: depot-ubuntu-24.04-4
+    runs-on: ubuntu-latest
     env:
       DATABASE_URL:  ${{ secrets.DATABASE_URL }}
       DATABASE_AUTH_TOKEN:  ${{ secrets.DATABASE_AUTH_TOKEN }}

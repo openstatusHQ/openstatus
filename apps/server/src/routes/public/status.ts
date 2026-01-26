@@ -1,7 +1,10 @@
+import { getLogger } from "@logtape/logtape";
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
 import { and, db, eq, gte, inArray, isNull, lte, ne } from "@openstatus/db";
+
+const logger = getLogger("api-server");
 import {
   incidentTable,
   maintenance,
@@ -72,7 +75,10 @@ status.get("/:slug", async (c) => {
 
     return c.json({ status });
   } catch (e) {
-    console.error(`Error in public status page: ${e}`);
+    logger.error("Error in public status page", {
+      error: e instanceof Error ? e.message : String(e),
+      stack: e instanceof Error ? e.stack : undefined,
+    });
     return c.json({ status: Status.Unknown });
   }
 });

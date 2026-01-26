@@ -39,6 +39,14 @@ test("create a valid monitor", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create a status report with invalid payload should return 400", async () => {
@@ -110,6 +118,14 @@ test("create HTTP monitor with GET method should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with PUT method should return 200", async () => {
@@ -138,6 +154,14 @@ test("create HTTP monitor with PUT method should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with textBody assertion should return 200", async () => {
@@ -171,6 +195,14 @@ test("create HTTP monitor with textBody assertion should return 200", async () =
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with multiple assertions should return 200", async () => {
@@ -215,6 +247,14 @@ test("create HTTP monitor with multiple assertions should return 200", async () 
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with timeout and retry configuration should return 200", async () => {
@@ -244,6 +284,14 @@ test("create HTTP monitor with timeout and retry configuration should return 200
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with OpenTelemetry configuration should return 200", async () => {
@@ -277,6 +325,14 @@ test("create HTTP monitor with OpenTelemetry configuration should return 200", a
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with 30s frequency should return 200", async () => {
@@ -303,6 +359,14 @@ test("create HTTP monitor with 30s frequency should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with 1h frequency should return 200", async () => {
@@ -329,6 +393,14 @@ test("create HTTP monitor with 1h frequency should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor without optional fields should return 200", async () => {
@@ -352,6 +424,14 @@ test("create HTTP monitor without optional fields should return 200", async () =
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with PATCH method should return 200", async () => {
@@ -380,6 +460,14 @@ test("create HTTP monitor with PATCH method should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with DELETE method should return 200", async () => {
@@ -407,6 +495,14 @@ test("create HTTP monitor with DELETE method should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create HTTP monitor with invalid URL should return 400", async () => {

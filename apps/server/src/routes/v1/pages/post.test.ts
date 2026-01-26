@@ -1,9 +1,12 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+import { db, eq } from "@openstatus/db";
+import { page } from "@openstatus/db/src/schema";
 import { PageSchema } from "./schema";
 
 test("create a valid page", async () => {
+  const uniqueSlug = `openstatus-${Date.now()}`;
   const res = await app.request("/v1/page", {
     method: "POST",
     headers: {
@@ -13,7 +16,7 @@ test("create a valid page", async () => {
     body: JSON.stringify({
       title: "OpenStatus",
       description: "OpenStatus website",
-      slug: "openstatus",
+      slug: uniqueSlug,
       monitors: [1],
     }),
   });
@@ -22,6 +25,11 @@ test("create a valid page", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created page
+  if (result.success) {
+    await db.delete(page).where(eq(page.id, result.data.id));
+  }
 });
 
 test("create a page with invalid monitor ids should return a 400", async () => {

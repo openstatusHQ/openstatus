@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+// NumberComparator defines comparison operations for numeric values.
+enum NumberComparator {
+  NUMBER_COMPARATOR_UNSPECIFIED = 0;
+  NUMBER_COMPARATOR_EQUAL = 1;
+  NUMBER_COMPARATOR_NOT_EQUAL = 2;
+  NUMBER_COMPARATOR_GREATER_THAN = 3;
+  NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL = 4;
+  NUMBER_COMPARATOR_LESS_THAN = 5;
+  NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL = 6;
+}
+
+// StringComparator defines comparison operations for string values.
+enum StringComparator {
+  STRING_COMPARATOR_UNSPECIFIED = 0;
+  STRING_COMPARATOR_CONTAINS = 1;
+  STRING_COMPARATOR_NOT_CONTAINS = 2;
+  STRING_COMPARATOR_EQUAL = 3;
+  STRING_COMPARATOR_NOT_EQUAL = 4;
+  STRING_COMPARATOR_EMPTY = 5;
+  STRING_COMPARATOR_NOT_EMPTY = 6;
+  STRING_COMPARATOR_GREATER_THAN = 7;
+  STRING_COMPARATOR_GREATER_THAN_OR_EQUAL = 8;
+  STRING_COMPARATOR_LESS_THAN = 9;
+  STRING_COMPARATOR_LESS_THAN_OR_EQUAL = 10;
+}
+
+// RecordComparator defines comparison operations for DNS records.
+enum RecordComparator {
+  RECORD_COMPARATOR_UNSPECIFIED = 0;
+  RECORD_COMPARATOR_EQUAL = 1;
+  RECORD_COMPARATOR_NOT_EQUAL = 2;
+  RECORD_COMPARATOR_CONTAINS = 3;
+  RECORD_COMPARATOR_NOT_CONTAINS = 4;
+}
+
+// StatusCodeAssertion defines an assertion for HTTP status codes.
+message StatusCodeAssertion {
+  // Target status code to compare against (100-599).
+  int64 target = 1 [(buf.validate.field).int64 = {
+    gte: 100
+    lte: 599
+  }];
+
+  // Comparison operation (required, must not be UNSPECIFIED).
+  NumberComparator comparator = 2 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+}
+
+// BodyAssertion defines an assertion for response body content.
+message BodyAssertion {
+  // Target value to compare against.
+  string target = 1;
+
+  // Comparison operation (required, must not be UNSPECIFIED).
+  StringComparator comparator = 2 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+}
+
+// HeaderAssertion defines an assertion for response headers.
+message HeaderAssertion {
+  // Target value to compare against.
+  string target = 1;
+
+  // Comparison operation (required, must not be UNSPECIFIED).
+  StringComparator comparator = 2 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+
+  // Header key to check (required).
+  string key = 3 [(buf.validate.field).string.min_len = 1];
+}
+
+// RecordAssertion defines an assertion for DNS records.
+message RecordAssertion {
+  // DNS record type (e.g., "A", "AAAA", "CNAME", "MX", "TXT").
+  string record = 1 [(buf.validate.field).string = {
+    in: ["A", "AAAA", "CNAME", "MX", "TXT"]
+  }];
+
+  // Comparison operation (required, must not be UNSPECIFIED).
+  RecordComparator comparator = 2 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+
+  // Target value to compare against.
+  string target = 3;
+}

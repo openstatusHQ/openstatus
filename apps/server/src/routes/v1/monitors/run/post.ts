@@ -2,7 +2,10 @@ import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
+import { getLogger } from "@logtape/logtape";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
+
+const logger = getLogger("api-server");
 import { db } from "@openstatus/db/src/db";
 import { monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
@@ -102,7 +105,11 @@ export function registerRunMonitor(api: typeof monitorsApi) {
       .safeParse(monitorStatusData);
 
     if (!monitorStatus.success) {
-      console.log(monitorStatus.error);
+      logger.error("Failed to parse monitor status", {
+        monitor_id: id,
+        workspace_id: workspaceId,
+        error: monitorStatus.error.message,
+      });
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
@@ -154,7 +161,11 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     }
 
     if (!data.success) {
-      console.log(data.error);
+      logger.error("Failed to parse trigger result", {
+        monitor_id: id,
+        workspace_id: workspaceId,
+        error: data.error.message,
+      });
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 

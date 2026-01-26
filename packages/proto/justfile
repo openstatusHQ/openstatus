@@ -9,5 +9,8 @@ init:
 buf:
     pnpm buf
 
-gen:
-    buf generate
+gen-private-location:
+    buf generate --path internal/private_location --template buf.gen.go.yaml
+
+gen-api:
+    buf generate --path api/openstatus --template buf.gen.ts.yaml
