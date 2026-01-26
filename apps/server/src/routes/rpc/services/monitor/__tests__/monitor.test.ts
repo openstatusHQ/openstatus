@@ -1179,7 +1179,7 @@ describe("MonitorService - Validation", () => {
           url: "https://test-valid-regions.example.com",
           periodicity: "PERIODICITY_5M",
           method: "HTTP_METHOD_GET",
-          regions: ["REGION_AMS", "REGION_IAD", "REGION_SIN"],
+          regions: ["REGION_FLY_AMS", "REGION_FLY_IAD", "REGION_FLY_SIN"],
         },
       },
       { "x-openstatus-key": "1" },
@@ -1189,9 +1189,9 @@ describe("MonitorService - Validation", () => {
     const data = await res.json();
     expect(data.monitor).toBeDefined();
     expect(data.monitor.regions).toEqual([
-      "REGION_AMS",
-      "REGION_IAD",
-      "REGION_SIN",
+      "REGION_FLY_AMS",
+      "REGION_FLY_IAD",
+      "REGION_FLY_SIN",
     ]);
 
     // Clean up
@@ -1468,14 +1468,14 @@ describe("MonitorService - Limits", () => {
           periodicity: "PERIODICITY_10M",
           method: "HTTP_METHOD_GET",
           regions: [
-            "REGION_AMS",
-            "REGION_IAD",
-            "REGION_SIN",
-            "REGION_LHR",
-            "REGION_SYD",
-            "REGION_NRT",
-            "REGION_FRA",
-            "REGION_GRU",
+            "REGION_FLY_AMS",
+            "REGION_FLY_IAD",
+            "REGION_FLY_SIN",
+            "REGION_FLY_LHR",
+            "REGION_FLY_SYD",
+            "REGION_FLY_NRT",
+            "REGION_FLY_FRA",
+            "REGION_FLY_GRU",
           ],
         },
       },
@@ -1741,13 +1741,13 @@ describe("MonitorService.GetMonitorStatus", () => {
 
     // Find each region and verify status
     const amsRegion = regions.find(
-      (r: { region: string }) => r.region === "REGION_AMS",
+      (r: { region: string }) => r.region === "REGION_FLY_AMS",
     );
     const iadRegion = regions.find(
-      (r: { region: string }) => r.region === "REGION_IAD",
+      (r: { region: string }) => r.region === "REGION_FLY_IAD",
     );
     const fraRegion = regions.find(
-      (r: { region: string }) => r.region === "REGION_FRA",
+      (r: { region: string }) => r.region === "REGION_FLY_FRA",
     );
 
     expect(amsRegion).toBeDefined();
@@ -1774,7 +1774,7 @@ describe("MonitorService.GetMonitorStatus", () => {
 
     // lhr has a status entry but is not in the monitor's configured regions
     const lhrRegion = regions.find(
-      (r: { region: string }) => r.region === "REGION_LHR",
+      (r: { region: string }) => r.region === "REGION_FLY_LHR",
     );
     expect(lhrRegion).toBeUndefined();
   });
@@ -1964,7 +1964,7 @@ describe("MonitorService.GetMonitorSummary", () => {
       "GetMonitorSummary",
       {
         id: String(testMonitorWithStatusId),
-        regions: ["REGION_AMS", "REGION_IAD"],
+        regions: ["REGION_FLY_AMS", "REGION_FLY_IAD"],
       },
       { "x-openstatus-key": "1" },
     );
@@ -1975,8 +1975,8 @@ describe("MonitorService.GetMonitorSummary", () => {
     expect(data.regions).toBeDefined();
     expect(Array.isArray(data.regions)).toBe(true);
     // Should return the requested regions
-    expect(data.regions).toContain("REGION_AMS");
-    expect(data.regions).toContain("REGION_IAD");
+    expect(data.regions).toContain("REGION_FLY_AMS");
+    expect(data.regions).toContain("REGION_FLY_IAD");
     expect(data.regions).toHaveLength(2);
   });
 
@@ -1992,9 +1992,9 @@ describe("MonitorService.GetMonitorSummary", () => {
     const data = await res.json();
     expect(data.regions).toBeDefined();
     // Monitor has regions: "ams,iad,fra"
-    expect(data.regions).toContain("REGION_AMS");
-    expect(data.regions).toContain("REGION_IAD");
-    expect(data.regions).toContain("REGION_FRA");
+    expect(data.regions).toContain("REGION_FLY_AMS");
+    expect(data.regions).toContain("REGION_FLY_IAD");
+    expect(data.regions).toContain("REGION_FLY_FRA");
   });
 
   test("returns 404 for non-existent monitor", async () => {

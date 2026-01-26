@@ -31,24 +31,24 @@ enum Periodicity {
 enum Region {
   REGION_UNSPECIFIED = 0;
   // Fly.io regions
-  REGION_AMS = 1;   // Amsterdam, Netherlands
-  REGION_ARN = 2;   // Stockholm, Sweden
-  REGION_BOM = 3;   // Mumbai, India
-  REGION_CDG = 4;   // Paris, France
-  REGION_DFW = 5;   // Dallas, USA
-  REGION_EWR = 6;   // Newark, USA
-  REGION_FRA = 7;   // Frankfurt, Germany
-  REGION_GRU = 8;   // São Paulo, Brazil
-  REGION_IAD = 9;   // Ashburn, USA
-  REGION_JNB = 10;  // Johannesburg, South Africa
-  REGION_LAX = 11;  // Los Angeles, USA
-  REGION_LHR = 12;  // London, UK
-  REGION_NRT = 13;  // Tokyo, Japan
-  REGION_ORD = 14;  // Chicago, USA
-  REGION_SJC = 15;  // San Jose, USA
-  REGION_SIN = 16;  // Singapore
-  REGION_SYD = 17;  // Sydney, Australia
-  REGION_YYZ = 18;  // Toronto, Canada
+  REGION_FLY_AMS = 1;   // Amsterdam, Netherlands
+  REGION_FLY_ARN = 2;   // Stockholm, Sweden
+  REGION_FLY_BOM = 3;   // Mumbai, India
+  REGION_FLY_CDG = 4;   // Paris, France
+  REGION_FLY_DFW = 5;   // Dallas, USA
+  REGION_FLY_EWR = 6;   // Newark, USA
+  REGION_FLY_FRA = 7;   // Frankfurt, Germany
+  REGION_FLY_GRU = 8;   // São Paulo, Brazil
+  REGION_FLY_IAD = 9;   // Ashburn, USA
+  REGION_FLY_JNB = 10;  // Johannesburg, South Africa
+  REGION_FLY_LAX = 11;  // Los Angeles, USA
+  REGION_FLY_LHR = 12;  // London, UK
+  REGION_FLY_NRT = 13;  // Tokyo, Japan
+  REGION_FLY_ORD = 14;  // Chicago, USA
+  REGION_FLY_SJC = 15;  // San Jose, USA
+  REGION_FLY_SIN = 16;  // Singapore
+  REGION_FLY_SYD = 17;  // Sydney, Australia
+  REGION_FLY_YYZ = 18;  // Toronto, Canada
   // Koyeb regions
   REGION_KOYEB_FRA = 19;  // Koyeb Frankfurt
   REGION_KOYEB_PAR = 20;  // Koyeb Paris
