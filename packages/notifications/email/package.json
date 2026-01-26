@@ -4,11 +4,13 @@
   "main": "src/index.ts",
   "description": "Log drains Vercel integration.",
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/notification-base": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",

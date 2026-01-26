@@ -1,10 +1,13 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import type { db } from "./db";
 import {
   maintenance,
+  maintenancesToMonitors,
   maintenancesToPageComponents,
   monitor,
+  monitorsToPages,
+  monitorsToStatusReport,
   pageComponent,
   pageComponentGroup,
   statusReport,
@@ -88,19 +91,21 @@ export async function syncMonitorsToPageInsert(
     groupOrder?: number;
   },
 ) {
-  // Get monitor data for name and workspace_id
+  // Get monitor data for name and workspace_id (only active monitors)
   const monitorData = await db
     .select({
       id: monitor.id,
       name: monitor.name,
       externalName: monitor.externalName,
       workspaceId: monitor.workspaceId,
+      active: monitor.active,
     })
     .from(monitor)
     .where(eq(monitor.id, data.monitorId))
     .get();
 
-  if (!monitorData || !monitorData.workspaceId) return;
+  // Skip if monitor doesn't exist, has no workspace, or is inactive
+  if (!monitorData || !monitorData.workspaceId || !monitorData.active) return;
 
   await db
     .insert(pageComponent)
@@ -132,7 +137,7 @@ export async function syncMonitorsToPageInsertMany(
 ) {
   if (items.length === 0) return;
 
-  // Get all monitor data in one query
+  // Get all monitor data in one query (only active monitors)
   const monitorIds = [...new Set(items.map((item) => item.monitorId))];
   const monitors = await db
     .select({
@@ -140,16 +145,18 @@ export async function syncMonitorsToPageInsertMany(
       name: monitor.name,
       externalName: monitor.externalName,
       workspaceId: monitor.workspaceId,
+      active: monitor.active,
     })
     .from(monitor)
-    .where(inArray(monitor.id, monitorIds));
+    .where(and(inArray(monitor.id, monitorIds), eq(monitor.active, true)));
 
   const monitorMap = new Map(monitors.map((m) => [m.id, m]));
 
   const values = items
     .map((item) => {
       const m = monitorMap.get(item.monitorId);
-      if (!m || !m.workspaceId) return null;
+      // Skip if monitor doesn't exist, has no workspace, or is inactive
+      if (!m || !m.workspaceId || !m.active) return null;
       return {
         workspaceId: m.workspaceId,
         pageId: item.pageId,
@@ -166,6 +173,72 @@ export async function syncMonitorsToPageInsertMany(
   if (values.length === 0) return;
 
   await db.insert(pageComponent).values(values).onConflictDoNothing();
+}
+
+/**
+ * Syncs multiple monitors_to_pages upserts to page_component
+ * Updates order, groupId, groupOrder for existing components, inserts new ones
+ */
+export async function syncMonitorsToPageUpsertMany(
+  db: DB | Transaction,
+  items: Array<{
+    monitorId: number;
+    pageId: number;
+    order?: number;
+    monitorGroupId?: number | null;
+    groupOrder?: number;
+  }>,
+) {
+  if (items.length === 0) return;
+
+  // Get all monitor data in one query (only active monitors)
+  const monitorIds = [...new Set(items.map((item) => item.monitorId))];
+  const monitors = await db
+    .select({
+      id: monitor.id,
+      name: monitor.name,
+      externalName: monitor.externalName,
+      workspaceId: monitor.workspaceId,
+      active: monitor.active,
+    })
+    .from(monitor)
+    .where(and(inArray(monitor.id, monitorIds), eq(monitor.active, true)));
+
+  const monitorMap = new Map(monitors.map((m) => [m.id, m]));
+
+  const values = items
+    .map((item) => {
+      const m = monitorMap.get(item.monitorId);
+      // Skip if monitor doesn't exist, has no workspace, or is inactive
+      if (!m || !m.workspaceId || !m.active) return null;
+      return {
+        workspaceId: m.workspaceId,
+        pageId: item.pageId,
+        type: "monitor" as const,
+        monitorId: item.monitorId,
+        name: m.externalName || m.name,
+        order: item.order ?? 0,
+        groupId: item.monitorGroupId ?? null,
+        groupOrder: item.groupOrder ?? 0,
+      };
+    })
+    .filter((v): v is NonNullable<typeof v> => v !== null);
+
+  if (values.length === 0) return;
+
+  // Use onConflictDoUpdate to update existing page components
+  // The unique constraint is on (pageId, monitorId)
+  await db
+    .insert(pageComponent)
+    .values(values)
+    .onConflictDoUpdate({
+      target: [pageComponent.pageId, pageComponent.monitorId],
+      set: {
+        order: sql.raw("excluded.`order`"),
+        groupId: sql.raw("excluded.`group_id`"),
+        groupOrder: sql.raw("excluded.`group_order`"),
+      },
+    });
 }
 
 /**
@@ -210,6 +283,36 @@ export async function syncMonitorsToPageDeleteByMonitors(
   await db
     .delete(pageComponent)
     .where(inArray(pageComponent.monitorId, monitorIds));
+}
+
+/**
+ * REVERSE SYNC: Syncs page_component inserts to monitors_to_pages
+ * Used when pageComponents is the primary table and monitorsToPages is kept for backwards compatibility
+ */
+export async function syncPageComponentToMonitorsToPageInsertMany(
+  db: DB | Transaction,
+  items: Array<{
+    monitorId: number;
+    pageId: number;
+    order?: number;
+    monitorGroupId?: number | null;
+    groupOrder?: number;
+  }>,
+) {
+  if (items.length === 0) return;
+
+  await db
+    .insert(monitorsToPages)
+    .values(
+      items.map((item) => ({
+        monitorId: item.monitorId,
+        pageId: item.pageId,
+        order: item.order ?? 0,
+        monitorGroupId: item.monitorGroupId ?? null,
+        groupOrder: item.groupOrder ?? 0,
+      })),
+    )
+    .onConflictDoNothing();
 }
 
 // ============================================================================
@@ -364,6 +467,68 @@ export async function syncStatusReportToMonitorDeleteByMonitors(
   );
 }
 
+/**
+ * Syncs status_report_to_page_component inserts to status_report_to_monitors
+ * This is the inverse of syncStatusReportToMonitorInsertMany
+ */
+export async function syncStatusReportToPageComponentInsertMany(
+  db: DB | Transaction,
+  statusReportId: number,
+  pageComponentIds: number[],
+) {
+  if (pageComponentIds.length === 0) return;
+
+  // Find monitor IDs from the page components
+  // Only get components that have a monitorId (not external components)
+  const components = await db
+    .select({ monitorId: pageComponent.monitorId })
+    .from(pageComponent)
+    .where(
+      and(
+        inArray(pageComponent.id, pageComponentIds),
+        eq(pageComponent.type, "monitor"),
+      ),
+    );
+
+  if (components.length === 0) return;
+
+  // Extract unique monitor IDs (filter out nulls)
+  const monitorIds = [
+    ...new Set(
+      components
+        .map((c) => c.monitorId)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+
+  if (monitorIds.length === 0) return;
+
+  // Insert into monitorsToStatusReport
+  await db
+    .insert(monitorsToStatusReport)
+    .values(
+      monitorIds.map((monitorId) => ({
+        statusReportId,
+        monitorId,
+      })),
+    )
+    .onConflictDoNothing();
+}
+
+/**
+ * Syncs status_report_to_page_component deletes to status_report_to_monitors
+ * This is the inverse of syncStatusReportToMonitorDeleteByStatusReport
+ * When page components are removed from a status report, remove the corresponding monitors
+ */
+export async function syncStatusReportToPageComponentDeleteByStatusReport(
+  db: DB | Transaction,
+  statusReportId: number,
+) {
+  await db
+    .delete(monitorsToStatusReport)
+    .where(eq(monitorsToStatusReport.statusReportId, statusReportId));
+}
+
 // ============================================================================
 // Maintenance to Monitor <-> Maintenance to Page Component Sync
 // ============================================================================
@@ -512,4 +677,66 @@ export async function syncMaintenanceToMonitorDeleteByMonitors(
       components.map((c) => c.id),
     ),
   );
+}
+
+/**
+ * Syncs maintenance_to_page_component inserts to maintenance_to_monitors
+ * This is the inverse of syncMaintenanceToMonitorInsertMany
+ */
+export async function syncMaintenanceToPageComponentInsertMany(
+  db: DB | Transaction,
+  maintenanceId: number,
+  pageComponentIds: number[],
+) {
+  if (pageComponentIds.length === 0) return;
+
+  // Find monitor IDs from the page components
+  // Only get components that have a monitorId (not external components)
+  const components = await db
+    .select({ monitorId: pageComponent.monitorId })
+    .from(pageComponent)
+    .where(
+      and(
+        inArray(pageComponent.id, pageComponentIds),
+        eq(pageComponent.type, "monitor"),
+      ),
+    );
+
+  if (components.length === 0) return;
+
+  // Extract unique monitor IDs (filter out nulls)
+  const monitorIds = [
+    ...new Set(
+      components
+        .map((c) => c.monitorId)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+
+  if (monitorIds.length === 0) return;
+
+  // Insert into maintenancesToMonitors
+  await db
+    .insert(maintenancesToMonitors)
+    .values(
+      monitorIds.map((monitorId) => ({
+        maintenanceId,
+        monitorId,
+      })),
+    )
+    .onConflictDoNothing();
+}
+
+/**
+ * Syncs maintenance_to_page_component deletes to maintenance_to_monitors
+ * This is the inverse of syncMaintenanceToMonitorDeleteByMaintenance
+ * When page components are removed from a maintenance, remove the corresponding monitors
+ */
+export async function syncMaintenanceToPageComponentDeleteByMaintenance(
+  db: DB | Transaction,
+  maintenanceId: number,
+) {
+  await db
+    .delete(maintenancesToMonitors)
+    .where(eq(maintenancesToMonitors.maintenanceId, maintenanceId));
 }

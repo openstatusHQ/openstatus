@@ -42,16 +42,12 @@ export function toValidMethod(value: string | undefined): MonitorMethod {
 
 /**
  * Validate required monitor fields common to all monitor types.
+ * Note: name, url/uri, and periodicity are validated by protovalidate interceptor.
  * Throws ConnectError if validation fails.
  */
 export function validateCommonMonitorFields(mon: {
-  name?: string;
   regions?: Region[];
 }): void {
-  if (!mon.name || mon.name.trim().length === 0) {
-    throw new ConnectError("Monitor name is required", Code.InvalidArgument);
-  }
-
   if (mon.regions && mon.regions.length > 0) {
     const regionStrings = regionsToStrings(mon.regions);
     const invalidRegions = validateRegions(regionStrings);

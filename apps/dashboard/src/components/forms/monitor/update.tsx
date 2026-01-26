@@ -16,7 +16,6 @@ import { FormOtel } from "./form-otel";
 import { FormResponseTime } from "./form-response-time";
 import { FormRetry, RETRY_DEFAULT } from "./form-retry";
 import { FormSchedulingRegions } from "./form-scheduling-regions";
-import { FormStatusPages } from "./form-status-pages";
 import { FormTags } from "./form-tags";
 import { FormVisibility } from "./form-visibility";
 
@@ -85,12 +84,6 @@ export function FormMonitorUpdate() {
         // TODO: open dialog
         console.error(err);
       },
-    }),
-  );
-
-  const updateStatusPagesMutation = useMutation(
-    trpc.monitor.updateStatusPages.mutationOptions({
-      onSuccess: () => refetch(),
     }),
   );
 
@@ -191,22 +184,6 @@ export function FormMonitorUpdate() {
             regions: values.regions,
             periodicity: values.periodicity,
             privateLocations: values.privateLocations,
-          });
-        }}
-      />
-      <FormStatusPages
-        statusPages={statusPages}
-        defaultValues={{
-          statusPages: monitor.pages.map(({ id }) => id),
-          description: monitor.description,
-          externalName: monitor.externalName ?? "",
-        }}
-        onSubmit={async (values) => {
-          await updateStatusPagesMutation.mutateAsync({
-            id: Number.parseInt(id),
-            statusPages: values.statusPages,
-            description: values.description,
-            externalName: values.externalName,
           });
         }}
       />

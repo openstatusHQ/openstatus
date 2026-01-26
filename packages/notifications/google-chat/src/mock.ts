@@ -26,6 +26,7 @@ const monitor: Monitor = {
   otelHeaders: [],
   followRedirects: true,
   retry: 3,
+  externalName: null,
 };
 
 const notification: Notification = {

@@ -4,6 +4,7 @@ import { and, db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
 import type { statusReportsApi } from "./index";
 import { ParamsSchema, StatusReportSchema } from "./schema";
 
@@ -36,7 +37,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
     const _statusUpdate = await db.query.statusReport.findFirst({
       with: {
         statusReportUpdates: true,
-        monitorsToStatusReports: true,
+        statusReportsToPageComponents: { with: { pageComponent: true } },
       },
       where: and(
         eq(statusReport.workspaceId, workspaceId),
@@ -51,7 +52,8 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       });
     }
 
-    const { statusReportUpdates, monitorsToStatusReports } = _statusUpdate;
+    const { statusReportUpdates, statusReportsToPageComponents } =
+      _statusUpdate;
 
     // most recent report information
     const { message, date } =
@@ -61,9 +63,9 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       ..._statusUpdate,
       message,
       date,
-      monitorIds: monitorsToStatusReports.length
-        ? monitorsToStatusReports.map((monitor) => monitor.monitorId)
-        : null,
+      monitorIds: statusReportsToPageComponents
+        .map((sr) => sr.pageComponent.monitorId)
+        .filter(notEmpty),
 
       statusReportUpdateIds: statusReportUpdates.map((update) => update.id),
     });

@@ -1,7 +1,7 @@
 import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { tb } from "@/libs/clients";
-import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
+import type { ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
@@ -33,6 +33,15 @@ import {
   stringsToRegions,
   timeRangeToKey,
 } from "./converters";
+import {
+  monitorCreateFailedError,
+  monitorInvalidDataError,
+  monitorNotFoundError,
+  monitorParseFailedError,
+  monitorRequiredError,
+  monitorRunCreateFailedError,
+  rateLimitExceededError,
+} from "./errors";
 import { checkMonitorLimits } from "./limits";
 import {
   getCommonDbValues,
@@ -67,17 +76,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
-      throw new ConnectError("Monitor is required", Code.InvalidArgument);
+      throw monitorRequiredError();
     }
 
     const mon = req.monitor;
 
-    // Validate required fields
+    // Validate required fields (proto validation handles name, url, periodicity)
     validateCommonMonitorFields(mon);
-
-    if (!mon.url || mon.url.trim().length === 0) {
-      throw new ConnectError("Monitor URL is required", Code.InvalidArgument);
-    }
 
     // Check workspace limits
     await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
@@ -112,13 +117,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .get();
 
     if (!newMonitor) {
-      throw new ConnectError("Failed to create monitor", Code.Internal);
+      throw monitorCreateFailedError();
     }
 
     // Parse through schema to transform fields
     const parsed = selectMonitorSchema.safeParse(newMonitor);
     if (!parsed.success) {
-      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+      throw monitorParseFailedError();
     }
 
     return {
@@ -132,17 +137,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
-      throw new ConnectError("Monitor is required", Code.InvalidArgument);
+      throw monitorRequiredError();
     }
 
     const mon = req.monitor;
 
-    // Validate required fields
+    // Validate required fields (proto validation handles name, uri, periodicity)
     validateCommonMonitorFields(mon);
-
-    if (!mon.uri || mon.uri.trim().length === 0) {
-      throw new ConnectError("Monitor URI is required", Code.InvalidArgument);
-    }
 
     // Check workspace limits
     await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
@@ -163,13 +164,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .get();
 
     if (!newMonitor) {
-      throw new ConnectError("Failed to create monitor", Code.Internal);
+      throw monitorCreateFailedError();
     }
 
     // Parse through schema to transform fields
     const parsed = selectMonitorSchema.safeParse(newMonitor);
     if (!parsed.success) {
-      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+      throw monitorParseFailedError();
     }
 
     return {
@@ -183,17 +184,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
-      throw new ConnectError("Monitor is required", Code.InvalidArgument);
+      throw monitorRequiredError();
     }
 
     const mon = req.monitor;
 
-    // Validate required fields
+    // Validate required fields (proto validation handles name, uri, periodicity)
     validateCommonMonitorFields(mon);
-
-    if (!mon.uri || mon.uri.trim().length === 0) {
-      throw new ConnectError("Monitor URI is required", Code.InvalidArgument);
-    }
 
     // Check workspace limits
     await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
@@ -218,13 +215,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .get();
 
     if (!newMonitor) {
-      throw new ConnectError("Failed to create monitor", Code.Internal);
+      throw monitorCreateFailedError();
     }
 
     // Parse through schema to transform fields
     const parsed = selectMonitorSchema.safeParse(newMonitor);
     if (!parsed.success) {
-      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+      throw monitorParseFailedError();
     }
 
     return {
@@ -252,22 +249,19 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     const count = countResult?.count ?? 0;
     if (count >= limits["synthetic-checks"]) {
-      throw new ConnectError("Upgrade for more checks", Code.ResourceExhausted);
+      throw rateLimitExceededError(limits["synthetic-checks"], count);
     }
 
     // Get the monitor
     const dbMon = await getMonitorById(Number(req.id), workspaceId);
     if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+      throw monitorNotFoundError(req.id);
     }
 
     // Validate monitor data
     const validateMonitor = selectMonitorSchema.safeParse(dbMon);
     if (!validateMonitor.success) {
-      throw new ConnectError(
-        "Invalid monitor data, please contact support",
-        Code.Internal,
-      );
+      throw monitorInvalidDataError(req.id);
     }
 
     const row = validateMonitor.data;
@@ -292,7 +286,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .get();
 
     if (!newRun) {
-      throw new ConnectError("Failed to create monitor run", Code.Internal);
+      throw monitorRunCreateFailedError(req.id);
     }
 
     // Trigger checks for each region in parallel
@@ -325,7 +319,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const dbMon = await getMonitorById(Number(req.id), workspaceId);
 
     if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+      throw monitorNotFoundError(req.id);
     }
 
     // Soft delete
@@ -405,6 +399,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       tcpMonitors,
       dnsMonitors,
       nextPageToken,
+      totalSize: totalCount,
     };
   },
 
@@ -415,13 +410,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Get the monitor
     const dbMon = await getMonitorById(Number(req.id), workspaceId);
     if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+      throw monitorNotFoundError(req.id);
     }
 
     // Parse monitor to get configured regions
     const parsed = selectMonitorSchema.safeParse(dbMon);
     if (!parsed.success) {
-      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+      throw monitorParseFailedError(req.id);
     }
 
     // Get monitor status only for configured regions
@@ -456,13 +451,13 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     // Get the monitor
     const dbMon = await getMonitorById(Number(req.id), workspaceId);
     if (!dbMon) {
-      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+      throw monitorNotFoundError(req.id);
     }
 
     // Parse monitor data
     const parsed = selectMonitorSchema.safeParse(dbMon);
     if (!parsed.success) {
-      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+      throw monitorParseFailedError(req.id);
     }
 
     const monitorData = parsed.data;

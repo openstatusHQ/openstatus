@@ -1,5 +1,5 @@
 import { schema } from "@openstatus/db";
-import { and, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { env } from "../env";
 import { db } from "../lib/db";
@@ -19,7 +19,7 @@ incidentRoute.get("/cleanup", async (c) => {
   const unresolvedIncidentMonitorIds = db
     .select({ monitorId: schema.incidentTable.monitorId })
     .from(schema.incidentTable)
-    .where(and(isNull(schema.incidentTable.resolvedAt)));
+    .where(isNull(schema.incidentTable.resolvedAt));
 
   const activeMonitorsWithUnresolvedIncidents = await db
     .select({ id: schema.monitor.id })

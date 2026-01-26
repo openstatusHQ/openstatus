@@ -32,7 +32,7 @@ export default function Page() {
   const sendMaintenanceUpdateMutation = useMutation(
     trpc.emailRouter.sendMaintenance.mutationOptions(),
   );
-  const createStatusPageMutation = useMutation(
+  const createMaintenanceMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
       onSuccess: (maintenance) => {
         // TODO: move to server
@@ -63,15 +63,15 @@ export default function Page() {
           </SectionHeader>
           <div>
             <FormSheetMaintenance
-              monitors={statusPage.monitors}
+              pageComponents={statusPage.pageComponents}
               onSubmit={async (values) => {
-                await createStatusPageMutation.mutateAsync({
+                await createMaintenanceMutation.mutateAsync({
                   pageId: Number.parseInt(id),
                   title: values.title,
                   message: values.message,
                   startDate: values.startDate,
                   endDate: values.endDate,
-                  monitors: values.monitors,
+                  pageComponents: values.pageComponents,
                   notifySubscribers: values.notifySubscribers,
                 });
               }}

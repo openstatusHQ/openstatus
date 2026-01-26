@@ -17,6 +17,26 @@ test("return all maintenances", async () => {
   expect(result.data?.length).toBeGreaterThan(0);
 });
 
+test("return all maintenances with monitorIds", async () => {
+  const res = await app.request("/v1/maintenance", {
+    method: "GET",
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+
+  const result = MaintenanceSchema.array().safeParse(await res.json());
+
+  expect(res.status).toBe(200);
+  expect(result.success).toBe(true);
+  expect(result.data?.length).toBeGreaterThan(0);
+  // Each maintenance should have monitorIds defined
+  for (const maintenance of result.data || []) {
+    expect(maintenance.monitorIds).toBeDefined();
+    expect(Array.isArray(maintenance.monitorIds)).toBe(true);
+  }
+});
+
 test("return empty maintenances", async () => {
   const res = await app.request("/v1/maintenance", {
     method: "GET",

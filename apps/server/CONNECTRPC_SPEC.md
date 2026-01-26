@@ -33,9 +33,6 @@ Both authentication methods resolve to the same workspace context:
    - Formats: `os_[32-char-hex]` (custom) or Unkey keys
    - Super admin: `sa_` prefix
 
-2. **JWT/Bearer tokens**
-   - Header: `Authorization: Bearer <token>`
-   - For service accounts and machine-to-machine auth
 
 ### Workspace Context
 - Workspace ID inferred from authenticated credentials
@@ -86,20 +83,12 @@ service MonitorService {
   // ListMonitors returns a paginated list of monitors.
   rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse);
 
-  // UpdateMonitor modifies an existing monitor.
-  rpc UpdateMonitor(UpdateMonitorRequest) returns (UpdateMonitorResponse);
-
   // DeleteMonitor removes a monitor.
   rpc DeleteMonitor(DeleteMonitorRequest) returns (DeleteMonitorResponse);
 
   // TriggerMonitor initiates an immediate check.
   rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse);
 
-  // PauseMonitor suspends monitoring.
-  rpc PauseMonitor(PauseMonitorRequest) returns (PauseMonitorResponse);
-
-  // ResumeMonitor resumes a paused monitor.
-  rpc ResumeMonitor(ResumeMonitorRequest) returns (ResumeMonitorResponse);
 }
 ```
 
@@ -156,7 +145,7 @@ message DnsMonitor {
 
 ### Pagination
 
-Cursor-based pagination for list operations:
+Offset-based pagination for list operations (page_token is the numeric offset):
 
 ```protobuf
 message ListMonitorsRequest {
@@ -478,7 +467,7 @@ Enable both JSON and binary formats for flexibility:
 | Validation | protovalidate |
 | Type modeling | Separate messages |
 | Port strategy | Same port, /rpc prefix |
-| Pagination | Cursor-based |
+| Pagination | Offset-based |
 | Rate limiting | Existing infrastructure |
 | Operations style | Separate methods |
 | Observability | Sentry + LogTape |
@@ -498,3 +487,18 @@ Enable both JSON and binary formats for flexibility:
 - [Buf Documentation](https://buf.build/docs)
 - [protovalidate](https://github.com/bufbuild/protovalidate)
 - [Google Error Model](https://cloud.google.com/apis/design/errors)
+
+## Future work
+
+
+- Implement additional services and procedure: 
+
+  // PauseMonitor suspends monitoring.
+  rpc PauseMonitor(PauseMonitorRequest) returns (PauseMonitorResponse);
+
+  // ResumeMonitor resumes a paused monitor.
+  rpc ResumeMonitor(ResumeMonitorRequest) returns (ResumeMonitorResponse);
+
+
+  // UpdateMonitor modifies an existing monitor.
+  rpc UpdateMonitor(UpdateMonitorRequest) returns (UpdateMonitorResponse);

@@ -29,7 +29,6 @@ export default function Page() {
   const { data: statusReports, refetch } = useQuery(
     trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const sendStatusReportUpdateMutation = useMutation(
     trpc.emailRouter.sendStatusReport.mutationOptions(),
   );
@@ -51,7 +50,7 @@ export default function Page() {
     }),
   );
 
-  if (!statusReports || !monitors || !page) return null;
+  if (!statusReports || !page) return null;
 
   const hasUnresolvedIssue = statusReports.some(
     (report) => report.status !== "resolved",
@@ -82,7 +81,7 @@ export default function Page() {
                   </>
                 ) : undefined
               }
-              monitors={page.monitors}
+              pageComponents={page.pageComponents}
               onSubmit={async (values) => {
                 // NOTE: for type safety, we need to check if the values have a date property
                 // because of the union type
@@ -91,7 +90,7 @@ export default function Page() {
                     title: values.title,
                     status: values.status,
                     pageId: Number.parseInt(id),
-                    monitors: values.monitors,
+                    pageComponents: values.pageComponents,
                     date: values.date,
                     message: values.message,
                     notifySubscribers: values.notifySubscribers,

@@ -18,20 +18,25 @@ import {
   StatusBannerTabsTrigger,
 } from "@/components/status-page/status-banner";
 import {
+  StatusEventAffected,
+  StatusEventAffectedBadge,
   StatusEventTimelineMaintenance,
-  StatusEventTimelineReport,
+  StatusEventTimelineReportUpdate,
 } from "@/components/status-page/status-events";
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 import { Separator } from "@/components/ui/separator";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
 export default function Page() {
+  const prefix = usePathnamePrefix();
   const { domain } = useParams<{ domain: string }>();
   const { cardType, barType, showUptime } = useStatusPage();
   const trpc = useTRPC();
@@ -69,12 +74,12 @@ export default function Page() {
   const { data: uptimeData, isLoading } = useQuery({
     ...trpc.statusPage.getUptime.queryOptions({
       slug: domain,
-      monitorIds:
-        pageInitial?.monitors?.map((monitor) => monitor.id.toString()) || [],
+      pageComponentIds:
+        pageInitial?.pageComponents?.map((c) => c.id.toString()) || [],
       cardType,
       barType,
     }),
-    enabled: !!pageInitial && pageInitial.monitors.length > 0,
+    enabled: !!pageInitial && pageInitial.pageComponents.length > 0,
   });
 
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
@@ -136,19 +141,43 @@ export default function Page() {
                     (report) => report.id === e.id,
                   );
                   if (!report) return null;
+                  const lastUpdate = report.statusReportUpdates.sort(
+                    (a, b) => b.date.getTime() - a.date.getTime(),
+                  )[0];
+                  if (!lastUpdate) return null;
                   return (
                     <StatusBannerTabsContent
                       value={`${e.type}-${e.id}`}
                       key={`${e.type}-${e.id}`}
                     >
-                      <StatusBannerContainer status={e.status}>
-                        <StatusBannerContent>
-                          <StatusEventTimelineReport
-                            updates={report.statusReportUpdates}
-                            withDot={false}
-                          />
-                        </StatusBannerContent>
-                      </StatusBannerContainer>
+                      <Link
+                        href={`${prefix ? `/${prefix}` : ""}/events/report/${report.id}`}
+                        className="rounded-lg"
+                      >
+                        <StatusBannerContainer status={e.status}>
+                          <StatusBannerContent>
+                            <StatusEventTimelineReportUpdate
+                              report={lastUpdate}
+                              withDot={false}
+                              isLast={true}
+                              withSeparator={false}
+                            />
+                            {report.statusReportsToPageComponents.length > 0 ? (
+                              <StatusEventAffected>
+                                {report.statusReportsToPageComponents.map(
+                                  (affected) => (
+                                    <StatusEventAffectedBadge
+                                      key={affected.pageComponent.id}
+                                    >
+                                      {affected.pageComponent.name}
+                                    </StatusEventAffectedBadge>
+                                  ),
+                                )}
+                              </StatusEventAffected>
+                            ) : null}
+                          </StatusBannerContent>
+                        </StatusBannerContainer>
+                      </Link>
                     </StatusBannerTabsContent>
                   );
                 }
@@ -162,14 +191,33 @@ export default function Page() {
                       value={`${e.type}-${e.id}`}
                       key={e.id}
                     >
-                      <StatusBannerContainer status={e.status}>
-                        <StatusBannerContent>
-                          <StatusEventTimelineMaintenance
-                            maintenance={maintenance}
-                            withDot={false}
-                          />
-                        </StatusBannerContent>
-                      </StatusBannerContainer>
+                      <Link
+                        href={`${prefix ? `/${prefix}` : ""}/events/maintenance/${maintenance.id}`}
+                        className="rounded-lg"
+                      >
+                        <StatusBannerContainer status={e.status}>
+                          <StatusBannerContent>
+                            <StatusEventTimelineMaintenance
+                              maintenance={maintenance}
+                              withDot={false}
+                            />
+                            {maintenance.maintenancesToPageComponents.length >
+                            0 ? (
+                              <StatusEventAffected>
+                                {maintenance.maintenancesToPageComponents.map(
+                                  (affected) => (
+                                    <StatusEventAffectedBadge
+                                      key={affected.pageComponent.id}
+                                    >
+                                      {affected.pageComponent.name}
+                                    </StatusEventAffectedBadge>
+                                  ),
+                                )}
+                              </StatusEventAffected>
+                            ) : null}
+                          </StatusBannerContent>
+                        </StatusBannerContainer>
+                      </Link>
                     </StatusBannerTabsContent>
                   );
                 }
@@ -194,16 +242,23 @@ export default function Page() {
         {page.trackers.length > 0 ? (
           <StatusContent className="gap-5">
             {page.trackers.map((tracker, index) => {
-              if (tracker.type === "monitor") {
-                const monitor = tracker.monitor;
+              if (tracker.type === "component") {
+                const component = tracker.component;
+
+                // Fetch uptime data by component ID
                 const { data, uptime } =
-                  uptimeData?.find((m) => m.id === monitor.id) ?? {};
+                  uptimeData?.find((u) => u.pageComponentId === component.id) ??
+                  {};
+
                 return (
                   <StatusMonitor
-                    key={`monitor-${monitor.id}`}
-                    status={monitor.status}
+                    key={`component-${component.id}`}
+                    status={component.status}
                     data={data}
-                    monitor={monitor}
+                    monitor={{
+                      name: component.name,
+                      description: component.description,
+                    }}
                     uptime={uptime}
                     showUptime={showUptime}
                     isLoading={isLoading}
@@ -219,15 +274,21 @@ export default function Page() {
                   // NOTE: we only want to open the first group if it is the first one
                   defaultOpen={firstGroupIndex === index && index === 0}
                 >
-                  {tracker.monitors.map((monitor) => {
+                  {tracker.components.map((component) => {
                     const { data, uptime } =
-                      uptimeData?.find((m) => m.id === monitor.id) ?? {};
+                      uptimeData?.find(
+                        (u) => u.pageComponentId === component.id,
+                      ) ?? {};
+
                     return (
                       <StatusMonitor
-                        key={`monitor-${monitor.id}`}
-                        status={monitor.status}
+                        key={`component-${component.id}`}
+                        status={component.status}
                         data={data}
-                        monitor={monitor}
+                        monitor={{
+                          name: component.name,
+                          description: component.description,
+                        }}
                         uptime={uptime}
                         showUptime={showUptime}
                         isLoading={isLoading}
@@ -250,8 +311,8 @@ export default function Page() {
               )
               .map((report) => ({
                 ...report,
-                affected: report.monitorsToStatusReports.map(
-                  (monitor) => monitor.monitor.name,
+                affected: report.statusReportsToPageComponents.map(
+                  (component) => component.pageComponent.name,
                 ),
                 updates: report.statusReportUpdates,
               }))}
@@ -264,8 +325,8 @@ export default function Page() {
               )
               .map((maintenance) => ({
                 ...maintenance,
-                affected: maintenance.maintenancesToMonitors.map(
-                  (monitor) => monitor.monitor.name,
+                affected: maintenance.maintenancesToPageComponents.map(
+                  (component) => component.pageComponent.name,
                 ),
               }))}
           />

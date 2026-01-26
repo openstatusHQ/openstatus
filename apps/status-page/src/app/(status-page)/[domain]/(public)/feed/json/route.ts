@@ -2,14 +2,6 @@ import { auth } from "@/lib/auth";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { notFound, unauthorized } from "next/navigation";
 
-const _STATUS_LABELS = {
-  investigating: "Investigating",
-  identified: "Identified",
-  monitoring: "Monitoring",
-  resolved: "Resolved",
-  maintenance: "Maintenance",
-} as const;
-
 export const revalidate = 60;
 
 export async function GET(
@@ -53,11 +45,26 @@ export async function GET(
       description: page.description,
       status: page.status,
       updatedAt: new Date(),
+      // @deprecated Use pageComponents instead
       monitors: page.monitors.map((monitor) => ({
         id: monitor.id,
         name: monitor.name,
         description: monitor.description,
         status: monitor.status,
+      })),
+      // New field - exposes the page component structure
+      pageComponents: page.pageComponents.map((component) => ({
+        id: component.id,
+        name: component.name,
+        description: component.description,
+        monitorId: component.monitorId,
+        order: component.order,
+        groupId: component.groupId,
+        groupOrder: component.groupOrder,
+      })),
+      pageComponentGroups: page.pageComponentGroups.map((group) => ({
+        id: group.id,
+        name: group.name,
       })),
       maintenances: page.maintenances.map((maintenance) => ({
         id: maintenance.id,
@@ -66,16 +73,28 @@ export async function GET(
         from: maintenance.from,
         to: maintenance.to,
         updatedAt: maintenance.updatedAt,
-        monitors: maintenance.maintenancesToMonitors.map(
-          (item) => item.monitor.id,
+        // @deprecated Use components instead - returning monitor IDs for backwards compatibility
+        monitors: maintenance.maintenancesToPageComponents
+          .map((item) => item.pageComponent.monitorId)
+          .filter((id): id is number => id !== null),
+        // New field - references page component IDs
+        pageComponents: maintenance.maintenancesToPageComponents.map(
+          (item) => item.pageComponentId,
         ),
       })),
       statusReports: page.statusReports.map((report) => ({
         id: report.id,
         title: report.title,
-        updateAt: report.updatedAt,
+        updatedAt: report.updatedAt,
         status: report.status,
-        monitors: report.monitorsToStatusReports.map((item) => item.monitor.id),
+        // @deprecated Use components instead - returning monitor IDs for backwards compatibility
+        monitors: report.statusReportsToPageComponents
+          .map((item) => item.pageComponent.monitorId)
+          .filter((id): id is number => id !== null),
+        // New field - references page component IDs
+        pageComponents: report.statusReportsToPageComponents.map(
+          (item) => item.pageComponentId,
+        ),
         statusReportUpdates: report.statusReportUpdates.map((update) => ({
           id: update.id,
           status: update.status,

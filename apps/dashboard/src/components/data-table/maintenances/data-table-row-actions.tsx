@@ -34,6 +34,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             pageId: row.original.pageId ?? undefined,
           }),
         });
+        queryClient.invalidateQueries({
+          queryKey: trpc.maintenance.list.queryKey({
+            period: "7d",
+          }),
+        });
       },
     }),
   );
@@ -44,6 +49,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         queryClient.refetchQueries({
           queryKey: trpc.maintenance.list.queryKey({
             pageId: row.original.pageId ?? undefined,
+          }),
+        });
+        queryClient.invalidateQueries({
+          queryKey: trpc.maintenance.list.queryKey({
+            period: "7d",
           }),
         });
       },
@@ -64,13 +74,13 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
       <FormSheetMaintenance
-        monitors={statusPage?.monitors ?? []}
+        pageComponents={statusPage?.pageComponents ?? []}
         defaultValues={{
           title: row.original.title,
           message: row.original.message,
           startDate: row.original.from,
           endDate: row.original.to,
-          monitors: row.original.monitors ?? [],
+          pageComponents: row.original.pageComponents?.map((c) => c.id) ?? [],
         }}
         onSubmit={async (values) => {
           await updateMaintenanceMutation.mutateAsync({
@@ -79,7 +89,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             message: values.message,
             startDate: values.startDate,
             endDate: values.endDate,
-            monitors: values.monitors,
+            pageComponents: values.pageComponents,
           });
         }}
       >

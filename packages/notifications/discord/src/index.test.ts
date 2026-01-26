@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import { COLOR_DECIMALS } from "@openstatus/notification-base";
 import {
   sendAlert,
   sendDegraded,
@@ -70,9 +71,10 @@ describe("Discord Notifications", () => {
     expect(callArgs[1].headers["Content-Type"]).toBe("application/json");
 
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("🚨 Alert");
-    expect(body.content).toContain("API Health Check");
-    expect(body.content).toContain("Something went wrong");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("is failing");
+    expect(body.embeds[0].title).toContain("API Health Check");
+    expect(body.embeds[0].color).toBe(COLOR_DECIMALS.red);
     expect(body.username).toBe("OpenStatus Notifications");
     expect(body.avatar_url).toBeDefined();
   });
@@ -95,8 +97,10 @@ describe("Discord Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("✅ Recovered");
-    expect(body.content).toContain("API Health Check");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("is recovered");
+    expect(body.embeds[0].title).toContain("API Health Check");
+    expect(body.embeds[0].color).toBe(COLOR_DECIMALS.green);
   });
 
   test("Send Degraded", async () => {
@@ -117,28 +121,26 @@ describe("Discord Notifications", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("⚠️ Degraded");
-    expect(body.content).toContain("API Health Check");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("is degraded");
+    expect(body.embeds[0].title).toContain("API Health Check");
+    expect(body.embeds[0].color).toBe(COLOR_DECIMALS.yellow); // Yellow color
   });
 
   test("Send Test Discord Message", async () => {
     const webhookUrl = "https://discord.com/api/webhooks/123456789/abcdefgh";
+    await sendTestDiscordMessage(webhookUrl);
 
-    const result = await sendTestDiscordMessage(webhookUrl);
-
-    expect(result).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
     const body = JSON.parse(callArgs[1].body);
-    expect(body.content).toContain("🧪 Test");
-    expect(body.content).toContain("OpenStatus");
+    expect(body.embeds).toBeDefined();
+    expect(body.embeds[0].title).toContain("Test Notification");
   });
 
   test("Send Test Discord Message with empty webhookUrl", async () => {
-    const result = await sendTestDiscordMessage("");
-
-    expect(result).toBe(false);
+    expect(sendTestDiscordMessage("")).rejects.toThrow();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

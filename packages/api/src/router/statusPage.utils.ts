@@ -1,11 +1,135 @@
 import type {
   Incident,
   Maintenance,
+  PageComponent,
+  PageComponentWithMonitorRelation,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 
-type StatusData = {
+/**
+ * Type for a monitor component with a non-null monitor relation
+ */
+export type MonitorComponentWithNonNullMonitor =
+  PageComponentWithMonitorRelation & {
+    type: "monitor";
+    monitorId: number;
+    monitor: NonNullable<PageComponentWithMonitorRelation["monitor"]>;
+  };
+
+/**
+ * Type guard to check if a pageComponent is a monitor type with a monitor relation
+ * Works with any object that has the shape of a pageComponent with a valid monitor relation
+ */
+export function isMonitorComponent(
+  component: PageComponentWithMonitorRelation,
+): component is MonitorComponentWithNonNullMonitor {
+  return (
+    component.type === "monitor" &&
+    component.monitor !== null &&
+    component.monitor !== undefined &&
+    component.monitor.active === true &&
+    component.monitor.deletedAt === null
+  );
+}
+
+/**
+ * Transforms pageComponents to legacy monitorsToStatusReports format
+ */
+export function transformToMonitorsToStatusReports(
+  statusReportId: number,
+  pageComponents: PageComponentWithMonitorRelation[],
+) {
+  const monitors = pageComponents.filter(isMonitorComponent);
+  return monitors.map((m) => ({
+    statusReportId,
+    monitorId: m.monitor.id,
+    monitor: m.monitor,
+  }));
+}
+
+/**
+ * Transforms pageComponents to legacy maintenancesToMonitors format
+ */
+export function transformToMaintenancesToMonitors(
+  maintenanceId: number,
+  pageComponents: PageComponentWithMonitorRelation[],
+) {
+  const monitors = pageComponents.filter(isMonitorComponent);
+  return monitors.map((m) => ({
+    maintenanceId,
+    monitorId: m.monitor.id,
+    monitor: m.monitor,
+  }));
+}
+
+/**
+ * Transforms statusReportsToPageComponents relations using a monitorByIdMap for performance
+ */
+export function transformStatusReportWithPageComponents<
+  T extends {
+    id: number;
+    statusReportsToPageComponents: Array<{
+      pageComponent: PageComponent | null;
+    }>;
+  },
+>(
+  report: T,
+  monitorByIdMap: Map<
+    number,
+    NonNullable<PageComponentWithMonitorRelation["monitor"]>
+  >,
+) {
+  return {
+    ...report,
+    monitorsToStatusReports: report.statusReportsToPageComponents.flatMap(
+      (r) => {
+        const pc = r.pageComponent;
+        if (!pc?.monitorId) return [];
+        const monitor = monitorByIdMap.get(pc.monitorId);
+        if (!monitor) return [];
+        return [
+          { statusReportId: report.id, monitorId: pc.monitorId, monitor },
+        ];
+      },
+    ),
+  };
+}
+
+/**
+ * Transforms maintenancesToPageComponents relations using a monitorByIdMap for performance
+ */
+export function transformMaintenanceWithPageComponents<
+  T extends {
+    id: number;
+    maintenancesToPageComponents: Array<{
+      pageComponent: PageComponent | null;
+    }>;
+  },
+>(
+  maintenance: T,
+  monitorByIdMap: Map<
+    number,
+    NonNullable<PageComponentWithMonitorRelation["monitor"]>
+  >,
+) {
+  return {
+    ...maintenance,
+    maintenancesToMonitors: maintenance.maintenancesToPageComponents.flatMap(
+      (mp) => {
+        const pc = mp.pageComponent;
+        if (!pc?.monitorId) return [];
+        const monitor = monitorByIdMap.get(pc.monitorId);
+        if (!monitor) return [];
+        return [
+          { maintenanceId: maintenance.id, monitorId: pc.monitorId, monitor },
+        ];
+      },
+    ),
+  };
+}
+
+export type StatusData = {
   day: string;
   count: number;
   ok: number;
@@ -100,33 +224,47 @@ export function getEvents({
   maintenances,
   incidents,
   reports,
+  pageComponentId,
   monitorId,
+  componentType,
   pastDays = 45,
 }: {
   maintenances: (Maintenance & {
-    maintenancesToMonitors: { monitorId: number }[];
+    maintenancesToPageComponents: {
+      pageComponent: PageComponent | null;
+    }[];
   })[];
   incidents: Incident[];
   reports: (StatusReport & {
-    monitorsToStatusReports: { monitorId: number }[];
+    statusReportsToPageComponents: {
+      pageComponent: PageComponent | null;
+    }[];
     statusReportUpdates: StatusReportUpdate[];
   })[];
+  pageComponentId?: number;
   monitorId?: number;
+  componentType?: "monitor" | "external";
   pastDays?: number;
 }): Event[] {
   const events: Event[] = [];
   const pastThreshod = new Date();
   pastThreshod.setDate(pastThreshod.getDate() - pastDays);
 
-  // Filter maintenances - if monitorId is provided, filter by monitor, otherwise include all
+  // Filter maintenances - prioritize pageComponentId, fallback to monitorId for backward compatibility
   maintenances
-    .filter((maintenance) =>
-      monitorId
-        ? maintenance.maintenancesToMonitors.some(
-            (m) => m.monitorId === monitorId,
-          )
-        : true,
-    )
+    .filter((maintenance) => {
+      if (pageComponentId) {
+        return maintenance.maintenancesToPageComponents.some(
+          (m) => m.pageComponent?.id === pageComponentId,
+        );
+      }
+      if (monitorId) {
+        return maintenance.maintenancesToPageComponents.some(
+          (m) => m.pageComponent?.monitorId === monitorId,
+        );
+      }
+      return true;
+    })
     .forEach((maintenance) => {
       if (maintenance.from < pastThreshod) return;
       events.push({
@@ -139,28 +277,41 @@ export function getEvents({
       });
     });
 
-  // Filter incidents - if monitorId is provided, filter by monitor, otherwise include all
-  incidents
-    .filter((incident) => (monitorId ? incident.monitorId === monitorId : true))
-    .forEach((incident) => {
-      if (!incident.createdAt || incident.createdAt < pastThreshod) return;
-      events.push({
-        id: incident.id,
-        name: "Downtime",
-        from: incident.createdAt,
-        to: incident.resolvedAt,
-        type: "incident",
-        status: "error" as const,
+  // Filter incidents - only for monitor-type components
+  // External components don't have incidents
+  if (componentType !== "external") {
+    incidents
+      .filter((incident) =>
+        monitorId ? incident.monitorId === monitorId : true,
+      )
+      .forEach((incident) => {
+        if (!incident.createdAt || incident.createdAt < pastThreshod) return;
+        events.push({
+          id: incident.id,
+          name: "Downtime",
+          from: incident.createdAt,
+          to: incident.resolvedAt,
+          type: "incident",
+          status: "error" as const,
+        });
       });
-    });
+  }
 
-  // Filter reports - if monitorId is provided, filter by monitor, otherwise include all
+  // Filter reports - prioritize pageComponentId, fallback to monitorId for backward compatibility
   reports
-    .filter((report) =>
-      monitorId
-        ? report.monitorsToStatusReports.some((m) => m.monitorId === monitorId)
-        : true,
-    )
+    .filter((report) => {
+      if (pageComponentId) {
+        return report.statusReportsToPageComponents.some(
+          (r) => r.pageComponent?.id === pageComponentId,
+        );
+      }
+      if (monitorId) {
+        return report.statusReportsToPageComponents.some(
+          (r) => r.pageComponent?.monitorId === monitorId,
+        );
+      }
+      return true;
+    })
     .map((report) => {
       const updates = report.statusReportUpdates.sort(
         (a, b) => a.date.getTime() - b.date.getTime(),

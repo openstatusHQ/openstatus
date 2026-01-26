@@ -40,6 +40,14 @@ OpenStatus is open-source synthetic monitoring platform.
   />
 </a>
 
+<a href="https://www.producthunt.com/posts/openstatus-2?utm_source=badge-top-post-badge&utm_medium=badge" target="_blank">
+  <img
+    alt="OpenStatus - #2 Product of the Day on Product Hunt"
+    src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=openstatus-2&theme=light&period=daily"
+    style="width: 250px; height: 55px;" width="250" height="55"
+  />
+</a>
+
 ## Contact us 💌
 
 If you are interested in our enterprise plan or need special features, please

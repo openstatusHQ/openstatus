@@ -86,8 +86,8 @@ message HTTPMonitor {
     lte: 10
   }];
 
-  // Whether to follow HTTP redirects (defaults to true).
-  bool follow_redirects = 10;
+  // Whether to follow HTTP redirects (defaults to true when not specified).
+  optional bool follow_redirects = 10;
 
   // Custom headers for the request.
   repeated Headers headers = 11 [(buf.validate.field).repeated.max_items = 20];

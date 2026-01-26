@@ -993,9 +993,9 @@ describe("MonitorService - Default Values", () => {
     try {
       expect(createData.monitor.timeout).toBe("45000");
       expect(createData.monitor.retry).toBe("3");
-      // In proto3, boolean defaults to false and is often omitted from JSON serialization
-      // followRedirects defaults to the proto3 default (false), not server-side default
-      expect(createData.monitor.followRedirects ?? false).toBe(false);
+      // Server applies business defaults when proto fields are omitted
+      // followRedirects defaults to true (as documented in the proto)
+      expect(createData.monitor.followRedirects).toBe(true);
       expect(createData.monitor.active ?? false).toBe(false);
       expect(createData.monitor.public ?? false).toBe(false);
       expect(createData.monitor.method).toBe("HTTP_METHOD_GET");

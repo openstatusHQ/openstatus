@@ -10,7 +10,7 @@ enum MonitorStatus {
   MONITOR_STATUS_UNSPECIFIED = 0;
   // MONITOR_STATUS_ACTIVE indicates the monitor is actively checking.
   MONITOR_STATUS_ACTIVE = 1;
-  // MONITOR_STATUS_DEGRADED indicates the monitor is paused.
+  // MONITOR_STATUS_DEGRADED indicates the monitor is degraded.
   MONITOR_STATUS_DEGRADED = 2;
   // MONITOR_STATUS_ERROR indicates the monitor is in an error state.
   MONITOR_STATUS_ERROR = 3;
