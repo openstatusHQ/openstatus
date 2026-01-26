@@ -23,5 +23,35 @@ mock.module("@openstatus/tinybird", () => ({
     get legacy_tcpStatus45d() {
       return () => Promise.resolve({ data: [] });
     }
+    // HTTP metrics for GetMonitorSummary
+    get httpMetricsDaily() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get httpMetricsWeekly() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get httpMetricsBiweekly() {
+      return () => Promise.resolve({ data: [] });
+    }
+    // TCP metrics for GetMonitorSummary
+    get tcpMetricsDaily() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get tcpMetricsWeekly() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get tcpMetricsBiweekly() {
+      return () => Promise.resolve({ data: [] });
+    }
+    // DNS metrics for GetMonitorSummary
+    get dnsMetricsDaily() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get dnsMetricsWeekly() {
+      return () => Promise.resolve({ data: [] });
+    }
+    get dnsMetricsBiweekly() {
+      return () => Promise.resolve({ data: [] });
+    }
   },
 }));

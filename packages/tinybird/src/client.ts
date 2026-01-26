@@ -16,7 +16,7 @@ export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
       this.tb = new NoopTinybird();
     } else {
       // Use local Tinybird container if available (Docker/self-hosted)

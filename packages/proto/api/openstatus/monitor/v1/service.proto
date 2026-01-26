@@ -10,6 +10,18 @@ import "openstatus/monitor/v1/tcp_monitor.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
 
+// TimeRange represents the time period for metrics aggregation.
+enum TimeRange {
+  // Unspecified time range.
+  TIME_RANGE_UNSPECIFIED = 0;
+  // Last 24 hours.
+  TIME_RANGE_1D = 1;
+  // Last 7 days.
+  TIME_RANGE_7D = 2;
+  // Last 14 days.
+  TIME_RANGE_14D = 3;
+}
+
 // MonitorService provides CRUD and operational commands for monitors.
 service MonitorService {
   // CreateHTTPMonitor creates a new HTTP monitor.
@@ -32,6 +44,9 @@ service MonitorService {
 
   // GetMonitorStatus returns the status of all regions for a monitor.
   rpc GetMonitorStatus(GetMonitorStatusRequest) returns (GetMonitorStatusResponse);
+
+  // GetMonitorSummary returns aggregated metrics and statistics for a monitor.
+  rpc GetMonitorSummary(GetMonitorSummaryRequest) returns (GetMonitorSummaryResponse);
 }
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -158,4 +173,55 @@ message MonitorConfig {
     // DNS monitor configuration.
     DNSMonitor dns = 3;
   }
+}
+
+// GetMonitorSummaryRequest is the request to get aggregated metrics for a monitor.
+message GetMonitorSummaryRequest {
+  // Monitor ID to get summary for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Time range for metrics aggregation (defaults to 1 day if unspecified).
+  TimeRange time_range = 2;
+
+  // Optional filter by regions. If empty, returns metrics for all regions.
+  repeated Region regions = 3 [(buf.validate.field).repeated.max_items = 28];
+}
+
+// GetMonitorSummaryResponse is the response containing aggregated metrics for a monitor.
+message GetMonitorSummaryResponse {
+  // Monitor ID.
+  string id = 1;
+
+  // Timestamp of the last check in RFC 3339 format.
+  string last_ping_at = 2;
+
+  // Total number of successful requests.
+  int64 total_successful = 3;
+
+  // Total number of degraded requests.
+  int64 total_degraded = 4;
+
+  // Total number of failed requests.
+  int64 total_failed = 5;
+
+  // 50th percentile (median) latency in milliseconds.
+  int64 p50 = 6;
+
+  // 75th percentile latency in milliseconds.
+  int64 p75 = 7;
+
+  // 90th percentile latency in milliseconds.
+  int64 p90 = 8;
+
+  // 95th percentile latency in milliseconds.
+  int64 p95 = 9;
+
+  // 99th percentile latency in milliseconds.
+  int64 p99 = 10;
+
+  // Time range used for the metrics.
+  TimeRange time_range = 11;
+
+  // Regions included in the metrics.
+  repeated Region regions = 12;
 }

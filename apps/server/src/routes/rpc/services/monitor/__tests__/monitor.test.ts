@@ -1420,3 +1420,220 @@ describe("MonitorService.GetMonitorStatus", () => {
     }
   });
 });
+
+describe("MonitorService.GetMonitorSummary", () => {
+  test("returns summary for HTTP monitor with correct structure", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.id).toBe(String(testHttpMonitorId));
+    // Proto3 JSON omits default values, so we check with defaults
+    // lastPingAt is empty string when no data, may be omitted
+    expect(data.lastPingAt ?? "").toBe("");
+    // Numeric values default to "0" but may be omitted in proto3 JSON
+    expect(data.totalSuccessful ?? "0").toBe("0");
+    expect(data.totalDegraded ?? "0").toBe("0");
+    expect(data.totalFailed ?? "0").toBe("0");
+    expect(data.p50 ?? "0").toBe("0");
+    expect(data.p75 ?? "0").toBe("0");
+    expect(data.p90 ?? "0").toBe("0");
+    expect(data.p95 ?? "0").toBe("0");
+    expect(data.p99 ?? "0").toBe("0");
+    expect(data.timeRange).toBe("TIME_RANGE_1D");
+    // regions array - check it exists (may be empty or omitted)
+    expect(Array.isArray(data.regions ?? [])).toBe(true);
+  });
+
+  test("returns summary for TCP monitor", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testTcpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.id).toBe(String(testTcpMonitorId));
+    expect(data).toHaveProperty("timeRange");
+  });
+
+  test("returns summary for DNS monitor", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testDnsMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.id).toBe(String(testDnsMonitorId));
+    expect(data).toHaveProperty("timeRange");
+  });
+
+  test("defaults to TIME_RANGE_1D when time range not specified", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.timeRange).toBe("TIME_RANGE_1D");
+  });
+
+  test("accepts TIME_RANGE_7D parameter", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testHttpMonitorId), timeRange: "TIME_RANGE_7D" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.timeRange).toBe("TIME_RANGE_7D");
+  });
+
+  test("accepts TIME_RANGE_14D parameter", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testHttpMonitorId), timeRange: "TIME_RANGE_14D" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.timeRange).toBe("TIME_RANGE_14D");
+  });
+
+  test("accepts regions filter parameter", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      {
+        id: String(testMonitorWithStatusId),
+        regions: ["REGION_AMS", "REGION_IAD"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.regions).toBeDefined();
+    expect(Array.isArray(data.regions)).toBe(true);
+    // Should return the requested regions
+    expect(data.regions).toContain("REGION_AMS");
+    expect(data.regions).toContain("REGION_IAD");
+    expect(data.regions).toHaveLength(2);
+  });
+
+  test("uses monitor configured regions when no regions filter provided", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testMonitorWithStatusId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.regions).toBeDefined();
+    // Monitor has regions: "ams,iad,fra"
+    expect(data.regions).toContain("REGION_AMS");
+    expect(data.regions).toContain("REGION_IAD");
+    expect(data.regions).toContain("REGION_FRA");
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetMonitorSummary", {
+      id: String(testHttpMonitorId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("cannot get summary from another workspace", async () => {
+    // Create a monitor for workspace 2
+    const otherWorkspaceMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-summary-other-ws`,
+        url: "https://other-ws-summary.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      // Try to get summary with workspace 1's key
+      const res = await connectRequest(
+        "GetMonitorSummary",
+        { id: String(otherWorkspaceMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      // Should return 404 (not found in this workspace)
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
+    }
+  });
+
+  test("returns zero values when no metrics data available", async () => {
+    // In test environment, Tinybird returns empty data (NoopTinybird)
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // Proto3 JSON omits default values, so we check with defaults
+    expect(data.totalSuccessful ?? "0").toBe("0");
+    expect(data.totalDegraded ?? "0").toBe("0");
+    expect(data.totalFailed ?? "0").toBe("0");
+    expect(data.p50 ?? "0").toBe("0");
+    expect(data.p75 ?? "0").toBe("0");
+    expect(data.p90 ?? "0").toBe("0");
+    expect(data.p95 ?? "0").toBe("0");
+    expect(data.p99 ?? "0").toBe("0");
+    expect(data.lastPingAt ?? "").toBe("");
+  });
+
+  test("invalid API key returns 401", async () => {
+    const res = await connectRequest(
+      "GetMonitorSummary",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "invalid-key" },
+    );
+
+    expect(res.status).toBe(401);
+  });
+});

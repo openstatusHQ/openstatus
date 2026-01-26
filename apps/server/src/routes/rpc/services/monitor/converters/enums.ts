@@ -2,6 +2,7 @@ import {
   HTTPMethod,
   MonitorStatus,
   Periodicity,
+  TimeRange,
 } from "@openstatus/proto/monitor/v1";
 
 // ============================================================
@@ -84,4 +85,21 @@ const DB_TO_MONITOR_STATUS: Record<string, MonitorStatus> = {
 
 export function stringToMonitorStatus(value: string): MonitorStatus {
   return DB_TO_MONITOR_STATUS[value] ?? MonitorStatus.UNSPECIFIED;
+}
+
+// ============================================================
+// Time Range Conversions
+// ============================================================
+
+export type TimeRangeKey = "1d" | "7d" | "14d";
+
+const TIME_RANGE_TO_KEY: Record<TimeRange, TimeRangeKey> = {
+  [TimeRange.TIME_RANGE_1D]: "1d",
+  [TimeRange.TIME_RANGE_7D]: "7d",
+  [TimeRange.TIME_RANGE_14D]: "14d",
+  [TimeRange.TIME_RANGE_UNSPECIFIED]: "1d",
+};
+
+export function timeRangeToKey(value: TimeRange): TimeRangeKey {
+  return TIME_RANGE_TO_KEY[value] ?? "1d";
 }

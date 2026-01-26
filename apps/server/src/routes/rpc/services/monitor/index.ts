@@ -1,5 +1,6 @@
 import { env } from "@/env";
 import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
+import { tb } from "@/libs/clients";
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
 import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
@@ -7,15 +8,18 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
+  GetMonitorSummaryResponse,
   HTTPMonitor,
   MonitorService,
   RegionStatus,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
+import { TimeRange } from "@openstatus/proto/monitor/v1";
 
 import { getRpcContext } from "../../interceptors";
 import {
   MONITOR_DEFAULTS,
+  type TimeRangeKey,
   dbMonitorToDnsProto,
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
@@ -23,8 +27,11 @@ import {
   headersToDbJson,
   httpAssertionsToDbJson,
   httpMethodToString,
+  regionsToStrings,
   stringToMonitorStatus,
   stringToRegion,
+  stringsToRegions,
+  timeRangeToKey,
 } from "./converters";
 import { checkMonitorLimits } from "./limits";
 import {
@@ -441,4 +448,132 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       regions,
     };
   },
+
+  async getMonitorSummary(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    // Get the monitor
+    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    if (!dbMon) {
+      throw new ConnectError(`Monitor ${req.id} not found`, Code.NotFound);
+    }
+
+    // Parse monitor data
+    const parsed = selectMonitorSchema.safeParse(dbMon);
+    if (!parsed.success) {
+      throw new ConnectError("Failed to parse monitor data", Code.Internal);
+    }
+
+    const monitorData = parsed.data;
+    const timeRangeKey = timeRangeToKey(req.timeRange);
+    const effectiveTimeRange =
+      req.timeRange === TimeRange.TIME_RANGE_UNSPECIFIED
+        ? TimeRange.TIME_RANGE_1D
+        : req.timeRange;
+
+    // Get regions to filter by (use request regions or monitor's configured regions)
+    const regionStrings =
+      req.regions.length > 0
+        ? regionsToStrings(req.regions)
+        : monitorData.regions;
+
+    // Build Tinybird query parameters
+    const queryParams = {
+      monitorId: req.id,
+      regions: regionStrings.length > 0 ? regionStrings : undefined,
+    };
+
+    // Call appropriate Tinybird method based on monitor type and time range
+    const metricsResult = await getMetricsByTypeAndRange(
+      monitorData.jobType,
+      timeRangeKey,
+      queryParams,
+    );
+
+    if (!metricsResult || metricsResult.data.length === 0) {
+      // Return empty response if no data
+      return {
+        $typeName: "openstatus.monitor.v1.GetMonitorSummaryResponse" as const,
+        id: req.id,
+        lastPingAt: "",
+        totalSuccessful: BigInt(0),
+        totalDegraded: BigInt(0),
+        totalFailed: BigInt(0),
+        p50: BigInt(0),
+        p75: BigInt(0),
+        p90: BigInt(0),
+        p95: BigInt(0),
+        p99: BigInt(0),
+        timeRange: effectiveTimeRange,
+        regions: stringsToRegions(regionStrings),
+      } satisfies GetMonitorSummaryResponse;
+    }
+
+    const metrics = metricsResult.data[0];
+
+    // Format last timestamp to RFC 3339
+    const lastPingAt = metrics.lastTimestamp
+      ? new Date(metrics.lastTimestamp).toISOString()
+      : "";
+
+    return {
+      $typeName: "openstatus.monitor.v1.GetMonitorSummaryResponse" as const,
+      id: req.id,
+      lastPingAt,
+      totalSuccessful: BigInt(metrics.success ?? 0),
+      totalDegraded: BigInt(metrics.degraded ?? 0),
+      totalFailed: BigInt(metrics.error ?? 0),
+      p50: BigInt(Math.round(metrics.p50Latency ?? 0)),
+      p75: BigInt(Math.round(metrics.p75Latency ?? 0)),
+      p90: BigInt(Math.round(metrics.p90Latency ?? 0)),
+      p95: BigInt(Math.round(metrics.p95Latency ?? 0)),
+      p99: BigInt(Math.round(metrics.p99Latency ?? 0)),
+      timeRange: effectiveTimeRange,
+      regions: stringsToRegions(regionStrings),
+    } satisfies GetMonitorSummaryResponse;
+  },
 };
+
+/**
+ * Get metrics from Tinybird based on monitor type and time range.
+ */
+async function getMetricsByTypeAndRange(
+  jobType: string,
+  timeRange: TimeRangeKey,
+  params: { monitorId: string; regions?: string[] },
+) {
+  switch (jobType) {
+    case "http":
+      switch (timeRange) {
+        case "1d":
+          return tb.httpMetricsDaily(params);
+        case "7d":
+          return tb.httpMetricsWeekly(params);
+        case "14d":
+          return tb.httpMetricsBiweekly(params);
+      }
+      break;
+    case "tcp":
+      switch (timeRange) {
+        case "1d":
+          return tb.tcpMetricsDaily(params);
+        case "7d":
+          return tb.tcpMetricsWeekly(params);
+        case "14d":
+          return tb.tcpMetricsBiweekly(params);
+      }
+      break;
+    case "dns":
+      switch (timeRange) {
+        case "1d":
+          return tb.dnsMetricsDaily(params);
+        case "7d":
+          return tb.dnsMetricsWeekly(params);
+        case "14d":
+          return tb.dnsMetricsBiweekly(params);
+      }
+      break;
+  }
+  return null;
+}
