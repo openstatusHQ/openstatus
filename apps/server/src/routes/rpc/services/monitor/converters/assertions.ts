@@ -1,4 +1,12 @@
 import { getLogger } from "@logtape/logtape";
+import {
+  type Assertion,
+  deserialize,
+  headerAssertion,
+  recordAssertion,
+  statusAssertion,
+  textBodyAssertion,
+} from "@openstatus/assertions";
 import type {
   BodyAssertion,
   HeaderAssertion,
@@ -18,18 +26,6 @@ import {
 const logger = getLogger("api-server");
 
 // ============================================================
-// Types for DB assertions
-// ============================================================
-
-interface DbAssertion {
-  type: string;
-  compare: string;
-  target: string | number;
-  key?: string;
-  record?: string;
-}
-
-// ============================================================
 // DB to Proto (for reads)
 // ============================================================
 
@@ -39,8 +35,9 @@ export interface HttpAssertions {
   headerAssertions: HeaderAssertion[];
 }
 
+
 /**
- * Parse database assertions JSON for HTTP monitors.
+ * Parse database assertions JSON for HTTP monitors using @openstatus/assertions package.
  */
 export function parseHttpAssertions(assertionsJson: string | null): HttpAssertions {
   const result: HttpAssertions = {
@@ -54,33 +51,41 @@ export function parseHttpAssertions(assertionsJson: string | null): HttpAssertio
   }
 
   try {
-    const assertions = JSON.parse(assertionsJson) as DbAssertion[];
+    const assertions = deserialize(assertionsJson);
 
     for (const a of assertions) {
-      switch (a.type) {
-        case "status":
+      const schema = a.schema;
+
+      switch (schema.type) {
+        case "status": {
+          const parsed = statusAssertion.parse(schema);
           result.statusCodeAssertions.push({
             $typeName: "openstatus.monitor.v1.StatusCodeAssertion",
-            target: BigInt(a.target),
-            comparator: compareToNumberComparator(a.compare),
+            target: BigInt(parsed.target),
+            comparator: compareToNumberComparator(parsed.compare),
           });
           break;
+        }
         case "textBody":
-        case "jsonBody":
+        case "jsonBody": {
+          const parsed = textBodyAssertion.parse(schema);
           result.bodyAssertions.push({
             $typeName: "openstatus.monitor.v1.BodyAssertion",
-            target: String(a.target),
-            comparator: compareToStringComparator(a.compare),
+            target: parsed.target,
+            comparator: compareToStringComparator(parsed.compare),
           });
           break;
-        case "header":
+        }
+        case "header": {
+          const parsed = headerAssertion.parse(schema);
           result.headerAssertions.push({
             $typeName: "openstatus.monitor.v1.HeaderAssertion",
-            target: String(a.target),
-            comparator: compareToStringComparator(a.compare),
-            key: a.key ?? "",
+            target: parsed.target,
+            comparator: compareToStringComparator(parsed.compare),
+            key: parsed.key,
           });
           break;
+        }
       }
     }
   } catch (error) {
@@ -94,7 +99,7 @@ export function parseHttpAssertions(assertionsJson: string | null): HttpAssertio
 }
 
 /**
- * Parse database assertions JSON for DNS monitors.
+ * Parse database assertions JSON for DNS monitors using @openstatus/assertions package.
  */
 export function parseDnsAssertions(assertionsJson: string | null): RecordAssertion[] {
   if (!assertionsJson) {
@@ -102,16 +107,22 @@ export function parseDnsAssertions(assertionsJson: string | null): RecordAsserti
   }
 
   try {
-    const assertions = JSON.parse(assertionsJson) as DbAssertion[];
+    // Normalize legacy DNS format before deserializing
+    const assertions = deserialize(assertionsJson);
 
     return assertions
-      .filter((a) => a.type === "dns" || a.record)
-      .map((a) => ({
-        $typeName: "openstatus.monitor.v1.RecordAssertion" as const,
-        record: a.record ?? "",
-        target: String(a.target),
-        comparator: compareToRecordComparator(a.compare),
-      }));
+      .filter((a): a is Assertion & { schema: { type: "dnsRecord" } } =>
+        a.schema.type === "dnsRecord"
+      )
+      .map((a) => {
+        const parsed = recordAssertion.parse(a.schema);
+        return {
+          $typeName: "openstatus.monitor.v1.RecordAssertion" as const,
+          record: parsed.key,
+          target: parsed.target,
+          comparator: compareToRecordComparator(parsed.compare),
+        };
+      });
   } catch (error) {
     logger.error("Failed to parse DNS assertions JSON", {
       error: error instanceof Error ? error.message : String(error),
@@ -127,16 +138,18 @@ export function parseDnsAssertions(assertionsJson: string | null): RecordAsserti
 
 /**
  * Convert HTTP monitor proto assertions to database JSON string.
+ * Uses @openstatus/assertions package format.
  */
 export function httpAssertionsToDbJson(
   statusCodeAssertions: StatusCodeAssertion[],
   bodyAssertions: BodyAssertion[],
   headerAssertions: HeaderAssertion[],
 ): string | undefined {
-  const assertions: DbAssertion[] = [];
+  const schemas: Array<Record<string, unknown>> = [];
 
   for (const s of statusCodeAssertions) {
-    assertions.push({
+    schemas.push({
+      version: "v1",
       type: "status",
       compare: numberComparatorToString(s.comparator),
       target: Number(s.target),
@@ -144,7 +157,8 @@ export function httpAssertionsToDbJson(
   }
 
   for (const b of bodyAssertions) {
-    assertions.push({
+    schemas.push({
+      version: "v1",
       type: "textBody",
       compare: stringComparatorToString(b.comparator),
       target: b.target,
@@ -152,7 +166,8 @@ export function httpAssertionsToDbJson(
   }
 
   for (const h of headerAssertions) {
-    assertions.push({
+    schemas.push({
+      version: "v1",
       type: "header",
       compare: stringComparatorToString(h.comparator),
       target: h.target,
@@ -160,11 +175,12 @@ export function httpAssertionsToDbJson(
     });
   }
 
-  return assertions.length > 0 ? JSON.stringify(assertions) : undefined;
+  return schemas.length > 0 ? JSON.stringify(schemas) : undefined;
 }
 
 /**
  * Convert DNS monitor proto assertions to database JSON string.
+ * Uses @openstatus/assertions package format with dnsRecord type.
  */
 export function dnsAssertionsToDbJson(
   recordAssertions: RecordAssertion[],
@@ -173,12 +189,13 @@ export function dnsAssertionsToDbJson(
     return undefined;
   }
 
-  const assertions = recordAssertions.map((a) => ({
-    type: "dns",
+  const schemas = recordAssertions.map((a) => ({
+    version: "v1",
+    type: "dnsRecord",
     compare: recordComparatorToString(a.comparator),
     target: a.target,
-    record: a.record,
+    key: a.record,
   }));
 
-  return JSON.stringify(assertions);
+  return JSON.stringify(schemas);
 }
