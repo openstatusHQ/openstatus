@@ -6,6 +6,7 @@ import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
@@ -56,6 +57,66 @@ function toValidMethod(value: string | undefined): MonitorMethod {
     return upper as MonitorMethod;
   }
   return "GET";
+}
+
+/**
+ * Check workspace limits for creating a new monitor.
+ * Throws ConnectError with RESOURCE_EXHAUSTED if any limit is exceeded.
+ */
+async function checkMonitorLimits(
+  workspaceId: number,
+  limits: Limits,
+  periodicity: Periodicity | undefined,
+  regions: Region[] | undefined,
+): Promise<void> {
+  // Check monitor count limit
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(monitor)
+    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
+    .get();
+
+  const count = countResult?.count ?? 0;
+  if (count >= limits.monitors) {
+    throw new ConnectError(
+      "Upgrade for more monitors",
+      Code.PermissionDenied,
+    );
+  }
+
+  // Check periodicity limit
+  if (periodicity) {
+    const periodicityStr = periodicityToString(periodicity);
+    if (!limits.periodicity.includes(periodicityStr)) {
+      throw new ConnectError(
+        "Upgrade for more periodicity options",
+        Code.PermissionDenied,
+      );
+    }
+  }
+
+  // Check regions limits
+  if (regions && regions.length > 0) {
+    const regionStrings = regionsToStrings(regions);
+
+    // Check max regions limit
+    if (regionStrings.length > limits["max-regions"]) {
+      throw new ConnectError(
+        "Upgrade for more regions",
+        Code.PermissionDenied,
+      );
+    }
+
+    // Check if each region is allowed
+    for (const region of regionStrings) {
+      if (!limits.regions.includes(region)) {
+        throw new ConnectError(
+          `Region '${region}' is not available on your plan. Upgrade for more regions`,
+          Code.PermissionDenied,
+        );
+      }
+    }
+  }
 }
 
 /**
@@ -142,6 +203,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
   async createHTTPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
       throw new ConnectError("Monitor is required", Code.InvalidArgument);
@@ -155,6 +217,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     if (!mon.url || mon.url.trim().length === 0) {
       throw new ConnectError("Monitor URL is required", Code.InvalidArgument);
     }
+
+    // Check workspace limits
+    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
 
     // Get common DB values
     const commonValues = getCommonDbValues(mon);
@@ -203,6 +268,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
   async createTCPMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
       throw new ConnectError("Monitor is required", Code.InvalidArgument);
@@ -216,6 +282,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     if (!mon.uri || mon.uri.trim().length === 0) {
       throw new ConnectError("Monitor URI is required", Code.InvalidArgument);
     }
+
+    // Check workspace limits
+    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
 
     // Get common DB values
     const commonValues = getCommonDbValues(mon);
@@ -250,6 +319,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
   async createDNSMonitor(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     if (!req.monitor) {
       throw new ConnectError("Monitor is required", Code.InvalidArgument);
@@ -263,6 +333,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     if (!mon.uri || mon.uri.trim().length === 0) {
       throw new ConnectError("Monitor URI is required", Code.InvalidArgument);
     }
+
+    // Check workspace limits
+    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
 
     // Get common DB values
     const commonValues = getCommonDbValues(mon);

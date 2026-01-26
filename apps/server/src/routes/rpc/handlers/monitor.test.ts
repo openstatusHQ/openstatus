@@ -972,6 +972,124 @@ describe("MonitorService - Default Values", () => {
   });
 });
 
+describe("MonitorService - Limits", () => {
+  // Workspace 2 has free plan with limited periodicity (10m, 30m, 1h) and max 6 regions
+  const FREE_PLAN_KEY = "2";
+
+  test("returns error when periodicity is not allowed by plan", async () => {
+    // Free plan only allows 10m, 30m, 1h - PERIODICITY_30S is not allowed
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-periodicity-limit",
+          url: "https://test-periodicity.example.com",
+          periodicity: "PERIODICITY_30S",
+          method: "HTTP_METHOD_GET",
+        },
+      },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    // Should return 403 (PermissionDenied maps to 403 in Connect)
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.message).toContain("periodicity");
+  });
+
+  test("returns error when too many regions specified", async () => {
+    // Free plan has max-regions: 6, try to use 8 regions
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-region-limit",
+          url: "https://test-region-limit.example.com",
+          periodicity: "PERIODICITY_10M",
+          method: "HTTP_METHOD_GET",
+          regions: [
+            "REGION_AMS",
+            "REGION_IAD",
+            "REGION_SIN",
+            "REGION_LHR",
+            "REGION_SYD",
+            "REGION_NRT",
+            "REGION_FRA",
+            "REGION_GRU",
+          ],
+        },
+      },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    // Should return 403 (PermissionDenied maps to 403 in Connect)
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.message).toContain("region");
+  });
+
+  test("allows valid periodicity for plan", async () => {
+    // PERIODICITY_10M is allowed on free plan
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-valid-periodicity",
+          url: "https://test-valid-periodicity.example.com",
+          periodicity: "PERIODICITY_10M",
+          method: "HTTP_METHOD_GET",
+        },
+      },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("TCP monitor respects periodicity limits", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {
+        monitor: {
+          name: "test-tcp-periodicity-limit",
+          uri: "tcp://test-periodicity.example.com:443",
+          periodicity: "PERIODICITY_30S",
+        },
+      },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.message).toContain("periodicity");
+  });
+
+  test("DNS monitor respects periodicity limits", async () => {
+    const res = await connectRequest(
+      "CreateDNSMonitor",
+      {
+        monitor: {
+          name: "test-dns-periodicity-limit",
+          uri: "test-periodicity.example.com",
+          periodicity: "PERIODICITY_30S",
+        },
+      },
+      { "x-openstatus-key": FREE_PLAN_KEY },
+    );
+
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.message).toContain("periodicity");
+  });
+});
+
 describe("MonitorService - Status Field", () => {
   test("HTTP monitor includes status field in response", async () => {
     const res = await connectRequest(
