@@ -971,3 +971,147 @@ describe("MonitorService - Default Values", () => {
     }
   });
 });
+
+describe("MonitorService - Status Field", () => {
+  test("HTTP monitor includes status field in response", async () => {
+    const res = await connectRequest(
+      "ListMonitors",
+      { pageSize: 100 },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const httpMonitors = data.httpMonitors || [];
+    const httpMon = httpMonitors.find(
+      (m: { id: string }) => m.id === String(testHttpMonitorId),
+    );
+
+    expect(httpMon).toBeDefined();
+    // Status should be present and be a valid MonitorStatus enum value
+    expect(httpMon.status).toBeDefined();
+    expect(["MONITOR_STATUS_ACTIVE", "MONITOR_STATUS_DEGRADED", "MONITOR_STATUS_ERROR", "MONITOR_STATUS_UNSPECIFIED"]).toContain(httpMon.status);
+  });
+
+  test("TCP monitor includes status field in response", async () => {
+    const res = await connectRequest(
+      "ListMonitors",
+      { pageSize: 100 },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const tcpMonitors = data.tcpMonitors || [];
+    const tcpMon = tcpMonitors.find(
+      (m: { id: string }) => m.id === String(testTcpMonitorId),
+    );
+
+    expect(tcpMon).toBeDefined();
+    // Status should be present and be a valid MonitorStatus enum value
+    expect(tcpMon.status).toBeDefined();
+    expect(["MONITOR_STATUS_ACTIVE", "MONITOR_STATUS_DEGRADED", "MONITOR_STATUS_ERROR", "MONITOR_STATUS_UNSPECIFIED"]).toContain(tcpMon.status);
+  });
+
+  test("DNS monitor includes status field in response", async () => {
+    const res = await connectRequest(
+      "ListMonitors",
+      { pageSize: 100 },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    const dnsMonitors = data.dnsMonitors || [];
+    const dnsMon = dnsMonitors.find(
+      (m: { id: string }) => m.id === String(testDnsMonitorId),
+    );
+
+    expect(dnsMon).toBeDefined();
+    // Status should be present and be a valid MonitorStatus enum value
+    expect(dnsMon.status).toBeDefined();
+    expect(["MONITOR_STATUS_ACTIVE", "MONITOR_STATUS_DEGRADED", "MONITOR_STATUS_ERROR", "MONITOR_STATUS_UNSPECIFIED"]).toContain(dnsMon.status);
+  });
+
+  test("newly created HTTP monitor has active status by default", async () => {
+    const res = await connectRequest(
+      "CreateHTTPMonitor",
+      {
+        monitor: {
+          name: "test-status-default",
+          url: "https://test-status.example.com",
+          periodicity: "PERIODICITY_5M",
+          method: "HTTP_METHOD_GET",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+
+    expect(data.monitor).toBeDefined();
+    // New monitors default to active status
+    expect(data.monitor.status).toBe("MONITOR_STATUS_ACTIVE");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("newly created TCP monitor has active status by default", async () => {
+    const res = await connectRequest(
+      "CreateTCPMonitor",
+      {
+        monitor: {
+          name: "test-tcp-status-default",
+          uri: "tcp://test-status.example.com:443",
+          periodicity: "PERIODICITY_5M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+
+    expect(data.monitor).toBeDefined();
+    // New monitors default to active status
+    expect(data.monitor.status).toBe("MONITOR_STATUS_ACTIVE");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+
+  test("newly created DNS monitor has active status by default", async () => {
+    const res = await connectRequest(
+      "CreateDNSMonitor",
+      {
+        monitor: {
+          name: "test-dns-status-default",
+          uri: "test-status.example.com",
+          periodicity: "PERIODICITY_5M",
+        },
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+
+    expect(data.monitor).toBeDefined();
+    // New monitors default to active status
+    expect(data.monitor.status).toBe("MONITOR_STATUS_ACTIVE");
+
+    // Clean up
+    if (data.monitor.id) {
+      await db.delete(monitor).where(eq(monitor.id, Number(data.monitor.id)));
+    }
+  });
+});

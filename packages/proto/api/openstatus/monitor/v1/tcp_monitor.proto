@@ -69,4 +69,7 @@ message TCPMonitor {
 
   // OpenTelemetry configuration for exporting metrics.
   OpenTelemetryConfig open_telemetry = 12;
+
+  // Current operational status of the monitor.
+  MonitorStatus status = 13;
 }

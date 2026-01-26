@@ -7,7 +7,7 @@ import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import type { OpenTelemetryConfig } from "./http_monitor_pb.ts";
 import { file_openstatus_monitor_v1_http_monitor } from "./http_monitor_pb.ts";
-import type { Periodicity, Region } from "./monitor_pb.ts";
+import type { MonitorStatus, Periodicity, Region } from "./monitor_pb.ts";
 import { file_openstatus_monitor_v1_monitor } from "./monitor_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/tcp_monitor.proto.
  */
 export const file_openstatus_monitor_v1_tcp_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLBAwoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEhcKA3VyaRgDIAEoCUIKukgHcgUQARiAEBJBCgtwZXJpb2RpY2l0eRgEIAEoDjIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5QZXJpb2RpY2l0eUIIukgFggECIAASHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABIdCgtkZXNjcmlwdGlvbhgIIAEoCUIIukgFcgMYgAgSDgoGYWN0aXZlGAkgASgIEg4KBnB1YmxpYxgKIAEoCBI/CgdyZWdpb25zGAsgAygOMh0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvbkIPukgMkgEJEBwiBYIBAiAAEkIKDm9wZW5fdGVsZW1ldHJ5GAwgASgLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLk9wZW5UZWxlbWV0cnlDb25maWdCDgoMX2RlZ3JhZGVkX2F0QlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvdGNwX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSL3AwoKVENQTW9uaXRvchIKCgJpZBgBIAEoCRIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEhcKA3VyaRgDIAEoCUIKukgHcgUQARiAEBJBCgtwZXJpb2RpY2l0eRgEIAEoDjIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5QZXJpb2RpY2l0eUIIukgFggECIAASHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABIdCgtkZXNjcmlwdGlvbhgIIAEoCUIIukgFcgMYgAgSDgoGYWN0aXZlGAkgASgIEg4KBnB1YmxpYxgKIAEoCBI/CgdyZWdpb25zGAsgAygOMh0ub3BlbnN0YXR1cy5tb25pdG9yLnYxLlJlZ2lvbkIPukgMkgEJEBwiBYIBAiAAEkIKDm9wZW5fdGVsZW1ldHJ5GAwgASgLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLk9wZW5UZWxlbWV0cnlDb25maWcSNAoGc3RhdHVzGA0gASgOMiQub3BlbnN0YXR1cy5tb25pdG9yLnYxLk1vbml0b3JTdGF0dXNCDgoMX2RlZ3JhZGVkX2F0QlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
 
 /**
  * TCPMonitor defines the configuration for a TCP monitor.
@@ -106,6 +106,13 @@ export type TCPMonitor = Message<"openstatus.monitor.v1.TCPMonitor"> & {
    * @generated from field: openstatus.monitor.v1.OpenTelemetryConfig open_telemetry = 12;
    */
   openTelemetry?: OpenTelemetryConfig;
+
+  /**
+   * Current operational status of the monitor.
+   *
+   * @generated from field: openstatus.monitor.v1.MonitorStatus status = 13;
+   */
+  status: MonitorStatus;
 };
 
 /**

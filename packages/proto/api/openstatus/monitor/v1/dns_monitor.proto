@@ -73,4 +73,7 @@ message DNSMonitor {
 
   // OpenTelemetry configuration for exporting metrics.
   OpenTelemetryConfig open_telemetry = 13;
+
+  // Current operational status of the monitor.
+  MonitorStatus status = 14;
 }

@@ -122,4 +122,7 @@ message HTTPMonitor {
 
   // OpenTelemetry configuration for exporting metrics.
   OpenTelemetryConfig open_telemetry = 19;
+
+  // Current operational status of the monitor.
+  MonitorStatus status = 20;
 }

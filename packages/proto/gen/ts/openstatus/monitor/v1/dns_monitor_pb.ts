@@ -9,7 +9,7 @@ import type { RecordAssertion } from "./assertions_pb.ts";
 import { file_openstatus_monitor_v1_assertions } from "./assertions_pb.ts";
 import type { OpenTelemetryConfig } from "./http_monitor_pb.ts";
 import { file_openstatus_monitor_v1_http_monitor } from "./http_monitor_pb.ts";
-import type { Periodicity, Region } from "./monitor_pb.ts";
+import type { MonitorStatus, Periodicity, Region } from "./monitor_pb.ts";
 import { file_openstatus_monitor_v1_monitor } from "./monitor_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/monitor/v1/dns_monitor.proto.
  */
 export const file_openstatus_monitor_v1_dns_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSKOBAoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEhcKA3VyaRgDIAEoCUIKukgHcgUQARiAEBJBCgtwZXJpb2RpY2l0eRgEIAEoDjIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5QZXJpb2RpY2l0eUIIukgFggECIAASHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABJLChFyZWNvcmRfYXNzZXJ0aW9ucxgIIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWNvcmRBc3NlcnRpb25CCLpIBZIBAhAKEh0KC2Rlc2NyaXB0aW9uGAkgASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYCiABKAgSDgoGcHVibGljGAsgASgIEj8KB3JlZ2lvbnMYDCADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYDSABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZ0IOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
+  fileDesc("CidvcGVuc3RhdHVzL21vbml0b3IvdjEvZG5zX21vbml0b3IucHJvdG8SFW9wZW5zdGF0dXMubW9uaXRvci52MSLEBAoKRE5TTW9uaXRvchIKCgJpZBgBIAEoCRIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEhcKA3VyaRgDIAEoCUIKukgHcgUQARiAEBJBCgtwZXJpb2RpY2l0eRgEIAEoDjIiLm9wZW5zdGF0dXMubW9uaXRvci52MS5QZXJpb2RpY2l0eUIIukgFggECIAASHAoHdGltZW91dBgFIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYBiABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYByABKANCCbpIBiIEGAooABJLChFyZWNvcmRfYXNzZXJ0aW9ucxgIIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5SZWNvcmRBc3NlcnRpb25CCLpIBZIBAhAKEh0KC2Rlc2NyaXB0aW9uGAkgASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYCiABKAgSDgoGcHVibGljGAsgASgIEj8KB3JlZ2lvbnMYDCADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYDSABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYDiABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1c0IOCgxfZGVncmFkZWRfYXRCU1pRZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL21vbml0b3IvdjE7bW9uaXRvcnYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_http_monitor, file_openstatus_monitor_v1_monitor]);
 
 /**
  * DNSMonitor defines the configuration for a DNS monitor.
@@ -115,6 +115,13 @@ export type DNSMonitor = Message<"openstatus.monitor.v1.DNSMonitor"> & {
    * @generated from field: openstatus.monitor.v1.OpenTelemetryConfig open_telemetry = 13;
    */
   openTelemetry?: OpenTelemetryConfig;
+
+  /**
+   * Current operational status of the monitor.
+   *
+   * @generated from field: openstatus.monitor.v1.MonitorStatus status = 14;
+   */
+  status: MonitorStatus;
 };
 
 /**

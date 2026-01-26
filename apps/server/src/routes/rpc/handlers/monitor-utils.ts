@@ -7,6 +7,7 @@ import {
   type HTTPMonitor,
   type HeaderAssertion,
   type Headers,
+  MonitorStatus,
   NumberComparator,
   type OpenTelemetryConfig,
   Periodicity,
@@ -253,6 +254,22 @@ export function parseOpenTelemetry(
     endpoint,
     headers: toProtoHeaders(headers),
   };
+}
+
+/**
+ * Convert database status string to proto MonitorStatus enum.
+ */
+export function stringToMonitorStatus(value: string): MonitorStatus {
+  switch (value) {
+    case "active":
+      return MonitorStatus.ACTIVE;
+    case "degraded":
+      return MonitorStatus.DEGRADED;
+    case "error":
+      return MonitorStatus.ERROR;
+    default:
+      return MonitorStatus.UNSPECIFIED;
+  }
 }
 
 /**
@@ -536,6 +553,7 @@ export function dbMonitorToHttpProto(dbMon: Monitor): HTTPMonitor {
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
+    status: stringToMonitorStatus(dbMon.status),
   };
 }
 
@@ -557,6 +575,7 @@ export function dbMonitorToTcpProto(dbMon: Monitor): TCPMonitor {
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
+    status: stringToMonitorStatus(dbMon.status),
   };
 }
 
@@ -579,6 +598,7 @@ export function dbMonitorToDnsProto(dbMon: Monitor): DNSMonitor {
     public: dbMon.public ?? MONITOR_DEFAULTS.public,
     regions: stringsToRegions(dbMon.regions),
     openTelemetry: parseOpenTelemetry(dbMon.otelEndpoint, dbMon.otelHeaders),
+    status: stringToMonitorStatus(dbMon.status),
   };
 }
 
