@@ -9,7 +9,7 @@ import { enumDesc, fileDesc } from "@bufbuild/protobuf/codegenv2";
  * Describes the file openstatus/monitor/v1/monitor.proto.
  */
 export const file_openstatus_monitor_v1_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxKoEBCg1Nb25pdG9yU3RhdHVzEh4KGk1PTklUT1JfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVTU9OSVRPUl9TVEFUVVNfQUNUSVZFEAESGwoXTU9OSVRPUl9TVEFUVVNfREVHUkFERUQQAhIYChRNT05JVE9SX1NUQVRVU19FUlJPUhADKqUBCgtQZXJpb2RpY2l0eRIbChdQRVJJT0RJQ0lUWV9VTlNQRUNJRklFRBAAEhMKD1BFUklPRElDSVRZXzMwUxABEhIKDlBFUklPRElDSVRZXzFNEAISEgoOUEVSSU9ESUNJVFlfNU0QAxITCg9QRVJJT0RJQ0lUWV8xME0QBBITCg9QRVJJT0RJQ0lUWV8zME0QBRISCg5QRVJJT0RJQ0lUWV8xSBAGKsMECgZSZWdpb24SFgoSUkVHSU9OX1VOU1BFQ0lGSUVEEAASDgoKUkVHSU9OX0FNUxABEg4KClJFR0lPTl9BUk4QAhIOCgpSRUdJT05fQk9NEAMSDgoKUkVHSU9OX0NERxAEEg4KClJFR0lPTl9ERlcQBRIOCgpSRUdJT05fRVdSEAYSDgoKUkVHSU9OX0ZSQRAHEg4KClJFR0lPTl9HUlUQCBIOCgpSRUdJT05fSUFEEAkSDgoKUkVHSU9OX0pOQhAKEg4KClJFR0lPTl9MQVgQCxIOCgpSRUdJT05fTEhSEAwSDgoKUkVHSU9OX05SVBANEg4KClJFR0lPTl9PUkQQDhIOCgpSRUdJT05fU0pDEA8SDgoKUkVHSU9OX1NJThAQEg4KClJFR0lPTl9TWUQQERIOCgpSRUdJT05fWVlaEBISFAoQUkVHSU9OX0tPWUVCX0ZSQRATEhQKEFJFR0lPTl9LT1lFQl9QQVIQFBIUChBSRUdJT05fS09ZRUJfU0ZPEBUSFAoQUkVHSU9OX0tPWUVCX1NJThAWEhQKEFJFR0lPTl9LT1lFQl9UWU8QFxIUChBSRUdJT05fS09ZRUJfV0FTEBgSGwoXUkVHSU9OX1JBSUxXQVlfVVNfV0VTVDIQGRIbChdSRUdJT05fUkFJTFdBWV9VU19FQVNUNBAaEh8KG1JFR0lPTl9SQUlMV0FZX0VVUk9QRV9XRVNUNBAbEiIKHlJFR0lPTl9SQUlMV0FZX0FTSUFfU09VVEhFQVNUMRAcQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z");
+  fileDesc("CiNvcGVuc3RhdHVzL21vbml0b3IvdjEvbW9uaXRvci5wcm90bxIVb3BlbnN0YXR1cy5tb25pdG9yLnYxKoEBCg1Nb25pdG9yU3RhdHVzEh4KGk1PTklUT1JfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGQoVTU9OSVRPUl9TVEFUVVNfQUNUSVZFEAESGwoXTU9OSVRPUl9TVEFUVVNfREVHUkFERUQQAhIYChRNT05JVE9SX1NUQVRVU19FUlJPUhADKqUBCgtQZXJpb2RpY2l0eRIbChdQRVJJT0RJQ0lUWV9VTlNQRUNJRklFRBAAEhMKD1BFUklPRElDSVRZXzMwUxABEhIKDlBFUklPRElDSVRZXzFNEAISEgoOUEVSSU9ESUNJVFlfNU0QAxITCg9QRVJJT0RJQ0lUWV8xME0QBBITCg9QRVJJT0RJQ0lUWV8zME0QBRISCg5QRVJJT0RJQ0lUWV8xSBAGKosFCgZSZWdpb24SFgoSUkVHSU9OX1VOU1BFQ0lGSUVEEAASEgoOUkVHSU9OX0ZMWV9BTVMQARISCg5SRUdJT05fRkxZX0FSThACEhIKDlJFR0lPTl9GTFlfQk9NEAMSEgoOUkVHSU9OX0ZMWV9DREcQBBISCg5SRUdJT05fRkxZX0RGVxAFEhIKDlJFR0lPTl9GTFlfRVdSEAYSEgoOUkVHSU9OX0ZMWV9GUkEQBxISCg5SRUdJT05fRkxZX0dSVRAIEhIKDlJFR0lPTl9GTFlfSUFEEAkSEgoOUkVHSU9OX0ZMWV9KTkIQChISCg5SRUdJT05fRkxZX0xBWBALEhIKDlJFR0lPTl9GTFlfTEhSEAwSEgoOUkVHSU9OX0ZMWV9OUlQQDRISCg5SRUdJT05fRkxZX09SRBAOEhIKDlJFR0lPTl9GTFlfU0pDEA8SEgoOUkVHSU9OX0ZMWV9TSU4QEBISCg5SRUdJT05fRkxZX1NZRBAREhIKDlJFR0lPTl9GTFlfWVlaEBISFAoQUkVHSU9OX0tPWUVCX0ZSQRATEhQKEFJFR0lPTl9LT1lFQl9QQVIQFBIUChBSRUdJT05fS09ZRUJfU0ZPEBUSFAoQUkVHSU9OX0tPWUVCX1NJThAWEhQKEFJFR0lPTl9LT1lFQl9UWU8QFxIUChBSRUdJT05fS09ZRUJfV0FTEBgSGwoXUkVHSU9OX1JBSUxXQVlfVVNfV0VTVDIQGRIbChdSRUdJT05fUkFJTFdBWV9VU19FQVNUNBAaEh8KG1JFR0lPTl9SQUlMV0FZX0VVUk9QRV9XRVNUNBAbEiIKHlJFR0lPTl9SQUlMV0FZX0FTSUFfU09VVEhFQVNUMRAcQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z");
 
 /**
  * MonitorStatus represents the operational status of a monitor.
@@ -116,128 +116,128 @@ export enum Region {
    *
    * Amsterdam, Netherlands
    *
-   * @generated from enum value: REGION_AMS = 1;
+   * @generated from enum value: REGION_FLY_AMS = 1;
    */
-  AMS = 1,
+  FLY_AMS = 1,
 
   /**
    * Stockholm, Sweden
    *
-   * @generated from enum value: REGION_ARN = 2;
+   * @generated from enum value: REGION_FLY_ARN = 2;
    */
-  ARN = 2,
+  FLY_ARN = 2,
 
   /**
    * Mumbai, India
    *
-   * @generated from enum value: REGION_BOM = 3;
+   * @generated from enum value: REGION_FLY_BOM = 3;
    */
-  BOM = 3,
+  FLY_BOM = 3,
 
   /**
    * Paris, France
    *
-   * @generated from enum value: REGION_CDG = 4;
+   * @generated from enum value: REGION_FLY_CDG = 4;
    */
-  CDG = 4,
+  FLY_CDG = 4,
 
   /**
    * Dallas, USA
    *
-   * @generated from enum value: REGION_DFW = 5;
+   * @generated from enum value: REGION_FLY_DFW = 5;
    */
-  DFW = 5,
+  FLY_DFW = 5,
 
   /**
    * Newark, USA
    *
-   * @generated from enum value: REGION_EWR = 6;
+   * @generated from enum value: REGION_FLY_EWR = 6;
    */
-  EWR = 6,
+  FLY_EWR = 6,
 
   /**
    * Frankfurt, Germany
    *
-   * @generated from enum value: REGION_FRA = 7;
+   * @generated from enum value: REGION_FLY_FRA = 7;
    */
-  FRA = 7,
+  FLY_FRA = 7,
 
   /**
    * São Paulo, Brazil
    *
-   * @generated from enum value: REGION_GRU = 8;
+   * @generated from enum value: REGION_FLY_GRU = 8;
    */
-  GRU = 8,
+  FLY_GRU = 8,
 
   /**
    * Ashburn, USA
    *
-   * @generated from enum value: REGION_IAD = 9;
+   * @generated from enum value: REGION_FLY_IAD = 9;
    */
-  IAD = 9,
+  FLY_IAD = 9,
 
   /**
    * Johannesburg, South Africa
    *
-   * @generated from enum value: REGION_JNB = 10;
+   * @generated from enum value: REGION_FLY_JNB = 10;
    */
-  JNB = 10,
+  FLY_JNB = 10,
 
   /**
    * Los Angeles, USA
    *
-   * @generated from enum value: REGION_LAX = 11;
+   * @generated from enum value: REGION_FLY_LAX = 11;
    */
-  LAX = 11,
+  FLY_LAX = 11,
 
   /**
    * London, UK
    *
-   * @generated from enum value: REGION_LHR = 12;
+   * @generated from enum value: REGION_FLY_LHR = 12;
    */
-  LHR = 12,
+  FLY_LHR = 12,
 
   /**
    * Tokyo, Japan
    *
-   * @generated from enum value: REGION_NRT = 13;
+   * @generated from enum value: REGION_FLY_NRT = 13;
    */
-  NRT = 13,
+  FLY_NRT = 13,
 
   /**
    * Chicago, USA
    *
-   * @generated from enum value: REGION_ORD = 14;
+   * @generated from enum value: REGION_FLY_ORD = 14;
    */
-  ORD = 14,
+  FLY_ORD = 14,
 
   /**
    * San Jose, USA
    *
-   * @generated from enum value: REGION_SJC = 15;
+   * @generated from enum value: REGION_FLY_SJC = 15;
    */
-  SJC = 15,
+  FLY_SJC = 15,
 
   /**
    * Singapore
    *
-   * @generated from enum value: REGION_SIN = 16;
+   * @generated from enum value: REGION_FLY_SIN = 16;
    */
-  SIN = 16,
+  FLY_SIN = 16,
 
   /**
    * Sydney, Australia
    *
-   * @generated from enum value: REGION_SYD = 17;
+   * @generated from enum value: REGION_FLY_SYD = 17;
    */
-  SYD = 17,
+  FLY_SYD = 17,
 
   /**
    * Toronto, Canada
    *
-   * @generated from enum value: REGION_YYZ = 18;
+   * @generated from enum value: REGION_FLY_YYZ = 18;
    */
-  YYZ = 18,
+  FLY_YYZ = 18,
 
   /**
    * Koyeb regions
