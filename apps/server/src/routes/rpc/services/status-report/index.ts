@@ -31,10 +31,7 @@ async function getStatusReportById(id: number, workspaceId: number) {
     .select()
     .from(statusReport)
     .where(
-      and(
-        eq(statusReport.id, id),
-        eq(statusReport.workspaceId, workspaceId),
-      ),
+      and(eq(statusReport.id, id), eq(statusReport.workspaceId, workspaceId)),
     )
     .get();
 }
@@ -168,7 +165,10 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       }
 
       // Create page component associations
-      await updatePageComponentAssociations(newReport.id, validPageComponentIds);
+      await updatePageComponentAssociations(
+        newReport.id,
+        validPageComponentIds,
+      );
 
       // Create the initial update
       const newUpdate = await db
@@ -190,11 +190,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       const updates = await getUpdatesForReport(newReport.id);
 
       return {
-        statusReport: dbReportToProto(
-          newReport,
-          req.pageComponentIds,
-          updates,
-        ),
+        statusReport: dbReportToProto(newReport, req.pageComponentIds, updates),
       };
     },
 
@@ -261,7 +257,9 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       // Get page component IDs for each report
       const statusReports = await Promise.all(
         reports.map(async (report) => {
-          const pageComponentIds = await getPageComponentIdsForReport(report.id);
+          const pageComponentIds = await getPageComponentIdsForReport(
+            report.id,
+          );
           return dbReportToProtoSummary(report, pageComponentIds);
         }),
       );

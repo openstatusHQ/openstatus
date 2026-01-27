@@ -41,7 +41,9 @@ function createError(
 /**
  * Creates a "status report not found" error.
  */
-export function statusReportNotFoundError(statusReportId: string): ConnectError {
+export function statusReportNotFoundError(
+  statusReportId: string,
+): ConnectError {
   return createError(
     "Status report not found",
     Code.NotFound,

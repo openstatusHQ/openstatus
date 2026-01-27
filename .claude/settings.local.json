@@ -1,7 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(buf lint:*)"
-    ]
+    "allow": ["Bash(buf lint:*)"]
   }
 }
