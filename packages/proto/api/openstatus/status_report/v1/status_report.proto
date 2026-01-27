@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package openstatus.status_report.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_report/v1;statusreportv1";
+
+// StatusReportStatus represents the current state of a status report.
+enum StatusReportStatus {
+  STATUS_REPORT_STATUS_UNSPECIFIED = 0;
+  STATUS_REPORT_STATUS_INVESTIGATING = 1;
+  STATUS_REPORT_STATUS_IDENTIFIED = 2;
+  STATUS_REPORT_STATUS_MONITORING = 3;
+  STATUS_REPORT_STATUS_RESOLVED = 4;
+}
+
+// StatusReportUpdate represents a single update entry in a status report timeline.
+message StatusReportUpdate {
+  // Unique identifier for the update.
+  string id = 1;
+
+  // Status at the time of this update.
+  StatusReportStatus status = 2;
+
+  // Timestamp when this update occurred (RFC 3339 format).
+  string date = 3;
+
+  // Message describing the update.
+  string message = 4;
+
+  // Timestamp when the update was created (RFC 3339 format).
+  string created_at = 5;
+}
+
+// StatusReportSummary represents metadata for a status report (used in list responses).
+message StatusReportSummary {
+  // Unique identifier for the status report.
+  string id = 1;
+
+  // Current status of the report.
+  StatusReportStatus status = 2;
+
+  // Title of the status report.
+  string title = 3;
+
+  // IDs of affected page components.
+  repeated string page_component_ids = 4;
+
+  // Timestamp when the report was created (RFC 3339 format).
+  string created_at = 5;
+
+  // Timestamp when the report was last updated (RFC 3339 format).
+  string updated_at = 6;
+}
+
+// StatusReport represents an incident or maintenance report with full details.
+message StatusReport {
+  // Unique identifier for the status report.
+  string id = 1;
+
+  // Current status of the report.
+  StatusReportStatus status = 2;
+
+  // Title of the status report.
+  string title = 3;
+
+  // IDs of affected page components.
+  repeated string page_component_ids = 4;
+
+  // Timeline of updates for this report (only included in GetStatusReport).
+  repeated StatusReportUpdate updates = 5;
+
+  // Timestamp when the report was created (RFC 3339 format).
+  string created_at = 6;
+
+  // Timestamp when the report was last updated (RFC 3339 format).
+  string updated_at = 7;
+}

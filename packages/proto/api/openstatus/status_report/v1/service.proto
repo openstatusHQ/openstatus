@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package openstatus.status_report.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/status_report/v1/status_report.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_report/v1;statusreportv1";
+
+// StatusReportService provides CRUD operations for status reports.
+service StatusReportService {
+  // CreateStatusReport creates a new status report.
+  rpc CreateStatusReport(CreateStatusReportRequest) returns (CreateStatusReportResponse);
+
+  // GetStatusReport retrieves a specific status report by ID (includes full update timeline).
+  rpc GetStatusReport(GetStatusReportRequest) returns (GetStatusReportResponse);
+
+  // ListStatusReports returns all status reports for the workspace (metadata only).
+  rpc ListStatusReports(ListStatusReportsRequest) returns (ListStatusReportsResponse);
+
+  // UpdateStatusReport updates the metadata of a status report (title, page components).
+  rpc UpdateStatusReport(UpdateStatusReportRequest) returns (UpdateStatusReportResponse);
+
+  // DeleteStatusReport removes a status report and all its updates.
+  rpc DeleteStatusReport(DeleteStatusReportRequest) returns (DeleteStatusReportResponse);
+
+  // AddStatusReportUpdate adds a new update to an existing status report timeline.
+  rpc AddStatusReportUpdate(AddStatusReportUpdateRequest) returns (AddStatusReportUpdateResponse);
+}
+
+// --- Create Status Report ---
+
+message CreateStatusReportRequest {
+  // Title of the status report (required).
+  string title = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Initial status (required).
+  StatusReportStatus status = 2 [(buf.validate.field).enum.defined_only = true];
+
+  // Initial message describing the incident (required).
+  string message = 3 [(buf.validate.field).string.min_len = 1];
+
+  // Date when the event occurred (RFC 3339 format, required).
+  string date = 4 [(buf.validate.field).string.min_len = 1];
+
+  // Page component IDs to associate with this report (required).
+  repeated string page_component_ids = 5 [(buf.validate.field).repeated.min_items = 1];
+}
+
+message CreateStatusReportResponse {
+  // The created status report.
+  StatusReport status_report = 1;
+}
+
+// --- Get Status Report ---
+
+message GetStatusReportRequest {
+  // ID of the status report to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetStatusReportResponse {
+  // The requested status report.
+  StatusReport status_report = 1;
+}
+
+// --- List Status Reports ---
+
+message ListStatusReportsRequest {
+  // Maximum number of reports to return (1-100, defaults to 50).
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Number of reports to skip for pagination (defaults to 0).
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+
+  // Filter by status (optional). If empty, returns all statuses.
+  repeated StatusReportStatus statuses = 3;
+}
+
+message ListStatusReportsResponse {
+  // List of status reports (metadata only, use GetStatusReport for full details).
+  repeated StatusReportSummary status_reports = 1;
+
+  // Total number of reports matching the filter.
+  int32 total_size = 2;
+}
+
+// --- Update Status Report ---
+
+message UpdateStatusReportRequest {
+  // ID of the status report to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New title for the report (optional).
+  optional string title = 2;
+
+  // New list of page component IDs (optional, replaces existing list).
+  repeated string page_component_ids = 3;
+}
+
+message UpdateStatusReportResponse {
+  // The updated status report.
+  StatusReport status_report = 1;
+}
+
+// --- Delete Status Report ---
+
+message DeleteStatusReportRequest {
+  // ID of the status report to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteStatusReportResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// --- Add Status Report Update ---
+
+message AddStatusReportUpdateRequest {
+  // ID of the status report to update (required).
+  string status_report_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New status for the report (required).
+  StatusReportStatus status = 2 [(buf.validate.field).enum.defined_only = true];
+
+  // Message describing what changed (required).
+  string message = 3 [(buf.validate.field).string.min_len = 1];
+
+  // Optional date for the update. Defaults to current time if not provided.
+  optional string date = 4;
+}
+
+message AddStatusReportUpdateResponse {
+  // The updated status report with the new update included.
+  StatusReport status_report = 1;
+}
