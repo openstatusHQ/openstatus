@@ -447,15 +447,15 @@ describe("StatusReportService.CreateStatusReport", () => {
       .where(eq(statusReport.id, Number(data.statusReport.id)));
   });
 
-  test("sets pageId to null when no components provided", async () => {
+  test("preserves pageId when no components provided", async () => {
     const res = await connectRequest(
       "CreateStatusReport",
       {
         title: `${TEST_PREFIX}-null-pageid`,
         status: "STATUS_REPORT_STATUS_INVESTIGATING",
-        message: "Test null pageId when no components.",
+        message: "Test pageId preserved when no components.",
         date: new Date().toISOString(),
-        pageId: "1", // This should be ignored
+        pageId: "1",
         pageComponentIds: [],
       },
       { "x-openstatus-key": "1" },
@@ -466,13 +466,13 @@ describe("StatusReportService.CreateStatusReport", () => {
     const data = await res.json();
     expect(data).toHaveProperty("statusReport");
 
-    // Verify the pageId is null
+    // Verify the pageId is preserved from the request
     const createdReport = await db
       .select()
       .from(statusReport)
       .where(eq(statusReport.id, Number(data.statusReport.id)))
       .get();
-    expect(createdReport?.pageId).toBeNull();
+    expect(createdReport?.pageId).toBe(1);
 
     // Clean up
     await db
