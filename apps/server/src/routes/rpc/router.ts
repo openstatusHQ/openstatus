@@ -1,6 +1,7 @@
 import { createConnectRouter } from "@connectrpc/connect";
 import { HealthService } from "@openstatus/proto/health/v1";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
+import { StatusReportService } from "@openstatus/proto/status_report/v1";
 
 import {
   authInterceptor,
@@ -10,6 +11,7 @@ import {
 } from "./interceptors";
 import { healthServiceImpl } from "./services/health";
 import { monitorServiceImpl } from "./services/monitor";
+import { statusReportServiceImpl } from "./services/status-report";
 
 /**
  * Create ConnectRPC router with services.
@@ -28,4 +30,5 @@ export const routes = createConnectRouter({
   ],
 })
   .service(MonitorService, monitorServiceImpl)
-  .service(HealthService, healthServiceImpl);
+  .service(HealthService, healthServiceImpl)
+  .service(StatusReportService, statusReportServiceImpl);

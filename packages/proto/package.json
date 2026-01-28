@@ -16,6 +16,10 @@
     "./health/v1": {
       "import": "./gen/ts/openstatus/health/v1/index.ts",
       "types": "./gen/ts/openstatus/health/v1/index.ts"
+    },
+    "./status_report/v1": {
+      "import": "./gen/ts/openstatus/status_report/v1/index.ts",
+      "types": "./gen/ts/openstatus/status_report/v1/index.ts"
     }
   },
   "scripts": {
