@@ -39,7 +39,6 @@ import {
   notificationsToMonitors,
   privateLocationToMonitors,
   selectIncidentSchema,
-  selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
@@ -239,9 +238,6 @@ export const monitorRouter = createTRPCRouter({
           monitorTagsToMonitors: {
             with: { monitorTag: true },
           },
-          maintenancesToMonitors: {
-            with: { maintenance: true },
-          },
           incidents: true,
           privateLocationToMonitors: {
             with: { privateLocation: true },
@@ -255,7 +251,6 @@ export const monitorRouter = createTRPCRouter({
         .extend({
           notifications: z.array(selectNotificationSchema).prefault([]),
           tags: z.array(selectMonitorTagSchema).prefault([]),
-          maintenances: z.array(selectMaintenanceSchema).prefault([]),
           incidents: z.array(selectIncidentSchema).prefault([]),
           privateLocations: z.array(selectPrivateLocationSchema).prefault([]),
         })
@@ -265,7 +260,6 @@ export const monitorRouter = createTRPCRouter({
             (m) => m.notification,
           ),
           tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
-          maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
           incidents: data.incidents,
           privateLocations: data.privateLocationToMonitors.map(
             (p) => p.privateLocation,

@@ -54,8 +54,6 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
     )
     .prefault([]),
 });
-// TODO: it would be nice to automatically add the monitor relation here
-// .refine((data) => ({ monitors: data.maintenancesToMonitors.map((m) => m.monitorId) }));
 
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
