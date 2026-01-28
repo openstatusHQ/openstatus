@@ -379,15 +379,34 @@ describe("StatusReportService.CreateStatusReport", () => {
     );
   });
 
-  test("derives pageId from components when creating status report", async () => {
+  test("returns error when pageId does not match components page", async () => {
     const res = await connectRequest(
       "CreateStatusReport",
       {
-        title: `${TEST_PREFIX}-derived-pageid`,
+        title: `${TEST_PREFIX}-pageid-mismatch`,
         status: "STATUS_REPORT_STATUS_INVESTIGATING",
-        message: "Test deriving pageId from components.",
+        message: "Test pageId mismatch with components.",
         date: new Date().toISOString(),
-        pageId: "1", // This is ignored, pageId is derived from components
+        pageId: "1", // This doesn't match testPage2ComponentId's page
+        pageComponentIds: [String(testPage2ComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("does not match the page ID");
+  });
+
+  test("creates status report when pageId matches component page", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-matching-pageid`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Test with matching pageId and components.",
+        date: new Date().toISOString(),
+        pageId: String(testPage2Id), // Matching the component's page
         pageComponentIds: [String(testPage2ComponentId)],
       },
       { "x-openstatus-key": "1" },
@@ -401,7 +420,7 @@ describe("StatusReportService.CreateStatusReport", () => {
       String(testPage2ComponentId),
     );
 
-    // Verify the pageId was derived from the component (page 2)
+    // Verify the pageId was set correctly
     const createdReport = await db
       .select()
       .from(statusReport)
