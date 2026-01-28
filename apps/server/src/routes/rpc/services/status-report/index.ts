@@ -297,7 +297,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         }
 
         // Use the derived pageId from components (null if no components)
-        const pageId = derivedPageId;
+        const pageId = Number(providedPageId);
 
         // Create the status report
         const report = await tx
