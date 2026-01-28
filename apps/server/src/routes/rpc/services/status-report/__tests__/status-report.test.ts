@@ -1,13 +1,29 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
   pageComponent,
+  pageSubscriber,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import { EmailClient } from "@openstatus/emails";
 
 import { app } from "@/index";
+
+// Mock the sendStatusReportUpdate method
+const sendStatusReportUpdateMock = spyOn(
+  EmailClient.prototype,
+  "sendStatusReportUpdate",
+).mockResolvedValue(undefined);
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).
@@ -36,6 +52,8 @@ let testPageComponentId: number;
 let testStatusReportId: number;
 let testStatusReportToDeleteId: number;
 let testStatusReportToUpdateId: number;
+let testStatusReportForNotifyId: number;
+let testSubscriberId: number;
 
 beforeAll(async () => {
   // Clean up any existing test data
@@ -132,9 +150,45 @@ beforeAll(async () => {
     statusReportId: updateReport.id,
     pageComponentId: testPageComponentId,
   });
+
+  // Create status report for notify tests
+  const notifyReport = await db
+    .insert(statusReport)
+    .values({
+      workspaceId: 1,
+      pageId: 1,
+      title: `${TEST_PREFIX}-for-notify`,
+      status: "investigating",
+    })
+    .returning()
+    .get();
+  testStatusReportForNotifyId = notifyReport.id;
+
+  await db.insert(statusReportsToPageComponents).values({
+    statusReportId: notifyReport.id,
+    pageComponentId: testPageComponentId,
+  });
+
+  // Create a verified subscriber for notification tests
+  const subscriber = await db
+    .insert(pageSubscriber)
+    .values({
+      pageId: 1,
+      email: `${TEST_PREFIX}@example.com`,
+      token: `${TEST_PREFIX}-token`,
+      acceptedAt: new Date(),
+    })
+    .returning()
+    .get();
+  testSubscriberId = subscriber.id;
 });
 
 afterAll(async () => {
+  // Clean up subscriber first
+  await db
+    .delete(pageSubscriber)
+    .where(eq(pageSubscriber.id, testSubscriberId));
+
   // Clean up status report updates first (due to foreign key)
   await db
     .delete(statusReportUpdate)
@@ -142,6 +196,9 @@ afterAll(async () => {
   await db
     .delete(statusReportUpdate)
     .where(eq(statusReportUpdate.statusReportId, testStatusReportToUpdateId));
+  await db
+    .delete(statusReportUpdate)
+    .where(eq(statusReportUpdate.statusReportId, testStatusReportForNotifyId));
 
   // Clean up associations
   await db
@@ -157,6 +214,14 @@ afterAll(async () => {
         testStatusReportToUpdateId,
       ),
     );
+  await db
+    .delete(statusReportsToPageComponents)
+    .where(
+      eq(
+        statusReportsToPageComponents.statusReportId,
+        testStatusReportForNotifyId,
+      ),
+    );
 
   // Clean up status reports
   await db
@@ -168,6 +233,9 @@ afterAll(async () => {
   await db
     .delete(statusReport)
     .where(eq(statusReport.title, `${TEST_PREFIX}-to-update`));
+  await db
+    .delete(statusReport)
+    .where(eq(statusReport.title, `${TEST_PREFIX}-for-notify`));
 
   // Clean up page component
   await db
@@ -252,6 +320,127 @@ describe("StatusReportService.CreateStatusReport", () => {
 
     expect(res.status).toBe(404);
   });
+
+  test("creates status report with empty pageComponentIds", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-no-components`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Report without components.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+    expect(data.statusReport.title).toBe(`${TEST_PREFIX}-no-components`);
+    // Empty array may be serialized as undefined or empty array in proto
+    const pageComponentIds = data.statusReport.pageComponentIds ?? [];
+    expect(pageComponentIds).toHaveLength(0);
+
+    // Clean up
+    await db
+      .delete(statusReportUpdate)
+      .where(
+        eq(statusReportUpdate.statusReportId, Number(data.statusReport.id)),
+      );
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)));
+  });
+
+  test("creates status report with notify=true", async () => {
+    sendStatusReportUpdateMock.mockClear();
+
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-with-notify`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Notifying subscribers about this issue.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [String(testPageComponentId)],
+        notify: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+    expect(data.statusReport.title).toBe(`${TEST_PREFIX}-with-notify`);
+    expect(data.statusReport.updates).toHaveLength(1);
+
+    // Verify notification was sent
+    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
+    const mockCall = sendStatusReportUpdateMock.mock.calls[0][0];
+    expect(mockCall.reportTitle).toBe(`${TEST_PREFIX}-with-notify`);
+    expect(mockCall.status).toBe("investigating");
+    expect(mockCall.message).toBe("Notifying subscribers about this issue.");
+
+    // Clean up
+    await db
+      .delete(statusReportUpdate)
+      .where(
+        eq(statusReportUpdate.statusReportId, Number(data.statusReport.id)),
+      );
+    await db
+      .delete(statusReportsToPageComponents)
+      .where(
+        eq(
+          statusReportsToPageComponents.statusReportId,
+          Number(data.statusReport.id),
+        ),
+      );
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)));
+  });
+
+  test("creates status report with notify=false (default)", async () => {
+    sendStatusReportUpdateMock.mockClear();
+
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-no-notify`,
+        status: "STATUS_REPORT_STATUS_IDENTIFIED",
+        message: "No notification for this one.",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [],
+        notify: false,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+    expect(data.statusReport.title).toBe(`${TEST_PREFIX}-no-notify`);
+
+    // Verify notification was NOT sent
+    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
+
+    // Clean up
+    await db
+      .delete(statusReportUpdate)
+      .where(
+        eq(statusReportUpdate.statusReportId, Number(data.statusReport.id)),
+      );
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)));
+  });
 });
 
 describe("StatusReportService.GetStatusReport", () => {
@@ -317,6 +506,26 @@ describe("StatusReportService.GetStatusReport", () => {
     } finally {
       await db.delete(statusReport).where(eq(statusReport.id, otherReport.id));
     }
+  });
+
+  test("returns error when ID is empty string", async () => {
+    const res = await connectRequest(
+      "GetStatusReport",
+      { id: "" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error when ID is whitespace only", async () => {
+    const res = await connectRequest(
+      "GetStatusReport",
+      { id: "   " },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
   });
 });
 
@@ -459,6 +668,97 @@ describe("StatusReportService.ListStatusReports", () => {
       await db.delete(statusReport).where(eq(statusReport.id, otherReport.id));
     }
   });
+
+  test("filters by multiple statuses", async () => {
+    // Create reports with different statuses
+    const monitoringReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: 1,
+        title: `${TEST_PREFIX}-monitoring-filter`,
+        status: "monitoring",
+      })
+      .returning()
+      .get();
+
+    const resolvedReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: 1,
+        title: `${TEST_PREFIX}-resolved-filter`,
+        status: "resolved",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "ListStatusReports",
+        {
+          statuses: [
+            "STATUS_REPORT_STATUS_MONITORING",
+            "STATUS_REPORT_STATUS_RESOLVED",
+          ],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      const data = await res.json();
+      // All returned reports should have monitoring or resolved status
+      for (const report of data.statusReports || []) {
+        expect([
+          "STATUS_REPORT_STATUS_MONITORING",
+          "STATUS_REPORT_STATUS_RESOLVED",
+        ]).toContain(report.status);
+      }
+    } finally {
+      await db
+        .delete(statusReport)
+        .where(eq(statusReport.id, monitoringReport.id));
+      await db
+        .delete(statusReport)
+        .where(eq(statusReport.id, resolvedReport.id));
+    }
+  });
+
+  test("returns all statuses when statuses filter is empty", async () => {
+    const res = await connectRequest(
+      "ListStatusReports",
+      { statuses: [] },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReports");
+    expect(data).toHaveProperty("totalSize");
+  });
+
+  test("ignores UNSPECIFIED status in filter", async () => {
+    const res = await connectRequest(
+      "ListStatusReports",
+      {
+        statuses: [
+          "STATUS_REPORT_STATUS_UNSPECIFIED",
+          "STATUS_REPORT_STATUS_INVESTIGATING",
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    // Should only return investigating status (UNSPECIFIED is ignored)
+    for (const report of data.statusReports || []) {
+      expect(report.status).toBe("STATUS_REPORT_STATUS_INVESTIGATING");
+    }
+  });
 });
 
 describe("StatusReportService.UpdateStatusReport", () => {
@@ -520,6 +820,64 @@ describe("StatusReportService.UpdateStatusReport", () => {
 
     expect(res.status).toBe(404);
   });
+
+  test("returns error when ID is empty string", async () => {
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      { id: "", title: "Empty ID update" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error when ID is whitespace only", async () => {
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      { id: "   ", title: "Whitespace ID update" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 404 for status report in different workspace", async () => {
+    // Create status report in workspace 2
+    const otherReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-other-workspace-update`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "UpdateStatusReport",
+        { id: String(otherReport.id), title: "Should not update" },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(statusReport).where(eq(statusReport.id, otherReport.id));
+    }
+  });
+
+  test("returns error for invalid page component ID on update", async () => {
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        pageComponentIds: ["99999"],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
 });
 
 describe("StatusReportService.DeleteStatusReport", () => {
@@ -558,6 +916,59 @@ describe("StatusReportService.DeleteStatusReport", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("returns error when ID is empty string", async () => {
+    const res = await connectRequest(
+      "DeleteStatusReport",
+      { id: "" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error when ID is whitespace only", async () => {
+    const res = await connectRequest(
+      "DeleteStatusReport",
+      { id: "   " },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 404 for status report in different workspace", async () => {
+    // Create status report in workspace 2
+    const otherReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-other-workspace-delete`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "DeleteStatusReport",
+        { id: String(otherReport.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+
+      // Verify it wasn't deleted
+      const stillExists = await db
+        .select()
+        .from(statusReport)
+        .where(eq(statusReport.id, otherReport.id))
+        .get();
+      expect(stillExists).toBeDefined();
+    } finally {
+      await db.delete(statusReport).where(eq(statusReport.id, otherReport.id));
+    }
   });
 });
 
@@ -642,5 +1053,156 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("returns error when statusReportId is empty string", async () => {
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: "",
+        status: "STATUS_REPORT_STATUS_RESOLVED",
+        message: "Empty ID update",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns error when statusReportId is whitespace only", async () => {
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: "   ",
+        status: "STATUS_REPORT_STATUS_RESOLVED",
+        message: "Whitespace ID update",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 404 for status report in different workspace", async () => {
+    // Create status report in workspace 2
+    const otherReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-other-workspace-add-update`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "AddStatusReportUpdate",
+        {
+          statusReportId: String(otherReport.id),
+          status: "STATUS_REPORT_STATUS_RESOLVED",
+          message: "Should not add to other workspace",
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(statusReport).where(eq(statusReport.id, otherReport.id));
+    }
+  });
+
+  test("adds update with notify=true", async () => {
+    sendStatusReportUpdateMock.mockClear();
+
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: String(testStatusReportForNotifyId),
+        status: "STATUS_REPORT_STATUS_IDENTIFIED",
+        message: "We identified the issue and are notifying subscribers.",
+        date: new Date().toISOString(),
+        notify: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+    expect(data.statusReport.status).toBe("STATUS_REPORT_STATUS_IDENTIFIED");
+
+    const newUpdate = data.statusReport.updates.find(
+      (u: { message: string }) =>
+        u.message === "We identified the issue and are notifying subscribers.",
+    );
+    expect(newUpdate).toBeDefined();
+
+    // Verify notification was sent
+    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
+    const mockCall = sendStatusReportUpdateMock.mock.calls[0][0];
+    expect(mockCall.reportTitle).toBe(`${TEST_PREFIX}-for-notify`);
+    expect(mockCall.status).toBe("identified");
+    expect(mockCall.message).toBe(
+      "We identified the issue and are notifying subscribers.",
+    );
+  });
+
+  test("adds update with notify=false", async () => {
+    sendStatusReportUpdateMock.mockClear();
+
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: String(testStatusReportForNotifyId),
+        status: "STATUS_REPORT_STATUS_MONITORING",
+        message: "Monitoring without notification.",
+        date: new Date().toISOString(),
+        notify: false,
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+    expect(data.statusReport.status).toBe("STATUS_REPORT_STATUS_MONITORING");
+
+    // Verify notification was NOT sent
+    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
+  });
+
+  test("updates status report status when adding update", async () => {
+    // First verify the current status
+    const getRes = await connectRequest(
+      "GetStatusReport",
+      { id: String(testStatusReportForNotifyId) },
+      { "x-openstatus-key": "1" },
+    );
+    const getData = await getRes.json();
+    const initialStatus = getData.statusReport.status;
+
+    // Add update with different status
+    const newStatus =
+      initialStatus === "STATUS_REPORT_STATUS_RESOLVED"
+        ? "STATUS_REPORT_STATUS_INVESTIGATING"
+        : "STATUS_REPORT_STATUS_RESOLVED";
+
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: String(testStatusReportForNotifyId),
+        status: newStatus,
+        message: "Status change test.",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.statusReport.status).toBe(newStatus);
   });
 });

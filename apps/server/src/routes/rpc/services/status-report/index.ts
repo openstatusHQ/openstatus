@@ -1,14 +1,19 @@
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
+import { and, db, desc, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
 import {
+  page,
   pageComponent,
+  pageSubscriber,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { EmailClient } from "@openstatus/emails";
 import type { StatusReportService } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 
+import { env } from "@/env";
 import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,
@@ -22,6 +27,91 @@ import {
   statusReportNotFoundError,
   statusReportUpdateFailedError,
 } from "./errors";
+
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
+
+/**
+ * Helper to send status report notifications to page subscribers.
+ */
+async function sendStatusReportNotification(params: {
+  statusReportId: number;
+  pageId: number;
+  reportTitle: string;
+  status: "investigating" | "identified" | "monitoring" | "resolved";
+  message: string;
+  date: Date;
+  limits: Limits;
+}) {
+  const { statusReportId, pageId, reportTitle, status, message, date, limits } =
+    params;
+
+  // Check if workspace has status-subscribers feature enabled
+  if (!limits["status-subscribers"]) {
+    return;
+  }
+
+  // Get page info
+  const pageInfo = await db.query.page.findFirst({
+    where: eq(page.id, pageId),
+  });
+
+  if (!pageInfo) {
+    return;
+  }
+
+  // Get verified subscribers who haven't unsubscribed
+  const subscribers = await db
+    .select()
+    .from(pageSubscriber)
+    .where(
+      and(
+        eq(pageSubscriber.pageId, pageId),
+        isNotNull(pageSubscriber.acceptedAt),
+        isNull(pageSubscriber.unsubscribedAt),
+      ),
+    )
+    .all();
+
+  const validSubscribers = subscribers.filter(
+    (s): s is typeof s & { token: string } =>
+      s.token !== null && s.acceptedAt !== null && s.unsubscribedAt === null,
+  );
+
+  if (validSubscribers.length === 0) {
+    return;
+  }
+
+  // Get page components for this status report
+  const statusReportWithComponents = await db.query.statusReport.findFirst({
+    where: eq(statusReport.id, statusReportId),
+    with: {
+      statusReportsToPageComponents: {
+        with: { pageComponent: true },
+      },
+    },
+  });
+
+  const pageComponents =
+    statusReportWithComponents?.statusReportsToPageComponents.map(
+      (i) => i.pageComponent.name,
+    ) ?? [];
+
+  // Send notification emails
+  await emailClient.sendStatusReportUpdate({
+    subscribers: validSubscribers.map((subscriber) => ({
+      email: subscriber.email,
+      token: subscriber.token,
+    })),
+    pageTitle: pageInfo.title,
+    pageSlug: pageInfo.slug,
+    customDomain: pageInfo.customDomain,
+    reportTitle,
+    status,
+    message,
+    date: date.toISOString(),
+    pageComponents,
+  });
+}
 
 /**
  * Helper to get a status report by ID with workspace scope.
@@ -176,6 +266,19 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
 
       if (!newUpdate) {
         throw statusReportCreateFailedError();
+      }
+
+      // Send notifications if requested
+      if (req.notify) {
+        await sendStatusReportNotification({
+          statusReportId: newReport.id,
+          pageId,
+          reportTitle: newReport.title,
+          status: protoStatusToDb(req.status),
+          message: req.message,
+          date,
+          limits: rpcCtx.workspace.limits,
+        });
       }
 
       // Fetch the updates for the response
@@ -393,6 +496,19 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
 
       if (!updatedReport) {
         throw statusReportUpdateFailedError(req.statusReportId);
+      }
+
+      // Send notifications if requested
+      if (req.notify && updatedReport.pageId) {
+        await sendStatusReportNotification({
+          statusReportId: updatedReport.id,
+          pageId: updatedReport.pageId,
+          reportTitle: updatedReport.title,
+          status: protoStatusToDb(req.status),
+          message: req.message,
+          date,
+          limits: rpcCtx.workspace.limits,
+        });
       }
 
       // Fetch all updates
