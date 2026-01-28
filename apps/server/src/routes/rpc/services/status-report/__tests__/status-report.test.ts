@@ -1,12 +1,4 @@
-import {
-  afterAll,
-  beforeAll,
-  describe,
-  expect,
-  mock,
-  spyOn,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
   pageComponent,

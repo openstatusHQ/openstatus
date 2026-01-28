@@ -1,5 +1,14 @@
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, desc, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  db,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  sql,
+} from "@openstatus/db";
 import {
   page,
   pageComponent,
