@@ -152,6 +152,9 @@ export function pageIdComponentMismatchError(
     `Page ID ${providedPageId} does not match the page ID ${componentPageId} of the provided components`,
     Code.InvalidArgument,
     ErrorReason.PAGE_ID_COMPONENT_MISMATCH,
-    { "provided-page-id": providedPageId, "component-page-id": componentPageId },
+    {
+      "provided-page-id": providedPageId,
+      "component-page-id": componentPageId,
+    },
   );
 }
