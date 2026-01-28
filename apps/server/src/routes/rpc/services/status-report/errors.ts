@@ -10,6 +10,7 @@ export const ErrorReason = {
   STATUS_REPORT_UPDATE_FAILED: "STATUS_REPORT_UPDATE_FAILED",
   PAGE_COMPONENT_NOT_FOUND: "PAGE_COMPONENT_NOT_FOUND",
   PAGE_COMPONENTS_MIXED_PAGES: "PAGE_COMPONENTS_MIXED_PAGES",
+  PAGE_ID_COMPONENT_MISMATCH: "PAGE_ID_COMPONENT_MISMATCH",
   INVALID_DATE_FORMAT: "INVALID_DATE_FORMAT",
   INVALID_STATUS: "INVALID_STATUS",
 } as const;
@@ -137,5 +138,20 @@ export function invalidStatusError(statusValue: number): ConnectError {
     Code.InvalidArgument,
     ErrorReason.INVALID_STATUS,
     { "status-value": String(statusValue) },
+  );
+}
+
+/**
+ * Creates a "page ID and component page mismatch" error.
+ */
+export function pageIdComponentMismatchError(
+  providedPageId: string,
+  componentPageId: string,
+): ConnectError {
+  return createError(
+    `Page ID ${providedPageId} does not match the page ID ${componentPageId} of the provided components`,
+    Code.InvalidArgument,
+    ErrorReason.PAGE_ID_COMPONENT_MISMATCH,
+    { "provided-page-id": providedPageId, "component-page-id": componentPageId },
   );
 }

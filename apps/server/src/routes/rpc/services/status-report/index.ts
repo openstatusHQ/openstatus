@@ -37,6 +37,7 @@ import {
   invalidDateFormatError,
   pageComponentNotFoundError,
   pageComponentsMixedPagesError,
+  pageIdComponentMismatchError,
   statusReportCreateFailedError,
   statusReportIdRequiredError,
   statusReportNotFoundError,
@@ -280,8 +281,15 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
           tx,
         );
 
-        // Derive pageId from validated components (ensures consistency)
-        const pageId = validatedComponents.pageId;
+        // Validate that provided pageId matches the components' page
+        const derivedPageId = validatedComponents.pageId;
+        const providedPageId = req.pageId?.trim();
+        if (derivedPageId !== null && providedPageId && providedPageId !== "" && Number(providedPageId) !== derivedPageId) {
+          throw pageIdComponentMismatchError(providedPageId, String(derivedPageId));
+        }
+
+        // Use the derived pageId from components (null if no components)
+        const pageId = derivedPageId;
 
         // Create the status report
         const report = await tx
