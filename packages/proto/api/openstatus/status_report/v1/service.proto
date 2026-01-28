@@ -43,8 +43,14 @@ message CreateStatusReportRequest {
   // Date when the event occurred (RFC 3339 format, required).
   string date = 4 [(buf.validate.field).string.min_len = 1];
 
-  // Page component IDs to associate with this report (required).
-  repeated string page_component_ids = 5 [(buf.validate.field).repeated.min_items = 1];
+  // Page ID to associate with this report (required).
+  string page_id = 5 [(buf.validate.field).string.min_len = 1];
+
+  // Page component IDs to associate with this report (optional).
+  repeated string page_component_ids = 6;
+
+  // Whether to notify subscribers about this status report (optional, defaults to false).
+  optional bool notify = 7;
 }
 
 message CreateStatusReportResponse {
@@ -132,6 +138,9 @@ message AddStatusReportUpdateRequest {
 
   // Optional date for the update. Defaults to current time if not provided.
   optional string date = 4;
+
+  // Whether to notify subscribers about this update (optional, defaults to false).
+  optional bool notify = 5;
 }
 
 message AddStatusReportUpdateResponse {

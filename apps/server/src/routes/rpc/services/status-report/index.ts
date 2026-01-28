@@ -128,7 +128,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       const rpcCtx = getRpcContext(ctx);
       const workspaceId = rpcCtx.workspace.id;
 
-      // Validate page component IDs
+      // Validate page component IDs if provided
       const validPageComponentIds = await validatePageComponentIds(
         req.pageComponentIds,
         workspaceId,
@@ -137,16 +137,8 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       // Parse the date
       const date = new Date(req.date);
 
-      // Get the pageId from the first page component (they should all be from the same page)
-      let pageId: number | null = null;
-      if (validPageComponentIds.length > 0) {
-        const firstComponent = await db
-          .select({ pageId: pageComponent.pageId })
-          .from(pageComponent)
-          .where(eq(pageComponent.id, validPageComponentIds[0]))
-          .get();
-        pageId = firstComponent?.pageId ?? null;
-      }
+      // Use pageId from request
+      const pageId = Number(req.pageId);
 
       // Create the status report
       const newReport = await db

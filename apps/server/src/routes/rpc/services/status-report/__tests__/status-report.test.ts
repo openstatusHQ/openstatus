@@ -184,6 +184,7 @@ describe("StatusReportService.CreateStatusReport", () => {
         status: "STATUS_REPORT_STATUS_INVESTIGATING",
         message: "We are looking into this issue.",
         date: new Date().toISOString(),
+        pageId: "1",
         pageComponentIds: [String(testPageComponentId)],
       },
       { "x-openstatus-key": "1" },
@@ -228,6 +229,7 @@ describe("StatusReportService.CreateStatusReport", () => {
       status: "STATUS_REPORT_STATUS_INVESTIGATING",
       message: "Test message",
       date: new Date().toISOString(),
+      pageId: "1",
       pageComponentIds: ["1"],
     });
 
@@ -242,6 +244,7 @@ describe("StatusReportService.CreateStatusReport", () => {
         status: "STATUS_REPORT_STATUS_INVESTIGATING",
         message: "Test message",
         date: new Date().toISOString(),
+        pageId: "1",
         pageComponentIds: ["99999"],
       },
       { "x-openstatus-key": "1" },
