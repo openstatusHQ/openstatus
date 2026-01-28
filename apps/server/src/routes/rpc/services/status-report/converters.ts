@@ -4,6 +4,7 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
+import { invalidStatusError } from "./errors";
 
 type DBStatusReport = {
   id: number;
@@ -60,8 +61,10 @@ export function protoStatusToDb(
       return "monitoring";
     case StatusReportStatus.RESOLVED:
       return "resolved";
+    case StatusReportStatus.UNSPECIFIED:
+      throw invalidStatusError(status);
     default:
-      return "investigating";
+      throw invalidStatusError(status);
   }
 }
 

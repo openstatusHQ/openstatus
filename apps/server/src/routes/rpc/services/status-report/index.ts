@@ -34,7 +34,9 @@ import {
   protoStatusToDb,
 } from "./converters";
 import {
+  invalidDateFormatError,
   pageComponentNotFoundError,
+  pageComponentsMixedPagesError,
   statusReportCreateFailedError,
   statusReportIdRequiredError,
   statusReportNotFoundError,
@@ -165,20 +167,30 @@ async function getUpdatesForReport(statusReportId: number) {
 }
 
 /**
- * Helper to validate page component IDs belong to the workspace.
+ * Result of validating page component IDs.
+ */
+interface ValidatedPageComponents {
+  componentIds: number[];
+  pageId: number | null;
+}
+
+/**
+ * Helper to validate page component IDs belong to the workspace and same page.
+ * Accepts an optional transaction to ensure atomicity with subsequent operations.
  */
 async function validatePageComponentIds(
   pageComponentIds: string[],
   workspaceId: number,
-): Promise<number[]> {
+  tx: DB | Transaction = db,
+): Promise<ValidatedPageComponents> {
   if (pageComponentIds.length === 0) {
-    return [];
+    return { componentIds: [], pageId: null };
   }
 
   const numericIds = pageComponentIds.map((id) => Number(id));
 
-  const validComponents = await db
-    .select({ id: pageComponent.id })
+  const validComponents = await tx
+    .select({ id: pageComponent.id, pageId: pageComponent.pageId })
     .from(pageComponent)
     .where(
       and(
@@ -188,15 +200,26 @@ async function validatePageComponentIds(
     )
     .all();
 
-  const validIds = new Set(validComponents.map((c) => c.id));
+  const validComponentsMap = new Map(
+    validComponents.map((c) => [c.id, c.pageId]),
+  );
 
+  // Check all requested IDs exist
   for (const id of numericIds) {
-    if (!validIds.has(id)) {
+    if (!validComponentsMap.has(id)) {
       throw pageComponentNotFoundError(String(id));
     }
   }
 
-  return numericIds;
+  // Validate all components belong to the same page
+  const pageIds = new Set(validComponents.map((c) => c.pageId));
+  if (pageIds.size > 1) {
+    throw pageComponentsMixedPagesError();
+  }
+
+  const pageId = validComponents[0]?.pageId ?? null;
+
+  return { componentIds: numericIds, pageId };
 }
 
 /**
@@ -225,6 +248,18 @@ async function updatePageComponentAssociations(
 }
 
 /**
+ * Parses and validates a date string.
+ * Throws invalidDateFormatError if the date is invalid.
+ */
+function parseDate(dateString: string): Date {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    throw invalidDateFormatError(dateString);
+  }
+  return date;
+}
+
+/**
  * Status report service implementation for ConnectRPC.
  */
 export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
@@ -233,20 +268,21 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       const rpcCtx = getRpcContext(ctx);
       const workspaceId = rpcCtx.workspace.id;
 
-      // Validate page component IDs if provided
-      const validPageComponentIds = await validatePageComponentIds(
-        req.pageComponentIds,
-        workspaceId,
-      );
-
-      // Parse the date
-      const date = new Date(req.date);
-
-      // Use pageId from request
-      const pageId = Number(req.pageId);
+      // Parse and validate the date before the transaction
+      const date = parseDate(req.date);
 
       // Create status report, associations, and initial update in a transaction
-      const newReport = await db.transaction(async (tx) => {
+      const { report: newReport, pageId } = await db.transaction(async (tx) => {
+        // Validate page component IDs inside transaction to prevent TOCTOU race condition
+        const validatedComponents = await validatePageComponentIds(
+          req.pageComponentIds,
+          workspaceId,
+          tx,
+        );
+
+        // Derive pageId from validated components (ensures consistency)
+        const pageId = validatedComponents.pageId;
+
         // Create the status report
         const report = await tx
           .insert(statusReport)
@@ -266,7 +302,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         // Create page component associations
         await updatePageComponentAssociations(
           report.id,
-          validPageComponentIds,
+          validatedComponents.componentIds,
           tx,
         );
 
@@ -286,7 +322,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
           throw statusReportCreateFailedError();
         }
 
-        return report;
+        return { report, pageId };
       });
 
       // Send notifications if requested (outside transaction)
@@ -399,17 +435,21 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         throw statusReportNotFoundError(req.id);
       }
 
-      // Validate page component IDs upfront (allows empty array to clear associations)
-      const validPageComponentIds = await validatePageComponentIds(
-        req.pageComponentIds,
-        workspaceId,
-      );
-
       // Update report, associations in a transaction
       const updatedReport = await db.transaction(async (tx) => {
+        // Validate page component IDs inside transaction to prevent TOCTOU race condition
+        // Allows empty array to clear associations; ensures all components belong to same page
+        const validatedComponents = await validatePageComponentIds(
+          req.pageComponentIds,
+          workspaceId,
+          tx,
+        );
+
         // Build update values
         const updateValues: Record<string, unknown> = {
           updatedAt: new Date(),
+          // Set pageId from validated components (null if no components)
+          pageId: validatedComponents.pageId,
         };
 
         if (req.title !== undefined && req.title !== "") {
@@ -419,22 +459,9 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         // Always update page component associations (empty array clears all)
         await updatePageComponentAssociations(
           report.id,
-          validPageComponentIds,
+          validatedComponents.componentIds,
           tx,
         );
-
-        // Update pageId based on first component (or clear if no components)
-        if (validPageComponentIds.length > 0) {
-          const firstComponent = await tx
-            .select({ pageId: pageComponent.pageId })
-            .from(pageComponent)
-            .where(eq(pageComponent.id, validPageComponentIds[0]))
-            .get();
-          updateValues.pageId = firstComponent?.pageId ?? null;
-        } else {
-          // Clear pageId if no components
-          updateValues.pageId = null;
-        }
 
         // Update the report
         const updated = await tx
@@ -497,8 +524,8 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         throw statusReportNotFoundError(req.statusReportId);
       }
 
-      // Parse the date or use current time
-      const date = req.date ? new Date(req.date) : new Date();
+      // Parse and validate the date or use current time
+      const date = req.date ? parseDate(req.date) : new Date();
 
       // Create update and update status report in a transaction
       const updatedReport = await db.transaction(async (tx) => {

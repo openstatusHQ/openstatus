@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
+  page,
   pageComponent,
   pageSubscriber,
   statusReport,
@@ -8,8 +9,10 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
+import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 
 import { app } from "@/index";
+import { protoStatusToDb } from "../converters";
 
 // Mock the sendStatusReportUpdate method
 const sendStatusReportUpdateMock = spyOn(
@@ -46,6 +49,9 @@ let testStatusReportToDeleteId: number;
 let testStatusReportToUpdateId: number;
 let testStatusReportForNotifyId: number;
 let testSubscriberId: number;
+// For mixed-page validation tests
+let testPage2Id: number;
+let testPage2ComponentId: number;
 
 beforeAll(async () => {
   // Clean up any existing test data
@@ -76,6 +82,34 @@ beforeAll(async () => {
     .returning()
     .get();
   testPageComponentId = component.id;
+
+  // Create a second page and component for mixed-page validation tests
+  const page2 = await db
+    .insert(page)
+    .values({
+      workspaceId: 1,
+      title: `${TEST_PREFIX}-page-2`,
+      slug: `${TEST_PREFIX}-page-2-slug`,
+      description: "Second test page for mixed-page tests",
+      customDomain: "",
+    })
+    .returning()
+    .get();
+  testPage2Id = page2.id;
+
+  const component2 = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: 1,
+      pageId: testPage2Id,
+      type: "external",
+      name: `${TEST_PREFIX}-component-2`,
+      description: "Test component on page 2",
+      order: 100,
+    })
+    .returning()
+    .get();
+  testPage2ComponentId = component2.id;
 
   // Create test status report
   const report = await db
@@ -176,10 +210,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  // Clean up subscriber first
-  await db
-    .delete(pageSubscriber)
-    .where(eq(pageSubscriber.id, testSubscriberId));
+  // Clean up subscriber first (only if it was created)
+  if (testSubscriberId) {
+    await db
+      .delete(pageSubscriber)
+      .where(eq(pageSubscriber.id, testSubscriberId));
+  }
 
   // Clean up status report updates first (due to foreign key)
   await db
@@ -233,6 +269,12 @@ afterAll(async () => {
   await db
     .delete(pageComponent)
     .where(eq(pageComponent.name, `${TEST_PREFIX}-component`));
+
+  // Clean up second page component and page (for mixed-page tests)
+  await db
+    .delete(pageComponent)
+    .where(eq(pageComponent.name, `${TEST_PREFIX}-component-2`));
+  await db.delete(page).where(eq(page.title, `${TEST_PREFIX}-page-2`));
 });
 
 describe("StatusReportService.CreateStatusReport", () => {
@@ -311,6 +353,117 @@ describe("StatusReportService.CreateStatusReport", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("returns error when page components are from different pages", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-mixed-pages`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Test message",
+        date: new Date().toISOString(),
+        pageId: "1",
+        pageComponentIds: [
+          String(testPageComponentId),
+          String(testPage2ComponentId),
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain(
+      "All page components must belong to the same page",
+    );
+  });
+
+  test("derives pageId from components when creating status report", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-derived-pageid`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Test deriving pageId from components.",
+        date: new Date().toISOString(),
+        pageId: "1", // This is ignored, pageId is derived from components
+        pageComponentIds: [String(testPage2ComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+    expect(data.statusReport.pageComponentIds).toContain(
+      String(testPage2ComponentId),
+    );
+
+    // Verify the pageId was derived from the component (page 2)
+    const createdReport = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)))
+      .get();
+    expect(createdReport?.pageId).toBe(testPage2Id);
+
+    // Clean up
+    await db
+      .delete(statusReportUpdate)
+      .where(
+        eq(statusReportUpdate.statusReportId, Number(data.statusReport.id)),
+      );
+    await db
+      .delete(statusReportsToPageComponents)
+      .where(
+        eq(
+          statusReportsToPageComponents.statusReportId,
+          Number(data.statusReport.id),
+        ),
+      );
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)));
+  });
+
+  test("sets pageId to null when no components provided", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-null-pageid`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Test null pageId when no components.",
+        date: new Date().toISOString(),
+        pageId: "1", // This should be ignored
+        pageComponentIds: [],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toHaveProperty("statusReport");
+
+    // Verify the pageId is null
+    const createdReport = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)))
+      .get();
+    expect(createdReport?.pageId).toBeNull();
+
+    // Clean up
+    await db
+      .delete(statusReportUpdate)
+      .where(
+        eq(statusReportUpdate.statusReportId, Number(data.statusReport.id)),
+      );
+    await db
+      .delete(statusReport)
+      .where(eq(statusReport.id, Number(data.statusReport.id)));
   });
 
   test("creates status report with empty pageComponentIds", async () => {
@@ -432,6 +585,25 @@ describe("StatusReportService.CreateStatusReport", () => {
     await db
       .delete(statusReport)
       .where(eq(statusReport.id, Number(data.statusReport.id)));
+  });
+
+  test("returns error for invalid date format", async () => {
+    const res = await connectRequest(
+      "CreateStatusReport",
+      {
+        title: `${TEST_PREFIX}-invalid-date`,
+        status: "STATUS_REPORT_STATUS_INVESTIGATING",
+        message: "Test with invalid date.",
+        date: "not-a-valid-date",
+        pageId: "1",
+        pageComponentIds: [],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("date: value does not match regex pattern");
   });
 });
 
@@ -870,6 +1042,113 @@ describe("StatusReportService.UpdateStatusReport", () => {
 
     expect(res.status).toBe(404);
   });
+
+  test("returns error when updating with components from different pages", async () => {
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        pageComponentIds: [
+          String(testPageComponentId),
+          String(testPage2ComponentId),
+        ],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain(
+      "All page components must belong to the same page",
+    );
+  });
+
+  test("updates pageId when changing components to different page", async () => {
+    // First verify the current pageId
+    const beforeReport = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, testStatusReportToUpdateId))
+      .get();
+    expect(beforeReport?.pageId).toBe(1);
+
+    // Update to use component from page 2
+    const res = await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        pageComponentIds: [String(testPage2ComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    // Verify the pageId was updated to page 2
+    const afterReport = await db
+      .select()
+      .from(statusReport)
+      .where(eq(statusReport.id, testStatusReportToUpdateId))
+      .get();
+    expect(afterReport?.pageId).toBe(testPage2Id);
+
+    // Restore original component association
+    await connectRequest(
+      "UpdateStatusReport",
+      {
+        id: String(testStatusReportToUpdateId),
+        pageComponentIds: [String(testPageComponentId)],
+      },
+      { "x-openstatus-key": "1" },
+    );
+  });
+
+  test("clears pageId when removing all components", async () => {
+    // Create a temporary status report for this test
+    const tempReport = await db
+      .insert(statusReport)
+      .values({
+        workspaceId: 1,
+        pageId: 1,
+        title: `${TEST_PREFIX}-clear-pageid`,
+        status: "investigating",
+      })
+      .returning()
+      .get();
+
+    await db.insert(statusReportsToPageComponents).values({
+      statusReportId: tempReport.id,
+      pageComponentId: testPageComponentId,
+    });
+
+    try {
+      // Clear all components
+      const res = await connectRequest(
+        "UpdateStatusReport",
+        {
+          id: String(tempReport.id),
+          pageComponentIds: [],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(200);
+
+      // Verify the pageId is now null
+      const afterReport = await db
+        .select()
+        .from(statusReport)
+        .where(eq(statusReport.id, tempReport.id))
+        .get();
+      expect(afterReport?.pageId).toBeNull();
+    } finally {
+      // Clean up
+      await db
+        .delete(statusReportsToPageComponents)
+        .where(eq(statusReportsToPageComponents.statusReportId, tempReport.id));
+      await db.delete(statusReport).where(eq(statusReport.id, tempReport.id));
+    }
+  });
 });
 
 describe("StatusReportService.DeleteStatusReport", () => {
@@ -1196,5 +1475,47 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
 
     const data = await res.json();
     expect(data.statusReport.status).toBe(newStatus);
+  });
+
+  test("returns error for invalid date format", async () => {
+    const res = await connectRequest(
+      "AddStatusReportUpdate",
+      {
+        statusReportId: String(testStatusReportId),
+        status: "STATUS_REPORT_STATUS_MONITORING",
+        message: "Test with invalid date.",
+        date: "not-a-valid-date",
+      },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.message).toContain("date: value does not match regex pattern");
+  });
+});
+
+describe("protoStatusToDb converter", () => {
+  test("converts valid statuses correctly", () => {
+    expect(protoStatusToDb(StatusReportStatus.INVESTIGATING)).toBe(
+      "investigating",
+    );
+    expect(protoStatusToDb(StatusReportStatus.IDENTIFIED)).toBe("identified");
+    expect(protoStatusToDb(StatusReportStatus.MONITORING)).toBe("monitoring");
+    expect(protoStatusToDb(StatusReportStatus.RESOLVED)).toBe("resolved");
+  });
+
+  test("throws error for UNSPECIFIED status", () => {
+    expect(() => protoStatusToDb(StatusReportStatus.UNSPECIFIED)).toThrow(
+      "Invalid status value",
+    );
+  });
+
+  test("throws error for unknown status values", () => {
+    // Simulate a new status value being added to the proto
+    const unknownStatus = 999 as StatusReportStatus;
+    expect(() => protoStatusToDb(unknownStatus)).toThrow(
+      "Invalid status value",
+    );
   });
 });
