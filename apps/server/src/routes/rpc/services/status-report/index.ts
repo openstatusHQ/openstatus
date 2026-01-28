@@ -9,6 +9,10 @@ import {
   isNull,
   sql,
 } from "@openstatus/db";
+
+// Type that works with both db instance and transaction
+type DB = typeof db;
+type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
 import {
   page,
   pageComponent,
@@ -197,19 +201,21 @@ async function validatePageComponentIds(
 
 /**
  * Helper to update page component associations for a status report.
+ * Accepts an optional transaction to ensure atomicity.
  */
 async function updatePageComponentAssociations(
   statusReportId: number,
   pageComponentIds: number[],
+  tx: DB | Transaction = db,
 ) {
   // Delete existing associations
-  await db
+  await tx
     .delete(statusReportsToPageComponents)
     .where(eq(statusReportsToPageComponents.statusReportId, statusReportId));
 
   // Insert new associations
   if (pageComponentIds.length > 0) {
-    await db.insert(statusReportsToPageComponents).values(
+    await tx.insert(statusReportsToPageComponents).values(
       pageComponentIds.map((pageComponentId) => ({
         statusReportId,
         pageComponentId,
@@ -239,45 +245,51 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       // Use pageId from request
       const pageId = Number(req.pageId);
 
-      // Create the status report
-      const newReport = await db
-        .insert(statusReport)
-        .values({
-          workspaceId,
-          pageId,
-          title: req.title,
-          status: protoStatusToDb(req.status),
-        })
-        .returning()
-        .get();
+      // Create status report, associations, and initial update in a transaction
+      const newReport = await db.transaction(async (tx) => {
+        // Create the status report
+        const report = await tx
+          .insert(statusReport)
+          .values({
+            workspaceId,
+            pageId,
+            title: req.title,
+            status: protoStatusToDb(req.status),
+          })
+          .returning()
+          .get();
 
-      if (!newReport) {
-        throw statusReportCreateFailedError();
-      }
+        if (!report) {
+          throw statusReportCreateFailedError();
+        }
 
-      // Create page component associations
-      await updatePageComponentAssociations(
-        newReport.id,
-        validPageComponentIds,
-      );
+        // Create page component associations
+        await updatePageComponentAssociations(
+          report.id,
+          validPageComponentIds,
+          tx,
+        );
 
-      // Create the initial update
-      const newUpdate = await db
-        .insert(statusReportUpdate)
-        .values({
-          statusReportId: newReport.id,
-          status: protoStatusToDb(req.status),
-          date,
-          message: req.message,
-        })
-        .returning()
-        .get();
+        // Create the initial update
+        const newUpdate = await tx
+          .insert(statusReportUpdate)
+          .values({
+            statusReportId: report.id,
+            status: protoStatusToDb(req.status),
+            date,
+            message: req.message,
+          })
+          .returning()
+          .get();
 
-      if (!newUpdate) {
-        throw statusReportCreateFailedError();
-      }
+        if (!newUpdate) {
+          throw statusReportCreateFailedError();
+        }
 
-      // Send notifications if requested
+        return report;
+      });
+
+      // Send notifications if requested (outside transaction)
       if (req.notify) {
         await sendStatusReportNotification({
           statusReportId: newReport.id,
@@ -387,45 +399,57 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
         throw statusReportNotFoundError(req.id);
       }
 
-      // Build update values
-      const updateValues: Record<string, unknown> = {
-        updatedAt: new Date(),
-      };
+      // Validate page component IDs upfront (allows empty array to clear associations)
+      const validPageComponentIds = await validatePageComponentIds(
+        req.pageComponentIds,
+        workspaceId,
+      );
 
-      if (req.title !== undefined && req.title !== "") {
-        updateValues.title = req.title;
-      }
+      // Update report, associations in a transaction
+      const updatedReport = await db.transaction(async (tx) => {
+        // Build update values
+        const updateValues: Record<string, unknown> = {
+          updatedAt: new Date(),
+        };
 
-      // Update page component associations if provided
-      if (req.pageComponentIds.length > 0) {
-        const validPageComponentIds = await validatePageComponentIds(
-          req.pageComponentIds,
-          workspaceId,
+        if (req.title !== undefined && req.title !== "") {
+          updateValues.title = req.title;
+        }
+
+        // Always update page component associations (empty array clears all)
+        await updatePageComponentAssociations(
+          report.id,
+          validPageComponentIds,
+          tx,
         );
-        await updatePageComponentAssociations(report.id, validPageComponentIds);
 
-        // Update pageId based on first component
+        // Update pageId based on first component (or clear if no components)
         if (validPageComponentIds.length > 0) {
-          const firstComponent = await db
+          const firstComponent = await tx
             .select({ pageId: pageComponent.pageId })
             .from(pageComponent)
             .where(eq(pageComponent.id, validPageComponentIds[0]))
             .get();
           updateValues.pageId = firstComponent?.pageId ?? null;
+        } else {
+          // Clear pageId if no components
+          updateValues.pageId = null;
         }
-      }
 
-      // Update the report
-      const updatedReport = await db
-        .update(statusReport)
-        .set(updateValues)
-        .where(eq(statusReport.id, report.id))
-        .returning()
-        .get();
+        // Update the report
+        const updated = await tx
+          .update(statusReport)
+          .set(updateValues)
+          .where(eq(statusReport.id, report.id))
+          .returning()
+          .get();
 
-      if (!updatedReport) {
-        throw statusReportUpdateFailedError(req.id);
-      }
+        if (!updated) {
+          throw statusReportUpdateFailedError(req.id);
+        }
+
+        return updated;
+      });
 
       // Fetch updated data
       const pageComponentIds = await getPageComponentIdsForReport(
@@ -476,38 +500,43 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       // Parse the date or use current time
       const date = req.date ? new Date(req.date) : new Date();
 
-      // Create the update
-      const newUpdate = await db
-        .insert(statusReportUpdate)
-        .values({
-          statusReportId: report.id,
-          status: protoStatusToDb(req.status),
-          date,
-          message: req.message,
-        })
-        .returning()
-        .get();
+      // Create update and update status report in a transaction
+      const updatedReport = await db.transaction(async (tx) => {
+        // Create the update
+        const newUpdate = await tx
+          .insert(statusReportUpdate)
+          .values({
+            statusReportId: report.id,
+            status: protoStatusToDb(req.status),
+            date,
+            message: req.message,
+          })
+          .returning()
+          .get();
 
-      if (!newUpdate) {
-        throw statusReportUpdateFailedError(req.statusReportId);
-      }
+        if (!newUpdate) {
+          throw statusReportUpdateFailedError(req.statusReportId);
+        }
 
-      // Update the status report's status and updatedAt
-      const updatedReport = await db
-        .update(statusReport)
-        .set({
-          status: protoStatusToDb(req.status),
-          updatedAt: new Date(),
-        })
-        .where(eq(statusReport.id, report.id))
-        .returning()
-        .get();
+        // Update the status report's status and updatedAt
+        const updated = await tx
+          .update(statusReport)
+          .set({
+            status: protoStatusToDb(req.status),
+            updatedAt: new Date(),
+          })
+          .where(eq(statusReport.id, report.id))
+          .returning()
+          .get();
 
-      if (!updatedReport) {
-        throw statusReportUpdateFailedError(req.statusReportId);
-      }
+        if (!updated) {
+          throw statusReportUpdateFailedError(req.statusReportId);
+        }
 
-      // Send notifications if requested
+        return updated;
+      });
+
+      // Send notifications if requested (outside transaction)
       if (req.notify && updatedReport.pageId) {
         await sendStatusReportNotification({
           statusReportId: updatedReport.id,
