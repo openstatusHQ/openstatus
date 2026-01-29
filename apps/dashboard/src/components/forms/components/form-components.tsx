@@ -661,7 +661,7 @@ export function FormComponents({
           <FormCardFooter>
             <FormCardFooterInfo>
               Learn more about{" "}
-              <Link href="https://docs.openstatus.dev/reference/status-page/#page-components">
+              <Link href="https://docs.openstatus.dev/reference/page-components">
                 page components
               </Link>
               .
