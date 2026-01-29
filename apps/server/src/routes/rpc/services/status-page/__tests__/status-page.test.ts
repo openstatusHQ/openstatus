@@ -1083,31 +1083,24 @@ describe("StatusPageService.UnsubscribeFromPage", () => {
       .where(eq(pageSubscriber.id, Number(subscribeData.subscriber.id)));
   });
 
-  test("unsubscribes by token", async () => {
+  test("unsubscribes by id", async () => {
     // First subscribe a new user
     const subscribeRes = await connectRequest(
       "SubscribeToPage",
       {
         pageId: String(testPageId),
-        email: `${TEST_PREFIX}-unsub-token@example.com`,
+        email: `${TEST_PREFIX}-unsub-id@example.com`,
       },
       { "x-openstatus-key": "1" },
     );
     const subscribeData = await subscribeRes.json();
 
-    // Get the token from DB
-    const subscriber = await db
-      .select()
-      .from(pageSubscriber)
-      .where(eq(pageSubscriber.id, Number(subscribeData.subscriber.id)))
-      .get();
-
-    // Then unsubscribe by token
+    // Then unsubscribe by id
     const res = await connectRequest(
       "UnsubscribeFromPage",
       {
         pageId: String(testPageId),
-        token: subscriber?.token,
+        id: subscribeData.subscriber.id,
       },
       { "x-openstatus-key": "1" },
     );

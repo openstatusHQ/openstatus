@@ -653,14 +653,14 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       return { success: true };
     }
 
-    if (req.identifier.case === "token") {
+    if (req.identifier.case === "id") {
       const subscriber = await db
         .select()
         .from(pageSubscriber)
         .where(
           and(
             eq(pageSubscriber.pageId, pageData.id),
-            eq(pageSubscriber.token, req.identifier.value),
+            eq(pageSubscriber.id, Number(req.identifier.value)),
           ),
         )
         .get();

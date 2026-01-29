@@ -362,12 +362,12 @@ message UnsubscribeFromPageRequest {
   // ID of the status page to unsubscribe from (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
 
-  // Identifier for the subscription (either email or token).
+  // Identifier for the subscription (either email or id).
   oneof identifier {
     // Email address to unsubscribe.
     string email = 2;
-    // Unsubscribe token.
-    string token = 3;
+    // Subscriber ID.
+    string id = 3;
   }
 }
 
