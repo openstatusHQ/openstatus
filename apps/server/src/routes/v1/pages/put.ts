@@ -10,13 +10,13 @@ import {
   isNull,
   sql,
   syncMonitorsToPageDelete,
-  syncMonitorsToPageInsert,
+  syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
-  monitorsToPages,
   page,
+  pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 import { isNumberArray } from "../utils";
@@ -184,55 +184,102 @@ export function registerPutPage(api: typeof pagesApi) {
       .returning()
       .get();
 
-    const currentMonitorsToPages = await db
+    // Query current pageComponents instead of monitorsToPages
+    const currentPageComponents = await db
       .select()
-      .from(monitorsToPages)
-      .where(eq(monitorsToPages.pageId, _page.id));
+      .from(pageComponent)
+      .where(eq(pageComponent.pageId, _page.id))
+      .all();
 
-    const removedMonitors = currentMonitorsToPages
-      .map(({ monitorId }) => monitorId)
-      .filter((x) => !monitorIds?.includes(x));
+    const currentMonitorIds = currentPageComponents
+      .filter((pc) => pc.type === "monitor" && pc.monitorId !== null)
+      .map((pc) => pc.monitorId as number);
 
-    if (removedMonitors.length) {
+    const removedMonitorIds = currentMonitorIds.filter(
+      (id) => !monitorIds?.includes(id),
+    );
+
+    // Delete removed monitors from pageComponent (primary table)
+    if (removedMonitorIds.length) {
       await db
-        .delete(monitorsToPages)
+        .delete(pageComponent)
         .where(
           and(
-            inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, newPage.id),
+            inArray(pageComponent.monitorId, removedMonitorIds),
+            eq(pageComponent.pageId, newPage.id),
           ),
         );
-      // Sync delete to page components
-      for (const monitorId of removedMonitors) {
+      // Reverse sync delete to monitorsToPages (for backwards compatibility)
+      for (const monitorId of removedMonitorIds) {
         await syncMonitorsToPageDelete(db, { monitorId, pageId: newPage.id });
       }
     }
 
+    // Insert or update pageComponents (primary table)
     if (monitors) {
-      for (const monitor of monitors) {
-        const values =
-          typeof monitor === "number" ? { monitorId: monitor } : monitor;
+      for (const [index, m] of monitors.entries()) {
+        const values = typeof m === "number" ? { monitorId: m } : m;
 
-        await db
-          .insert(monitorsToPages)
-          .values({ pageId: newPage.id, ...values })
-          .onConflictDoUpdate({
-            target: [monitorsToPages.monitorId, monitorsToPages.pageId],
-            set: { order: sql.raw("excluded.`order`") },
-          });
-        // Sync to page components (existing ones will be ignored due to onConflictDoNothing in sync)
-        await syncMonitorsToPageInsert(db, {
-          monitorId: values.monitorId,
-          pageId: newPage.id,
-          order: "order" in values ? values.order : undefined,
+        const _monitor = await db.query.monitor.findFirst({
+          where: and(
+            eq(monitor.id, values.monitorId),
+            eq(monitor.workspaceId, workspaceId),
+            isNull(monitor.deletedAt),
+          ),
         });
+
+        if (!_monitor) {
+          throw new OpenStatusApiError({
+            code: "BAD_REQUEST",
+            message: `Monitor ${values.monitorId} not found`,
+          });
+        }
+
+        // Insert or update pageComponent
+        await db
+          .insert(pageComponent)
+          .values({
+            workspaceId: newPage.workspaceId,
+            pageId: newPage.id,
+            type: "monitor",
+            monitorId: values.monitorId,
+            name: _monitor.externalName || _monitor.name,
+            order: "order" in values ? values.order : index,
+            groupId: null,
+            groupOrder: 0,
+          })
+          .onConflictDoUpdate({
+            target: [pageComponent.monitorId, pageComponent.pageId],
+            set: {
+              order: sql.raw("excluded.`order`"),
+              name: sql.raw("excluded.`name`"),
+            },
+          })
+          .run();
       }
+
+      // Reverse sync to monitorsToPages (for backwards compatibility)
+      const monitorsToPageValues = monitors.map((m, index) => {
+        const values = typeof m === "number" ? { monitorId: m } : m;
+        return {
+          pageId: newPage.id,
+          monitorId: values.monitorId,
+          order: "order" in values ? values.order : index,
+          monitorGroupId: null,
+          groupOrder: 0,
+        };
+      });
+
+      await syncPageComponentToMonitorsToPageInsertMany(
+        db,
+        monitorsToPageValues,
+      );
     }
 
     const data = transformPageData(
       PageSchema.parse({
         ...newPage,
-        monitors: monitors || currentMonitorsToPages,
+        monitors: monitors || currentPageComponents.map((pc) => pc.monitorId),
       }),
     );
 
