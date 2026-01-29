@@ -8,7 +8,7 @@ import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
 import type { checkApi } from "../index";
 
-const _logger = getLogger("api-server");
+const logger = getLogger("api-server");
 import {
   AggregatedResponseSchema,
   AggregatedResult,
@@ -110,7 +110,11 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
       const parsed = ResponseSchema.safeParse(json);
 
       if (!parsed.success) {
-        console.error(parsed.error.message);
+        logger.error("Failed to parse check response", {
+          check_id: newCheck.id,
+          workspace_id: workspaceId,
+          validation_errors: parsed.error,
+        });
         throw new Error(`Failed to parse response: ${parsed.error.message}`);
       }
 
@@ -191,7 +195,9 @@ function getAggregate(data: number[]) {
   });
 
   if (!parsed.success) {
-    console.error(parsed.error.message);
+    logger.error("Failed to parse aggregated response", {
+      validation_errors: parsed.error,
+    });
     throw new Error(`Failed to parse response: ${parsed.error.message}`);
   }
 
