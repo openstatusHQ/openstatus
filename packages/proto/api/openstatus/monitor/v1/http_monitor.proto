@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/monitor/v1/assertions.proto";
+import "openstatus/monitor/v1/monitor.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+// HTTP methods supported for monitors.
+enum HTTPMethod {
+  HTTP_METHOD_UNSPECIFIED = 0;
+  HTTP_METHOD_GET = 1;
+  HTTP_METHOD_POST = 2;
+  HTTP_METHOD_HEAD = 3;
+  HTTP_METHOD_PUT = 4;
+  HTTP_METHOD_PATCH = 5;
+  HTTP_METHOD_DELETE = 6;
+  HTTP_METHOD_TRACE = 7;
+  HTTP_METHOD_CONNECT = 8;
+  HTTP_METHOD_OPTIONS = 9;
+}
+
+// Headers represents a key-value pair for HTTP headers.
+message Headers {
+  string key = 1 [(buf.validate.field).string.min_len = 1];
+  string value = 2;
+}
+
+// OpenTelemetry configuration for exporting metrics.
+message OpenTelemetryConfig {
+  // OTEL endpoint URL.
+  string endpoint = 1 [(buf.validate.field).string.max_len = 2048];
+
+  // Custom headers for OTEL requests.
+  repeated Headers headers = 2 [(buf.validate.field).repeated.max_items = 20];
+}
+
+// HTTPMonitor defines the configuration for an HTTP monitor.
+message HTTPMonitor {
+  // Unique identifier for the monitor (output only for create requests).
+  string id = 1;
+
+  // Name of the monitor (required, max 256 characters).
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // URL to monitor (required, max 2048 characters).
+  string url = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 2048
+    uri: true
+  }];
+
+  // Check periodicity (required).
+  Periodicity periodicity = 4 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+
+  // HTTP method to use (defaults to GET).
+  HTTPMethod method = 5 [(buf.validate.field).enum = {
+      not_in: [0]
+  }];
+
+  // Request body (optional).
+  string body = 6;
+
+  // Timeout in milliseconds (0-120000, defaults to 45000).
+  int64 timeout = 7 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Latency threshold for degraded status in milliseconds (optional, 0-120000).
+  optional int64 degraded_at = 8 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Number of retry attempts (0-10, defaults to 3).
+  int64 retry = 9 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 10
+  }];
+
+  // Whether to follow HTTP redirects (defaults to true when not specified).
+  optional bool follow_redirects = 10;
+
+  // Custom headers for the request.
+  repeated Headers headers = 11 [(buf.validate.field).repeated.max_items = 20];
+
+  // Status code assertions for the response.
+  repeated StatusCodeAssertion status_code_assertions = 12 [(buf.validate.field).repeated.max_items = 10];
+
+  // Body content assertions for the response.
+  repeated BodyAssertion body_assertions = 13 [(buf.validate.field).repeated.max_items = 10];
+
+  // Header assertions for the response.
+  repeated HeaderAssertion header_assertions = 14 [(buf.validate.field).repeated.max_items = 10];
+
+  // Description of the monitor (optional).
+  string description = 15 [(buf.validate.field).string.max_len = 1024];
+
+  // Whether the monitor is active (defaults to false).
+  bool active = 16;
+
+  // Whether the monitor is publicly visible (defaults to false).
+  bool public = 17;
+
+  // Geographic regions to run checks from.
+  repeated Region regions = 18 [(buf.validate.field).repeated = {
+    max_items: 28
+    items: {
+      enum: {
+        not_in: [0]
+      }
+    }
+  }];
+
+  // OpenTelemetry configuration for exporting metrics.
+  OpenTelemetryConfig open_telemetry = 19;
+
+  // Current operational status of the monitor.
+  MonitorStatus status = 20;
+}

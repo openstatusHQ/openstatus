@@ -10,12 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@react-email/button": "0.2.1",
     "@react-email/components": "1.0.3",
-    "@react-email/head": "0.0.13",
-    "@react-email/html": "0.0.12",
     "@react-email/render": "2.0.1",
-    "@react-email/tailwind": "2.0.3",
     "@t3-oss/env-core": "0.13.10",
     "effect": "3.19.12",
     "react-email": "5.1.1",

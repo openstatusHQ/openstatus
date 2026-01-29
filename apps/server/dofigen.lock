@@ -10,35 +10,14 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-      label:
-        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
-      workdir: /app/apps/server
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
         digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
-        org.opencontainers.image.stage: install
         org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        org.opencontainers.image.stage: install
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
       workdir: /app/
       run:
       - bun install --production --frozen-lockfile --verbose
@@ -55,6 +34,8 @@ effective: |
         source: packages/analytics/package.json
       - target: packages/db/package.json
         source: packages/db/package.json
+      - target: packages/proto/package.json
+        source: packages/proto/package.json
       - target: packages/emails/package.json
         source: packages/emails/package.json
       - target: packages/error/package.json
@@ -75,16 +56,37 @@ effective: |
         source: packages/assertions/package.json
       - target: packages/theme-store/package.json
         source: packages/theme-store/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+      label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
+        org.opencontainers.image.stage: build
+        org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f
+    digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
   label:
+    org.opencontainers.image.vendor: OpenStatus
+    org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.base.digest: sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     io.dofigen.version: 2.6.0
     org.opencontainers.image.title: OpenStatus Server
   user:
@@ -116,14 +118,14 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f
+          digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
     oven:
       bun:
         1.3.6:
           digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
 resources:
   dofigen.yml:
-    hash: 9517fa6af63764e1066de654bdbee489a77f4d9ce57858a451a8abae505bf27a
+    hash: 7e47c3833d499c7394c76a65c785330d2c16fc1b1b29b423fc71a6ec4feccd14
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -150,6 +152,7 @@ resources:
             - apps/server/package.json
             - packages/analytics/package.json
             - packages/db/package.json
+            - packages/proto/package.json
             - packages/emails/package.json
             - packages/error/package.json
             - packages/regions/package.json

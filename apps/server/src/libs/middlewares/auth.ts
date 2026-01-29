@@ -14,7 +14,37 @@ import {
   verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
 
-const logger = getLogger("api-server-otel");
+const logger = getLogger("api-server");
+
+/**
+ * Looks up a workspace by ID and validates the data.
+ * Throws OpenStatusApiError if workspace is not found or invalid.
+ */
+export async function lookupWorkspace(workspaceId: number) {
+  const _workspace = await db
+    .select()
+    .from(workspace)
+    .where(eq(workspace.id, workspaceId))
+    .get();
+
+  if (!_workspace) {
+    throw new OpenStatusApiError({
+      code: "NOT_FOUND",
+      message: "Workspace not found, please contact support",
+    });
+  }
+
+  const validation = selectWorkspaceSchema.safeParse(_workspace);
+
+  if (!validation.success) {
+    throw new OpenStatusApiError({
+      code: "BAD_REQUEST",
+      message: "Workspace data is invalid",
+    });
+  }
+
+  return validation.data;
+}
 
 export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
@@ -52,45 +82,22 @@ export async function authMiddleware(
     });
   }
 
-  const _workspace = await db
-    .select()
-    .from(workspace)
-    .where(eq(workspace.id, ownerId))
-    .get();
+  const workspaceData = await lookupWorkspace(ownerId);
 
-  if (!_workspace) {
-    logger.error("Workspace not found for ownerId {ownerId}", { ownerId });
-    throw new OpenStatusApiError({
-      code: "NOT_FOUND",
-      message: "Workspace not found, please contact support",
-    });
-  }
-
-  const validation = selectWorkspaceSchema.safeParse(_workspace);
-
-  if (!validation.success) {
-    throw new OpenStatusApiError({
-      code: "BAD_REQUEST",
-      message: "Workspace data is invalid",
-    });
-  }
-
-  // Enrich wide event with business context
   const event = c.get("event");
   event.workspace = {
-    id: validation.data.id,
-    name: validation.data.name,
-    plan: validation.data.plan,
-    stripe_id: validation.data.stripeId,
+    id: workspaceData.id,
+    name: workspaceData.name,
+    plan: workspaceData.plan,
+    stripe_id: workspaceData.stripeId,
   };
   event.auth_method = result.authMethod;
+  c.set("workspace", workspaceData);
 
-  c.set("workspace", validation.data);
-  c.set("event", event);
   await next();
 }
 
-async function validateKey(key: string): Promise<{
+export async function validateKey(key: string): Promise<{
   result: { valid: boolean; ownerId?: string; authMethod?: string };
   error?: { message: string };
 }> {
@@ -100,14 +107,6 @@ async function validateKey(key: string): Promise<{
      * Custom keys are checked first in the database, then falls back to Unkey.
      */
     if (key.startsWith("os_")) {
-      // Validate token format before database query
-      // if (!/^os_[a-f0-9]{32}$/.test(key)) {
-      //   return {
-      //     result: { valid: false },
-      //     error: { message: "Invalid API Key format" },
-      //   };
-      // }
-
       // 1. Try custom DB first
       const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
       const customKey = await db

@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/monitor/v1/assertions.proto";
+import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/monitor.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/monitor/v1;monitorv1";
+
+// DNSMonitor defines the configuration for a DNS monitor.
+message DNSMonitor {
+  // Unique identifier for the monitor (output only for create requests).
+  string id = 1;
+
+  // Name of the monitor (required, max 256 characters).
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // Domain to resolve (required, max 2048 characters).
+  string uri = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 2048
+  }];
+
+  // Check periodicity (required).
+  Periodicity periodicity = 4 [(buf.validate.field).enum = {
+    not_in: [0]
+  }];
+
+  // Timeout in milliseconds (0-120000, defaults to 45000).
+  int64 timeout = 5 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Latency threshold for degraded status in milliseconds (optional, 0-120000).
+  optional int64 degraded_at = 6 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 120000
+  }];
+
+  // Number of retry attempts (0-10, defaults to 3).
+  int64 retry = 7 [(buf.validate.field).int64 = {
+    gte: 0
+    lte: 10
+  }];
+
+  // DNS record assertions for validation.
+  repeated RecordAssertion record_assertions = 8 [(buf.validate.field).repeated.max_items = 10];
+
+  // Description of the monitor (optional).
+  string description = 9 [(buf.validate.field).string.max_len = 1024];
+
+  // Whether the monitor is active (defaults to false).
+  bool active = 10;
+
+  // Whether the monitor is publicly visible (defaults to false).
+  bool public = 11;
+
+  // Geographic regions to run checks from.
+  repeated Region regions = 12 [(buf.validate.field).repeated = {
+    max_items: 28
+    items: {
+      enum: {
+        not_in: [0]
+      }
+    }
+  }];
+
+  // OpenTelemetry configuration for exporting metrics.
+  OpenTelemetryConfig open_telemetry = 13;
+
+  // Current operational status of the monitor.
+  MonitorStatus status = 14;
+}

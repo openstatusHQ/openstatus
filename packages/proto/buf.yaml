@@ -1,8 +1,18 @@
 version: v2
 
 modules:
-   - path: .
-     name: buf.build/openstatus/private-location
+  - path: ./api/
+    name: buf.build/openstatus/api
+  - path: ./internal/
+    name: buf.build/openstatus/private-location
+
+deps:
+  - buf.build/bufbuild/protovalidate
 lint:
   use:
     - STANDARD
+  except:
+    - PACKAGE_VERSION_SUFFIX
+breaking:
+  use:
+    - FILE

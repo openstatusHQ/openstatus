@@ -20,6 +20,7 @@ import { requestId } from "hono/request-id";
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
+import { mountRpcRoutes } from "./routes/rpc";
 import { api } from "./routes/v1";
 
 type Env = {
@@ -119,6 +120,10 @@ app.use("*", async (c, next) => {
         user_agent: c.req.header("User-Agent"),
         // Request metadata
         content_type: c.req.header("Content-Type"),
+        // Environment characteristics
+        service: "api-server",
+        environment: env.NODE_ENV,
+        region: env.FLY_REGION,
       };
       c.set("event", event);
 
@@ -166,6 +171,11 @@ app.use("*", async (c, next) => {
 app.onError(handleError);
 
 /**
+ * ConnectRPC Routes API v2 ftw
+ */
+mountRpcRoutes(app);
+
+/**
  * Public Routes
  */
 app.route("/public", publicRoute);
@@ -196,7 +206,7 @@ const port = 3000;
 
 if (isDev) showRoutes(app, { verbose: true, colorize: true });
 
-console.log(`Starting server on port ${port}`);
+logger.info("Starting server", { port, environment: env.NODE_ENV });
 
 const server = { port, fetch: app.fetch };
 

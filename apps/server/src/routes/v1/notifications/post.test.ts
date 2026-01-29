@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+import { db, eq } from "@openstatus/db";
+import { notification } from "@openstatus/db/src/schema";
 import { NotificationSchema } from "./schema";
 
 test("create a notification", async () => {
@@ -22,6 +24,11 @@ test("create a notification", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created notification
+  if (result.success) {
+    await db.delete(notification).where(eq(notification.id, result.data.id));
+  }
 });
 
 test("create a notification with invalid monitor ids should return a 400", async () => {

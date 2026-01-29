@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package private_location.v1;
 
-import "google/protobuf/struct.proto";
-
 import "private_location/v1/dns_monitor.proto";
 import "private_location/v1/http_monitor.proto";
 import "private_location/v1/tcp_monitor.proto";

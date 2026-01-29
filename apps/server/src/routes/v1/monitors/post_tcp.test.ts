@@ -24,14 +24,17 @@ test("create a valid monitor", async () => {
     }),
   });
   const r = await res.json();
-  console.log(r);
   const result = MonitorSchema.safeParse(r);
-  if (result.error) {
-    console.error(result.error);
-    throw new Error("Invalid monitor payload");
-  }
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create a status report with invalid payload should return 400", async () => {
@@ -93,6 +96,14 @@ test("create TCP monitor with port 80 should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with custom port should return 200", async () => {
@@ -119,6 +130,14 @@ test("create TCP monitor with custom port should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with timeout and retry configuration should return 200", async () => {
@@ -148,6 +167,14 @@ test("create TCP monitor with timeout and retry configuration should return 200"
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with OpenTelemetry configuration should return 200", async () => {
@@ -180,6 +207,14 @@ test("create TCP monitor with OpenTelemetry configuration should return 200", as
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with multiple regions should return 200", async () => {
@@ -206,6 +241,14 @@ test("create TCP monitor with multiple regions should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with 30s frequency should return 200", async () => {
@@ -232,6 +275,14 @@ test("create TCP monitor with 30s frequency should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with 1h frequency should return 200", async () => {
@@ -258,6 +309,14 @@ test("create TCP monitor with 1h frequency should return 200", async () => {
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor without optional fields should return 200", async () => {
@@ -281,6 +340,14 @@ test("create TCP monitor without optional fields should return 200", async () =>
   const result = MonitorSchema.safeParse(await res.json());
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
+
+  // Cleanup: delete the created monitor
+  if (result.success) {
+    await app.request(`/v1/monitor/${result.data.id}`, {
+      method: "DELETE",
+      headers: { "x-openstatus-key": "1" },
+    });
+  }
 });
 
 test("create TCP monitor with invalid host should return 400", async () => {

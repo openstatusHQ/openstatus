@@ -15,6 +15,7 @@ RUN \
     --mount=type=bind,target=apps/server/package.json,source=apps/server/package.json \
     --mount=type=bind,target=packages/analytics/package.json,source=packages/analytics/package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
+    --mount=type=bind,target=packages/proto/package.json,source=packages/proto/package.json \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
     --mount=type=bind,target=packages/error/package.json,source=packages/error/package.json \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
@@ -46,11 +47,11 @@ COPY \
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f AS runtime
+FROM debian@sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734 AS runtime
 LABEL \
     io.dofigen.version="2.6.0" \
     org.opencontainers.image.authors="OpenStatus Team" \
-    org.opencontainers.image.base.digest="sha256:c5f48c942c667e70d7e64b124cfc939c25a4a43207c0d14b45844d762dc1d50f" \
+    org.opencontainers.image.base.digest="sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734" \
     org.opencontainers.image.base.name="docker.io/debian:bullseye-slim" \
     org.opencontainers.image.description="REST API server with Hono framework for OpenStatus" \
     org.opencontainers.image.source="https://github.com/openstatusHQ/openstatus" \

@@ -17,8 +17,8 @@ const statusAssertion = z
   .object({
     type: z.literal("status"),
     compare: numberCompare.openapi({
-      description: "The comparison to run",
-      example: "eq",
+      description: "Comparison operator",
+      examples: ["eq", "not_eq", "gt", "gte", "lt", "lte"],
     }),
     target: z.int().positive().openapi({ description: "The target value" }),
   })

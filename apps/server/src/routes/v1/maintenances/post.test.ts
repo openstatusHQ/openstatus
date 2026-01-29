@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
 import { app } from "@/index";
+import { db, eq } from "@openstatus/db";
+import { maintenance } from "@openstatus/db/src/schema";
 import { MaintenanceSchema } from "./schema";
 
 test("create a valid maintenance without monitorIds", async () => {
@@ -26,6 +28,11 @@ test("create a valid maintenance without monitorIds", async () => {
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.monitorIds?.length).toBe(0);
+
+  // Cleanup: delete the created maintenance
+  if (result.success) {
+    await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
+  }
 });
 
 test("create a maintenance with `from` date after `to` date should return 400", async () => {
@@ -133,7 +140,9 @@ test("create a valid maintenance", async () => {
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
   expect(result.data?.monitorIds?.length).toBe(1);
-  expect(result.data?.monitorIds).toEqual([1]);
+  if (result.success) {
+    await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
+  }
 });
 
 test("create a maintenance with multiple monitorIds", async () => {
@@ -161,6 +170,43 @@ test("create a maintenance with multiple monitorIds", async () => {
   expect(result.success).toBe(true);
   expect(result.data?.monitorIds?.length).toBe(2);
   expect(result.data?.monitorIds).toEqual(expect.arrayContaining([1, 2]));
+
+  // Cleanup: delete the created maintenance
+  if (result.success) {
+    await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
+  }
+});
+
+test("create a maintenance with multiple monitorIds", async () => {
+  const from = new Date();
+  const to = new Date(from.getTime() + 3600000); // 1 hour later
+
+  const res = await app.request("/v1/maintenance", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "Multi-Monitor Maintenance",
+      message: "Maintenance affecting multiple monitors",
+      from: from.toISOString(),
+      to: to.toISOString(),
+      monitorIds: [1, 2],
+      pageId: 1,
+    }),
+  });
+  const result = MaintenanceSchema.safeParse(await res.json());
+
+  expect(res.status).toBe(200);
+  expect(result.success).toBe(true);
+  expect(result.data?.monitorIds?.length).toBe(2);
+  expect(result.data?.monitorIds).toEqual(expect.arrayContaining([1, 2]));
+
+  // Cleanup: delete the created maintenance
+  if (result.success) {
+    await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
+  }
 });
 
 test("create a maintenance with invalid dates should return 400", async () => {

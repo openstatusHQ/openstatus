@@ -1,7 +1,10 @@
+import { getLogger } from "@logtape/logtape";
 import { Hono } from "hono";
 
 import { db, eq } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
+
+const logger = getLogger("api-server");
 
 /**
  * RFC 8058 One-Click Unsubscribe Endpoint
@@ -56,7 +59,10 @@ unsubscribe.post("/:token", async (c) => {
     // Return 200 OK on success
     return c.json({ message: "Successfully unsubscribed" }, 200);
   } catch (e) {
-    console.error(`Error in one-click unsubscribe: ${e}`);
+    logger.error("Error in one-click unsubscribe", {
+      error: e instanceof Error ? e.message : String(e),
+      stack: e instanceof Error ? e.stack : undefined,
+    });
     return c.json({ error: "Internal server error" }, 500);
   }
 });

@@ -1,10 +1,43 @@
 {
   "name": "@openstatus/proto",
   "version": "0.0.0",
+  "type": "module",
+  "main": "./gen/ts/index.ts",
+  "types": "./gen/ts/index.ts",
+  "exports": {
+    ".": {
+      "import": "./gen/ts/index.ts",
+      "types": "./gen/ts/index.ts"
+    },
+    "./monitor/v1": {
+      "import": "./gen/ts/openstatus/monitor/v1/index.ts",
+      "types": "./gen/ts/openstatus/monitor/v1/index.ts"
+    },
+    "./health/v1": {
+      "import": "./gen/ts/openstatus/health/v1/index.ts",
+      "types": "./gen/ts/openstatus/health/v1/index.ts"
+    },
+    "./status_report/v1": {
+      "import": "./gen/ts/openstatus/status_report/v1/index.ts",
+      "types": "./gen/ts/openstatus/status_report/v1/index.ts"
+    }
+  },
   "scripts": {
-    "buf": "buf generate"
+    "buf:ts": "buf generate --path api/openstatus --template buf.gen.ts.yaml",
+    "buf:go": "buf generate --path internal/private_location --template buf.gen.go.yaml",
+    "buf:lint": "buf lint",
+    "build": "buf generate",
+    "clean": "rm -rf gen/ts"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "2.10.2",
+    "@bufbuild/protovalidate": "^1.1.1",
+    "@connectrpc/connect": "^2.1.1"
   },
   "devDependencies": {
-    "@bufbuild/buf": "1.57.2"
+    "@bufbuild/buf": "1.57.2",
+    "@bufbuild/protoc-gen-es": "2.10.2",
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "5.9.3"
   }
 }

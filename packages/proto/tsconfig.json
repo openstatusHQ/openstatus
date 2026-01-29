@@ -1,0 +1,18 @@
+{
+  "extends": "@openstatus/tsconfig/base.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "gen/ts",
+    "rootDir": "gen/ts",
+    "strict": true,
+    "skipLibCheck": true,
+    "emitDeclarationOnly": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["gen/ts/**/*.ts"],
+  "exclude": ["node_modules"]
+}
