@@ -1,13 +1,9 @@
 import { z } from "zod";
 
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
-import {
-  page,
-  pageComponent,
-  pageComponentGroup,
-} from "@openstatus/db/src/schema";
+import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
 
-import { TRPCError } from "@trpc/server";
+import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const pageComponentRouter = createTRPCRouter({
@@ -47,6 +43,7 @@ export const pageComponentRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
+    .meta({ track: Events.DeletePageComponent, trackProps: ["id"] })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       return await opts.ctx.db
@@ -60,85 +57,8 @@ export const pageComponentRouter = createTRPCRouter({
         .returning();
     }),
 
-  new: protectedProcedure
-    .input(
-      z.object({
-        pageId: z.number(),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        type: z.enum(["static", "monitor"]).default("monitor"),
-        monitorId: z.number().optional(),
-        order: z.number().optional(),
-        groupId: z.number().optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: and(
-          eq(page.id, opts.input.pageId),
-          eq(page.workspaceId, opts.ctx.workspace.id),
-        ),
-      });
-
-      if (!_page) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
-      }
-
-      const newPageComponent = await opts.ctx.db
-        .insert(pageComponent)
-        .values({
-          pageId: opts.input.pageId,
-          workspaceId: opts.ctx.workspace.id,
-          name: opts.input.name,
-          description: opts.input.description,
-          type: opts.input.type,
-          monitorId: opts.input.monitorId,
-          order: opts.input.order,
-          groupId: opts.input.groupId,
-        })
-        .returning()
-        .get();
-
-      return newPageComponent;
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        type: z.enum(["static", "monitor"]).optional(),
-        monitorId: z.number().optional(),
-        order: z.number().optional(),
-        groupId: z.number().optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(pageComponent.id, opts.input.id),
-        eq(pageComponent.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _pageComponent = await opts.ctx.db
-        .update(pageComponent)
-        .set({
-          name: opts.input.name,
-          description: opts.input.description,
-          type: opts.input.type,
-          monitorId: opts.input.monitorId,
-          order: opts.input.order,
-          groupId: opts.input.groupId,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .returning()
-        .get();
-
-      return _pageComponent;
-    }),
-
   updateOrder: protectedProcedure
+    .meta({ track: Events.UpdatePageComponentOrder, trackProps: ["pageId"] })
     .input(
       z.object({
         pageId: z.number(),
