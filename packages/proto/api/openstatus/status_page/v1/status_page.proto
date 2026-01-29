@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+package openstatus.status_page.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
+
+// PageAccessType defines who can access the status page.
+enum PageAccessType {
+  PAGE_ACCESS_TYPE_UNSPECIFIED = 0;
+  PAGE_ACCESS_TYPE_PUBLIC = 1;
+  PAGE_ACCESS_TYPE_PASSWORD_PROTECTED = 2;
+  PAGE_ACCESS_TYPE_AUTHENTICATED = 3;
+}
+
+// PageTheme defines the visual theme of the status page.
+enum PageTheme {
+  PAGE_THEME_UNSPECIFIED = 0;
+  PAGE_THEME_SYSTEM = 1;
+  PAGE_THEME_LIGHT = 2;
+  PAGE_THEME_DARK = 3;
+}
+
+// OverallStatus represents the aggregated status of all components on a page.
+enum OverallStatus {
+  OVERALL_STATUS_UNSPECIFIED = 0;
+  OVERALL_STATUS_OPERATIONAL = 1;
+  OVERALL_STATUS_DEGRADED = 2;
+  OVERALL_STATUS_PARTIAL_OUTAGE = 3;
+  OVERALL_STATUS_MAJOR_OUTAGE = 4;
+  OVERALL_STATUS_MAINTENANCE = 5;
+  OVERALL_STATUS_UNKNOWN = 6;
+}
+
+// StatusPage represents a full status page with all details.
+message StatusPage {
+  // Unique identifier for the status page.
+  string id = 1;
+
+  // Title of the status page.
+  string title = 2;
+
+  // Description of the status page.
+  string description = 3;
+
+  // URL-friendly slug for the status page.
+  string slug = 4;
+
+  // Custom domain for the status page (optional).
+  string custom_domain = 5;
+
+  // Whether the status page is published and visible.
+  bool published = 6;
+
+  // Access type for the status page.
+  PageAccessType access_type = 7;
+
+  // Visual theme for the status page.
+  PageTheme theme = 8;
+
+  // URL to the homepage (optional).
+  string homepage_url = 9;
+
+  // URL to the contact page (optional).
+  string contact_url = 10;
+
+  // Icon URL for the status page (optional).
+  string icon = 11;
+
+  // Timestamp when the page was created (RFC 3339 format).
+  string created_at = 12;
+
+  // Timestamp when the page was last updated (RFC 3339 format).
+  string updated_at = 13;
+}
+
+// StatusPageSummary represents metadata for a status page (used in list responses).
+message StatusPageSummary {
+  // Unique identifier for the status page.
+  string id = 1;
+
+  // Title of the status page.
+  string title = 2;
+
+  // URL-friendly slug for the status page.
+  string slug = 3;
+
+  // Whether the status page is published and visible.
+  bool published = 4;
+
+  // Timestamp when the page was created (RFC 3339 format).
+  string created_at = 5;
+
+  // Timestamp when the page was last updated (RFC 3339 format).
+  string updated_at = 6;
+}

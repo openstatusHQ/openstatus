@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package openstatus.status_page.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
+
+// PageSubscriber represents a subscriber to a status page.
+message PageSubscriber {
+  // Unique identifier for the subscriber.
+  string id = 1;
+
+  // ID of the status page the user is subscribed to.
+  string page_id = 2;
+
+  // Email address of the subscriber.
+  string email = 3;
+
+  // Timestamp when the subscription was accepted/confirmed (RFC 3339 format, optional).
+  string accepted_at = 4;
+
+  // Timestamp when the user unsubscribed (RFC 3339 format, optional).
+  string unsubscribed_at = 5;
+
+  // Timestamp when the subscription was created (RFC 3339 format).
+  string created_at = 6;
+
+  // Timestamp when the subscription was last updated (RFC 3339 format).
+  string updated_at = 7;
+}

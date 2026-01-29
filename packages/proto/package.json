@@ -20,6 +20,10 @@
     "./status_report/v1": {
       "import": "./gen/ts/openstatus/status_report/v1/index.ts",
       "types": "./gen/ts/openstatus/status_report/v1/index.ts"
+    },
+    "./status_page/v1": {
+      "import": "./gen/ts/openstatus/status_page/v1/index.ts",
+      "types": "./gen/ts/openstatus/status_page/v1/index.ts"
     }
   },
   "scripts": {

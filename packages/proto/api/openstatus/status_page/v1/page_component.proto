@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package openstatus.status_page.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
+
+// PageComponentType defines the type of a component on a status page.
+enum PageComponentType {
+  PAGE_COMPONENT_TYPE_UNSPECIFIED = 0;
+  PAGE_COMPONENT_TYPE_MONITOR = 1;
+  PAGE_COMPONENT_TYPE_STATIC = 2;
+}
+
+// PageComponent represents a component displayed on a status page.
+message PageComponent {
+  // Unique identifier for the component.
+  string id = 1;
+
+  // ID of the status page this component belongs to.
+  string page_id = 2;
+
+  // Display name of the component.
+  string name = 3;
+
+  // Description of the component (optional).
+  string description = 4;
+
+  // Type of the component (monitor or static).
+  PageComponentType type = 5;
+
+  // ID of the monitor if type is MONITOR (optional).
+  string monitor_id = 6;
+
+  // Display order of the component.
+  int32 order = 7;
+
+  // ID of the group this component belongs to (optional).
+  string group_id = 8;
+
+  // Order within the group if grouped.
+  int32 group_order = 9;
+
+  // Timestamp when the component was created (RFC 3339 format).
+  string created_at = 10;
+
+  // Timestamp when the component was last updated (RFC 3339 format).
+  string updated_at = 11;
+}
+
+// PageComponentGroup represents a group of components on a status page.
+message PageComponentGroup {
+  // Unique identifier for the group.
+  string id = 1;
+
+  // ID of the status page this group belongs to.
+  string page_id = 2;
+
+  // Display name of the group.
+  string name = 3;
+
+  // Timestamp when the group was created (RFC 3339 format).
+  string created_at = 4;
+
+  // Timestamp when the group was last updated (RFC 3339 format).
+  string updated_at = 5;
+}
