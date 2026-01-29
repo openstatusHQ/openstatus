@@ -1,6 +1,18 @@
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, count, db, desc, eq, inArray, isNull } from "@openstatus/db";
 import {
+  and,
+  count,
+  db,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lte,
+} from "@openstatus/db";
+import {
+  maintenance,
+  maintenancesToPageComponents,
   monitor,
   page,
   pageComponent,
@@ -32,9 +44,11 @@ import {
   pageComponentNotFoundError,
   pageComponentUpdateFailedError,
   slugAlreadyExistsError,
+  statusPageAccessDeniedError,
   statusPageCreateFailedError,
   statusPageIdRequiredError,
   statusPageNotFoundError,
+  statusPageNotPublishedError,
   statusPageUpdateFailedError,
   subscriberCreateFailedError,
   subscriberNotFoundError,
@@ -57,6 +71,26 @@ async function getPageById(id: number, workspaceId: number) {
  */
 async function getPageBySlug(slug: string) {
   return db.select().from(page).where(eq(page.slug, slug)).get();
+}
+
+/**
+ * Validates public access to a status page.
+ * Checks that the page is published and has public access type.
+ * Throws appropriate errors if access is denied.
+ */
+function validatePublicAccess(
+  pageData: { published: boolean | null; accessType: string | null },
+  slug: string,
+): void {
+  // Check if page is published
+  if (!pageData.published) {
+    throw statusPageNotPublishedError(slug);
+  }
+
+  // Check access type - only public pages are accessible without authentication
+  if (pageData.accessType && pageData.accessType !== "public") {
+    throw statusPageAccessDeniedError(slug, pageData.accessType);
+  }
 }
 
 /**
@@ -745,6 +779,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     type PageData = Awaited<ReturnType<typeof getPageById>>;
     let pageData: PageData;
     let identifierValue: string;
+    let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
       const rpcCtx = getRpcContext(ctx);
@@ -754,12 +789,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug(identifierValue);
+      isPublicAccess = true;
     } else {
       throw statusPageIdRequiredError();
     }
 
     if (!pageData) {
       throw statusPageNotFoundError(identifierValue);
+    }
+
+    // For public access (by slug), validate that page is published and accessible
+    if (isPublicAccess) {
+      validatePublicAccess(pageData, identifierValue);
     }
 
     // Get components
@@ -849,12 +890,55 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       };
     });
 
+    // Get maintenances for the page (upcoming and recent)
+    const pageMaintenances = await db
+      .select()
+      .from(maintenance)
+      .where(eq(maintenance.pageId, pageData.id))
+      .orderBy(desc(maintenance.from))
+      .all();
+
+    // Get component associations for maintenances
+    const maintenanceIds = pageMaintenances.map((m) => m.id);
+    const maintenanceComponents =
+      maintenanceIds.length > 0
+        ? await db
+            .select()
+            .from(maintenancesToPageComponents)
+            .where(
+              inArray(
+                maintenancesToPageComponents.maintenanceId,
+                maintenanceIds,
+              ),
+            )
+            .all()
+        : [];
+
+    // Convert maintenances to proto format
+    const maintenancesProto = pageMaintenances.map((m) => {
+      const componentIds = maintenanceComponents
+        .filter((mc) => mc.maintenanceId === m.id)
+        .map((mc) => String(mc.pageComponentId));
+
+      return {
+        $typeName: "openstatus.status_page.v1.Maintenance" as const,
+        id: String(m.id),
+        title: m.title,
+        message: m.message,
+        from: m.from.toISOString(),
+        to: m.to.toISOString(),
+        pageComponentIds: componentIds,
+        createdAt: m.createdAt?.toISOString() ?? "",
+        updatedAt: m.updatedAt?.toISOString() ?? "",
+      };
+    });
+
     return {
       statusPage: dbPageToProto(pageData),
       components: components.map(dbComponentToProto),
       groups: groups.map(dbGroupToProto),
       statusReports,
-      maintenances: [], // TODO: Implement maintenance support
+      maintenances: maintenancesProto,
     };
   },
 
@@ -862,6 +946,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     type PageData = Awaited<ReturnType<typeof getPageById>>;
     let pageData: PageData;
     let identifierValue: string;
+    let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
       const rpcCtx = getRpcContext(ctx);
@@ -871,12 +956,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug(identifierValue);
+      isPublicAccess = true;
     } else {
       throw statusPageIdRequiredError();
     }
 
     if (!pageData) {
       throw statusPageNotFoundError(identifierValue);
+    }
+
+    // For public access (by slug), validate that page is published and accessible
+    if (isPublicAccess) {
+      validatePublicAccess(pageData, identifierValue);
     }
 
     // Get components
@@ -886,13 +977,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       .where(eq(pageComponent.pageId, pageData.id))
       .all();
 
-    // Check for active incidents affecting components
     const componentIds = components.map((c) => c.id);
-    let hasActiveIncident = false;
+    const now = new Date();
+
+    // Check for active status reports (degraded state)
+    let hasActiveStatusReport = false;
+    const componentReportStatus = new Map<number, boolean>();
 
     if (componentIds.length > 0) {
-      const activeIncidents = await db
-        .select()
+      const activeReports = await db
+        .select({
+          componentId: statusReportsToPageComponents.pageComponentId,
+        })
         .from(statusReportsToPageComponents)
         .innerJoin(
           statusReport,
@@ -913,22 +1009,75 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         )
         .all();
 
-      hasActiveIncident = activeIncidents.length > 0;
+      hasActiveStatusReport = activeReports.length > 0;
+
+      // Track which components have active reports
+      for (const report of activeReports) {
+        componentReportStatus.set(report.componentId, true);
+      }
     }
 
-    // Determine overall status
-    // In a full implementation, this would check monitor statuses as well
-    const overallStatus = hasActiveIncident
-      ? OverallStatus.DEGRADED
-      : OverallStatus.OPERATIONAL;
+    // Check for active maintenances (info state - current time between from and to)
+    let hasActiveMaintenance = false;
+    const componentMaintenanceStatus = new Map<number, boolean>();
 
-    // Build component statuses
-    // In a full implementation, this would check each component's monitor status
-    const componentStatuses = components.map((c) => ({
-      $typeName: "openstatus.status_page.v1.ComponentStatus" as const,
-      componentId: String(c.id),
-      status: OverallStatus.OPERATIONAL, // Placeholder - would check monitor/incident status
-    }));
+    const activeMaintenances = await db
+      .select()
+      .from(maintenance)
+      .where(
+        and(
+          eq(maintenance.pageId, pageData.id),
+          lte(maintenance.from, now),
+          gte(maintenance.to, now),
+        ),
+      )
+      .all();
+
+    hasActiveMaintenance = activeMaintenances.length > 0;
+
+    // Get component associations for active maintenances
+    if (activeMaintenances.length > 0) {
+      const maintenanceIds = activeMaintenances.map((m) => m.id);
+      const maintenanceComponentAssocs = await db
+        .select()
+        .from(maintenancesToPageComponents)
+        .where(
+          inArray(maintenancesToPageComponents.maintenanceId, maintenanceIds),
+        )
+        .all();
+
+      // Track which components are under maintenance
+      for (const assoc of maintenanceComponentAssocs) {
+        componentMaintenanceStatus.set(assoc.pageComponentId, true);
+      }
+    }
+
+    // Determine overall status based on priority: degraded > maintenance > operational
+    // Note: In the existing codebase, status reports indicate "degraded" state
+    // and maintenances indicate "info/maintenance" state
+    const overallStatus = hasActiveStatusReport
+      ? OverallStatus.DEGRADED
+      : hasActiveMaintenance
+        ? OverallStatus.UNDER_MAINTENANCE
+        : OverallStatus.OPERATIONAL;
+
+    // Build component statuses based on their individual state
+    const componentStatuses = components.map((c) => {
+      const hasReport = componentReportStatus.get(c.id) ?? false;
+      const hasMaintenance = componentMaintenanceStatus.get(c.id) ?? false;
+
+      const status = hasReport
+        ? OverallStatus.DEGRADED
+        : hasMaintenance
+          ? OverallStatus.UNDER_MAINTENANCE
+          : OverallStatus.OPERATIONAL;
+
+      return {
+        $typeName: "openstatus.status_page.v1.ComponentStatus" as const,
+        componentId: String(c.id),
+        status,
+      };
+    });
 
     return {
       overallStatus,

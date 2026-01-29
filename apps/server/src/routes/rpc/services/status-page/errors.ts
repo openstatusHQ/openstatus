@@ -8,6 +8,8 @@ export const ErrorReason = {
   STATUS_PAGE_ID_REQUIRED: "STATUS_PAGE_ID_REQUIRED",
   STATUS_PAGE_CREATE_FAILED: "STATUS_PAGE_CREATE_FAILED",
   STATUS_PAGE_UPDATE_FAILED: "STATUS_PAGE_UPDATE_FAILED",
+  STATUS_PAGE_NOT_PUBLISHED: "STATUS_PAGE_NOT_PUBLISHED",
+  STATUS_PAGE_ACCESS_DENIED: "STATUS_PAGE_ACCESS_DENIED",
   SLUG_ALREADY_EXISTS: "SLUG_ALREADY_EXISTS",
   PAGE_COMPONENT_NOT_FOUND: "PAGE_COMPONENT_NOT_FOUND",
   PAGE_COMPONENT_CREATE_FAILED: "PAGE_COMPONENT_CREATE_FAILED",
@@ -103,6 +105,35 @@ export function slugAlreadyExistsError(slug: string): ConnectError {
     Code.AlreadyExists,
     ErrorReason.SLUG_ALREADY_EXISTS,
     { slug },
+  );
+}
+
+/**
+ * Creates a "status page not published" error.
+ * Used when trying to access an unpublished page via public slug.
+ */
+export function statusPageNotPublishedError(slug: string): ConnectError {
+  return createError(
+    "Status page is not published",
+    Code.NotFound,
+    ErrorReason.STATUS_PAGE_NOT_PUBLISHED,
+    { slug },
+  );
+}
+
+/**
+ * Creates a "status page access denied" error.
+ * Used when trying to access a protected page without proper authentication.
+ */
+export function statusPageAccessDeniedError(
+  slug: string,
+  accessType: string,
+): ConnectError {
+  return createError(
+    `Status page requires ${accessType} access`,
+    Code.PermissionDenied,
+    ErrorReason.STATUS_PAGE_ACCESS_DENIED,
+    { slug, "access-type": accessType },
   );
 }
 

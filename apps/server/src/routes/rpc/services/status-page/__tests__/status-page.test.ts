@@ -91,7 +91,7 @@ beforeAll(async () => {
     .get();
   testMonitorId = testMonitor.id;
 
-  // Create a test page
+  // Create a test page (published and public for testing public access)
   const testPage = await db
     .insert(page)
     .values({
@@ -100,6 +100,8 @@ beforeAll(async () => {
       slug: `${TEST_PREFIX}-slug`,
       description: "Test page for status page tests",
       customDomain: "",
+      published: true,
+      accessType: "public",
     })
     .returning()
     .get();
@@ -1310,6 +1312,94 @@ describe("StatusPageService.GetStatusPageContent", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("returns 404 for unpublished page accessed by slug", async () => {
+    // Create an unpublished page
+    const unpublishedPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-unpublished`,
+        slug: `${TEST_PREFIX}-unpublished-slug`,
+        description: "Unpublished page",
+        customDomain: "",
+        published: false,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageContent",
+        { slug: unpublishedPage.slug },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(page).where(eq(page.id, unpublishedPage.id));
+    }
+  });
+
+  test("returns 403 for password-protected page accessed by slug", async () => {
+    // Create a password-protected page
+    const protectedPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-protected`,
+        slug: `${TEST_PREFIX}-protected-slug`,
+        description: "Password protected page",
+        customDomain: "",
+        published: true,
+        accessType: "password",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageContent",
+        { slug: protectedPage.slug },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(403);
+    } finally {
+      await db.delete(page).where(eq(page.id, protectedPage.id));
+    }
+  });
+
+  test("allows workspace owner to access unpublished page by ID", async () => {
+    // Create an unpublished page
+    const unpublishedPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: `${TEST_PREFIX}-unpublished-by-id`,
+        slug: `${TEST_PREFIX}-unpublished-by-id-slug`,
+        description: "Unpublished page accessible by ID",
+        customDomain: "",
+        published: false,
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetStatusPageContent",
+        { id: String(unpublishedPage.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      // Workspace owner can access their own unpublished pages by ID
+      expect(res.status).toBe(200);
+    } finally {
+      await db.delete(page).where(eq(page.id, unpublishedPage.id));
+    }
   });
 
   test("includes active status reports", async () => {
