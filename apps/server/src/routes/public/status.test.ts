@@ -112,36 +112,36 @@ afterAll(async () => {
     await db
       .delete(incidentTable)
       .where(eq(incidentTable.id, testIncidentId))
-      .catch(() => { });
+      .catch(() => {});
   }
   if (testStatusReportId) {
     await db
       .delete(statusReport)
       .where(eq(statusReport.id, testStatusReportId))
-      .catch(() => { });
+      .catch(() => {});
   }
   if (testMaintenanceId) {
     await db
       .delete(maintenance)
       .where(eq(maintenance.id, testMaintenanceId))
-      .catch(() => { });
+      .catch(() => {});
   }
   await db
     .delete(pageComponent)
     .where(eq(pageComponent.pageId, testPageId))
-    .catch(() => { });
+    .catch(() => {});
   await db
     .delete(page)
     .where(eq(page.id, testPageId))
-    .catch(() => { });
+    .catch(() => {});
   await db
     .delete(monitor)
     .where(eq(monitor.id, testMonitorId))
-    .catch(() => { });
+    .catch(() => {});
   await db
     .delete(monitor)
     .where(eq(monitor.id, testMonitor2Id))
-    .catch(() => { });
+    .catch(() => {});
 });
 
 describe("Status Route: Basic functionality", () => {
@@ -252,7 +252,7 @@ describe("Status Route: Incident detection", () => {
       await db
         .delete(incidentTable)
         .where(eq(incidentTable.id, testIncidentId))
-        .catch(() => { });
+        .catch(() => {});
       testIncidentId = 0;
     }
 
@@ -318,7 +318,7 @@ describe("Status Route: Status report detection", () => {
       await db
         .delete(statusReport)
         .where(eq(statusReport.id, testStatusReportId))
-        .catch(() => { });
+        .catch(() => {});
       testStatusReportId = 0;
     }
 
@@ -386,7 +386,7 @@ describe("Status Route: Maintenance detection", () => {
       await db
         .delete(maintenance)
         .where(eq(maintenance.id, testMaintenanceId))
-        .catch(() => { });
+        .catch(() => {});
       testMaintenanceId = 0;
     }
 
@@ -425,7 +425,7 @@ describe("Status Route: Maintenance detection", () => {
       await db
         .delete(maintenance)
         .where(eq(maintenance.id, testMaintenanceId))
-        .catch(() => { });
+        .catch(() => {});
       testMaintenanceId = 0;
     }
 
