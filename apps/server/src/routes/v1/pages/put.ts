@@ -2,6 +2,7 @@ import { createRoute } from "@hono/zod-openapi";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
+import { notEmpty } from "@/utils/not-empty";
 import { Events } from "@openstatus/analytics";
 import {
   and,
@@ -282,7 +283,9 @@ export function registerPutPage(api: typeof pagesApi) {
     const data = transformPageData(
       PageSchema.parse({
         ...newPage,
-        monitors: monitors || currentPageComponents.map((pc) => pc.monitorId),
+        monitors:
+          monitors ||
+          currentPageComponents.map((pc) => pc.monitorId).filter(notEmpty),
       }),
     );
 
