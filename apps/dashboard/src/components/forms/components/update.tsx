@@ -17,6 +17,7 @@ export function FormComponentsUpdate() {
     trpc.pageComponent.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
@@ -33,7 +34,7 @@ export function FormComponentsUpdate() {
     }),
   );
 
-  if (!statusPage || !pageComponents || !monitors) return null;
+  if (!statusPage || !pageComponents || !monitors || !workspace) return null;
 
   // Separate standalone components from grouped components
   const standaloneComponents = pageComponents.filter((c) => !c.groupId);
@@ -85,7 +86,7 @@ export function FormComponentsUpdate() {
         monitors={monitors}
         allPageComponents={pageComponents}
         defaultValues={defaultValues}
-        legacy={statusPage.legacyPage}
+        workspace={workspace}
         onSubmit={async (values) => {
           await updateComponentsMutation.mutateAsync({
             pageId: Number.parseInt(id),

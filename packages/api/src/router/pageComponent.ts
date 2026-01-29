@@ -12,6 +12,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
+import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const pageComponentRouter = createTRPCRouter({
@@ -133,6 +134,8 @@ export const pageComponentRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       await opts.ctx.db.transaction(async (tx) => {
+        const pageComponentLimit = opts.ctx.workspace.limits["page-components"];
+
         // Get existing state
         const existingComponents = await tx
           .select()
@@ -144,6 +147,13 @@ export const pageComponentRouter = createTRPCRouter({
             ),
           )
           .all();
+
+        if (existingComponents.length >= pageComponentLimit) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You reached your page component limits.",
+          });
+        }
 
         const existingGroups = await tx
           .select()
