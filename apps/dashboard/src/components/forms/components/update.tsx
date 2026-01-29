@@ -5,6 +5,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { FormCardGroup } from "../form-card";
+import { FormConfiguration } from "../status-page/form-configuration";
 
 export function FormComponentsUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -23,6 +24,12 @@ export function FormComponentsUpdate() {
         refetch();
         refetchComponents();
       },
+    }),
+  );
+
+  const updatePageConfigurationMutation = useMutation(
+    trpc.page.updatePageConfiguration.mutationOptions({
+      onSuccess: () => refetch(),
     }),
   );
 
@@ -67,6 +74,10 @@ export function FormComponentsUpdate() {
     groups,
   };
 
+  const configLink = `https://${
+    statusPage.slug
+  }.stpg.dev?configuration-token=${statusPage.createdAt?.getTime().toString()}`;
+
   return (
     <FormCardGroup>
       <FormComponents
@@ -85,6 +96,26 @@ export function FormComponentsUpdate() {
             })),
           });
         }}
+      />
+      <FormConfiguration
+        defaultValues={{
+          configuration: statusPage.configuration ?? {},
+        }}
+        onSubmit={async (values) => {
+          await updatePageConfigurationMutation.mutateAsync({
+            id: Number.parseInt(id),
+            configuration: {
+              uptime:
+                typeof values.configuration.uptime === "boolean"
+                  ? values.configuration.uptime
+                  : values.configuration.uptime === "true",
+              value: values.configuration.value ?? "duration",
+              type: values.configuration.type ?? "absolute",
+              theme: values.configuration.theme ?? undefined,
+            },
+          });
+        }}
+        configLink={configLink}
       />
     </FormCardGroup>
   );

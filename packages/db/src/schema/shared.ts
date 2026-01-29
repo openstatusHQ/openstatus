@@ -54,28 +54,10 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
     )
     .prefault([]),
 });
-// TODO: it would be nice to automatically add the monitor relation here
-// .refine((data) => ({ monitors: data.maintenancesToMonitors.map((m) => m.monitorId) }));
 
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
   statusReports: z.array(selectStatusReportPageSchema),
-});
-
-export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
-  monitorsToPages: z.array(
-    z.object({
-      monitorId: z.number(),
-      pageId: z.number(),
-      order: z.number().prefault(0).optional(),
-      monitor: selectMonitorSchema,
-    }),
-  ),
-  maintenances: selectMaintenanceSchema.array().prefault([]),
-  statusReports: selectStatusReportSchema
-    .extend({ statusReportUpdates: selectStatusReportUpdateSchema.array() })
-    .array()
-    .prefault([]),
 });
 
 export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
@@ -191,20 +173,6 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
     .transform((val) => val ?? "free"),
   whiteLabel: z.boolean().prefault(false),
 });
-
-export const selectPublicStatusReportSchemaWithRelation =
-  selectStatusReportSchema.extend({
-    monitorsToStatusReports: z
-      .array(
-        z.object({
-          monitorId: z.number(),
-          statusReportId: z.number(),
-          monitor: selectPublicMonitorSchema,
-        }),
-      )
-      .prefault([]),
-    statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-  });
 
 export type StatusReportWithUpdates = z.infer<
   typeof selectStatusReportPageSchema

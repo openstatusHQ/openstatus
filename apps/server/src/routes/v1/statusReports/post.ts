@@ -164,21 +164,11 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
 
       const pageInfo = await db.query.page.findFirst({
         where: eq(page.id, _newStatusReport.pageId),
-        with: {
-          monitorsToPages: {
-            with: {
-              monitor: true,
-            },
-          },
-        },
       });
 
       const _statusReport = await db.query.statusReport.findFirst({
         where: eq(statusReport.id, _newStatusReport.id),
         with: {
-          monitorsToStatusReports: {
-            with: { monitor: true },
-          },
           statusReportsToPageComponents: {
             with: { pageComponent: true },
           },

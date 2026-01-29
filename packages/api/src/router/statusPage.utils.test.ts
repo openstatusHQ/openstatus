@@ -915,7 +915,7 @@ describe("getEvents - pageComponent filtering", () => {
       id,
       workspaceId: 1,
       pageId: 1,
-      type: monitorId ? ("monitor" as const) : ("external" as const),
+      type: monitorId ? ("monitor" as const) : ("static" as const),
       monitorId: monitorId ?? null,
       name: `Component ${id}`,
       description: null,
@@ -1060,14 +1060,14 @@ describe("getEvents - pageComponent filtering", () => {
     expect(reportEvents.map((e) => e.id).sort()).toEqual([1, 3]);
   });
 
-  it("should exclude incidents for external components", () => {
+  it("should exclude incidents for static components", () => {
     const incidents = [createMockIncident(1, 10), createMockIncident(2, 20)];
 
     const events = getEvents({
       maintenances: [],
       incidents,
       reports: [],
-      componentType: "external",
+      componentType: "static",
       pastDays: 365,
     });
 

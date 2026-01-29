@@ -139,11 +139,11 @@ export function FormConfiguration({
     <>
       <Form {...form}>
         <form id="redesign" onSubmit={form.handleSubmit(submitAction)}>
-          <FormCard variant="info">
+          <FormCard>
             <FormCardHeader>
-              <FormCardTitle>Tracker Configuration</FormCardTitle>
+              <FormCardTitle>Components Configuration</FormCardTitle>
               <FormCardDescription>
-                Configure which data should be shown in the monitor tracker.
+                Configure which data should be shown for your components.
               </FormCardDescription>
             </FormCardHeader>
             <FormCardSeparator />
@@ -153,7 +153,7 @@ export function FormConfiguration({
                 name="configuration.type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bar Type</FormLabel>
+                    <FormLabel>Bar Type*</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "absolute"}
@@ -184,7 +184,7 @@ export function FormConfiguration({
                 name="configuration.value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Card Value</FormLabel>
+                    <FormLabel>Card Value*</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "duration"}
@@ -242,41 +242,40 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
+              <p className="col-span-full text-foreground/70 text-sm">
+                *Configuration settings only apply to monitor components.
+              </p>
               <Note className="col-span-full">
                 <ul className="list-inside list-disc">
                   <li>
+                    <span>Bar Type </span>
                     <span className="font-medium">
-                      Bar Type{" "}
-                      <span className="font-semibold">
-                        {watchConfigurationType}
-                      </span>
+                      {watchConfigurationType}
                     </span>
-                    : {message.type[watchConfigurationType]}
+                    : <span>{message.type[watchConfigurationType]}</span>
                   </li>
                   <li>
+                    <span>Card Value </span>
                     <span className="font-medium">
-                      Card Value{" "}
-                      <span className="font-semibold">
-                        {watchConfigurationValue}
-                      </span>
+                      {watchConfigurationValue}
                     </span>
                     :{" "}
-                    {message.value[watchConfigurationValue] ??
-                      message.value.default}
+                    <span>
+                      {message.value[watchConfigurationValue] ??
+                        message.value.default}
+                    </span>
                   </li>
                   <li>
-                    <span className="font-medium">
-                      Show Uptime{" "}
-                      <span className="font-semibold">
-                        {watchConfigurationUptime}
-                      </span>
+                    <span>Show Uptime </span>
+                    <span className="font-medium capitalize">
+                      {String(watchConfigurationUptime)}
                     </span>
-                    : {message.uptime[watchConfigurationUptime]}
+                    : <span>{message.uptime[watchConfigurationUptime]}</span>
                   </li>
                 </ul>
               </Note>
             </FormCardContent>
-            <FormCardFooter variant="info">
+            <FormCardFooter>
               <FormCardFooterInfo>
                 Learn more about{" "}
                 <Link

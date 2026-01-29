@@ -72,7 +72,6 @@ export const maintenanceRouter = createTRPCRouter({
             ? asc(maintenance.createdAt)
             : desc(maintenance.createdAt),
         with: {
-          maintenancesToMonitors: true,
           maintenancesToPageComponents: { with: { pageComponent: true } },
         },
       });
@@ -87,7 +86,6 @@ export const maintenanceRouter = createTRPCRouter({
         .parse(
           result.map((m) => ({
             ...m,
-            monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
             pageComponents: m.maintenancesToPageComponents.map(
               ({ pageComponent }) => pageComponent,
             ),

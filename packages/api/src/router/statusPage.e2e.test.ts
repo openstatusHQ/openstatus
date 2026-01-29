@@ -829,7 +829,7 @@ describe("statusPage.get endpoint validation", () => {
         expect(tracker.component).toHaveProperty("name");
         expect(tracker.component).toHaveProperty("status");
         expect(tracker.component).toHaveProperty("type");
-        expect(["monitor", "external"]).toContain(tracker.component.type);
+        expect(["monitor", "static"]).toContain(tracker.component.type);
         expect(["success", "degraded", "error", "info"]).toContain(
           tracker.component.status,
         );
