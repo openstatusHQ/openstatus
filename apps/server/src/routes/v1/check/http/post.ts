@@ -8,7 +8,7 @@ import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
 import type { checkApi } from "../index";
 
-const logger = getLogger("api-server");
+const _logger = getLogger("api-server");
 import {
   AggregatedResponseSchema,
   AggregatedResult,

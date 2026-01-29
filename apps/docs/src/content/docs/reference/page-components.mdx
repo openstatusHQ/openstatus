@@ -1,0 +1,306 @@
+---
+title: Page Components Reference
+description: Complete specification for OpenStatus page components on status pages.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Overview
+
+Page components are the individual elements displayed on your status page that show the operational status of your services. They provide a flexible way to organize and present both monitored services and static content on your status page.
+
+**Key features:**
+- Support for both monitor-linked and static components.
+- Organize components into logical groups.
+- Custom ordering and arrangement.
+- Individual status tracking with incidents, reports, and maintenances.
+- Granular control over what appears on your status page.
+
+## Component Types
+
+Page components come in two distinct types, each serving different purposes on your status page.
+
+### Monitor Components
+
+**Type:** `monitor`
+
+Monitor components are linked to an active monitor in your workspace. They automatically inherit the monitor's status and display real-time health information.
+
+**Characteristics:**
+- Display live monitor status (up, degraded, down).
+- Show active incidents from the linked monitor.
+- Include historical uptime data.
+- Reflect the monitor's current operational state.
+- Automatically update when the monitor changes.
+
+**Use cases:**
+- Displaying API endpoint health.
+- Showing website availability.
+- Tracking critical service dependencies.
+- Monitoring infrastructure components.
+
+#### Configuring Monitor Components
+
+When you create a monitor component, you link it to an existing monitor in your workspace. This connection provides several benefits:
+
+**Automatic incident tracking:**
+When your monitor detects a failure (connection timeout, HTTP error, assertion failure), an incident is automatically created and displayed on the status page. The component will show an **error** status until the monitor recovers.
+
+**Real-time status updates:**
+The component reflects the current operational state of your monitor. If the monitor is actively checking and healthy, your visitors see a **success** status. If checks fail, they immediately see the issue.
+
+**Historical data visualization:**
+Monitor components display historical uptime data through status trackers. Depending on your [tracker configuration](/tutorial/how-to-configure-status-page#1-tracker-configuration), you can show:
+- **Absolute bar with duration card**: Shows the time spent in each status (success, error, degraded, maintenance).
+- **Absolute bar with request card**: Shows the number of successful vs. failed requests.
+- **Manual bar**: Shows only the most significant status of each day.
+
+**Uptime calculations:**
+Monitor components calculate uptime percentages based on:
+- Duration of successful vs. failed checks (for duration-based tracking).
+- Number of successful vs. failed requests (for request-based tracking).
+- Includes incidents and status reports in the calculation.
+
+**Monitor selection:**
+When adding a monitor component, the dashboard shows you available monitors with indicators for:
+- **Public/Private status**: Whether the monitor is already public.
+- **Active status**: Only active monitors can be linked.
+- **Already linked**: Monitors already used on this status page are unavailable.
+
+<Aside type="tip">
+You can customize the component name to be different from the monitor name. For example, your monitor might be named "prod-api-health-check" internally, but the component can display as "API Server" for your visitors.
+</Aside>
+
+**Status hierarchy:**
+1. **Error** - Active incidents from the linked monitor.
+2. **Degraded** - Unresolved status reports affecting this component.
+3. **Info** - Ongoing scheduled maintenance.
+4. **Success** - Healthy and operational.
+
+**What affects monitor components:**
+- ✅ Automatic incidents (from monitor failures)
+- ✅ Manual status reports
+- ✅ Scheduled maintenances
+
+### Static Components
+
+**Type:** `static`
+
+Static components are independent elements not linked to any monitor. They allow you to display services or systems that you manually manage through status reports and maintenance windows only.
+
+**Characteristics:**
+- No automatic status updates.
+- Status controlled exclusively by manual status reports and scheduled maintenances.
+- Useful for third-party services or manual tracking.
+- Do not display incidents (no automatic incident creation).
+- Provide flexibility for non-monitored services.
+
+**Use cases:**
+- Third-party service dependencies (e.g., payment providers like Stripe, email services like SendGrid).
+- Manual status tracking for systems without monitors.
+- Services monitored through external tools.
+- Components that only need maintenance window communication.
+- Legacy systems without API endpoints to monitor.
+
+<Aside type="caution">
+Static components **only** respond to manual status reports and scheduled maintenances. They never automatically detect issues or create incidents. If you need automatic failure detection, use a monitor component instead.
+</Aside>
+
+#### Managing Static Components
+
+Static components give you full manual control over what your visitors see:
+
+**Status reports:**
+Create status reports to indicate issues or degraded performance for static components. For example:
+- "Stripe payment processing experiencing delays" (degraded status).
+- "Email delivery service partially unavailable" (degraded status).
+
+Once you resolve the issue and mark the status report as resolved, the component returns to a success status.
+
+**Maintenance windows:**
+Schedule maintenance windows to inform visitors about planned downtime:
+- "Scheduled database backup - Sunday 2:00 AM - 4:00 AM" (info status).
+- "Third-party CDN maintenance window" (info status).
+
+During the maintenance window, the component shows an info status. After the window ends, it returns to its previous status.
+
+**No automatic monitoring:**
+Static components do not perform any health checks or generate incidents. You are responsible for:
+- Monitoring the service through other means.
+- Creating status reports when issues occur.
+- Updating reports when issues are resolved.
+- Communicating maintenance windows in advance.
+
+**Status hierarchy:**
+1. **Degraded** - Unresolved status reports affecting this component.
+2. **Info** - Ongoing scheduled maintenance.
+3. **Success** - No active reports or maintenances.
+
+**What affects static components:**
+- ✅ Manual status reports
+- ✅ Scheduled maintenances
+- ❌ Automatic incidents (not supported)
+
+## Component Groups
+
+Component groups allow you to organize related page components into logical sections on your status page. Groups improve readability and help visitors understand your service architecture.
+
+**Benefits:**
+- Visual organization of related services.
+- Collapsible sections for better page structure.
+- Independent ordering within groups.
+- Clear service categorization.
+
+**Examples of grouping strategies:**
+
+| Group Name | Components |
+|------------|------------|
+| **API Services** | Authentication API, Data API, WebSocket API |
+| **Infrastructure** | Database, Cache, Message Queue |
+| **External Dependencies** | Payment Provider, Email Service, CDN |
+| **Regional Services** | US Region, EU Region, APAC Region |
+
+**Group configuration:**
+- **Name:** The group heading displayed on your status page.
+- **Order:** Position of the group relative to other groups and ungrouped components.
+- **Components:** The page components contained within this group.
+## Events and Status
+
+Page components can be affected by up to three types of events that influence their displayed status. The type of component determines which events apply:
+
+| Event Type | Monitor Components | Static Components |
+|------------|-------------------|-------------------|
+| **Incidents** | ✅ Automatic | ❌ Not supported |
+| **Status Reports** | ✅ Manual | ✅ Manual |
+| **Maintenances** | ✅ Manual | ✅ Manual |
+
+### Incidents
+
+**Applies to:** Monitor components only
+
+Incidents are automatically generated when a monitor detects a failure. They represent unplanned outages or degraded performance discovered through active monitoring.
+
+**How incidents are created:**
+- Monitor check fails (connection timeout, HTTP error, DNS failure).
+- Monitor assertion fails (wrong status code, unexpected response body).
+- Monitor reaches degraded threshold (response time too slow).
+
+**Status impact:** Components with active incidents show an **error** status. This takes the highest priority in the status hierarchy.
+
+**Resolution:** Incidents are automatically resolved when the monitor recovers and checks succeed again.
+
+<Aside>
+Static components **never** generate incidents because they are not linked to monitors. Use status reports for manual issue tracking on static components.
+</Aside>
+
+### Status Reports
+
+**Applies to:** Both monitor and static components
+
+Status reports are manually created updates about component health or issues. They provide a way to communicate problems that may not trigger automatic monitoring or to manually report issues with static components.
+
+**Status impact:** Components with unresolved status reports show a **degraded** status (unless overridden by an incident for monitor components).
+
+**Use cases for monitor components:**
+- Reporting known issues that don't cause complete outages.
+- Communicating performance degradation not captured by monitoring.
+- Providing context for intermittent issues.
+
+**Use cases for static components:**
+- Reporting third-party service issues (e.g., "Stripe processing delays").
+- Communicating external service degradation.
+- Announcing partial outages of non-monitored systems.
+
+**Attaching to components:** When creating a status report, you can select which components are affected. Multiple components can be attached to a single report.
+
+### Maintenances
+
+**Applies to:** Both monitor and static components
+
+Maintenances are scheduled maintenance windows that you create in advance. They inform visitors about planned downtime or service interruptions for both monitored and static components.
+
+**Status impact:** Components with ongoing maintenances show an **info** status (unless overridden by incidents or reports).
+
+**Use cases for monitor components:**
+- Scheduled system upgrades that will cause downtime.
+- Infrastructure changes that affect monitored services.
+- Planned deployments requiring service restarts.
+
+**Use cases for static components:**
+- Third-party maintenance windows (e.g., "Payment provider scheduled maintenance").
+- External service upgrade notifications.
+- Planned downtime for non-monitored dependencies.
+
+**Scheduling:** Maintenances have a defined start and end time. The info status automatically appears during the window and disappears when the maintenance ends.
+
+**Attaching to components:** When creating a maintenance, you select which components will be affected. This allows you to communicate maintenance impact across multiple services.
+
+## Managing Components
+
+### Adding Components
+
+You can add components to your status page in two ways:
+
+1. **Individual components:** Add a single component outside of any group.
+2. **Components within groups:** Add a component directly into a new or existing group.
+
+When adding a monitor component, you can only select from monitors that:
+- Are currently active.
+- Have not been deleted.
+- Are not already linked to another component on this status page.
+
+### Reordering Components
+
+Components and groups can be reordered using drag-and-drop functionality in the dashboard. The order determines how they appear on your status page from top to bottom.
+
+**Ordering tips:**
+- Place your most critical services at the top.
+- Group related services together.
+- Consider visitor priorities when ordering.
+
+### Editing Components
+
+You can modify the following properties of existing components:
+- Component name and description.
+- Group assignment (move between groups or make ungrouped).
+- Display order.
+
+**Note:** You cannot change a component's type (monitor to static or vice versa) after creation. To change types, delete the component and create a new one.
+
+### Deleting Components
+
+When you delete a component, any associations with status reports and maintenances are automatically removed. The linked monitor (if applicable) is not deleted and remains available in your workspace.
+
+**Warning:** Deletion is permanent and cannot be undone. Ensure you want to remove the component before confirming deletion.
+
+## Deprecation Notice
+
+The legacy monitor-only system for status pages is deprecated in favor of the more flexible page component system.
+
+**Deprecated approach:**
+- Status pages directly referenced monitors.
+- No support for static content.
+- Limited organizational flexibility.
+
+**Current approach (page components):**
+- Status pages contain page components.
+- Components can be monitors or static content.
+- Full support for grouping and custom ordering.
+- Better separation between monitoring and status page presentation.
+
+### API Compatibility
+
+**v1 API (backward compatibility):**
+The v1 API continues to display `monitorIds` and `monitors` fields in status page responses to avoid breaking changes for existing integrations. However, these fields now only include page components that are explicitly of type `monitor`. Static components are not included in these legacy fields.
+
+**Future API versions:**
+Newer API versions will primarily use the `pageComponents` structure. The legacy `monitors` and `monitorIds` fields will be removed in future API versions. We recommend migrating your integrations to use `pageComponents` for full feature support.
+
+**Migration:** Existing status pages using the legacy system will continue to function. We recommend updating your status pages to use page components for improved flexibility and future compatibility.
+
+## Related resources
+
+- **[Status Page Reference](/reference/status-page)** - Complete status page configuration reference.
+- **[Status Report Reference](/reference/status-report)** - Details on creating and managing status reports.
+- **[Create Status Page](/status-page/create-status-page)** - Step-by-step tutorial on creating a status page.
+- **[HTTP Monitor Reference](/reference/http-monitor)** - Technical specification for HTTP monitors that can be linked to components.
