@@ -1,9 +1,11 @@
+import type { PageComponentType } from "@openstatus/db/src/schema";
+
 /**
  * Type guard to check if a pageComponent is a monitor type with a valid monitor relation
- * Filters out external components and ensures the monitor is active and not deleted
+ * Filters out static components and ensures the monitor is active and not deleted
  */
 export function isMonitorComponent(component: {
-  type: "monitor" | "external";
+  type: PageComponentType;
   monitor?: { active: boolean | null; deletedAt: Date | null } | null;
 }): component is {
   type: "monitor";

@@ -125,7 +125,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-      // Transform all page components (both monitor and external types)
+      // Transform all page components (both monitor and static types)
       const components = pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
@@ -139,8 +139,8 @@ export const statusPageRouter = createTRPCRouter({
         // Calculate status based on component type
         let status: "success" | "degraded" | "error" | "info";
 
-        if (c.type === "external") {
-          // External: only reports and maintenances affect status
+        if (c.type === "static") {
+          // Static: only reports and maintenances affect status
           status = events.some((e) => e.type === "report" && !e.to)
             ? "degraded"
             : events.some(
@@ -554,7 +554,7 @@ export const statusPageRouter = createTRPCRouter({
             lookbackPeriod,
           );
         } else {
-          // External components, manual mode, or NOOP mode: use synthetic data
+          // Static components, manual mode, or NOOP mode: use synthetic data
           filledData = fillStatusDataFor45DaysNoop({
             errorDays: [],
             degradedDays: [],
@@ -562,11 +562,11 @@ export const statusPageRouter = createTRPCRouter({
           });
         }
 
-        // External components always use manual mode since they don't have real monitoring data
+        // Static components always use manual mode since they don't have real monitoring data
         const effectiveBarType =
-          c.type === "external" ? "manual" : opts.input.barType;
+          c.type === "static" ? "manual" : opts.input.barType;
         const effectiveCardType =
-          c.type === "external" ? "manual" : opts.input.cardType;
+          c.type === "static" ? "manual" : opts.input.cardType;
 
         const processedData = setDataByType({
           events,

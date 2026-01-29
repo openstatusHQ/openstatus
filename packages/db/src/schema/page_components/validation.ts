@@ -13,15 +13,15 @@ export const insertPageComponentSchema = createInsertSchema(pageComponent, {
     if (data.type === "monitor" && !data.monitorId) {
       return false;
     }
-    // monitorId must be null when type='external'
-    if (data.type === "external" && data.monitorId) {
+    // monitorId must be null when type='static'
+    if (data.type === "static" && data.monitorId) {
       return false;
     }
     return true;
   },
   {
     message:
-      "monitorId must be set when type is 'monitor' and must be null when type is 'external'",
+      "monitorId must be set when type is 'monitor' and must be null when type is 'static'",
   },
 );
 

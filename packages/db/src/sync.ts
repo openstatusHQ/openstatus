@@ -479,7 +479,7 @@ export async function syncStatusReportToPageComponentInsertMany(
   if (pageComponentIds.length === 0) return;
 
   // Find monitor IDs from the page components
-  // Only get components that have a monitorId (not external components)
+  // Only get components that have a monitorId (not static components)
   const components = await db
     .select({ monitorId: pageComponent.monitorId })
     .from(pageComponent)
@@ -691,7 +691,7 @@ export async function syncMaintenanceToPageComponentInsertMany(
   if (pageComponentIds.length === 0) return;
 
   // Find monitor IDs from the page components
-  // Only get components that have a monitorId (not external components)
+  // Only get components that have a monitorId (not static components)
   const components = await db
     .select({ monitorId: pageComponent.monitorId })
     .from(pageComponent)

@@ -103,7 +103,7 @@ const componentSchema = z.object({
   order: z.number(),
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string().optional(),
-  type: z.enum(["monitor", "external"]),
+  type: z.enum(["monitor", "static"]),
 });
 
 const schema = z.object({
@@ -126,7 +126,7 @@ const getSortedComponents = (
     id: number;
     order: number;
     name?: string;
-    type?: "monitor" | "external";
+    type?: "monitor" | "static";
     monitorId?: number | null;
   }[],
   monitors: Monitor[],
@@ -149,7 +149,7 @@ const getSortedComponents = (
       componentMap.set(c.id, {
         id: c.id,
         name: c.name ?? "",
-        type: c.type ?? "external",
+        type: c.type ?? "static",
         monitorId: c.monitorId ?? null,
         monitor: monitor ?? null,
         groupId: null,
@@ -174,7 +174,7 @@ const getSortedItems = (
     id: number;
     order: number;
     name?: string;
-    type?: "monitor" | "external";
+    type?: "monitor" | "static";
     monitorId?: number | null;
   }[],
   groups: Array<{
@@ -185,7 +185,7 @@ const getSortedItems = (
       id: number;
       order: number;
       name?: string;
-      type?: "monitor" | "external";
+      type?: "monitor" | "static";
       monitorId?: number | null;
     }>;
   }>,
@@ -210,7 +210,7 @@ const getSortedItems = (
       componentMap.set(c.id, {
         id: c.id,
         name: c.name ?? "",
-        type: c.type ?? "external",
+        type: c.type ?? "static",
         monitorId: c.monitorId ?? null,
         monitor: monitor ?? null,
         groupId: null,
@@ -513,7 +513,7 @@ export function FormComponents({
                                 order: watchComponents.length,
                                 name: "",
                                 description: "",
-                                type: "external" as const,
+                                type: "static" as const,
                               },
                             ]);
                           }}
@@ -781,7 +781,7 @@ function ComponentRow({
           ) : (
             <span className="flex items-center gap-2 text-muted-foreground text-sm">
               <Link2Off className="size-4 shrink-0" />{" "}
-              <span className="truncate">External Component</span>
+              <span className="truncate">Static Component</span>
             </span>
           )}
         </div>
@@ -1014,7 +1014,7 @@ function ComponentGroupRow({
                             order: current.length,
                             name: "",
                             description: "",
-                            type: "external" as const,
+                            type: "static" as const,
                           },
                         ]);
                       }}
