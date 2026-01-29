@@ -9,7 +9,7 @@ import {
   inArray,
   isNull,
   sql,
-  syncMonitorsToPageDelete,
+  syncPageComponentToMonitorsToPageDelete,
   syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
@@ -211,7 +211,10 @@ export function registerPutPage(api: typeof pagesApi) {
         );
       // Reverse sync delete to monitorsToPages (for backwards compatibility)
       for (const monitorId of removedMonitorIds) {
-        await syncMonitorsToPageDelete(db, { monitorId, pageId: newPage.id });
+        await syncPageComponentToMonitorsToPageDelete(db, {
+          monitorId,
+          pageId: newPage.id,
+        });
       }
     }
 
