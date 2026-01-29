@@ -80,6 +80,7 @@ import {
   GripVertical,
   Link2,
   Link2Off,
+  Plug,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -589,6 +590,10 @@ export function FormComponents({
                             </Command>
                           </DropdownMenuSubContent>
                         </DropdownMenuSub>
+                        <DropdownMenuItem disabled>
+                          <Plug className="text-muted-foreground" />
+                          Add Third-Party Component
+                        </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1035,7 +1040,7 @@ function ComponentGroupRow({
                                   <CommandItem
                                     value={monitor.name}
                                     key={monitor.id}
-                                    disabled={isTaken}
+                                    disabled={isTaken || isSelected}
                                     onSelect={() => {
                                       if (isSelected) {
                                         form.setValue(
@@ -1079,6 +1084,10 @@ function ComponentGroupRow({
                         </Command>
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
+                    <DropdownMenuItem disabled>
+                      <Plug className="text-muted-foreground" />
+                      Add Third-Party Component
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
