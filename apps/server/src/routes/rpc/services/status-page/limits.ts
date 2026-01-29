@@ -1,5 +1,5 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { db, eq, sql } from "@openstatus/db";
+import { count, db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
@@ -13,13 +13,13 @@ export async function checkStatusPageLimits(
 ): Promise<void> {
   // Check status page count limit
   const countResult = await db
-    .select({ count: sql<number>`count(*)` })
+    .select({ count: count() })
     .from(page)
     .where(eq(page.workspaceId, workspaceId))
     .get();
 
-  const count = countResult?.count ?? 0;
-  if (count >= limits["status-pages"]) {
+  const currentCount = countResult?.count ?? 0;
+  if (currentCount >= limits["status-pages"]) {
     throw new ConnectError(
       "Upgrade for more status pages",
       Code.PermissionDenied,
