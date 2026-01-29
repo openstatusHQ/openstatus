@@ -107,8 +107,8 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
       const parsed = ResponseSchema.safeParse(json);
 
       if (!parsed.success) {
-        console.error(parsed.error.errors);
-        throw new Error(`Failed to parse response: ${parsed.error.errors}`);
+        console.error(parsed.error.message);
+        throw new Error(`Failed to parse response: ${parsed.error.message}`);
       }
 
       fulfilledRequest.push(parsed.data);
@@ -188,8 +188,8 @@ function getAggregate(data: number[]) {
   });
 
   if (!parsed.success) {
-    console.error(parsed.error.errors);
-    throw new Error(`Failed to parse response: ${parsed.error.errors}`);
+    console.error(parsed.error.message);
+    throw new Error(`Failed to parse response: ${parsed.error.message}`);
   }
 
   return parsed.data;
