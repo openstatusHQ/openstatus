@@ -315,6 +315,43 @@ describe("StatusPageService.CreateStatusPage", () => {
 
     expect(res.status).toBe(409); // AlreadyExists
   });
+
+  test("returns 403 when status page limit is exceeded", async () => {
+    // Workspace 2 is on free plan with status-pages limit of 1
+    // First, create a page for workspace 2 to hit the limit
+    const firstPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-limit-test`,
+        slug: `${TEST_PREFIX}-limit-test-slug`,
+        description: "First page for limit test",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    try {
+      // Try to create a second page - should fail with PermissionDenied
+      const res = await connectRequest(
+        "CreateStatusPage",
+        {
+          title: `${TEST_PREFIX}-limit-exceeded`,
+          description: "Should fail due to limit",
+          slug: `${TEST_PREFIX}-limit-exceeded-slug`,
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403); // PermissionDenied
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade for more status pages");
+    } finally {
+      // Clean up
+      await db.delete(page).where(eq(page.id, firstPage.id));
+    }
+  });
 });
 
 describe("StatusPageService.GetStatusPage", () => {

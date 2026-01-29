@@ -39,6 +39,7 @@ import {
   subscriberCreateFailedError,
   subscriberNotFoundError,
 } from "./errors";
+import { checkStatusPageLimits } from "./limits";
 
 /**
  * Helper to get a status page by ID with workspace scope.
@@ -109,6 +110,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async createStatusPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    // Check workspace limits for status pages
+    await checkStatusPageLimits(workspaceId, limits);
 
     // Check if slug already exists
     const existingPage = await getPageBySlug(req.slug);
