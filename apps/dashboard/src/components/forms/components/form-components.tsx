@@ -832,10 +832,13 @@ function ComponentRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to delete this component. Status reports
-                  connected to this component will still be available but will
-                  not have the component attached anymore.
+                  Once saved, this will unlink the component from attached
+                  status reports and maintenances.
                 </AlertDialogDescription>
+                <ComponentAttachments
+                  statusReports={component.statusReports ?? []}
+                  maintenances={component.maintenances ?? []}
+                />
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -843,7 +846,7 @@ function ComponentRow({
                   className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
                   onClick={() => onDelete(component.id)}
                 >
-                  Delete
+                  Remove
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1116,10 +1119,25 @@ function ComponentGroupRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to delete this group and all its components.
-                  Status reports connected to those components will still be
-                  available but will not have the components attached anymore.
+                  Once saved, this will delete all components in the group and
+                  unlink them from attached status reports and maintenances.
                 </AlertDialogDescription>
+                <ComponentAttachments
+                  statusReports={Array.from(
+                    new Map(
+                      group.components
+                        .flatMap((c) => c.statusReports ?? [])
+                        .map((sr) => [sr.id, sr]),
+                    ).values(),
+                  )}
+                  maintenances={Array.from(
+                    new Map(
+                      group.components
+                        .flatMap((c) => c.maintenances ?? [])
+                        .map((m) => [m.id, m]),
+                    ).values(),
+                  )}
+                />
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -1127,7 +1145,7 @@ function ComponentGroupRow({
                   className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
                   onClick={() => onDeleteGroup(group.id)}
                 >
-                  Delete
+                  Remove
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1173,5 +1191,48 @@ function ComponentGroupRow({
         </Sortable>
       </div>
     </SortableItem>
+  );
+}
+
+function ComponentAttachments({
+  statusReports,
+  maintenances,
+}: {
+  statusReports: Array<{ id: number; title: string }>;
+  maintenances: Array<{ id: number; title: string }>;
+}) {
+  if (statusReports.length === 0 && maintenances.length === 0) {
+    return null;
+  }
+
+  const allItems = [
+    ...statusReports.map((report) => ({
+      id: `report-${report.id}`,
+      title: report.title,
+      type: "report" as const,
+    })),
+    ...maintenances.map((maintenance) => ({
+      id: `maintenance-${maintenance.id}`,
+      title: maintenance.title,
+      type: "maintenance" as const,
+    })),
+  ];
+
+  const displayLimit = 3;
+  const displayedItems = allItems.slice(0, displayLimit);
+  const remainingCount = allItems.length - displayLimit;
+
+  return (
+    <ul className="list-inside list-disc space-y-1 text-foreground text-sm">
+      {displayedItems.map((item) => (
+        <li key={item.id}>
+          {item.title}{" "}
+          <span className="text-muted-foreground">({item.type})</span>
+        </li>
+      ))}
+      {remainingCount > 0 && (
+        <li className="text-muted-foreground">+ {remainingCount} more</li>
+      )}
+    </ul>
   );
 }

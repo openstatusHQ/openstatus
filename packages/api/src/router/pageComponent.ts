@@ -1,7 +1,15 @@
 import { z } from "zod";
 
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
-import { pageComponent, pageComponentGroup } from "@openstatus/db/src/schema";
+import {
+  pageComponent,
+  pageComponentGroup,
+  selectMaintenanceSchema,
+  selectMonitorSchema,
+  selectPageComponentGroupSchema,
+  selectPageComponentSchema,
+  selectStatusReportSchema,
+} from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -25,7 +33,7 @@ export const pageComponentRouter = createTRPCRouter({
         whereConditions.push(eq(pageComponent.pageId, opts.input.pageId));
       }
 
-      const query = opts.ctx.db.query.pageComponent.findMany({
+      const result = await opts.ctx.db.query.pageComponent.findMany({
         where: and(...whereConditions),
         orderBy:
           opts.input?.order === "desc"
@@ -34,12 +42,45 @@ export const pageComponentRouter = createTRPCRouter({
         with: {
           monitor: true,
           group: true,
+          statusReportsToPageComponents: {
+            with: {
+              statusReport: true,
+            },
+            orderBy: (statusReportsToPageComponents, { desc }) =>
+              desc(statusReportsToPageComponents.createdAt),
+          },
+          maintenancesToPageComponents: {
+            with: {
+              maintenance: true,
+            },
+            orderBy: (maintenancesToPageComponents, { desc }) =>
+              desc(maintenancesToPageComponents.createdAt),
+          },
         },
       });
 
-      const result = await query;
-
-      return result;
+      // Transform and parse the result to flatten the junction tables
+      return selectPageComponentSchema
+        .extend({
+          monitor: selectMonitorSchema.nullish(),
+          group: selectPageComponentGroupSchema.nullish(),
+          statusReports: z.array(selectStatusReportSchema).default([]),
+          maintenances: z.array(selectMaintenanceSchema).default([]),
+        })
+        .array()
+        .parse(
+          result.map((component) => ({
+            ...component,
+            statusReports:
+              component.statusReportsToPageComponents?.map(
+                (sr) => sr.statusReport,
+              ) ?? [],
+            maintenances:
+              component.maintenancesToPageComponents?.map(
+                (m) => m.maintenance,
+              ) ?? [],
+          })),
+        );
     }),
 
   delete: protectedProcedure
