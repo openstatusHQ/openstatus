@@ -93,3 +93,30 @@ message StatusPageSummary {
   // Timestamp when the page was last updated (RFC 3339 format).
   string updated_at = 6;
 }
+
+// Maintenance represents a scheduled maintenance window.
+message Maintenance {
+  // Unique identifier for the maintenance.
+  string id = 1;
+
+  // Title of the maintenance.
+  string title = 2;
+
+  // Message describing the maintenance.
+  string message = 3;
+
+  // Start time of the maintenance window (RFC 3339 format).
+  string from = 4;
+
+  // End time of the maintenance window (RFC 3339 format).
+  string to = 5;
+
+  // IDs of affected page components.
+  repeated string page_component_ids = 6;
+
+  // Timestamp when the maintenance was created (RFC 3339 format).
+  string created_at = 7;
+
+  // Timestamp when the maintenance was last updated (RFC 3339 format).
+  string updated_at = 8;
+}

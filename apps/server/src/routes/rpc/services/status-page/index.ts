@@ -798,7 +798,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(identifierValue);
     }
 
-    // For public access (by slug), validate that page is published and accessible
+    // Access control differs based on how the page is accessed:
+    // - By slug (public): Validates page is published and publicly accessible
+    // - By ID (workspace): Allows workspace members to preview unpublished pages
     if (isPublicAccess) {
       validatePublicAccess(pageData, identifierValue);
     }
@@ -965,7 +967,9 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       throw statusPageNotFoundError(identifierValue);
     }
 
-    // For public access (by slug), validate that page is published and accessible
+    // Access control differs based on how the page is accessed:
+    // - By slug (public): Validates page is published and publicly accessible
+    // - By ID (workspace): Allows workspace members to preview unpublished pages
     if (isPublicAccess) {
       validatePublicAccess(pageData, identifierValue);
     }
@@ -1058,7 +1062,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     const overallStatus = hasActiveStatusReport
       ? OverallStatus.DEGRADED
       : hasActiveMaintenance
-        ? OverallStatus.UNDER_MAINTENANCE
+        ? OverallStatus.MAINTENANCE
         : OverallStatus.OPERATIONAL;
 
     // Build component statuses based on their individual state
@@ -1069,7 +1073,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       const status = hasReport
         ? OverallStatus.DEGRADED
         : hasMaintenance
-          ? OverallStatus.UNDER_MAINTENANCE
+          ? OverallStatus.MAINTENANCE
           : OverallStatus.OPERATIONAL;
 
       return {

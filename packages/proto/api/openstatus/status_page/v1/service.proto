@@ -433,7 +433,7 @@ message GetStatusPageContentResponse {
   repeated openstatus.status_report.v1.StatusReport status_reports = 4;
 
   // Scheduled maintenances.
-  repeated openstatus.status_report.v1.StatusReport maintenances = 5;
+  repeated Maintenance maintenances = 5;
 }
 
 // --- Get Overall Status ---
