@@ -117,7 +117,7 @@ export function Sidebar() {
               label: "Name",
               value: (
                 <TableCellLink
-                  href={`status-pages/${statusPage.id}/components`}
+                  href={`/status-pages/${statusPage.id}/components`}
                   value={component.name}
                 />
               ),
