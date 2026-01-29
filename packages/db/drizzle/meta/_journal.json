@@ -386,6 +386,13 @@
       "when": 1768564852930,
       "tag": "0054_bitter_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1769675142003,
+      "tag": "0055_spicy_bastion",
+      "breakpoints": true
     }
   ]
 }
