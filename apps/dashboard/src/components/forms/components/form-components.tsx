@@ -483,7 +483,11 @@ export function FormComponents({
               Manage your page components
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <FormCardContent className="flex flex-row gap-2">
+            <Button variant="outline" type="button" onClick={handleAddGroup}>
+              <Plus />
+              Add Component Group
+            </Button>
             <FormField
               control={form.control}
               name="components"
@@ -497,13 +501,9 @@ export function FormComponents({
                         Add Component
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-[var(--radix-dropdown-menu-trigger-width)]"
-                    >
+                    <DropdownMenuContent align="start">
                       <DropdownMenuGroup>
                         <DropdownMenuItem
-                          disabled
                           onClick={() => {
                             form.setValue("components", [
                               ...field.value,
@@ -519,12 +519,12 @@ export function FormComponents({
                           }}
                         >
                           <Link2Off className="text-muted-foreground" />
-                          Add External (soon)
+                          Add Static Component
                         </DropdownMenuItem>
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
                             <Link2 className="text-muted-foreground" />
-                            Add Monitor
+                            Add Monitor Component
                           </DropdownMenuSubTrigger>
                           <DropdownMenuSubContent className="p-0">
                             <Command>
@@ -596,15 +596,6 @@ export function FormComponents({
                 </FormItem>
               )}
             />
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full"
-              onClick={handleAddGroup}
-            >
-              <Plus />
-              Add Component Group
-            </Button>
           </FormCardContent>
           <FormCardSeparator />
           <FormCardContent>
@@ -773,7 +764,7 @@ function ComponentRow({
             <Link
               href={`/monitors/${component.monitorId}/overview`}
               onClick={(e) => e.stopPropagation()}
-              className="flex w-full items-center gap-2 truncate text-sm"
+              className="flex w-full items-center gap-2 truncate py-1.5 text-sm"
             >
               <Link2 className="size-4 shrink-0" />{" "}
               <span className="truncate">{component.monitor.name}</span>
@@ -836,7 +827,9 @@ function ComponentRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to delete this component.
+                  You are about to delete this component. Status reports
+                  connected to this component will still be available but will
+                  not have the component attached anymore.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -997,13 +990,9 @@ function ComponentGroupRow({
                     Add Component
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-[var(--radix-dropdown-menu-trigger-width)]"
-                >
+                <DropdownMenuContent align="start">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      disabled
                       onClick={() => {
                         const current = field.value ?? [];
                         form.setValue(`groups.${groupIndex}.components`, [
@@ -1020,12 +1009,12 @@ function ComponentGroupRow({
                       }}
                     >
                       <Link2Off className="text-muted-foreground" />
-                      Add External (soon)
+                      Add Static Component
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
                         <Link2 className="text-muted-foreground" />
-                        Add Monitor
+                        Add Monitor Component
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="p-0">
                         <Command>
@@ -1119,6 +1108,8 @@ function ComponentGroupRow({
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
                   You are about to delete this group and all its components.
+                  Status reports connected to those components will still be
+                  available but will not have the components attached anymore.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
