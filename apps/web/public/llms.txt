@@ -1,6 +1,6 @@
-# OpenStatus
+# openstatus
 
-> OpenStatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.
+OpenStatus is an open-source status page platform with global monitoring (HTTP, TCP, DNS).
 
 ## Features
 
@@ -8,7 +8,8 @@
 - Status Page: Create a custom status page to display the status of your services.
 - Monitoring as Code: Define your monitoring checks using YAML.
 - Alerting: Configure email, Slack, or other notification channels for alerts.
-- CLI: Manage OpenStatus using a command-line interface.
+- CLI: Manage openstatus using a command-line interface.
+- SDK: Integrate openstatus into your applications with our [SDK](https://jsr.io/@openstatus/sdk-node).
 
 ## Documentation
 
