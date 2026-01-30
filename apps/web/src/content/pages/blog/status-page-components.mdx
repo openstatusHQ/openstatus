@@ -68,6 +68,20 @@ This architectural change brings several advantages:
 - **Future extensibility**: The component-based architecture makes it easy to add new types like third-party integrations
 - **Better separation of concerns**: Monitoring and status reporting are now properly decoupled, allowing each to evolve independently
 
+## Pricing and Plan Limits
+
+Page components are counted across your workspace based on your plan tier:
+
+- **Hobby (free)**: 3 components
+- **Starter**: 20 components
+- **Pro**: 50 components
+
+The flexibility of **static components** means you can now maximize your plan limits more effectively. Previously, every component required a monitor (which counts against your monitor limit). Now you can:
+
+- Use monitor-type components for services you want to actively check
+- Use static components for third-party dependencies, managed services, or components you update manually
+- Mix both types to get full visibility without needing a monitor for everything
+
 ## Migration Approach
 
 Our strategy was to sync the legacy database while incrementally migrating every part of our stack:
