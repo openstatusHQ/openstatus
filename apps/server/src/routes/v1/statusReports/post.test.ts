@@ -244,7 +244,12 @@ test("create a status report with multiple monitors syncs correctly to both tabl
     .all();
 
   const existingMonitorIds = existingPageComponents
-    .filter((c) => c.monitorId !== null && c.type === "monitor" && [1, 2].includes(c.monitorId))
+    .filter(
+      (c) =>
+        c.monitorId !== null &&
+        c.type === "monitor" &&
+        [1, 2].includes(c.monitorId),
+    )
     .map((c) => c.monitorId as number);
 
   const res = await app.request("/v1/status_report", {
