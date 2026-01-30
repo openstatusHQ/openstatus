@@ -53,7 +53,7 @@ import {
   subscriberCreateFailedError,
   subscriberNotFoundError,
 } from "./errors";
-import { checkStatusPageLimits } from "./limits";
+import { checkPageComponentLimits, checkStatusPageLimits } from "./limits";
 
 /**
  * Helper to get a status page by ID with workspace scope.
@@ -319,12 +319,16 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async addMonitorComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     // Verify page exists and belongs to workspace
     const pageData = await getPageById(Number(req.pageId), workspaceId);
     if (!pageData) {
       throw statusPageNotFoundError(req.pageId);
     }
+
+    // Check workspace limits for page components
+    await checkPageComponentLimits(pageData.id, limits);
 
     // Verify monitor exists and belongs to workspace
     const monitorData = await getMonitorById(
@@ -371,12 +375,16 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async addStaticComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
 
     // Verify page exists and belongs to workspace
     const pageData = await getPageById(Number(req.pageId), workspaceId);
     if (!pageData) {
       throw statusPageNotFoundError(req.pageId);
     }
+
+    // Check workspace limits for page components
+    await checkPageComponentLimits(pageData.id, limits);
 
     // Validate group exists if provided
     if (req.groupId) {
