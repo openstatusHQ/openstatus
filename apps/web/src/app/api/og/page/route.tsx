@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
   const slug = searchParams.has("slug") ? searchParams.get("slug") : undefined;
 
-  const page = await api.page.getPageBySlug.query({ slug: slug || "" });
+  const page = await api.statusPage.getLight.query({ slug: slug || "" });
   const _protected = page?.accessType !== "public";
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;

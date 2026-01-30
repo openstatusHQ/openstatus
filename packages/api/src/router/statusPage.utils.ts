@@ -2,6 +2,7 @@ import type {
   Incident,
   Maintenance,
   PageComponent,
+  PageComponentType,
   PageComponentWithMonitorRelation,
   StatusReport,
   StatusReportUpdate,
@@ -243,7 +244,7 @@ export function getEvents({
   })[];
   pageComponentId?: number;
   monitorId?: number;
-  componentType?: "monitor" | "external";
+  componentType?: PageComponentType;
   pastDays?: number;
 }): Event[] {
   const events: Event[] = [];
@@ -278,8 +279,8 @@ export function getEvents({
     });
 
   // Filter incidents - only for monitor-type components
-  // External components don't have incidents
-  if (componentType !== "external") {
+  // Static components don't have incidents
+  if (componentType !== "static") {
     incidents
       .filter((incident) =>
         monitorId ? incident.monitorId === monitorId : true,

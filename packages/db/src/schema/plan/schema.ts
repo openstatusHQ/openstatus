@@ -27,6 +27,7 @@ export const limitsSchema = z.object({
    * Status page limits
    */
   "status-pages": z.number().prefault(1),
+  "page-components": z.number().prefault(3),
   maintenance: z.boolean().prefault(true),
   "monitor-values-visibility": z.boolean().prefault(true),
   "status-subscribers": z.boolean().prefault(false),

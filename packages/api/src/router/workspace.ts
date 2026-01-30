@@ -26,7 +26,11 @@ export const workspaceRouter = createTRPCRouter({
     const result = await opts.ctx.db.query.workspace.findFirst({
       where: and(...whereConditions),
       with: {
-        pages: true,
+        pages: {
+          with: {
+            pageComponents: true,
+          },
+        },
         monitors: {
           where: isNull(monitor.deletedAt),
         },
@@ -40,6 +44,8 @@ export const workspaceRouter = createTRPCRouter({
         monitors: result?.monitors?.length || 0,
         notifications: result?.notifications?.length || 0,
         pages: result?.pages?.length || 0,
+        pageComponents:
+          result?.pages?.flatMap((page) => page.pageComponents)?.length || 0,
         // checks: result?.checks?.length || 0,
         checks: 0,
       },

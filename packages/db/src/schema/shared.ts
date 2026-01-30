@@ -54,28 +54,10 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
     )
     .prefault([]),
 });
-// TODO: it would be nice to automatically add the monitor relation here
-// .refine((data) => ({ monitors: data.maintenancesToMonitors.map((m) => m.monitorId) }));
 
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
   statusReports: z.array(selectStatusReportPageSchema),
-});
-
-export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
-  monitorsToPages: z.array(
-    z.object({
-      monitorId: z.number(),
-      pageId: z.number(),
-      order: z.number().prefault(0).optional(),
-      monitor: selectMonitorSchema,
-    }),
-  ),
-  maintenances: selectMaintenanceSchema.array().prefault([]),
-  statusReports: selectStatusReportSchema
-    .extend({ statusReportUpdates: selectStatusReportUpdateSchema.array() })
-    .array()
-    .prefault([]),
 });
 
 export const legacy_selectPublicPageSchemaWithRelation = selectPageSchema
@@ -172,6 +154,24 @@ export type PageComponentWithMonitorRelation = z.infer<
   typeof selectPageComponentWithMonitorRelation
 >;
 
+export const selectPublicPageLightSchemaWithRelation = selectPageSchema
+  .extend({
+    monitors: z.array(selectPublicMonitorSchema).prefault([]),
+    statusReports: z.array(selectStatusReportPageSchema).prefault([]),
+    incidents: z.array(selectIncidentSchema).prefault([]),
+    maintenances: z.array(selectMaintenancePageSchema).prefault([]),
+    workspacePlan: workspacePlanSchema
+      .nullable()
+      .prefault("free")
+      .transform((val) => val ?? "free"),
+    // NEW: Include pageComponents for modern consumers
+    pageComponents: selectPageComponentWithMonitorRelation.array().prefault([]),
+    pageComponentGroups: selectPageComponentGroupSchema.array().prefault([]),
+  })
+  .omit({
+    id: true,
+  });
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   monitorGroups: selectMonitorGroupSchema.array().prefault([]),
   // TODO: include status of the monitor
@@ -191,20 +191,6 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
     .transform((val) => val ?? "free"),
   whiteLabel: z.boolean().prefault(false),
 });
-
-export const selectPublicStatusReportSchemaWithRelation =
-  selectStatusReportSchema.extend({
-    monitorsToStatusReports: z
-      .array(
-        z.object({
-          monitorId: z.number(),
-          statusReportId: z.number(),
-          monitor: selectPublicMonitorSchema,
-        }),
-      )
-      .prefault([]),
-    statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-  });
 
 export type StatusReportWithUpdates = z.infer<
   typeof selectStatusReportPageSchema
