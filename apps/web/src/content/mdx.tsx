@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { getImageDimensions } from "@/lib/image-dimensions";
 import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
@@ -241,7 +242,7 @@ function CustomImage({
   className,
   ...props
 }: React.ComponentProps<typeof Image>) {
-  const { src, alt, ...rest } = props;
+  const { src, alt, width, height, ...rest } = props;
 
   if (!src || typeof src !== "string") {
     return (
@@ -256,10 +257,9 @@ function CustomImage({
             className={className}
             src={src}
             alt={alt ?? "image"}
-            width={0}
-            height={0}
+            fill
             sizes="100vw"
-            style={{ width: "100%", height: "auto" }}
+            style={{ objectFit: "contain" }}
             {...rest}
           />
         </ImageZoom>
@@ -267,6 +267,11 @@ function CustomImage({
       </figure>
     );
   }
+
+  // Get actual image dimensions from filesystem
+  const dimensions = getImageDimensions(src);
+  const imageWidth = width || dimensions?.width || 1200;
+  const imageHeight = height || dimensions?.height || 630;
 
   // Generate dark mode image path by adding .dark before extension
   const getDarkImagePath = (path: string) => {
@@ -304,8 +309,8 @@ function CustomImage({
           {...rest}
           src={src}
           alt={alt ?? ""}
-          width={0}
-          height={0}
+          width={imageWidth}
+          height={imageHeight}
           sizes="100vw"
           style={{ width: "100%", height: "auto" }}
           className={cn("block dark:hidden", className)}
@@ -321,8 +326,8 @@ function CustomImage({
           {...rest}
           src={useDarkImage ? darkSrc : src}
           alt={alt ?? ""}
-          width={0}
-          height={0}
+          width={imageWidth}
+          height={imageHeight}
           sizes="100vw"
           style={{ width: "100%", height: "auto" }}
           className={cn("hidden dark:block", className)}
@@ -359,19 +364,25 @@ export const components = {
   },
 };
 
+function MDXContent(props: MDXRemoteProps) {
+  return (
+    <MDXRemote
+      {...props}
+      components={
+        {
+          ...components,
+          ...props.components,
+        } as MDXRemoteProps["components"]
+      }
+    />
+  );
+}
+
 export function CustomMDX(props: MDXRemoteProps) {
   return (
-    <React.Suspense>
+    <React.Suspense fallback={<MDXContent {...props} />}>
       <HighlightText>
-        <MDXRemote
-          {...props}
-          components={
-            {
-              ...components,
-              ...props.components,
-            } as MDXRemoteProps["components"]
-          }
-        />
+        <MDXContent {...props} />
       </HighlightText>
     </React.Suspense>
   );
