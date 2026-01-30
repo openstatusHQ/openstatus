@@ -1,5 +1,5 @@
 import { Link } from "@/components/common/link";
-import { Note } from "@/components/common/note";
+import { Note, NoteButton } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,9 +82,14 @@ export function FormStatusPageUpdate() {
         <Info />
         <p className="text-sm">
           Looking to connect monitors to your status page? The setup now has a
-          separate components page{" "}
+          separate page{" "}
           <Link href={`/status-pages/${id}/components`}>components</Link>.
         </p>
+        <NoteButton variant="default" asChild>
+          <Link href="https://openstatus.dev/blog/status-page-components">
+            Learn more
+          </Link>
+        </NoteButton>
       </Note>
       <FormGeneral
         defaultValues={{
