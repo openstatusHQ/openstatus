@@ -1,0 +1,260 @@
+---
+title: "Network Connectivity Issues Template"
+description: "Template for communicating network outages, CDN problems, and regional connectivity issues to affected users."
+author: "OpenStatus"
+publishedAt: "2026-01-19"
+category: "infrastructure"
+---
+
+Use this template when experiencing network-related issues affecting user connectivity, including CDN problems, regional outages, or ISP issues.
+
+## When to Use This Template
+
+- Regional network outages
+- CDN degradation or failures
+- DNS resolution problems
+- ISP-specific connectivity issues
+- DDoS mitigation impacts
+
+## Template Messages
+
+### Investigating
+
+We are aware of connectivity issues affecting some users. The issue appears to be network-related and we are investigating the root cause.
+
+Our team is working to restore connectivity as quickly as possible.
+
+### Identified
+
+We have identified the cause of the connectivity issues. Our team is working with our network provider to implement a fix.
+
+### Monitoring
+
+Network connectivity has been restored. We are monitoring the situation to ensure stability across all regions.
+
+### Resolved
+
+The connectivity issues have been fully resolved. All users should now have normal access to our services.
+
+## Real-World Examples
+
+### Fly.io: "Network instability in IAD region"
+
+**Context**: Regional infrastructure problem
+**Location**: IAD (Ashburn, Virginia)
+**Approach**: Geographic specificity
+
+**What they did well**:
+- Named the specific region affected
+- Used technical but clear naming ("network instability")
+- Focused on infrastructure layer vs vague "connectivity problems"
+
+**Why it worked**: Users in that region immediately knew they were affected, while users elsewhere knew they weren't experiencing issues.
+
+### GitHub: Infrastructure with Specific Impact Areas
+
+**Context**: Multi-service infrastructure issues
+**Approach**: Service-by-service breakdown
+
+**Sample structure**:
+```
+We're experiencing connectivity issues affecting:
+- Issues and Pull Requests: 10% error rate
+- GitHub Actions: 5% job failures
+- API: Elevated latency
+
+Other services operating normally.
+```
+
+**Why it worked**: Users could quickly assess if their workflow was affected.
+
+## Geographic Specificity Best Practices
+
+### Be Specific About Location
+
+✅ Good:
+- "Users in Europe experiencing connectivity issues"
+- "Network problems in AWS us-east-1 region"
+- "CDN degradation affecting Asia-Pacific"
+
+❌ Vague:
+- "Some users having problems"
+- "Network issues"
+- "Connectivity degraded"
+
+### Example: Regional Communication
+
+**For global outage**:
+```
+We're experiencing network connectivity issues affecting users globally.
+Our network provider is investigating. We'll provide updates every 30 minutes.
+```
+
+**For regional outage**:
+```
+We're aware of connectivity issues affecting users in the EU region.
+This appears to be related to our CDN provider. US and Asia-Pacific
+regions are operating normally.
+```
+
+**For ISP-specific**:
+```
+We're receiving reports of connectivity issues from users on [ISP Name].
+We're working with the ISP to resolve. Users on other networks should
+not be affected.
+```
+
+## CDN-Specific Communication
+
+When CDN issues affect your service:
+
+### During Investigation
+```
+We're experiencing degraded performance due to issues with our CDN provider.
+Users may see slower load times or intermittent connectivity. We're working
+with [CDN Provider] to resolve this quickly.
+```
+
+### When Switching to Backup
+```
+We've temporarily switched traffic to our backup CDN to restore performance.
+You may experience brief disruptions during this transition.
+```
+
+### After Resolution
+```
+CDN performance has been fully restored. All traffic has been returned to
+our primary provider, and we're monitoring closely for any recurring issues.
+```
+
+## DNS Issues Communication
+
+### Initial Report
+```
+We're aware of DNS resolution failures affecting access to [service].
+Some users may receive "site cannot be reached" errors. We're working
+with our DNS provider to resolve this immediately.
+
+Workaround: If you have our service's IP address cached, you can
+still access via direct IP.
+```
+
+### Resolution
+```
+DNS resolution has been restored. Changes may take 5-15 minutes to
+propagate globally due to DNS caching. If you still can't access
+the service, try clearing your DNS cache or waiting a few minutes.
+```
+
+## Providing Workarounds
+
+Always include workarounds when possible:
+
+### Example 1: CDN Issues
+```
+While we work on the connectivity issue, you can access the service
+directly via: https://direct.yourservice.com (bypasses CDN)
+```
+
+### Example 2: Regional Issues
+```
+Users in affected regions can temporarily use our US endpoint:
+https://us.yourservice.com
+```
+
+### Example 3: API Connectivity
+```
+If experiencing timeouts, try reducing request rate or adding retry
+logic with exponential backoff. We'll send an all-clear when issues
+are fully resolved.
+```
+
+## DDoS Mitigation Communication
+
+### During Active Mitigation
+```
+We're currently mitigating a distributed denial-of-service (DDoS) attack.
+Some users may experience:
+- Slower response times
+- CAPTCHA challenges
+- Temporary access blocks
+
+These are protective measures. Your data and account remain secure.
+```
+
+### Post-Mitigation
+```
+The DDoS attack has been successfully mitigated. All protective measures
+remain in place. Service performance has returned to normal.
+```
+
+## Timing Expectations
+
+Set clear expectations about updates:
+
+```
+We're investigating network connectivity issues in the APAC region.
+We'll provide updates every 15 minutes until resolved.
+
+Next update: 10:15 UTC
+```
+
+Then honor that commitment:
+
+```
+[10:15 UTC Update] Still investigating. Network provider has identified
+the issue and is implementing a fix. We expect resolution within 30 minutes.
+
+Next update: 10:30 UTC or sooner if resolved.
+```
+
+## Multi-Region Status Example
+
+For services with multiple regions:
+
+```
+Current Status:
+- 🔴 EU-West: Major connectivity issues
+- 🟡 US-East: Minor latency increases
+- 🟢 US-West: Operating normally
+- 🟢 Asia-Pacific: Operating normally
+
+We're prioritizing restoration of EU-West and monitoring other regions closely.
+```
+
+## Third-Party Provider Communication
+
+When the issue is with a third-party:
+
+✅ **Be transparent but professional**:
+```
+We're experiencing connectivity issues due to problems with our CDN
+provider, Cloudflare. They are working on a fix. We're monitoring
+their status page and will update you as we learn more.
+```
+
+❌ **Don't blame or criticize**:
+```
+Cloudflare is down again! Not our fault! 🤷
+```
+
+## Follow-Up After Resolution
+
+### Short-Term (Same Day)
+```
+Connectivity has been fully restored across all regions. We're continuing
+to monitor for any recurring issues.
+```
+
+### Medium-Term (Next Day)
+```
+Yesterday's connectivity issues were caused by [root cause]. We're working
+with our network provider to implement additional safeguards to prevent
+recurrence.
+```
+
+## Related Templates
+
+- Use **API Service Disruption** if network issues primarily affect API calls
+- Use **Database Performance** if network latency affects database connections
+- Use **Security Incident** if connectivity issues are attack-related

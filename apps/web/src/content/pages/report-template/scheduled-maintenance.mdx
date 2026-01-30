@@ -1,0 +1,342 @@
+---
+title: "Scheduled Maintenance Template"
+description: "Proactive template for communicating planned maintenance windows, upgrades, and scheduled downtime to users."
+author: "OpenStatus"
+publishedAt: "2026-01-19"
+category: "maintenance"
+---
+
+Use this template for planned maintenance, infrastructure upgrades, or scheduled downtime. Proactive communication builds trust and reduces support burden.
+
+## When to Use This Template
+
+- Database upgrades
+- Infrastructure migrations
+- Security patch deployments
+- Third-party provider maintenance
+- Performance optimization work
+
+## Template Messages
+
+### Scheduled (Advance Notice)
+
+We have scheduled maintenance for [System Name] on [Date] at [Time] [Timezone].
+
+**Expected Duration**: [Duration]
+**Expected Impact**: [Impact Description]
+
+We will provide updates throughout the maintenance window.
+
+### In Progress
+
+Scheduled maintenance is currently in progress. We expect to complete within the planned window.
+
+**Current Status**: [Brief status]
+**Expected Completion**: [Time]
+
+### Completed
+
+The scheduled maintenance has been completed successfully. All systems are operating normally.
+
+Thank you for your patience during this maintenance window.
+
+## Real-World Examples
+
+### Stripe: Payment Method Maintenance
+
+**Context**: Scheduled maintenance for TWINT payment method
+**Approach**: Clear scheduling with transparency disclaimers
+
+**Sample messaging**:
+```
+TWINT has an upcoming scheduled maintenance.
+
+Note: Stripe retrieves payment method planned maintenance information
+from payment method partners and the information may not be complete,
+accurate, or up to date.
+```
+
+**What worked**:
+- Clear about the service affected (TWINT)
+- Set expectations about information accuracy
+- Consistent disclaimer across all maintenance notices
+
+**Multi-stage updates**:
+1. **Scheduled**: "TWINT has upcoming scheduled maintenance on [date]"
+2. **In Progress**: "Maintenance is currently in progress"
+3. **Completed**: "The scheduled maintenance has been completed"
+
+### Notion: Planned Maintenance Communication
+
+**Approach**: Clear timing with minimal service impact
+
+**Sample structure**:
+```
+Scheduled Maintenance
+Time: Jan 20, 2026 | 2:00 AM - 4:00 AM PST
+Impact: Brief connectivity interruptions expected
+Status: Scheduled
+
+We'll be performing database maintenance during this window.
+Most features will remain available, but you may experience
+brief disruptions.
+```
+
+## Planning Your Maintenance Communication
+
+### 1 Week Before
+```
+📅 Scheduled Maintenance Notice
+
+We'll be performing infrastructure upgrades on [date] at [time].
+
+What: Database migration to improve performance
+When: January 25, 2026 at 02:00 UTC
+Duration: Approximately 2 hours
+Impact: Read-only mode during migration
+
+Add to calendar: [iCal link]
+```
+
+### 24 Hours Before
+```
+⏰ Reminder: Maintenance Tomorrow
+
+This is a reminder that we'll be performing scheduled maintenance
+tomorrow, January 25 at 02:00 UTC (approximately 2 hours).
+
+During this time, the service will be in read-only mode. You'll be
+able to view data but won't be able to make changes.
+
+We recommend completing any urgent work before maintenance begins.
+```
+
+### 1 Hour Before
+```
+🔧 Maintenance Starting Soon
+
+Scheduled maintenance begins in 1 hour (02:00 UTC).
+
+Quick reminders:
+- Service will be in read-only mode
+- Expected duration: 2 hours
+- We'll provide hourly updates
+
+If you have any questions, please contact support before maintenance begins.
+```
+
+### At Start
+```
+🚧 Maintenance In Progress
+
+Scheduled maintenance has started. The service is now in read-only mode.
+
+Progress: Database backup completed ✓
+Next: Begin migration
+Expected completion: 04:00 UTC
+```
+
+### Hourly Updates
+```
+📊 Maintenance Progress Update (Hour 1)
+
+Migration is progressing as planned.
+
+Completed:
+✓ Database backup
+✓ Schema updates
+✓ Data migration (65%)
+
+In progress:
+⏳ Data migration (ongoing)
+
+Still on track for 04:00 UTC completion.
+```
+
+### At Completion
+```
+✅ Maintenance Complete
+
+Scheduled maintenance has been completed successfully!
+
+The service is now fully operational and out of read-only mode.
+All features are available.
+
+Thank you for your patience. You should notice improved performance
+with our upgraded infrastructure.
+```
+
+### If Extended
+```
+⚠️ Maintenance Extended
+
+We're making excellent progress, but the maintenance will take longer
+than expected.
+
+New estimated completion: 05:00 UTC (1 hour extension)
+Reason: Data migration taking longer due to dataset size
+
+The service remains in read-only mode. We'll provide another update
+in 30 minutes.
+```
+
+## Advance Notice Best Practices
+
+### Minimum Notice Periods
+
+- **Minor maintenance** (< 30 min, no downtime): 48 hours notice
+- **Standard maintenance** (1-4 hours, read-only): 1 week notice
+- **Major maintenance** (> 4 hours, full downtime): 2+ weeks notice
+
+### What to Include
+
+✅ **Always include**:
+- Exact date and time (with timezone)
+- Expected duration
+- Impact description
+- What users can/can't do
+- Who to contact with questions
+
+✅ **Nice to have**:
+- Reason for maintenance
+- Expected benefits
+- Calendar file (.ics)
+- Status page link
+- Estimated completion time
+
+❌ **Avoid**:
+- Vague timing ("sometime next week")
+- Unclear impact ("may affect some users")
+- No duration estimate
+- Technical jargon without explanation
+
+## Impact Level Communication
+
+### No Downtime
+```
+Maintenance Window: January 25, 02:00-04:00 UTC
+Impact: None - We'll be performing rolling updates with no service interruption
+Action Required: None
+```
+
+### Read-Only Mode
+```
+Maintenance Window: January 25, 02:00-04:00 UTC
+Impact: Service will be in read-only mode
+What you CAN do: View all data, run reports, access historical information
+What you CAN'T do: Create, update, or delete records
+Action Required: Complete any urgent changes before maintenance
+```
+
+### Full Downtime
+```
+Maintenance Window: January 25, 02:00-04:00 UTC
+Impact: Service will be completely unavailable
+What to expect: You won't be able to access the service at all
+Action Required: Plan accordingly, download any needed data beforehand
+Alternative: [If you have a status page or alternative access method]
+```
+
+### Partial Service Impact
+```
+Maintenance Window: January 25, 02:00-04:00 UTC
+Impact: Partial service degradation
+
+Available:
+✓ Login and authentication
+✓ Data viewing
+✓ API read endpoints
+
+Unavailable:
+✗ File uploads
+✗ Report generation
+✗ Data exports
+✗ Webhook delivery
+```
+
+## Timezone Considerations
+
+Always include multiple timezones for global audiences:
+
+```
+Maintenance scheduled for:
+- 02:00 UTC
+- 6:00 PM PST (Jan 24)
+- 9:00 PM EST (Jan 24)
+- 11:00 AM JST (Jan 25)
+
+Check your timezone: [worldtimebuddy.com link]
+```
+
+Or use relative time:
+```
+Maintenance begins in 24 hours.
+Check your local time: January 25, 02:00 UTC
+```
+
+## Third-Party Maintenance
+
+When a provider schedules maintenance:
+
+```
+Our payment provider, Stripe, has scheduled maintenance for [date].
+
+Impact: Payment processing may be temporarily unavailable
+Duration: Approximately 30 minutes
+Workaround: We'll queue any failed payments and automatically retry
+
+This maintenance is being performed by our payment provider. For more
+information, visit: [provider status page]
+```
+
+## Emergency Maintenance
+
+Sometimes maintenance can't wait:
+
+```
+🚨 Emergency Maintenance Required
+
+We've identified a critical issue that requires immediate maintenance.
+
+Starting: Now (15:00 UTC)
+Expected duration: 30 minutes
+Impact: Service will be unavailable
+
+We apologize for the short notice. This maintenance is necessary to
+prevent potential data issues.
+
+Updates every 10 minutes.
+```
+
+## Benefits Communication
+
+Help users understand the "why":
+
+```
+This maintenance will deliver:
+✓ 3x faster query performance
+✓ 99.99% uptime SLA (up from 99.9%)
+✓ Support for 10x more concurrent users
+✓ Reduced latency for API calls
+
+We appreciate your patience as we improve the service.
+```
+
+## FAQ to Include
+
+Consider adding to your maintenance notice:
+
+**Q: Can I use the service during maintenance?**
+A: The service will be in read-only mode. You can view data but not make changes.
+
+**Q: What if I'm in the middle of something?**
+A: We recommend saving your work before maintenance begins. Any unsaved changes may be lost.
+
+**Q: Will my data be safe?**
+A: Yes, we perform full backups before all maintenance. Your data is secure.
+
+**Q: What if maintenance takes longer?**
+A: We'll provide updates every hour and notify you of any time extensions.
+
+**Q: Can you reschedule?**
+A: This timing was chosen for minimal impact. Please contact support if you have urgent concerns.

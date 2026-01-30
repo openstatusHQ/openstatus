@@ -1,13 +1,12 @@
 import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
 import { twitterMetadata } from "@/app/shared-metadata";
-import { getChangelogPosts } from "@/content/utils";
+import { getReportTemplates } from "@/content/utils";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
-const TITLE = "Changelog";
-const DESCRIPTION = "All the latest changes and updates to openstatus.";
+const TITLE = "Report Template";
+const DESCRIPTION = "All the latest templates from openstatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -26,22 +25,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ChangelogListPage() {
-  const allChangelogs = getChangelogPosts();
+export default function ReportTemplateListPage() {
+  const allReportTemplates = getReportTemplates();
   return (
     <div className="prose dark:prose-invert max-w-none">
-      <h1>Changelog</h1>
-      <ContentCategory data={allChangelogs} prefix="/changelog" />
-      <p>
-        Get the{" "}
-        <Link
-          href="https://www.openstatus.dev/changelog/feed.xml"
-          target="_blank"
-        >
-          RSS feed
-        </Link>
-      </p>
-      <ContentList data={allChangelogs} prefix="/changelog" withCategory />
+      <h1>Report Templates</h1>
+      <ContentCategory data={allReportTemplates} prefix="/report-template" />
+      <ContentList
+        data={allReportTemplates}
+        prefix="/report-template"
+        withCategory
+      />
     </div>
   );
 }

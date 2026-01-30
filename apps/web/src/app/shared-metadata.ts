@@ -46,7 +46,7 @@ export const defaultMetadata: Metadata = {
   openGraph: ogMetadata,
 };
 
-export const getPageMetadata = (page: MDXData): Metadata => {
+export const getPageMetadata = (page: MDXData, basePath: string): Metadata => {
   const { slug, metadata } = page;
   const { title, description, category, publishedAt } = metadata;
 
@@ -64,7 +64,7 @@ export const getPageMetadata = (page: MDXData): Metadata => {
       description,
       type: "article",
       publishedTime: publishedAt.toISOString(),
-      url: `${BASE_URL}/changelog/${slug}`,
+      url: `${BASE_URL}/${basePath}/${slug}`,
       images: [
         {
           url: ogImage,
@@ -95,6 +95,7 @@ export const getJsonLDWebPage = (page: MDXData): WithContext<WebPage> => {
 
 export const getJsonLDBlogPosting = (
   post: MDXData,
+  basePath: string,
 ): WithContext<BlogPosting> => {
   return {
     "@context": "https://schema.org",
@@ -110,7 +111,7 @@ export const getJsonLDBlogPosting = (
         )}&description=${encodeURIComponent(
           post.metadata.description,
         )}&category=${encodeURIComponent(post.metadata.category)}`,
-    url: `${BASE_URL}/blog/${post.slug}`,
+    url: `${BASE_URL}/${basePath}/${post.slug}`,
     author: {
       "@type": "Person",
       name: post.metadata.author,
