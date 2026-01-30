@@ -1,0 +1,102 @@
+---
+title: "Introducing Status Page Components"
+description: "A major architectural refactor that decouples status pages from monitors, enabling flexible status reporting and better self-hosting support."
+author: "Maximilian Kaske"
+publishedAt: "2026-01-30"
+image: "/assets/posts/status-page-components/status-page-components.png"
+category: "company"
+---
+
+Status pages started simple for us: a page showed the uptime of a monitor. That assumption shaped our entire data model - and eventually became our biggest limitation.
+
+We embraced this tight coupling early on because it let us move fast. The downside? It made us move slow when requirements evolved.
+
+Over the year, we've received requests from users wanting to share status reports without any uptime monitoring attached. We tried addressing this with the `page.configuration` object - you could choose between bar type, card value, and showing uptime - but that was us duct-taping a more fundamental problem: status page components were tightly coupled to monitors.
+
+## The Solution
+
+From the ground up, we've reworked the relationships between status reports, maintenances, pages, and monitors. The result: **page components** - a flexible new architecture that decouples status pages from monitors.
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                 BEFORE (monitors_to_pages)                   │
+└──────────────────────────────────────────────────────────────┘
+
+  incidents ───▶ monitors ◀─── maintenances
+                    │     ◀─── status_reports
+                    │
+                    ▼
+            monitors_to_pages (m-to-m)
+                    │
+                    ▼
+                  pages
+
+
+┌──────────────────────────────────────────────────────────────┐
+│                  AFTER (page_components)                     │
+└──────────────────────────────────────────────────────────────┘
+
+  incidents ───▶ monitors
+                    │
+                    │ (optional)
+                    ▼
+            page_components ◀─── maintenances
+                    │       ◀─── status_reports
+                    ▼
+                  pages
+```
+
+## Component Types
+
+A **page component** has a `type` that determines its behavior:
+
+- **static**: zero dependency on any uptime data—simply shows values based on connected status reports or maintenances
+- **monitor**: acts just like before where uptime data _can be_ tightly linked to our monitoring system (see `page.configuration` for more)
+
+### Future Types
+
+These types can be extended. We see **third-party** as a big third pillar where status updates from third-party services can be displayed in near real-time. Feel free to [reach out to us](mailto:ping@openstatus.dev) if you're interested in those components.
+
+<Image src="/assets/posts/status-page-components/form-components.png" alt="Page components form, grouped by regions" />
+
+## Key Benefits
+
+This architectural change brings several advantages:
+
+- **Flexibility**: Status pages are no longer limited to monitored services—share status updates for any component, monitored or not
+- **Simplified self-hosting**: Self-hosters can create status pages without setting up a full monitoring infrastructure
+- **Future extensibility**: The component-based architecture makes it easy to add new types like third-party integrations
+- **Better separation of concerns**: Monitoring and status reporting are now properly decoupled, allowing each to evolve independently
+
+## Pricing and Plan Limits
+
+Page components are counted across your workspace based on your plan tier:
+
+- **Hobby (free)**: 3 components
+- **Starter**: 20 components
+- **Pro**: 50 components
+
+The flexibility of **static components** means you can now maximize your plan limits more effectively. Previously, every component required a monitor (which counts against your monitor limit). Now you can:
+
+- Use monitor-type components for services you want to actively check
+- Use static components for third-party dependencies, managed services, or components you update manually
+- Mix both types to get full visibility without needing a monitor for everything
+
+## Migration Approach
+
+Our strategy was to sync the legacy database while incrementally migrating every part of our stack:
+
+- database migration + setup syncing between `monitors_to_pages` and `page_components` tables
+- status page
+- status reports and maintenances
+- dashboard form
+- status report emails
+- ...
+
+This allowed us to step by step test and merge changes to production without having to pause the migration.
+
+## API Compatibility
+
+For existing integrations, the **v1 API maintains backward compatibility**. Status page responses continue to include the legacy `monitorIds` and `monitors` fields to prevent breaking changes. However, these fields now only return page components of type `monitor` - the `static` components are excluded from these legacy fields.
+
+**Looking ahead:** Future API versions will use the `pageComponents` structure as the primary interface. Thibault is already cooking our v2 API version including an SDK to improve the DX around openstatus!
