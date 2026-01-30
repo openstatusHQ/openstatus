@@ -10,6 +10,7 @@ import {
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPublicMonitorSchema,
+  selectPublicPageLightSchemaWithRelation,
   selectPublicPageSchemaWithRelation,
   selectStatusReportPageSchema,
   selectWorkspaceSchema,
@@ -125,7 +126,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-      // Transform all page components (both monitor and external types)
+      // Transform all page components (both monitor and static types)
       const components = pageComponents.map((c) => {
         const events = getEvents({
           maintenances: _page.maintenances,
@@ -139,8 +140,8 @@ export const statusPageRouter = createTRPCRouter({
         // Calculate status based on component type
         let status: "success" | "degraded" | "error" | "info";
 
-        if (c.type === "external") {
-          // External: only reports and maintenances affect status
+        if (c.type === "static") {
+          // Static: only reports and maintenances affect status
           status = events.some((e) => e.type === "report" && !e.to)
             ? "degraded"
             : events.some(
@@ -348,7 +349,6 @@ export const statusPageRouter = createTRPCRouter({
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
 
-      // Transform statusReports to include monitorsToStatusReports format
       const statusReports = _page.statusReports.sort((a, b) => {
         // Sort reports without updates to the beginning
         if (
@@ -385,6 +385,81 @@ export const statusPageRouter = createTRPCRouter({
         pageComponents,
         pageComponentGroups: _page.pageComponentGroups,
         whiteLabel,
+      });
+    }),
+
+  getLight: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      // Single query with all relations
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          workspace: true,
+          statusReports: {
+            with: {
+              statusReportUpdates: {
+                orderBy: (reports, { desc }) => desc(reports.date),
+              },
+              statusReportsToPageComponents: { with: { pageComponent: true } },
+            },
+          },
+          maintenances: {
+            with: {
+              maintenancesToPageComponents: { with: { pageComponent: true } },
+            },
+            orderBy: (maintenances, { desc }) => desc(maintenances.from),
+          },
+          pageComponents: {
+            with: {
+              monitor: { with: { incidents: true } },
+              group: true,
+            },
+            orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
+          },
+          pageComponentGroups: true,
+        },
+      });
+
+      if (!_page) return null;
+
+      // Extract monitor components for backwards compatibility
+      const monitorComponents = _page.pageComponents.filter(
+        (c) =>
+          c.type === "monitor" &&
+          c.monitor &&
+          c.monitor.active &&
+          !c.monitor.deletedAt,
+      );
+
+      // Build legacy monitors array (sorted by order)
+      const monitors = monitorComponents
+        .map((c) => ({
+          ...c.monitor,
+          name: c.monitor?.externalName ?? c.monitor?.name ?? "",
+        }))
+        .sort((a, b) => {
+          const aComp = monitorComponents.find((m) => m.monitor?.id === a.id);
+          const bComp = monitorComponents.find((m) => m.monitor?.id === b.id);
+          return (aComp?.order ?? 0) - (bComp?.order ?? 0);
+        });
+
+      // Extract all incidents from monitor components
+      const incidents = monitorComponents.flatMap(
+        (c) => c.monitor?.incidents ?? [],
+      );
+
+      return selectPublicPageLightSchemaWithRelation.parse({
+        ..._page,
+        monitors,
+        incidents,
+        statusReports: _page.statusReports,
+        maintenances: _page.maintenances,
+        pageComponents: _page.pageComponents,
+        pageComponentGroups: _page.pageComponentGroups,
+        workspacePlan: _page.workspace.plan,
       });
     }),
 
@@ -555,7 +630,7 @@ export const statusPageRouter = createTRPCRouter({
             lookbackPeriod,
           );
         } else {
-          // External components, manual mode, or NOOP mode: use synthetic data
+          // Static components, manual mode, or NOOP mode: use synthetic data
           filledData = fillStatusDataFor45DaysNoop({
             errorDays: [],
             degradedDays: [],
@@ -563,11 +638,11 @@ export const statusPageRouter = createTRPCRouter({
           });
         }
 
-        // External components always use manual mode since they don't have real monitoring data
+        // Static components always use manual mode since they don't have real monitoring data
         const effectiveBarType =
-          c.type === "external" ? "manual" : opts.input.barType;
+          c.type === "static" ? "manual" : opts.input.barType;
         const effectiveCardType =
-          c.type === "external" ? "manual" : opts.input.cardType;
+          c.type === "static" ? "manual" : opts.input.cardType;
 
         const processedData = setDataByType({
           events,

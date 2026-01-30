@@ -5,6 +5,7 @@ import {
   EmptyStateContainer,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import {
   FormCard,
   FormCardContent,
@@ -80,6 +81,7 @@ import {
   GripVertical,
   Link2,
   Link2Off,
+  Plug,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -90,6 +92,7 @@ import { z } from "zod";
 
 type PageComponent = RouterOutputs["pageComponent"]["list"][number];
 type Monitor = RouterOutputs["monitor"]["list"][number];
+type Workspace = RouterOutputs["workspace"]["get"];
 
 type ComponentGroup = {
   id: number;
@@ -103,7 +106,7 @@ const componentSchema = z.object({
   order: z.number(),
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string().optional(),
-  type: z.enum(["monitor", "external"]),
+  type: z.enum(["monitor", "static"]),
 });
 
 const schema = z.object({
@@ -126,7 +129,7 @@ const getSortedComponents = (
     id: number;
     order: number;
     name?: string;
-    type?: "monitor" | "external";
+    type?: "monitor" | "static";
     monitorId?: number | null;
   }[],
   monitors: Monitor[],
@@ -149,7 +152,7 @@ const getSortedComponents = (
       componentMap.set(c.id, {
         id: c.id,
         name: c.name ?? "",
-        type: c.type ?? "external",
+        type: c.type ?? "static",
         monitorId: c.monitorId ?? null,
         monitor: monitor ?? null,
         groupId: null,
@@ -174,7 +177,7 @@ const getSortedItems = (
     id: number;
     order: number;
     name?: string;
-    type?: "monitor" | "external";
+    type?: "monitor" | "static";
     monitorId?: number | null;
   }[],
   groups: Array<{
@@ -185,7 +188,7 @@ const getSortedItems = (
       id: number;
       order: number;
       name?: string;
-      type?: "monitor" | "external";
+      type?: "monitor" | "static";
       monitorId?: number | null;
     }>;
   }>,
@@ -210,7 +213,7 @@ const getSortedItems = (
       componentMap.set(c.id, {
         id: c.id,
         name: c.name ?? "",
-        type: c.type ?? "external",
+        type: c.type ?? "static",
         monitorId: c.monitorId ?? null,
         monitor: monitor ?? null,
         groupId: null,
@@ -259,7 +262,7 @@ export function FormComponents({
   pageComponents,
   allPageComponents,
   monitors,
-  legacy,
+  workspace,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
@@ -270,9 +273,9 @@ export function FormComponents({
   /** Monitors available for selection */
   monitors: Monitor[];
   /**
-   * Whether the status page is legacy or new
+   * The workspace the page belongs to
    */
-  legacy: boolean;
+  workspace: Workspace;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
@@ -282,6 +285,7 @@ export function FormComponents({
   const [isPending, startTransition] = useTransition();
   const watchComponents = form.watch("components");
   const watchGroups = form.watch("groups");
+  const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
   const [data, setData] = useState<(PageComponent | ComponentGroup)[]>(
     getSortedItems(
       allPageComponents,
@@ -311,6 +315,15 @@ export function FormComponents({
     );
     setData(sortedItems);
   }, [watchComponents, watchGroups, allPageComponents, monitors]);
+
+  const validateLimit = useCallback(() => {
+    const limitReached = workspace.limits["page-components"] <= data.length;
+    if (limitReached) {
+      setOpenUpgradeDialog(true);
+      return false;
+    }
+    return true;
+  }, [workspace, data.length]);
 
   const onValueChange = useCallback(
     (newItems: (PageComponent | ComponentGroup)[]) => {
@@ -372,6 +385,8 @@ export function FormComponents({
   );
 
   const handleAddGroup = useCallback(() => {
+    if (!validateLimit()) return;
+
     const newGroupId = Date.now();
     const existingGroups = form.getValues("groups") ?? [];
     const existingComponents = form.getValues("components") ?? [];
@@ -382,7 +397,7 @@ export function FormComponents({
     ];
     form.setValue("groups", newGroups);
     setData((prev) => [...prev, { id: newGroupId, name: "", components: [] }]);
-  }, [form]);
+  }, [form, validateLimit]);
 
   const handleDeleteGroup = useCallback(
     (groupId: number) => {
@@ -437,6 +452,7 @@ export function FormComponents({
           form={form}
           allPageComponents={allPageComponents}
           monitors={monitors}
+          validateLimit={validateLimit}
         />
       );
     },
@@ -447,6 +463,7 @@ export function FormComponents({
       allPageComponents,
       monitors,
       handleDeleteComponent,
+      validateLimit,
     ],
   );
 
@@ -474,209 +491,216 @@ export function FormComponents({
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
-          <FormCardHeader>
-            <FormCardTitle>Components</FormCardTitle>
-            <FormCardDescription>
-              Manage your page components
-            </FormCardDescription>
-          </FormCardHeader>
-          <FormCardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <FormField
-              control={form.control}
-              name="components"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="sr-only">Components</FormLabel>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="w-full">
-                        <Plus />
-                        Add Component
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-[var(--radix-dropdown-menu-trigger-width)]"
-                    >
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem
-                          disabled
-                          onClick={() => {
-                            form.setValue("components", [
-                              ...field.value,
-                              {
-                                id: Date.now(),
-                                monitorId: null,
-                                order: watchComponents.length,
-                                name: "",
-                                description: "",
-                                type: "external" as const,
-                              },
-                            ]);
-                          }}
-                        >
-                          <Link2Off className="text-muted-foreground" />
-                          Add External (soon)
-                        </DropdownMenuItem>
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
-                            <Link2 className="text-muted-foreground" />
-                            Add Monitor
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuSubContent className="p-0">
-                            <Command>
-                              <CommandInput
-                                placeholder="Search monitors..."
-                                className="h-9"
-                              />
-                              <CommandList>
-                                <CommandEmpty>No monitors found.</CommandEmpty>
-                                <CommandGroup>
-                                  {monitors.map((monitor) => {
-                                    const isUsed = usedMonitorIds.has(
-                                      monitor.id,
-                                    );
-                                    const isSelected = field.value.some(
-                                      (c) => c.monitorId === monitor.id,
-                                    );
-                                    return (
-                                      <CommandItem
-                                        value={monitor.name}
-                                        key={monitor.id}
-                                        disabled={isUsed}
-                                        onSelect={() => {
-                                          if (isSelected) {
-                                            form.setValue(
-                                              "components",
-                                              field.value.filter(
-                                                (c) =>
-                                                  c.monitorId !== monitor.id,
-                                              ),
-                                            );
-                                          } else {
-                                            form.setValue("components", [
-                                              ...field.value,
-                                              {
-                                                id: Date.now(),
-                                                monitorId: monitor.id,
-                                                order: watchComponents.length,
-                                                name: monitor.name,
-                                                description:
-                                                  monitor.description,
-                                                type: "monitor" as const,
-                                              },
-                                            ]);
-                                          }
-                                        }}
-                                      >
-                                        {monitor.name}
-                                        <Check
-                                          className={cn(
-                                            "ml-auto",
-                                            isSelected
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                      </CommandItem>
-                                    );
-                                  })}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </DropdownMenuSubContent>
-                        </DropdownMenuSub>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              variant="outline"
-              type="button"
-              className="w-full"
-              onClick={handleAddGroup}
-            >
-              <Plus />
-              Add Component Group
-            </Button>
-          </FormCardContent>
-          <FormCardSeparator />
-          <FormCardContent>
-            <Sortable
-              value={data}
-              onValueChange={onValueChange}
-              getItemValue={getItemValue}
-              orientation="vertical"
-            >
-              {data.length ? (
-                <SortableContent className="grid gap-2">
-                  {data.map((item) => {
-                    if ("type" in item) {
-                      const components = form.getValues("components") ?? [];
-                      const componentIndex = components.findIndex(
-                        (c) => c.id === item.id,
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(submitAction)} {...props}>
+          <FormCard>
+            <FormCardHeader>
+              <FormCardTitle>Components</FormCardTitle>
+              <FormCardDescription>
+                Manage your page components
+              </FormCardDescription>
+            </FormCardHeader>
+            <FormCardContent className="flex flex-row gap-2">
+              <Button variant="outline" type="button" onClick={handleAddGroup}>
+                <Plus />
+                Add Component Group
+              </Button>
+              <FormField
+                control={form.control}
+                name="components"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel className="sr-only">Components</FormLabel>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          <Plus />
+                          Add Component
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              if (!validateLimit()) return;
+                              form.setValue("components", [
+                                ...field.value,
+                                {
+                                  id: Date.now(),
+                                  monitorId: null,
+                                  order: watchComponents.length,
+                                  name: "",
+                                  description: "",
+                                  type: "static" as const,
+                                },
+                              ]);
+                            }}
+                          >
+                            <Link2Off className="text-muted-foreground" />
+                            Add Static Component
+                          </DropdownMenuItem>
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
+                              <Link2 className="text-muted-foreground" />
+                              Add Monitor Component
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="p-0">
+                              <Command>
+                                <CommandInput
+                                  placeholder="Search monitors..."
+                                  className="h-9"
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    No monitors found.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {monitors.map((monitor) => {
+                                      const isUsed = usedMonitorIds.has(
+                                        monitor.id,
+                                      );
+                                      const isSelected = field.value.some(
+                                        (c) => c.monitorId === monitor.id,
+                                      );
+                                      return (
+                                        <CommandItem
+                                          value={monitor.name}
+                                          key={monitor.id}
+                                          disabled={isUsed}
+                                          onSelect={() => {
+                                            if (isSelected) {
+                                              form.setValue(
+                                                "components",
+                                                field.value.filter(
+                                                  (c) =>
+                                                    c.monitorId !== monitor.id,
+                                                ),
+                                              );
+                                            } else {
+                                              if (!validateLimit()) return;
+                                              form.setValue("components", [
+                                                ...field.value,
+                                                {
+                                                  id: Date.now(),
+                                                  monitorId: monitor.id,
+                                                  order: watchComponents.length,
+                                                  name: monitor.name,
+                                                  description:
+                                                    monitor.description,
+                                                  type: "monitor" as const,
+                                                },
+                                              ]);
+                                            }
+                                          }}
+                                        >
+                                          {monitor.name}
+                                          <Check
+                                            className={cn(
+                                              "ml-auto",
+                                              isSelected
+                                                ? "opacity-100"
+                                                : "opacity-0",
+                                            )}
+                                          />
+                                        </CommandItem>
+                                      );
+                                    })}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                          <DropdownMenuItem disabled>
+                            <Plug className="text-muted-foreground" />
+                            Add Third-Party Component
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </FormCardContent>
+            <FormCardSeparator />
+            <FormCardContent>
+              <Sortable
+                value={data}
+                onValueChange={onValueChange}
+                getItemValue={getItemValue}
+                orientation="vertical"
+              >
+                {data.length ? (
+                  <SortableContent className="grid gap-2">
+                    {data.map((item) => {
+                      if ("type" in item) {
+                        const components = form.getValues("components") ?? [];
+                        const componentIndex = components.findIndex(
+                          (c) => c.id === item.id,
+                        );
+                        return (
+                          <ComponentRow
+                            key={`${item.id}-component`}
+                            className="border-transparent border-x px-2"
+                            component={item}
+                            form={form}
+                            onDelete={handleDeleteComponent}
+                            fieldNamePrefix={
+                              componentIndex >= 0
+                                ? `components.${componentIndex}`
+                                : undefined
+                            }
+                          />
+                        );
+                      }
+                      const groups = form.getValues("groups") ?? [];
+                      const groupIndex = groups.findIndex(
+                        (g) => g.id === item.id,
                       );
                       return (
-                        <ComponentRow
-                          key={`${item.id}-component`}
-                          className="border-transparent border-x px-2"
-                          component={item}
+                        <ComponentGroupRow
+                          key={`${item.id}-group`}
+                          group={item}
+                          groupIndex={groupIndex}
+                          onDeleteGroup={handleDeleteGroup}
                           form={form}
-                          onDelete={handleDeleteComponent}
-                          fieldNamePrefix={
-                            componentIndex >= 0
-                              ? `components.${componentIndex}`
-                              : undefined
-                          }
+                          allPageComponents={allPageComponents}
+                          monitors={monitors}
+                          validateLimit={validateLimit}
                         />
                       );
-                    }
-                    const groups = form.getValues("groups") ?? [];
-                    const groupIndex = groups.findIndex(
-                      (g) => g.id === item.id,
-                    );
-                    return (
-                      <ComponentGroupRow
-                        key={`${item.id}-group`}
-                        group={item}
-                        groupIndex={groupIndex}
-                        onDeleteGroup={handleDeleteGroup}
-                        form={form}
-                        allPageComponents={allPageComponents}
-                        monitors={monitors}
-                      />
-                    );
-                  })}
-                  <SortableOverlay>{renderOverlay}</SortableOverlay>
-                </SortableContent>
-              ) : (
-                <EmptyStateContainer>
-                  <EmptyStateTitle>No components selected</EmptyStateTitle>
-                </EmptyStateContainer>
-              )}
-            </Sortable>
-          </FormCardContent>
-          <FormCardFooter>
-            <FormCardFooterInfo>
-              Learn more about{" "}
-              <Link href="https://docs.openstatus.dev/reference/status-page/#page-components">
-                page components
-              </Link>
-              .
-            </FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Submitting..." : "Submit"}
-            </Button>
-          </FormCardFooter>
-        </FormCard>
-      </form>
-    </Form>
+                    })}
+                    <SortableOverlay>{renderOverlay}</SortableOverlay>
+                  </SortableContent>
+                ) : (
+                  <EmptyStateContainer>
+                    <EmptyStateTitle>No components selected</EmptyStateTitle>
+                  </EmptyStateContainer>
+                )}
+              </Sortable>
+            </FormCardContent>
+            <FormCardFooter>
+              <FormCardFooterInfo>
+                Learn more about{" "}
+                <Link href="https://docs.openstatus.dev/reference/status-page/#page-components">
+                  page components
+                </Link>
+                .
+              </FormCardFooterInfo>
+              <Button type="submit" disabled={isPending}>
+                {isPending ? "Submitting..." : "Submit"}
+              </Button>
+            </FormCardFooter>
+          </FormCard>
+        </form>
+      </Form>
+      <UpgradeDialog
+        limit="page-components"
+        open={openUpgradeDialog}
+        onOpenChange={setOpenUpgradeDialog}
+      />
+    </>
   );
 }
 
@@ -773,7 +797,7 @@ function ComponentRow({
             <Link
               href={`/monitors/${component.monitorId}/overview`}
               onClick={(e) => e.stopPropagation()}
-              className="flex w-full items-center gap-2 truncate text-sm"
+              className="flex w-full items-center gap-2 truncate py-1.5 text-sm"
             >
               <Link2 className="size-4 shrink-0" />{" "}
               <span className="truncate">{component.monitor.name}</span>
@@ -781,7 +805,7 @@ function ComponentRow({
           ) : (
             <span className="flex items-center gap-2 text-muted-foreground text-sm">
               <Link2Off className="size-4 shrink-0" />{" "}
-              <span className="truncate">External Component</span>
+              <span className="truncate">Static Component</span>
             </span>
           )}
         </div>
@@ -836,8 +860,13 @@ function ComponentRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to delete this component.
+                  Once saved, this will unlink the component from attached
+                  status reports and maintenances.
                 </AlertDialogDescription>
+                <ComponentAttachments
+                  statusReports={component.statusReports ?? []}
+                  maintenances={component.maintenances ?? []}
+                />
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -845,7 +874,7 @@ function ComponentRow({
                   className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
                   onClick={() => onDelete(component.id)}
                 >
-                  Delete
+                  Remove
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -864,6 +893,7 @@ interface ComponentGroupRowProps
   form: UseFormReturn<FormValues>;
   allPageComponents: PageComponent[];
   monitors: Monitor[];
+  validateLimit: () => boolean;
 }
 
 function ComponentGroupRow({
@@ -873,6 +903,7 @@ function ComponentGroupRow({
   form,
   allPageComponents,
   monitors,
+  validateLimit,
 }: ComponentGroupRowProps) {
   const watchGroup = form.watch(`groups.${groupIndex}`);
   const watchComponents = form.watch("components");
@@ -997,14 +1028,11 @@ function ComponentGroupRow({
                     Add Component
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-[var(--radix-dropdown-menu-trigger-width)]"
-                >
+                <DropdownMenuContent align="start">
                   <DropdownMenuGroup>
                     <DropdownMenuItem
-                      disabled
                       onClick={() => {
+                        if (!validateLimit()) return;
                         const current = field.value ?? [];
                         form.setValue(`groups.${groupIndex}.components`, [
                           ...current,
@@ -1014,18 +1042,18 @@ function ComponentGroupRow({
                             order: current.length,
                             name: "",
                             description: "",
-                            type: "external" as const,
+                            type: "static" as const,
                           },
                         ]);
                       }}
                     >
                       <Link2Off className="text-muted-foreground" />
-                      Add External (soon)
+                      Add Static Component
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0">
                         <Link2 className="text-muted-foreground" />
-                        Add Monitor
+                        Add Monitor Component
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="p-0">
                         <Command>
@@ -1046,7 +1074,7 @@ function ComponentGroupRow({
                                   <CommandItem
                                     value={monitor.name}
                                     key={monitor.id}
-                                    disabled={isTaken}
+                                    disabled={isTaken || isSelected}
                                     onSelect={() => {
                                       if (isSelected) {
                                         form.setValue(
@@ -1056,6 +1084,7 @@ function ComponentGroupRow({
                                           ),
                                         );
                                       } else {
+                                        if (!validateLimit()) return;
                                         form.setValue(
                                           `groups.${groupIndex}.components`,
                                           [
@@ -1090,6 +1119,10 @@ function ComponentGroupRow({
                         </Command>
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
+                    <DropdownMenuItem disabled>
+                      <Plug className="text-muted-foreground" />
+                      Add Third-Party Component
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1118,8 +1151,25 @@ function ComponentGroupRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to delete this group and all its components.
+                  Once saved, this will delete all components in the group and
+                  unlink them from attached status reports and maintenances.
                 </AlertDialogDescription>
+                <ComponentAttachments
+                  statusReports={Array.from(
+                    new Map(
+                      group.components
+                        .flatMap((c) => c.statusReports ?? [])
+                        .map((sr) => [sr.id, sr]),
+                    ).values(),
+                  )}
+                  maintenances={Array.from(
+                    new Map(
+                      group.components
+                        .flatMap((c) => c.maintenances ?? [])
+                        .map((m) => [m.id, m]),
+                    ).values(),
+                  )}
+                />
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -1127,7 +1177,7 @@ function ComponentGroupRow({
                   className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
                   onClick={() => onDeleteGroup(group.id)}
                 >
-                  Delete
+                  Remove
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -1173,5 +1223,48 @@ function ComponentGroupRow({
         </Sortable>
       </div>
     </SortableItem>
+  );
+}
+
+function ComponentAttachments({
+  statusReports,
+  maintenances,
+}: {
+  statusReports: Array<{ id: number; title: string }>;
+  maintenances: Array<{ id: number; title: string }>;
+}) {
+  if (statusReports.length === 0 && maintenances.length === 0) {
+    return null;
+  }
+
+  const allItems = [
+    ...statusReports.map((report) => ({
+      id: `report-${report.id}`,
+      title: report.title,
+      type: "report" as const,
+    })),
+    ...maintenances.map((maintenance) => ({
+      id: `maintenance-${maintenance.id}`,
+      title: maintenance.title,
+      type: "maintenance" as const,
+    })),
+  ];
+
+  const displayLimit = 3;
+  const displayedItems = allItems.slice(0, displayLimit);
+  const remainingCount = allItems.length - displayLimit;
+
+  return (
+    <ul className="list-inside list-disc space-y-1 text-foreground text-sm">
+      {displayedItems.map((item) => (
+        <li key={item.id}>
+          {item.title}{" "}
+          <span className="text-muted-foreground">({item.type})</span>
+        </li>
+      ))}
+      {remainingCount > 0 && (
+        <li className="text-muted-foreground">+ {remainingCount} more</li>
+      )}
+    </ul>
   );
 }

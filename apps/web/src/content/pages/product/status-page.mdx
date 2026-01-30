@@ -31,11 +31,15 @@ A status page is a dedicated webpage that provides real-time information about t
 
 We provide you with a good **mix of customization and opinionated options**.
 
-### Monitors (or Components)
+### Page Components
 
 You can attach specific monitors to a status page. You can either populate the data from the **aggregated uptime** data **or manually** manage them. Read more [about uptime monitoring](/uptime-monitoring).
 
-You can **group monitors** by their services, locations,... and they will be collabsible.
+Page components provide a **flexible structure** that supports both:
+- **Monitors**: Automatically synced with your uptime monitoring data
+- **External Services**: Manually managed components for third-party services or systems you don't directly monitor
+
+You can **group page components** by their services, locations, or any logical grouping, and they will be collapsible for better organization.
 
 ### Customization
 
@@ -59,11 +63,10 @@ We support following communication channels:
 
 - **Emails**
 - **RSS/Atom feeds**
+- **JSON**
 
 [Contact us](mailto:ping@openstatus.dev) if you are looking for specific a channel.
 
-### Visibility
+### Audience
 
-You can **password protect** your status page. By default, a status page is for the broad public, but if you want to share it internally or with clients, a password helps you from unwanted visitors.
-
-The RSS feed will still work. Append your `?pw=` to the URL **search params** to share private pages.
+By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection** or **magic link** authentication to control who can view your updates.

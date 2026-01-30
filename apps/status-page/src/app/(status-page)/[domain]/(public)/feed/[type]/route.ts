@@ -25,7 +25,7 @@ export async function GET(
     if (!["rss", "atom"].includes(type)) return notFound();
 
     const _page = await queryClient.fetchQuery(
-      trpc.page.getPageBySlug.queryOptions({ slug: domain }),
+      trpc.statusPage.getLight.queryOptions({ slug: domain }),
     );
     if (!_page) return notFound();
 

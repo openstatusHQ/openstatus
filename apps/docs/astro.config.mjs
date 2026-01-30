@@ -192,6 +192,10 @@ export default defineConfig({
               slug: "reference/status-page",
             },
             {
+              label: "Page Components",
+              slug: "reference/page-components",
+            },
+            {
               label: "Status Report",
               slug: "reference/status-report",
             },

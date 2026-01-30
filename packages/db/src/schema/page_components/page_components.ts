@@ -14,8 +14,7 @@ import { pageComponentGroup } from "../page_component_groups";
 import { page } from "../pages";
 import { statusReport } from "../status_reports";
 import { workspace } from "../workspaces";
-
-export const pageComponentTypes = ["external", "monitor"] as const;
+import { pageComponentTypes } from "./constants";
 
 export const pageComponent = sqliteTable(
   "page_component",
@@ -55,8 +54,8 @@ export const pageComponent = sqliteTable(
     ),
     check(
       "page_component_type_check",
-      //   NOTE: This check ensures that either the component is a monitor or an external component, but not both.
-      sql`${t.type} = 'monitor' AND ${t.monitorId} IS NOT NULL OR ${t.type} = 'external' AND ${t.monitorId} IS NULL`,
+      //   NOTE: This check ensures that either the component is a monitor or a static component, but not both.
+      sql`${t.type} = 'monitor' AND ${t.monitorId} IS NOT NULL OR ${t.type} = 'static' AND ${t.monitorId} IS NULL`,
     ),
   ],
 );

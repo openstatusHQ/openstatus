@@ -13,7 +13,7 @@ export async function GET(
     const { domain } = await props.params;
 
     const _page = await queryClient.fetchQuery(
-      trpc.page.getPageBySlug.queryOptions({ slug: domain }),
+      trpc.statusPage.getLight.queryOptions({ slug: domain }),
     );
 
     if (!_page) return notFound();

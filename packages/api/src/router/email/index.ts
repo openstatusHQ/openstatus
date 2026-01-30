@@ -42,11 +42,6 @@ export const emailRouter = createTRPCRouter({
                       pageSubscribers: {
                         where: isNotNull(pageSubscriber.acceptedAt),
                       },
-                      monitorsToPages: {
-                        with: {
-                          monitor: true,
-                        },
-                      },
                     },
                   },
                 },

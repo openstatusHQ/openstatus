@@ -2,11 +2,16 @@ import { z } from "zod";
 
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
 import {
-  page,
   pageComponent,
   pageComponentGroup,
+  selectMaintenanceSchema,
+  selectMonitorSchema,
+  selectPageComponentGroupSchema,
+  selectPageComponentSchema,
+  selectStatusReportSchema,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -29,7 +34,7 @@ export const pageComponentRouter = createTRPCRouter({
         whereConditions.push(eq(pageComponent.pageId, opts.input.pageId));
       }
 
-      const query = opts.ctx.db.query.pageComponent.findMany({
+      const result = await opts.ctx.db.query.pageComponent.findMany({
         where: and(...whereConditions),
         orderBy:
           opts.input?.order === "desc"
@@ -38,15 +43,49 @@ export const pageComponentRouter = createTRPCRouter({
         with: {
           monitor: true,
           group: true,
+          statusReportsToPageComponents: {
+            with: {
+              statusReport: true,
+            },
+            orderBy: (statusReportsToPageComponents, { desc }) =>
+              desc(statusReportsToPageComponents.createdAt),
+          },
+          maintenancesToPageComponents: {
+            with: {
+              maintenance: true,
+            },
+            orderBy: (maintenancesToPageComponents, { desc }) =>
+              desc(maintenancesToPageComponents.createdAt),
+          },
         },
       });
 
-      const result = await query;
-
-      return result;
+      // Transform and parse the result to flatten the junction tables
+      return selectPageComponentSchema
+        .extend({
+          monitor: selectMonitorSchema.nullish(),
+          group: selectPageComponentGroupSchema.nullish(),
+          statusReports: z.array(selectStatusReportSchema).default([]),
+          maintenances: z.array(selectMaintenanceSchema).default([]),
+        })
+        .array()
+        .parse(
+          result.map((component) => ({
+            ...component,
+            statusReports:
+              component.statusReportsToPageComponents?.map(
+                (sr) => sr.statusReport,
+              ) ?? [],
+            maintenances:
+              component.maintenancesToPageComponents?.map(
+                (m) => m.maintenance,
+              ) ?? [],
+          })),
+        );
     }),
 
   delete: protectedProcedure
+    .meta({ track: Events.DeletePageComponent, trackProps: ["id"] })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       return await opts.ctx.db
@@ -60,85 +99,8 @@ export const pageComponentRouter = createTRPCRouter({
         .returning();
     }),
 
-  new: protectedProcedure
-    .input(
-      z.object({
-        pageId: z.number(),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        type: z.enum(["external", "monitor"]).default("monitor"),
-        monitorId: z.number().optional(),
-        order: z.number().optional(),
-        groupId: z.number().optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const _page = await opts.ctx.db.query.page.findFirst({
-        where: and(
-          eq(page.id, opts.input.pageId),
-          eq(page.workspaceId, opts.ctx.workspace.id),
-        ),
-      });
-
-      if (!_page) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Page not found" });
-      }
-
-      const newPageComponent = await opts.ctx.db
-        .insert(pageComponent)
-        .values({
-          pageId: opts.input.pageId,
-          workspaceId: opts.ctx.workspace.id,
-          name: opts.input.name,
-          description: opts.input.description,
-          type: opts.input.type,
-          monitorId: opts.input.monitorId,
-          order: opts.input.order,
-          groupId: opts.input.groupId,
-        })
-        .returning()
-        .get();
-
-      return newPageComponent;
-    }),
-
-  update: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        type: z.enum(["external", "monitor"]).optional(),
-        monitorId: z.number().optional(),
-        order: z.number().optional(),
-        groupId: z.number().optional(),
-      }),
-    )
-    .mutation(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(pageComponent.id, opts.input.id),
-        eq(pageComponent.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _pageComponent = await opts.ctx.db
-        .update(pageComponent)
-        .set({
-          name: opts.input.name,
-          description: opts.input.description,
-          type: opts.input.type,
-          monitorId: opts.input.monitorId,
-          order: opts.input.order,
-          groupId: opts.input.groupId,
-          updatedAt: new Date(),
-        })
-        .where(and(...whereConditions))
-        .returning()
-        .get();
-
-      return _pageComponent;
-    }),
-
   updateOrder: protectedProcedure
+    .meta({ track: Events.UpdatePageComponentOrder, trackProps: ["pageId"] })
     .input(
       z.object({
         pageId: z.number(),
@@ -149,7 +111,7 @@ export const pageComponentRouter = createTRPCRouter({
             order: z.number(),
             name: z.string(),
             description: z.string().nullish(),
-            type: z.enum(["monitor", "external"]),
+            type: z.enum(["monitor", "static"]),
           }),
         ),
         groups: z.array(
@@ -163,7 +125,7 @@ export const pageComponentRouter = createTRPCRouter({
                 order: z.number(),
                 name: z.string(),
                 description: z.string().nullish(),
-                type: z.enum(["monitor", "external"]),
+                type: z.enum(["monitor", "static"]),
               }),
             ),
           }),
@@ -172,6 +134,8 @@ export const pageComponentRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       await opts.ctx.db.transaction(async (tx) => {
+        const pageComponentLimit = opts.ctx.workspace.limits["page-components"];
+
         // Get existing state
         const existingComponents = await tx
           .select()
@@ -183,6 +147,13 @@ export const pageComponentRouter = createTRPCRouter({
             ),
           )
           .all();
+
+        if (existingComponents.length >= pageComponentLimit) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You reached your page component limits.",
+          });
+        }
 
         const existingGroups = await tx
           .select()
@@ -209,22 +180,22 @@ export const pageComponentRouter = createTRPCRouter({
           ),
         ] as number[];
 
-        // Collect IDs for external components that have IDs in input
-        const inputExternalComponentIds = [
+        // Collect IDs for static components that have IDs in input
+        const inputStaticComponentIds = [
           ...opts.input.components
-            .filter((c) => c.type === "external" && c.id)
+            .filter((c) => c.type === "static" && c.id)
             .map((c) => c.id),
           ...opts.input.groups.flatMap((g) =>
             g.components
-              .filter((c) => c.type === "external" && c.id)
+              .filter((c) => c.type === "static" && c.id)
               .map((c) => c.id),
           ),
         ] as number[];
 
         // Find components that are being removed
         // For monitor components: those with monitorIds not in the input
-        // For external components with IDs: those with IDs not in the input
-        // For external components without IDs in input: delete all existing external components
+        // For static components with IDs: those with IDs not in the input
+        // For static components without IDs in input: delete all existing static components
         const removedMonitorComponents = existingComponents.filter(
           (c) =>
             c.type === "monitor" &&
@@ -232,32 +203,32 @@ export const pageComponentRouter = createTRPCRouter({
             !inputMonitorIds.includes(c.monitorId),
         );
 
-        const hasExternalComponentsInInput =
-          opts.input.components.some((c) => c.type === "external") ||
+        const hasStaticComponentsInInput =
+          opts.input.components.some((c) => c.type === "static") ||
           opts.input.groups.some((g) =>
-            g.components.some((c) => c.type === "external"),
+            g.components.some((c) => c.type === "static"),
           );
 
-        // If input has external components but they don't have IDs, we need to delete old ones
-        // If input has external components with IDs, only delete those not in input
-        const removedExternalComponents = existingComponents.filter((c) => {
-          if (c.type !== "external") return false;
-          // If we have external components in input
-          if (hasExternalComponentsInInput) {
+        // If input has static components but they don't have IDs, we need to delete old ones
+        // If input has static components with IDs, only delete those not in input
+        const removedStaticComponents = existingComponents.filter((c) => {
+          if (c.type !== "static") return false;
+          // If we have static components in input
+          if (hasStaticComponentsInInput) {
             // If the input has IDs, only remove those not in the list
-            if (inputExternalComponentIds.length > 0) {
-              return !inputExternalComponentIds.includes(c.id);
+            if (inputStaticComponentIds.length > 0) {
+              return !inputStaticComponentIds.includes(c.id);
             }
-            // If input doesn't have IDs, remove all existing external components
+            // If input doesn't have IDs, remove all existing static components
             return true;
           }
-          // If no external components in input at all, remove existing ones
+          // If no static components in input at all, remove existing ones
           return true;
         });
 
         const removedComponentIds = [
           ...removedMonitorComponents.map((c) => c.id),
-          ...removedExternalComponents.map((c) => c.id),
+          ...removedStaticComponents.map((c) => c.id),
         ];
 
         // Delete removed components
@@ -350,12 +321,12 @@ export const pageComponentRouter = createTRPCRouter({
           ...standaloneComponentValues,
         ];
 
-        // Separate monitor and external components for different upsert strategies
+        // Separate monitor and static components for different upsert strategies
         const monitorComponents = allComponentValues.filter(
           (c) => c.type === "monitor" && c.monitorId,
         );
-        const externalComponents = allComponentValues.filter(
-          (c) => c.type === "external",
+        const staticComponents = allComponentValues.filter(
+          (c) => c.type === "static",
         );
 
         // Upsert monitor components using SQL-level conflict resolution
@@ -377,11 +348,11 @@ export const pageComponentRouter = createTRPCRouter({
             });
         }
 
-        // Handle external components
+        // Handle static components
         // If they have IDs, update them; otherwise insert new ones
-        for (const componentValue of externalComponents) {
+        for (const componentValue of staticComponents) {
           if (componentValue.id) {
-            // Update existing external component (preserves ID and relationships)
+            // Update existing static component (preserves ID and relationships)
             await tx
               .update(pageComponent)
               .set({
@@ -402,7 +373,7 @@ export const pageComponentRouter = createTRPCRouter({
                 ),
               );
           } else {
-            // Insert new external component
+            // Insert new static component
             await tx.insert(pageComponent).values({
               pageId: componentValue.pageId,
               workspaceId: componentValue.workspaceId,

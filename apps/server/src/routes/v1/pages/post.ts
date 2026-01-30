@@ -6,13 +6,13 @@ import {
   inArray,
   isNull,
   sql,
-  syncMonitorsToPageInsert,
+  syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
-  monitorsToPages,
   page,
+  pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
 
@@ -171,7 +171,7 @@ export function registerPostPage(api: typeof pagesApi) {
       .values({
         ...rest,
         workspaceId: workspaceId,
-        customDomain: rest.customDomain ?? "", // TODO: make database migration to allow null
+        customDomain: rest.customDomain ?? "", // TODO  : make database migration to allow null
         accessType:
           rest.accessType ?? (rest.passwordProtected ? "password" : "public"),
         authEmailDomains: rest.authEmailDomains?.join(","),
@@ -181,21 +181,56 @@ export function registerPostPage(api: typeof pagesApi) {
 
     // TODO: missing order
     if (monitors?.length) {
-      for (const monitor of monitors) {
-        const values =
-          typeof monitor === "number" ? { monitorId: monitor } : monitor;
+      for (const [index, m] of monitors.entries()) {
+        const values = typeof m === "number" ? { monitorId: m } : m;
 
-        await db
-          .insert(monitorsToPages)
-          .values({ pageId: _page.id, ...values })
-          .run();
-        // Sync to page components
-        await syncMonitorsToPageInsert(db, {
-          monitorId: values.monitorId,
-          pageId: _page.id,
-          order: "order" in values ? values.order : undefined,
+        const _monitor = await db.query.monitor.findFirst({
+          where: and(
+            eq(monitor.id, values.monitorId),
+            eq(monitor.workspaceId, workspaceId),
+            isNull(monitor.deletedAt),
+          ),
         });
+
+        if (!_monitor) {
+          throw new OpenStatusApiError({
+            code: "BAD_REQUEST",
+            message: `Monitor ${values.monitorId} not found`,
+          });
+        }
+
+        // Insert to pageComponent (primary table)
+        await db
+          .insert(pageComponent)
+          .values({
+            workspaceId: _page.workspaceId,
+            pageId: _page.id,
+            type: "monitor",
+            monitorId: values.monitorId,
+            name: _monitor.externalName || _monitor.name,
+            order: "order" in values ? values.order : index,
+            groupId: null,
+            groupOrder: 0,
+          })
+          .run();
       }
+
+      // Sync to legacy table for backwards compatibility
+      const monitorsToPageValues = monitors.map((m, index) => {
+        const values = typeof m === "number" ? { monitorId: m } : m;
+        return {
+          pageId: _page.id,
+          monitorId: values.monitorId,
+          order: "order" in values ? values.order : index,
+          monitorGroupId: null,
+          groupOrder: 0,
+        };
+      });
+
+      await syncPageComponentToMonitorsToPageInsertMany(
+        db,
+        monitorsToPageValues,
+      );
     }
     const data = transformPageData(PageSchema.parse(_page));
     return c.json(data, 200);
