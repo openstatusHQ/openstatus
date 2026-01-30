@@ -76,6 +76,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
           eq(pageSubscriber.email, input.email),
           eq(pageSubscriber.pageId, Number(id)),
           isNotNull(pageSubscriber.acceptedAt),
+          isNotNull(pageSubscriber.unsubscribedAt),
         ),
       )
       .get();
