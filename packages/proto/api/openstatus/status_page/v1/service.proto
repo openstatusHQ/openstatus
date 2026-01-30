@@ -1,0 +1,466 @@
+syntax = "proto3";
+
+package openstatus.status_page.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/status_page/v1/page_component.proto";
+import "openstatus/status_page/v1/page_subscriber.proto";
+import "openstatus/status_page/v1/status_page.proto";
+import "openstatus/status_report/v1/status_report.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
+
+// StatusPageService provides CRUD and management operations for status pages.
+service StatusPageService {
+  // --- Page CRUD ---
+
+  // CreateStatusPage creates a new status page.
+  rpc CreateStatusPage(CreateStatusPageRequest) returns (CreateStatusPageResponse);
+
+  // GetStatusPage retrieves a specific status page by ID.
+  rpc GetStatusPage(GetStatusPageRequest) returns (GetStatusPageResponse);
+
+  // ListStatusPages returns all status pages for the workspace.
+  rpc ListStatusPages(ListStatusPagesRequest) returns (ListStatusPagesResponse);
+
+  // UpdateStatusPage updates an existing status page.
+  rpc UpdateStatusPage(UpdateStatusPageRequest) returns (UpdateStatusPageResponse);
+
+  // DeleteStatusPage removes a status page.
+  rpc DeleteStatusPage(DeleteStatusPageRequest) returns (DeleteStatusPageResponse);
+
+  // --- Component Management ---
+
+  // AddMonitorComponent adds a monitor-based component to a status page.
+  rpc AddMonitorComponent(AddMonitorComponentRequest) returns (AddMonitorComponentResponse);
+
+  // AddStaticComponent adds a static component to a status page.
+  rpc AddStaticComponent(AddStaticComponentRequest) returns (AddStaticComponentResponse);
+
+  // RemoveComponent removes a component from a status page.
+  rpc RemoveComponent(RemoveComponentRequest) returns (RemoveComponentResponse);
+
+  // UpdateComponent updates an existing component.
+  rpc UpdateComponent(UpdateComponentRequest) returns (UpdateComponentResponse);
+
+  // --- Component Groups ---
+
+  // CreateComponentGroup creates a new component group.
+  rpc CreateComponentGroup(CreateComponentGroupRequest) returns (CreateComponentGroupResponse);
+
+  // DeleteComponentGroup removes a component group.
+  rpc DeleteComponentGroup(DeleteComponentGroupRequest) returns (DeleteComponentGroupResponse);
+
+  // UpdateComponentGroup updates an existing component group.
+  rpc UpdateComponentGroup(UpdateComponentGroupRequest) returns (UpdateComponentGroupResponse);
+
+  // --- Subscribers ---
+
+  // SubscribeToPage subscribes an email to a status page.
+  rpc SubscribeToPage(SubscribeToPageRequest) returns (SubscribeToPageResponse);
+
+  // UnsubscribeFromPage removes a subscription from a status page.
+  rpc UnsubscribeFromPage(UnsubscribeFromPageRequest) returns (UnsubscribeFromPageResponse);
+
+  // ListSubscribers returns all subscribers for a status page.
+  rpc ListSubscribers(ListSubscribersRequest) returns (ListSubscribersResponse);
+
+  // --- Full Content & Status ---
+
+  // GetStatusPageContent retrieves the full content of a status page including components and reports.
+  rpc GetStatusPageContent(GetStatusPageContentRequest) returns (GetStatusPageContentResponse);
+
+  // GetOverallStatus returns the aggregated status of a status page.
+  rpc GetOverallStatus(GetOverallStatusRequest) returns (GetOverallStatusResponse);
+}
+
+// =============================================================================
+// Page CRUD Messages
+// =============================================================================
+
+// --- Create Status Page ---
+
+message CreateStatusPageRequest {
+  // Title of the status page (required).
+  string title = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 256
+  ];
+
+  // Description of the status page (optional).
+  optional string description = 2 [(buf.validate.field).string.max_len = 1024];
+
+  // URL-friendly slug for the status page (required).
+  string slug = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 256,
+    (buf.validate.field).string.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+  ];
+
+  // URL to the homepage (optional).
+  optional string homepage_url = 4;
+
+  // URL to the contact page (optional).
+  optional string contact_url = 5;
+}
+
+message CreateStatusPageResponse {
+  // The created status page.
+  StatusPage status_page = 1;
+}
+
+// --- Get Status Page ---
+
+message GetStatusPageRequest {
+  // ID of the status page to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetStatusPageResponse {
+  // The requested status page.
+  StatusPage status_page = 1;
+}
+
+// --- List Status Pages ---
+
+message ListStatusPagesRequest {
+  // Maximum number of pages to return (1-100, defaults to 50).
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Number of pages to skip for pagination (defaults to 0).
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+}
+
+message ListStatusPagesResponse {
+  // List of status pages (metadata only).
+  repeated StatusPageSummary status_pages = 1;
+
+  // Total number of status pages.
+  int32 total_size = 2;
+}
+
+// --- Update Status Page ---
+
+message UpdateStatusPageRequest {
+  // ID of the status page to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New title for the status page (optional).
+  optional string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // New description for the status page (optional).
+  optional string description = 3 [(buf.validate.field).string.max_len = 1024];
+
+  // New slug for the status page (optional).
+  optional string slug = 4 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+    pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+  }];
+
+  // New homepage URL (optional).
+  optional string homepage_url = 5;
+
+  // New contact URL (optional).
+  optional string contact_url = 6;
+}
+
+message UpdateStatusPageResponse {
+  // The updated status page.
+  StatusPage status_page = 1;
+}
+
+// --- Delete Status Page ---
+
+message DeleteStatusPageRequest {
+  // ID of the status page to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteStatusPageResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// =============================================================================
+// Component Management Messages
+// =============================================================================
+
+// --- Add Monitor Component ---
+
+message AddMonitorComponentRequest {
+  // ID of the status page to add the component to (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // ID of the monitor to associate with this component (required).
+  string monitor_id = 2 [(buf.validate.field).string.min_len = 1];
+
+  // Display name for the component (optional, defaults to monitor name).
+  optional string name = 3 [(buf.validate.field).string.max_len = 256];
+
+  // Description of the component (optional).
+  optional string description = 4 [(buf.validate.field).string.max_len = 1024];
+
+  // Display order of the component (optional).
+  optional int32 order = 5;
+
+  // ID of the group to add this component to (optional).
+  optional string group_id = 6;
+}
+
+message AddMonitorComponentResponse {
+  // The created component.
+  PageComponent component = 1;
+}
+
+// --- Add Static Component ---
+
+message AddStaticComponentRequest {
+  // ID of the status page to add the component to (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Display name for the component (required).
+  string name = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 256
+  ];
+
+  // Description of the component (optional).
+  optional string description = 3 [(buf.validate.field).string.max_len = 1024];
+
+  // Display order of the component (optional).
+  optional int32 order = 4;
+
+  // ID of the group to add this component to (optional).
+  optional string group_id = 5;
+}
+
+message AddStaticComponentResponse {
+  // The created component.
+  PageComponent component = 1;
+}
+
+// --- Remove Component ---
+
+message RemoveComponentRequest {
+  // ID of the component to remove (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message RemoveComponentResponse {
+  // Whether the removal was successful.
+  bool success = 1;
+}
+
+// --- Update Component ---
+
+message UpdateComponentRequest {
+  // ID of the component to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New display name for the component (optional).
+  optional string name = 2 [(buf.validate.field).string.max_len = 256];
+
+  // New description for the component (optional).
+  optional string description = 3 [(buf.validate.field).string.max_len = 1024];
+
+  // New display order (optional).
+  optional int32 order = 4;
+
+  // New group ID (optional, set to empty string to remove from group).
+  optional string group_id = 5;
+
+  // New order within the group (optional).
+  optional int32 group_order = 6;
+}
+
+message UpdateComponentResponse {
+  // The updated component.
+  PageComponent component = 1;
+}
+
+// =============================================================================
+// Component Group Messages
+// =============================================================================
+
+// --- Create Component Group ---
+
+message CreateComponentGroupRequest {
+  // ID of the status page to create the group in (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Display name for the group (required).
+  string name = 2 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 256
+  ];
+}
+
+message CreateComponentGroupResponse {
+  // The created component group.
+  PageComponentGroup group = 1;
+}
+
+// --- Delete Component Group ---
+
+message DeleteComponentGroupRequest {
+  // ID of the component group to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteComponentGroupResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// --- Update Component Group ---
+
+message UpdateComponentGroupRequest {
+  // ID of the component group to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New display name for the group (optional).
+  optional string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+}
+
+message UpdateComponentGroupResponse {
+  // The updated component group.
+  PageComponentGroup group = 1;
+}
+
+// =============================================================================
+// Subscriber Messages
+// =============================================================================
+
+// --- Subscribe To Page ---
+
+message SubscribeToPageRequest {
+  // ID of the status page to subscribe to (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Email address to subscribe (required).
+  string email = 2 [(buf.validate.field).string.email = true];
+}
+
+message SubscribeToPageResponse {
+  // The created subscriber.
+  PageSubscriber subscriber = 1;
+}
+
+// --- Unsubscribe From Page ---
+
+message UnsubscribeFromPageRequest {
+  // ID of the status page to unsubscribe from (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Identifier for the subscription (either email or id).
+  oneof identifier {
+    // Email address to unsubscribe.
+    string email = 2;
+    // Subscriber ID.
+    string id = 3;
+  }
+}
+
+message UnsubscribeFromPageResponse {
+  // Whether the unsubscription was successful.
+  bool success = 1;
+}
+
+// --- List Subscribers ---
+
+message ListSubscribersRequest {
+  // ID of the status page to list subscribers for (required).
+  string page_id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Maximum number of subscribers to return (1-100, defaults to 50).
+  optional int32 limit = 2 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Number of subscribers to skip for pagination (defaults to 0).
+  optional int32 offset = 3 [(buf.validate.field).int32.gte = 0];
+
+  // Whether to include unsubscribed users (defaults to false).
+  optional bool include_unsubscribed = 4;
+}
+
+message ListSubscribersResponse {
+  // List of subscribers.
+  repeated PageSubscriber subscribers = 1;
+
+  // Total number of subscribers matching the filter.
+  int32 total_size = 2;
+}
+
+// =============================================================================
+// Full Content & Status Messages
+// =============================================================================
+
+// --- Get Status Page Content ---
+
+message GetStatusPageContentRequest {
+  // Identifier for the status page (either id or slug).
+  oneof identifier {
+    // ID of the status page.
+    string id = 1;
+    // Slug of the status page.
+    string slug = 2;
+  }
+}
+
+message GetStatusPageContentResponse {
+  // The status page details.
+  StatusPage status_page = 1;
+
+  // Components on the status page.
+  repeated PageComponent components = 2;
+
+  // Component groups on the status page.
+  repeated PageComponentGroup groups = 3;
+
+  // Active and recent status reports.
+  repeated openstatus.status_report.v1.StatusReport status_reports = 4;
+
+  // Scheduled maintenances.
+  repeated Maintenance maintenances = 5;
+}
+
+// --- Get Overall Status ---
+
+message GetOverallStatusRequest {
+  // Identifier for the status page (either id or slug).
+  oneof identifier {
+    // ID of the status page.
+    string id = 1;
+    // Slug of the status page.
+    string slug = 2;
+  }
+}
+
+// ComponentStatus represents the status of a single component.
+message ComponentStatus {
+  // ID of the component.
+  string component_id = 1;
+
+  // Current status of the component.
+  OverallStatus status = 2;
+}
+
+message GetOverallStatusResponse {
+  // Aggregated status across all components.
+  OverallStatus overall_status = 1;
+
+  // Status of individual components.
+  repeated ComponentStatus component_statuses = 2;
+}
