@@ -8,9 +8,15 @@ export function Link({
   className,
   ...props
 }: React.ComponentProps<typeof NextLink>) {
+  const isExternal = props.href?.toString().startsWith("http");
+  const externalProps = isExternal
+    ? { target: "_blank", rel: "noopener noreferrer" }
+    : {};
+
   return (
     <NextLink
       className={cn("font-medium text-foreground", className)}
+      {...externalProps}
       {...props}
     >
       {children}
