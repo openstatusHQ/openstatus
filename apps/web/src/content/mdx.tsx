@@ -364,19 +364,25 @@ export const components = {
   },
 };
 
+function MDXContent(props: MDXRemoteProps) {
+  return (
+    <MDXRemote
+      {...props}
+      components={
+        {
+          ...components,
+          ...props.components,
+        } as MDXRemoteProps["components"]
+      }
+    />
+  );
+}
+
 export function CustomMDX(props: MDXRemoteProps) {
   return (
-    <React.Suspense>
+    <React.Suspense fallback={<MDXContent {...props} />}>
       <HighlightText>
-        <MDXRemote
-          {...props}
-          components={
-            {
-              ...components,
-              ...props.components,
-            } as MDXRemoteProps["components"]
-          }
-        />
+        <MDXContent {...props} />
       </HighlightText>
     </React.Suspense>
   );
