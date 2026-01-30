@@ -120,145 +120,140 @@ export function FormStatusReportUpdateCard({
         onSubmit={form.handleSubmit(submitAction)}
         {...props}
       >
-        <FormCardContent className="grid gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <FormControl>
-                    <Select
-                      defaultValue={field.value}
-                      onValueChange={field.onChange}
+        <FormCardContent className="grid gap-4 sm:grid-cols-3">
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Select
+                    defaultValue={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        colors[field.value],
+                        "font-mono capitalize w-full",
+                      )}
                     >
-                      <SelectTrigger
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusReportStatus.map((status) => (
+                        <SelectItem
+                          key={status}
+                          value={status}
+                          className={cn(colors[status], "font-mono capitalize")}
+                        >
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover modal>
+                  <FormControl>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
                         className={cn(
-                          colors[field.value],
-                          "font-mono capitalize",
+                          "sm:w-[240px] pl-3 text-left font-normal h-9 w-full",
+                          !field.value && "text-muted-foreground",
                         )}
                       >
-                        <SelectValue placeholder="Select a status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusReportStatus.map((status) => (
-                          <SelectItem
-                            key={status}
-                            value={status}
-                            className={cn(
-                              colors[status],
-                              "font-mono capitalize",
-                            )}
-                          >
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                        {field.value ? (
+                          format(field.value, "PPP 'at' h:mm a")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date</FormLabel>
-                  <Popover modal>
-                    <FormControl>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal h-9",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP 'at' h:mm a")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                    </FormControl>
-                    <PopoverContent
-                      className="pointer-events-auto w-auto p-0"
-                      align="start"
-                      side={mobile ? "bottom" : "left"}
-                    >
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(selectedDate) => {
-                          if (!selectedDate) return;
-                          const newDate = new Date(selectedDate);
-                          newDate.setHours(
-                            field.value.getHours(),
-                            field.value.getMinutes(),
-                            field.value.getSeconds(),
-                            field.value.getMilliseconds(),
-                          );
-                          field.onChange(newDate);
-                        }}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                      />
-                      <div className="border-t p-3">
-                        <div className="flex items-center gap-3">
-                          <Label htmlFor="time" className="text-xs">
-                            Enter time
-                          </Label>
-                          <div className="relative grow">
-                            <Input
-                              id="time"
-                              type="time"
-                              step="1"
-                              defaultValue={new Date()
-                                .toTimeString()
-                                .slice(0, 8)}
-                              className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                              onChange={(e) => {
-                                try {
-                                  const timeValue = e.target.value;
-                                  if (!timeValue || !field.value) return;
-                                  const [hours, minutes, seconds] = timeValue
-                                    .split(":")
-                                    .map(Number);
-                                  const newDate = new Date(field.value);
-                                  newDate.setHours(
-                                    hours,
-                                    minutes,
-                                    seconds || 0,
-                                    0,
-                                  );
-                                  field.onChange(newDate);
-                                } catch (error) {
-                                  console.error(error);
-                                }
-                              }}
-                            />
-                            <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-                              <ClockIcon size={16} aria-hidden="true" />
-                            </div>
+                  <PopoverContent
+                    className="pointer-events-auto w-auto p-0"
+                    align="start"
+                    side={mobile ? "bottom" : "left"}
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={field.value}
+                      onSelect={(selectedDate) => {
+                        if (!selectedDate) return;
+                        const newDate = new Date(selectedDate);
+                        newDate.setHours(
+                          field.value.getHours(),
+                          field.value.getMinutes(),
+                          field.value.getSeconds(),
+                          field.value.getMilliseconds(),
+                        );
+                        field.onChange(newDate);
+                      }}
+                      disabled={(date) =>
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                    <div className="border-t p-3">
+                      <div className="flex items-center gap-3">
+                        <Label htmlFor="time" className="text-xs">
+                          Enter time
+                        </Label>
+                        <div className="relative grow">
+                          <Input
+                            id="time"
+                            type="time"
+                            step="1"
+                            defaultValue={new Date().toTimeString().slice(0, 8)}
+                            className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                            onChange={(e) => {
+                              try {
+                                const timeValue = e.target.value;
+                                if (!timeValue || !field.value) return;
+                                const [hours, minutes, seconds] = timeValue
+                                  .split(":")
+                                  .map(Number);
+                                const newDate = new Date(field.value);
+                                newDate.setHours(
+                                  hours,
+                                  minutes,
+                                  seconds || 0,
+                                  0,
+                                );
+                                field.onChange(newDate);
+                              } catch (error) {
+                                console.error(error);
+                              }
+                            }}
+                          />
+                          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                            <ClockIcon size={16} aria-hidden="true" />
                           </div>
                         </div>
                       </div>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormCardContent>
+        <FormCardContent>
           <FormDescription>
             When the status report was created. Shown in your timezone (
             <code className="font-commit-mono text-foreground/70">
