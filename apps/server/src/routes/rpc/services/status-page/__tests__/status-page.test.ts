@@ -671,6 +671,78 @@ describe("StatusPageService.AddMonitorComponent", () => {
       .delete(pageComponent)
       .where(eq(pageComponent.id, Number(data.component.id)));
   });
+
+  test("returns 403 when page component limit is exceeded", async () => {
+    // Workspace 2 is on free plan with page-components limit of 3
+    // Create a page for workspace 2
+    const limitTestPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-component-limit-test`,
+        slug: `${TEST_PREFIX}-component-limit-test-slug`,
+        description: "Page for component limit test",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    // Create a monitor for workspace 2
+    const limitTestMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-limit-monitor`,
+        url: "https://example.com",
+        periodicity: "1m",
+        active: true,
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    // Create 3 components to hit the limit
+    const createdComponentIds: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      const component = await db
+        .insert(pageComponent)
+        .values({
+          workspaceId: 2,
+          pageId: limitTestPage.id,
+          type: "static",
+          name: `${TEST_PREFIX}-limit-component-${i}`,
+          order: i,
+        })
+        .returning()
+        .get();
+      createdComponentIds.push(component.id);
+    }
+
+    try {
+      // Try to add a 4th component - should fail with PermissionDenied
+      const res = await connectRequest(
+        "AddMonitorComponent",
+        {
+          pageId: String(limitTestPage.id),
+          monitorId: String(limitTestMonitor.id),
+          name: `${TEST_PREFIX}-limit-exceeded-component`,
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403); // PermissionDenied
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade for more page components");
+    } finally {
+      // Clean up
+      for (const id of createdComponentIds) {
+        await db.delete(pageComponent).where(eq(pageComponent.id, id));
+      }
+      await db.delete(monitor).where(eq(monitor.id, limitTestMonitor.id));
+      await db.delete(page).where(eq(page.id, limitTestPage.id));
+    }
+  });
 });
 
 describe("StatusPageService.AddStaticComponent", () => {
@@ -720,6 +792,63 @@ describe("StatusPageService.AddStaticComponent", () => {
     );
 
     expect(res.status).toBe(404);
+  });
+
+  test("returns 403 when page component limit is exceeded", async () => {
+    // Workspace 2 is on free plan with page-components limit of 3
+    // Create a page for workspace 2
+    const limitTestPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 2,
+        title: `${TEST_PREFIX}-static-limit-test`,
+        slug: `${TEST_PREFIX}-static-limit-test-slug`,
+        description: "Page for static component limit test",
+        customDomain: "",
+      })
+      .returning()
+      .get();
+
+    // Create 3 components to hit the limit
+    const createdComponentIds: number[] = [];
+    for (let i = 0; i < 3; i++) {
+      const component = await db
+        .insert(pageComponent)
+        .values({
+          workspaceId: 2,
+          pageId: limitTestPage.id,
+          type: "static",
+          name: `${TEST_PREFIX}-static-limit-component-${i}`,
+          order: i,
+        })
+        .returning()
+        .get();
+      createdComponentIds.push(component.id);
+    }
+
+    try {
+      // Try to add a 4th component - should fail with PermissionDenied
+      const res = await connectRequest(
+        "AddStaticComponent",
+        {
+          pageId: String(limitTestPage.id),
+          name: `${TEST_PREFIX}-static-limit-exceeded`,
+          description: "Should fail due to limit",
+        },
+        { "x-openstatus-key": "2" },
+      );
+
+      expect(res.status).toBe(403); // PermissionDenied
+
+      const data = await res.json();
+      expect(data.message).toContain("Upgrade for more page components");
+    } finally {
+      // Clean up
+      for (const id of createdComponentIds) {
+        await db.delete(pageComponent).where(eq(pageComponent.id, id));
+      }
+      await db.delete(page).where(eq(page.id, limitTestPage.id));
+    }
   });
 });
 
