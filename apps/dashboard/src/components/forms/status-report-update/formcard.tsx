@@ -120,8 +120,8 @@ export function FormStatusReportUpdateCard({
         onSubmit={form.handleSubmit(submitAction)}
         {...props}
       >
-        <FormCardContent className="flex flex-col gap-4">
-          <div className="flex gap-2">
+        <FormCardContent className="grid gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="status"

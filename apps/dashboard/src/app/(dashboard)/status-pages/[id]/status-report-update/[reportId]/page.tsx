@@ -27,7 +27,7 @@ import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-up
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";
 
 export default function Page() {
@@ -137,7 +137,7 @@ export default function Page() {
                     });
                   }}
                 />
-                <FormCardFooter className="[&>:last-child]:ml-0 flex gap-2 justify-end">
+                <FormCardFooter className="[&>:last-child]:ml-0 grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <FormAlertDialog
                     confirmationValue={update.status}
                     submitAction={async () => {
@@ -151,7 +151,6 @@ export default function Page() {
                       size="sm"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
-                      <Trash2 className="size-4 mr-2" />
                       Delete
                     </Button>
                   </FormAlertDialog>
