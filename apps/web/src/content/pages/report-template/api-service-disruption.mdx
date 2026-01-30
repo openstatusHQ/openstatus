@@ -1,0 +1,76 @@
+---
+title: "API Service Disruption Template"
+description: "Professional template for communicating API outages and third-party service failures to your users."
+author: "OpenStatus"
+publishedAt: "2026-01-19"
+category: "infrastructure"
+---
+
+Use this template when your API or third-party service provider is experiencing issues. Based on real-world examples from companies like Vercel, Stripe, and GitHub.
+
+## When to Use This Template
+
+- Third-party API failures
+- Elevated API error rates
+- Service provider outages
+- Integration connectivity issues
+
+## Template Messages
+
+### Investigating
+
+We are currently experiencing issues with our third-party API provider. Our team is actively investigating and working with the provider to restore normal service.
+
+We apologize for the inconvenience and will provide updates as we learn more.
+
+### Identified
+
+We have confirmed the issue is with our third-party provider's infrastructure. They are working on a fix and we are monitoring their progress.
+
+### Monitoring
+
+A fix has been deployed. We are monitoring service health and will confirm full restoration shortly.
+
+### Resolved
+
+The service has been fully restored. All API operations are back to normal. We apologize for the disruption.
+
+## Real-World Examples
+
+### Vercel: "Elevated error rates across new deployments and Vercel API"
+
+**Context**: Build failures and deployment issues affecting multiple systems
+**Duration**: ~32 minutes
+**Impact**: New deployments and API calls
+
+This incident title demonstrates clear scope communication - users immediately understood both the severity ("elevated error rates") and which systems were affected.
+
+### GitHub: "Configuration error during a model update"
+
+**Context**: Copilot service degradation
+**Duration**: ~1.5 hours
+**Impact**: 18% average error rate, peaking at 100%
+
+GitHub's approach included specific metrics and root cause transparency, helping technical users understand the scope and nature of the issue.
+
+### Stripe: Payment Method Maintenance
+
+**Context**: Scheduled maintenance for payment providers
+**Approach**: Proactive communication with disclaimers about third-party information
+
+Stripe consistently provides context about the source of information and sets clear expectations about accuracy.
+
+## Tips for Using This Template
+
+1. **Be specific about the provider** if you can share that information
+2. **Include timeframes** when you have them (e.g., "Expected resolution: 30 minutes")
+3. **Add metrics** if you're comfortable sharing them (e.g., "affecting 5% of requests")
+4. **Acknowledge impact** - users appreciate transparency about what's affected
+5. **Follow up after resolution** with any lessons learned or preventative measures
+
+## Customization Ideas
+
+- Add your specific API names (e.g., "Payment API" instead of generic "API")
+- Include workaround instructions if available
+- Link to status dashboard or real-time monitoring
+- Add contact information for urgent support needs

@@ -5,11 +5,11 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { getBlogPosts } from "@/content/utils";
+import { getReportTemplates } from "@/content/utils";
 import type { Metadata } from "next";
 
-const TITLE = "Blog Category";
-const DESCRIPTION = "All the latest articles and news from openstatus.";
+const TITLE = "Report Template Category";
+const DESCRIPTION = "All the latest templates from openstatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const posts = getBlogPosts();
+  const posts = getReportTemplates();
   const categories = [...new Set(posts.map((post) => post.metadata.category))];
 
   return categories.map((category) => ({
@@ -39,22 +39,22 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function BlogCategoryPage({
+export default async function ReportTemplateCategoryPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const allBlogs = getBlogPosts();
-  const filteredBlogs = allBlogs.filter(
+  const allReportTemplates = getReportTemplates();
+  const filteredReportTemplates = allReportTemplates.filter(
     (post) => post.metadata.category.toLowerCase() === slug.toLowerCase(),
   );
 
   return (
     <div className="prose dark:prose-invert max-w-none">
-      <h1 className="capitalize">Blog | {slug}</h1>
-      <ContentCategory data={allBlogs} prefix="/blog" />
-      <ContentList data={filteredBlogs} prefix="/blog" />
+      <h1 className="capitalize">Report Template | {slug}</h1>
+      <ContentCategory data={allReportTemplates} prefix="/report-template" />
+      <ContentList data={filteredReportTemplates} prefix="/report-template" />
     </div>
   );
 }

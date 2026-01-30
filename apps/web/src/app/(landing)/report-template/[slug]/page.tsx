@@ -1,6 +1,6 @@
 import { getJsonLDBlogPosting, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
-import { formatDate, getBlogPosts } from "@/content/utils";
+import { formatDate, getReportTemplates } from "@/content/utils";
 import { getAuthor } from "@/data/author";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -11,7 +11,7 @@ import { ContentPagination } from "../../content-pagination";
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const posts = getBlogPosts();
+  const posts = getReportTemplates();
 
   return posts.map((post) => ({
     slug: post.slug,
@@ -24,23 +24,23 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata | undefined> {
   const { slug } = await params;
-  const post = getBlogPosts().find((post) => post.slug === slug);
+  const post = getReportTemplates().find((post) => post.slug === slug);
   if (!post) {
     return;
   }
 
-  const metadata = getPageMetadata(post, "blog");
+  const metadata = getPageMetadata(post, "report-template");
 
   return metadata;
 }
 
-export default async function Blog({
+export default async function ReportTemplate({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const posts = getBlogPosts().sort(
+  const posts = getReportTemplates().sort(
     (a, b) =>
       b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
   );
@@ -55,7 +55,7 @@ export default async function Blog({
 
   const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(
     post,
-    "blog",
+    "report-template",
   );
 
   return (
@@ -87,7 +87,7 @@ export default async function Blog({
       <ContentPagination
         previousPost={previousPost}
         nextPost={nextPost}
-        prefix="/blog"
+        prefix="/report-template"
       />
     </section>
   );

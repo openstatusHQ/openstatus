@@ -1,0 +1,357 @@
+---
+title: "Feature Degradation Template"
+description: "Template for communicating partial service degradation where some features are impacted but the service remains available."
+author: "OpenStatus"
+publishedAt: "2026-01-19"
+category: "performance"
+---
+
+Use this template when specific features are degraded or unavailable, but the core service remains operational. Helps users understand what's working and what isn't.
+
+## When to Use This Template
+
+- Specific feature experiencing errors
+- Elevated latency for particular operations
+- Partial functionality unavailable
+- Non-critical systems impaired
+
+## Template Messages
+
+### Investigating
+
+We are experiencing issues with [Feature Name]. The core service remains available, but this specific feature may not work as expected.
+
+Our team is actively investigating and working to restore full functionality.
+
+### Identified
+
+We have identified the cause of the [Feature Name] degradation. Our team is implementing a fix.
+
+### Monitoring
+
+[Feature Name] has been restored. We are monitoring to ensure stable operation.
+
+### Resolved
+
+[Feature Name] is now fully operational. All features are working normally.
+
+## Real-World Examples
+
+### Notion: "Operations such as duplicate a page or move a block"
+
+**Context**: Specific operations failing while rest of service worked
+**Duration**: ~4 hours
+**Impact**: Users could read/edit but not duplicate or move content
+
+**What worked**:
+- Specific about which operations were affected
+- Clear that core functionality (reading, editing) still worked
+- Precise timestamps in user's timezone (PST)
+
+**Sample progression**:
+```
+12:10pm PST - Investigating
+"We are experiencing an incident that affects operations such as
+duplicate a page or move a block."
+
+2:30pm PST - Identified
+"We've identified the issue and are implementing a fix. Most
+operations continue to work normally."
+
+4:09pm PST - Resolved
+"All operations have been restored. The issue has been fully resolved."
+```
+
+### Notion: "Exporting pages remains in a loading state"
+
+**Context**: Export feature stuck, but rest of service worked
+**Approach**: Clear about single feature impact
+
+**Why it worked**:
+- Users knew exactly what was broken
+- Clear that it wasn't a full outage
+- No operational downtime reported for core features
+
+### GitHub: "Some models missing in Copilot"
+
+**Context**: Specific AI models unavailable
+**Duration**: ~2.5 hours
+**Impact**: Claude Opus 4.5 and GPT-5.2 inaccessible; other models worked
+
+**Communication breakdown**:
+```
+Investigating:
+"Some users unable to access premium AI models in GitHub Copilot"
+
+Identified:
+"Misconfiguration marking Claude Opus 4.5 and GPT-5.2 as inaccessible.
+Other models functioning normally. Deploying configuration fix."
+
+Resolved:
+"All models now accessible. Configuration has been corrected and
+validated across all regions."
+```
+
+**Why it worked**:
+- Specific model names (users could check if they were affected)
+- Clear that other models still worked
+- Technical but not overly complex
+
+## Clear Scope Communication
+
+### ✅ Good Examples
+
+**Specific and clear**:
+```
+The file upload feature is currently unavailable. All other features,
+including viewing, editing, and sharing, are working normally.
+```
+
+**With workaround**:
+```
+Export functionality is temporarily degraded. Exports may take 2-3x
+longer than usual. Viewing and editing are unaffected.
+
+Workaround: For faster exports, try exporting smaller sections
+individually.
+```
+
+**With context**:
+```
+Search is experiencing elevated latency (5-10 seconds vs normal <1s).
+We're working on a fix. All other features operating normally.
+```
+
+### ❌ Vague Examples
+
+```
+"Some features might not work"
+"Experiencing issues"
+"Partial service degradation"
+"Some users affected"
+```
+
+## Feature Impact Matrix
+
+Help users quickly understand what works and what doesn't:
+
+### Example 1: Export Feature Down
+```
+Current Status:
+
+Working:
+✓ View documents
+✓ Edit documents
+✓ Share with team
+✓ Comments and collaboration
+✓ Search
+
+Not Working:
+✗ PDF export
+✗ CSV download
+✗ Bulk export
+
+We're working to restore export functionality.
+```
+
+### Example 2: Upload Feature Degraded
+```
+Current Status:
+
+Working Normally:
+✓ View files
+✓ Download files
+✓ Share links
+✓ Delete files
+
+Degraded:
+⚠️ File uploads (50% success rate, retrying usually works)
+⚠️ Drag-and-drop (use upload button instead)
+
+We're investigating the upload issues.
+```
+
+## Communication by Feature Type
+
+### Core Features Degraded
+
+When important features fail, be very clear about impact:
+
+```
+🔴 Payment Processing Degraded
+
+Impact: High - payments may fail or experience delays
+
+Status: We're experiencing elevated error rates (10%) on payment
+processing. Most transactions are succeeding, but some may fail.
+
+Action: If your payment fails, please wait 5 minutes and retry.
+We're working on a fix.
+
+Other features: Account management, viewing history, and settings
+all working normally.
+```
+
+### Secondary Features Down
+
+When nice-to-have features fail:
+
+```
+🟡 Analytics Dashboard Unavailable
+
+Impact: Low - core product features unaffected
+
+Status: The analytics dashboard is temporarily unavailable due to
+a database issue. All product features continue working normally.
+
+Your data is safe and being collected. Analytics will be updated
+once the dashboard is restored.
+```
+
+### Batch/Background Features
+
+When background processes are affected:
+
+```
+⚠️ Report Generation Delayed
+
+Impact: Reports scheduled in the last hour will be delayed.
+
+Status: The background job processor is experiencing issues. Reports
+will still generate, but may take 2-4 hours instead of the usual
+15 minutes.
+
+If you need a report urgently, please contact support@company.com
+and we can prioritize it.
+```
+
+## User Action Guidance
+
+### No Action Needed
+```
+The issue is on our end. No action is required from you. We'll
+update this status when resolved.
+```
+
+### Retry Recommended
+```
+If you encounter an error, please wait 30 seconds and try again.
+Most operations succeed on the second attempt.
+```
+
+### Workaround Available
+```
+While we work on a fix, you can use this workaround:
+1. Go to Settings > Export
+2. Select "Legacy Export Mode"
+3. Your export should complete successfully
+
+We'll notify you when the standard export is restored.
+```
+
+### Avoid Feature Temporarily
+```
+We recommend avoiding [feature] until this is resolved to prevent
+data sync issues. We'll send an all-clear when it's safe to use again.
+```
+
+## Timing and SLA Context
+
+### When degradation exceeds SLA:
+
+```
+Update: This degradation has exceeded our 99.9% uptime SLA for the
+month. Affected customers will receive automatic service credits as
+per our SLA terms. No action needed from you.
+```
+
+### When approaching SLA:
+
+```
+We're aware this degradation is approaching our SLA threshold. We're
+treating this as high priority and have additional engineers engaged.
+```
+
+## Progressive Updates
+
+### Initial (Minute 0)
+```
+We're investigating reports of [feature] not working correctly.
+Some users may experience errors. Core functionality unaffected.
+```
+
+### Update 1 (Minute 15)
+```
+We've confirmed [feature] is experiencing issues. Approximately
+20% of requests are failing. We're investigating the cause.
+```
+
+### Update 2 (Minute 30)
+```
+Root cause identified: database connection timeout on [specific service].
+Implementing a fix now. Estimated resolution: 15 minutes.
+```
+
+### Update 3 (Minute 45)
+```
+Fix deployed. [Feature] error rate has dropped from 20% to 2%.
+Monitoring for full recovery.
+```
+
+### Final (Minute 60)
+```
+[Feature] is fully restored. Error rates back to normal (< 0.1%).
+No user action required. Thank you for your patience.
+```
+
+## Partial vs. Complete Degradation
+
+### Partial (50% working)
+```
+[Feature] is partially degraded. About half of requests are succeeding.
+If you receive an error, try again in a few seconds - you'll likely
+succeed on the second or third attempt.
+```
+
+### Severe (90% failing)
+```
+[Feature] is severely degraded with most requests failing. We recommend
+waiting until this is resolved rather than retrying repeatedly.
+
+ETA for fix: 30 minutes
+```
+
+### Complete (100% down)
+```
+[Feature] is currently unavailable. We've identified the issue and
+are working on a fix.
+
+Estimated restoration: 15 minutes
+We'll notify you as soon as it's back.
+```
+
+## Post-Resolution Analysis
+
+After resolving, explain what happened:
+
+```
+[Feature] has been fully restored.
+
+What happened: A configuration change caused connection timeouts
+to the [service] backend.
+
+Resolution: We rolled back the configuration change and implemented
+additional connection monitoring.
+
+Prevention: We're adding pre-deployment validation for configuration
+changes to catch issues like this before they reach production.
+
+Thank you for your patience while we resolved this issue.
+```
+
+## Related Templates
+
+- Use **API Service Disruption** if the degraded feature is API-related
+- Use **Database Performance** if degradation is caused by database issues
+- Use **Network Connectivity** if some regions can't access the feature
+- Use **Deployment Rollback** if a recent deployment caused the degradation

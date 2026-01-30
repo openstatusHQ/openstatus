@@ -7,8 +7,14 @@ import { Button } from "@openstatus/ui";
 export function CopyButton({
   className,
   copyText,
+  buttonText = "copy",
+  copiedText = "copied",
   ...props
-}: React.ComponentProps<typeof Button> & { copyText: string }) {
+}: React.ComponentProps<typeof Button> & {
+  copyText: string;
+  buttonText?: string;
+  copiedText?: string;
+}) {
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -19,7 +25,7 @@ export function CopyButton({
       onClick={() => copy(copyText, { withToast: true })}
       {...props}
     >
-      {isCopied ? "[link copied]" : "[copy link]"}
+      {isCopied ? `[${copiedText}]` : `[${buttonText}]`}
     </Button>
   );
 }

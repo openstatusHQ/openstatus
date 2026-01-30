@@ -19,7 +19,7 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
         {segments.map((segment, index) => (
           <Fragment key={segment}>
             <Link href={`/${segments.slice(0, index + 1).join("/")}`}>
-              {segment}
+              {segment.split("-").join(" ")}
             </Link>
             {index < segments.length - 1 ? (
               <span className="text-muted-foreground">{" | "}</span>
@@ -29,6 +29,8 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
       </div>
       <CopyButton
         copyText={typeof window !== "undefined" ? window.location.href : ""}
+        buttonText="copy link"
+        copiedText="link copied"
       />
     </div>
   );

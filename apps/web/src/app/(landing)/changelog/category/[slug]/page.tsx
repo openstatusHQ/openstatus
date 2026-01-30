@@ -9,7 +9,7 @@ import { getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 
 const TITLE = "Changelog Category";
-const DESCRIPTION = "All the latest changes and updates to OpenStatus.";
+const DESCRIPTION = "All the latest changes and updates to openstatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
