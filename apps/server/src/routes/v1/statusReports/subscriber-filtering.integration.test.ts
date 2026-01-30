@@ -196,6 +196,10 @@ describe("Subscriber state transitions", () => {
       where: eq(pageSubscriber.email, "unsubscribed-sub@test.com"),
     });
 
+    if (!unsubscribedSub) {
+      throw new Error("Unsubscribed subscriber not found");
+    }
+
     expect(unsubscribedSub?.unsubscribedAt).not.toBeNull();
 
     // Simulate re-subscription by clearing unsubscribedAt

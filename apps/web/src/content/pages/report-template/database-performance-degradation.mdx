@@ -1,0 +1,101 @@
+---
+title: "Database Performance Degradation Template"
+description: "Technical template for communicating database latency and performance issues to your engineering-focused audience."
+author: "OpenStatus"
+publishedAt: "2026-01-19"
+category: "performance"
+---
+
+Use this template when experiencing database performance issues, elevated latency, or query slowdowns. Ideal for engineering teams and technical stakeholders.
+
+## When to Use This Template
+
+- Elevated database latency
+- Slow query performance
+- Connection pool exhaustion
+- Database infrastructure issues
+
+## Template Messages
+
+### Investigating
+
+We are experiencing elevated database latency affecting some features. Users may experience slower response times.
+
+Our database team is actively investigating and working to restore normal performance levels.
+
+### Identified
+
+We have identified the root cause. Our team is implementing a fix.
+
+### Monitoring
+
+Database performance improvements have been deployed. Latency is returning to normal levels. We are continuing to monitor.
+
+### Resolved
+
+Database performance has been fully restored. All queries are executing at normal speeds.
+
+## Real-World Examples
+
+### GitHub: "Infrastructure update to data stores"
+
+**Context**: Data store infrastructure changes
+**Duration**: ~1.5 hours
+**Impact**: 1.8% combined failure rate, peaking at 10%
+
+**What they did well**:
+- Quantified impact with specific percentages
+- Identified multiple affected services
+- Committed to post-incident RCA (Root Cause Analysis)
+- Provided precise UTC timestamps
+
+**Sample messaging**: "Infrastructure update to data stores caused 1.8% combined failure rate, peaking at 10% across multiple services Jan 15, 16:40-18:20 UTC."
+
+### Fly.io: "Network instability in IAD region"
+
+**Context**: Regional infrastructure issue
+**Approach**: Geographic specificity
+
+**What they did well**:
+- Identified specific region (IAD = Ashburn, Virginia)
+- Focused on infrastructure layer
+- Technical but clear naming
+
+This demonstrates the value of being specific about location when database issues are region-specific.
+
+## Tips for Technical Communication
+
+1. **Include specific metrics** when you have them (p95 latency, error rates, query times)
+2. **Name the layer** - application, database, network, storage
+3. **Be technical if your audience is technical** - don't oversimplify for engineers
+4. **Quantify impact** - "affecting 2% of queries" is better than "some users"
+5. **Share root cause** when resolved - technical teams appreciate learning
+
+## Customization Ideas
+
+For **developer audiences**:
+```
+We are experiencing elevated p95 latency (2.5s vs normal 150ms)
+on write operations to our primary PostgreSQL cluster.
+
+Root cause: Connection pool exhaustion due to long-running
+transactions from the reporting service.
+
+Mitigation: Killed long-running queries, increased pool size
+from 100 to 150 connections, added query timeouts.
+```
+
+For **general users**:
+```
+We are experiencing slower than normal response times for some
+features. Our team is working to resolve this quickly.
+```
+
+## Warning Signs to Monitor
+
+Watch for these indicators that might trigger using this template:
+- P95 latency > 2x normal
+- Error rate > 1%
+- Connection timeouts
+- User reports of slowness
+- Database monitoring alerts

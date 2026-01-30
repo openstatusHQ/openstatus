@@ -106,13 +106,6 @@ export function registerPostStatusReportUpdate(
 
       const _page = await db.query.page.findFirst({
         where: eq(page.id, _statusReport.pageId),
-        with: {
-          monitorsToPages: {
-            with: {
-              monitor: true,
-            },
-          },
-        },
       });
 
       const validSubscribers = subscribers.filter(

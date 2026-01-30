@@ -7,7 +7,7 @@ import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
 const TITLE = "Changelog";
-const DESCRIPTION = "All the latest changes and updates to OpenStatus.";
+const DESCRIPTION = "All the latest changes and updates to openstatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,

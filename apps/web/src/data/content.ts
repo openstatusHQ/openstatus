@@ -31,6 +31,10 @@ const resourcesFooterSection = {
       href: "https://docs.openstatus.dev",
     },
     {
+      label: "Report Templates",
+      href: "/report-template",
+    },
+    {
       label: "External Status",
       href: "/status",
     },

@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { FormAppearance } from "./form-appearance";
-import { FormConfiguration } from "./form-configuration";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
@@ -69,12 +68,6 @@ export function FormStatusPageUpdate() {
     }),
   );
 
-  const updatePageConfigurationMutation = useMutation(
-    trpc.page.updatePageConfiguration.mutationOptions({
-      onSuccess: () => refetch(),
-    }),
-  );
-
   const updateLinksMutation = useMutation(
     trpc.page.updateLinks.mutationOptions({
       onSuccess: () => refetch(),
@@ -82,10 +75,6 @@ export function FormStatusPageUpdate() {
   );
 
   if (!statusPage || !monitors || !workspace) return null;
-
-  const configLink = `https://${
-    statusPage.slug
-  }.stpg.dev?configuration-token=${statusPage.createdAt?.getTime().toString()}`;
 
   return (
     <FormCardGroup>
@@ -153,26 +142,6 @@ export function FormStatusPageUpdate() {
             configuration: values.configuration,
           });
         }}
-      />
-      <FormConfiguration
-        defaultValues={{
-          configuration: statusPage.configuration ?? {},
-        }}
-        onSubmit={async (values) => {
-          await updatePageConfigurationMutation.mutateAsync({
-            id: Number.parseInt(id),
-            configuration: {
-              uptime:
-                typeof values.configuration.uptime === "boolean"
-                  ? values.configuration.uptime
-                  : values.configuration.uptime === "true",
-              value: values.configuration.value ?? "duration",
-              type: values.configuration.type ?? "absolute",
-              theme: values.configuration.theme ?? undefined,
-            },
-          });
-        }}
-        configLink={configLink}
       />
       <FormPageAccess
         lockedMap={

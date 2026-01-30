@@ -74,7 +74,7 @@ beforeAll(async () => {
     .values({
       workspaceId: 1,
       pageId: 1,
-      type: "external",
+      type: "static",
       name: `${TEST_PREFIX}-component`,
       description: "Test component for status report tests",
       order: 100,
@@ -102,7 +102,7 @@ beforeAll(async () => {
     .values({
       workspaceId: 1,
       pageId: testPage2Id,
-      type: "external",
+      type: "static",
       name: `${TEST_PREFIX}-component-2`,
       description: "Test component on page 2",
       order: 100,

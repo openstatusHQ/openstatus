@@ -34,8 +34,8 @@ service StatusPageService {
   // AddMonitorComponent adds a monitor-based component to a status page.
   rpc AddMonitorComponent(AddMonitorComponentRequest) returns (AddMonitorComponentResponse);
 
-  // AddExternalComponent adds a static/external component to a status page.
-  rpc AddExternalComponent(AddExternalComponentRequest) returns (AddExternalComponentResponse);
+  // AddStaticComponent adds a static component to a status page.
+  rpc AddStaticComponent(AddStaticComponentRequest) returns (AddStaticComponentResponse);
 
   // RemoveComponent removes a component from a status page.
   rpc RemoveComponent(RemoveComponentRequest) returns (RemoveComponentResponse);
@@ -219,9 +219,9 @@ message AddMonitorComponentResponse {
   PageComponent component = 1;
 }
 
-// --- Add External Component ---
+// --- Add Static Component ---
 
-message AddExternalComponentRequest {
+message AddStaticComponentRequest {
   // ID of the status page to add the component to (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
 
@@ -241,7 +241,7 @@ message AddExternalComponentRequest {
   optional string group_id = 5;
 }
 
-message AddExternalComponentResponse {
+message AddStaticComponentResponse {
   // The created component.
   PageComponent component = 1;
 }

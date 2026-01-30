@@ -178,7 +178,7 @@ beforeAll(async () => {
     .values({
       workspaceId: 1,
       pageId: testPageId,
-      type: "external",
+      type: "static",
       name: `${TEST_PREFIX}-component`,
       description: "Test component",
       order: 100,
@@ -193,7 +193,7 @@ beforeAll(async () => {
     .values({
       workspaceId: 1,
       pageId: testPageId,
-      type: "external",
+      type: "static",
       name: `${TEST_PREFIX}-component-to-delete`,
       description: "Test component to delete",
       order: 101,
@@ -208,7 +208,7 @@ beforeAll(async () => {
     .values({
       workspaceId: 1,
       pageId: testPageId,
-      type: "external",
+      type: "static",
       name: `${TEST_PREFIX}-component-to-update`,
       description: "Test component to update",
       order: 102,
@@ -673,14 +673,14 @@ describe("StatusPageService.AddMonitorComponent", () => {
   });
 });
 
-describe("StatusPageService.AddExternalComponent", () => {
-  test("adds external component to page", async () => {
+describe("StatusPageService.AddStaticComponent", () => {
+  test("adds static component to page", async () => {
     const res = await connectRequest(
-      "AddExternalComponent",
+      "AddStaticComponent",
       {
         pageId: String(testPageId),
-        name: `${TEST_PREFIX}-external-component`,
-        description: "External service",
+        name: `${TEST_PREFIX}-static-component`,
+        description: "Static service",
         order: 300,
       },
       { "x-openstatus-key": "1" },
@@ -690,9 +690,9 @@ describe("StatusPageService.AddExternalComponent", () => {
 
     const data = await res.json();
     expect(data).toHaveProperty("component");
-    expect(data.component.name).toBe(`${TEST_PREFIX}-external-component`);
+    expect(data.component.name).toBe(`${TEST_PREFIX}-static-component`);
     expect(data.component.type).toBe("PAGE_COMPONENT_TYPE_STATIC");
-    expect(data.component.description).toBe("External service");
+    expect(data.component.description).toBe("Static service");
 
     // Clean up
     await db
@@ -701,7 +701,7 @@ describe("StatusPageService.AddExternalComponent", () => {
   });
 
   test("returns 401 when no auth key provided", async () => {
-    const res = await connectRequest("AddExternalComponent", {
+    const res = await connectRequest("AddStaticComponent", {
       pageId: String(testPageId),
       name: "Unauthorized component",
     });
@@ -711,7 +711,7 @@ describe("StatusPageService.AddExternalComponent", () => {
 
   test("returns 404 for non-existent page", async () => {
     const res = await connectRequest(
-      "AddExternalComponent",
+      "AddStaticComponent",
       {
         pageId: "99999",
         name: "Component for non-existent page",

@@ -1,12 +1,11 @@
-import { getPageMetadata } from "@/app/shared-metadata";
+import { getJsonLDBlogPosting, getPageMetadata } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getChangelogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { BlogPosting, WithContext } from "schema-dts";
 import { ContentPagination } from "../../content-pagination";
-
-const baseUrl = "http://localhost:3000";
 
 export const dynamicParams = false;
 
@@ -29,7 +28,7 @@ export async function generateMetadata({
     return;
   }
 
-  const metadata = getPageMetadata(post);
+  const metadata = getPageMetadata(post, "changelog");
 
   return metadata;
 }
@@ -53,6 +52,11 @@ export default async function Changelog({
     notFound();
   }
 
+  const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(
+    post,
+    "changelog",
+  );
+
   return (
     <section className="prose dark:prose-invert max-w-none">
       <script
@@ -60,26 +64,7 @@ export default async function Changelog({
         suppressHydrationWarning
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: post.metadata.title,
-            datePublished: post.metadata.publishedAt,
-            dateModified: post.metadata.publishedAt,
-            description: post.metadata.description,
-            image: post.metadata.image
-              ? `${baseUrl}${post.metadata.image}`
-              : `/api/og?title=${encodeURIComponent(
-                  post.metadata.title,
-                )}&description=${encodeURIComponent(
-                  post.metadata.description,
-                )}&category=${encodeURIComponent(post.metadata.category)}`,
-            url: `${baseUrl}/changelog/${post.slug}`,
-            author: {
-              "@type": "Person",
-              name: post.metadata.author,
-            },
-          }),
+          __html: JSON.stringify(jsonLDBlog).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{post.metadata.title}</h1>

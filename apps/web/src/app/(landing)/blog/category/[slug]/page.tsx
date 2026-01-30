@@ -9,7 +9,7 @@ import { getBlogPosts } from "@/content/utils";
 import type { Metadata } from "next";
 
 const TITLE = "Blog Category";
-const DESCRIPTION = "All the latest articles and news from OpenStatus.";
+const DESCRIPTION = "All the latest articles and news from openstatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,

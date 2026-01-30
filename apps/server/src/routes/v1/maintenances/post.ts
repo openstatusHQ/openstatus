@@ -137,6 +137,7 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
           and(
             eq(pageSubscriber.pageId, _newMaintenance.pageId),
             isNotNull(pageSubscriber.acceptedAt),
+            isNull(pageSubscriber.unsubscribedAt),
           ),
         )
         .all();

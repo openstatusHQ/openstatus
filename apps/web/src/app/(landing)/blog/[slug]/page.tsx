@@ -29,7 +29,7 @@ export async function generateMetadata({
     return;
   }
 
-  const metadata = getPageMetadata(post);
+  const metadata = getPageMetadata(post, "blog");
 
   return metadata;
 }
@@ -53,7 +53,10 @@ export default async function Blog({
     notFound();
   }
 
-  const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(post);
+  const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(
+    post,
+    "blog",
+  );
 
   return (
     <section className="prose dark:prose-invert max-w-none">

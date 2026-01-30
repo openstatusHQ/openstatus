@@ -368,7 +368,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     };
   },
 
-  async addExternalComponent(req, ctx) {
+  async addStaticComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
 
@@ -392,7 +392,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       .values({
         workspaceId,
         pageId: pageData.id,
-        type: "external",
+        type: "static",
         monitorId: null,
         name: req.name,
         description: req.description ?? null,

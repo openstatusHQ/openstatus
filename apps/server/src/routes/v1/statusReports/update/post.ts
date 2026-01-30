@@ -1,5 +1,6 @@
 import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
@@ -142,7 +143,11 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       where: eq(statusReport.id, Number(id)),
       with: {
         statusReportUpdates: true,
-        monitorsToStatusReports: true,
+        statusReportsToPageComponents: {
+          with: {
+            pageComponent: true,
+          },
+        },
       },
     });
 
@@ -158,9 +163,9 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       statusReportUpdateIds: fullStatusReport.statusReportUpdates.map(
         (u) => u.id,
       ),
-      monitorIds: fullStatusReport.monitorsToStatusReports.map(
-        (m) => m.monitorId,
-      ),
+      monitorIds: fullStatusReport.statusReportsToPageComponents
+        .map((m) => m.pageComponent.monitorId)
+        .filter(notEmpty),
     });
 
     return c.json(data, 200);

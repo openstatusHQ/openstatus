@@ -1,0 +1,137 @@
+---
+title: "Deployment Rollback Template"
+description: "Template for communicating deployment failures and rollback procedures during service disruptions."
+author: "OpenStatus"
+publishedAt: "2026-01-19"
+category: "deployment"
+---
+
+Use this template when a deployment causes issues and requires rolling back to a previous version. Communicates the issue, mitigation, and resolution clearly.
+
+## When to Use This Template
+
+- Deployment causes service errors
+- New release breaking existing functionality
+- Configuration changes causing issues
+- Need to roll back to previous version
+
+## Template Messages
+
+### Investigating
+
+We encountered an issue during a scheduled deployment and have initiated a rollback to restore service stability.
+
+We apologize for the disruption and are working to complete the rollback as quickly as possible.
+
+### Identified
+
+The deployment issue has been identified. We are completing the rollback to the previous stable version.
+
+### Monitoring
+
+The rollback has been completed successfully. We are monitoring system stability to ensure all services are functioning normally.
+
+### Resolved
+
+All services have been restored to normal operation. The deployment issue has been resolved and we will investigate the root cause.
+
+## Real-World Examples
+
+### Vercel: "Elevated error rates across new deployments"
+
+**Context**: Build system changes affecting deployments
+**Duration**: ~32 minutes
+**Impact**: New deployments and builds failing
+
+**Communication approach**:
+- Clear about what was affected ("new deployments")
+- Specific about the problem ("elevated error rates")
+- Quick resolution time communicated
+
+### GitHub: "Configuration error during a model update"
+
+**Context**: Copilot model deployment issue
+**Duration**: ~1.5 hours
+**Impact**: 18% error rate on average, spiking to 100%
+
+**What worked**:
+- Transparent about the cause ("configuration error")
+- Quantified impact (error rates)
+- Showed progression: investigation → rollback → recovery monitoring
+- Committed to improvement
+
+**Sample update progression**:
+1. "We're investigating reports of Copilot failures"
+2. "Configuration error identified during model update. Rolling back."
+3. "Rollback complete. Monitoring for full recovery."
+4. "Fully resolved. Error rates back to normal. RCA in progress."
+
+## Best Practices
+
+### During Rollback
+
+**Do**:
+- ✅ Announce the rollback immediately
+- ✅ Set expectations on timeline if known
+- ✅ Acknowledge the user impact
+- ✅ Monitor closely during rollback
+
+**Don't**:
+- ❌ Wait until rollback is complete to communicate
+- ❌ Over-promise on fix timing
+- ❌ Skip the post-incident analysis
+
+### After Resolution
+
+Always include:
+1. Confirmation that rollback succeeded
+2. Current system status
+3. Next steps (investigation, new deployment plan)
+4. Preventative measures (if ready to share)
+
+## Communication Patterns
+
+### For User-Facing Services
+
+```
+We've rolled back a deployment that was causing issues with [feature].
+Service is now restored. We're investigating to prevent this in the future.
+```
+
+### For API Services
+
+```
+A recent deployment caused elevated error rates in our API.
+We've rolled back to the previous version and error rates
+have returned to normal. All endpoints are functioning correctly.
+```
+
+### For Internal Tools
+
+```
+Deployment to production caused issues with [system]. Rolled back
+to previous version. Services restored. Post-mortem scheduled for
+tomorrow to identify root cause and improve deployment process.
+```
+
+## Preventative Context
+
+After resolution, consider adding context about prevention:
+
+> "We're improving our deployment process to catch issues like this
+> before they reach production. This includes enhanced pre-deployment
+> testing and gradual rollout procedures."
+
+## Timing Guidance
+
+- **0-5 minutes**: Initial notification of issue and rollback decision
+- **5-20 minutes**: Rollback in progress updates
+- **20-30 minutes**: Rollback complete, monitoring
+- **30-60 minutes**: Confirmed resolution
+- **24 hours later**: Root cause analysis summary (optional)
+
+## Related Templates
+
+- Use **API Service Disruption** if rollback affects external integrations
+- Use **Database Performance** if rollback impacts database operations
+- Use **Security Incident** if deployment exposed security issues

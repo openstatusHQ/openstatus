@@ -36,7 +36,7 @@ type DBPageComponent = {
   pageId: number;
   name: string;
   description: string | null;
-  type: "external" | "monitor";
+  type: "static" | "monitor";
   monitorId: number | null;
   order: number | null;
   groupId: number | null;
@@ -135,12 +135,12 @@ export function protoThemeToDb(theme: PageTheme): "system" | "light" | "dark" {
  * Convert DB component type string to proto enum.
  */
 export function dbComponentTypeToProto(
-  type: "external" | "monitor",
+  type: "static" | "monitor",
 ): PageComponentType {
   switch (type) {
     case "monitor":
       return PageComponentType.MONITOR;
-    case "external":
+    case "static":
       return PageComponentType.STATIC;
     default:
       return PageComponentType.UNSPECIFIED;
@@ -152,14 +152,14 @@ export function dbComponentTypeToProto(
  */
 export function protoComponentTypeToDb(
   type: PageComponentType,
-): "external" | "monitor" {
+): "static" | "monitor" {
   switch (type) {
     case PageComponentType.MONITOR:
       return "monitor";
     case PageComponentType.STATIC:
-      return "external";
+      return "static";
     default:
-      return "external";
+      return "static";
   }
 }
 

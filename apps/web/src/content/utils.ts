@@ -91,6 +91,13 @@ export function getProductPages(): MDXData[] {
   );
 }
 
+export function getReportTemplates(): MDXData[] {
+  return getMDXDataFromDir(
+    path.join(process.cwd(), "src", "content", "pages", "report-template"),
+    "/report-template",
+  );
+}
+
 export function getUnrelatedPages(): MDXData[] {
   return getMDXDataFromDir(
     path.join(process.cwd(), "src", "content", "pages", "unrelated"),

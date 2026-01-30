@@ -60,6 +60,14 @@ export const Events = {
     name: "page_deleted",
     channel: "page",
   },
+  DeletePageComponent: {
+    name: "page_component_deleted",
+    channel: "page",
+  },
+  UpdatePageComponentOrder: {
+    name: "page_component_order_updated",
+    channel: "page",
+  },
   SubscribePage: {
     name: "user_subscribed",
     channel: "page",

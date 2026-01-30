@@ -259,6 +259,24 @@ export async function syncMonitorsToPageDelete(
 }
 
 /**
+ * REVERSE SYNC: Syncs a page_component delete to monitors_to_pages
+ * Used when pageComponent is the primary table and monitorsToPages is kept for backwards compatibility
+ */
+export async function syncPageComponentToMonitorsToPageDelete(
+  db: DB | Transaction,
+  data: { monitorId: number; pageId: number },
+) {
+  await db
+    .delete(monitorsToPages)
+    .where(
+      and(
+        eq(monitorsToPages.monitorId, data.monitorId),
+        eq(monitorsToPages.pageId, data.pageId),
+      ),
+    );
+}
+
+/**
  * Syncs monitors_to_pages deletes for a specific page to page_component
  */
 export async function syncMonitorsToPageDeleteByPage(
@@ -479,7 +497,7 @@ export async function syncStatusReportToPageComponentInsertMany(
   if (pageComponentIds.length === 0) return;
 
   // Find monitor IDs from the page components
-  // Only get components that have a monitorId (not external components)
+  // Only get components that have a monitorId (not static components)
   const components = await db
     .select({ monitorId: pageComponent.monitorId })
     .from(pageComponent)
@@ -691,7 +709,7 @@ export async function syncMaintenanceToPageComponentInsertMany(
   if (pageComponentIds.length === 0) return;
 
   // Find monitor IDs from the page components
-  // Only get components that have a monitorId (not external components)
+  // Only get components that have a monitorId (not static components)
   const components = await db
     .select({ monitorId: pageComponent.monitorId })
     .from(pageComponent)

@@ -115,7 +115,7 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
           workspace_id: workspaceId,
           validation_errors: parsed.error,
         });
-        throw new Error(`Failed to parse response: ${parsed.error}`);
+        throw new Error(`Failed to parse response: ${parsed.error.message}`);
       }
 
       fulfilledRequest.push(parsed.data);
@@ -198,7 +198,7 @@ function getAggregate(data: number[]) {
     logger.error("Failed to parse aggregated response", {
       validation_errors: parsed.error,
     });
-    throw new Error(`Failed to parse response: ${parsed.error}`);
+    throw new Error(`Failed to parse response: ${parsed.error.message}`);
   }
 
   return parsed.data;

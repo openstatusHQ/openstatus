@@ -9,37 +9,24 @@ import {
   inArray,
   isNull,
   sql,
-  syncMonitorGroupDeleteMany,
-  syncMonitorGroupInsert,
-  syncMonitorsToPageDelete,
-  syncMonitorsToPageUpsertMany,
   syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
 import {
-  incidentTable,
   insertPageSchema,
-  legacy_selectPublicPageSchemaWithRelation,
-  maintenance,
   monitor,
-  monitorGroup,
-  monitorsToPages,
   page,
   pageAccessTypes,
   pageComponent,
   selectMaintenanceSchema,
-  selectMonitorGroupSchema,
-  selectMonitorSchema,
   selectPageComponentGroupSchema,
   selectPageComponentSchema,
   selectPageSchema,
-  statusReport,
   subdomainSafeList,
-  workspace,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { env } from "../env";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 if (process.env.NODE_ENV === "test") {
   require("../test/preload");
@@ -200,116 +187,6 @@ export const pageRouter = createTRPCRouter({
         .where(and(...whereConditions))
         .run();
     }),
-  // public if we use trpc hooks to get the page from the url
-  getPageBySlug: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase() }))
-    .output(legacy_selectPublicPageSchemaWithRelation.nullish())
-    .query(async (opts) => {
-      if (!opts.input.slug) return;
-
-      const result = await opts.ctx.db
-        .select()
-        .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-        )
-        .get();
-
-      if (!result) return;
-
-      const [workspaceResult, monitorsToPagesResult] = await Promise.all([
-        opts.ctx.db
-          .select()
-          .from(workspace)
-          .where(eq(workspace.id, result.workspaceId))
-          .get(),
-        opts.ctx.db
-          .select()
-          .from(monitorsToPages)
-          .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
-          .where(
-            // make sur only active monitors are returned!
-            and(
-              eq(monitorsToPages.pageId, result.id),
-              eq(monitor.active, true),
-            ),
-          )
-          .all(),
-      ]);
-
-      // FIXME: There is probably a better way to do this
-
-      const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
-      );
-
-      const statusReports = await opts.ctx.db.query.statusReport.findMany({
-        where: eq(statusReport.pageId, result.id),
-        with: {
-          statusReportUpdates: {
-            orderBy: (reports, { desc }) => desc(reports.date),
-          },
-          monitorsToStatusReports: { with: { monitor: true } },
-        },
-      });
-
-      const monitorQuery =
-        monitorsId.length > 0
-          ? opts.ctx.db
-              .select()
-              .from(monitor)
-              .where(
-                and(
-                  inArray(monitor.id, monitorsId),
-                  eq(monitor.active, true),
-                  isNull(monitor.deletedAt),
-                ), // REMINDER: this is hardcoded
-              )
-              .all()
-          : [];
-
-      const maintenancesQuery = opts.ctx.db.query.maintenance.findMany({
-        where: eq(maintenance.pageId, result.id),
-        with: { maintenancesToMonitors: { with: { monitor: true } } },
-        orderBy: (maintenances, { desc }) => desc(maintenances.from),
-      });
-
-      const incidentsQuery =
-        monitorsId.length > 0
-          ? await opts.ctx.db
-              .select()
-              .from(incidentTable)
-              .where(inArray(incidentTable.monitorId, monitorsId))
-              .all()
-          : [];
-      // TODO: monitorsToPagesResult has the result already, no need to query again
-      const [monitors, maintenances, incidents] = await Promise.all([
-        monitorQuery,
-        maintenancesQuery,
-        incidentsQuery,
-      ]);
-
-      return legacy_selectPublicPageSchemaWithRelation.parse({
-        ...result,
-        // TODO: improve performance and move into SQLite query
-        monitors: monitors.sort((a, b) => {
-          const aIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === a.id)
-              ?.monitors_to_pages.order || 0;
-          const bIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === b.id)
-              ?.monitors_to_pages.order || 0;
-          return aIndex - bIndex;
-        }),
-        incidents,
-        statusReports,
-        maintenances: maintenances.map((m) => ({
-          ...m,
-          monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
-        })),
-        workspacePlan: workspaceResult?.plan,
-      });
-    }),
 
   getSlugUniqueness: protectedProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
@@ -384,7 +261,6 @@ export const pageRouter = createTRPCRouter({
       const data = await opts.ctx.db.query.page.findFirst({
         where: and(...whereConditions),
         with: {
-          monitorsToPages: { with: { monitor: true, monitorGroup: true } },
           maintenances: true,
           pageComponents: true,
           pageComponentGroups: true,
@@ -393,16 +269,6 @@ export const pageRouter = createTRPCRouter({
 
       return selectPageSchema
         .extend({
-          monitors: z
-            .array(
-              selectMonitorSchema.extend({
-                order: z.number().prefault(0),
-                groupOrder: z.number().prefault(0),
-                groupId: z.number().nullable(),
-              }),
-            )
-            .prefault([]),
-          monitorGroups: z.array(selectMonitorGroupSchema).prefault([]),
           pageComponentGroups: z
             .array(selectPageComponentGroupSchema)
             .prefault([]),
@@ -411,19 +277,6 @@ export const pageRouter = createTRPCRouter({
         })
         .parse({
           ...data,
-          monitors: data?.monitorsToPages.map((m) => ({
-            ...m.monitor,
-            order: m.order,
-            groupId: m.monitorGroupId,
-            groupOrder: m.groupOrder,
-          })),
-          monitorGroups: Array.from(
-            new Map(
-              data?.monitorsToPages
-                .filter((m) => m.monitorGroup)
-                .map((m) => [m.monitorGroup?.id, m.monitorGroup]),
-            ).values(),
-          ),
           pageComponentGroups: data?.pageComponentGroups ?? [],
           maintenances: data?.maintenances,
           pageComponents: data?.pageComponents,
@@ -803,176 +656,5 @@ export const pageRouter = createTRPCRouter({
         })
         .where(and(...whereConditions))
         .run();
-    }),
-
-  updateMonitors: protectedProcedure
-    .meta({ track: Events.UpdatePage })
-    .input(
-      z.object({
-        id: z.number(),
-        monitors: z.array(z.object({ id: z.number(), order: z.number() })),
-        groups: z.array(
-          z.object({
-            // id: z.number(), // we dont need it as we are deleting and adding
-            order: z.number(),
-            name: z.string(),
-            monitors: z.array(z.object({ id: z.number(), order: z.number() })),
-          }),
-        ),
-      }),
-    )
-    .mutation(async (opts) => {
-      const monitorIds = opts.input.monitors.map((m) => m.id);
-      const groupMonitorIds = opts.input.groups.flatMap((g) =>
-        g.monitors.map((m) => m.id),
-      );
-
-      const allMonitorIds = [...new Set([...monitorIds, ...groupMonitorIds])];
-      // check if the monitors are in the workspace
-      const monitors = await opts.ctx.db.query.monitor.findMany({
-        where: and(
-          inArray(monitor.id, allMonitorIds),
-          eq(monitor.workspaceId, opts.ctx.workspace.id),
-        ),
-      });
-
-      if (monitors.length !== allMonitorIds.length) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to all the monitors.",
-        });
-      }
-
-      await opts.ctx.db.transaction(async (tx) => {
-        // Get existing state
-        const existingMonitorsToPages = await tx
-          .select()
-          .from(monitorsToPages)
-          .where(eq(monitorsToPages.pageId, opts.input.id))
-          .all();
-
-        const existingGroups = await tx.query.monitorGroup.findMany({
-          where: eq(monitorGroup.pageId, opts.input.id),
-        });
-        const existingGroupIds = existingGroups.map((g) => g.id);
-
-        // Calculate what monitors are in the new input vs existing
-        const existingMonitorIds = existingMonitorsToPages.map(
-          (m) => m.monitorId,
-        );
-
-        // Find monitors that are being removed (in DB but not in input)
-        const removedMonitorIds = existingMonitorIds.filter(
-          (id) => !allMonitorIds.includes(id),
-        );
-
-        // Delete removed monitors from monitorsToPages and page components
-        if (removedMonitorIds.length > 0) {
-          await tx
-            .delete(monitorsToPages)
-            .where(
-              and(
-                eq(monitorsToPages.pageId, opts.input.id),
-                inArray(monitorsToPages.monitorId, removedMonitorIds),
-              ),
-            );
-
-          // Sync delete to page components
-          for (const monitorId of removedMonitorIds) {
-            await syncMonitorsToPageDelete(tx, {
-              monitorId,
-              pageId: opts.input.id,
-            });
-          }
-        }
-
-        // Clear monitorGroupId from all monitorsToPages before deleting groups
-        // This prevents foreign key constraint errors
-        if (existingGroupIds.length > 0) {
-          await tx
-            .update(monitorsToPages)
-            .set({ monitorGroupId: null })
-            .where(
-              and(
-                eq(monitorsToPages.pageId, opts.input.id),
-                inArray(monitorsToPages.monitorGroupId, existingGroupIds),
-              ),
-            );
-        }
-
-        // Handle groups: delete old groups and create new ones
-        if (existingGroupIds.length > 0) {
-          await tx
-            .delete(monitorGroup)
-            .where(eq(monitorGroup.pageId, opts.input.id));
-
-          // Sync delete page component groups
-          await syncMonitorGroupDeleteMany(tx, existingGroupIds);
-        }
-
-        // Create new monitor groups
-        let monitorGroups: Array<{ id: number; name: string }> = [];
-        if (opts.input.groups.length > 0) {
-          monitorGroups = await tx
-            .insert(monitorGroup)
-            .values(
-              opts.input.groups.map((g) => ({
-                workspaceId: opts.ctx.workspace.id,
-                pageId: opts.input.id,
-                name: g.name,
-              })),
-            )
-            .returning();
-
-          // Sync new monitor groups to page component groups
-          for (const group of monitorGroups) {
-            await syncMonitorGroupInsert(tx, {
-              id: group.id,
-              workspaceId: opts.ctx.workspace.id,
-              pageId: opts.input.id,
-              name: group.name,
-            });
-          }
-        }
-
-        // Prepare values for upsert - both grouped and ungrouped monitors
-        const groupMonitorValues = opts.input.groups.flatMap((g, i) =>
-          g.monitors.map((m) => ({
-            pageId: opts.input.id,
-            monitorId: m.id,
-            order: g.order,
-            monitorGroupId: monitorGroups[i].id,
-            groupOrder: m.order,
-          })),
-        );
-
-        const monitorValues = opts.input.monitors.map((m) => ({
-          pageId: opts.input.id,
-          monitorId: m.id,
-          order: m.order,
-          monitorGroupId: null as number | null,
-          groupOrder: 0,
-        }));
-
-        const allValues = [...groupMonitorValues, ...monitorValues];
-
-        // Upsert all monitors (update existing, insert new)
-        if (allValues.length > 0) {
-          await tx
-            .insert(monitorsToPages)
-            .values(allValues)
-            .onConflictDoUpdate({
-              target: [monitorsToPages.monitorId, monitorsToPages.pageId],
-              set: {
-                order: sql.raw("excluded.`order`"),
-                monitorGroupId: sql.raw("excluded.`monitor_group_id`"),
-                groupOrder: sql.raw("excluded.`group_order`"),
-              },
-            });
-
-          // Sync upsert to page components (updates existing, inserts new)
-          await syncMonitorsToPageUpsertMany(tx, allValues);
-        }
-      });
     }),
 });

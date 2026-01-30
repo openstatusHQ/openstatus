@@ -159,6 +159,11 @@ export function Client() {
                   max={workspace.limits["status-pages"]}
                 />
                 <BillingProgress
+                  label="Page Components"
+                  value={workspace.usage?.pageComponents ?? 0}
+                  max={workspace.limits["page-components"]}
+                />
+                <BillingProgress
                   label="Notifications"
                   value={workspace.usage?.notifications ?? 0}
                   max={workspace.limits["notification-channels"]}
