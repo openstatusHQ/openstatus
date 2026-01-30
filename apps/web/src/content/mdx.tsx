@@ -241,7 +241,11 @@ function CustomImage({
   className,
   ...props
 }: React.ComponentProps<typeof Image>) {
-  const { src, alt, ...rest } = props;
+  const { src, alt, width, height, ...rest } = props;
+
+  // Use provided dimensions or fallback to unoptimized mode with aspect ratio preservation
+  const imageWidth = width || 1200;
+  const imageHeight = height || 630;
 
   if (!src || typeof src !== "string") {
     return (
@@ -256,8 +260,8 @@ function CustomImage({
             className={className}
             src={src}
             alt={alt ?? "image"}
-            width={0}
-            height={0}
+            width={imageWidth}
+            height={imageHeight}
             sizes="100vw"
             style={{ width: "100%", height: "auto" }}
             {...rest}
@@ -304,8 +308,8 @@ function CustomImage({
           {...rest}
           src={src}
           alt={alt ?? ""}
-          width={0}
-          height={0}
+          width={imageWidth}
+          height={imageHeight}
           sizes="100vw"
           style={{ width: "100%", height: "auto" }}
           className={cn("block dark:hidden", className)}
@@ -321,8 +325,8 @@ function CustomImage({
           {...rest}
           src={useDarkImage ? darkSrc : src}
           alt={alt ?? ""}
-          width={0}
-          height={0}
+          width={imageWidth}
+          height={imageHeight}
           sizes="100vw"
           style={{ width: "100%", height: "auto" }}
           className={cn("hidden dark:block", className)}
