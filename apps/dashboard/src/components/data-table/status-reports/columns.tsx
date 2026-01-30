@@ -51,6 +51,18 @@ export const columns: ColumnDef<StatusReport>[] = [
   {
     accessorKey: "title",
     header: "Title",
+    cell: ({ row }) => {
+      const { id, pageId } = row.original;
+
+      return (
+        <Link
+          href={`/status-pages/${pageId}/status-report-update/${id}`}
+          className="hover:underline font-medium"
+        >
+          {row.getValue("title")}
+        </Link>
+      );
+    },
     enableSorting: false,
     enableHiding: false,
     meta: {
