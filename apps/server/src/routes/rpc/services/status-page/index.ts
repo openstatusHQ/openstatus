@@ -68,9 +68,11 @@ async function getPageById(id: number, workspaceId: number) {
 
 /**
  * Helper to get a status page by slug.
+ * Normalizes the slug to lowercase before querying.
  */
 async function getPageBySlug(slug: string) {
-  return db.select().from(page).where(eq(page.slug, slug)).get();
+  const normalizedSlug = slug.toLowerCase();
+  return db.select().from(page).where(eq(page.slug, normalizedSlug)).get();
 }
 
 /**

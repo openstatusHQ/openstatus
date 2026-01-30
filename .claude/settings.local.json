@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(pnpm exec biome:*)",
-      "Bash(pnpm exec tsc:*)",
-      "Bash(find:*)"
-    ]
-  }
-}
