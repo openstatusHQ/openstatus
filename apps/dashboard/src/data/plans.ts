@@ -52,6 +52,10 @@ export const config: Record<
         label: "Number of status pages",
       },
       {
+        value: "page-components",
+        label: "Number of components",
+      },
+      {
         value: "maintenance",
         label: "Maintenance status",
       },
