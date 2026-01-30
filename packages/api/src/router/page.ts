@@ -12,12 +12,8 @@ import {
   syncPageComponentToMonitorsToPageInsertMany,
 } from "@openstatus/db";
 import {
-  incidentTable,
   insertPageSchema,
-  legacy_selectPublicPageSchemaWithRelation,
-  maintenance,
   monitor,
-  monitorsToPages,
   page,
   pageAccessTypes,
   pageComponent,
@@ -25,14 +21,12 @@ import {
   selectPageComponentGroupSchema,
   selectPageComponentSchema,
   selectPageSchema,
-  statusReport,
   subdomainSafeList,
-  workspace,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { env } from "../env";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 if (process.env.NODE_ENV === "test") {
   require("../test/preload");
@@ -192,116 +186,6 @@ export const pageRouter = createTRPCRouter({
         .delete(page)
         .where(and(...whereConditions))
         .run();
-    }),
-  // public if we use trpc hooks to get the page from the url
-  getPageBySlug: publicProcedure
-    .input(z.object({ slug: z.string().toLowerCase() }))
-    .output(legacy_selectPublicPageSchemaWithRelation.nullish())
-    .query(async (opts) => {
-      if (!opts.input.slug) return;
-
-      const result = await opts.ctx.db
-        .select()
-        .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-        )
-        .get();
-
-      if (!result) return;
-
-      const [workspaceResult, monitorsToPagesResult] = await Promise.all([
-        opts.ctx.db
-          .select()
-          .from(workspace)
-          .where(eq(workspace.id, result.workspaceId))
-          .get(),
-        opts.ctx.db
-          .select()
-          .from(monitorsToPages)
-          .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
-          .where(
-            // make sur only active monitors are returned!
-            and(
-              eq(monitorsToPages.pageId, result.id),
-              eq(monitor.active, true),
-            ),
-          )
-          .all(),
-      ]);
-
-      // FIXME: There is probably a better way to do this
-
-      const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
-      );
-
-      const statusReports = await opts.ctx.db.query.statusReport.findMany({
-        where: eq(statusReport.pageId, result.id),
-        with: {
-          statusReportUpdates: {
-            orderBy: (reports, { desc }) => desc(reports.date),
-          },
-          monitorsToStatusReports: { with: { monitor: true } },
-        },
-      });
-
-      const monitorQuery =
-        monitorsId.length > 0
-          ? opts.ctx.db
-              .select()
-              .from(monitor)
-              .where(
-                and(
-                  inArray(monitor.id, monitorsId),
-                  eq(monitor.active, true),
-                  isNull(monitor.deletedAt),
-                ), // REMINDER: this is hardcoded
-              )
-              .all()
-          : [];
-
-      const maintenancesQuery = opts.ctx.db.query.maintenance.findMany({
-        where: eq(maintenance.pageId, result.id),
-        with: { maintenancesToMonitors: { with: { monitor: true } } },
-        orderBy: (maintenances, { desc }) => desc(maintenances.from),
-      });
-
-      const incidentsQuery =
-        monitorsId.length > 0
-          ? await opts.ctx.db
-              .select()
-              .from(incidentTable)
-              .where(inArray(incidentTable.monitorId, monitorsId))
-              .all()
-          : [];
-      // TODO: monitorsToPagesResult has the result already, no need to query again
-      const [monitors, maintenances, incidents] = await Promise.all([
-        monitorQuery,
-        maintenancesQuery,
-        incidentsQuery,
-      ]);
-
-      return legacy_selectPublicPageSchemaWithRelation.parse({
-        ...result,
-        // TODO: improve performance and move into SQLite query
-        monitors: monitors.sort((a, b) => {
-          const aIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === a.id)
-              ?.monitors_to_pages.order || 0;
-          const bIndex =
-            monitorsToPagesResult.find((m) => m.monitor?.id === b.id)
-              ?.monitors_to_pages.order || 0;
-          return aIndex - bIndex;
-        }),
-        incidents,
-        statusReports,
-        maintenances: maintenances.map((m) => ({
-          ...m,
-          monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
-        })),
-        workspacePlan: workspaceResult?.plan,
-      });
     }),
 
   getSlugUniqueness: protectedProcedure

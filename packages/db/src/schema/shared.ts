@@ -154,6 +154,24 @@ export type PageComponentWithMonitorRelation = z.infer<
   typeof selectPageComponentWithMonitorRelation
 >;
 
+export const selectPublicPageLightSchemaWithRelation = selectPageSchema
+  .extend({
+    monitors: z.array(selectPublicMonitorSchema).prefault([]),
+    statusReports: z.array(selectStatusReportPageSchema).prefault([]),
+    incidents: z.array(selectIncidentSchema).prefault([]),
+    maintenances: z.array(selectMaintenancePageSchema).prefault([]),
+    workspacePlan: workspacePlanSchema
+      .nullable()
+      .prefault("free")
+      .transform((val) => val ?? "free"),
+    // NEW: Include pageComponents for modern consumers
+    pageComponents: selectPageComponentWithMonitorRelation.array().prefault([]),
+    pageComponentGroups: selectPageComponentGroupSchema.array().prefault([]),
+  })
+  .omit({
+    id: true,
+  });
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema.extend({
   monitorGroups: selectMonitorGroupSchema.array().prefault([]),
   // TODO: include status of the monitor

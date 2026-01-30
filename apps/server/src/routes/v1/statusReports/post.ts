@@ -7,15 +7,16 @@ import {
   inArray,
   isNotNull,
   isNull,
-  syncStatusReportToMonitorInsertMany,
+  syncStatusReportToPageComponentInsertMany,
 } from "@openstatus/db";
 import {
   monitor,
-  monitorsToStatusReport,
   page,
+  pageComponent,
   pageSubscriber,
   statusReport,
   statusReportUpdate,
+  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
@@ -129,24 +130,46 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       .returning()
       .get();
 
+    if (!_newStatusReport.pageId) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: "Page ID is required",
+      });
+    }
+
     if (input.monitorIds?.length) {
-      await db
-        .insert(monitorsToStatusReport)
-        .values(
-          input.monitorIds.map((id) => {
-            return {
-              monitorId: id,
-              statusReportId: _newStatusReport.id,
-            };
-          }),
+      // Find matching page_components for the monitors on this page
+      const components = await db
+        .select({ id: pageComponent.id })
+        .from(pageComponent)
+        .where(
+          and(
+            inArray(pageComponent.monitorId, input.monitorIds),
+            eq(pageComponent.pageId, _newStatusReport.pageId),
+            eq(pageComponent.type, "monitor"),
+          ),
         )
-        .returning();
-      // Sync to page components
-      await syncStatusReportToMonitorInsertMany(
-        db,
-        _newStatusReport.id,
-        input.monitorIds,
-      );
+        .all();
+
+      // Insert to statusReportsToPageComponents (primary table)
+      if (components.length > 0) {
+        await db
+          .insert(statusReportsToPageComponents)
+          .values(
+            components.map((c) => ({
+              statusReportId: _newStatusReport.id,
+              pageComponentId: c.id,
+            })),
+          )
+          .run();
+
+        // Sync to legacy table for backwards compatibility
+        await syncStatusReportToPageComponentInsertMany(
+          db,
+          _newStatusReport.id,
+          components.map((c) => c.id),
+        );
+      }
     }
 
     if (limits["status-subscribers"] && _newStatusReport.pageId) {

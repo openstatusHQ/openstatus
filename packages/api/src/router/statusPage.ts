@@ -10,6 +10,7 @@ import {
   selectMaintenancePageSchema,
   selectPageComponentWithMonitorRelation,
   selectPublicMonitorSchema,
+  selectPublicPageLightSchemaWithRelation,
   selectPublicPageSchemaWithRelation,
   selectStatusReportPageSchema,
   selectWorkspaceSchema,
@@ -384,6 +385,81 @@ export const statusPageRouter = createTRPCRouter({
         pageComponents,
         pageComponentGroups: _page.pageComponentGroups,
         whiteLabel,
+      });
+    }),
+
+  getLight: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase() }))
+    .query(async (opts) => {
+      if (!opts.input.slug) return null;
+
+      // Single query with all relations
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR lower(${page.customDomain}) = ${opts.input.slug}`,
+        with: {
+          workspace: true,
+          statusReports: {
+            with: {
+              statusReportUpdates: {
+                orderBy: (reports, { desc }) => desc(reports.date),
+              },
+              statusReportsToPageComponents: { with: { pageComponent: true } },
+            },
+          },
+          maintenances: {
+            with: {
+              maintenancesToPageComponents: { with: { pageComponent: true } },
+            },
+            orderBy: (maintenances, { desc }) => desc(maintenances.from),
+          },
+          pageComponents: {
+            with: {
+              monitor: { with: { incidents: true } },
+              group: true,
+            },
+            orderBy: (pageComponents, { asc }) => asc(pageComponents.order),
+          },
+          pageComponentGroups: true,
+        },
+      });
+
+      if (!_page) return null;
+
+      // Extract monitor components for backwards compatibility
+      const monitorComponents = _page.pageComponents.filter(
+        (c) =>
+          c.type === "monitor" &&
+          c.monitor &&
+          c.monitor.active &&
+          !c.monitor.deletedAt,
+      );
+
+      // Build legacy monitors array (sorted by order)
+      const monitors = monitorComponents
+        .map((c) => ({
+          ...c.monitor,
+          name: c.monitor?.externalName ?? c.monitor?.name ?? "",
+        }))
+        .sort((a, b) => {
+          const aComp = monitorComponents.find((m) => m.monitor?.id === a.id);
+          const bComp = monitorComponents.find((m) => m.monitor?.id === b.id);
+          return (aComp?.order ?? 0) - (bComp?.order ?? 0);
+        });
+
+      // Extract all incidents from monitor components
+      const incidents = monitorComponents.flatMap(
+        (c) => c.monitor?.incidents ?? [],
+      );
+
+      return selectPublicPageLightSchemaWithRelation.parse({
+        ..._page,
+        monitors,
+        incidents,
+        statusReports: _page.statusReports,
+        maintenances: _page.maintenances,
+        pageComponents: _page.pageComponents,
+        pageComponentGroups: _page.pageComponentGroups,
+        workspacePlan: _page.workspace.plan,
       });
     }),
 
