@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { getImageDimensions } from "@/lib/image-dimensions";
 import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
@@ -243,10 +244,6 @@ function CustomImage({
 }: React.ComponentProps<typeof Image>) {
   const { src, alt, width, height, ...rest } = props;
 
-  // Use provided dimensions or fallback to unoptimized mode with aspect ratio preservation
-  const imageWidth = width || 1200;
-  const imageHeight = height || 630;
-
   if (!src || typeof src !== "string") {
     return (
       <figure>
@@ -260,10 +257,9 @@ function CustomImage({
             className={className}
             src={src}
             alt={alt ?? "image"}
-            width={imageWidth}
-            height={imageHeight}
+            fill
             sizes="100vw"
-            style={{ width: "100%", height: "auto" }}
+            style={{ objectFit: "contain" }}
             {...rest}
           />
         </ImageZoom>
@@ -271,6 +267,11 @@ function CustomImage({
       </figure>
     );
   }
+
+  // Get actual image dimensions from filesystem
+  const dimensions = getImageDimensions(src);
+  const imageWidth = width || dimensions?.width || 1200;
+  const imageHeight = height || dimensions?.height || 630;
 
   // Generate dark mode image path by adding .dark before extension
   const getDarkImagePath = (path: string) => {
