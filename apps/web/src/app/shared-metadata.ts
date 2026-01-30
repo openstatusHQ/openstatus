@@ -46,7 +46,7 @@ export const defaultMetadata: Metadata = {
   openGraph: ogMetadata,
 };
 
-export const getPageMetadata = (page: MDXData, basePath: string): Metadata => {
+export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
   const { slug, metadata } = page;
   const { title, description, category, publishedAt } = metadata;
 
@@ -56,6 +56,10 @@ export const getPageMetadata = (page: MDXData, basePath: string): Metadata => {
     description,
   )}&category=${encodeURIComponent(category)}`;
 
+  const url = basePath
+    ? `${BASE_URL}/${basePath}/${slug}`
+    : `${BASE_URL}/${slug}`;
+
   return {
     title,
     description,
@@ -64,7 +68,7 @@ export const getPageMetadata = (page: MDXData, basePath: string): Metadata => {
       description,
       type: "article",
       publishedTime: publishedAt.toISOString(),
-      url: `${BASE_URL}/${basePath}/${slug}`,
+      url,
       images: [
         {
           url: ogImage,
