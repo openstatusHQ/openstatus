@@ -3,6 +3,8 @@ import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Metadata } from "next";
 import type {
   BlogPosting,
+  BreadcrumbList,
+  FAQPage,
   Organization,
   Product,
   WebPage,
@@ -10,6 +12,8 @@ import type {
 } from "schema-dts";
 
 export const TITLE = "openstatus";
+export const HOMEPAGE_TITLE =
+  "OpenStatus - Open-Source Status Page & Uptime Monitoring";
 export const DESCRIPTION =
   "Monitor your services globally and showcase your uptime with a status page. Get started for free with our open-source status page with uptime monitoring solution.";
 
@@ -38,10 +42,13 @@ export const ogMetadata: Metadata["openGraph"] = {
 export const defaultMetadata: Metadata = {
   title: {
     template: `%s | ${TITLE}`,
-    default: TITLE,
+    default: HOMEPAGE_TITLE,
   },
   description: DESCRIPTION,
   metadataBase: new URL(BASE_URL),
+  alternates: {
+    canonical: "/",
+  },
   twitter: twitterMetadata,
   openGraph: ogMetadata,
 };
@@ -63,6 +70,9 @@ export const getPageMetadata = (page: MDXData, basePath?: string): Metadata => {
   return {
     title,
     description,
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
       title,
       description,
@@ -165,5 +175,69 @@ export const getJsonLDProduct = (): WithContext<Product> => {
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
     })),
+  };
+};
+
+export const getJsonLDBreadcrumbList = (
+  items: { name: string; url: string }[],
+): WithContext<BreadcrumbList> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+};
+
+export const getJsonLDFAQPage = (): WithContext<FAQPage> => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "What are the limits?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "As free user you will start with a total of one monitor and one status page as well as cron jobs of min. 10m. You can upgrade to a paid plan at any time. No credit card is required to sign up and you can cancel at any time.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Who are we?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "We are Thibault and Max and we take you with us on our journey. Read more on our about page at https://www.openstatus.dev/about.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How does it work?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "We ping your endpoints from multiple regions to calculate uptime and display the current status on your status page. We also collect response time data like headers and timing phases and display it on your dashboard.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What regions do we support?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "We support monitoring from 28 regions worldwide across all continents: Europe (Amsterdam, Stockholm, Paris, Frankfurt, London), North America (Dallas, New Jersey, Los Angeles, San Jose, Chicago, Toronto), South America (São Paulo), Asia (Mumbai, Tokyo, Singapore), Africa (Johannesburg), and Oceania (Sydney).",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How can I help?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "There are many ways you can help us: Spread the word by telling your friends and colleagues about OpenStatus, report bugs if you find them, suggest new features, contribute to the project if you are a developer, become a paid user if you are a business, or star our project on GitHub.",
+        },
+      },
+    ],
   };
 };

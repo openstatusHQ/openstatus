@@ -1,11 +1,16 @@
-import { getJsonLDBlogPosting, getPageMetadata } from "@/app/shared-metadata";
+import {
+  BASE_URL,
+  getJsonLDBlogPosting,
+  getJsonLDBreadcrumbList,
+  getPageMetadata,
+} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getReportTemplates } from "@/content/utils";
 import { getAuthor } from "@/data/author";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import type { BlogPosting, WithContext } from "schema-dts";
+import type { BlogPosting, BreadcrumbList, WithContext } from "schema-dts";
 import { ContentPagination } from "../../content-pagination";
 
 export const dynamicParams = false;
@@ -58,6 +63,14 @@ export default async function ReportTemplate({
     "report-template",
   );
 
+  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
+    [
+      { name: "Home", url: BASE_URL },
+      { name: "Report Templates", url: `${BASE_URL}/report-template` },
+      { name: post.metadata.title, url: `${BASE_URL}/report-template/${slug}` },
+    ],
+  );
+
   return (
     <section className="prose dark:prose-invert max-w-none">
       <script
@@ -66,6 +79,14 @@ export default async function ReportTemplate({
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDBlog).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{post.metadata.title}</h1>

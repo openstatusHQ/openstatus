@@ -1,4 +1,8 @@
-import { getPageMetadata } from "@/app/shared-metadata";
+import {
+  BASE_URL,
+  getJsonLDBreadcrumbList,
+  getPageMetadata,
+} from "@/app/shared-metadata";
 import {
   getCheckerDataById,
   latencyFormatter,
@@ -8,6 +12,7 @@ import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import type { BreadcrumbList, WithContext } from "schema-dts";
 import { mockCheckAllRegions } from "../api/mock";
 import { Table } from "./client";
 
@@ -88,8 +93,25 @@ export default async function Page({
 
   if (!data) redirect("/play/checker");
 
+  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
+    [
+      { name: "Home", url: BASE_URL },
+      { name: "Playground", url: `${BASE_URL}/play` },
+      { name: "Speed Checker", url: `${BASE_URL}/play/checker` },
+      { name: data.url, url: `${BASE_URL}/play/checker/${slug}` },
+    ],
+  );
+
   return (
     <section className="prose dark:prose-invert max-w-none">
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+        }}
+      />
       <h1>{data.url}</h1>
       <p className="text-lg">{formatDate(new Date(data.timestamp))}</p>
       <Table data={data} />

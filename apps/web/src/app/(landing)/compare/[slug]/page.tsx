@@ -1,8 +1,13 @@
-import { getPageMetadata } from "@/app/shared-metadata";
+import {
+  BASE_URL,
+  getJsonLDBreadcrumbList,
+  getPageMetadata,
+} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { BreadcrumbList, WithContext } from "schema-dts";
 
 export const dynamicParams = false;
 
@@ -43,8 +48,24 @@ export default async function Blog({
     notFound();
   }
 
+  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
+    [
+      { name: "Home", url: BASE_URL },
+      { name: "Compare", url: `${BASE_URL}/compare` },
+      { name: post.metadata.title, url: `${BASE_URL}/compare/${slug}` },
+    ],
+  );
+
   return (
     <section className="prose dark:prose-invert max-w-none">
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+        }}
+      />
       <h1>{post.metadata.title}</h1>
       <p className="text-lg">{post.metadata.description}</p>
       <CustomMDX source={post.content} />

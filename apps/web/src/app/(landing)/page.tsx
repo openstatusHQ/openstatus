@@ -1,9 +1,19 @@
 import { CustomMDX } from "@/content/mdx";
 import { getHomePage } from "@/content/utils";
 import type { Metadata } from "next";
-import type { Organization, Product, WebPage, WithContext } from "schema-dts";
-import { defaultMetadata } from "../shared-metadata";
-import { getJsonLDOrganization, getJsonLDProduct } from "../shared-metadata";
+import type {
+  FAQPage,
+  Organization,
+  Product,
+  WebPage,
+  WithContext,
+} from "schema-dts";
+import {
+  defaultMetadata,
+  getJsonLDFAQPage,
+  getJsonLDOrganization,
+  getJsonLDProduct,
+} from "../shared-metadata";
 
 const jsonLdProduct: WithContext<Product> = getJsonLDProduct();
 
@@ -18,6 +28,8 @@ const jsonLDWebpage: WithContext<WebPage> = {
   image: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
   headline: "Showcase your uptime with a status page",
 };
+
+const jsonLDFAQPage: WithContext<FAQPage> = getJsonLDFAQPage();
 
 export const metadata: Metadata = defaultMetadata;
 
@@ -44,6 +56,13 @@ export default function Page() {
         // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDWebpage).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLDFAQPage).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{homePage.metadata.title}</h1>
