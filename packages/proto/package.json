@@ -24,6 +24,10 @@
     "./status_page/v1": {
       "import": "./gen/ts/openstatus/status_page/v1/index.ts",
       "types": "./gen/ts/openstatus/status_page/v1/index.ts"
+    },
+    "./maintenance/v1": {
+      "import": "./gen/ts/openstatus/maintenance/v1/index.ts",
+      "types": "./gen/ts/openstatus/maintenance/v1/index.ts"
     }
   },
   "scripts": {
