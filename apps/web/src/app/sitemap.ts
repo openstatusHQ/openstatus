@@ -2,9 +2,9 @@ import {
   getBlogPosts,
   getChangelogPosts,
   getComparePages,
+  getGuides,
   getHomePage,
   getProductPages,
-  getReportTemplates,
   getToolsPages,
   getUnrelatedPages,
 } from "@/content/utils";
@@ -20,7 +20,7 @@ const allProducts = getProductPages();
 const allPlaygrounds = getToolsPages().filter(
   (tool) => tool.slug !== "checker-slug",
 );
-const allReportTemplates = getReportTemplates();
+const allGuides = getGuides();
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const blogs = allPosts.map((post) => ({
@@ -65,9 +65,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  const reportTemplates = allReportTemplates.map((reportTemplate) => ({
-    url: `https://www.openstatus.dev/report-template/${reportTemplate.slug}`,
-    lastModified: reportTemplate.metadata.publishedAt,
+  const guides = allGuides.map((guide) => ({
+    url: `https://www.openstatus.dev/guides/${guide.slug}`,
+    lastModified: guide.metadata.publishedAt,
     changeFrequency: "monthly" as const,
     priority: 0.6,
   }));
@@ -89,6 +89,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...landings,
     ...products,
     ...playgrounds,
-    ...reportTemplates,
+    ...guides,
   ];
 }

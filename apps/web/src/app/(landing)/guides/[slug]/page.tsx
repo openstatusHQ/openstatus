@@ -5,7 +5,7 @@ import {
   getPageMetadata,
 } from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
-import { formatDate, getReportTemplates } from "@/content/utils";
+import { formatDate, getGuides } from "@/content/utils";
 import { getAuthor } from "@/data/author";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -16,7 +16,7 @@ import { ContentPagination } from "../../content-pagination";
 export const dynamicParams = false;
 
 export async function generateStaticParams() {
-  const posts = getReportTemplates();
+  const posts = getGuides();
 
   return posts.map((post) => ({
     slug: post.slug,
@@ -29,23 +29,23 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata | undefined> {
   const { slug } = await params;
-  const post = getReportTemplates().find((post) => post.slug === slug);
+  const post = getGuides().find((post) => post.slug === slug);
   if (!post) {
     return;
   }
 
-  const metadata = getPageMetadata(post, "report-template");
+  const metadata = getPageMetadata(post, "guides");
 
   return metadata;
 }
 
-export default async function ReportTemplate({
+export default async function Guide({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const posts = getReportTemplates().sort(
+  const posts = getGuides().sort(
     (a, b) =>
       b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
   );
@@ -60,14 +60,14 @@ export default async function ReportTemplate({
 
   const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(
     post,
-    "report-template",
+    "guides",
   );
 
   const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
     [
       { name: "Home", url: BASE_URL },
-      { name: "Report Templates", url: `${BASE_URL}/report-template` },
-      { name: post.metadata.title, url: `${BASE_URL}/report-template/${slug}` },
+      { name: "Guides", url: `${BASE_URL}/guides` },
+      { name: post.metadata.title, url: `${BASE_URL}/guides/${slug}` },
     ],
   );
 
@@ -108,7 +108,7 @@ export default async function ReportTemplate({
       <ContentPagination
         previousPost={previousPost}
         nextPost={nextPost}
-        prefix="/report-template"
+        prefix="/guides"
       />
     </section>
   );

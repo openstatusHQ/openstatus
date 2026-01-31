@@ -91,10 +91,10 @@ export function getProductPages(): MDXData[] {
   );
 }
 
-export function getReportTemplates(): MDXData[] {
+export function getGuides(): MDXData[] {
   return getMDXDataFromDir(
-    path.join(process.cwd(), "src", "content", "pages", "report-template"),
-    "/report-template",
+    path.join(process.cwd(), "src", "content", "pages", "guides"),
+    "/guides",
   );
 }
 
