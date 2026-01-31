@@ -200,10 +200,10 @@ export const getJsonLDFAQPage = (): WithContext<FAQPage> => {
     mainEntity: [
       {
         "@type": "Question",
-        name: "What are the limits?",
+        name: "What are the free limits?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "As free user you will start with a total of one monitor and one status page as well as cron jobs of min. 10m. You can upgrade to a paid plan at any time. No credit card is required to sign up and you can cancel at any time.",
+          text: "As free user you will start with a total of one monitor and one status page (incl. three page components) as well as cron jobs of min. 10m. You can upgrade to a paid plan at any time. No credit card is required to sign up and you can cancel at any time.",
         },
       },
       {
