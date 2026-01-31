@@ -110,6 +110,14 @@ export const config: Record<
         label: "OpsGenie",
       },
       {
+        value: "grafana-oncall",
+        label: "Grafana OnCall",
+      },
+      {
+        value: "whatsapp",
+        label: "WhatsApp",
+      },
+      {
         value: "notification-channels",
         label: "Number of notification channels",
       },
