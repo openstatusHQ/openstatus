@@ -88,16 +88,18 @@ export const sendRecovery = async ({
     link_to_upstream_details: `https://www.openstatus.dev/app/${monitor.id}/overview`,
   });
 
-  try {
-    await fetch(config.webhookUrl, {
-      method: "POST",
-      body: JSON.stringify(event),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (err) {
-    console.log(err);
+  const res = await fetch(config.webhookUrl, {
+    method: "POST",
+    body: JSON.stringify(event),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Failed to send Grafana OnCall recovery: ${res.status} ${res.statusText}`,
+    );
   }
 };
 

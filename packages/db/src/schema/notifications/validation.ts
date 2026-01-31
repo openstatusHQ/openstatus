@@ -151,6 +151,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
     ),
     insertNotificationSchema.extend(
       z.object({
+        provider: z.literal("telegram"),
+        data: telegramDataSchema,
+      }).shape,
+    ),
+    insertNotificationSchema.extend(
+      z.object({
         provider: z.literal("webhook"),
         data: webhookDataSchema,
       }).shape,
