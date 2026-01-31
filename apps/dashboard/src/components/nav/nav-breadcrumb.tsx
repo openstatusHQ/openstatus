@@ -43,7 +43,24 @@ interface NavBreadcrumbProps {
 export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const value = pathname.split("/").pop();
+
+  // Find the select item in the breadcrumb
+  const selectItem = items.find((item) => item.type === "select");
+
+  // Get pathname segments
+  const segments = pathname.split("/").filter(Boolean);
+
+  // Find the first segment that matches a select item value, or fall back to last segment
+  const value = selectItem
+    ? segments.find((segment) =>
+        selectItem.items.some((item) => item.value === segment),
+      ) ?? segments[segments.length - 1]
+    : segments[segments.length - 1];
+
+  // Find the index of the current value in segments to construct base path
+  const valueIndex = segments.indexOf(value);
+  const basePath =
+    valueIndex >= 0 ? `/${segments.slice(0, valueIndex).join("/")}` : pathname;
 
   return (
     <Breadcrumb>
@@ -61,7 +78,13 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                     href={item.href}
                     className="font-commit-mono tracking-tight"
                   >
-                    {item.icon && <item.icon size={16} aria-hidden="true" />}
+                    {item.icon && (
+                      <item.icon
+                        size={16}
+                        aria-hidden="true"
+                        className="shrink-0"
+                      />
+                    )}
                     {item.label}
                   </Link>
                 </BreadcrumbLink>
@@ -69,7 +92,13 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
               {item.type === "page" ? (
                 <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono tracking-tight md:block lg:max-w-[200px] ">
                   <span className="flex items-center gap-1.5">
-                    {item.icon && <item.icon size={16} aria-hidden="true" />}
+                    {item.icon && (
+                      <item.icon
+                        size={16}
+                        aria-hidden="true"
+                        className="shrink-0"
+                      />
+                    )}
 
                     {item.label}
                   </span>
@@ -78,8 +107,8 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
               {item.type === "select" ? (
                 <Select
                   value={value}
-                  onValueChange={(value) => {
-                    router.push(value);
+                  onValueChange={(newValue) => {
+                    router.push(`${basePath}/${newValue}`);
                   }}
                 >
                   <SelectTrigger
@@ -96,7 +125,11 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                         value={item.value}
                         className="font-commit-mono tracking-tight"
                       >
-                        <item.icon size={16} aria-hidden="true" />
+                        <item.icon
+                          size={16}
+                          aria-hidden="true"
+                          className="shrink-0"
+                        />
                         {item.label}
                       </SelectItem>
                     ))}
