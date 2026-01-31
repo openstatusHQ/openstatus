@@ -4,6 +4,7 @@ import type {
   BlogPosting,
   BreadcrumbList,
   FAQPage,
+  Graph,
   HowTo,
   Organization,
   Person,
@@ -23,7 +24,7 @@ export const getJsonLDWebPage = (page: MDXData): WithContext<WebPage> => {
     headline: page.metadata.description,
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": "https://www.openstatus.dev",
+      "@id": BASE_URL,
     },
   };
 };
@@ -59,8 +60,8 @@ export const getJsonLDOrganization = (): WithContext<Organization> => {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "openstatus",
-    url: "https://openstatus.dev",
-    logo: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
+    url: BASE_URL,
+    logo: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     sameAs: [
       "https://github.com/openstatushq",
       "https://linkedin.com/company/openstatus",
@@ -84,11 +85,11 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     name: "openstatus",
     description:
       "Open-source uptime and synthetic monitoring with status pages.",
-    url: "https://openstatus.dev",
+    url: BASE_URL,
     brand: {
       "@type": "Brand",
       name: "openstatus",
-      logo: "https://openstatus.dev/assets/logos/OpenStatus-Logo.svg",
+      logo: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     },
     offers: Object.entries(allPlans).map(([_, value]) => ({
       "@type": "Offer",
@@ -106,7 +107,7 @@ export const getJsonLDSoftwareApplication =
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       name: "openstatus",
-      url: "https://openstatus.dev",
+      url: BASE_URL,
       description:
         "Open-source uptime and synthetic monitoring with status pages.",
       applicationCategory: "BusinessApplication",
@@ -128,7 +129,7 @@ export const getJsonLDSoftwareApplication =
         "Self-hosting option",
         "Open-source",
       ],
-      screenshot: "https://www.openstatus.dev/assets/landing/dashboard.png",
+      screenshot: `${BASE_URL}/assets/landing/dashboard.png`,
     };
   };
 
@@ -187,8 +188,8 @@ export const getJsonLDHowTo = (post: MDXData): WithContext<HowTo> | null => {
     "@type": "HowTo",
     name: post.metadata.title,
     description: post.metadata.description,
-    totalTime: post.metadata.howto?.totalTime,
-    step: post.metadata.howto?.steps.map((step, index) => ({
+    totalTime: post.metadata.howto.totalTime,
+    step: post.metadata.howto.steps.map((step, index) => ({
       "@type": "HowToStep",
       position: index + 1,
       name: step.name,
@@ -215,10 +216,15 @@ export const getJsonLDHowTo = (post: MDXData): WithContext<HowTo> | null => {
  */
 export const createJsonLDGraph = (
   items: (WithContext<Thing> | null)[],
-): { "@context": string; "@graph": unknown[] } => {
-  const graphItems = items.filter(
-    (item): item is WithContext<Thing> => item !== null,
-  );
+): Graph => {
+  const graphItems = items
+    .filter((item): item is WithContext<Thing> => item !== null)
+    .map(
+      (item) =>
+        Object.fromEntries(
+          Object.entries(item).filter(([key]) => key !== "@context"),
+        ) as Thing,
+    );
 
   return {
     "@context": "https://schema.org",
