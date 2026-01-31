@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/og";
 
-import { TITLE } from "@/app/shared-metadata";
+import { TITLE } from "@/lib/metadata/shared-metadata";
 import { BasicLayout } from "../_components/basic-layout";
 import {
   DEFAULT_URL,

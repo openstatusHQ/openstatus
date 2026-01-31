@@ -1,11 +1,10 @@
-import {
-  BASE_URL,
-  getJsonLDBreadcrumbList,
-  getJsonLDWebPage,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  getJsonLDBreadcrumbList,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { BreadcrumbList, WebPage, WithContext } from "schema-dts";

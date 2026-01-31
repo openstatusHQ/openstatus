@@ -1,10 +1,7 @@
-import {
-  BASE_URL,
-  getJsonLDBreadcrumbList,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import { getJsonLDBreadcrumbList } from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { BreadcrumbList, WithContext } from "schema-dts";

@@ -1,10 +1,10 @@
+import { components } from "@/content/mdx";
+import { env } from "@/env";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/app/shared-metadata";
-import { components } from "@/content/mdx";
-import { env } from "@/env";
+} from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 import {
   ContentBoxDescription,

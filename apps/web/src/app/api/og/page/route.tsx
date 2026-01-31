@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 import { Tracker } from "@openstatus/tracker";
 
-import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
+import { DESCRIPTION, TITLE } from "@/lib/metadata/shared-metadata";
 import { api } from "@/trpc/server";
 import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";

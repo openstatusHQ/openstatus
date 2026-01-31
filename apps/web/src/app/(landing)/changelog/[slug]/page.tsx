@@ -1,11 +1,10 @@
-import {
-  BASE_URL,
-  getJsonLDBlogPosting,
-  getJsonLDBreadcrumbList,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getChangelogPosts } from "@/content/utils";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  getJsonLDBlogPosting,
+  getJsonLDBreadcrumbList,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";

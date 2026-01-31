@@ -1,11 +1,8 @@
-import {
-  BASE_URL,
-  getJsonLDBreadcrumbList,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import { getJsonLDBreadcrumbList } from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import type { BreadcrumbList, WithContext } from "schema-dts";
 import { mockCheckAllRegions } from "./api/mock";

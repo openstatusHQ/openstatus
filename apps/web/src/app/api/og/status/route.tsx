@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
+import { DESCRIPTION, TITLE } from "@/lib/metadata/shared-metadata";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import type { RouterOutputs } from "@openstatus/api";
