@@ -19,8 +19,8 @@ import {
 
 import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
-import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
+import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
 
@@ -507,7 +507,7 @@ export const notificationRouter = createTRPCRouter({
         await sendGoogleChatTest(_data.data["google-chat"]);
         return;
       }
-      if (opts.input.provider === 'grafana-oncall') {
+      if (opts.input.provider === "grafana-oncall") {
         const _data = grafanaOncallDataSchema.safeParse(opts.input.data);
         if (!_data.success) {
           throw new TRPCError({
