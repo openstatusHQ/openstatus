@@ -4,6 +4,30 @@ publishedAt: "2025-11-10"
 author: "Thibault Le Ouay Ducasse"
 description: "Openstatus allows your to monitor your service from your own network."
 category: "Product"
+howto:
+  totalTime: "PT10M"
+  steps:
+    - name: "Create a private location in OpenStatus"
+      text: "In your OpenStatus dashboard, create a new private location and generate an API key. This key will authenticate your probe with the OpenStatus platform."
+      url: "https://docs.openstatus.dev/tutorial/how-to-create-private-location/"
+    - name: "Deploy the Docker container"
+      text: "Pull the private location Docker image (ghcr.io/openstatushq/private-location:latest) and run it with your API key in your infrastructure, VPC, or cloud provider."
+      url: "#docker-container"
+    - name: "Verify the connection"
+      text: "Check your OpenStatus dashboard to confirm the private location is connected and receiving updates. The probe will automatically sync with your monitors every few minutes."
+      url: "https://docs.openstatus.dev/tutorial/how-to-create-private-location/"
+    - name: "Assign monitors to the private location"
+      text: "Update your monitors to use the private location region. The probe will now run checks from inside your network on the defined schedule."
+      url: "https://docs.openstatus.dev/tutorial/how-to-create-private-location/"
+faq:
+  - question: "Why is the Docker image only 8.5MB?"
+    answer: "We keep it minimal by excluding browser-based checks and bundling only the HTTP monitoring engine. This allows deployment on resource-constrained devices like Raspberry Pis while maintaining full API monitoring capabilities."
+  - question: "Can I run multiple private locations in different networks?"
+    answer: "Yes, you can deploy as many private location probes as needed across different networks, VPCs, or regions. Each gets its own API key and appears as a separate monitoring region in your dashboard."
+  - question: "What platforms support the private location Docker image?"
+    answer: "The image supports both ARM64 and AMD64 architectures, running on any Docker-compatible platform including cloud providers (AWS, GCP, Azure), Cloudflare Containers, Kubernetes, Raspberry Pi, and standard Linux servers."
+  - question: "How does the probe communicate with OpenStatus?"
+    answer: "The probe makes outbound connections to OpenStatus to fetch monitor configurations and send results. It doesn't require inbound connections or firewall changes, making it safe to run in restricted networks."
 ---
 
 Sometimes the services you want to monitor are not accessible from the outside, you want to be able to monitor from your own network.

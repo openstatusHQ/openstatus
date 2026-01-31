@@ -1,11 +1,11 @@
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
+import { getChangelogPosts } from "@/content/utils";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/app/shared-metadata";
-import { getChangelogPosts } from "@/content/utils";
+} from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 
 const TITLE = "Changelog Category";

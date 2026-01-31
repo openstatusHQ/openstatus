@@ -1,16 +1,19 @@
-import {
-  BASE_URL,
-  getJsonLDBlogPosting,
-  getJsonLDBreadcrumbList,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { formatDate, getGuides } from "@/content/utils";
 import { getAuthor } from "@/data/author";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBlogPosting,
+  getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
+  getJsonLDHowTo,
+  getJsonLDOrganization,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import type { BlogPosting, BreadcrumbList, WithContext } from "schema-dts";
 import { ContentPagination } from "../../content-pagination";
 
 export const dynamicParams = false;
@@ -58,35 +61,27 @@ export default async function Guide({
     notFound();
   }
 
-  const jsonLDBlog: WithContext<BlogPosting> = getJsonLDBlogPosting(
-    post,
-    "guides",
-  );
-
-  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
-    [
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDWebPage(post),
+    getJsonLDBlogPosting(post, "guides"),
+    getJsonLDBreadcrumbList([
       { name: "Home", url: BASE_URL },
       { name: "Guides", url: `${BASE_URL}/guides` },
       { name: post.metadata.title, url: `${BASE_URL}/guides/${slug}` },
-    ],
-  );
+    ]),
+    getJsonLDHowTo(post),
+    getJsonLDFAQPage(post),
+  ]);
 
   return (
     <section className="prose dark:prose-invert max-w-none">
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBlog).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{post.metadata.title}</h1>

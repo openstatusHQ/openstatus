@@ -4,6 +4,15 @@ description: "Formal template for communicating security issues with professiona
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+faq:
+  - question: "Do I need to notify users immediately for every security concern?"
+    answer: "No. Only communicate publicly when there's a confirmed incident with user impact or when you're taking visible security measures (like requiring password resets). Internal security reviews and patched vulnerabilities without exploitation typically don't require public disclosure."
+  - question: "What legal obligations do I have for security incident disclosure?"
+    answer: "This varies by jurisdiction and industry. GDPR requires notification within 72 hours for personal data breaches. CCPA has requirements for California residents. Healthcare (HIPAA) and payment systems (PCI DSS) have specific rules. Always consult with legal counsel before publishing security incident communications."
+  - question: "How much technical detail should I share about a security vulnerability?"
+    answer: "Share enough to demonstrate competence and transparency, but avoid tactical details that could help attackers. Good: 'unauthorized access attempts to our admin panel.' Bad: 'SQL injection on /admin/login using parameter X.' Wait until the vulnerability is fully patched and no longer exploitable before sharing technical details."
+  - question: "Should I tell users to change their passwords?"
+    answer: "Only if there's evidence of credential compromise or unauthorized access to authentication systems. Don't create alarm fatigue by requesting password changes for unrelated security work. Be specific about why you're asking and which accounts are affected."
 ---
 
 Use this template when investigating or responding to security-related incidents. Maintains professional tone while reassuring users about security measures.

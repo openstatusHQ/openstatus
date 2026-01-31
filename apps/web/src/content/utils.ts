@@ -1,7 +1,26 @@
 import fs from "node:fs";
 import path from "node:path";
+import matter from "gray-matter";
 import slugify from "slugify";
 import { z } from "zod";
+
+// Structured data schemas
+const howtoStepSchema = z.object({
+  name: z.string(),
+  text: z.string(),
+  image: z.string().optional(),
+  url: z.string().optional(),
+});
+
+const howtoSchema = z.object({
+  totalTime: z.string().optional(), // ISO 8601 duration format (e.g., "PT2H")
+  steps: z.array(howtoStepSchema),
+});
+
+const faqItemSchema = z.object({
+  question: z.string(),
+  answer: z.string(),
+});
 
 const metadataSchema = z.object({
   title: z.string(),
@@ -10,30 +29,24 @@ const metadataSchema = z.object({
   category: z.string(),
   author: z.string(),
   image: z.string().optional(),
+  // Structured data fields
+  howto: howtoSchema.optional(),
+  faq: z.array(faqItemSchema).optional(),
 });
 
 export type Metadata = z.infer<typeof metadataSchema>;
+export type HowToStep = z.infer<typeof howtoStepSchema>;
+export type HowToData = z.infer<typeof howtoSchema>;
+export type FAQItem = z.infer<typeof faqItemSchema>;
 
 function parseFrontmatter(fileContent: string) {
-  const frontmatterRegex = /---\s*([\s\S]*?)\s*---/;
-  const match = frontmatterRegex.exec(fileContent);
-  const frontMatterBlock = match?.[1];
-  const content = fileContent.replace(frontmatterRegex, "").trim();
-  const frontMatterLines = frontMatterBlock?.trim().split("\n");
-  const metadata: Record<string, string> = {};
+  const { data, content } = matter(fileContent);
 
-  frontMatterLines?.forEach((line) => {
-    const [key, ...valueArr] = line.split(": ");
-    let value = valueArr.join(": ").trim();
-    value = value.replace(/^['"](.*)['"]$/, "$1"); // Remove quotes
-    metadata[key.trim()] = value;
-  });
-
-  const validatedMetadata = metadataSchema.safeParse(metadata);
+  const validatedMetadata = metadataSchema.safeParse(data);
 
   if (!validatedMetadata.success) {
     console.error(validatedMetadata.error);
-    throw new Error(`Invalid metadata ${fileContent}`);
+    throw new Error(`Invalid metadata: ${validatedMetadata.error.message}`);
   }
 
   return { metadata: validatedMetadata.data, content };

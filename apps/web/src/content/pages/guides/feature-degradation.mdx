@@ -4,6 +4,15 @@ description: "Template for communicating partial service degradation where some 
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+faq:
+  - question: "When is something 'degraded' vs a full outage?"
+    answer: "Use degraded when the feature still works partially (e.g., 50% success rate, slower than normal, or intermittent failures). Use outage when the feature is completely unavailable (100% failure rate). Clear distinction helps users set expectations."
+  - question: "Should I list all working features or just the broken ones?"
+    answer: "For major features, list both. Users need to know what still works so they can continue their workflow. For minor features, focus on what's broken and state 'all other features operating normally.' The feature impact matrix format works well for complex degradations."
+  - question: "How do I communicate partial degradation percentages to users?"
+    answer: "Be specific: '50% success rate - retry usually works' or '10% error rate - most requests succeeding.' Avoid vague terms like 'some' or 'many.' Percentages help users assess their likelihood of being affected and whether retrying makes sense."
+  - question: "What if I don't know which feature is causing issues?"
+    answer: "Start with what you know: 'We're investigating reports of errors. Some users may be affected.' Then update as you learn more: 'We've confirmed the issue is with [specific feature].' Narrow the scope as quickly as possible to reduce user uncertainty."
 ---
 
 Use this template when specific features are degraded or unavailable, but the core service remains operational. Helps users understand what's working and what isn't.

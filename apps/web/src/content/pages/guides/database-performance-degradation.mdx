@@ -4,6 +4,13 @@ description: "Technical template for communicating database latency and performa
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+faq:
+  - question: "How do I decide between technical and user-friendly messaging?"
+    answer: "Match your communication to your audience. For developer-focused products, include technical details like p95 latency, query times, and specific database components. For general users, focus on impact: 'slower response times' instead of 'elevated connection pool exhaustion.'"
+  - question: "Should I share the root cause of database performance issues?"
+    answer: "Yes, once resolved. Technical audiences appreciate transparency and can learn from your incidents. Share root cause, mitigation steps taken, and preventative measures. This builds trust and demonstrates engineering maturity."
+  - question: "When should I trigger a database performance incident notification?"
+    answer: "Trigger notifications when p95 latency exceeds 2x normal, error rates exceed 1%, connection timeouts occur, or when user reports indicate widespread slowness. Set up automated monitoring alerts to catch these thresholds early."
 ---
 
 Use this template when experiencing database performance issues, elevated latency, or query slowdowns. Ideal for engineering teams and technical stakeholders.

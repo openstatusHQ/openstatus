@@ -1,9 +1,9 @@
+import { components } from "@/content/mdx";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/app/shared-metadata";
-import { components } from "@/content/mdx";
+} from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 import { z } from "zod";
 import {

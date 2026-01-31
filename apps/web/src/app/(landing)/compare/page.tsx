@@ -1,10 +1,10 @@
+import { components } from "@/content/mdx";
+import { getComparePages } from "@/content/utils";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
-} from "@/app/shared-metadata";
-import { components } from "@/content/mdx";
-import { getComparePages } from "@/content/utils";
+} from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 import {
   ContentBoxDescription,

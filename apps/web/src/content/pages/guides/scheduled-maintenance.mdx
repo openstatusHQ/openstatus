@@ -4,6 +4,30 @@ description: "Proactive template for communicating planned maintenance windows, 
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+howto:
+  totalTime: "PT2H"
+  steps:
+    - name: "Plan and schedule maintenance"
+      text: "Choose a low-traffic time window and schedule maintenance at least 1 week in advance. Consider timezone differences for global audiences."
+      url: "#advance-notice-best-practices"
+    - name: "Send advance notifications"
+      text: "Notify users 1 week before, 24 hours before, and 1 hour before maintenance begins. Include exact times, duration, and expected impact."
+      url: "#1-week-before"
+    - name: "Execute maintenance with updates"
+      text: "Begin maintenance at scheduled time, provide status updates every hour, and extend timeline if needed with clear communication."
+      url: "#at-start"
+    - name: "Complete and verify"
+      text: "Test all systems after completion, send completion notice to all users, and communicate any improvements or benefits delivered."
+      url: "#at-completion"
+faq:
+  - question: "How much advance notice should I give for maintenance?"
+    answer: "Minimum 48 hours for minor maintenance under 30 minutes with no downtime. 1 week notice for standard maintenance 1-4 hours with read-only mode. 2+ weeks notice for major maintenance over 4 hours with full downtime."
+  - question: "What if maintenance takes longer than expected?"
+    answer: "Provide updates every hour and notify users immediately of any time extensions. Include the new estimated completion time and reason for the extension."
+  - question: "Should I include timezone information?"
+    answer: "Yes, always include multiple timezones for global audiences or use UTC time with a timezone converter link. This prevents confusion about when maintenance will occur."
+  - question: "What information must be included in maintenance notices?"
+    answer: "Always include exact date and time with timezone, expected duration, impact description, what users can and cannot do during maintenance, and who to contact with questions."
 ---
 
 Use this template for planned maintenance, infrastructure upgrades, or scheduled downtime. Proactive communication builds trust and reduces support burden.

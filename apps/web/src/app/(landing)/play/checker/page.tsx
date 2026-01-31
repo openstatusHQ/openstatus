@@ -1,13 +1,13 @@
-import {
-  BASE_URL,
-  getJsonLDBreadcrumbList,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
+import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
-import type { BreadcrumbList, WithContext } from "schema-dts";
 import { mockCheckAllRegions } from "./api/mock";
 import {
   CheckerProvider,
@@ -38,13 +38,14 @@ export default async function Page(props: {
       : await getCheckerDataById(id)
     : null;
 
-  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
-    [
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDWebPage(page),
+    getJsonLDBreadcrumbList([
       { name: "Home", url: BASE_URL },
       { name: "Playground", url: `${BASE_URL}/play` },
       { name: page.metadata.title, url: `${BASE_URL}/play/checker` },
-    ],
-  );
+    ]),
+  ]);
 
   return (
     <section className="prose dark:prose-invert max-w-none">
@@ -53,7 +54,7 @@ export default async function Page(props: {
         suppressHydrationWarning
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{page.metadata.title}</h1>

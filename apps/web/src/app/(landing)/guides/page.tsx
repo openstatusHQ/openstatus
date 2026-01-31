@@ -1,6 +1,6 @@
-import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
-import { twitterMetadata } from "@/app/shared-metadata";
 import { getGuides } from "@/content/utils";
+import { defaultMetadata, ogMetadata } from "@/lib/metadata/shared-metadata";
+import { twitterMetadata } from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";

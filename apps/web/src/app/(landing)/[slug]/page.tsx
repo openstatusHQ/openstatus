@@ -1,14 +1,17 @@
-import {
-  BASE_URL,
-  getJsonLDBreadcrumbList,
-  getJsonLDWebPage,
-  getPageMetadata,
-} from "@/app/shared-metadata";
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
+import { getPageMetadata } from "@/lib/metadata/shared-metadata";
+import {
+  createJsonLDGraph,
+  getJsonLDFAQPage,
+  getJsonLDHowTo,
+  getJsonLDOrganization,
+  getJsonLDProduct,
+  getJsonLDSoftwareApplication,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { BreadcrumbList, WebPage, WithContext } from "schema-dts";
 
 export const dynamicParams = false;
 
@@ -48,30 +51,23 @@ export default async function Page({
     notFound();
   }
 
-  const jsonLDWebPage: WithContext<WebPage> = getJsonLDWebPage(page);
-
-  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
-    [
-      { name: "Home", url: BASE_URL },
-      { name: page.metadata.title, url: `${BASE_URL}/${slug}` },
-    ],
-  );
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDSoftwareApplication(),
+    getJsonLDProduct(),
+    getJsonLDWebPage(page),
+    getJsonLDHowTo(page),
+    getJsonLDFAQPage(page),
+  ]);
 
   return (
     <section className="prose dark:prose-invert max-w-none">
       <script
         type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDWebPage).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        type="application/ld+json"
         suppressHydrationWarning
         // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{page.metadata.title}</h1>
