@@ -24,11 +24,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
+import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useFormSheetDirty } from "../form-sheet";
-import React from "react";
 
 const schema = z.object({
   name: z.string(),
@@ -74,7 +74,6 @@ export function FormGrafanaOncall({
   React.useEffect(() => {
     setIsDirty(formIsDirty);
   }, [formIsDirty, setIsDirty]);
-
 
   function submitAction(values: FormValues) {
     if (isPending) return;
