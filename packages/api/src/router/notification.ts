@@ -50,11 +50,22 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
-      const limitedProviders = ["sms", "pagerduty", "opsgenie"];
+      const limitedProviders = [
+        "sms",
+        "pagerduty",
+        "opsgenie",
+        "grafana-oncall",
+        "whatsapp",
+      ];
       if (limitedProviders.includes(props.provider)) {
         const isAllowed =
           opts.ctx.workspace.limits[
-            props.provider as "sms" | "pagerduty" | "opsgenie"
+            props.provider as
+              | "sms"
+              | "pagerduty"
+              | "opsgenie"
+              | "grafana-oncall"
+              | "whatsapp"
           ];
 
         if (!isAllowed) {
@@ -391,12 +402,23 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
-      const limitedProviders = ["sms", "pagerduty", "opsgenie"] as const;
+      const limitedProviders = [
+        "sms",
+        "pagerduty",
+        "opsgenie",
+        "grafana-oncall",
+        "whatsapp",
+      ] as const;
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       if (limitedProviders.includes(opts.input.provider as any)) {
         const isAllowed =
           opts.ctx.workspace.limits[
-            opts.input.provider as "sms" | "pagerduty" | "opsgenie"
+            opts.input.provider as
+              | "sms"
+              | "pagerduty"
+              | "opsgenie"
+              | "grafana-oncall"
+              | "whatsapp"
           ];
 
         if (!isAllowed) {

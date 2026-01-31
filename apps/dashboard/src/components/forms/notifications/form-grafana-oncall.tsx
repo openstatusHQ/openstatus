@@ -27,6 +27,8 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useFormSheetDirty } from "../form-sheet";
+import React from "react";
 
 const schema = z.object({
   name: z.string(),
@@ -60,12 +62,19 @@ export function FormGrafanaOncall({
     },
   });
   const [isPending, startTransition] = useTransition();
+  const { setIsDirty } = useFormSheetDirty();
 
   const trpc = useTRPC();
 
   const sendTestMutation = useMutation(
     trpc.notification.sendTest.mutationOptions(),
   );
+
+  const formIsDirty = form.formState.isDirty;
+  React.useEffect(() => {
+    setIsDirty(formIsDirty);
+  }, [formIsDirty, setIsDirty]);
+
 
   function submitAction(values: FormValues) {
     if (isPending) return;
