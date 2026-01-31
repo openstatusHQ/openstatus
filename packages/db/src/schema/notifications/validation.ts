@@ -67,6 +67,12 @@ export const telegramDataSchema = z.object({
   telegram: z.object({ chatId: z.string() }),
 });
 
+export const grafanaOncallDataSchema = z.object({
+  "grafana-oncall": z.object({
+    webhookUrl: z.url(),
+  }),
+});
+
 export const whatsappDataSchema = z.object({
   whatsapp: phoneSchema,
 });
@@ -74,6 +80,7 @@ export const whatsappDataSchema = z.object({
 export const NotificationDataSchema = z.union([
   discordDataSchema,
   emailDataSchema,
+  grafanaOncallDataSchema,
   ntfyDataSchema,
   opsgenieDataSchema,
   pagerdutyDataSchema,
@@ -104,6 +111,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("google-chat"),
         data: googleChatDataSchema,
+      }).shape,
+    ),
+    insertNotificationSchema.extend(
+      z.object({
+        provider: z.literal("grafana-oncall"),
+        data: grafanaOncallDataSchema,
       }).shape,
     ),
     insertNotificationSchema.extend(

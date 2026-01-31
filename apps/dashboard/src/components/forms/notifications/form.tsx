@@ -34,6 +34,7 @@ const schema = z.object({
     "telegram",
     "whatsapp",
     "google-chat",
+    "grafana-oncall",
   ]),
   data: z.record(z.string(), z.string()).or(z.string()),
   monitors: z.array(z.number()),

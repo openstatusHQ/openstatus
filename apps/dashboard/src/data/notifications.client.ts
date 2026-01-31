@@ -1,6 +1,7 @@
 import { FormDiscord } from "@/components/forms/notifications/form-discord";
 import { FormEmail } from "@/components/forms/notifications/form-email";
 import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
+import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
 import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
 import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
 import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
@@ -12,6 +13,7 @@ import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
 import {
   DiscordIcon,
   GoogleIcon,
+  GrafanaIcon,
   TelegramIcon,
   WhatsappIcon,
 } from "@openstatus/icons";
@@ -19,6 +21,7 @@ import { OpsGenieIcon } from "@openstatus/icons";
 import { PagerDutyIcon } from "@openstatus/icons";
 import { SlackIcon } from "@openstatus/icons";
 import { sendTestDiscordMessage as sendTestDiscord } from "@openstatus/notification-discord";
+import { sendTest as sendTestGrafanaOncall } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
 import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
 import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
@@ -107,6 +110,12 @@ export const config = {
     label: "Google Chat",
     form: FormGoogleChat,
     sendTest: sendTestWebhook,
+  },
+  "grafana-oncall": {
+    icon: GrafanaIcon,
+    label: "Grafana OnCall",
+    form: FormGrafanaOncall,
+    sendTest: sendTestGrafanaOncall,
   },
   pagerduty: {
     icon: PagerDutyIcon,
