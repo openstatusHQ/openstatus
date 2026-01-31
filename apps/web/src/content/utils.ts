@@ -158,6 +158,7 @@ export const PAGE_TYPES = [
   "unrelated",
   "compare",
   "tools",
+  "guides",
   "all",
 ] as const;
 
@@ -177,6 +178,8 @@ export function getPages(type: PageType) {
       return getComparePages();
     case "tools":
       return getToolsPages();
+    case "guides":
+      return getGuides();
     case "all":
       return [
         ...getBlogPosts(),
@@ -185,6 +188,7 @@ export function getPages(type: PageType) {
         ...getUnrelatedPages(),
         ...getComparePages(),
         ...getToolsPages(),
+        ...getGuides(),
       ];
     default:
       throw new Error(`Unknown page type: ${type}`);

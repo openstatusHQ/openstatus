@@ -107,6 +107,12 @@ const CONFIG: ConfigSection[] = [
         page: "compare",
       },
       {
+        type: "group",
+        label: "Search in Guides...",
+        heading: "Guides",
+        page: "guides",
+      },
+      {
         type: "item",
         label: "Go to About",
         href: "/about",

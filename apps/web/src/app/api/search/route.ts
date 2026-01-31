@@ -70,6 +70,7 @@ function search(params: SearchParams) {
       ...getPages("tools").filter((tool) => tool.slug !== "checker-slug"),
       ...getPages("compare"),
       ...getPages("product"),
+      ...getPages("guides"),
       home,
     ];
   } else {
