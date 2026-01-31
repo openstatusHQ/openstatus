@@ -38,10 +38,10 @@ message CreateMaintenanceRequest {
   string message = 2 [(buf.validate.field).string.min_len = 1];
 
   // Start time of the maintenance window (RFC 3339 format, required).
-  string from = 3 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"];
+  string from = 3 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
   // End time of the maintenance window (RFC 3339 format, required).
-  string to = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"];
+  string to = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
   // Page ID to associate with this maintenance (required).
   string page_id = 5 [(buf.validate.field).string.min_len = 1];
@@ -110,10 +110,10 @@ message UpdateMaintenanceRequest {
   optional string message = 3;
 
   // New start time (RFC 3339 format, optional).
-  optional string from = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"];
+  optional string from = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
   // New end time (RFC 3339 format, optional).
-  optional string to = 5 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}"];
+  optional string to = 5 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
 
   // New page ID (optional).
   optional string page_id = 6;
