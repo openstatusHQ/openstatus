@@ -1,10 +1,17 @@
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
-import { getJsonLDBreadcrumbList } from "@/lib/metadata/structured-data";
+import {
+  createJsonLDGraph,
+  getJsonLDBlogPosting,
+  getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
+  getJsonLDHowTo,
+  getJsonLDOrganization,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import type { BreadcrumbList, WithContext } from "schema-dts";
 
 export const dynamicParams = false;
 
@@ -45,22 +52,27 @@ export default async function Blog({
     notFound();
   }
 
-  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
-    [
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDOrganization(),
+    getJsonLDWebPage(post),
+    getJsonLDBlogPosting(post, "compare"),
+    getJsonLDBreadcrumbList([
       { name: "Home", url: BASE_URL },
       { name: "Compare", url: `${BASE_URL}/compare` },
       { name: post.metadata.title, url: `${BASE_URL}/compare/${slug}` },
-    ],
-  );
+    ]),
+    getJsonLDHowTo(post),
+    getJsonLDFAQPage(post),
+  ]);
 
   return (
     <section className="prose dark:prose-invert max-w-none">
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{post.metadata.title}</h1>

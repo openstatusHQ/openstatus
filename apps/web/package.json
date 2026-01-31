@@ -63,6 +63,7 @@
     "date-fns": "2.30.0",
     "date-fns-tz": "2.0.0",
     "feed": "4.2.2",
+    "gray-matter": "^4.0.3",
     "lucide-react": "0.525.0",
     "nanoid": "5.0.7",
     "next": "16.0.10",

@@ -6,10 +6,13 @@ import {
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
-import { getJsonLDBreadcrumbList } from "@/lib/metadata/structured-data";
+import {
+  createJsonLDGraph,
+  getJsonLDBreadcrumbList,
+  getJsonLDWebPage,
+} from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import type { BreadcrumbList, WithContext } from "schema-dts";
 import { mockCheckAllRegions } from "../api/mock";
 import { Table } from "./client";
 
@@ -90,14 +93,15 @@ export default async function Page({
 
   if (!data) redirect("/play/checker");
 
-  const jsonLDBreadcrumb: WithContext<BreadcrumbList> = getJsonLDBreadcrumbList(
-    [
+  const jsonLDGraph = createJsonLDGraph([
+    getJsonLDWebPage(page),
+    getJsonLDBreadcrumbList([
       { name: "Home", url: BASE_URL },
       { name: "Playground", url: `${BASE_URL}/play` },
       { name: "Speed Checker", url: `${BASE_URL}/play/checker` },
       { name: data.url, url: `${BASE_URL}/play/checker/${slug}` },
-    ],
-  );
+    ]),
+  ]);
 
   return (
     <section className="prose dark:prose-invert max-w-none">
@@ -106,7 +110,7 @@ export default async function Page({
         suppressHydrationWarning
         // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLDBreadcrumb).replace(/</g, "\\u003c"),
+          __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
       />
       <h1>{data.url}</h1>

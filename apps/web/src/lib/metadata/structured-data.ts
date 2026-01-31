@@ -9,6 +9,7 @@ import type {
   Person,
   Product,
   SoftwareApplication,
+  Thing,
   WebPage,
   WithContext,
 } from "schema-dts";
@@ -83,6 +84,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     name: "openstatus",
     description:
       "Open-source uptime and synthetic monitoring with status pages.",
+    url: "https://openstatus.dev",
     brand: {
       "@type": "Brand",
       name: "openstatus",
@@ -104,6 +106,7 @@ export const getJsonLDSoftwareApplication =
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       name: "openstatus",
+      url: "https://openstatus.dev",
       description:
         "Open-source uptime and synthetic monitoring with status pages.",
       applicationCategory: "BusinessApplication",
@@ -156,13 +159,14 @@ export const getJsonLDBreadcrumbList = (
   };
 };
 
-export const getJsonLDFAQPage = (
-  faqs: Array<{ question: string; answer: string }>,
-): WithContext<FAQPage> => {
+export function getJsonLDFAQPage(input: MDXData): WithContext<FAQPage> | null {
+  if (!input.metadata.faq) {
+    return null;
+  }
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
+    mainEntity: input.metadata.faq.map((faq) => ({
       "@type": "Question",
       name: faq.question,
       acceptedAnswer: {
@@ -171,36 +175,53 @@ export const getJsonLDFAQPage = (
       },
     })),
   };
-};
+}
 
-export const getJsonLDHowTo = (params: {
-  title: string;
-  description: string;
-  steps: Array<{
-    name: string;
-    text: string;
-    image?: string;
-    url?: string;
-  }>;
-  totalTime?: string;
-}): WithContext<HowTo> => {
+export const getJsonLDHowTo = (post: MDXData): WithContext<HowTo> | null => {
+  if (!post.metadata.howto) {
+    return null;
+  }
+
   return {
     "@context": "https://schema.org",
     "@type": "HowTo",
-    name: params.title,
-    description: params.description,
-    totalTime: params.totalTime,
-    step: params.steps.map((step, index) => ({
+    name: post.metadata.title,
+    description: post.metadata.description,
+    totalTime: post.metadata.howto?.totalTime,
+    step: post.metadata.howto?.steps.map((step, index) => ({
       "@type": "HowToStep",
       position: index + 1,
       name: step.name,
       text: step.text,
-      image: step.image,
-      url: step.url,
+      image: step.image ?? undefined,
+      url: step.url ?? undefined,
     })),
   };
 };
 
-// TODO: create the graph so that we only have to pass a single item
-// to script the JSON-LD for the page
-// export const createJsonLDGraph = (items: WithContext<object>[]): WithContext<Graph> => {}
+/**
+ * Creates a unified JSON-LD graph from multiple schema objects
+ * Combines multiple schemas into a single @graph structure
+ *
+ * @param items - Array of schema objects with @context
+ * @returns A single schema object with @graph containing all items
+ *
+ * @example
+ * const graph = createJsonLDGraph([
+ *   getJsonLDWebPage(data),
+ *   getJsonLDBlogPosting(data),
+ *   getJsonLDFAQPage(faqs),
+ * ]);
+ */
+export const createJsonLDGraph = (
+  items: (WithContext<Thing> | null)[],
+): { "@context": string; "@graph": unknown[] } => {
+  const graphItems = items.filter(
+    (item): item is WithContext<Thing> => item !== null,
+  );
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": graphItems,
+  };
+};
