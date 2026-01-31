@@ -1,11 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  spyOn,
-  test,
-} from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
@@ -205,7 +198,12 @@ describe("Grafana OnCall Notifications", () => {
 
   test("Send Alert throws on non-ok response", async () => {
     fetchMock.mockImplementation(() =>
-      Promise.resolve(new Response(null, { status: 500, statusText: "Internal Server Error" })),
+      Promise.resolve(
+        new Response(null, {
+          status: 500,
+          statusText: "Internal Server Error",
+        }),
+      ),
     );
 
     const monitor = createMockMonitor();
