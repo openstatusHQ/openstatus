@@ -1,12 +1,12 @@
 import { defaultMetadata, ogMetadata } from "@/app/shared-metadata";
 import { twitterMetadata } from "@/app/shared-metadata";
-import { getReportTemplates } from "@/content/utils";
+import { getGuides } from "@/content/utils";
 import type { Metadata } from "next";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
-const TITLE = "Report Template";
-const DESCRIPTION = "All the latest templates from openstatus.";
+const TITLE = "Guides";
+const DESCRIPTION = "All the latest guides from openstatus.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -25,17 +25,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ReportTemplateListPage() {
-  const allReportTemplates = getReportTemplates();
+export default function GuidesListPage() {
+  const allGuides = getGuides();
   return (
     <div className="prose dark:prose-invert max-w-none">
-      <h1>Report Templates</h1>
-      <ContentCategory data={allReportTemplates} prefix="/report-template" />
-      <ContentList
-        data={allReportTemplates}
-        prefix="/report-template"
-        withCategory
-      />
+      <h1>Guides</h1>
+      <ContentCategory data={allGuides} prefix="/guides" />
+      <ContentList data={allGuides} prefix="/guides" withCategory />
     </div>
   );
 }
