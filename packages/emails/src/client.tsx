@@ -262,4 +262,75 @@ export class EmailClient {
       console.error(`Error sending status page magic link to ${req.to}`, err);
     }
   }
+
+  public async sendMaintenanceNotification(req: {
+    subscribers: Array<{ email: string; token: string }>;
+    pageTitle: string;
+    pageSlug: string;
+    customDomain?: string | null;
+    maintenanceTitle: string;
+    message: string;
+    from: string;
+    to: string;
+    pageComponents: string[];
+  }) {
+    const statusPageBaseUrl = req.customDomain
+      ? `https://${req.customDomain}`
+      : `https://${req.pageSlug}.openstatus.dev`;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Sending maintenance notification emails to ${req.subscribers
+          .map((s) => s.email)
+          .join(", ")}`,
+      );
+      return;
+    }
+
+    for (const recipients of chunk(req.subscribers, 100)) {
+      const sendEmail = Effect.tryPromise({
+        try: () =>
+          this.client.batch.send(
+            recipients.map((subscriber) => {
+              const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
+              return {
+                from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+                subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
+                to: subscriber.email,
+                react: (
+                  <StatusReportEmail
+                    pageTitle={req.pageTitle}
+                    reportTitle={req.maintenanceTitle}
+                    status="maintenance"
+                    date={`${req.from} - ${req.to}`}
+                    message={req.message}
+                    pageComponents={req.pageComponents}
+                    unsubscribeUrl={unsubscribeUrl}
+                  />
+                ),
+              };
+            }),
+          ),
+        catch: (_unknown) =>
+          new Error(
+            `Error sending maintenance notification batch to ${recipients.map(
+              (r) => r.email,
+            )}`,
+          ),
+      }).pipe(
+        Effect.andThen((result) =>
+          result.error ? Effect.fail(result.error) : Effect.succeed(result),
+        ),
+        Effect.retry({
+          times: 3,
+          schedule: Schedule.exponential("1000 millis"),
+        }),
+      );
+      await Effect.runPromise(sendEmail).catch(console.error);
+    }
+
+    console.log(
+      `Sent maintenance notification email to ${req.subscribers.length} subscribers`,
+    );
+  }
 }
