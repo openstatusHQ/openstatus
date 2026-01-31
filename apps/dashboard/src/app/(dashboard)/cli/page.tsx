@@ -24,8 +24,12 @@ const installs = [
         "brew install openstatusHQ/cli/openstatus --cask",
         "curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash",
       ],
-      Linux: ["curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash"],
-      Windows: ["iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.ps1| iex"],
+      Linux: [
+        "curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash",
+      ],
+      Windows: [
+        "iwr https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.ps1| iex",
+      ],
     },
   },
   {
