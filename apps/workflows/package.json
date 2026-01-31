@@ -18,6 +18,7 @@
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-google-chat": "workspace:*",
+    "@openstatus/notification-grafana-oncall": "workspace:*",
     "@openstatus/notification-ntfy": "workspace:*",
     "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
