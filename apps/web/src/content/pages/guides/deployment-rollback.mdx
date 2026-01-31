@@ -4,6 +4,30 @@ description: "Template for communicating deployment failures and rollback proced
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+howto:
+  totalTime: "PT1H"
+  steps:
+    - name: "Detect and acknowledge the deployment issue"
+      text: "Identify that a recent deployment is causing problems through monitoring alerts or user reports. Immediately acknowledge the issue and announce rollback decision to users."
+      url: "#investigating"
+    - name: "Execute the rollback"
+      text: "Roll back to the previous stable version while providing status updates. Monitor error rates and system health during the rollback process."
+      url: "#identified"
+    - name: "Monitor post-rollback stability"
+      text: "Verify that the rollback completed successfully and all services have returned to normal operation. Continue monitoring for any lingering issues."
+      url: "#monitoring"
+    - name: "Confirm resolution and communicate lessons"
+      text: "Send final confirmation that services are restored. Schedule post-mortem to identify root cause and document preventative measures for future deployments."
+      url: "#resolved"
+faq:
+  - question: "How quickly should I decide to roll back a deployment?"
+    answer: "If error rates exceed 5% or critical functionality is broken, initiate rollback immediately. Don't wait to debug in production. Roll back first, then investigate the issue in a safe environment. Time is critical - every minute of impact affects user trust."
+  - question: "Should I complete the rollback before communicating, or communicate during?"
+    answer: "Communicate the rollback decision immediately, then provide updates during the process. Users appreciate knowing you're taking action. Example: 'We've initiated a rollback and expect completion in 10 minutes' is better than waiting until it's done."
+  - question: "What if the rollback doesn't fix the issue?"
+    answer: "This suggests the problem isn't with the recent deployment. Pivot your communication to general incident response, investigate the root cause, and consider whether you need to roll back further or take other remediation steps. Update users with revised information."
+  - question: "Do I need a post-mortem after every rollback?"
+    answer: "Yes. Even quick rollbacks deserve analysis. Document what went wrong, why it wasn't caught in testing, and what process changes will prevent recurrence. Share key findings with users if appropriate to show continuous improvement."
 ---
 
 Use this template when a deployment causes issues and requires rolling back to a previous version. Communicates the issue, mitigation, and resolution clearly.

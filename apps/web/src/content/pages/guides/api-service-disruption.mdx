@@ -4,6 +4,15 @@ description: "Professional template for communicating API outages and third-part
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+faq:
+  - question: "How often should I update users during an API disruption?"
+    answer: "Provide updates every 30-60 minutes during active incidents, even if there's no significant change. Users appreciate knowing you're still working on the issue. Once resolved, a final summary is essential."
+  - question: "Should I name the third-party provider causing the issue?"
+    answer: "Yes, if you can. Being specific helps users understand the scope and that you're transparent about dependencies. Companies like Vercel, Stripe, and GitHub regularly name their providers during incidents. Just remain professional and factual."
+  - question: "What metrics should I include in API disruption updates?"
+    answer: "Include error rates (e.g., '5% of requests failing'), affected endpoints, and timeframes when you have them. Avoid oversharing internal metrics that might confuse users. Focus on impact-oriented data that helps them assess how they're affected."
+  - question: "When should I use this template instead of other incident templates?"
+    answer: "Use this template specifically for API-related issues, third-party provider failures, or integration connectivity problems. Use Database Performance for database-specific issues, Deployment Rollback for deployment failures, or Network Connectivity for regional/CDN issues."
 ---
 
 Use this template when your API or third-party service provider is experiencing issues. Based on real-world examples from companies like Vercel, Stripe, and GitHub.

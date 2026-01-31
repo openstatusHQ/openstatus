@@ -4,6 +4,15 @@ publishedAt: "2025-11-10"
 author: "openstatus"
 description: "Openstatus allows your to monitor your API from multiple regions around the world. "
 category: "Product"
+faq:
+  - question: "What types of API endpoints can I monitor?"
+    answer: "You can monitor any HTTP/HTTPS endpoint including REST APIs, GraphQL APIs, webhooks, and third-party service endpoints. OpenStatus supports all HTTP methods (GET, POST, PUT, DELETE, etc.) and custom headers for authentication."
+  - question: "How do assertions work in API monitoring?"
+    answer: "Assertions let you validate API responses beyond just checking if the endpoint is reachable. You can validate status codes (e.g., expect 200), check for specific text in response bodies, or verify header values. This ensures your API returns correct data, not just any response."
+  - question: "What's the difference between internal monitoring tools and OpenStatus?"
+    answer: "Internal tools like Grafana or Signoz monitor from inside your infrastructure and see your services as your servers see them. OpenStatus monitors from external locations worldwide, showing you what your customers actually experience including network issues, CDN problems, and geographic latency."
+  - question: "Can I export monitoring data to my existing observability stack?"
+    answer: "Yes, OpenStatus supports OpenTelemetry (OTLP) export. You can send monitoring metrics to your existing tools like Grafana, Honeycomb, or Datadog, allowing you to combine external monitoring data with your internal metrics and set custom alerts."
 ---
 
 ## Why monitor your API from an external providers?

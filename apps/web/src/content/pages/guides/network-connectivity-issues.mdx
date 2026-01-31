@@ -4,6 +4,13 @@ description: "Template for communicating network outages, CDN problems, and regi
 author: "openstatus"
 publishedAt: "2026-01-19"
 category: "template"
+faq:
+  - question: "How do I identify which region or users are affected?"
+    answer: "Use monitoring data from multiple geographic locations, check CDN provider dashboards, and review user reports by location. Tools like uptime monitors with multi-region checks can quickly identify geographic patterns in outages."
+  - question: "Should I provide a workaround like a direct IP address?"
+    answer: "Yes, if safe and practical. Direct IPs, alternate endpoints, or backup URLs can help users during CDN or DNS issues. Just ensure the workaround is secure and won't create additional problems once the primary issue is resolved."
+  - question: "What if my CDN provider is having issues but hasn't acknowledged it?"
+    answer: "You can still communicate transparently without waiting for your provider. Say 'We're experiencing connectivity issues that appear related to our CDN provider. We're investigating with them and will update you shortly.' Users care about your transparency, not your provider's timeline."
 ---
 
 Use this template when experiencing network-related issues affecting user connectivity, including CDN problems, regional outages, or ISP issues.

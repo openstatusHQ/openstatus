@@ -4,6 +4,30 @@ publishedAt: "2025-11-10"
 author: "Maximilian Kaske"
 description: "Openstatus gives you the possibility to store your monitoring as code."
 category: "Product"
+howto:
+  totalTime: "PT15M"
+  steps:
+    - name: "Create a YAML configuration file"
+      text: "Create a monitoring configuration file (e.g., openstatus.yaml) in your repository. Define your monitors with regions, frequency, and request details using our YAML schema."
+      url: "#yaml--cli"
+    - name: "Install the OpenStatus CLI"
+      text: "Install the OpenStatus CLI tool to your local environment or CI/CD pipeline. Authenticate with your API key to connect to your workspace."
+      url: "https://docs.openstatus.dev/tutorial/get-started-with-openstatus-cli/"
+    - name: "Apply your configuration"
+      text: "Run 'openstatus monitors apply' to sync your YAML configuration with OpenStatus. The CLI will create or update monitors based on your config file."
+      url: "#yaml--cli"
+    - name: "Commit and version control"
+      text: "Commit your monitoring configuration to git. All changes to your monitors are now tracked, reviewable, and can be rolled back just like your application code."
+      url: "#what-are-the-benefits-of-monitoring-as-code"
+faq:
+  - question: "Should I use YAML with CLI or Terraform for monitoring as code?"
+    answer: "Use YAML + CLI for simplicity and if you're not already using Terraform. It's lightweight and easy to get started. Choose Terraform if you're managing infrastructure as code and want to integrate monitoring into your existing Terraform workflows for unified state management."
+  - question: "Can I manage monitors both via UI and via code?"
+    answer: "Yes, but we recommend choosing one primary method to avoid conflicts. If you apply a YAML config, it will sync the monitors defined in that file. Monitors created only in the UI won't be affected unless you add them to your YAML config."
+  - question: "How do I handle sensitive data like API tokens in my YAML config?"
+    answer: "Never commit tokens directly to git. Use environment variables or secret management tools. In CI/CD, store tokens as encrypted secrets. For local development, use .env files (and add them to .gitignore) or reference secrets from your secret manager."
+  - question: "What happens when I apply changes to an existing monitor?"
+    answer: "The CLI updates the existing monitor with your new configuration. Historical monitoring data is preserved. If you change the monitor name, it will create a new monitor instead of updating, so use unique identifiers consistently."
 ---
 
 ## What are the benefits of monitoring as code?

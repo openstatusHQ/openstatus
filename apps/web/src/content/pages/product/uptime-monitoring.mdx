@@ -4,6 +4,17 @@ publishedAt: "2025-11-10"
 author: "Thibault Le Ouay Ducasse"
 description: "Openstatus provides a global multi-cloud uptime monitoring solution."
 category: "Product"
+faq:
+  - question: "How many regions should I monitor from?"
+    answer: "Start with 3-5 regions covering your main user geographies. More regions provide better global coverage but use more check quota. For critical services, monitor from all major regions (North America, Europe, Asia) to catch regional issues quickly."
+  - question: "Why monitor from multiple cloud providers instead of just one?"
+    answer: "If your service runs on AWS and your monitoring also runs on AWS, you won't detect AWS-wide outages or network issues affecting AWS connectivity. Using Fly.io, Koyeb, and Railway ensures monitoring independence from your infrastructure provider."
+  - question: "What's the difference between frequency settings?"
+    answer: "Frequency determines how often we check your service (e.g., every 30 seconds, 1 minute, 5 minutes, 10 minutes). Higher frequency (30s) catches issues faster but uses more checks. Lower frequency (10m) is sufficient for non-critical services and conserves quota."
+  - question: "Can uptime monitoring trigger my status page automatically?"
+    answer: "Yes, you can configure monitors to automatically update your status page based on monitoring results. When assertions fail or thresholds are exceeded, the status page can reflect degraded or down status without manual intervention."
+  - question: "How do thresholds and assertions work together?"
+    answer: "Assertions validate response correctness (status code, headers, body content) while thresholds define performance boundaries (degraded latency, timeout). Both can trigger alerts - assertions catch functional failures, thresholds catch performance degradation."
 ---
 
 ```
