@@ -155,11 +155,11 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
         data: webhookDataSchema,
       }).shape,
     ),
-    insertNotificationSchema.merge(
+    insertNotificationSchema.extend(
       z.object({
         provider: z.literal("whatsapp"),
         data: whatsappDataSchema,
-      }),
+      }).shape,
     ),
   ],
 );
