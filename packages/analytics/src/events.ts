@@ -188,4 +188,8 @@ export const Events = {
     name: "workspace_downgraded",
     channel: "billing",
   },
+  GlobalSpeedChecker: {
+    name: "global_speed_checker",
+    channel: "checker",
+  },
 } as const satisfies Record<string, EventProps>;
