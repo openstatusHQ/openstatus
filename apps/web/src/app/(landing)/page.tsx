@@ -4,6 +4,7 @@ import { defaultMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDFAQPage,
+  getJsonLDHowTo,
   getJsonLDOrganization,
   getJsonLDProduct,
   getJsonLDSoftwareApplication,
@@ -21,6 +22,7 @@ export default function Page() {
     getJsonLDProduct(),
     getJsonLDSoftwareApplication(),
     getJsonLDWebPage(homePage),
+    getJsonLDHowTo(homePage),
     getJsonLDFAQPage(homePage),
   ]);
 

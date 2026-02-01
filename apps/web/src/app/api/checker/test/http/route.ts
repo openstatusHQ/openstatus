@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 
-import { checkRegion } from "@/components/ping-response-analysis/utils";
+import { checkRegion } from "@/lib/checker/utils";
 import { httpPayloadSchema } from "@openstatus/utils";
 import { isAnInvalidTestUrl } from "../../utils";
 

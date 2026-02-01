@@ -1,10 +1,11 @@
+import { CustomMDX } from "@/content/mdx";
+import { getToolsPage } from "@/content/utils";
+import { mockCheckAllRegions } from "@/lib/checker/mock";
 import {
   getCheckerDataById,
   latencyFormatter,
   regionFormatter,
-} from "@/components/ping-response-analysis/utils";
-import { CustomMDX } from "@/content/mdx";
-import { getToolsPage } from "@/content/utils";
+} from "@/lib/checker/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -13,7 +14,6 @@ import {
 } from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { mockCheckAllRegions } from "../api/mock";
 import { Table } from "./client";
 
 function formatDate(date: Date) {

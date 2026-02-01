@@ -6,7 +6,7 @@ import {
   getTimingPhases,
   regionFormatter,
   timestampFormatter,
-} from "@/components/ping-response-analysis/utils";
+} from "@/lib/checker/utils";
 import { cn } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui";

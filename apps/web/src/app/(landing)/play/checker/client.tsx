@@ -7,7 +7,7 @@ import {
   latencyFormatter,
   regionCheckerSchema,
   regionFormatter,
-} from "@/components/ping-response-analysis/utils";
+} from "@/lib/checker/utils";
 import { toast } from "@/lib/toast";
 import { cn, notEmpty } from "@/lib/utils";
 import {

@@ -1,13 +1,13 @@
+import { mockCheckRegion } from "@/lib/checker/mock";
 import {
   type Method,
   checkRegion,
   storeBaseCheckerData,
   storeCheckerData,
-} from "@/components/ping-response-analysis/utils";
+} from "@/lib/checker/utils";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { mockCheckRegion } from "./mock";
 
 export const runtime = "edge";
 
@@ -66,10 +66,10 @@ async function* generator(id: string) {
 
 export async function POST(request: Request) {
   const json = await request.json();
-  const { url, method } = json;
+  const { url, method, body, headers } = json;
 
   const uuid = crypto.randomUUID().replace(/-/g, "");
-  await storeBaseCheckerData({ url, method, id: uuid });
+  await storeBaseCheckerData({ url, method, id: uuid, body, headers });
 
   const iterator = makeIterator({ url, method, id: uuid });
   const stream = iteratorToStream(iterator);
