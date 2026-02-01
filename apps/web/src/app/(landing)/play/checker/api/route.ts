@@ -42,7 +42,6 @@ type ErrorCode =
 interface ErrorResponse {
   error: string;
   code: ErrorCode;
-  message: string;
   details?: Record<string, unknown>;
   limit?: number;
   remaining?: number;
@@ -51,13 +50,13 @@ interface ErrorResponse {
 
 function createErrorResponse(
   code: ErrorCode,
-  message: string,
+  error: string,
   status: number,
   details?: Record<string, unknown>,
   headers?: Record<string, string>,
 ): Response {
   const response: ErrorResponse = {
-    error: message,
+    error,
     code,
     ...details,
   };
@@ -158,9 +157,11 @@ export async function POST(request: Request) {
 
   const { url, method } = requestData;
 
+  const urlObject = new URL(url);
+
   if (
-    url.hostname.includes("openstatus.dev") &&
-    url.pathname.startsWith("/play/checker/api")
+    urlObject.hostname.includes("openstatus.dev") &&
+    urlObject.pathname.startsWith("/play/checker/api")
   ) {
     return createErrorResponse(
       "INVALID_REQUEST",
