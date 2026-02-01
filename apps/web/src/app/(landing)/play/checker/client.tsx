@@ -149,6 +149,24 @@ export function Form({
             signal: abortController.signal,
           });
 
+          if (!response.ok) {
+            try {
+              const json = await response.json();
+              toast.error(json.message, {
+                id: toastId,
+                className: "text-destructive!",
+              });
+              return;
+            } catch {
+              toast.error("Failed to fetch data", {
+                id: toastId,
+                description: "Please try again.",
+                className: "text-destructive!",
+              });
+              return;
+            }
+          }
+
           clearTimeout(timeoutId);
 
           const reader = response?.body?.getReader();
