@@ -59,7 +59,6 @@ function createErrorResponse(
   const response: ErrorResponse = {
     error: message,
     code,
-    message,
     ...details,
   };
 
@@ -126,6 +125,37 @@ async function* generator(id: string) {
 }
 
 export async function POST(request: Request) {
+  // Parse and validate request body
+  let requestData: PlayCheckerRequest;
+  try {
+    const json = await request.json();
+    const parsed = playCheckerRequestSchema.safeParse(json);
+
+    if (!parsed.success) {
+      return createErrorResponse(
+        "INVALID_REQUEST",
+        "Invalid request format",
+        400,
+        {
+          details: {
+            issues: parsed.error.issues.map((issue) => ({
+              field: issue.path.join("."),
+              message: issue.message,
+            })),
+          },
+        },
+      );
+    }
+
+    requestData = parsed.data;
+  } catch (_error) {
+    return createErrorResponse(
+      "INVALID_REQUEST",
+      "Invalid JSON in request body",
+      400,
+    );
+  }
+
   // Rate limiting check
   const clientIP = getClientIP(request.headers);
 
@@ -160,37 +190,6 @@ export async function POST(request: Request) {
           (rateLimitResult.reset - Date.now()) / 1000,
         ).toString(),
       },
-    );
-  }
-
-  // Parse and validate request body
-  let requestData: PlayCheckerRequest;
-  try {
-    const json = await request.json();
-    const parsed = playCheckerRequestSchema.safeParse(json);
-
-    if (!parsed.success) {
-      return createErrorResponse(
-        "INVALID_REQUEST",
-        "Invalid request format",
-        400,
-        {
-          details: {
-            issues: parsed.error.issues.map((issue) => ({
-              field: issue.path.join("."),
-              message: issue.message,
-            })),
-          },
-        },
-      );
-    }
-
-    requestData = parsed.data;
-  } catch (_error) {
-    return createErrorResponse(
-      "INVALID_REQUEST",
-      "Invalid JSON in request body",
-      400,
     );
   }
 

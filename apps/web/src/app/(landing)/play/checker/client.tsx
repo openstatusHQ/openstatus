@@ -152,7 +152,7 @@ export function Form({
           if (!response.ok) {
             try {
               const json = await response.json();
-              toast.error(json.message, {
+              toast.error(json.error, {
                 id: toastId,
                 className: "text-destructive!",
               });
