@@ -9,10 +9,15 @@ import {
 import { getClientIP, ratelimit } from "@/lib/ratelimit";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import { after } from "next/server";
 import { z } from "zod";
 
 export const runtime = "edge";
+
+const RATE_LIMIT_WINDOW = 60; // 60 seconds
+const MAX_REQUESTS_PER_WINDOW = 5;
 
 // Request schema validation
 const playCheckerRequestSchema = z.object({
@@ -196,8 +201,8 @@ export async function POST(request: Request) {
   }
 
   const rateLimitResult = await ratelimit(`play-checker:${clientIP}`, {
-    window: 60, // 60 seconds
-    limit: 10, // 10 requests
+    window: RATE_LIMIT_WINDOW,
+    limit: MAX_REQUESTS_PER_WINDOW,
   });
 
   if (!rateLimitResult.success) {
@@ -223,6 +228,11 @@ export async function POST(request: Request) {
 
   const compact = new URL(request.url).searchParams.get("compact") === "true";
   const uuid = crypto.randomUUID().replace(/-/g, "");
+  after(async () => {
+    const analytics = await setupAnalytics({});
+    const additionalProps = { url, uuid, compact };
+    await analytics.track({ ...Events.GlobalSpeedChecker, ...additionalProps });
+  });
   await storeBaseCheckerData({ url, method, id: uuid });
 
   const iterator = makeIterator({
