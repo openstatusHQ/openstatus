@@ -90,7 +90,7 @@ async function* makeIterator({
       // Perform the fetch operation
       const check =
         process.env.NODE_ENV === "production"
-          ? await checkRegion(url, region, { method })
+          ? await checkRegion({ url, region, method })
           : await mockCheckRegion(region);
 
       if ("body" in check) {
@@ -194,20 +194,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const { url, method, body, headers } = requestData;
+  const { url, method } = requestData;
 
   const uuid = crypto.randomUUID().replace(/-/g, "");
-  await storeBaseCheckerData({ url, method, id: uuid, body, headers });
+  await storeBaseCheckerData({ url, method, id: uuid });
 
   const iterator = makeIterator({
     url,
     method,
     id: uuid,
-    rateLimit: {
-      limit: rateLimitResult.limit,
-      remaining: rateLimitResult.remaining,
-      reset: rateLimitResult.reset,
-    },
   });
   const stream = iteratorToStream(iterator);
   return new Response(stream, {
