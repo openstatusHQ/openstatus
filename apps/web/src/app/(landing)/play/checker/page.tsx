@@ -1,6 +1,7 @@
-import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
+import { mockCheckAllRegions } from "@/lib/checker/mock";
+import { getCheckerDataById } from "@/lib/checker/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -8,7 +9,6 @@ import {
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
-import { mockCheckAllRegions } from "./api/mock";
 import {
   CheckerProvider,
   DetailsButtonLink,

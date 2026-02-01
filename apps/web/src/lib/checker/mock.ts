@@ -1,7 +1,4 @@
-import {
-  type RegionChecker,
-  cachedCheckerSchema,
-} from "@/components/ping-response-analysis/utils";
+import { type RegionChecker, cachedCheckerSchema } from "@/lib/checker/utils";
 import { wait } from "@/lib/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 

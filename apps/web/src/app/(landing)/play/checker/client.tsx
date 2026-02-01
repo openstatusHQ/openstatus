@@ -7,7 +7,7 @@ import {
   latencyFormatter,
   regionCheckerSchema,
   regionFormatter,
-} from "@/components/ping-response-analysis/utils";
+} from "@/lib/checker/utils";
 import { toast } from "@/lib/toast";
 import { cn, notEmpty } from "@/lib/utils";
 import {
@@ -148,6 +148,24 @@ export function Form({
             body: JSON.stringify({ url, method }),
             signal: abortController.signal,
           });
+
+          if (!response.ok) {
+            try {
+              const json = await response.json();
+              toast.error(json.error, {
+                id: toastId,
+                className: "text-destructive!",
+              });
+              return;
+            } catch {
+              toast.error("Failed to fetch data", {
+                id: toastId,
+                description: "Please try again.",
+                className: "text-destructive!",
+              });
+              return;
+            }
+          }
 
           clearTimeout(timeoutId);
 

@@ -1,7 +1,4 @@
-import {
-  type Timing,
-  getTimingPhases,
-} from "@/components/ping-response-analysis/utils";
+import { type Timing, getTimingPhases } from "@/lib/checker/utils";
 import { toast } from "@/lib/toast";
 import { type Region, regionDict } from "@openstatus/regions";
 
