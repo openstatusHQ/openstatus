@@ -156,6 +156,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const { url, method } = requestData;
+
+  if (
+    url.hostname.includes("openstatus.dev") &&
+    url.pathname.startsWith("/play/checker/api")
+  ) {
+    return createErrorResponse(
+      "INVALID_REQUEST",
+      "Self-requests are not allowed",
+      400,
+    );
+  }
+
   // Rate limiting check
   const clientIP = getClientIP(request.headers);
 
@@ -192,8 +205,6 @@ export async function POST(request: Request) {
       },
     );
   }
-
-  const { url, method } = requestData;
 
   const uuid = crypto.randomUUID().replace(/-/g, "");
   await storeBaseCheckerData({ url, method, id: uuid });
