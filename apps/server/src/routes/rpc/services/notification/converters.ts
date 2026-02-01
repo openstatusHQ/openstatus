@@ -1,4 +1,5 @@
 import { create } from "@bufbuild/protobuf";
+import type { NotificationProvider as DBNotificationProvider } from "@openstatus/db/src/schema";
 import type {
   Notification,
   NotificationData,
@@ -11,7 +12,6 @@ import {
   NotificationSummarySchema,
   OpsgenieRegion,
 } from "@openstatus/proto/notification/v1";
-import type { NotificationProvider as DBNotificationProvider } from "@openstatus/db/src/schema";
 
 type DBNotification = {
   id: number;
@@ -275,8 +275,7 @@ export function protoDataToDb(
       return JSON.stringify({
         opsgenie: {
           apiKey: data.data.value.apiKey,
-          region:
-            data.data.value.region === OpsgenieRegion.EU ? "eu" : "us",
+          region: data.data.value.region === OpsgenieRegion.EU ? "eu" : "us",
         },
       });
     case "slack":

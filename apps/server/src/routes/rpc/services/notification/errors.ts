@@ -46,7 +46,9 @@ function createError(
 /**
  * Creates a "notification not found" error.
  */
-export function notificationNotFoundError(notificationId: string): ConnectError {
+export function notificationNotFoundError(
+  notificationId: string,
+): ConnectError {
   return createError(
     "Notification not found",
     Code.NotFound,

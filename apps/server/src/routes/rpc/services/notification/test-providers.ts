@@ -1,8 +1,3 @@
-import {
-  type NotificationData,
-  NotificationProvider,
-  OpsgenieRegion,
-} from "@openstatus/proto/notification/v1";
 import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
@@ -13,6 +8,11 @@ import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
 import { sendTest as sendWebhookTest } from "@openstatus/notification-webhook";
+import {
+  type NotificationData,
+  NotificationProvider,
+  OpsgenieRegion,
+} from "@openstatus/proto/notification/v1";
 import {
   invalidNotificationDataError,
   providerNotSupportedError,

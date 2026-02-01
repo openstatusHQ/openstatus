@@ -94,7 +94,10 @@ async function validateMonitorIds(
     .select({ id: monitor.id })
     .from(monitor)
     .where(
-      and(inArray(monitor.id, numericIds), eq(monitor.workspaceId, workspaceId)),
+      and(
+        inArray(monitor.id, numericIds),
+        eq(monitor.workspaceId, workspaceId),
+      ),
     )
     .all();
 
@@ -300,7 +303,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
                     webhook: 11,
                     whatsapp: 12,
                   };
-                  return caseToProvider[req.data!.data.case!] ?? 0;
+                  return caseToProvider[req.data.data.case] ?? 0;
                 })()
               : 0,
             req.data,

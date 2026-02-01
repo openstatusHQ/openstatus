@@ -72,7 +72,9 @@ beforeAll(async () => {
       workspaceId: 1,
       name: `${TEST_PREFIX}-to-delete`,
       provider: "discord",
-      data: JSON.stringify({ discord: "https://discord.com/api/webhooks/test" }),
+      data: JSON.stringify({
+        discord: "https://discord.com/api/webhooks/test",
+      }),
     })
     .returning()
     .get();
@@ -104,7 +106,9 @@ afterAll(async () => {
     .where(eq(notificationsToMonitors.notificationId, testNotificationId));
   await db
     .delete(notificationsToMonitors)
-    .where(eq(notificationsToMonitors.notificationId, testNotificationToUpdateId));
+    .where(
+      eq(notificationsToMonitors.notificationId, testNotificationToUpdateId),
+    );
 
   // Clean up notifications
   await db
@@ -147,7 +151,10 @@ describe("NotificationService.CreateNotification", () => {
     await db
       .delete(notificationsToMonitors)
       .where(
-        eq(notificationsToMonitors.notificationId, Number(data.notification.id)),
+        eq(
+          notificationsToMonitors.notificationId,
+          Number(data.notification.id),
+        ),
       );
     await db
       .delete(notification)
@@ -236,7 +243,10 @@ describe("NotificationService.CreateNotification", () => {
     await db
       .delete(notificationsToMonitors)
       .where(
-        eq(notificationsToMonitors.notificationId, Number(data.notification.id)),
+        eq(
+          notificationsToMonitors.notificationId,
+          Number(data.notification.id),
+        ),
       );
     await db
       .delete(notification)
