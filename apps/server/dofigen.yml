@@ -25,6 +25,19 @@ builders:
       - packages/db/package.json
       - packages/proto/package.json
       - packages/emails/package.json
+      - packages/notifications/base/package.json
+      - packages/notifications/discord/package.json
+      - packages/notifications/email/package.json
+      - packages/notifications/grafana-oncall/package.json
+      - packages/notifications/google-chat/package.json
+      - packages/notifications/ntfy/package.json
+      - packages/notifications/opsgenie/package.json
+      - packages/notifications/pagerduty/package.json
+      - packages/notifications/slack/package.json
+      - packages/notifications/telegram/package.json
+      - packages/notifications/twillio-whatsapp/package.json
+      - packages/notifications/twillio-sms/package.json
+      - packages/notifications/webhook/package.json
       - packages/error/package.json
       - packages/regions/package.json
       - packages/tinybird/package.json

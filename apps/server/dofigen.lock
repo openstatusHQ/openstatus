@@ -15,9 +15,9 @@ effective: |
         path: oven/bun
         digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
       label:
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
         org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
         org.opencontainers.image.stage: install
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
       workdir: /app/
       run:
       - bun install --production --frozen-lockfile --verbose
@@ -38,6 +38,32 @@ effective: |
         source: packages/proto/package.json
       - target: packages/emails/package.json
         source: packages/emails/package.json
+      - target: packages/notifications/base/package.json
+        source: packages/notifications/base/package.json
+      - target: packages/notifications/discord/package.json
+        source: packages/notifications/discord/package.json
+      - target: packages/notifications/email/package.json
+        source: packages/notifications/email/package.json
+      - target: packages/notifications/grafana-oncall/package.json
+        source: packages/notifications/grafana-oncall/package.json
+      - target: packages/notifications/google-chat/package.json
+        source: packages/notifications/google-chat/package.json
+      - target: packages/notifications/ntfy/package.json
+        source: packages/notifications/ntfy/package.json
+      - target: packages/notifications/opsgenie/package.json
+        source: packages/notifications/opsgenie/package.json
+      - target: packages/notifications/pagerduty/package.json
+        source: packages/notifications/pagerduty/package.json
+      - target: packages/notifications/slack/package.json
+        source: packages/notifications/slack/package.json
+      - target: packages/notifications/telegram/package.json
+        source: packages/notifications/telegram/package.json
+      - target: packages/notifications/twillio-whatsapp/package.json
+        source: packages/notifications/twillio-whatsapp/package.json
+      - target: packages/notifications/twillio-sms/package.json
+        source: packages/notifications/twillio-sms/package.json
+      - target: packages/notifications/webhook/package.json
+        source: packages/notifications/webhook/package.json
       - target: packages/error/package.json
         source: packages/error/package.json
       - target: packages/regions/package.json
@@ -61,9 +87,9 @@ effective: |
         path: oven/bun
         digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
       label:
-        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
         org.opencontainers.image.stage: build
         org.opencontainers.image.base.digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
+        org.opencontainers.image.base.name: docker.io/oven/bun:1.3.6
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -81,13 +107,13 @@ effective: |
     path: debian
     digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
   label:
+    io.dofigen.version: 2.6.0
     org.opencontainers.image.vendor: OpenStatus
     org.opencontainers.image.base.digest: sha256:b32674fb57780ad57d7b0749242d3f585f462f4ec4a60ae0adacd945f9cb9734
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
     org.opencontainers.image.description: REST API server with Hono framework for OpenStatus
     org.opencontainers.image.authors: OpenStatus Team
-    org.opencontainers.image.base.name: docker.io/debian:bullseye-slim
-    io.dofigen.version: 2.6.0
     org.opencontainers.image.title: OpenStatus Server
   user:
     user: '1000'
@@ -125,7 +151,7 @@ images:
           digest: sha256:f20d9cf365ab35529384f1717687c739c92e6f39157a35a95ef06f4049a10e4a
 resources:
   dofigen.yml:
-    hash: 7e47c3833d499c7394c76a65c785330d2c16fc1b1b29b423fc71a6ec4feccd14
+    hash: 534b1d0a16fe15d3ca9a01f090b1303ac7c2e011607e25167357592a6a987129
     content: |
       # Files to exclude from Docker context
       ignore:
@@ -154,6 +180,19 @@ resources:
             - packages/db/package.json
             - packages/proto/package.json
             - packages/emails/package.json
+            - packages/notifications/base/package.json
+            - packages/notifications/discord/package.json
+            - packages/notifications/email/package.json
+            - packages/notifications/grafana-oncall/package.json
+            - packages/notifications/google-chat/package.json
+            - packages/notifications/ntfy/package.json
+            - packages/notifications/opsgenie/package.json
+            - packages/notifications/pagerduty/package.json
+            - packages/notifications/slack/package.json
+            - packages/notifications/telegram/package.json
+            - packages/notifications/twillio-whatsapp/package.json
+            - packages/notifications/twillio-sms/package.json
+            - packages/notifications/webhook/package.json
             - packages/error/package.json
             - packages/regions/package.json
             - packages/tinybird/package.json
