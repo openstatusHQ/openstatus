@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package openstatus.maintenance.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/maintenance/v1/maintenance.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/maintenance/v1;maintenancev1";
+
+// MaintenanceService provides CRUD operations for maintenance windows.
+service MaintenanceService {
+  // CreateMaintenance creates a new maintenance window.
+  rpc CreateMaintenance(CreateMaintenanceRequest) returns (CreateMaintenanceResponse);
+
+  // GetMaintenance retrieves a specific maintenance window by ID.
+  rpc GetMaintenance(GetMaintenanceRequest) returns (GetMaintenanceResponse);
+
+  // ListMaintenances returns all maintenance windows for the workspace.
+  rpc ListMaintenances(ListMaintenancesRequest) returns (ListMaintenancesResponse);
+
+  // UpdateMaintenance updates a maintenance window.
+  rpc UpdateMaintenance(UpdateMaintenanceRequest) returns (UpdateMaintenanceResponse);
+
+  // DeleteMaintenance removes a maintenance window.
+  rpc DeleteMaintenance(DeleteMaintenanceRequest) returns (DeleteMaintenanceResponse);
+}
+
+// --- Create Maintenance ---
+
+message CreateMaintenanceRequest {
+  // Title of the maintenance (required, 1-256 characters).
+  string title = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // Message describing the maintenance (required).
+  string message = 2 [(buf.validate.field).string.min_len = 1];
+
+  // Start time of the maintenance window (RFC 3339 format, required).
+  string from = 3 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+
+  // End time of the maintenance window (RFC 3339 format, required).
+  string to = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+
+  // Page ID to associate with this maintenance (required).
+  string page_id = 5 [(buf.validate.field).string.min_len = 1];
+
+  // Page component IDs to associate with this maintenance (optional).
+  repeated string page_component_ids = 6;
+
+  // Whether to notify subscribers about this maintenance (optional, defaults to false).
+  optional bool notify = 7;
+}
+
+message CreateMaintenanceResponse {
+  // The created maintenance.
+  Maintenance maintenance = 1;
+}
+
+// --- Get Maintenance ---
+
+message GetMaintenanceRequest {
+  // ID of the maintenance to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message GetMaintenanceResponse {
+  // The requested maintenance.
+  Maintenance maintenance = 1;
+}
+
+// --- List Maintenances ---
+
+message ListMaintenancesRequest {
+  // Maximum number of maintenances to return (1-100, defaults to 50).
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+
+  // Number of maintenances to skip for pagination (defaults to 0).
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+
+  // Filter by page ID (optional).
+  optional string page_id = 3;
+}
+
+message ListMaintenancesResponse {
+  // List of maintenances.
+  repeated MaintenanceSummary maintenances = 1;
+
+  // Total number of maintenances matching the filter.
+  int32 total_size = 2;
+}
+
+// --- Update Maintenance ---
+
+message UpdateMaintenanceRequest {
+  // ID of the maintenance to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // New title for the maintenance (optional).
+  optional string title = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+
+  // New message for the maintenance (optional).
+  optional string message = 3;
+
+  // New start time (RFC 3339 format, optional).
+  optional string from = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+
+  // New end time (RFC 3339 format, optional).
+  optional string to = 5 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+
+  // New page ID (optional).
+  optional string page_id = 6;
+
+  // New list of page component IDs (optional, replaces existing list).
+  repeated string page_component_ids = 7;
+}
+
+message UpdateMaintenanceResponse {
+  // The updated maintenance.
+  Maintenance maintenance = 1;
+}
+
+// --- Delete Maintenance ---
+
+message DeleteMaintenanceRequest {
+  // ID of the maintenance to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message DeleteMaintenanceResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}

@@ -188,7 +188,7 @@ describe("MonitorService.ListMonitors", () => {
   test("returns HTTP monitors with correct structure", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 100 }, // Request more to ensure we get our test monitors
+      { limit: 100 }, // Request more to ensure we get our test monitors
       {
         "x-openstatus-key": "1",
       },
@@ -216,7 +216,7 @@ describe("MonitorService.ListMonitors", () => {
   test("returns TCP monitors with correct structure", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 100 }, // Request more to ensure we get our test monitors
+      { limit: 100 }, // Request more to ensure we get our test monitors
       {
         "x-openstatus-key": "1",
       },
@@ -239,7 +239,7 @@ describe("MonitorService.ListMonitors", () => {
   test("returns DNS monitors with correct structure", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 100 }, // Request more to ensure we get our test monitors
+      { limit: 100 }, // Request more to ensure we get our test monitors
       {
         "x-openstatus-key": "1",
       },
@@ -266,10 +266,10 @@ describe("MonitorService.ListMonitors", () => {
     expect(res.status).toBe(401);
   });
 
-  test("respects page_size parameter", async () => {
+  test("respects limit parameter", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 2 },
+      { limit: 2 },
       { "x-openstatus-key": "1" },
     );
 
@@ -286,36 +286,37 @@ describe("MonitorService.ListMonitors", () => {
     expect(totalMonitors).toBeLessThanOrEqual(2);
   });
 
-  test("returns nextPageToken for pagination", async () => {
+  test("returns totalSize for pagination", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 1 },
+      { limit: 1 },
       { "x-openstatus-key": "1" },
     );
 
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    // If there's more than 1 monitor, should have a nextPageToken
-    expect(data).toHaveProperty("nextPageToken");
+    // Should have totalSize indicating total number of monitors
+    expect(data).toHaveProperty("totalSize");
+    expect(typeof data.totalSize).toBe("number");
   });
 
-  test("uses pageToken for pagination", async () => {
+  test("uses offset for pagination", async () => {
     // First page
     const res1 = await connectRequest(
       "ListMonitors",
-      { pageSize: 1 },
+      { limit: 1 },
       { "x-openstatus-key": "1" },
     );
 
     expect(res1.status).toBe(200);
     const data1 = await res1.json();
 
-    if (data1.nextPageToken) {
-      // Second page
+    if (data1.totalSize > 1) {
+      // Second page using offset
       const res2 = await connectRequest(
         "ListMonitors",
-        { pageSize: 1, pageToken: data1.nextPageToken },
+        { limit: 1, offset: 1 },
         { "x-openstatus-key": "1" },
       );
 
@@ -362,7 +363,7 @@ describe("MonitorService.ListMonitors", () => {
     try {
       const res = await connectRequest(
         "ListMonitors",
-        { pageSize: 100 },
+        { limit: 100 },
         {
           "x-openstatus-key": "1",
         },
@@ -1232,7 +1233,7 @@ describe("MonitorService - Assertions Round-trip", () => {
       // List monitors to verify assertions are retrieved correctly
       const listRes = await connectRequest(
         "ListMonitors",
-        { pageSize: 100 },
+        { limit: 100 },
         { "x-openstatus-key": "1" },
       );
 
@@ -1280,7 +1281,7 @@ describe("MonitorService - Assertions Round-trip", () => {
     try {
       const listRes = await connectRequest(
         "ListMonitors",
-        { pageSize: 100 },
+        { limit: 100 },
         { "x-openstatus-key": "1" },
       );
 
@@ -1332,7 +1333,7 @@ describe("MonitorService - OpenTelemetry Configuration", () => {
     try {
       const listRes = await connectRequest(
         "ListMonitors",
-        { pageSize: 100 },
+        { limit: 100 },
         { "x-openstatus-key": "1" },
       );
 
@@ -1378,7 +1379,7 @@ describe("MonitorService - OpenTelemetry Configuration", () => {
     try {
       const listRes = await connectRequest(
         "ListMonitors",
-        { pageSize: 100 },
+        { limit: 100 },
         { "x-openstatus-key": "1" },
       );
 
@@ -1554,7 +1555,7 @@ describe("MonitorService - Status Field", () => {
   test("HTTP monitor includes status field in response", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 100 },
+      { limit: 100 },
       { "x-openstatus-key": "1" },
     );
 
@@ -1580,7 +1581,7 @@ describe("MonitorService - Status Field", () => {
   test("TCP monitor includes status field in response", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 100 },
+      { limit: 100 },
       { "x-openstatus-key": "1" },
     );
 
@@ -1606,7 +1607,7 @@ describe("MonitorService - Status Field", () => {
   test("DNS monitor includes status field in response", async () => {
     const res = await connectRequest(
       "ListMonitors",
-      { pageSize: 100 },
+      { limit: 100 },
       { "x-openstatus-key": "1" },
     );
 

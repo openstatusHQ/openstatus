@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.status_page.v1;
 
 import "buf/validate/validate.proto";
+import "openstatus/maintenance/v1/maintenance.proto";
 import "openstatus/status_page/v1/page_component.proto";
 import "openstatus/status_page/v1/page_subscriber.proto";
 import "openstatus/status_page/v1/status_page.proto";
@@ -433,7 +434,7 @@ message GetStatusPageContentResponse {
   repeated openstatus.status_report.v1.StatusReport status_reports = 4;
 
   // Scheduled maintenances.
-  repeated Maintenance maintenances = 5;
+  repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 5;
 }
 
 // --- Get Overall Status ---

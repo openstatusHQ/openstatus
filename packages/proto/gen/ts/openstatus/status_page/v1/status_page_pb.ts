@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_page/v1/status_page.proto.
  */
 export const file_openstatus_status_page_v1_status_page: GenFile = /*@__PURE__*/
-  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIsoCCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEgwKBHNsdWcYBCABKAkSFQoNY3VzdG9tX2RvbWFpbhgFIAEoCRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSEgoKY3JlYXRlZF9hdBgMIAEoCRISCgp1cGRhdGVkX2F0GA0gASgJIncKEVN0YXR1c1BhZ2VTdW1tYXJ5EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBHNsdWcYAyABKAkSEQoJcHVibGlzaGVkGAQgASgIEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSKXAQoLTWFpbnRlbmFuY2USCgoCaWQYASABKAkSDQoFdGl0bGUYAiABKAkSDwoHbWVzc2FnZRgDIAEoCRIMCgRmcm9tGAQgASgJEgoKAnRvGAUgASgJEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgGIAMoCRISCgpjcmVhdGVkX2F0GAcgASgJEhIKCnVwZGF0ZWRfYXQYCCABKAkqnAEKDlBhZ2VBY2Nlc3NUeXBlEiAKHFBBR0VfQUNDRVNTX1RZUEVfVU5TUEVDSUZJRUQQABIbChdQQUdFX0FDQ0VTU19UWVBFX1BVQkxJQxABEicKI1BBR0VfQUNDRVNTX1RZUEVfUEFTU1dPUkRfUFJPVEVDVEVEEAISIgoeUEFHRV9BQ0NFU1NfVFlQRV9BVVRIRU5USUNBVEVEEAMqaQoJUGFnZVRoZW1lEhoKFlBBR0VfVEhFTUVfVU5TUEVDSUZJRUQQABIVChFQQUdFX1RIRU1FX1NZU1RFTRABEhQKEFBBR0VfVEhFTUVfTElHSFQQAhITCg9QQUdFX1RIRU1FX0RBUksQAyrsAQoNT3ZlcmFsbFN0YXR1cxIeChpPVkVSQUxMX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGk9WRVJBTExfU1RBVFVTX09QRVJBVElPTkFMEAESGwoXT1ZFUkFMTF9TVEFUVVNfREVHUkFERUQQAhIhCh1PVkVSQUxMX1NUQVRVU19QQVJUSUFMX09VVEFHRRADEh8KG09WRVJBTExfU1RBVFVTX01BSk9SX09VVEFHRRAEEh4KGk9WRVJBTExfU1RBVFVTX01BSU5URU5BTkNFEAUSGgoWT1ZFUkFMTF9TVEFUVVNfVU5LTk9XThAGQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw");
+  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIsoCCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEgwKBHNsdWcYBCABKAkSFQoNY3VzdG9tX2RvbWFpbhgFIAEoCRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSEgoKY3JlYXRlZF9hdBgMIAEoCRISCgp1cGRhdGVkX2F0GA0gASgJIncKEVN0YXR1c1BhZ2VTdW1tYXJ5EgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEgwKBHNsdWcYAyABKAkSEQoJcHVibGlzaGVkGAQgASgIEhIKCmNyZWF0ZWRfYXQYBSABKAkSEgoKdXBkYXRlZF9hdBgGIAEoCSqcAQoOUGFnZUFjY2Vzc1R5cGUSIAocUEFHRV9BQ0NFU1NfVFlQRV9VTlNQRUNJRklFRBAAEhsKF1BBR0VfQUNDRVNTX1RZUEVfUFVCTElDEAESJwojUEFHRV9BQ0NFU1NfVFlQRV9QQVNTV09SRF9QUk9URUNURUQQAhIiCh5QQUdFX0FDQ0VTU19UWVBFX0FVVEhFTlRJQ0FURUQQAyppCglQYWdlVGhlbWUSGgoWUEFHRV9USEVNRV9VTlNQRUNJRklFRBAAEhUKEVBBR0VfVEhFTUVfU1lTVEVNEAESFAoQUEFHRV9USEVNRV9MSUdIVBACEhMKD1BBR0VfVEhFTUVfREFSSxADKuwBCg1PdmVyYWxsU3RhdHVzEh4KGk9WRVJBTExfU1RBVFVTX1VOU1BFQ0lGSUVEEAASHgoaT1ZFUkFMTF9TVEFUVVNfT1BFUkFUSU9OQUwQARIbChdPVkVSQUxMX1NUQVRVU19ERUdSQURFRBACEiEKHU9WRVJBTExfU1RBVFVTX1BBUlRJQUxfT1VUQUdFEAMSHwobT1ZFUkFMTF9TVEFUVVNfTUFKT1JfT1VUQUdFEAQSHgoaT1ZFUkFMTF9TVEFUVVNfTUFJTlRFTkFOQ0UQBRIaChZPVkVSQUxMX1NUQVRVU19VTktOT1dOEAZCWlpYZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxO3N0YXR1c3BhZ2V2MWIGcHJvdG8z");
 
 /**
  * StatusPage represents a full status page with all details.
@@ -172,76 +172,6 @@ export type StatusPageSummary = Message<"openstatus.status_page.v1.StatusPageSum
  */
 export const StatusPageSummarySchema: GenMessage<StatusPageSummary> = /*@__PURE__*/
   messageDesc(file_openstatus_status_page_v1_status_page, 1);
-
-/**
- * Maintenance represents a scheduled maintenance window.
- *
- * @generated from message openstatus.status_page.v1.Maintenance
- */
-export type Maintenance = Message<"openstatus.status_page.v1.Maintenance"> & {
-  /**
-   * Unique identifier for the maintenance.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-
-  /**
-   * Title of the maintenance.
-   *
-   * @generated from field: string title = 2;
-   */
-  title: string;
-
-  /**
-   * Message describing the maintenance.
-   *
-   * @generated from field: string message = 3;
-   */
-  message: string;
-
-  /**
-   * Start time of the maintenance window (RFC 3339 format).
-   *
-   * @generated from field: string from = 4;
-   */
-  from: string;
-
-  /**
-   * End time of the maintenance window (RFC 3339 format).
-   *
-   * @generated from field: string to = 5;
-   */
-  to: string;
-
-  /**
-   * IDs of affected page components.
-   *
-   * @generated from field: repeated string page_component_ids = 6;
-   */
-  pageComponentIds: string[];
-
-  /**
-   * Timestamp when the maintenance was created (RFC 3339 format).
-   *
-   * @generated from field: string created_at = 7;
-   */
-  createdAt: string;
-
-  /**
-   * Timestamp when the maintenance was last updated (RFC 3339 format).
-   *
-   * @generated from field: string updated_at = 8;
-   */
-  updatedAt: string;
-};
-
-/**
- * Describes the message openstatus.status_page.v1.Maintenance.
- * Use `create(MaintenanceSchema)` to create a new message.
- */
-export const MaintenanceSchema: GenMessage<Maintenance> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_page_v1_status_page, 2);
 
 /**
  * PageAccessType defines who can access the status page.
