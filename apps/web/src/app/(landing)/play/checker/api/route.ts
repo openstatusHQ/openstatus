@@ -5,6 +5,7 @@ import {
   storeBaseCheckerData,
   storeCheckerData,
 } from "@/lib/checker/utils";
+import { getClientIP, ratelimit } from "@/lib/ratelimit";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
@@ -65,6 +66,51 @@ async function* generator(id: string) {
 }
 
 export async function POST(request: Request) {
+  // Rate limiting check
+  const clientIP = getClientIP(request.headers);
+
+  if (!clientIP) {
+    return new Response(
+      JSON.stringify({
+        error: "Unable to determine client IP address",
+      }),
+      {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+  }
+
+  const rateLimitResult = await ratelimit(`play-checker:${clientIP}`, {
+    window: 60, // 60 seconds
+    limit: 10, // 10 requests
+  });
+
+  if (!rateLimitResult.success) {
+    return new Response(
+      JSON.stringify({
+        error: "Rate limit exceeded",
+        limit: rateLimitResult.limit,
+        remaining: rateLimitResult.remaining,
+        reset: rateLimitResult.reset,
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+          "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+          "X-RateLimit-Reset": rateLimitResult.reset.toString(),
+          "Retry-After": Math.ceil(
+            (rateLimitResult.reset - Date.now()) / 1000,
+          ).toString(),
+        },
+      },
+    );
+  }
+
   const json = await request.json();
   const { url, method, body, headers } = json;
 
@@ -73,5 +119,11 @@ export async function POST(request: Request) {
 
   const iterator = makeIterator({ url, method, id: uuid });
   const stream = iteratorToStream(iterator);
-  return new Response(stream);
+  return new Response(stream, {
+    headers: {
+      "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+      "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+      "X-RateLimit-Reset": rateLimitResult.reset.toString(),
+    },
+  });
 }
