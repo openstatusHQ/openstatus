@@ -166,13 +166,13 @@ message DeleteMonitorResponse {
 // ListMonitorsRequest is the request to list monitors.
 message ListMonitorsRequest {
   // Maximum number of monitors to return (1-100, defaults to 50).
-  optional int32 page_size = 1 [(buf.validate.field).int32 = {
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
     gte: 1
     lte: 100
   }];
 
-  // Token for pagination.
-  optional string page_token = 2;
+  // Number of monitors to skip for pagination (defaults to 0).
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
 }
 
 // ListMonitorsResponse is the response containing a list of monitors.
@@ -186,11 +186,8 @@ message ListMonitorsResponse {
   // DNS monitors in the workspace.
   repeated DNSMonitor dns_monitors = 3;
 
-  // Token for the next page of results.
-  string next_page_token = 4;
-
-  // Total number of monitors across all pages.
-  int32 total_size = 5;
+  // Total number of monitors across all types.
+  int32 total_size = 4;
 }
 
 // GetMonitorStatusRequest is the request to get the status of all regions for a monitor.

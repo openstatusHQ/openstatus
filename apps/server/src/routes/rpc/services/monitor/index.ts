@@ -577,8 +577,8 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const rpcCtx = getRpcContext(ctx);
     const workspaceId = rpcCtx.workspace.id;
 
-    const pageSize = Math.min(Math.max(req.pageSize || 50, 1), 100);
-    const offset = req.pageToken ? Number.parseInt(req.pageToken, 10) : 0;
+    const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
+    const offset = req.offset ?? 0;
 
     // Build query conditions
     const conditions = [
@@ -600,13 +600,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       .select()
       .from(monitor)
       .where(and(...conditions))
-      .limit(pageSize)
+      .limit(limit)
       .offset(offset)
       .all();
-
-    // Calculate next page token
-    const nextOffset = offset + monitors.length;
-    const nextPageToken = nextOffset < totalCount ? String(nextOffset) : "";
 
     // Group monitors by type
     const httpMonitors: HTTPMonitor[] = [];
@@ -637,7 +633,6 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       httpMonitors,
       tcpMonitors,
       dnsMonitors,
-      nextPageToken,
       totalSize: totalCount,
     };
   },

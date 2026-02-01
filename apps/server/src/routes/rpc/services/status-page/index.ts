@@ -933,12 +933,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         .map((mc) => String(mc.pageComponentId));
 
       return {
-        $typeName: "openstatus.status_page.v1.Maintenance" as const,
+        $typeName: "openstatus.maintenance.v1.MaintenanceSummary" as const,
         id: String(m.id),
         title: m.title,
         message: m.message,
         from: m.from.toISOString(),
         to: m.to.toISOString(),
+        pageId: String(pageData.id),
         pageComponentIds: componentIds,
         createdAt: m.createdAt?.toISOString() ?? "",
         updatedAt: m.updatedAt?.toISOString() ?? "",
