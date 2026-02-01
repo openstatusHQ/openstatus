@@ -2,6 +2,7 @@ import { mockCheckRegion } from "@/lib/checker/mock";
 import {
   type Method,
   checkRegion,
+  getTimingPhases,
   storeBaseCheckerData,
   storeCheckerData,
 } from "@/lib/checker/utils";
@@ -76,10 +77,13 @@ async function* makeIterator({
   url,
   method,
   id,
+  compact,
 }: {
   url: string;
   method: Method;
   id: string;
+  // used for openstatushq/skills:global-speed-checker to reduce size of the response
+  compact: boolean;
 }) {
   // Create an array to store all the promises
   const promises = AVAILABLE_REGIONS.map(async (region, index) => {
@@ -99,9 +103,18 @@ async function* makeIterator({
         await storeCheckerData({ check, id });
       }
 
+      // compact mode: remove headers and body and use calculated timing
+      const result =
+        compact && check.state === "success"
+          ? (() => {
+              const { headers: _h, body: _b, timing, ...rest } = check;
+              return { ...rest, timing: getTimingPhases(timing) };
+            })()
+          : check;
+
       return encoder.encode(
         `${JSON.stringify({
-          ...check,
+          ...result,
           index,
         })}\n`,
       );
@@ -126,6 +139,7 @@ async function* generator(id: string) {
 export async function POST(request: Request) {
   // Parse and validate request body
   let requestData: PlayCheckerRequest;
+
   try {
     const json = await request.json();
     const parsed = playCheckerRequestSchema.safeParse(json);
@@ -207,6 +221,7 @@ export async function POST(request: Request) {
     );
   }
 
+  const compact = new URL(request.url).searchParams.get("compact") === "true";
   const uuid = crypto.randomUUID().replace(/-/g, "");
   await storeBaseCheckerData({ url, method, id: uuid });
 
@@ -214,6 +229,7 @@ export async function POST(request: Request) {
     url,
     method,
     id: uuid,
+    compact,
   });
   const stream = iteratorToStream(iterator);
   return new Response(stream, {
