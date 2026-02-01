@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package openstatus.notification.v1;
+
+import "openstatus/notification/v1/providers.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/notification/v1;notificationv1";
+
+// Notification represents a notification channel with full details.
+message Notification {
+  // Unique identifier for the notification.
+  string id = 1;
+  // Display name for the notification channel.
+  string name = 2;
+  // Provider type.
+  NotificationProvider provider = 3;
+  // Provider-specific configuration.
+  NotificationData data = 4;
+  // IDs of monitors associated with this notification.
+  repeated string monitor_ids = 5;
+  // Timestamp when the notification was created (RFC 3339).
+  string created_at = 6;
+  // Timestamp when the notification was last updated (RFC 3339).
+  string updated_at = 7;
+}
+
+// NotificationSummary represents a notification channel summary for list responses.
+message NotificationSummary {
+  // Unique identifier for the notification.
+  string id = 1;
+  // Display name for the notification channel.
+  string name = 2;
+  // Provider type.
+  NotificationProvider provider = 3;
+  // Number of monitors associated with this notification.
+  int32 monitor_count = 4;
+  // Timestamp when the notification was created (RFC 3339).
+  string created_at = 5;
+  // Timestamp when the notification was last updated (RFC 3339).
+  string updated_at = 6;
+}

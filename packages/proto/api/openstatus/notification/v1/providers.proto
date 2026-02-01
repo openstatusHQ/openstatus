@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package openstatus.notification.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/notification/v1;notificationv1";
+
+// NotificationProvider represents the supported notification channel types.
+enum NotificationProvider {
+  // Unspecified provider.
+  NOTIFICATION_PROVIDER_UNSPECIFIED = 0;
+  // Discord webhook.
+  NOTIFICATION_PROVIDER_DISCORD = 1;
+  // Email notification.
+  NOTIFICATION_PROVIDER_EMAIL = 2;
+  // Google Chat webhook.
+  NOTIFICATION_PROVIDER_GOOGLE_CHAT = 3;
+  // Grafana OnCall webhook.
+  NOTIFICATION_PROVIDER_GRAFANA_ONCALL = 4;
+  // Ntfy notification service.
+  NOTIFICATION_PROVIDER_NTFY = 5;
+  // PagerDuty integration.
+  NOTIFICATION_PROVIDER_PAGERDUTY = 6;
+  // Opsgenie integration.
+  NOTIFICATION_PROVIDER_OPSGENIE = 7;
+  // Slack webhook.
+  NOTIFICATION_PROVIDER_SLACK = 8;
+  // SMS notification.
+  NOTIFICATION_PROVIDER_SMS = 9;
+  // Telegram bot.
+  NOTIFICATION_PROVIDER_TELEGRAM = 10;
+  // Custom webhook.
+  NOTIFICATION_PROVIDER_WEBHOOK = 11;
+  // WhatsApp notification.
+  NOTIFICATION_PROVIDER_WHATSAPP = 12;
+}
+
+// DiscordData contains configuration for Discord notifications.
+message DiscordData {
+  // Discord webhook URL.
+  string webhook_url = 1 [(buf.validate.field).string.uri = true];
+}
+
+// EmailData contains configuration for email notifications.
+message EmailData {
+  // Email address to send notifications to.
+  string email = 1 [(buf.validate.field).string.email = true];
+}
+
+// GoogleChatData contains configuration for Google Chat notifications.
+message GoogleChatData {
+  // Google Chat webhook URL.
+  string webhook_url = 1 [(buf.validate.field).string.uri = true];
+}
+
+// GrafanaOncallData contains configuration for Grafana OnCall notifications.
+message GrafanaOncallData {
+  // Grafana OnCall webhook URL.
+  string webhook_url = 1 [(buf.validate.field).string.uri = true];
+}
+
+// NtfyData contains configuration for Ntfy notifications.
+message NtfyData {
+  // Ntfy topic to publish to.
+  string topic = 1 [(buf.validate.field).string.min_len = 1];
+  // Ntfy server URL (defaults to https://ntfy.sh).
+  string server_url = 2;
+  // Optional authentication token.
+  optional string token = 3;
+}
+
+// PagerDutyData contains configuration for PagerDuty notifications.
+message PagerDutyData {
+  // PagerDuty integration key.
+  string integration_key = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// OpsgenieRegion represents the Opsgenie API region.
+enum OpsgenieRegion {
+  // Unspecified region.
+  OPSGENIE_REGION_UNSPECIFIED = 0;
+  // US region.
+  OPSGENIE_REGION_US = 1;
+  // EU region.
+  OPSGENIE_REGION_EU = 2;
+}
+
+// OpsgenieData contains configuration for Opsgenie notifications.
+message OpsgenieData {
+  // Opsgenie API key.
+  string api_key = 1 [(buf.validate.field).string.min_len = 1];
+  // Opsgenie region.
+  OpsgenieRegion region = 2 [(buf.validate.field).enum.defined_only = true];
+}
+
+// SlackData contains configuration for Slack notifications.
+message SlackData {
+  // Slack webhook URL.
+  string webhook_url = 1 [(buf.validate.field).string.uri = true];
+}
+
+// SmsData contains configuration for SMS notifications.
+message SmsData {
+  // Phone number to send SMS to.
+  string phone_number = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// TelegramData contains configuration for Telegram notifications.
+message TelegramData {
+  // Telegram chat ID.
+  string chat_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// WebhookHeader represents a custom header for webhook requests.
+message WebhookHeader {
+  // Header name.
+  string key = 1 [(buf.validate.field).string.min_len = 1];
+  // Header value.
+  string value = 2;
+}
+
+// WebhookData contains configuration for custom webhook notifications.
+message WebhookData {
+  // Webhook endpoint URL.
+  string endpoint = 1 [(buf.validate.field).string.uri = true];
+  // Optional custom headers.
+  repeated WebhookHeader headers = 2;
+}
+
+// WhatsappData contains configuration for WhatsApp notifications.
+message WhatsappData {
+  // Phone number to send WhatsApp messages to.
+  string phone_number = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// NotificationData is a union of provider-specific configuration.
+message NotificationData {
+  oneof data {
+    // Discord configuration.
+    DiscordData discord = 1;
+    // Email configuration.
+    EmailData email = 2;
+    // Google Chat configuration.
+    GoogleChatData google_chat = 3;
+    // Grafana OnCall configuration.
+    GrafanaOncallData grafana_oncall = 4;
+    // Ntfy configuration.
+    NtfyData ntfy = 5;
+    // PagerDuty configuration.
+    PagerDutyData pagerduty = 6;
+    // Opsgenie configuration.
+    OpsgenieData opsgenie = 7;
+    // Slack configuration.
+    SlackData slack = 8;
+    // SMS configuration.
+    SmsData sms = 9;
+    // Telegram configuration.
+    TelegramData telegram = 10;
+    // Webhook configuration.
+    WebhookData webhook = 11;
+    // WhatsApp configuration.
+    WhatsappData whatsapp = 12;
+  }
+}

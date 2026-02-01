@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package openstatus.notification.v1;
+
+import "buf/validate/validate.proto";
+import "openstatus/notification/v1/notification.proto";
+import "openstatus/notification/v1/providers.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/notification/v1;notificationv1";
+
+// NotificationService provides CRUD operations for notification channels.
+service NotificationService {
+  // CreateNotification creates a new notification channel.
+  rpc CreateNotification(CreateNotificationRequest) returns (CreateNotificationResponse);
+
+  // GetNotification retrieves a notification channel by ID.
+  rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse);
+
+  // ListNotifications returns a list of notification channels.
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+
+  // UpdateNotification updates an existing notification channel.
+  rpc UpdateNotification(UpdateNotificationRequest) returns (UpdateNotificationResponse);
+
+  // DeleteNotification removes a notification channel.
+  rpc DeleteNotification(DeleteNotificationRequest) returns (DeleteNotificationResponse);
+
+  // SendTestNotification sends a test notification to verify configuration.
+  rpc SendTestNotification(SendTestNotificationRequest) returns (SendTestNotificationResponse);
+
+  // CheckNotificationLimit checks if the workspace has reached its notification limit.
+  rpc CheckNotificationLimit(CheckNotificationLimitRequest) returns (CheckNotificationLimitResponse);
+}
+
+// CreateNotificationRequest is the request to create a new notification channel.
+message CreateNotificationRequest {
+  // Display name for the notification channel.
+  string name = 1 [(buf.validate.field).string.min_len = 1];
+  // Provider type.
+  NotificationProvider provider = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  // Provider-specific configuration.
+  NotificationData data = 3 [(buf.validate.field).required = true];
+  // IDs of monitors to associate with this notification.
+  repeated string monitor_ids = 4;
+}
+
+// CreateNotificationResponse is the response after creating a notification channel.
+message CreateNotificationResponse {
+  // The created notification channel.
+  Notification notification = 1;
+}
+
+// GetNotificationRequest is the request to get a notification channel.
+message GetNotificationRequest {
+  // Notification ID to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetNotificationResponse is the response containing the notification channel.
+message GetNotificationResponse {
+  // The notification channel.
+  Notification notification = 1;
+}
+
+// ListNotificationsRequest is the request to list notification channels.
+message ListNotificationsRequest {
+  // Maximum number of notifications to return (1-100, defaults to 50).
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+  // Number of notifications to skip for pagination (defaults to 0).
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+}
+
+// ListNotificationsResponse is the response containing notification channels.
+message ListNotificationsResponse {
+  // Notification channel summaries.
+  repeated NotificationSummary notifications = 1;
+  // Total number of notification channels.
+  int32 total_size = 2;
+}
+
+// UpdateNotificationRequest is the request to update a notification channel.
+message UpdateNotificationRequest {
+  // Notification ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+  // Updated display name.
+  optional string name = 2;
+  // Updated provider-specific configuration.
+  optional NotificationData data = 3;
+  // Updated monitor IDs to associate.
+  repeated string monitor_ids = 4;
+}
+
+// UpdateNotificationResponse is the response after updating a notification channel.
+message UpdateNotificationResponse {
+  // The updated notification channel.
+  Notification notification = 1;
+}
+
+// DeleteNotificationRequest is the request to delete a notification channel.
+message DeleteNotificationRequest {
+  // Notification ID to delete (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// DeleteNotificationResponse is the response after deleting a notification channel.
+message DeleteNotificationResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}
+
+// SendTestNotificationRequest is the request to send a test notification.
+message SendTestNotificationRequest {
+  // Provider type.
+  NotificationProvider provider = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  // Provider-specific configuration.
+  NotificationData data = 2 [(buf.validate.field).required = true];
+}
+
+// SendTestNotificationResponse is the response after sending a test notification.
+message SendTestNotificationResponse {
+  // Whether the test was successful.
+  bool success = 1;
+  // Optional error message if the test failed.
+  optional string error_message = 2;
+}
+
+// CheckNotificationLimitRequest is the request to check notification limits.
+message CheckNotificationLimitRequest {}
+
+// CheckNotificationLimitResponse is the response containing limit information.
+message CheckNotificationLimitResponse {
+  // Whether the workspace has reached its notification limit.
+  bool limit_reached = 1;
+  // Current number of notification channels.
+  int32 current_count = 2;
+  // Maximum allowed notification channels.
+  int32 max_count = 3;
+}
