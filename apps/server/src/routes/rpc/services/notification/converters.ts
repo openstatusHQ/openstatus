@@ -47,6 +47,58 @@ export function dbProviderToProto(
 }
 
 /**
+ * Maps NotificationProvider to expected NotificationData case.
+ */
+export function getExpectedDataCase(
+  provider: NotificationProvider,
+): string | undefined {
+  const mapping: Record<number, string> = {
+    [NotificationProvider.DISCORD]: "discord",
+    [NotificationProvider.EMAIL]: "email",
+    [NotificationProvider.GOOGLE_CHAT]: "googleChat",
+    [NotificationProvider.GRAFANA_ONCALL]: "grafanaOncall",
+    [NotificationProvider.NTFY]: "ntfy",
+    [NotificationProvider.PAGERDUTY]: "pagerduty",
+    [NotificationProvider.OPSGENIE]: "opsgenie",
+    [NotificationProvider.SLACK]: "slack",
+    [NotificationProvider.SMS]: "sms",
+    [NotificationProvider.TELEGRAM]: "telegram",
+    [NotificationProvider.WEBHOOK]: "webhook",
+    [NotificationProvider.WHATSAPP]: "whatsapp",
+  };
+  return mapping[provider];
+}
+
+/**
+ * Validates that the notification data matches the provider.
+ * Returns an error message if validation fails, undefined if valid.
+ */
+export function validateProviderDataConsistency(
+  provider: NotificationProvider,
+  data: NotificationData | undefined,
+): string | undefined {
+  if (provider === NotificationProvider.UNSPECIFIED) {
+    return "Provider must be specified";
+  }
+
+  const expectedCase = getExpectedDataCase(provider);
+  if (!expectedCase) {
+    return `Unknown provider: ${provider}`;
+  }
+
+  if (!data || data.data.case === undefined) {
+    return `Provider ${NotificationProvider[provider]} requires ${expectedCase} data, but no data was provided`;
+  }
+
+  const actualCase = data.data.case;
+  if (actualCase !== expectedCase) {
+    return `Provider ${NotificationProvider[provider]} requires ${expectedCase} data, got ${actualCase}`;
+  }
+
+  return undefined;
+}
+
+/**
  * Maps proto NotificationProvider enum to DB provider string.
  */
 export function protoProviderToDb(
@@ -234,7 +286,11 @@ export function dbDataToProto(
     }
 
     return protoData;
-  } catch {
+  } catch (error) {
+    console.error("Failed to parse notification data:", {
+      provider,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
     return undefined;
   }
 }

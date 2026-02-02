@@ -5,16 +5,19 @@ import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
-import type { NotificationService } from "@openstatus/proto/notification/v1";
+import { NotificationProvider, type NotificationService } from "@openstatus/proto/notification/v1";
 
 import { getRpcContext } from "../../interceptors";
 import {
   dbNotificationToProto,
   dbNotificationToProtoSummary,
+  dbProviderToProto,
   protoDataToDb,
   protoProviderToDb,
+  validateProviderDataConsistency,
 } from "./converters";
 import {
+  invalidNotificationDataError,
   monitorNotFoundError,
   notificationCreateFailedError,
   notificationIdRequiredError,
@@ -152,6 +155,15 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
       // Check if provider is allowed for this plan
       checkProviderAllowed(req.provider, limits);
 
+      // Validate provider-data consistency
+      const validationError = validateProviderDataConsistency(
+        req.provider,
+        req.data,
+      );
+      if (validationError) {
+        throw invalidNotificationDataError(validationError);
+      }
+
       // Create notification in a transaction
       const newNotification = await db.transaction(async (tx) => {
         // Validate monitor IDs
@@ -264,6 +276,18 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
         throw notificationNotFoundError(req.id);
       }
 
+      // Validate provider-data consistency if data is being updated
+      if (req.data !== undefined) {
+        const existingProvider = dbProviderToProto(record.provider);
+        const validationError = validateProviderDataConsistency(
+          existingProvider,
+          req.data,
+        );
+        if (validationError) {
+          throw invalidNotificationDataError(validationError);
+        }
+      }
+
       // Update notification in a transaction
       const updatedNotification = await db.transaction(async (tx) => {
         // Validate monitor IDs
@@ -290,20 +314,20 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
               ? (() => {
                   // Map case to NotificationProvider
                   const caseToProvider: Record<string, number> = {
-                    discord: 1,
-                    email: 2,
-                    googleChat: 3,
-                    grafanaOncall: 4,
-                    ntfy: 5,
-                    pagerduty: 6,
-                    opsgenie: 7,
-                    slack: 8,
-                    sms: 9,
-                    telegram: 10,
-                    webhook: 11,
-                    whatsapp: 12,
+                    discord: NotificationProvider.DISCORD,
+                    email: NotificationProvider.EMAIL,
+                    googleChat: NotificationProvider.GOOGLE_CHAT,
+                    grafanaOncall: NotificationProvider.GRAFANA_ONCALL,
+                    ntfy: NotificationProvider.NTFY,
+                    pagerduty: NotificationProvider.PAGERDUTY,
+                    opsgenie: NotificationProvider.OPSGENIE,
+                    slack: NotificationProvider.SLACK,
+                    sms: NotificationProvider.SMS,
+                    telegram: NotificationProvider.TELEGRAM,
+                    webhook: NotificationProvider.WEBHOOK,
+                    whatsapp: NotificationProvider.WHATSAPP,
                   };
-                  return caseToProvider[req.data.data.case] ?? 0;
+                  return caseToProvider[req.data.data.case] ?? NotificationProvider.UNSPECIFIED;
                 })()
               : 0,
             req.data,
