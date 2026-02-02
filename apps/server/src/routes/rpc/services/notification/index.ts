@@ -5,7 +5,10 @@ import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
-import { NotificationProvider, type NotificationService } from "@openstatus/proto/notification/v1";
+import {
+  NotificationProvider,
+  type NotificationService,
+} from "@openstatus/proto/notification/v1";
 
 import { getRpcContext } from "../../interceptors";
 import {
@@ -327,7 +330,10 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
                     webhook: NotificationProvider.WEBHOOK,
                     whatsapp: NotificationProvider.WHATSAPP,
                   };
-                  return caseToProvider[req.data.data.case] ?? NotificationProvider.UNSPECIFIED;
+                  return (
+                    caseToProvider[req.data.data.case] ??
+                    NotificationProvider.UNSPECIFIED
+                  );
                 })()
               : 0,
             req.data,
