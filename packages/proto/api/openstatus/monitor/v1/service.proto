@@ -56,6 +56,10 @@ service MonitorService {
 
   // GetMonitorSummary returns aggregated metrics and statistics for a monitor.
   rpc GetMonitorSummary(GetMonitorSummaryRequest) returns (GetMonitorSummaryResponse);
+
+  // GetMonitor returns a single monitor by ID within the authenticated workspace.
+  // Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+  rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse);
 }
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
@@ -275,4 +279,16 @@ message GetMonitorSummaryResponse {
 
   // Regions included in the metrics.
   repeated Region regions = 12;
+}
+
+// GetMonitorRequest is the request to get a single monitor by ID.
+message GetMonitorRequest {
+  // Monitor ID to retrieve (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// GetMonitorResponse is the response containing the monitor.
+message GetMonitorResponse {
+  // The monitor configuration (one of HTTP, TCP, or DNS).
+  MonitorConfig monitor = 1;
 }

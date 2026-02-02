@@ -8,8 +8,10 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
+  GetMonitorResponse,
   GetMonitorSummaryResponse,
   HTTPMonitor,
+  MonitorConfig,
   MonitorService,
   RegionStatus,
   TCPMonitor,
@@ -676,6 +678,62 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
       id: String(dbMon.id),
       regions,
     };
+  },
+
+  async getMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    // Get the monitor
+    const dbMon = await getMonitorById(Number(req.id), workspaceId);
+    if (!dbMon) {
+      throw monitorNotFoundError(req.id);
+    }
+
+    // Parse monitor data
+    const parsed = selectMonitorSchema.safeParse(dbMon);
+    if (!parsed.success) {
+      throw monitorParseFailedError(req.id);
+    }
+
+    const monitorData = parsed.data;
+
+    // Convert to appropriate proto type based on jobType
+    let monitorConfig: MonitorConfig;
+
+    switch (monitorData.jobType) {
+      case "http":
+        monitorConfig = {
+          $typeName: "openstatus.monitor.v1.MonitorConfig",
+          config: { case: "http", value: dbMonitorToHttpProto(monitorData) },
+        };
+        break;
+      case "tcp":
+        monitorConfig = {
+          $typeName: "openstatus.monitor.v1.MonitorConfig",
+          config: { case: "tcp", value: dbMonitorToTcpProto(monitorData) },
+        };
+        break;
+      case "dns":
+        monitorConfig = {
+          $typeName: "openstatus.monitor.v1.MonitorConfig",
+          config: { case: "dns", value: dbMonitorToDnsProto(monitorData) },
+        };
+        break;
+      default: {
+        const _exhaustive: never = monitorData.jobType;
+        throw monitorTypeMismatchError(
+          req.id,
+          "http, tcp, or dns",
+          monitorData.jobType,
+        );
+      }
+    }
+
+    return {
+      $typeName: "openstatus.monitor.v1.GetMonitorResponse",
+      monitor: monitorConfig,
+    } satisfies GetMonitorResponse;
   },
 
   async getMonitorSummary(req, ctx) {
