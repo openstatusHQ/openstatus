@@ -722,7 +722,11 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
         break;
       default: {
         const _exhaustive: never = monitorData.jobType;
-        throw monitorTypeMismatchError(req.id, "http, tcp, or dns", monitorData.jobType);
+        throw monitorTypeMismatchError(
+          req.id,
+          "http, tcp, or dns",
+          monitorData.jobType,
+        );
       }
     }
 
