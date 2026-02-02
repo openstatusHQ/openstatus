@@ -18,7 +18,7 @@ func TestParseAssertions_TextBodyContains(t *testing.T) {
 		Valid:  true,
 	}
 
-	_, _, bodyAssertions := server.ParseAssertions(assertions)
+	_, _, bodyAssertions := server.ParseAssertions(context.Background(), assertions)
 
 	if len(bodyAssertions) != 1 {
 		t.Fatalf("expected 1 body assertion, got %d", len(bodyAssertions))
@@ -42,7 +42,7 @@ func TestParseAssertions_HttpStatusEquals(t *testing.T) {
 		Valid:  true,
 	}
 
-	statusAssertion, _, _ := server.ParseAssertions(assertions)
+	statusAssertion, _, _ := server.ParseAssertions(context.Background(), assertions)
 
 	if len(statusAssertion) != 1 {
 		t.Fatalf("expected 1 body assertion, got %d", len(statusAssertion))
@@ -64,7 +64,7 @@ func TestParseAssertions_InvalidJSON(t *testing.T) {
 		Valid:  true,
 	}
 
-	statusAssertions, headerAssertions, bodyAssertions := server.ParseAssertions(assertions)
+	statusAssertions, headerAssertions, bodyAssertions := server.ParseAssertions(context.Background(), assertions)
 
 	if len(statusAssertions) != 0 || len(headerAssertions) != 0 || len(bodyAssertions) != 0 {
 		t.Errorf("expected empty assertions for invalid JSON, got status=%d, header=%d, body=%d",
@@ -78,7 +78,7 @@ func TestParseAssertions_NullString(t *testing.T) {
 		Valid:  false,
 	}
 
-	statusAssertions, headerAssertions, bodyAssertions := server.ParseAssertions(assertions)
+	statusAssertions, headerAssertions, bodyAssertions := server.ParseAssertions(context.Background(), assertions)
 
 	if len(statusAssertions) != 0 || len(headerAssertions) != 0 || len(bodyAssertions) != 0 {
 		t.Errorf("expected empty assertions for null string, got status=%d, header=%d, body=%d",
@@ -93,7 +93,7 @@ func TestParseAssertions_HeaderAssertion(t *testing.T) {
 		Valid:  true,
 	}
 
-	_, headerAssertions, _ := server.ParseAssertions(assertions)
+	_, headerAssertions, _ := server.ParseAssertions(context.Background(), assertions)
 
 	if len(headerAssertions) != 1 {
 		t.Fatalf("expected 1 header assertion, got %d", len(headerAssertions))
@@ -122,7 +122,7 @@ func TestParseAssertions_MultipleAssertions(t *testing.T) {
 		Valid:  true,
 	}
 
-	statusAssertions, headerAssertions, bodyAssertions := server.ParseAssertions(assertions)
+	statusAssertions, headerAssertions, bodyAssertions := server.ParseAssertions(context.Background(), assertions)
 
 	if len(statusAssertions) != 1 {
 		t.Errorf("expected 1 status assertion, got %d", len(statusAssertions))
@@ -280,7 +280,7 @@ func TestParseRecordAssertions_DnsRecordContains(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions))
@@ -305,7 +305,7 @@ func TestParseRecordAssertions_DnsRecordEquals(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions))
@@ -334,7 +334,7 @@ func TestParseRecordAssertions_MultipleRecordTypes(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 3 {
 		t.Fatalf("expected 3 record assertions, got %d", len(recordAssertions))
@@ -371,7 +371,7 @@ func TestParseRecordAssertions_InvalidJSON(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 0 {
 		t.Errorf("expected empty assertions for invalid JSON, got %d", len(recordAssertions))
@@ -384,7 +384,7 @@ func TestParseRecordAssertions_NullString(t *testing.T) {
 		Valid:  false,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if recordAssertions != nil {
 		t.Errorf("expected nil for null string, got %v", recordAssertions)
@@ -403,7 +403,7 @@ func TestParseRecordAssertions_MixedAssertionTypes(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 1 {
 		t.Fatalf("expected 1 record assertion (only dnsRecord), got %d", len(recordAssertions))
@@ -455,7 +455,7 @@ func TestParseRecordAssertions_EmptyArray(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 0 {
 		t.Errorf("expected empty slice for empty JSON array, got %d", len(recordAssertions))
@@ -469,7 +469,7 @@ func TestParseRecordAssertions_UnknownComparator(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions))
@@ -488,7 +488,7 @@ func TestParseRecordAssertions_UnknownRecordType(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions))
@@ -509,7 +509,7 @@ func TestParseRecordAssertions_MissingRequiredFields(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions := server.ParseRecordAssertions(assertions)
+	recordAssertions := server.ParseRecordAssertions(context.Background(), assertions)
 
 	if len(recordAssertions) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions))
@@ -527,7 +527,7 @@ func TestParseRecordAssertions_MissingRequiredFields(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions2 := server.ParseRecordAssertions(assertions2)
+	recordAssertions2 := server.ParseRecordAssertions(context.Background(), assertions2)
 
 	if len(recordAssertions2) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions2))
@@ -545,7 +545,7 @@ func TestParseRecordAssertions_MissingRequiredFields(t *testing.T) {
 		Valid:  true,
 	}
 
-	recordAssertions3 := server.ParseRecordAssertions(assertions3)
+	recordAssertions3 := server.ParseRecordAssertions(context.Background(), assertions3)
 
 	if len(recordAssertions3) != 1 {
 		t.Fatalf("expected 1 record assertion, got %d", len(recordAssertions3))

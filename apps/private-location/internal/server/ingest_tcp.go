@@ -43,9 +43,13 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 
-	if holder, ok := ctx.Value(eventKey).(*EventHolder); ok && holder != nil {
+	// Enrich wide event with business context
+	if holder := GetEvent(ctx); holder != nil {
 		holder.Event["private_location"] = map[string]any{
-			"monitor_id": req.Msg.MonitorId,
+			"monitor_id":   req.Msg.MonitorId,
+			"workspace_id": ic.Monitor.WorkspaceID,
+			"region_id":    ic.Region.ID,
+			"datasource":   tinybird.DatasourceTCP,
 		}
 	}
 

@@ -35,12 +35,6 @@ type PingData struct {
 }
 
 func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Request[private_locationv1.IngestHTTPRequest]) (*connect.Response[private_locationv1.IngestHTTPResponse], error) {
-	if holder, ok := ctx.Value(eventKey).(*EventHolder); ok && holder != nil {
-		holder.Event["private_location"] = map[string]any{
-			"monitor_id": req.Msg.MonitorId,
-		}
-	}
-
 	token := req.Header().Get("openstatus-token")
 	if token == "" {
 		return nil, connect.NewError(connect.CodeUnauthenticated, ErrMissingToken)
@@ -53,6 +47,16 @@ func (h *privateLocationHandler) IngestHTTP(ctx context.Context, req *connect.Re
 	ic, err := h.getIngestContext(ctx, token, req.Msg.MonitorId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	// Enrich wide event with business context
+	if holder := GetEvent(ctx); holder != nil {
+		holder.Event["private_location"] = map[string]any{
+			"monitor_id":   req.Msg.MonitorId,
+			"workspace_id": ic.Monitor.WorkspaceID,
+			"region_id":    ic.Region.ID,
+			"datasource":   tinybird.DatasourceHTTP,
+		}
 	}
 
 	data := PingData{

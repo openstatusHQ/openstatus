@@ -70,6 +70,10 @@ func Logger() func(next http.Handler) http.Handler {
 					"url":          fullURL,
 					"user_agent":   r.Header.Get("User-Agent"),
 					"content_type": r.Header.Get("Content-Type"),
+					"service": map[string]any{
+						"name":        "openstatus-private-location",
+						"instance_id": instanceID,
+					},
 				},
 			}
 
@@ -165,11 +169,21 @@ func (s *Server) RegisterRoutes() http.Handler {
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	status := "ok"
 	httpStatus := http.StatusOK
+	dbOK := true
 
 	// Check database connection
 	if err := s.db.PingContext(r.Context()); err != nil {
 		status = "degraded"
 		httpStatus = http.StatusServiceUnavailable
+		dbOK = false
+	}
+
+	// Enrich wide event with health check context
+	if holder := GetEvent(r.Context()); holder != nil {
+		holder.Event["health_check"] = map[string]any{
+			"status":  status,
+			"db_ping": dbOK,
+		}
 	}
 
 	render.Status(r, httpStatus)

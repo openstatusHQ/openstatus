@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/joho/godotenv/autoload"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
@@ -22,12 +23,16 @@ import (
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 )
 
+
 type Server struct {
 	port        int
 	db          *sqlx.DB
 	logger      *slog.Logger
 	logProvider *sdklog.LoggerProvider
 }
+
+// instanceID is generated once at startup
+var instanceID = uuid.New().String()
 
 // NewServer returns an HTTP server and a cleanup function to shutdown the log provider.
 func NewServer() (*http.Server, func(context.Context)) {
@@ -59,6 +64,14 @@ func NewServer() (*http.Server, func(context.Context)) {
 		WriteTimeout: 30 * time.Second,
 	}
 
+	// Startup logging
+	slog.Info("server starting",
+		"port", port,
+		"instance_id", instanceID,
+		"axiom_configured", os.Getenv("AXIOM_TOKEN") != "",
+		"tinybird_configured", os.Getenv("TINYBIRD_TOKEN") != "",
+	)
+
 	// Return cleanup function for graceful shutdown
 	cleanup := func(ctx context.Context) {
 		if logProvider != nil {
@@ -82,11 +95,14 @@ func setupLogger() (*slog.Logger, *sdklog.LoggerProvider) {
 		return logger, nil
 	}
 
+	environment := env("ENVIRONMENT", "production")
+
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceNameKey.String("openstatus-private-location"),
-		semconv.ServiceVersionKey.String("1.0.0"),
-		attribute.String("environment", "production"),
+		attribute.String("environment", environment),
+
+		attribute.String("instance_id", instanceID),
 	)
 
 	// Set up OTLP log exporter for Axiom
