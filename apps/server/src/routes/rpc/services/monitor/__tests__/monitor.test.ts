@@ -1864,6 +1864,128 @@ describe("MonitorService.GetMonitorStatus", () => {
   });
 });
 
+describe("MonitorService.GetMonitor", () => {
+  test("returns HTTP monitor with correct structure", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.http).toBeDefined();
+    expect(data.monitor.http.id).toBe(String(testHttpMonitorId));
+    expect(data.monitor.http.url).toBe("https://example.com");
+    expect(data.monitor.http.method).toBe("HTTP_METHOD_GET");
+    expect(data.monitor.http.periodicity).toBe("PERIODICITY_1M");
+    // Should not have tcp or dns
+    expect(data.monitor.tcp).toBeUndefined();
+    expect(data.monitor.dns).toBeUndefined();
+  });
+
+  test("returns TCP monitor with correct structure", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testTcpMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.tcp).toBeDefined();
+    expect(data.monitor.tcp.id).toBe(String(testTcpMonitorId));
+    expect(data.monitor.tcp.uri).toBe("tcp://example.com:443");
+    expect(data.monitor.tcp.periodicity).toBe("PERIODICITY_5M");
+    // Should not have http or dns
+    expect(data.monitor.http).toBeUndefined();
+    expect(data.monitor.dns).toBeUndefined();
+  });
+
+  test("returns DNS monitor with correct structure", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testDnsMonitorId) },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.monitor).toBeDefined();
+    expect(data.monitor.dns).toBeDefined();
+    expect(data.monitor.dns.id).toBe(String(testDnsMonitorId));
+    expect(data.monitor.dns.uri).toBe("example.com");
+    expect(data.monitor.dns.periodicity).toBe("PERIODICITY_10M");
+    // Should not have http or tcp
+    expect(data.monitor.http).toBeUndefined();
+    expect(data.monitor.tcp).toBeUndefined();
+  });
+
+  test("returns 404 for non-existent monitor", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: "99999" },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(404);
+  });
+
+  test("returns 401 when no auth key provided", async () => {
+    const res = await connectRequest("GetMonitor", {
+      id: String(testHttpMonitorId),
+    });
+
+    expect(res.status).toBe(401);
+  });
+
+  test("cannot get monitor from another workspace", async () => {
+    // Create a monitor for workspace 2
+    const otherWorkspaceMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 2,
+        name: `${TEST_PREFIX}-get-other-ws`,
+        url: "https://other-ws-get.example.com",
+        periodicity: "1m",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      // Try to get with workspace 1's key
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(otherWorkspaceMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      // Should return 404 (not found in this workspace)
+      expect(res.status).toBe(404);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, otherWorkspaceMon.id));
+    }
+  });
+
+  test("invalid API key returns 401", async () => {
+    const res = await connectRequest(
+      "GetMonitor",
+      { id: String(testHttpMonitorId) },
+      { "x-openstatus-key": "invalid-key" },
+    );
+
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("MonitorService.GetMonitorSummary", () => {
   test("returns summary for HTTP monitor with correct structure", async () => {
     const res = await connectRequest(
