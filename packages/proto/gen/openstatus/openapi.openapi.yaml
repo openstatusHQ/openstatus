@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: My Awesome API
+  description: This is a sample server for a pet store.
+  contact:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+paths: {}
+components: {}
+security: []

@@ -1,0 +1,1636 @@
+openapi: 3.1.0
+info:
+  title: openstatus.status_page.v1
+paths:
+  /openstatus.status_page.v1.StatusPageService/CreateStatusPage:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: CreateStatusPage
+      description: CreateStatusPage creates a new status page.
+      operationId: openstatus.status_page.v1.StatusPageService.CreateStatusPage
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageResponse'
+  /openstatus.status_page.v1.StatusPageService/GetStatusPage:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: GetStatusPage
+      description: GetStatusPage retrieves a specific status page by ID.
+      operationId: openstatus.status_page.v1.StatusPageService.GetStatusPage
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse'
+  /openstatus.status_page.v1.StatusPageService/ListStatusPages:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: ListStatusPages
+      description: ListStatusPages returns all status pages for the workspace.
+      operationId: openstatus.status_page.v1.StatusPageService.ListStatusPages
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse'
+  /openstatus.status_page.v1.StatusPageService/UpdateStatusPage:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: UpdateStatusPage
+      description: UpdateStatusPage updates an existing status page.
+      operationId: openstatus.status_page.v1.StatusPageService.UpdateStatusPage
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageResponse'
+  /openstatus.status_page.v1.StatusPageService/DeleteStatusPage:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: DeleteStatusPage
+      description: DeleteStatusPage removes a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.DeleteStatusPage
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageResponse'
+  /openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: AddMonitorComponent
+      description: AddMonitorComponent adds a monitor-based component to a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.AddMonitorComponent
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentResponse'
+  /openstatus.status_page.v1.StatusPageService/AddStaticComponent:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: AddStaticComponent
+      description: AddStaticComponent adds a static component to a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.AddStaticComponent
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentResponse'
+  /openstatus.status_page.v1.StatusPageService/RemoveComponent:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: RemoveComponent
+      description: RemoveComponent removes a component from a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.RemoveComponent
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentResponse'
+  /openstatus.status_page.v1.StatusPageService/UpdateComponent:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: UpdateComponent
+      description: UpdateComponent updates an existing component.
+      operationId: openstatus.status_page.v1.StatusPageService.UpdateComponent
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentResponse'
+  /openstatus.status_page.v1.StatusPageService/CreateComponentGroup:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: CreateComponentGroup
+      description: CreateComponentGroup creates a new component group.
+      operationId: openstatus.status_page.v1.StatusPageService.CreateComponentGroup
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupResponse'
+  /openstatus.status_page.v1.StatusPageService/DeleteComponentGroup:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: DeleteComponentGroup
+      description: DeleteComponentGroup removes a component group.
+      operationId: openstatus.status_page.v1.StatusPageService.DeleteComponentGroup
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupResponse'
+  /openstatus.status_page.v1.StatusPageService/UpdateComponentGroup:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: UpdateComponentGroup
+      description: UpdateComponentGroup updates an existing component group.
+      operationId: openstatus.status_page.v1.StatusPageService.UpdateComponentGroup
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupResponse'
+  /openstatus.status_page.v1.StatusPageService/SubscribeToPage:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: SubscribeToPage
+      description: SubscribeToPage subscribes an email to a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.SubscribeToPage
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageResponse'
+  /openstatus.status_page.v1.StatusPageService/UnsubscribeFromPage:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: UnsubscribeFromPage
+      description: UnsubscribeFromPage removes a subscription from a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.UnsubscribeFromPage
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageResponse'
+  /openstatus.status_page.v1.StatusPageService/ListSubscribers:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: ListSubscribers
+      description: ListSubscribers returns all subscribers for a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.ListSubscribers
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse'
+  /openstatus.status_page.v1.StatusPageService/GetStatusPageContent:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: GetStatusPageContent
+      description: GetStatusPageContent retrieves the full content of a status page including components and reports.
+      operationId: openstatus.status_page.v1.StatusPageService.GetStatusPageContent
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+  /openstatus.status_page.v1.StatusPageService/GetOverallStatus:
+    post:
+      tags:
+        - openstatus.status_page.v1.StatusPageService
+      summary: GetOverallStatus
+      description: GetOverallStatus returns the aggregated status of a status page.
+      operationId: openstatus.status_page.v1.StatusPageService.GetOverallStatus
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+components:
+  schemas:
+    openstatus.status_page.v1.OverallStatus:
+      type: string
+      title: OverallStatus
+      enum:
+        - OVERALL_STATUS_UNSPECIFIED
+        - OVERALL_STATUS_OPERATIONAL
+        - OVERALL_STATUS_DEGRADED
+        - OVERALL_STATUS_PARTIAL_OUTAGE
+        - OVERALL_STATUS_MAJOR_OUTAGE
+        - OVERALL_STATUS_MAINTENANCE
+        - OVERALL_STATUS_UNKNOWN
+      description: OverallStatus represents the aggregated status of all components on a page.
+    openstatus.status_page.v1.PageAccessType:
+      type: string
+      title: PageAccessType
+      enum:
+        - PAGE_ACCESS_TYPE_UNSPECIFIED
+        - PAGE_ACCESS_TYPE_PUBLIC
+        - PAGE_ACCESS_TYPE_PASSWORD_PROTECTED
+        - PAGE_ACCESS_TYPE_AUTHENTICATED
+      description: PageAccessType defines who can access the status page.
+    openstatus.status_page.v1.PageComponentType:
+      type: string
+      title: PageComponentType
+      enum:
+        - PAGE_COMPONENT_TYPE_UNSPECIFIED
+        - PAGE_COMPONENT_TYPE_MONITOR
+        - PAGE_COMPONENT_TYPE_STATIC
+      description: PageComponentType defines the type of a component on a status page.
+    openstatus.status_page.v1.PageTheme:
+      type: string
+      title: PageTheme
+      enum:
+        - PAGE_THEME_UNSPECIFIED
+        - PAGE_THEME_SYSTEM
+        - PAGE_THEME_LIGHT
+        - PAGE_THEME_DARK
+      description: PageTheme defines the visual theme of the status page.
+    openstatus.status_report.v1.StatusReportStatus:
+      type: string
+      title: StatusReportStatus
+      enum:
+        - STATUS_REPORT_STATUS_UNSPECIFIED
+        - STATUS_REPORT_STATUS_INVESTIGATING
+        - STATUS_REPORT_STATUS_IDENTIFIED
+        - STATUS_REPORT_STATUS_MONITORING
+        - STATUS_REPORT_STATUS_RESOLVED
+      description: StatusReportStatus represents the current state of a status report.
+    openstatus.maintenance.v1.MaintenanceSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the maintenance.
+        title:
+          type: string
+          title: title
+          description: Title of the maintenance.
+        message:
+          type: string
+          title: message
+          description: Message describing the maintenance.
+        from:
+          type: string
+          title: from
+          description: Start time of the maintenance window (RFC 3339 format).
+        to:
+          type: string
+          title: to
+          description: End time of the maintenance window (RFC 3339 format).
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the page this maintenance is associated with.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the maintenance was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the maintenance was last updated (RFC 3339 format).
+      title: MaintenanceSummary
+      additionalProperties: false
+      description: MaintenanceSummary represents metadata for a maintenance window (used in list responses).
+    openstatus.status_page.v1.AddMonitorComponentRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to add the component to (required).
+        monitorId:
+          type: string
+          title: monitor_id
+          minLength: 1
+          description: ID of the monitor to associate with this component (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          description: Display name for the component (optional, defaults to monitor name).
+          nullable: true
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the component (optional).
+          nullable: true
+        order:
+          type: integer
+          title: order
+          format: int32
+          description: Display order of the component (optional).
+          nullable: true
+        groupId:
+          type: string
+          title: group_id
+          description: ID of the group to add this component to (optional).
+          nullable: true
+      title: AddMonitorComponentRequest
+      additionalProperties: false
+    openstatus.status_page.v1.AddMonitorComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The created component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: AddMonitorComponentResponse
+      additionalProperties: false
+    openstatus.status_page.v1.AddStaticComponentRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to add the component to (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the component (required).
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the component (optional).
+          nullable: true
+        order:
+          type: integer
+          title: order
+          format: int32
+          description: Display order of the component (optional).
+          nullable: true
+        groupId:
+          type: string
+          title: group_id
+          description: ID of the group to add this component to (optional).
+          nullable: true
+      title: AddStaticComponentRequest
+      additionalProperties: false
+    openstatus.status_page.v1.AddStaticComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The created component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: AddStaticComponentResponse
+      additionalProperties: false
+    openstatus.status_page.v1.ComponentStatus:
+      type: object
+      properties:
+        componentId:
+          type: string
+          title: component_id
+          description: ID of the component.
+        status:
+          title: status
+          description: Current status of the component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+      title: ComponentStatus
+      additionalProperties: false
+      description: ComponentStatus represents the status of a single component.
+    openstatus.status_page.v1.CreateComponentGroupRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to create the group in (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the group (required).
+      title: CreateComponentGroupRequest
+      additionalProperties: false
+    openstatus.status_page.v1.CreateComponentGroupResponse:
+      type: object
+      properties:
+        group:
+          title: group
+          description: The created component group.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+      title: CreateComponentGroupResponse
+      additionalProperties: false
+    openstatus.status_page.v1.CreateStatusPageRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: Title of the status page (required).
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the status page (optional).
+          nullable: true
+        slug:
+          type: string
+          title: slug
+          maxLength: 256
+          minLength: 1
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+          description: URL-friendly slug for the status page (required).
+        homepageUrl:
+          type: string
+          title: homepage_url
+          description: URL to the homepage (optional).
+          nullable: true
+        contactUrl:
+          type: string
+          title: contact_url
+          description: URL to the contact page (optional).
+          nullable: true
+      title: CreateStatusPageRequest
+      additionalProperties: false
+    openstatus.status_page.v1.CreateStatusPageResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The created status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+      title: CreateStatusPageResponse
+      additionalProperties: false
+    openstatus.status_page.v1.DeleteComponentGroupRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component group to delete (required).
+      title: DeleteComponentGroupRequest
+      additionalProperties: false
+    openstatus.status_page.v1.DeleteComponentGroupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteComponentGroupResponse
+      additionalProperties: false
+    openstatus.status_page.v1.DeleteStatusPageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page to delete (required).
+      title: DeleteStatusPageRequest
+      additionalProperties: false
+    openstatus.status_page.v1.DeleteStatusPageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteStatusPageResponse
+      additionalProperties: false
+    openstatus.status_page.v1.GetOverallStatusRequest:
+      type: object
+      oneOf:
+        - properties:
+            id:
+              type: string
+              title: id
+              description: ID of the status page.
+          title: id
+          required:
+            - id
+        - properties:
+            slug:
+              type: string
+              title: slug
+              description: Slug of the status page.
+          title: slug
+          required:
+            - slug
+      title: GetOverallStatusRequest
+      additionalProperties: false
+    openstatus.status_page.v1.GetOverallStatusResponse:
+      type: object
+      properties:
+        overallStatus:
+          title: overall_status
+          description: Aggregated status across all components.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+        componentStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentStatus'
+          title: component_statuses
+          description: Status of individual components.
+      title: GetOverallStatusResponse
+      additionalProperties: false
+    openstatus.status_page.v1.GetStatusPageContentRequest:
+      type: object
+      oneOf:
+        - properties:
+            id:
+              type: string
+              title: id
+              description: ID of the status page.
+          title: id
+          required:
+            - id
+        - properties:
+            slug:
+              type: string
+              title: slug
+              description: Slug of the status page.
+          title: slug
+          required:
+            - slug
+      title: GetStatusPageContentRequest
+      additionalProperties: false
+    openstatus.status_page.v1.GetStatusPageContentResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The status page details.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          title: components
+          description: Components on the status page.
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          title: groups
+          description: Component groups on the status page.
+        statusReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          title: status_reports
+          description: Active and recent status reports.
+        maintenances:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+          title: maintenances
+          description: Scheduled maintenances.
+      title: GetStatusPageContentResponse
+      additionalProperties: false
+    openstatus.status_page.v1.GetStatusPageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page to retrieve (required).
+      title: GetStatusPageRequest
+      additionalProperties: false
+    openstatus.status_page.v1.GetStatusPageResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The requested status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+      title: GetStatusPageResponse
+      additionalProperties: false
+    openstatus.status_page.v1.ListStatusPagesRequest:
+      type: object
+      properties:
+        limit:
+          type: integer
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of pages to return (1-100, defaults to 50).
+          nullable: true
+        offset:
+          type: integer
+          title: offset
+          format: int32
+          description: Number of pages to skip for pagination (defaults to 0).
+          nullable: true
+      title: ListStatusPagesRequest
+      additionalProperties: false
+    openstatus.status_page.v1.ListStatusPagesResponse:
+      type: object
+      properties:
+        statusPages:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.StatusPageSummary'
+          title: status_pages
+          description: List of status pages (metadata only).
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of status pages.
+      title: ListStatusPagesResponse
+      additionalProperties: false
+    openstatus.status_page.v1.ListSubscribersRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to list subscribers for (required).
+        limit:
+          type: integer
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of subscribers to return (1-100, defaults to 50).
+          nullable: true
+        offset:
+          type: integer
+          title: offset
+          format: int32
+          description: Number of subscribers to skip for pagination (defaults to 0).
+          nullable: true
+        includeUnsubscribed:
+          type: boolean
+          title: include_unsubscribed
+          description: Whether to include unsubscribed users (defaults to false).
+          nullable: true
+      title: ListSubscribersRequest
+      additionalProperties: false
+    openstatus.status_page.v1.ListSubscribersResponse:
+      type: object
+      properties:
+        subscribers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+          title: subscribers
+          description: List of subscribers.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of subscribers matching the filter.
+      title: ListSubscribersResponse
+      additionalProperties: false
+    openstatus.status_page.v1.PageComponent:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the component.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page this component belongs to.
+        name:
+          type: string
+          title: name
+          description: Display name of the component.
+        description:
+          type: string
+          title: description
+          description: Description of the component (optional).
+        type:
+          title: type
+          description: Type of the component (monitor or static).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentType'
+        monitorId:
+          type: string
+          title: monitor_id
+          description: ID of the monitor if type is MONITOR (optional).
+        order:
+          type: integer
+          title: order
+          format: int32
+          description: Display order of the component.
+        groupId:
+          type: string
+          title: group_id
+          description: ID of the group this component belongs to (optional).
+        groupOrder:
+          type: integer
+          title: group_order
+          format: int32
+          description: Order within the group if grouped.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the component was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the component was last updated (RFC 3339 format).
+      title: PageComponent
+      additionalProperties: false
+      description: PageComponent represents a component displayed on a status page.
+    openstatus.status_page.v1.PageComponentGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the group.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page this group belongs to.
+        name:
+          type: string
+          title: name
+          description: Display name of the group.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the group was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the group was last updated (RFC 3339 format).
+      title: PageComponentGroup
+      additionalProperties: false
+      description: PageComponentGroup represents a group of components on a status page.
+    openstatus.status_page.v1.PageSubscriber:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the subscriber.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page the user is subscribed to.
+        email:
+          type: string
+          title: email
+          description: Email address of the subscriber.
+        acceptedAt:
+          type: string
+          title: accepted_at
+          description: Timestamp when the subscription was accepted/confirmed (RFC 3339 format, optional).
+        unsubscribedAt:
+          type: string
+          title: unsubscribed_at
+          description: Timestamp when the user unsubscribed (RFC 3339 format, optional).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the subscription was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the subscription was last updated (RFC 3339 format).
+      title: PageSubscriber
+      additionalProperties: false
+      description: PageSubscriber represents a subscriber to a status page.
+    openstatus.status_page.v1.RemoveComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to remove (required).
+      title: RemoveComponentRequest
+      additionalProperties: false
+    openstatus.status_page.v1.RemoveComponentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the removal was successful.
+      title: RemoveComponentResponse
+      additionalProperties: false
+    openstatus.status_page.v1.StatusPage:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status page.
+        title:
+          type: string
+          title: title
+          description: Title of the status page.
+        description:
+          type: string
+          title: description
+          description: Description of the status page.
+        slug:
+          type: string
+          title: slug
+          description: URL-friendly slug for the status page.
+        customDomain:
+          type: string
+          title: custom_domain
+          description: Custom domain for the status page (optional).
+        published:
+          type: boolean
+          title: published
+          description: Whether the status page is published and visible.
+        accessType:
+          title: access_type
+          description: Access type for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageAccessType'
+        theme:
+          title: theme
+          description: Visual theme for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageTheme'
+        homepageUrl:
+          type: string
+          title: homepage_url
+          description: URL to the homepage (optional).
+        contactUrl:
+          type: string
+          title: contact_url
+          description: URL to the contact page (optional).
+        icon:
+          type: string
+          title: icon
+          description: Icon URL for the status page (optional).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the page was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the page was last updated (RFC 3339 format).
+      title: StatusPage
+      additionalProperties: false
+      description: StatusPage represents a full status page with all details.
+    openstatus.status_page.v1.StatusPageSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status page.
+        title:
+          type: string
+          title: title
+          description: Title of the status page.
+        slug:
+          type: string
+          title: slug
+          description: URL-friendly slug for the status page.
+        published:
+          type: boolean
+          title: published
+          description: Whether the status page is published and visible.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the page was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the page was last updated (RFC 3339 format).
+      title: StatusPageSummary
+      additionalProperties: false
+      description: StatusPageSummary represents metadata for a status page (used in list responses).
+    openstatus.status_page.v1.SubscribeToPageRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to subscribe to (required).
+        email:
+          type: string
+          title: email
+          format: email
+          description: Email address to subscribe (required).
+      title: SubscribeToPageRequest
+      additionalProperties: false
+    openstatus.status_page.v1.SubscribeToPageResponse:
+      type: object
+      properties:
+        subscriber:
+          title: subscriber
+          description: The created subscriber.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+      title: SubscribeToPageResponse
+      additionalProperties: false
+    openstatus.status_page.v1.UnsubscribeFromPageRequest:
+      type: object
+      oneOf:
+        - properties:
+            email:
+              type: string
+              title: email
+              description: Email address to unsubscribe.
+          title: email
+          required:
+            - email
+        - properties:
+            id:
+              type: string
+              title: id
+              description: Subscriber ID.
+          title: id
+          required:
+            - id
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to unsubscribe from (required).
+      title: UnsubscribeFromPageRequest
+      additionalProperties: false
+    openstatus.status_page.v1.UnsubscribeFromPageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the unsubscription was successful.
+      title: UnsubscribeFromPageResponse
+      additionalProperties: false
+    openstatus.status_page.v1.UpdateComponentGroupRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component group to update (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: New display name for the group (optional).
+          nullable: true
+      title: UpdateComponentGroupRequest
+      additionalProperties: false
+    openstatus.status_page.v1.UpdateComponentGroupResponse:
+      type: object
+      properties:
+        group:
+          title: group
+          description: The updated component group.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+      title: UpdateComponentGroupResponse
+      additionalProperties: false
+    openstatus.status_page.v1.UpdateComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to update (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          description: New display name for the component (optional).
+          nullable: true
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: New description for the component (optional).
+          nullable: true
+        order:
+          type: integer
+          title: order
+          format: int32
+          description: New display order (optional).
+          nullable: true
+        groupId:
+          type: string
+          title: group_id
+          description: New group ID (optional, set to empty string to remove from group).
+          nullable: true
+        groupOrder:
+          type: integer
+          title: group_order
+          format: int32
+          description: New order within the group (optional).
+          nullable: true
+      title: UpdateComponentRequest
+      additionalProperties: false
+    openstatus.status_page.v1.UpdateComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The updated component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: UpdateComponentResponse
+      additionalProperties: false
+    openstatus.status_page.v1.UpdateStatusPageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page to update (required).
+        title:
+          type: string
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: New title for the status page (optional).
+          nullable: true
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: New description for the status page (optional).
+          nullable: true
+        slug:
+          type: string
+          title: slug
+          maxLength: 256
+          minLength: 1
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+          description: New slug for the status page (optional).
+          nullable: true
+        homepageUrl:
+          type: string
+          title: homepage_url
+          description: New homepage URL (optional).
+          nullable: true
+        contactUrl:
+          type: string
+          title: contact_url
+          description: New contact URL (optional).
+          nullable: true
+      title: UpdateStatusPageRequest
+      additionalProperties: false
+    openstatus.status_page.v1.UpdateStatusPageResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The updated status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+      title: UpdateStatusPageResponse
+      additionalProperties: false
+    openstatus.status_report.v1.StatusReport:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status report.
+        status:
+          title: status
+          description: Current status of the report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        title:
+          type: string
+          title: title
+          description: Title of the status report.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportUpdate'
+          title: updates
+          description: Timeline of updates for this report (only included in GetStatusReport).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the report was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the report was last updated (RFC 3339 format).
+      title: StatusReport
+      additionalProperties: false
+      description: StatusReport represents an incident or maintenance report with full details.
+    openstatus.status_report.v1.StatusReportUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the update.
+        status:
+          title: status
+          description: Status at the time of this update.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        date:
+          type: string
+          title: date
+          description: Timestamp when this update occurred (RFC 3339 format).
+        message:
+          type: string
+          title: message
+          description: Message describing the update.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the update was created (RFC 3339 format).
+      title: StatusReportUpdate
+      additionalProperties: false
+      description: StatusReportUpdate represents a single update entry in a status report timeline.
+    connect-protocol-version:
+      type: number
+      title: Connect-Protocol-Version
+      enum:
+        - 1
+      description: Define the version of the Connect protocol
+      const: 1
+    connect-timeout-header:
+      type: number
+      title: Connect-Timeout-Ms
+      description: Define the timeout, in ms
+    connect.error:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - not_found
+          enum:
+            - canceled
+            - unknown
+            - invalid_argument
+            - deadline_exceeded
+            - not_found
+            - already_exists
+            - permission_denied
+            - resource_exhausted
+            - failed_precondition
+            - aborted
+            - out_of_range
+            - unimplemented
+            - internal
+            - unavailable
+            - data_loss
+            - unauthenticated
+          description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+        detail:
+          $ref: '#/components/schemas/google.protobuf.Any'
+      title: Connect Error
+      additionalProperties: true
+      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+    google.protobuf.Any:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+          format: binary
+        debug:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+security: []
+tags:
+  - name: openstatus.status_page.v1.StatusPageService
+    description: StatusPageService provides CRUD and management operations for status pages. --- Page CRUD ---

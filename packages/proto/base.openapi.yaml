@@ -1,0 +1,5 @@
+openapi: 3.1.0
+info:
+  description: "openapi API v2 "
+  title: OpenStatus API
+  version: v2.0.0

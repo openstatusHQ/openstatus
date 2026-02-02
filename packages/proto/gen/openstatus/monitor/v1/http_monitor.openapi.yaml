@@ -1,0 +1,324 @@
+openapi: 3.1.0
+info:
+  title: openstatus.monitor.v1
+paths: {}
+components:
+  schemas:
+    openstatus.monitor.v1.HTTPMethod:
+      type: string
+      title: HTTPMethod
+      enum:
+        - HTTP_METHOD_UNSPECIFIED
+        - HTTP_METHOD_GET
+        - HTTP_METHOD_POST
+        - HTTP_METHOD_HEAD
+        - HTTP_METHOD_PUT
+        - HTTP_METHOD_PATCH
+        - HTTP_METHOD_DELETE
+        - HTTP_METHOD_TRACE
+        - HTTP_METHOD_CONNECT
+        - HTTP_METHOD_OPTIONS
+      description: HTTP methods supported for monitors.
+    openstatus.monitor.v1.MonitorStatus:
+      type: string
+      title: MonitorStatus
+      enum:
+        - MONITOR_STATUS_UNSPECIFIED
+        - MONITOR_STATUS_ACTIVE
+        - MONITOR_STATUS_DEGRADED
+        - MONITOR_STATUS_ERROR
+      description: MonitorStatus represents the operational status of a monitor.
+    openstatus.monitor.v1.NumberComparator:
+      type: string
+      title: NumberComparator
+      enum:
+        - NUMBER_COMPARATOR_UNSPECIFIED
+        - NUMBER_COMPARATOR_EQUAL
+        - NUMBER_COMPARATOR_NOT_EQUAL
+        - NUMBER_COMPARATOR_GREATER_THAN
+        - NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - NUMBER_COMPARATOR_LESS_THAN
+        - NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: NumberComparator defines comparison operations for numeric values.
+    openstatus.monitor.v1.Periodicity:
+      type: string
+      title: Periodicity
+      enum:
+        - PERIODICITY_UNSPECIFIED
+        - PERIODICITY_30S
+        - PERIODICITY_1M
+        - PERIODICITY_5M
+        - PERIODICITY_10M
+        - PERIODICITY_30M
+        - PERIODICITY_1H
+      description: Monitor periodicity options.
+    openstatus.monitor.v1.Region:
+      type: string
+      title: Region
+      enum:
+        - REGION_UNSPECIFIED
+        - REGION_FLY_AMS
+        - REGION_FLY_ARN
+        - REGION_FLY_BOM
+        - REGION_FLY_CDG
+        - REGION_FLY_DFW
+        - REGION_FLY_EWR
+        - REGION_FLY_FRA
+        - REGION_FLY_GRU
+        - REGION_FLY_IAD
+        - REGION_FLY_JNB
+        - REGION_FLY_LAX
+        - REGION_FLY_LHR
+        - REGION_FLY_NRT
+        - REGION_FLY_ORD
+        - REGION_FLY_SJC
+        - REGION_FLY_SIN
+        - REGION_FLY_SYD
+        - REGION_FLY_YYZ
+        - REGION_KOYEB_FRA
+        - REGION_KOYEB_PAR
+        - REGION_KOYEB_SFO
+        - REGION_KOYEB_SIN
+        - REGION_KOYEB_TYO
+        - REGION_KOYEB_WAS
+        - REGION_RAILWAY_US_WEST2
+        - REGION_RAILWAY_US_EAST4
+        - REGION_RAILWAY_EUROPE_WEST4
+        - REGION_RAILWAY_ASIA_SOUTHEAST1
+      description: Geographic regions where monitors can run checks from.
+    openstatus.monitor.v1.StringComparator:
+      type: string
+      title: StringComparator
+      enum:
+        - STRING_COMPARATOR_UNSPECIFIED
+        - STRING_COMPARATOR_CONTAINS
+        - STRING_COMPARATOR_NOT_CONTAINS
+        - STRING_COMPARATOR_EQUAL
+        - STRING_COMPARATOR_NOT_EQUAL
+        - STRING_COMPARATOR_EMPTY
+        - STRING_COMPARATOR_NOT_EMPTY
+        - STRING_COMPARATOR_GREATER_THAN
+        - STRING_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - STRING_COMPARATOR_LESS_THAN
+        - STRING_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: StringComparator defines comparison operations for string values.
+    openstatus.monitor.v1.BodyAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+      title: BodyAssertion
+      additionalProperties: false
+      description: BodyAssertion defines an assertion for response body content.
+    openstatus.monitor.v1.HTTPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        url:
+          type: string
+          title: url
+          maxLength: 2048
+          minLength: 1
+          format: uri
+          description: URL to monitor (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - 0
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        method:
+          not:
+            enum:
+              - 0
+          title: method
+          description: HTTP method to use (defaults to GET).
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMethod'
+        body:
+          type: string
+          title: body
+          description: Request body (optional).
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+          title: degraded_at
+          maximum: 120000
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          nullable: true
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        followRedirects:
+          type: boolean
+          title: follow_redirects
+          description: Whether to follow HTTP redirects (defaults to true when not specified).
+          nullable: true
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for the request.
+        statusCodeAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.StatusCodeAssertion'
+          title: status_code_assertions
+          maxItems: 10
+          description: Status code assertions for the response.
+        bodyAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.BodyAssertion'
+          title: body_assertions
+          maxItems: 10
+          description: Body content assertions for the response.
+        headerAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HeaderAssertion'
+          title: header_assertions
+          maxItems: 10
+          description: Header assertions for the response.
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: HTTPMonitor
+      additionalProperties: false
+      description: HTTPMonitor defines the configuration for an HTTP monitor.
+    openstatus.monitor.v1.HeaderAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header key to check (required).
+      title: HeaderAssertion
+      additionalProperties: false
+      description: HeaderAssertion defines an assertion for response headers.
+    openstatus.monitor.v1.Headers:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+        value:
+          type: string
+          title: value
+      title: Headers
+      additionalProperties: false
+      description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.OpenTelemetryConfig:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          title: endpoint
+          maxLength: 2048
+          description: OTEL endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for OTEL requests.
+      title: OpenTelemetryConfig
+      additionalProperties: false
+      description: OpenTelemetry configuration for exporting metrics.
+    openstatus.monitor.v1.StatusCodeAssertion:
+      type: object
+      properties:
+        target:
+          type:
+            - integer
+            - string
+          title: target
+          maximum: 599
+          minimum: 100
+          format: int64
+          description: Target status code to compare against (100-599).
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.NumberComparator'
+      title: StatusCodeAssertion
+      additionalProperties: false
+      description: StatusCodeAssertion defines an assertion for HTTP status codes.
+security: []

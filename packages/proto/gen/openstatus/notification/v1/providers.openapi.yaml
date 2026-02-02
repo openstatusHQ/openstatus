@@ -1,0 +1,301 @@
+openapi: 3.1.0
+info:
+  title: openstatus.notification.v1
+paths: {}
+components:
+  schemas:
+    openstatus.notification.v1.NotificationProvider:
+      type: string
+      title: NotificationProvider
+      enum:
+        - NOTIFICATION_PROVIDER_UNSPECIFIED
+        - NOTIFICATION_PROVIDER_DISCORD
+        - NOTIFICATION_PROVIDER_EMAIL
+        - NOTIFICATION_PROVIDER_GOOGLE_CHAT
+        - NOTIFICATION_PROVIDER_GRAFANA_ONCALL
+        - NOTIFICATION_PROVIDER_NTFY
+        - NOTIFICATION_PROVIDER_PAGERDUTY
+        - NOTIFICATION_PROVIDER_OPSGENIE
+        - NOTIFICATION_PROVIDER_SLACK
+        - NOTIFICATION_PROVIDER_SMS
+        - NOTIFICATION_PROVIDER_TELEGRAM
+        - NOTIFICATION_PROVIDER_WEBHOOK
+        - NOTIFICATION_PROVIDER_WHATSAPP
+      description: NotificationProvider represents the supported notification channel types.
+    openstatus.notification.v1.OpsgenieRegion:
+      type: string
+      title: OpsgenieRegion
+      enum:
+        - OPSGENIE_REGION_UNSPECIFIED
+        - OPSGENIE_REGION_US
+        - OPSGENIE_REGION_EU
+      description: OpsgenieRegion represents the Opsgenie API region.
+    openstatus.notification.v1.DiscordData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Discord webhook URL.
+      title: DiscordData
+      additionalProperties: false
+      description: DiscordData contains configuration for Discord notifications.
+    openstatus.notification.v1.EmailData:
+      type: object
+      properties:
+        email:
+          type: string
+          title: email
+          format: email
+          description: Email address to send notifications to.
+      title: EmailData
+      additionalProperties: false
+      description: EmailData contains configuration for email notifications.
+    openstatus.notification.v1.GoogleChatData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Google Chat webhook URL.
+      title: GoogleChatData
+      additionalProperties: false
+      description: GoogleChatData contains configuration for Google Chat notifications.
+    openstatus.notification.v1.GrafanaOncallData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Grafana OnCall webhook URL.
+      title: GrafanaOncallData
+      additionalProperties: false
+      description: GrafanaOncallData contains configuration for Grafana OnCall notifications.
+    openstatus.notification.v1.NotificationData:
+      type: object
+      oneOf:
+        - properties:
+            discord:
+              title: discord
+              description: Discord configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.DiscordData'
+          title: discord
+          required:
+            - discord
+        - properties:
+            email:
+              title: email
+              description: Email configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.EmailData'
+          title: email
+          required:
+            - email
+        - properties:
+            googleChat:
+              title: google_chat
+              description: Google Chat configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.GoogleChatData'
+          title: google_chat
+          required:
+            - googleChat
+        - properties:
+            grafanaOncall:
+              title: grafana_oncall
+              description: Grafana OnCall configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.GrafanaOncallData'
+          title: grafana_oncall
+          required:
+            - grafanaOncall
+        - properties:
+            ntfy:
+              title: ntfy
+              description: Ntfy configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.NtfyData'
+          title: ntfy
+          required:
+            - ntfy
+        - properties:
+            opsgenie:
+              title: opsgenie
+              description: Opsgenie configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieData'
+          title: opsgenie
+          required:
+            - opsgenie
+        - properties:
+            pagerduty:
+              title: pagerduty
+              description: PagerDuty configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.PagerDutyData'
+          title: pagerduty
+          required:
+            - pagerduty
+        - properties:
+            slack:
+              title: slack
+              description: Slack configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.SlackData'
+          title: slack
+          required:
+            - slack
+        - properties:
+            sms:
+              title: sms
+              description: SMS configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.SmsData'
+          title: sms
+          required:
+            - sms
+        - properties:
+            telegram:
+              title: telegram
+              description: Telegram configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.TelegramData'
+          title: telegram
+          required:
+            - telegram
+        - properties:
+            webhook:
+              title: webhook
+              description: Webhook configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.WebhookData'
+          title: webhook
+          required:
+            - webhook
+        - properties:
+            whatsapp:
+              title: whatsapp
+              description: WhatsApp configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.WhatsappData'
+          title: whatsapp
+          required:
+            - whatsapp
+      title: NotificationData
+      additionalProperties: false
+      description: NotificationData is a union of provider-specific configuration.
+    openstatus.notification.v1.NtfyData:
+      type: object
+      properties:
+        topic:
+          type: string
+          title: topic
+          minLength: 1
+          description: Ntfy topic to publish to.
+        serverUrl:
+          type: string
+          title: server_url
+          description: Ntfy server URL (defaults to https://ntfy.sh).
+        token:
+          type: string
+          title: token
+          description: Optional authentication token.
+          nullable: true
+      title: NtfyData
+      additionalProperties: false
+      description: NtfyData contains configuration for Ntfy notifications.
+    openstatus.notification.v1.OpsgenieData:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          title: api_key
+          minLength: 1
+          description: Opsgenie API key.
+        region:
+          title: region
+          description: Opsgenie region.
+          $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieRegion'
+      title: OpsgenieData
+      additionalProperties: false
+      description: OpsgenieData contains configuration for Opsgenie notifications.
+    openstatus.notification.v1.PagerDutyData:
+      type: object
+      properties:
+        integrationKey:
+          type: string
+          title: integration_key
+          minLength: 1
+          description: PagerDuty integration key.
+      title: PagerDutyData
+      additionalProperties: false
+      description: PagerDutyData contains configuration for PagerDuty notifications.
+    openstatus.notification.v1.SlackData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Slack webhook URL.
+      title: SlackData
+      additionalProperties: false
+      description: SlackData contains configuration for Slack notifications.
+    openstatus.notification.v1.SmsData:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          title: phone_number
+          minLength: 1
+          description: Phone number to send SMS to.
+      title: SmsData
+      additionalProperties: false
+      description: SmsData contains configuration for SMS notifications.
+    openstatus.notification.v1.TelegramData:
+      type: object
+      properties:
+        chatId:
+          type: string
+          title: chat_id
+          minLength: 1
+          description: Telegram chat ID.
+      title: TelegramData
+      additionalProperties: false
+      description: TelegramData contains configuration for Telegram notifications.
+    openstatus.notification.v1.WebhookData:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          title: endpoint
+          format: uri
+          description: Webhook endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.notification.v1.WebhookHeader'
+          title: headers
+          description: Optional custom headers.
+      title: WebhookData
+      additionalProperties: false
+      description: WebhookData contains configuration for custom webhook notifications.
+    openstatus.notification.v1.WebhookHeader:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header name.
+        value:
+          type: string
+          title: value
+          description: Header value.
+      title: WebhookHeader
+      additionalProperties: false
+      description: WebhookHeader represents a custom header for webhook requests.
+    openstatus.notification.v1.WhatsappData:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          title: phone_number
+          minLength: 1
+          description: Phone number to send WhatsApp messages to.
+      title: WhatsappData
+      additionalProperties: false
+      description: WhatsappData contains configuration for WhatsApp notifications.
+security: []

@@ -8,6 +8,7 @@ modules:
 
 deps:
   - buf.build/bufbuild/protovalidate
+  - buf.build/gnostic/gnostic
 lint:
   use:
     - STANDARD

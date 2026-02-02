@@ -1,0 +1,93 @@
+openapi: 3.1.0
+info:
+  title: openstatus.status_page.v1
+paths: {}
+components:
+  schemas:
+    openstatus.status_page.v1.PageComponentType:
+      type: string
+      title: PageComponentType
+      enum:
+        - PAGE_COMPONENT_TYPE_UNSPECIFIED
+        - PAGE_COMPONENT_TYPE_MONITOR
+        - PAGE_COMPONENT_TYPE_STATIC
+      description: PageComponentType defines the type of a component on a status page.
+    openstatus.status_page.v1.PageComponent:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the component.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page this component belongs to.
+        name:
+          type: string
+          title: name
+          description: Display name of the component.
+        description:
+          type: string
+          title: description
+          description: Description of the component (optional).
+        type:
+          title: type
+          description: Type of the component (monitor or static).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentType'
+        monitorId:
+          type: string
+          title: monitor_id
+          description: ID of the monitor if type is MONITOR (optional).
+        order:
+          type: integer
+          title: order
+          format: int32
+          description: Display order of the component.
+        groupId:
+          type: string
+          title: group_id
+          description: ID of the group this component belongs to (optional).
+        groupOrder:
+          type: integer
+          title: group_order
+          format: int32
+          description: Order within the group if grouped.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the component was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the component was last updated (RFC 3339 format).
+      title: PageComponent
+      additionalProperties: false
+      description: PageComponent represents a component displayed on a status page.
+    openstatus.status_page.v1.PageComponentGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the group.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page this group belongs to.
+        name:
+          type: string
+          title: name
+          description: Display name of the group.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the group was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the group was last updated (RFC 3339 format).
+      title: PageComponentGroup
+      additionalProperties: false
+      description: PageComponentGroup represents a group of components on a status page.
+security: []

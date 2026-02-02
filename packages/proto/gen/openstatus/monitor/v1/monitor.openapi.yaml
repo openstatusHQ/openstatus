@@ -1,0 +1,62 @@
+openapi: 3.1.0
+info:
+  title: openstatus.monitor.v1
+paths: {}
+components:
+  schemas:
+    openstatus.monitor.v1.MonitorStatus:
+      type: string
+      title: MonitorStatus
+      enum:
+        - MONITOR_STATUS_UNSPECIFIED
+        - MONITOR_STATUS_ACTIVE
+        - MONITOR_STATUS_DEGRADED
+        - MONITOR_STATUS_ERROR
+      description: MonitorStatus represents the operational status of a monitor.
+    openstatus.monitor.v1.Periodicity:
+      type: string
+      title: Periodicity
+      enum:
+        - PERIODICITY_UNSPECIFIED
+        - PERIODICITY_30S
+        - PERIODICITY_1M
+        - PERIODICITY_5M
+        - PERIODICITY_10M
+        - PERIODICITY_30M
+        - PERIODICITY_1H
+      description: Monitor periodicity options.
+    openstatus.monitor.v1.Region:
+      type: string
+      title: Region
+      enum:
+        - REGION_UNSPECIFIED
+        - REGION_FLY_AMS
+        - REGION_FLY_ARN
+        - REGION_FLY_BOM
+        - REGION_FLY_CDG
+        - REGION_FLY_DFW
+        - REGION_FLY_EWR
+        - REGION_FLY_FRA
+        - REGION_FLY_GRU
+        - REGION_FLY_IAD
+        - REGION_FLY_JNB
+        - REGION_FLY_LAX
+        - REGION_FLY_LHR
+        - REGION_FLY_NRT
+        - REGION_FLY_ORD
+        - REGION_FLY_SJC
+        - REGION_FLY_SIN
+        - REGION_FLY_SYD
+        - REGION_FLY_YYZ
+        - REGION_KOYEB_FRA
+        - REGION_KOYEB_PAR
+        - REGION_KOYEB_SFO
+        - REGION_KOYEB_SIN
+        - REGION_KOYEB_TYO
+        - REGION_KOYEB_WAS
+        - REGION_RAILWAY_US_WEST2
+        - REGION_RAILWAY_US_EAST4
+        - REGION_RAILWAY_EUROPE_WEST4
+        - REGION_RAILWAY_ASIA_SOUTHEAST1
+      description: Geographic regions where monitors can run checks from.
+security: []

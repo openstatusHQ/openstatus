@@ -1,0 +1,131 @@
+openapi: 3.1.0
+info:
+  title: openstatus.health.v1
+paths:
+  /openstatus.health.v1.HealthService/Check:
+    post:
+      tags:
+        - openstatus.health.v1.HealthService
+      summary: Check
+      description: Check returns the current serving status of the service.
+      operationId: openstatus.health.v1.HealthService.Check
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+components:
+  schemas:
+    openstatus.health.v1.CheckResponse.ServingStatus:
+      type: string
+      title: ServingStatus
+      enum:
+        - SERVING_STATUS_UNSPECIFIED
+        - SERVING_STATUS_SERVING
+        - SERVING_STATUS_NOT_SERVING
+      description: ServingStatus represents the health status of the service.
+    openstatus.health.v1.CheckRequest:
+      type: object
+      properties:
+        service:
+          type: string
+          title: service
+          description: Optional service name to check. If empty, checks overall service health.
+      title: CheckRequest
+      additionalProperties: false
+      description: CheckRequest is the request message for health checks.
+    openstatus.health.v1.CheckResponse:
+      type: object
+      properties:
+        status:
+          title: status
+          description: The serving status of the service.
+          $ref: '#/components/schemas/openstatus.health.v1.CheckResponse.ServingStatus'
+      title: CheckResponse
+      additionalProperties: false
+      description: CheckResponse is the response message for health checks.
+    connect-protocol-version:
+      type: number
+      title: Connect-Protocol-Version
+      enum:
+        - 1
+      description: Define the version of the Connect protocol
+      const: 1
+    connect-timeout-header:
+      type: number
+      title: Connect-Timeout-Ms
+      description: Define the timeout, in ms
+    connect.error:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - not_found
+          enum:
+            - canceled
+            - unknown
+            - invalid_argument
+            - deadline_exceeded
+            - not_found
+            - already_exists
+            - permission_denied
+            - resource_exhausted
+            - failed_precondition
+            - aborted
+            - out_of_range
+            - unimplemented
+            - internal
+            - unavailable
+            - data_loss
+            - unauthenticated
+          description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+        detail:
+          $ref: '#/components/schemas/google.protobuf.Any'
+      title: Connect Error
+      additionalProperties: true
+      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+    google.protobuf.Any:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+          format: binary
+        debug:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+security: []
+tags:
+  - name: openstatus.health.v1.HealthService
+    description: HealthService provides health check endpoints for load balancer probes.

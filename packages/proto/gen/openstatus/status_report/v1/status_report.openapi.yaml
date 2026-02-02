@@ -1,0 +1,113 @@
+openapi: 3.1.0
+info:
+  title: openstatus.status_report.v1
+paths: {}
+components:
+  schemas:
+    openstatus.status_report.v1.StatusReportStatus:
+      type: string
+      title: StatusReportStatus
+      enum:
+        - STATUS_REPORT_STATUS_UNSPECIFIED
+        - STATUS_REPORT_STATUS_INVESTIGATING
+        - STATUS_REPORT_STATUS_IDENTIFIED
+        - STATUS_REPORT_STATUS_MONITORING
+        - STATUS_REPORT_STATUS_RESOLVED
+      description: StatusReportStatus represents the current state of a status report.
+    openstatus.status_report.v1.StatusReport:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status report.
+        status:
+          title: status
+          description: Current status of the report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        title:
+          type: string
+          title: title
+          description: Title of the status report.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportUpdate'
+          title: updates
+          description: Timeline of updates for this report (only included in GetStatusReport).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the report was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the report was last updated (RFC 3339 format).
+      title: StatusReport
+      additionalProperties: false
+      description: StatusReport represents an incident or maintenance report with full details.
+    openstatus.status_report.v1.StatusReportSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status report.
+        status:
+          title: status
+          description: Current status of the report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        title:
+          type: string
+          title: title
+          description: Title of the status report.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the report was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the report was last updated (RFC 3339 format).
+      title: StatusReportSummary
+      additionalProperties: false
+      description: StatusReportSummary represents metadata for a status report (used in list responses).
+    openstatus.status_report.v1.StatusReportUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the update.
+        status:
+          title: status
+          description: Status at the time of this update.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        date:
+          type: string
+          title: date
+          description: Timestamp when this update occurred (RFC 3339 format).
+        message:
+          type: string
+          title: message
+          description: Message describing the update.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the update was created (RFC 3339 format).
+      title: StatusReportUpdate
+      additionalProperties: false
+      description: StatusReportUpdate represents a single update entry in a status report timeline.
+security: []

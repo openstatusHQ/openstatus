@@ -1,0 +1,175 @@
+openapi: 3.1.0
+info:
+  title: openstatus.monitor.v1
+paths: {}
+components:
+  schemas:
+    openstatus.monitor.v1.MonitorStatus:
+      type: string
+      title: MonitorStatus
+      enum:
+        - MONITOR_STATUS_UNSPECIFIED
+        - MONITOR_STATUS_ACTIVE
+        - MONITOR_STATUS_DEGRADED
+        - MONITOR_STATUS_ERROR
+      description: MonitorStatus represents the operational status of a monitor.
+    openstatus.monitor.v1.Periodicity:
+      type: string
+      title: Periodicity
+      enum:
+        - PERIODICITY_UNSPECIFIED
+        - PERIODICITY_30S
+        - PERIODICITY_1M
+        - PERIODICITY_5M
+        - PERIODICITY_10M
+        - PERIODICITY_30M
+        - PERIODICITY_1H
+      description: Monitor periodicity options.
+    openstatus.monitor.v1.Region:
+      type: string
+      title: Region
+      enum:
+        - REGION_UNSPECIFIED
+        - REGION_FLY_AMS
+        - REGION_FLY_ARN
+        - REGION_FLY_BOM
+        - REGION_FLY_CDG
+        - REGION_FLY_DFW
+        - REGION_FLY_EWR
+        - REGION_FLY_FRA
+        - REGION_FLY_GRU
+        - REGION_FLY_IAD
+        - REGION_FLY_JNB
+        - REGION_FLY_LAX
+        - REGION_FLY_LHR
+        - REGION_FLY_NRT
+        - REGION_FLY_ORD
+        - REGION_FLY_SJC
+        - REGION_FLY_SIN
+        - REGION_FLY_SYD
+        - REGION_FLY_YYZ
+        - REGION_KOYEB_FRA
+        - REGION_KOYEB_PAR
+        - REGION_KOYEB_SFO
+        - REGION_KOYEB_SIN
+        - REGION_KOYEB_TYO
+        - REGION_KOYEB_WAS
+        - REGION_RAILWAY_US_WEST2
+        - REGION_RAILWAY_US_EAST4
+        - REGION_RAILWAY_EUROPE_WEST4
+        - REGION_RAILWAY_ASIA_SOUTHEAST1
+      description: Geographic regions where monitors can run checks from.
+    openstatus.monitor.v1.Headers:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+        value:
+          type: string
+          title: value
+      title: Headers
+      additionalProperties: false
+      description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.OpenTelemetryConfig:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          title: endpoint
+          maxLength: 2048
+          description: OTEL endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for OTEL requests.
+      title: OpenTelemetryConfig
+      additionalProperties: false
+      description: OpenTelemetry configuration for exporting metrics.
+    openstatus.monitor.v1.TCPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: URI to monitor in format "host:port" (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - 0
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+          title: degraded_at
+          maximum: 120000
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          nullable: true
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: TCPMonitor
+      additionalProperties: false
+      description: TCPMonitor defines the configuration for a TCP monitor.
+security: []

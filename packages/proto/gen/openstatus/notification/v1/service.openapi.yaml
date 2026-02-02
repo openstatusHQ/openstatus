@@ -1,0 +1,895 @@
+openapi: 3.1.0
+info:
+  title: openstatus.notification.v1
+paths:
+  /openstatus.notification.v1.NotificationService/CreateNotification:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: CreateNotification
+      description: CreateNotification creates a new notification channel.
+      operationId: openstatus.notification.v1.NotificationService.CreateNotification
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationResponse'
+  /openstatus.notification.v1.NotificationService/GetNotification:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: GetNotification
+      description: GetNotification retrieves a notification channel by ID.
+      operationId: openstatus.notification.v1.NotificationService.GetNotification
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationResponse'
+  /openstatus.notification.v1.NotificationService/ListNotifications:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: ListNotifications
+      description: ListNotifications returns a list of notification channels.
+      operationId: openstatus.notification.v1.NotificationService.ListNotifications
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsResponse'
+  /openstatus.notification.v1.NotificationService/UpdateNotification:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: UpdateNotification
+      description: UpdateNotification updates an existing notification channel.
+      operationId: openstatus.notification.v1.NotificationService.UpdateNotification
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /openstatus.notification.v1.NotificationService/DeleteNotification:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: DeleteNotification
+      description: DeleteNotification removes a notification channel.
+      operationId: openstatus.notification.v1.NotificationService.DeleteNotification
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationResponse'
+  /openstatus.notification.v1.NotificationService/SendTestNotification:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: SendTestNotification
+      description: SendTestNotification sends a test notification to verify configuration.
+      operationId: openstatus.notification.v1.NotificationService.SendTestNotification
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationResponse'
+  /openstatus.notification.v1.NotificationService/CheckNotificationLimit:
+    post:
+      tags:
+        - openstatus.notification.v1.NotificationService
+      summary: CheckNotificationLimit
+      description: CheckNotificationLimit checks if the workspace has reached its notification limit.
+      operationId: openstatus.notification.v1.NotificationService.CheckNotificationLimit
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse'
+components:
+  schemas:
+    openstatus.notification.v1.NotificationProvider:
+      type: string
+      title: NotificationProvider
+      enum:
+        - NOTIFICATION_PROVIDER_UNSPECIFIED
+        - NOTIFICATION_PROVIDER_DISCORD
+        - NOTIFICATION_PROVIDER_EMAIL
+        - NOTIFICATION_PROVIDER_GOOGLE_CHAT
+        - NOTIFICATION_PROVIDER_GRAFANA_ONCALL
+        - NOTIFICATION_PROVIDER_NTFY
+        - NOTIFICATION_PROVIDER_PAGERDUTY
+        - NOTIFICATION_PROVIDER_OPSGENIE
+        - NOTIFICATION_PROVIDER_SLACK
+        - NOTIFICATION_PROVIDER_SMS
+        - NOTIFICATION_PROVIDER_TELEGRAM
+        - NOTIFICATION_PROVIDER_WEBHOOK
+        - NOTIFICATION_PROVIDER_WHATSAPP
+      description: NotificationProvider represents the supported notification channel types.
+    openstatus.notification.v1.OpsgenieRegion:
+      type: string
+      title: OpsgenieRegion
+      enum:
+        - OPSGENIE_REGION_UNSPECIFIED
+        - OPSGENIE_REGION_US
+        - OPSGENIE_REGION_EU
+      description: OpsgenieRegion represents the Opsgenie API region.
+    openstatus.notification.v1.CheckNotificationLimitRequest:
+      type: object
+      title: CheckNotificationLimitRequest
+      additionalProperties: false
+      description: CheckNotificationLimitRequest is the request to check notification limits.
+    openstatus.notification.v1.CheckNotificationLimitResponse:
+      type: object
+      properties:
+        limitReached:
+          type: boolean
+          title: limit_reached
+          description: Whether the workspace has reached its notification limit.
+        currentCount:
+          type: integer
+          title: current_count
+          format: int32
+          description: Current number of notification channels.
+        maxCount:
+          type: integer
+          title: max_count
+          format: int32
+          description: Maximum allowed notification channels.
+      title: CheckNotificationLimitResponse
+      additionalProperties: false
+      description: CheckNotificationLimitResponse is the response containing limit information.
+    openstatus.notification.v1.CreateNotificationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+          minLength: 1
+          description: Display name for the notification channel.
+        provider:
+          not:
+            enum:
+              - 0
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        data:
+          title: data
+          description: Provider-specific configuration.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors to associate with this notification.
+      title: CreateNotificationRequest
+      required:
+        - data
+      additionalProperties: false
+      description: CreateNotificationRequest is the request to create a new notification channel.
+    openstatus.notification.v1.CreateNotificationResponse:
+      type: object
+      properties:
+        notification:
+          title: notification
+          description: The created notification channel.
+          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+      title: CreateNotificationResponse
+      additionalProperties: false
+      description: CreateNotificationResponse is the response after creating a notification channel.
+    openstatus.notification.v1.DeleteNotificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Notification ID to delete (required).
+      title: DeleteNotificationRequest
+      additionalProperties: false
+      description: DeleteNotificationRequest is the request to delete a notification channel.
+    openstatus.notification.v1.DeleteNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteNotificationResponse
+      additionalProperties: false
+      description: DeleteNotificationResponse is the response after deleting a notification channel.
+    openstatus.notification.v1.DiscordData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Discord webhook URL.
+      title: DiscordData
+      additionalProperties: false
+      description: DiscordData contains configuration for Discord notifications.
+    openstatus.notification.v1.EmailData:
+      type: object
+      properties:
+        email:
+          type: string
+          title: email
+          format: email
+          description: Email address to send notifications to.
+      title: EmailData
+      additionalProperties: false
+      description: EmailData contains configuration for email notifications.
+    openstatus.notification.v1.GetNotificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Notification ID to retrieve (required).
+      title: GetNotificationRequest
+      additionalProperties: false
+      description: GetNotificationRequest is the request to get a notification channel.
+    openstatus.notification.v1.GetNotificationResponse:
+      type: object
+      properties:
+        notification:
+          title: notification
+          description: The notification channel.
+          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+      title: GetNotificationResponse
+      additionalProperties: false
+      description: GetNotificationResponse is the response containing the notification channel.
+    openstatus.notification.v1.GoogleChatData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Google Chat webhook URL.
+      title: GoogleChatData
+      additionalProperties: false
+      description: GoogleChatData contains configuration for Google Chat notifications.
+    openstatus.notification.v1.GrafanaOncallData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Grafana OnCall webhook URL.
+      title: GrafanaOncallData
+      additionalProperties: false
+      description: GrafanaOncallData contains configuration for Grafana OnCall notifications.
+    openstatus.notification.v1.ListNotificationsRequest:
+      type: object
+      properties:
+        limit:
+          type: integer
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of notifications to return (1-100, defaults to 50).
+          nullable: true
+        offset:
+          type: integer
+          title: offset
+          format: int32
+          description: Number of notifications to skip for pagination (defaults to 0).
+          nullable: true
+      title: ListNotificationsRequest
+      additionalProperties: false
+      description: ListNotificationsRequest is the request to list notification channels.
+    openstatus.notification.v1.ListNotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.notification.v1.NotificationSummary'
+          title: notifications
+          description: Notification channel summaries.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of notification channels.
+      title: ListNotificationsResponse
+      additionalProperties: false
+      description: ListNotificationsResponse is the response containing notification channels.
+    openstatus.notification.v1.Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the notification.
+        name:
+          type: string
+          title: name
+          description: Display name for the notification channel.
+        provider:
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        data:
+          title: data
+          description: Provider-specific configuration.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors associated with this notification.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the notification was created (RFC 3339).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the notification was last updated (RFC 3339).
+      title: Notification
+      additionalProperties: false
+      description: Notification represents a notification channel with full details.
+    openstatus.notification.v1.NotificationData:
+      type: object
+      oneOf:
+        - properties:
+            discord:
+              title: discord
+              description: Discord configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.DiscordData'
+          title: discord
+          required:
+            - discord
+        - properties:
+            email:
+              title: email
+              description: Email configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.EmailData'
+          title: email
+          required:
+            - email
+        - properties:
+            googleChat:
+              title: google_chat
+              description: Google Chat configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.GoogleChatData'
+          title: google_chat
+          required:
+            - googleChat
+        - properties:
+            grafanaOncall:
+              title: grafana_oncall
+              description: Grafana OnCall configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.GrafanaOncallData'
+          title: grafana_oncall
+          required:
+            - grafanaOncall
+        - properties:
+            ntfy:
+              title: ntfy
+              description: Ntfy configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.NtfyData'
+          title: ntfy
+          required:
+            - ntfy
+        - properties:
+            opsgenie:
+              title: opsgenie
+              description: Opsgenie configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieData'
+          title: opsgenie
+          required:
+            - opsgenie
+        - properties:
+            pagerduty:
+              title: pagerduty
+              description: PagerDuty configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.PagerDutyData'
+          title: pagerduty
+          required:
+            - pagerduty
+        - properties:
+            slack:
+              title: slack
+              description: Slack configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.SlackData'
+          title: slack
+          required:
+            - slack
+        - properties:
+            sms:
+              title: sms
+              description: SMS configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.SmsData'
+          title: sms
+          required:
+            - sms
+        - properties:
+            telegram:
+              title: telegram
+              description: Telegram configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.TelegramData'
+          title: telegram
+          required:
+            - telegram
+        - properties:
+            webhook:
+              title: webhook
+              description: Webhook configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.WebhookData'
+          title: webhook
+          required:
+            - webhook
+        - properties:
+            whatsapp:
+              title: whatsapp
+              description: WhatsApp configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.WhatsappData'
+          title: whatsapp
+          required:
+            - whatsapp
+      title: NotificationData
+      additionalProperties: false
+      description: NotificationData is a union of provider-specific configuration.
+    openstatus.notification.v1.NotificationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the notification.
+        name:
+          type: string
+          title: name
+          description: Display name for the notification channel.
+        provider:
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        monitorCount:
+          type: integer
+          title: monitor_count
+          format: int32
+          description: Number of monitors associated with this notification.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the notification was created (RFC 3339).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the notification was last updated (RFC 3339).
+      title: NotificationSummary
+      additionalProperties: false
+      description: NotificationSummary represents a notification channel summary for list responses.
+    openstatus.notification.v1.NtfyData:
+      type: object
+      properties:
+        topic:
+          type: string
+          title: topic
+          minLength: 1
+          description: Ntfy topic to publish to.
+        serverUrl:
+          type: string
+          title: server_url
+          description: Ntfy server URL (defaults to https://ntfy.sh).
+        token:
+          type: string
+          title: token
+          description: Optional authentication token.
+          nullable: true
+      title: NtfyData
+      additionalProperties: false
+      description: NtfyData contains configuration for Ntfy notifications.
+    openstatus.notification.v1.OpsgenieData:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          title: api_key
+          minLength: 1
+          description: Opsgenie API key.
+        region:
+          title: region
+          description: Opsgenie region.
+          $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieRegion'
+      title: OpsgenieData
+      additionalProperties: false
+      description: OpsgenieData contains configuration for Opsgenie notifications.
+    openstatus.notification.v1.PagerDutyData:
+      type: object
+      properties:
+        integrationKey:
+          type: string
+          title: integration_key
+          minLength: 1
+          description: PagerDuty integration key.
+      title: PagerDutyData
+      additionalProperties: false
+      description: PagerDutyData contains configuration for PagerDuty notifications.
+    openstatus.notification.v1.SendTestNotificationRequest:
+      type: object
+      properties:
+        provider:
+          not:
+            enum:
+              - 0
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        data:
+          title: data
+          description: Provider-specific configuration.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+      title: SendTestNotificationRequest
+      required:
+        - data
+      additionalProperties: false
+      description: SendTestNotificationRequest is the request to send a test notification.
+    openstatus.notification.v1.SendTestNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the test was successful.
+        errorMessage:
+          type: string
+          title: error_message
+          description: Optional error message if the test failed.
+          nullable: true
+      title: SendTestNotificationResponse
+      additionalProperties: false
+      description: SendTestNotificationResponse is the response after sending a test notification.
+    openstatus.notification.v1.SlackData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Slack webhook URL.
+      title: SlackData
+      additionalProperties: false
+      description: SlackData contains configuration for Slack notifications.
+    openstatus.notification.v1.SmsData:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          title: phone_number
+          minLength: 1
+          description: Phone number to send SMS to.
+      title: SmsData
+      additionalProperties: false
+      description: SmsData contains configuration for SMS notifications.
+    openstatus.notification.v1.TelegramData:
+      type: object
+      properties:
+        chatId:
+          type: string
+          title: chat_id
+          minLength: 1
+          description: Telegram chat ID.
+      title: TelegramData
+      additionalProperties: false
+      description: TelegramData contains configuration for Telegram notifications.
+    openstatus.notification.v1.UpdateNotificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Notification ID to update (required).
+        name:
+          type: string
+          title: name
+          description: Updated display name.
+          nullable: true
+        data:
+          title: data
+          description: Updated provider-specific configuration.
+          nullable: true
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: Updated monitor IDs to associate.
+      title: UpdateNotificationRequest
+      additionalProperties: false
+      description: UpdateNotificationRequest is the request to update a notification channel.
+    openstatus.notification.v1.UpdateNotificationResponse:
+      type: object
+      properties:
+        notification:
+          title: notification
+          description: The updated notification channel.
+          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+      title: UpdateNotificationResponse
+      additionalProperties: false
+      description: UpdateNotificationResponse is the response after updating a notification channel.
+    openstatus.notification.v1.WebhookData:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          title: endpoint
+          format: uri
+          description: Webhook endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.notification.v1.WebhookHeader'
+          title: headers
+          description: Optional custom headers.
+      title: WebhookData
+      additionalProperties: false
+      description: WebhookData contains configuration for custom webhook notifications.
+    openstatus.notification.v1.WebhookHeader:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header name.
+        value:
+          type: string
+          title: value
+          description: Header value.
+      title: WebhookHeader
+      additionalProperties: false
+      description: WebhookHeader represents a custom header for webhook requests.
+    openstatus.notification.v1.WhatsappData:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          title: phone_number
+          minLength: 1
+          description: Phone number to send WhatsApp messages to.
+      title: WhatsappData
+      additionalProperties: false
+      description: WhatsappData contains configuration for WhatsApp notifications.
+    connect-protocol-version:
+      type: number
+      title: Connect-Protocol-Version
+      enum:
+        - 1
+      description: Define the version of the Connect protocol
+      const: 1
+    connect-timeout-header:
+      type: number
+      title: Connect-Timeout-Ms
+      description: Define the timeout, in ms
+    connect.error:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - not_found
+          enum:
+            - canceled
+            - unknown
+            - invalid_argument
+            - deadline_exceeded
+            - not_found
+            - already_exists
+            - permission_denied
+            - resource_exhausted
+            - failed_precondition
+            - aborted
+            - out_of_range
+            - unimplemented
+            - internal
+            - unavailable
+            - data_loss
+            - unauthenticated
+          description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+        detail:
+          $ref: '#/components/schemas/google.protobuf.Any'
+      title: Connect Error
+      additionalProperties: true
+      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+    google.protobuf.Any:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+          format: binary
+        debug:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+security: []
+tags:
+  - name: openstatus.notification.v1.NotificationService
+    description: NotificationService provides CRUD operations for notification channels.

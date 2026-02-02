@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: openstatus.status_page.v1
+paths: {}
+components:
+  schemas:
+    openstatus.status_page.v1.OverallStatus:
+      type: string
+      title: OverallStatus
+      enum:
+        - OVERALL_STATUS_UNSPECIFIED
+        - OVERALL_STATUS_OPERATIONAL
+        - OVERALL_STATUS_DEGRADED
+        - OVERALL_STATUS_PARTIAL_OUTAGE
+        - OVERALL_STATUS_MAJOR_OUTAGE
+        - OVERALL_STATUS_MAINTENANCE
+        - OVERALL_STATUS_UNKNOWN
+      description: OverallStatus represents the aggregated status of all components on a page.
+    openstatus.status_page.v1.PageAccessType:
+      type: string
+      title: PageAccessType
+      enum:
+        - PAGE_ACCESS_TYPE_UNSPECIFIED
+        - PAGE_ACCESS_TYPE_PUBLIC
+        - PAGE_ACCESS_TYPE_PASSWORD_PROTECTED
+        - PAGE_ACCESS_TYPE_AUTHENTICATED
+      description: PageAccessType defines who can access the status page.
+    openstatus.status_page.v1.PageTheme:
+      type: string
+      title: PageTheme
+      enum:
+        - PAGE_THEME_UNSPECIFIED
+        - PAGE_THEME_SYSTEM
+        - PAGE_THEME_LIGHT
+        - PAGE_THEME_DARK
+      description: PageTheme defines the visual theme of the status page.
+    openstatus.status_page.v1.StatusPage:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status page.
+        title:
+          type: string
+          title: title
+          description: Title of the status page.
+        description:
+          type: string
+          title: description
+          description: Description of the status page.
+        slug:
+          type: string
+          title: slug
+          description: URL-friendly slug for the status page.
+        customDomain:
+          type: string
+          title: custom_domain
+          description: Custom domain for the status page (optional).
+        published:
+          type: boolean
+          title: published
+          description: Whether the status page is published and visible.
+        accessType:
+          title: access_type
+          description: Access type for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageAccessType'
+        theme:
+          title: theme
+          description: Visual theme for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageTheme'
+        homepageUrl:
+          type: string
+          title: homepage_url
+          description: URL to the homepage (optional).
+        contactUrl:
+          type: string
+          title: contact_url
+          description: URL to the contact page (optional).
+        icon:
+          type: string
+          title: icon
+          description: Icon URL for the status page (optional).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the page was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the page was last updated (RFC 3339 format).
+      title: StatusPage
+      additionalProperties: false
+      description: StatusPage represents a full status page with all details.
+    openstatus.status_page.v1.StatusPageSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status page.
+        title:
+          type: string
+          title: title
+          description: Title of the status page.
+        slug:
+          type: string
+          title: slug
+          description: URL-friendly slug for the status page.
+        published:
+          type: boolean
+          title: published
+          description: Whether the status page is published and visible.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the page was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the page was last updated (RFC 3339 format).
+      title: StatusPageSummary
+      additionalProperties: false
+      description: StatusPageSummary represents metadata for a status page (used in list responses).
+security: []

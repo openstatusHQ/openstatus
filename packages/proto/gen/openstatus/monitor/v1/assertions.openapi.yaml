@@ -1,0 +1,133 @@
+openapi: 3.1.0
+info:
+  title: openstatus.monitor.v1
+paths: {}
+components:
+  schemas:
+    openstatus.monitor.v1.NumberComparator:
+      type: string
+      title: NumberComparator
+      enum:
+        - NUMBER_COMPARATOR_UNSPECIFIED
+        - NUMBER_COMPARATOR_EQUAL
+        - NUMBER_COMPARATOR_NOT_EQUAL
+        - NUMBER_COMPARATOR_GREATER_THAN
+        - NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - NUMBER_COMPARATOR_LESS_THAN
+        - NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: NumberComparator defines comparison operations for numeric values.
+    openstatus.monitor.v1.RecordComparator:
+      type: string
+      title: RecordComparator
+      enum:
+        - RECORD_COMPARATOR_UNSPECIFIED
+        - RECORD_COMPARATOR_EQUAL
+        - RECORD_COMPARATOR_NOT_EQUAL
+        - RECORD_COMPARATOR_CONTAINS
+        - RECORD_COMPARATOR_NOT_CONTAINS
+      description: RecordComparator defines comparison operations for DNS records.
+    openstatus.monitor.v1.StringComparator:
+      type: string
+      title: StringComparator
+      enum:
+        - STRING_COMPARATOR_UNSPECIFIED
+        - STRING_COMPARATOR_CONTAINS
+        - STRING_COMPARATOR_NOT_CONTAINS
+        - STRING_COMPARATOR_EQUAL
+        - STRING_COMPARATOR_NOT_EQUAL
+        - STRING_COMPARATOR_EMPTY
+        - STRING_COMPARATOR_NOT_EMPTY
+        - STRING_COMPARATOR_GREATER_THAN
+        - STRING_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - STRING_COMPARATOR_LESS_THAN
+        - STRING_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: StringComparator defines comparison operations for string values.
+    openstatus.monitor.v1.BodyAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+      title: BodyAssertion
+      additionalProperties: false
+      description: BodyAssertion defines an assertion for response body content.
+    openstatus.monitor.v1.HeaderAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header key to check (required).
+      title: HeaderAssertion
+      additionalProperties: false
+      description: HeaderAssertion defines an assertion for response headers.
+    openstatus.monitor.v1.RecordAssertion:
+      type: object
+      properties:
+        record:
+          type: string
+          title: record
+          enum:
+            - A
+            - AAAA
+            - CNAME
+            - MX
+            - TXT
+          description: DNS record type (e.g., "A", "AAAA", "CNAME", "MX", "TXT").
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.RecordComparator'
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+      title: RecordAssertion
+      additionalProperties: false
+      description: RecordAssertion defines an assertion for DNS records.
+    openstatus.monitor.v1.StatusCodeAssertion:
+      type: object
+      properties:
+        target:
+          type:
+            - integer
+            - string
+          title: target
+          maximum: 599
+          minimum: 100
+          format: int64
+          description: Target status code to compare against (100-599).
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.NumberComparator'
+      title: StatusCodeAssertion
+      additionalProperties: false
+      description: StatusCodeAssertion defines an assertion for HTTP status codes.
+security: []

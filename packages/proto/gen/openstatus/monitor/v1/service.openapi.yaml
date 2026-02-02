@@ -1,0 +1,1464 @@
+openapi: 3.1.0
+info:
+  title: openstatus.monitor.v1
+paths:
+  /openstatus.monitor.v1.MonitorService/CreateHTTPMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: CreateHTTPMonitor
+      description: CreateHTTPMonitor creates a new HTTP monitor.
+      operationId: openstatus.monitor.v1.MonitorService.CreateHTTPMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/CreateTCPMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: CreateTCPMonitor
+      description: CreateTCPMonitor creates a new TCP monitor.
+      operationId: openstatus.monitor.v1.MonitorService.CreateTCPMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/CreateDNSMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: CreateDNSMonitor
+      description: CreateDNSMonitor creates a new DNS monitor.
+      operationId: openstatus.monitor.v1.MonitorService.CreateDNSMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: UpdateHTTPMonitor
+      description: UpdateHTTPMonitor updates an existing HTTP monitor.
+      operationId: openstatus.monitor.v1.MonitorService.UpdateHTTPMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/UpdateTCPMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: UpdateTCPMonitor
+      description: UpdateTCPMonitor updates an existing TCP monitor.
+      operationId: openstatus.monitor.v1.MonitorService.UpdateTCPMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/UpdateDNSMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: UpdateDNSMonitor
+      description: UpdateDNSMonitor updates an existing DNS monitor.
+      operationId: openstatus.monitor.v1.MonitorService.UpdateDNSMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/TriggerMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: TriggerMonitor
+      description: TriggerMonitor initiates an immediate check for a monitor.
+      operationId: openstatus.monitor.v1.MonitorService.TriggerMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/DeleteMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: DeleteMonitor
+      description: DeleteMonitor removes a monitor.
+      operationId: openstatus.monitor.v1.MonitorService.DeleteMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorResponse'
+  /openstatus.monitor.v1.MonitorService/ListMonitors:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: ListMonitors
+      description: ListMonitors returns a list of monitors.
+      operationId: openstatus.monitor.v1.MonitorService.ListMonitors
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse'
+  /openstatus.monitor.v1.MonitorService/GetMonitorStatus:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: GetMonitorStatus
+      description: GetMonitorStatus returns the status of all regions for a monitor.
+      operationId: openstatus.monitor.v1.MonitorService.GetMonitorStatus
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse'
+  /openstatus.monitor.v1.MonitorService/GetMonitorSummary:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: GetMonitorSummary
+      description: GetMonitorSummary returns aggregated metrics and statistics for a monitor.
+      operationId: openstatus.monitor.v1.MonitorService.GetMonitorSummary
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+  /openstatus.monitor.v1.MonitorService/GetMonitor:
+    post:
+      tags:
+        - openstatus.monitor.v1.MonitorService
+      summary: GetMonitor
+      description: |-
+        GetMonitor returns a single monitor by ID within the authenticated workspace.
+         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+      operationId: openstatus.monitor.v1.MonitorService.GetMonitor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+components:
+  schemas:
+    openstatus.monitor.v1.HTTPMethod:
+      type: string
+      title: HTTPMethod
+      enum:
+        - HTTP_METHOD_UNSPECIFIED
+        - HTTP_METHOD_GET
+        - HTTP_METHOD_POST
+        - HTTP_METHOD_HEAD
+        - HTTP_METHOD_PUT
+        - HTTP_METHOD_PATCH
+        - HTTP_METHOD_DELETE
+        - HTTP_METHOD_TRACE
+        - HTTP_METHOD_CONNECT
+        - HTTP_METHOD_OPTIONS
+      description: HTTP methods supported for monitors.
+    openstatus.monitor.v1.MonitorStatus:
+      type: string
+      title: MonitorStatus
+      enum:
+        - MONITOR_STATUS_UNSPECIFIED
+        - MONITOR_STATUS_ACTIVE
+        - MONITOR_STATUS_DEGRADED
+        - MONITOR_STATUS_ERROR
+      description: MonitorStatus represents the operational status of a monitor.
+    openstatus.monitor.v1.NumberComparator:
+      type: string
+      title: NumberComparator
+      enum:
+        - NUMBER_COMPARATOR_UNSPECIFIED
+        - NUMBER_COMPARATOR_EQUAL
+        - NUMBER_COMPARATOR_NOT_EQUAL
+        - NUMBER_COMPARATOR_GREATER_THAN
+        - NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - NUMBER_COMPARATOR_LESS_THAN
+        - NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: NumberComparator defines comparison operations for numeric values.
+    openstatus.monitor.v1.Periodicity:
+      type: string
+      title: Periodicity
+      enum:
+        - PERIODICITY_UNSPECIFIED
+        - PERIODICITY_30S
+        - PERIODICITY_1M
+        - PERIODICITY_5M
+        - PERIODICITY_10M
+        - PERIODICITY_30M
+        - PERIODICITY_1H
+      description: Monitor periodicity options.
+    openstatus.monitor.v1.RecordComparator:
+      type: string
+      title: RecordComparator
+      enum:
+        - RECORD_COMPARATOR_UNSPECIFIED
+        - RECORD_COMPARATOR_EQUAL
+        - RECORD_COMPARATOR_NOT_EQUAL
+        - RECORD_COMPARATOR_CONTAINS
+        - RECORD_COMPARATOR_NOT_CONTAINS
+      description: RecordComparator defines comparison operations for DNS records.
+    openstatus.monitor.v1.Region:
+      type: string
+      title: Region
+      enum:
+        - REGION_UNSPECIFIED
+        - REGION_FLY_AMS
+        - REGION_FLY_ARN
+        - REGION_FLY_BOM
+        - REGION_FLY_CDG
+        - REGION_FLY_DFW
+        - REGION_FLY_EWR
+        - REGION_FLY_FRA
+        - REGION_FLY_GRU
+        - REGION_FLY_IAD
+        - REGION_FLY_JNB
+        - REGION_FLY_LAX
+        - REGION_FLY_LHR
+        - REGION_FLY_NRT
+        - REGION_FLY_ORD
+        - REGION_FLY_SJC
+        - REGION_FLY_SIN
+        - REGION_FLY_SYD
+        - REGION_FLY_YYZ
+        - REGION_KOYEB_FRA
+        - REGION_KOYEB_PAR
+        - REGION_KOYEB_SFO
+        - REGION_KOYEB_SIN
+        - REGION_KOYEB_TYO
+        - REGION_KOYEB_WAS
+        - REGION_RAILWAY_US_WEST2
+        - REGION_RAILWAY_US_EAST4
+        - REGION_RAILWAY_EUROPE_WEST4
+        - REGION_RAILWAY_ASIA_SOUTHEAST1
+      description: Geographic regions where monitors can run checks from.
+    openstatus.monitor.v1.StringComparator:
+      type: string
+      title: StringComparator
+      enum:
+        - STRING_COMPARATOR_UNSPECIFIED
+        - STRING_COMPARATOR_CONTAINS
+        - STRING_COMPARATOR_NOT_CONTAINS
+        - STRING_COMPARATOR_EQUAL
+        - STRING_COMPARATOR_NOT_EQUAL
+        - STRING_COMPARATOR_EMPTY
+        - STRING_COMPARATOR_NOT_EMPTY
+        - STRING_COMPARATOR_GREATER_THAN
+        - STRING_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - STRING_COMPARATOR_LESS_THAN
+        - STRING_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: StringComparator defines comparison operations for string values.
+    openstatus.monitor.v1.TimeRange:
+      type: string
+      title: TimeRange
+      enum:
+        - TIME_RANGE_UNSPECIFIED
+        - TIME_RANGE_1D
+        - TIME_RANGE_7D
+        - TIME_RANGE_14D
+      description: TimeRange represents the time period for metrics aggregation.
+    openstatus.monitor.v1.BodyAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+      title: BodyAssertion
+      additionalProperties: false
+      description: BodyAssertion defines an assertion for response body content.
+    openstatus.monitor.v1.CreateDNSMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: CreateDNSMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateDNSMonitorRequest is the request to create a new DNS monitor.
+    openstatus.monitor.v1.CreateDNSMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: CreateDNSMonitorResponse
+      additionalProperties: false
+      description: CreateDNSMonitorResponse is the response after creating a DNS monitor.
+    openstatus.monitor.v1.CreateHTTPMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: CreateHTTPMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
+    openstatus.monitor.v1.CreateHTTPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: CreateHTTPMonitorResponse
+      additionalProperties: false
+      description: CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
+    openstatus.monitor.v1.CreateTCPMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: CreateTCPMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateTCPMonitorRequest is the request to create a new TCP monitor.
+    openstatus.monitor.v1.CreateTCPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: CreateTCPMonitorResponse
+      additionalProperties: false
+      description: CreateTCPMonitorResponse is the response after creating a TCP monitor.
+    openstatus.monitor.v1.DNSMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: Domain to resolve (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - 0
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+          title: degraded_at
+          maximum: 120000
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          nullable: true
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        recordAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.RecordAssertion'
+          title: record_assertions
+          maxItems: 10
+          description: DNS record assertions for validation.
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: DNSMonitor
+      additionalProperties: false
+      description: DNSMonitor defines the configuration for a DNS monitor.
+    openstatus.monitor.v1.DeleteMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to delete (required).
+      title: DeleteMonitorRequest
+      additionalProperties: false
+      description: DeleteMonitorRequest is the request to delete a monitor.
+    openstatus.monitor.v1.DeleteMonitorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteMonitorResponse
+      additionalProperties: false
+      description: DeleteMonitorResponse is the response after deleting a monitor.
+    openstatus.monitor.v1.GetMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to retrieve (required).
+      title: GetMonitorRequest
+      additionalProperties: false
+      description: GetMonitorRequest is the request to get a single monitor by ID.
+    openstatus.monitor.v1.GetMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The monitor configuration (one of HTTP, TCP, or DNS).
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorConfig'
+      title: GetMonitorResponse
+      additionalProperties: false
+      description: GetMonitorResponse is the response containing the monitor.
+    openstatus.monitor.v1.GetMonitorStatusRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to get status for (required).
+      title: GetMonitorStatusRequest
+      additionalProperties: false
+      description: GetMonitorStatusRequest is the request to get the status of all regions for a monitor.
+    openstatus.monitor.v1.GetMonitorStatusResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Monitor ID.
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.RegionStatus'
+          title: regions
+          description: Status for each region.
+      title: GetMonitorStatusResponse
+      additionalProperties: false
+      description: GetMonitorStatusResponse is the response containing the status of all regions for a monitor.
+    openstatus.monitor.v1.GetMonitorSummaryRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to get summary for (required).
+        timeRange:
+          title: time_range
+          description: Time range for metrics aggregation (defaults to 1 day if unspecified).
+          $ref: '#/components/schemas/openstatus.monitor.v1.TimeRange'
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Optional filter by regions. If empty, returns metrics for all regions.
+      title: GetMonitorSummaryRequest
+      additionalProperties: false
+      description: GetMonitorSummaryRequest is the request to get aggregated metrics for a monitor.
+    openstatus.monitor.v1.GetMonitorSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Monitor ID.
+        lastPingAt:
+          type: string
+          title: last_ping_at
+          description: Timestamp of the last check in RFC 3339 format.
+        totalSuccessful:
+          type:
+            - integer
+            - string
+          title: total_successful
+          format: int64
+          description: Total number of successful requests.
+        totalDegraded:
+          type:
+            - integer
+            - string
+          title: total_degraded
+          format: int64
+          description: Total number of degraded requests.
+        totalFailed:
+          type:
+            - integer
+            - string
+          title: total_failed
+          format: int64
+          description: Total number of failed requests.
+        p50:
+          type:
+            - integer
+            - string
+          title: p50
+          format: int64
+          description: 50th percentile (median) latency in milliseconds.
+        p75:
+          type:
+            - integer
+            - string
+          title: p75
+          format: int64
+          description: 75th percentile latency in milliseconds.
+        p90:
+          type:
+            - integer
+            - string
+          title: p90
+          format: int64
+          description: 90th percentile latency in milliseconds.
+        p95:
+          type:
+            - integer
+            - string
+          title: p95
+          format: int64
+          description: 95th percentile latency in milliseconds.
+        p99:
+          type:
+            - integer
+            - string
+          title: p99
+          format: int64
+          description: 99th percentile latency in milliseconds.
+        timeRange:
+          title: time_range
+          description: Time range used for the metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.TimeRange'
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          description: Regions included in the metrics.
+      title: GetMonitorSummaryResponse
+      additionalProperties: false
+      description: GetMonitorSummaryResponse is the response containing aggregated metrics for a monitor.
+    openstatus.monitor.v1.HTTPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        url:
+          type: string
+          title: url
+          maxLength: 2048
+          minLength: 1
+          format: uri
+          description: URL to monitor (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - 0
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        method:
+          not:
+            enum:
+              - 0
+          title: method
+          description: HTTP method to use (defaults to GET).
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMethod'
+        body:
+          type: string
+          title: body
+          description: Request body (optional).
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+          title: degraded_at
+          maximum: 120000
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          nullable: true
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        followRedirects:
+          type: boolean
+          title: follow_redirects
+          description: Whether to follow HTTP redirects (defaults to true when not specified).
+          nullable: true
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for the request.
+        statusCodeAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.StatusCodeAssertion'
+          title: status_code_assertions
+          maxItems: 10
+          description: Status code assertions for the response.
+        bodyAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.BodyAssertion'
+          title: body_assertions
+          maxItems: 10
+          description: Body content assertions for the response.
+        headerAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HeaderAssertion'
+          title: header_assertions
+          maxItems: 10
+          description: Header assertions for the response.
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: HTTPMonitor
+      additionalProperties: false
+      description: HTTPMonitor defines the configuration for an HTTP monitor.
+    openstatus.monitor.v1.HeaderAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header key to check (required).
+      title: HeaderAssertion
+      additionalProperties: false
+      description: HeaderAssertion defines an assertion for response headers.
+    openstatus.monitor.v1.Headers:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+        value:
+          type: string
+          title: value
+      title: Headers
+      additionalProperties: false
+      description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ListMonitorsRequest:
+      type: object
+      properties:
+        limit:
+          type: integer
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of monitors to return (1-100, defaults to 50).
+          nullable: true
+        offset:
+          type: integer
+          title: offset
+          format: int32
+          description: Number of monitors to skip for pagination (defaults to 0).
+          nullable: true
+      title: ListMonitorsRequest
+      additionalProperties: false
+      description: ListMonitorsRequest is the request to list monitors.
+    openstatus.monitor.v1.ListMonitorsResponse:
+      type: object
+      properties:
+        httpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          title: http_monitors
+          description: HTTP monitors in the workspace.
+        tcpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          title: tcp_monitors
+          description: TCP monitors in the workspace.
+        dnsMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          title: dns_monitors
+          description: DNS monitors in the workspace.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of monitors across all types.
+      title: ListMonitorsResponse
+      additionalProperties: false
+      description: ListMonitorsResponse is the response containing a list of monitors.
+    openstatus.monitor.v1.MonitorConfig:
+      type: object
+      oneOf:
+        - properties:
+            dns:
+              title: dns
+              description: DNS monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          title: dns
+          required:
+            - dns
+        - properties:
+            http:
+              title: http
+              description: HTTP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          title: http
+          required:
+            - http
+        - properties:
+            tcp:
+              title: tcp
+              description: TCP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          title: tcp
+          required:
+            - tcp
+      title: MonitorConfig
+      additionalProperties: false
+      description: MonitorConfig represents the type-specific configuration for a monitor.
+    openstatus.monitor.v1.OpenTelemetryConfig:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          title: endpoint
+          maxLength: 2048
+          description: OTEL endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for OTEL requests.
+      title: OpenTelemetryConfig
+      additionalProperties: false
+      description: OpenTelemetry configuration for exporting metrics.
+    openstatus.monitor.v1.RecordAssertion:
+      type: object
+      properties:
+        record:
+          type: string
+          title: record
+          enum:
+            - A
+            - AAAA
+            - CNAME
+            - MX
+            - TXT
+          description: DNS record type (e.g., "A", "AAAA", "CNAME", "MX", "TXT").
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.RecordComparator'
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+      title: RecordAssertion
+      additionalProperties: false
+      description: RecordAssertion defines an assertion for DNS records.
+    openstatus.monitor.v1.RegionStatus:
+      type: object
+      properties:
+        region:
+          title: region
+          description: The region identifier.
+          $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+        status:
+          title: status
+          description: The status of the monitor in this region.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: RegionStatus
+      additionalProperties: false
+      description: RegionStatus represents the status of a monitor in a specific region.
+    openstatus.monitor.v1.StatusCodeAssertion:
+      type: object
+      properties:
+        target:
+          type:
+            - integer
+            - string
+          title: target
+          maximum: 599
+          minimum: 100
+          format: int64
+          description: Target status code to compare against (100-599).
+        comparator:
+          not:
+            enum:
+              - 0
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.NumberComparator'
+      title: StatusCodeAssertion
+      additionalProperties: false
+      description: StatusCodeAssertion defines an assertion for HTTP status codes.
+    openstatus.monitor.v1.TCPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: URI to monitor in format "host:port" (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - 0
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+          title: degraded_at
+          maximum: 120000
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+          nullable: true
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: TCPMonitor
+      additionalProperties: false
+      description: TCPMonitor defines the configuration for a TCP monitor.
+    openstatus.monitor.v1.TriggerMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to trigger (required).
+      title: TriggerMonitorRequest
+      additionalProperties: false
+      description: TriggerMonitorRequest is the request to trigger a monitor check.
+    openstatus.monitor.v1.TriggerMonitorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the trigger was successful.
+      title: TriggerMonitorResponse
+      additionalProperties: false
+      description: TriggerMonitorResponse is the response after triggering a monitor.
+    openstatus.monitor.v1.UpdateDNSMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+          nullable: true
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: UpdateDNSMonitorRequest
+      additionalProperties: false
+      description: UpdateDNSMonitorRequest is the request to update an existing DNS monitor.
+    openstatus.monitor.v1.UpdateDNSMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: UpdateDNSMonitorResponse
+      additionalProperties: false
+      description: UpdateDNSMonitorResponse is the response after updating a DNS monitor.
+    openstatus.monitor.v1.UpdateHTTPMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+          nullable: true
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: UpdateHTTPMonitorRequest
+      additionalProperties: false
+      description: UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
+    openstatus.monitor.v1.UpdateHTTPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: UpdateHTTPMonitorResponse
+      additionalProperties: false
+      description: UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
+    openstatus.monitor.v1.UpdateTCPMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+          nullable: true
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: UpdateTCPMonitorRequest
+      additionalProperties: false
+      description: UpdateTCPMonitorRequest is the request to update an existing TCP monitor.
+    openstatus.monitor.v1.UpdateTCPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: UpdateTCPMonitorResponse
+      additionalProperties: false
+      description: UpdateTCPMonitorResponse is the response after updating a TCP monitor.
+    connect-protocol-version:
+      type: number
+      title: Connect-Protocol-Version
+      enum:
+        - 1
+      description: Define the version of the Connect protocol
+      const: 1
+    connect-timeout-header:
+      type: number
+      title: Connect-Timeout-Ms
+      description: Define the timeout, in ms
+    connect.error:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - not_found
+          enum:
+            - canceled
+            - unknown
+            - invalid_argument
+            - deadline_exceeded
+            - not_found
+            - already_exists
+            - permission_denied
+            - resource_exhausted
+            - failed_precondition
+            - aborted
+            - out_of_range
+            - unimplemented
+            - internal
+            - unavailable
+            - data_loss
+            - unauthenticated
+          description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+        detail:
+          $ref: '#/components/schemas/google.protobuf.Any'
+      title: Connect Error
+      additionalProperties: true
+      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+    google.protobuf.Any:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+          format: binary
+        debug:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+security: []
+tags:
+  - name: openstatus.monitor.v1.MonitorService
+    description: MonitorService provides CRUD and operational commands for monitors.

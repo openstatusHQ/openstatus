@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: openstatus.status_page.v1
+paths: {}
+components:
+  schemas:
+    openstatus.status_page.v1.PageSubscriber:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the subscriber.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page the user is subscribed to.
+        email:
+          type: string
+          title: email
+          description: Email address of the subscriber.
+        acceptedAt:
+          type: string
+          title: accepted_at
+          description: Timestamp when the subscription was accepted/confirmed (RFC 3339 format, optional).
+        unsubscribedAt:
+          type: string
+          title: unsubscribed_at
+          description: Timestamp when the user unsubscribed (RFC 3339 format, optional).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the subscription was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the subscription was last updated (RFC 3339 format).
+      title: PageSubscriber
+      additionalProperties: false
+      description: PageSubscriber represents a subscriber to a status page.
+security: []
