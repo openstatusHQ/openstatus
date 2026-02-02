@@ -23,6 +23,8 @@ export function mountRpcRoutes(
     };
   }>,
 ) {
+
+
   // Handle all RPC routes at /rpc/* prefix
   app.all("/rpc/*", async (c) => {
     const url = new URL(c.req.url);

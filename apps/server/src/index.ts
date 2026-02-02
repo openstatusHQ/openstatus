@@ -22,6 +22,8 @@ import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
 import { api } from "./routes/v1";
+import { serveStatic } from "hono/bun";
+import { Scalar } from "@scalar/hono-api-reference";
 
 type Env = {
   Variables: {
@@ -173,6 +175,7 @@ app.onError(handleError);
 /**
  * ConnectRPC Routes API v2 ftw
  */
+
 mountRpcRoutes(app);
 
 /**
@@ -189,6 +192,37 @@ app.get("/ping", (c) => {
     200,
   );
 });
+
+app.get('/openapi.yaml', serveStatic({ path: './static/openapi.yaml' }))
+app.get('/openapi-v1.json', serveStatic({ path: './static/openapi-v1.json' }))
+
+
+app.get(
+  "/openapi",
+  Scalar({
+    url: "/openapi.yaml",
+    servers: [
+      {
+        url: "https://api.openstatus.dev/rpc",
+        description: "Production server",
+      },
+      {
+        url: "http://localhost:3000/v1",
+        description: "Dev server",
+      },
+    ],
+    metaData: {
+      title: "OpenStatus API",
+      description: "Start building with OpenStatus API",
+      ogDescription: "API Reference",
+      ogTitle: "OpenStatus API",
+      ogImage:
+        "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
+      twitterCard: "summary_large_image",
+    },
+  }),
+);
+
 
 /**
  * API Routes v1

@@ -901,7 +901,8 @@ export const MonitorService: GenService<{
     output: typeof GetMonitorSummaryResponseSchema;
   },
   /**
-   * GetMonitor returns a single monitor by ID.
+   * GetMonitor returns a single monitor by ID within the authenticated workspace.
+   * Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
    *
    * @generated from rpc openstatus.monitor.v1.MonitorService.GetMonitor
    */
