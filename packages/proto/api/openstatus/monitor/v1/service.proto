@@ -57,7 +57,8 @@ service MonitorService {
   // GetMonitorSummary returns aggregated metrics and statistics for a monitor.
   rpc GetMonitorSummary(GetMonitorSummaryRequest) returns (GetMonitorSummaryResponse);
 
-  // GetMonitor returns a single monitor by ID.
+  // GetMonitor returns a single monitor by ID within the authenticated workspace.
+  // Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
   rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse);
 }
 

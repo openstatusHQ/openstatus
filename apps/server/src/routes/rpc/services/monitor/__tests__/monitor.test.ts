@@ -1984,6 +1984,36 @@ describe("MonitorService.GetMonitor", () => {
 
     expect(res.status).toBe(401);
   });
+
+  test("returns 500 when monitor data fails schema parsing", async () => {
+    // Insert a monitor with invalid data that will fail selectMonitorSchema parsing
+    const corruptedMon = await db
+      .insert(monitor)
+      .values({
+        workspaceId: 1,
+        name: `${TEST_PREFIX}-corrupted-data`,
+        url: "https://corrupted.example.com",
+        // @ts-expect-error - intentionally invalid periodicity to test parse failure
+        periodicity: "invalid-periodicity",
+        active: true,
+        regions: "ams",
+        jobType: "http",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await connectRequest(
+        "GetMonitor",
+        { id: String(corruptedMon.id) },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(500);
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, corruptedMon.id));
+    }
+  });
 });
 
 describe("MonitorService.GetMonitorSummary", () => {

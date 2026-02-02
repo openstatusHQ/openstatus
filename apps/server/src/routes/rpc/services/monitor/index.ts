@@ -720,15 +720,10 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
           config: { case: "dns", value: dbMonitorToDnsProto(monitorData) },
         };
         break;
-      case "imcp":
-      case "udp":
-      case "ssl":
-        // These monitor types are not yet supported via RPC
-        throw monitorTypeMismatchError(
-          req.id,
-          "http, tcp, or dns",
-          monitorData.jobType,
-        );
+      default: {
+        const _exhaustive: never = monitorData.jobType;
+        throw monitorTypeMismatchError(req.id, "http, tcp, or dns", monitorData.jobType);
+      }
     }
 
     return {
