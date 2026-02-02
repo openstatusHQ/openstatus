@@ -17,6 +17,19 @@ RUN \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
     --mount=type=bind,target=packages/proto/package.json,source=packages/proto/package.json \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
+    --mount=type=bind,target=packages/notifications/base/package.json,source=packages/notifications/base/package.json \
+    --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
+    --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
+    --mount=type=bind,target=packages/notifications/grafana-oncall/package.json,source=packages/notifications/grafana-oncall/package.json \
+    --mount=type=bind,target=packages/notifications/google-chat/package.json,source=packages/notifications/google-chat/package.json \
+    --mount=type=bind,target=packages/notifications/ntfy/package.json,source=packages/notifications/ntfy/package.json \
+    --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
+    --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
+    --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
+    --mount=type=bind,target=packages/notifications/telegram/package.json,source=packages/notifications/telegram/package.json \
+    --mount=type=bind,target=packages/notifications/twillio-whatsapp/package.json,source=packages/notifications/twillio-whatsapp/package.json \
+    --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
+    --mount=type=bind,target=packages/notifications/webhook/package.json,source=packages/notifications/webhook/package.json \
     --mount=type=bind,target=packages/error/package.json,source=packages/error/package.json \
     --mount=type=bind,target=packages/regions/package.json,source=packages/regions/package.json \
     --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \

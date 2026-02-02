@@ -28,6 +28,10 @@
     "./maintenance/v1": {
       "import": "./gen/ts/openstatus/maintenance/v1/index.ts",
       "types": "./gen/ts/openstatus/maintenance/v1/index.ts"
+    },
+    "./notification/v1": {
+      "import": "./gen/ts/openstatus/notification/v1/index.ts",
+      "types": "./gen/ts/openstatus/notification/v1/index.ts"
     }
   },
   "scripts": {

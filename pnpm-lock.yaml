@@ -494,6 +494,36 @@ importers:
       '@openstatus/error':
         specifier: workspace:*
         version: link:../../packages/error
+      '@openstatus/notification-discord':
+        specifier: workspace:*
+        version: link:../../packages/notifications/discord
+      '@openstatus/notification-google-chat':
+        specifier: workspace:*
+        version: link:../../packages/notifications/google-chat
+      '@openstatus/notification-grafana-oncall':
+        specifier: workspace:*
+        version: link:../../packages/notifications/grafana-oncall
+      '@openstatus/notification-ntfy':
+        specifier: workspace:*
+        version: link:../../packages/notifications/ntfy
+      '@openstatus/notification-opsgenie':
+        specifier: workspace:*
+        version: link:../../packages/notifications/opsgenie
+      '@openstatus/notification-pagerduty':
+        specifier: workspace:*
+        version: link:../../packages/notifications/pagerduty
+      '@openstatus/notification-slack':
+        specifier: workspace:*
+        version: link:../../packages/notifications/slack
+      '@openstatus/notification-telegram':
+        specifier: workspace:*
+        version: link:../../packages/notifications/telegram
+      '@openstatus/notification-twillio-whatsapp':
+        specifier: workspace:*
+        version: link:../../packages/notifications/twillio-whatsapp
+      '@openstatus/notification-webhook':
+        specifier: workspace:*
+        version: link:../../packages/notifications/webhook
       '@openstatus/proto':
         specifier: workspace:*
         version: link:../../packages/proto
