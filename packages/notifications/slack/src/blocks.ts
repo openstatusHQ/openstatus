@@ -208,8 +208,8 @@ export function buildRecoveryBlocks(data: FormattedMessageData): SlackBlock[] {
       type: "header",
       text: {
         type: "plain_text",
-        text: `${escapedName} is recovered`,
-        emoji: false,
+        text: `${escapedName} is recovered :joy:`,
+        emoji: true,
       },
     },
     {
