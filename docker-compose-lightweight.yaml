@@ -1,0 +1,113 @@
+networks:
+    openstatus:
+        driver: bridge
+        name: openstatus
+
+volumes:
+    libsql-data:
+        name: openstatus-libsql-data
+
+services:
+    # External services
+    libsql:
+        container_name: openstatus-libsql
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        networks:
+            - openstatus
+        ports:
+            - "8080:8080"
+            - "5001:5001"
+        volumes:
+            - libsql-data:/var/lib/sqld
+        environment:
+            - SQLD_NODE=primary
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    'perl -e ''use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>"127.0.0.1:8080",Timeout=>1) ? 0 : 1);''',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        restart: unless-stopped
+
+    db-migrate:
+        container_name: openstatus-db-migrate
+        image: oven/bun:1.3.6
+        networks:
+            - openstatus
+        working_dir: /app/packages/db
+        volumes:
+            - .:/app
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+        command: ["sh", "-c", "bun install && bun run migrate"]
+        depends_on:
+            libsql:
+                condition: service_healthy
+        restart: "no"
+
+
+    dashboard:
+        container_name: openstatus-dashboard
+        build:
+            context: .
+            dockerfile: apps/dashboard/Dockerfile
+        image: openstatus/dashboard:latest
+        networks:
+            - openstatus
+        ports:
+            - "3000:3000"
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+            - PORT=3000
+            - HOSTNAME=0.0.0.0
+            - AUTH_TRUST_HOST=true
+        depends_on:
+            db-migrate:
+                condition: service_completed_successfully
+            libsql:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 45s
+        restart: unless-stopped
+
+    status-page:
+        container_name: openstatus-status-page
+        build:
+            context: .
+            dockerfile: apps/status-page/Dockerfile
+        image: openstatus/status-page:latest
+        networks:
+            - openstatus
+        ports:
+            - "3001:3000"
+        env_file:
+            - .env.docker
+        environment:
+            - DATABASE_URL=http://libsql:8080
+            - PORT=3000
+            - HOSTNAME=0.0.0.0
+            - AUTH_TRUST_HOST=true
+        depends_on:
+            db-migrate:
+                condition: service_completed_successfully
+            libsql:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+            interval: 15s
+            timeout: 10s
+            retries: 3
+            start_period: 45s
+        restart: unless-stopped
