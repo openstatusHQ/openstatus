@@ -514,12 +514,14 @@ npx jsr add @openstatus/sdk
 ```
 
 ```typescript
-import { OpenStatusClient } from "@openstatus/sdk";
+import { createOpenStatusClient } from "@openstatus/sdk-node";
 
-const client = new OpenStatusClient({ apiKey: "os_xxx" });
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
 
-const { httpMonitors } = await client.monitor.list({ limit: 10 });
-console.log(httpMonitors);
+const monitors = await client.monitor.v1.MonitorService.listMonitors({});
+console.log(monitors);
 ```
 
 No more maintaining two APIs. We just build.
