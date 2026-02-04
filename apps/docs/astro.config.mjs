@@ -142,6 +142,10 @@ export default defineConfig({
               label: "How to self-host openstatus",
               slug: "guides/self-hosting-openstatus",
             },
+            {
+              label: "Self host Status Page only",
+              slug: "guides/self-host-status-page-only",
+            },
           ],
         },
         {
