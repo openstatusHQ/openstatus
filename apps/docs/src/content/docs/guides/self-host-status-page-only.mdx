@@ -1,0 +1,59 @@
+---
+title: Only deploy the openstatus status page (self-hosting) 
+description: Complete guide to deploying openstatus status page on your own infrastructure
+---
+
+
+Openstatus is a status page  platform with monitoring capabilities. If you only want to self-host the status page component of openstatus, this guide will walk you through the process.
+
+
+## Prerequisites
+
+- Docker and Docker Compose installed
+- Basic understanding of Docker and containerization
+- Command line experience
+- Git installed
+- Node.js and pnpm (for database migrations)
+
+
+### Part 1: Initial Setup and Service Launch
+
+1.  **Clone the Repository**
+
+    Get the latest version of openstatus:
+    ```bash
+    git clone https://github.com/openstatushq/openstatus
+    cd openstatus
+    ```
+
+2.  **Configure Your Environment**
+
+    Copy the example environment file. This file will hold all your configuration variables.
+    ```bash
+    cp .env.docker-lightweight .env.docker
+    ```
+    Open `.env.docker` in a text editor. At a minimum, you **must** set a value for `AUTH_SECRET` for authentication to work. For a complete setup, review the file for other variables like OAuth providers or email services.
+
+
+3.  **Build and Start Services**
+
+    Use Docker Compose to build and run all openstatus services in the background.
+    ```bash
+    export DOCKER_BUILDKIT=1
+    docker compose -f docker-compose.lightweight.yml up -d
+    ```
+
+### Part 2: Application Configuration
+
+Now that the services are running, you can access the dashboard and perform the final setup steps.
+
+-   **Dashboard:** `http://localhost:3000`
+-   **Status Pages:** `http://localhost:3001`
+
+
+You can now log in to the dashboard using email authentication. If you want to set up OAuth providers, refer to the environment variable configuration in the `.env.docker` file.
+
+
+## Next Steps
+
+Create your first status page and start adding static components to monitor your services. For more advanced configurations and monitoring setups, refer to the [full self-hosting guide](./self-hosting-openstatus).
