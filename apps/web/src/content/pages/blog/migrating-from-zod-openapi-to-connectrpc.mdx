@@ -1,40 +1,42 @@
 ---
 title: "One API to Rule Them All: Migrating from zod-openapi to ConnectRPC"
-description: ""
+description: "We killed our technical debt by merging two APIs into one. Here's how ConnectRPC gave us tRPC-level DX while keeping REST compatibility—and how AI cut our migration time from months to weeks."
 author: "Thibault Le Ouay Ducasse"
 publishedAt: "2026-02-04"
 image: ""
 category: "engineering"
 ---
 
-**TL;DR:** We were maintaining two separate APIs: a typed tRPC backend for ourselves and a REST API for everyone else. That was a mistake. Here's how we unified them into a single, schema-first source of truth using ConnectRPC—and how AI helped us do it in record time.
+**TL;DR:** Two APIs. Double the bugs. Double the work. We maintained tRPC for ourselves and REST for everyone else—until we found ConnectRPC. Now we have one schema-first API that's type-safe *and* curl-able. AI helped us finish in weeks instead of months.
 
 ---
 
-## The Problem: Two APIs, Double the Debt
+## The Problem: Two APIs, Double the Work
 
-Here's a confession: until recently, we weren't dogfooding our own public API.
+Here's a confession: we weren't dogfooding our own public API.
 
-Internally, we relied on **tRPC** for its end-to-end type safety and developer experience. For our public API, we built a separate REST API using **zod-openapi**.
+Internally, we used **tRPC** for its end-to-end type safety. For our public API, we built a separate REST layer with **zod-openapi**.
 
-This resulted in the "Split Stack" problem:
-* **Two Codebases:** We had to define logic twice.
-* **Two Sets of Types:** Internal types often drifted from public DTOs.
-* **Velocity Drag:** Every feature had to be implemented twice. Every bug fix was a potential inconsistency.
+The result? The "Split Stack" problem:
+* **Two codebases.** Every endpoint defined twice.
+* **Two sets of types.** Internal types drifted from public DTOs.
+* **Half the velocity.** Every feature shipped twice. Every bug fix risked inconsistency.
 
-This is the kind of technical debt that slowly erodes velocity. We knew we needed to merge them, but we didn't want to lose the developer experience (DX) of tRPC or the accessibility of REST.
+This debt compounds. We needed to merge them—but we didn't want to sacrifice tRPC's DX or REST's accessibility.
 
-The answer wasn't REST or GraphQL. It was **ConnectRPC**.
+The answer wasn't REST. It wasn't GraphQL. It was **ConnectRPC**.
 
 ---
 
 ## Why ConnectRPC Won
 
-We evaluated several options, but ConnectRPC stood out because it bridged the gap between strict contracts and developer ease.
+We evaluated several options. ConnectRPC stood out because it bridges strict contracts with developer ease.
 
-### 1. Schema-First is the New King
+### 1. Better Client Generation Tooling
 
-With `zod-openapi`, we were generating documentation from code. With ConnectRPC, we flip that: **the schema is the source of truth.**
+OpenAPI can generate clients for multiple languages, but the tooling is hit-or-miss. For TypeScript, [Hey API](https://heyapi.dev/) is solid, but try generating a quality Go or Rust client and you'll spend hours fixing the output. We are actually experiencing it with for our CLI written in Go.
+
+The Buf ecosystem solves this. **Generated clients actually work.** No manual fixes, no weird edge cases. The proto schema compiles to idiomatic code in any language.
 
 Here's what our Monitor API looks like in proto:
 
@@ -89,9 +91,9 @@ message ListMonitorsRequest {
 
 Notice the `buf.validate` constraints inline. This isn't documentation—it's executable validation that runs at runtime via protovalidate.
 
-### 2. Tooling That Actually Works (The Buf Ecosystem)
+### 2. Protobuf Tooling That Doesn't Suck
 
-The biggest fear with moving to Protobuf/gRPC is usually the tooling setup. The **Buf** ecosystem solved this for us.
+The biggest fear with Protobuf? The tooling. The **Buf** ecosystem solved this.
 
 Our `buf.yaml`:
 
@@ -121,9 +123,9 @@ What this gives us:
 * **`buf breaking`**: Detects backward-incompatible changes in CI. No more accidentally breaking the SDK.
 * **Type-Safe Clients**: We generate TypeScript clients via `protoc-gen-es` with TanStack Query integration.
 
-### 3. HTTP/JSON Support Out of the Box
+### 3. Still Curl-able (No gRPC Client Required)
 
-ConnectRPC isn't "gRPC-or-nothing." It speaks HTTP/JSON. This means our API is still `curl`-able:
+ConnectRPC isn't "gRPC-or-nothing." It speaks HTTP/JSON natively:
 
 ```bash
 # Create a monitor
@@ -147,13 +149,13 @@ curl -X POST https://api.openstatus.dev/rpc/openstatus.monitor.v1.MonitorService
   -d '{"limit": 10}'
 ```
 
-Debuggable in Chrome DevTools. No gRPC client required.
+Debuggable in Chrome DevTools. No special tooling required.
 
 ---
 
-## The Implementation: Hono + ConnectRPC
+## How We Built It: Hono + ConnectRPC
 
-We run our API on **Hono**. Here's how we integrated ConnectRPC:
+Our API runs on **Hono**. Here's the integration:
 
 ### Router Setup
 
@@ -191,9 +193,9 @@ export const routes = createConnectRouter({
   .service(StatusPageService, statusPageServiceImpl);
 ```
 
-### Service Implementation
+### Service Implementation: Just Business Logic
 
-Here's a real excerpt from our Monitor service:
+Here's a real excerpt.
 
 ```typescript
 // apps/server/src/routes/rpc/services/monitor/index.ts
@@ -275,7 +277,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
 ### The Interceptor Pattern
 
-This is where ConnectRPC shines. Cross-cutting concerns become clean, composable interceptors.
+Similar to Hono middleware, but with typed context and protovalidate integration out of the box.
 
 **Authentication:**
 
@@ -376,9 +378,9 @@ export function rateLimitExceededError(limit: number, current: number): ConnectE
 
 ---
 
-## Before/After: Zod-OpenAPI vs ConnectRPC
+## Before and After: Less Code, More Clarity
 
-**Before (zod-openapi):**
+**Before (zod-openapi):** ~50 lines per endpoint, validation mixed with business logic.
 
 ```typescript
 import { createRoute, z } from "@hono/zod-openapi";
@@ -419,10 +421,10 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
 }
 ```
 
-**After (ConnectRPC):**
+**After (ConnectRPC):** Schema defines validation. Handler is pure business logic.
 
 ```protobuf
-// Proto - single source of truth
+// Proto defines the contract
 message HTTPMonitor {
   string name = 2 [(buf.validate.field).string = { min_len: 1, max_len: 256 }];
   string url = 3 [(buf.validate.field).string = { min_len: 1, max_len: 2048, uri: true }];
@@ -445,13 +447,13 @@ async createHTTPMonitor(req, ctx) {
 }
 ```
 
-The difference: **validation, auth, and error handling are now composable interceptors**, not copy-pasted boilerplate in every handler.
+The difference: validation lives in the schema, not scattered across Zod definitions and handler code. One source of truth for the contract.
 
 ---
 
-## Client Usage: The Secret Sauce
+## The Payoff: tRPC-Level DX for Everyone
 
-Here's where ConnectRPC delivers tRPC-level DX. With `@connectrpc/connect-query`, we get TanStack Query integration:
+This is where it all comes together. With `@connectrpc/connect-query`, we can get auto-generated TanStack Query hooks:
 
 **React Component:**
 
@@ -510,28 +512,30 @@ export default async function MonitorsPage() {
 
 Full type safety. Auto-generated hooks. The same API your users consume.
 
----
-
-## We "Vibe Coded" It (And It Worked)
-
-In early 2025, we decided to treat this migration as a perfect candidate for AI-assisted development.
-
-Here's what we learned: **AI is exceptionally good at schema work.**
-
-`.proto` files are declarative, highly structured, and pattern-heavy—the perfect meal for an LLM. We used Claude to:
-
-1. Ingest our existing Zod schemas and output valid, idiomatic Protobuf definitions.
-2. Generate the service implementations from our existing REST handlers.
-3. Flag inconsistencies between our internal (tRPC) and external (REST) logic.
-4. Write the interceptors and error handling patterns.
-
-The review cycles were lightning fast. Instead of writing boilerplate from scratch, we shifted to an "Architect + Reviewer" role. A migration we estimated would take months was completed in weeks.
+That's the "what." Here's the "how fast."
 
 ---
 
-## Testing
+## How AI Cut Our Migration Time by 75%
 
-ConnectRPC endpoints are just HTTP. Testing is straightforward:
+In early 2026, we treated this migration as a test case for AI-assisted development.
+
+The result? **AI is exceptionally good at schema work.**
+
+`.proto` files are declarative, highly structured, and pattern-heavy—perfect for LLMs. We used Claude to:
+
+1. Convert our Zod schemas into idiomatic Protobuf definitions
+2. Generate service implementations from existing REST handlers
+3. Flag inconsistencies between our internal and external APIs
+4. Write the interceptor patterns
+
+We shifted from "writing boilerplate" to "reviewing code." A migration we estimated at months finished in weeks.
+
+---
+
+## Testing: Just HTTP
+
+No special test setup. ConnectRPC endpoints are plain HTTP:
 
 ```typescript
 import { describe, expect, test } from "bun:test";
@@ -570,11 +574,11 @@ describe("MonitorService", () => {
 
 ## What's Next
 
-Now that the foundation is laid, we're doing two things:
+Two things:
 
-1. **Eating our own cooking:** We're migrating our internal dashboard to use the public ConnectRPC API. The `connect-query` integration gives us the same DX we had with tRPC.
+1. **Dogfooding.** We're migrating our dashboard to the public ConnectRPC API. Same DX we had with tRPC, but now we use exactly what our users use.
 
-2. **The OpenStatus SDK is Live:** You can now build on top of our monitoring platform with generated, type-safe clients.
+2. **The SDK is live.** Build on our monitoring platform with type-safe, generated clients:
 
 ```bash
 npx jsr add @openstatus/sdk
@@ -589,6 +593,10 @@ const { httpMonitors } = await client.monitor.list({ limit: 10 });
 console.log(httpMonitors);
 ```
 
-We're done maintaining two APIs. Now, we just build.
+No more maintaining two APIs. We just build.
 
-**[Check out the SDK](https://jsr.io/@openstatus/sdk-node)** | **[View the Proto definitions](https://github.com/openstatushq/openstatus/tree/main/packages/proto)**
+---
+
+**Ready to try it?**
+
+**[Get the SDK](https://jsr.io/@openstatus/sdk-node)** | **[View the Proto definitions](https://github.com/openstatushq/openstatus/tree/main/packages/proto)**
