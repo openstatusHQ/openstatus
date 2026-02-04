@@ -10,7 +10,6 @@ import (
 	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/models"
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
-	"github.com/rs/zerolog/log"
 )
 
 // Converts models.NumberComparator to proto NumberComparator
@@ -69,8 +68,23 @@ func convertRecordComparator(m models.RecordComparator) private_locationv1.Recor
 	}
 }
 
+// addParseError records a parsing error in the wide event context
+func addParseError(ctx context.Context, errorType string, err error) {
+	if holder := GetEvent(ctx); holder != nil {
+		errors, ok := holder.Event["parse_errors"].([]map[string]any)
+		if !ok {
+			errors = []map[string]any{}
+		}
+		errors = append(errors, map[string]any{
+			"type":    errorType,
+			"message": err.Error(),
+		})
+		holder.Event["parse_errors"] = errors
+	}
+}
+
 // Helper to parse assertions
-func ParseAssertions(assertions sql.NullString) (
+func ParseAssertions(ctx context.Context, assertions sql.NullString) (
 	statusAssertions []*private_locationv1.StatusCodeAssertion,
 	headerAssertions []*private_locationv1.HeaderAssertion,
 	bodyAssertions []*private_locationv1.BodyAssertion,
@@ -80,20 +94,20 @@ func ParseAssertions(assertions sql.NullString) (
 	}
 	var rawAssertions []json.RawMessage
 	if err := json.Unmarshal([]byte(assertions.String), &rawAssertions); err != nil {
-		log.Error().Err(err).Msg("failed to unmarshal assertions")
+		addParseError(ctx, "assertions_unmarshal", err)
 		return
 	}
 	for _, a := range rawAssertions {
 		var assert models.Assertion
 		if err := json.Unmarshal(a, &assert); err != nil {
-			log.Error().Err(err).Msg("failed to unmarshal assertion")
+			addParseError(ctx, "assertion_unmarshal", err)
 			continue
 		}
 		switch assert.AssertionType {
 		case models.AssertionStatus:
 			var target models.StatusTarget
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Error().Err(err).Msg("failed to unmarshal status target")
+				addParseError(ctx, "status_target_unmarshal", err)
 				continue
 			}
 			statusAssertions = append(statusAssertions, &private_locationv1.StatusCodeAssertion{
@@ -103,7 +117,7 @@ func ParseAssertions(assertions sql.NullString) (
 		case models.AssertionHeader:
 			var target models.HeaderTarget
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Error().Err(err).Msg("failed to unmarshal header target")
+				addParseError(ctx, "header_target_unmarshal", err)
 				continue
 			}
 			headerAssertions = append(headerAssertions, &private_locationv1.HeaderAssertion{
@@ -114,7 +128,7 @@ func ParseAssertions(assertions sql.NullString) (
 		case models.AssertionTextBody:
 			var target models.BodyString
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Error().Err(err).Msg("failed to unmarshal body target")
+				addParseError(ctx, "body_target_unmarshal", err)
 				continue
 			}
 			bodyAssertions = append(bodyAssertions, &private_locationv1.BodyAssertion{
@@ -127,32 +141,32 @@ func ParseAssertions(assertions sql.NullString) (
 }
 
 // Helper to parse DNS record assertions
-func ParseRecordAssertions(assertions sql.NullString) []*private_locationv1.RecordAssertion {
+func ParseRecordAssertions(ctx context.Context, assertions sql.NullString) []*private_locationv1.RecordAssertion {
 	if !assertions.Valid {
 		return nil
 	}
 	var rawAssertions []json.RawMessage
 	if err := json.Unmarshal([]byte(assertions.String), &rawAssertions); err != nil {
-		log.Error().Err(err).Msg("failed to unmarshal assertions")
+		addParseError(ctx, "record_assertions_unmarshal", err)
 		return nil
 	}
 	var recordAssertions []*private_locationv1.RecordAssertion
 	for _, a := range rawAssertions {
 		var assert models.Assertion
 		if err := json.Unmarshal(a, &assert); err != nil {
-			log.Error().Err(err).Msg("failed to unmarshal assertion")
+			addParseError(ctx, "record_assertion_unmarshal", err)
 			continue
 		}
 		if assert.AssertionType == models.AssertionDnsRecord {
 			var target models.RecordTarget
 			if err := json.Unmarshal(a, &target); err != nil {
-				log.Error().Err(err).Msg("failed to unmarshal record target")
+				addParseError(ctx, "record_target_unmarshal", err)
 				continue
 			}
 			recordAssertions = append(recordAssertions, &private_locationv1.RecordAssertion{
 				Record:     target.Key,
 				Comparator: convertRecordComparator(target.Comparator),
-				Target:    target.Target,
+				Target:     target.Target,
 			})
 		}
 	}
@@ -183,11 +197,11 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		case database.JobTypeHTTP:
 			var headers []*private_locationv1.Headers
 			if err := json.Unmarshal([]byte(monitor.Headers), &headers); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("unable to unmarshal headers")
+				addParseError(ctx, "headers_unmarshal", err)
 				headers = nil
 			}
 
-			statusAssertions, headerAssertions, bodyAssertions := ParseAssertions(monitor.Assertions)
+			statusAssertions, headerAssertions, bodyAssertions := ParseAssertions(ctx, monitor.Assertions)
 
 			httpMonitors = append(httpMonitors, &private_locationv1.HTTPMonitor{
 				Url:                  monitor.URL,
@@ -216,7 +230,7 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 			})
 
 		case database.JobTypeDNS:
-			recordAssertions := ParseRecordAssertions(monitor.Assertions)
+			recordAssertions := ParseRecordAssertions(ctx, monitor.Assertions)
 			dnsMonitors = append(dnsMonitors, &private_locationv1.DNSMonitor{
 				Id:               strconv.Itoa(monitor.ID),
 				Uri:              monitor.URL,
@@ -229,13 +243,15 @@ func (h *privateLocationHandler) Monitors(ctx context.Context, req *connect.Requ
 		}
 	}
 
-
-	event := ctx.Value("event")
-	if eventMap, ok := event.(map[string]any); ok && eventMap != nil {
-		eventMap["private_location"] = map[string]any{
-			"workspace_id": workspaceId,
+	// Enrich wide event with monitor counts
+	if holder := GetEvent(ctx); holder != nil {
+		holder.Event["private_location"] = map[string]any{
+			"workspace_id":   workspaceId,
+			"http_monitors":  len(httpMonitors),
+			"tcp_monitors":   len(tcpMonitors),
+			"dns_monitors":   len(dnsMonitors),
+			"total_monitors": len(monitors),
 		}
-		ctx = context.WithValue(ctx, "event", eventMap)
 	}
 
 	return connect.NewResponse(&private_locationv1.MonitorsResponse{
