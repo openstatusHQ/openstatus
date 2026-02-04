@@ -1,6 +1,6 @@
 ---
 title: "One API to Rule Them All: Migrating from zod-openapi to ConnectRPC"
-description: "We killed our technical debt by merging two APIs into one. Here's how ConnectRPC gave us tRPC-level DX while keeping REST compatibility—and how AI cut our migration time from months to weeks."
+description: "We are unifying our internal tRPC API and public REST API into a single ConnectRPC service. Here's how we did it—and how AI helped us finish in weeks instead of months."
 author: "Thibault Le Ouay Ducasse"
 publishedAt: "2026-02-04"
 image: ""
@@ -34,7 +34,7 @@ We evaluated several options. ConnectRPC stood out because it bridges strict con
 
 ### 1. Better Client Generation Tooling
 
-OpenAPI can generate clients for multiple languages, but the tooling is hit-or-miss. For TypeScript, [Hey API](https://heyapi.dev/) is solid, but try generating a quality Go or Rust client and you'll spend hours fixing the output. We are actually experiencing it with for our CLI written in Go.
+OpenAPI can generate clients for multiple languages, but the tooling is hit-or-miss. For TypeScript, [Hey API](https://heyapi.dev/) is solid. For Go or Rust? You'll spend hours fixing the output. We learned this the hard way with our CLI.
 
 The Buf ecosystem solves this. **Generated clients actually work.** No manual fixes, no weird edge cases. The proto schema compiles to idiomatic code in any language.
 
@@ -91,9 +91,9 @@ message ListMonitorsRequest {
 
 Notice the `buf.validate` constraints inline. This isn't documentation—it's executable validation that runs at runtime via protovalidate.
 
-### 2. Protobuf Tooling That Doesn't Suck
+### 2. Schema Linting and Breaking Change Detection
 
-The biggest fear with Protobuf? The tooling. The **Buf** ecosystem solved this.
+Beyond client generation, Buf gives us guardrails we never had with OpenAPI.
 
 Our `buf.yaml`:
 
@@ -119,9 +119,8 @@ breaking:
 ```
 
 What this gives us:
-* **`buf lint`**: Catches style issues and conventions before PRs are merged.
-* **`buf breaking`**: Detects backward-incompatible changes in CI. No more accidentally breaking the SDK.
-* **Type-Safe Clients**: We generate TypeScript clients via `protoc-gen-es` with TanStack Query integration.
+* **`buf lint`**: Catches style issues and naming conventions before PRs merge.
+* **`buf breaking`**: Detects backward-incompatible changes in CI. No more accidentally shipping a breaking SDK change.
 
 ### 3. Still Curl-able (No gRPC Client Required)
 
@@ -277,9 +276,7 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
 ### The Interceptor Pattern
 
-Similar to Hono middleware, but with typed context and protovalidate integration out of the box.
-
-**Authentication:**
+Similar to Hono middleware, but with typed context via `createContextKey`:
 
 ```typescript
 // apps/server/src/routes/rpc/interceptors/auth.ts
@@ -289,11 +286,6 @@ export const RPC_CONTEXT_KEY = createContextKey<RpcContext | undefined>(undefine
 
 export function authInterceptor(): Interceptor {
   return (next) => async (req) => {
-    // Skip auth for health checks
-    if (req.service.typeName === "openstatus.health.v1.HealthService") {
-      return next(req);
-    }
-
     const apiKey = req.header.get("x-openstatus-key");
 
     if (!apiKey) {
@@ -313,74 +305,13 @@ export function authInterceptor(): Interceptor {
 }
 ```
 
-**Validation (protovalidate):**
-
-```typescript
-// apps/server/src/routes/rpc/interceptors/validation.ts
-import { createValidateInterceptor } from "@connectrpc/validate";
-
-const SKIP_VALIDATION_METHODS = new Set([
-  "UpdateHTTPMonitor",  // Partial updates need manual validation
-  "UpdateTCPMonitor",
-  "UpdateDNSMonitor",
-]);
-
-export function validationInterceptor(): Interceptor {
-  const baseInterceptor = createValidateInterceptor();
-  return (next) => async (req) => {
-    if (SKIP_VALIDATION_METHODS.has(req.method.name)) {
-      return next(req);  // Handler does manual validation
-    }
-    return baseInterceptor(next)(req);
-  };
-}
-```
-
-**Structured Errors:**
-
-```typescript
-// apps/server/src/routes/rpc/services/monitor/errors.ts
-import { Code, ConnectError } from "@connectrpc/connect";
-
-function createError(
-  message: string,
-  code: Code,
-  reason: string,
-  metadata?: Record<string, string>,
-): ConnectError {
-  const headers = new Headers({
-    "error-domain": "openstatus.dev",
-    "error-reason": reason,
-  });
-  if (metadata) {
-    for (const [key, value] of Object.entries(metadata)) {
-      headers.set(`error-${key}`, value);
-    }
-  }
-  return new ConnectError(message, code, headers);
-}
-
-export function monitorNotFoundError(monitorId: string): ConnectError {
-  return createError("Monitor not found", Code.NotFound, "MONITOR_NOT_FOUND", {
-    "monitor-id": monitorId,
-  });
-}
-
-export function rateLimitExceededError(limit: number, current: number): ConnectError {
-  return createError(
-    `Rate limit exceeded. Max: ${limit}, Current: ${current}`,
-    Code.ResourceExhausted,
-    "RATE_LIMIT_EXCEEDED",
-    { limit: String(limit), current: String(current) },
-  );
-}
-```
+For validation, we use `@connectrpc/validate` which runs protovalidate constraints automatically. See the full implementation in [our repo](https://github.com/openstatushq/openstatus/tree/main/apps/server/src/routes/rpc).
 
 ---
 
-## Before and After: Less Code, More Clarity
+## Before and After: Validation Moves to the Schema
 
-**Before (zod-openapi):** ~50 lines per endpoint, validation mixed with business logic.
+**Before (zod-openapi):** Validation defined in TypeScript, separate from the OpenAPI spec.
 
 ```typescript
 import { createRoute, z } from "@hono/zod-openapi";
@@ -447,13 +378,13 @@ async createHTTPMonitor(req, ctx) {
 }
 ```
 
-The difference: validation lives in the schema, not scattered across Zod definitions and handler code. One source of truth for the contract.
+The difference: validation constraints live in the proto schema and execute at runtime via protovalidate.
 
 ---
 
-## The Payoff: tRPC-Level DX for Everyone
+## The Payoff: Auto-Generated Hooks with Full Type Inference
 
-This is where it all comes together. With `@connectrpc/connect-query`, we can get auto-generated TanStack Query hooks:
+With `@connectrpc/connect-query`, we get TanStack Query hooks generated from the proto schema:
 
 **React Component:**
 
@@ -512,11 +443,9 @@ export default async function MonitorsPage() {
 
 Full type safety. Auto-generated hooks. The same API your users consume.
 
-That's the "what." Here's the "how fast."
-
 ---
 
-## How AI Cut Our Migration Time by 75%
+## How AI Helped Us Ship Faster
 
 In early 2026, we treated this migration as a test case for AI-assisted development.
 
