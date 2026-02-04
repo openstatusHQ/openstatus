@@ -145,7 +145,7 @@ export default defineConfig({
             {
               label: "Self host Status Page only",
               slug: "guides/self-host-status-page-only",
-            }
+            },
           ],
         },
         {
