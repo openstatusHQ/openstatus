@@ -146,13 +146,6 @@ export const pageRouter = createTRPCRouter({
           .insert(pageComponent)
           .values(pageComponentValues)
           .run();
-
-        // Build values for reverse sync to monitorsToPages
-        const _monitorsToPageValues = monitors.map(({ monitorId }, index) => ({
-          pageId: newPage.id,
-          order: index,
-          monitorId,
-        }));
       }
 
       return newPage;

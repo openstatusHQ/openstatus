@@ -177,7 +177,6 @@ export function registerPutPage(api: typeof pagesApi) {
       .returning()
       .get();
 
-    // Query current pageComponents instead of monitorsToPages
     const currentPageComponents = await db
       .select()
       .from(pageComponent)

@@ -207,18 +207,6 @@ export function registerPostPage(api: typeof pagesApi) {
           })
           .run();
       }
-
-      // Sync to legacy table for backwards compatibility
-      const _monitorsToPageValues = monitors.map((m, index) => {
-        const values = typeof m === "number" ? { monitorId: m } : m;
-        return {
-          pageId: _page.id,
-          monitorId: values.monitorId,
-          order: "order" in values ? values.order : index,
-          monitorGroupId: null,
-          groupOrder: 0,
-        };
-      });
     }
     const data = transformPageData(PageSchema.parse(_page));
     return c.json(data, 200);

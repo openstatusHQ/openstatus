@@ -373,7 +373,7 @@ test("create a page with partial invalid monitors should return 400", async () =
   expect(json.message).toContain("not found");
 });
 
-test("create a page syncs correctly to pageComponent and legacy monitorsToPages", async () => {
+test("create a page syncs correctly to pageComponent", async () => {
   const uniqueSlug = `sync-test-${Date.now()}`;
   const res = await app.request("/v1/page", {
     method: "POST",
