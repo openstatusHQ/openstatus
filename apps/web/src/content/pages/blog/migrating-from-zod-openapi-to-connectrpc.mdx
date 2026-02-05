@@ -1,0 +1,543 @@
+---
+title: "One API to Rule Them All: Migrating from zod-openapi to ConnectRPC"
+description: "We're unifying our internal tRPC API and public REST API into a single ConnectRPC service. Here's how we're doing it—and how AI is accelerating the migration."
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2026-02-04"
+image: ""
+category: "engineering"
+---
+
+**TL;DR:** Two APIs. Double the bugs. Double the work. We maintain tRPC for ourselves and REST for everyone else. We're unifying them with ConnectRPC—a schema-first API that's type-safe *and* curl-able. Here's how we're doing it, and how AI is accelerating the migration.
+
+---
+
+## The Problem: Two APIs, Double the Work
+
+Here's a confession: we weren't dogfooding our own public API.
+
+Internally, we use **tRPC** for its end-to-end type safety. For our public API, we built a separate REST layer with **zod-openapi**.
+
+The result? The "Split Stack" problem:
+* **Two codebases.** Every endpoint defined twice.
+* **Two sets of types.** Internal types drifted from public DTOs.
+* **Half the velocity.** Every feature shipped twice. Every bug fix risked inconsistency.
+
+This debt compounds. We needed to merge them—but we didn't want to sacrifice tRPC's DX or REST's accessibility.
+
+The answer wasn't REST. It wasn't GraphQL. It was **ConnectRPC**.
+
+---
+
+## Why ConnectRPC Won
+
+We evaluated several options. ConnectRPC stood out because it bridges strict contracts with developer ease.
+
+### 1. Better Client Generation Tooling
+
+OpenAPI can generate clients for multiple languages, but the tooling is hit-or-miss. For TypeScript, [Hey API](https://heyapi.dev/) is solid. For Go or Rust? You'll spend hours fixing the output. We learned this the hard way with our CLI.
+
+The Buf ecosystem solves this. **Generated clients actually work.** No manual fixes, no weird edge cases. The proto schema compiles to idiomatic code in any language.
+
+Here's what our Monitor API looks like in proto:
+
+```protobuf
+syntax = "proto3";
+package openstatus.monitor.v1;
+
+import "buf/validate/validate.proto";
+
+service MonitorService {
+  rpc CreateHTTPMonitor(CreateHTTPMonitorRequest) returns (CreateHTTPMonitorResponse);
+  rpc UpdateHTTPMonitor(UpdateHTTPMonitorRequest) returns (UpdateHTTPMonitorResponse);
+  rpc DeleteMonitor(DeleteMonitorRequest) returns (DeleteMonitorResponse);
+  rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse);
+  rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse);
+  rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse);
+}
+
+message HTTPMonitor {
+  string id = 1;
+  string name = 2 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 256
+  }];
+  string url = 3 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 2048
+    uri: true
+  }];
+  Periodicity periodicity = 4 [(buf.validate.field).enum = {
+    not_in: [0]  // Require a value, reject UNSPECIFIED
+  }];
+  repeated Region regions = 5 [(buf.validate.field).repeated.max_items = 28];
+  int64 timeout = 6;
+  HTTPMethod method = 7;
+  optional string body = 8;
+  repeated Headers headers = 9;
+  repeated StatusCodeAssertion statusCodeAssertions = 10;
+  repeated BodyAssertion bodyAssertions = 11;
+  repeated HeaderAssertion headerAssertions = 12;
+  bool followRedirects = 13;
+}
+
+message ListMonitorsRequest {
+  optional int32 limit = 1 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
+}
+```
+
+Notice the `buf.validate` constraints inline. This isn't documentation—it's executable validation that runs at runtime via protovalidate.
+
+### 2. Schema Linting and Breaking Change Detection
+
+Beyond client generation, Buf gives us guardrails we never had with OpenAPI.
+
+Our `buf.yaml`:
+
+```yaml
+version: v2
+
+modules:
+  - path: ./api/
+    name: buf.build/openstatus/api
+
+deps:
+  - buf.build/bufbuild/protovalidate
+
+lint:
+  use:
+    - STANDARD
+  except:
+    - PACKAGE_VERSION_SUFFIX
+
+breaking:
+  use:
+    - FILE
+```
+
+What this gives us:
+* **`buf lint`**: Catches style issues and naming conventions before PRs merge.
+* **`buf breaking`**: Detects backward-incompatible changes in CI. No more accidentally shipping a breaking SDK change.
+
+### 3. Still Curl-able (No gRPC Client Required)
+
+ConnectRPC isn't "gRPC-or-nothing." It speaks HTTP/JSON natively:
+
+```bash
+# Create a monitor
+curl -X POST https://api.openstatus.dev/rpc/openstatus.monitor.v1.MonitorService/CreateHTTPMonitor \
+  -H "Content-Type: application/json" \
+  -H "x-openstatus-key: YOUR_API_KEY" \
+  -d '{
+    "monitor": {
+      "name": "My Website",
+      "url": "https://example.com",
+      "periodicity": "PERIODICITY_1M",
+      "regions": ["REGION_AMS", "REGION_IAD"],
+      "method": "HTTP_METHOD_GET"
+    }
+  }'
+
+# List monitors
+curl -X POST https://api.openstatus.dev/rpc/openstatus.monitor.v1.MonitorService/ListMonitors \
+  -H "Content-Type: application/json" \
+  -H "x-openstatus-key: YOUR_API_KEY" \
+  -d '{"limit": 10}'
+```
+
+Debuggable in Chrome DevTools. No special tooling required.
+
+### 4. Ship Types, Not Docs
+
+Documentation gets stale. Types don't compile if they're wrong.
+
+With OpenAPI, your docs and implementation can drift apart silently. With Protobuf, the schema *is* the implementation contract. If the types don't match, the build fails.
+
+This matters even more now that AI agents are consuming APIs. They work better with structured schemas than with prose documentation. For more on this idea, see Boris Tane's [Ship types, not docs](https://shiptypes.com?ref=openstatus.dev).
+
+
+
+---
+
+## How We Built It: Hono + ConnectRPC
+
+Our API runs on **Hono**. Here's the integration:
+
+### Router Setup
+
+```typescript
+// apps/server/src/routes/rpc/router.ts
+import { createConnectRouter } from "@connectrpc/connect";
+import { MonitorService } from "@openstatus/proto/monitor/v1";
+import { NotificationService } from "@openstatus/proto/notification/v1";
+import { StatusPageService } from "@openstatus/proto/status_page/v1";
+
+import {
+  authInterceptor,
+  errorInterceptor,
+  loggingInterceptor,
+  validationInterceptor,
+} from "./interceptors";
+
+/**
+ * Interceptors run in order (outermost to innermost):
+ * 1. errorInterceptor - Catches all errors, maps to ConnectError
+ * 2. loggingInterceptor - Logs requests/responses (wide events pattern)
+ * 3. authInterceptor - Validates API key, sets workspace context
+ * 4. validationInterceptor - Validates request messages via protovalidate
+ */
+export const routes = createConnectRouter({
+  interceptors: [
+    errorInterceptor(),
+    loggingInterceptor(),
+    authInterceptor(),
+    validationInterceptor(),
+  ],
+})
+  .service(MonitorService, monitorServiceImpl)
+  .service(NotificationService, notificationServiceImpl)
+  .service(StatusPageService, statusPageServiceImpl);
+```
+
+### Service Implementation: Just Business Logic
+
+Here's a real excerpt.
+
+```typescript
+// apps/server/src/routes/rpc/services/monitor/index.ts
+import type { ServiceImpl } from "@connectrpc/connect";
+import type { MonitorService } from "@openstatus/proto/monitor/v1";
+
+export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
+  async createHTTPMonitor(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+    const limits = rpcCtx.workspace.limits;
+
+    // Validation is already done by the interceptor via protovalidate
+    const mon = req.monitor!;
+
+    // Check workspace limits
+    await checkMonitorLimits(workspaceId, limits, mon.periodicity, mon.regions);
+
+    // Insert into database
+    const newMonitor = await db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        jobType: "http",
+        url: mon.url,
+        method: httpMethodToString(mon.method),
+        body: mon.body || undefined,
+        headers: headersToDbJson(mon.headers),
+        assertions: httpAssertionsToDbJson(
+          mon.statusCodeAssertions,
+          mon.bodyAssertions,
+          mon.headerAssertions,
+        ),
+        ...getCommonDbValues(mon),
+      })
+      .returning()
+      .get();
+
+    return {
+      monitor: dbMonitorToHttpProto(newMonitor),
+    };
+  },
+
+  async listMonitors(req, ctx) {
+    const rpcCtx = getRpcContext(ctx);
+    const workspaceId = rpcCtx.workspace.id;
+
+    const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
+    const offset = req.offset ?? 0;
+
+    const monitors = await db
+      .select()
+      .from(monitor)
+      .where(and(
+        eq(monitor.workspaceId, workspaceId),
+        isNull(monitor.deletedAt)
+      ))
+      .limit(limit)
+      .offset(offset)
+      .all();
+
+    // Group by type
+    const httpMonitors: HTTPMonitor[] = [];
+    const tcpMonitors: TCPMonitor[] = [];
+    const dnsMonitors: DNSMonitor[] = [];
+
+    for (const m of monitors) {
+      switch (m.jobType) {
+        case "http": httpMonitors.push(dbMonitorToHttpProto(m)); break;
+        case "tcp":  tcpMonitors.push(dbMonitorToTcpProto(m));   break;
+        case "dns":  dnsMonitors.push(dbMonitorToDnsProto(m));   break;
+      }
+    }
+
+    return { httpMonitors, tcpMonitors, dnsMonitors, totalSize: monitors.length };
+  },
+};
+```
+
+### The Interceptor Pattern
+
+Similar to Hono middleware, but with typed context via `createContextKey`:
+
+```typescript
+// apps/server/src/routes/rpc/interceptors/auth.ts
+import { Code, ConnectError, type Interceptor, createContextKey } from "@connectrpc/connect";
+
+export const RPC_CONTEXT_KEY = createContextKey<RpcContext | undefined>(undefined);
+
+export function authInterceptor(): Interceptor {
+  return (next) => async (req) => {
+    const apiKey = req.header.get("x-openstatus-key");
+
+    if (!apiKey) {
+      throw new ConnectError("Missing 'x-openstatus-key' header", Code.Unauthenticated);
+    }
+
+    const { error, result } = await validateKey(apiKey);
+    if (error || !result.valid) {
+      throw new ConnectError("Invalid API Key", Code.Unauthenticated);
+    }
+
+    const workspace = await lookupWorkspace(Number(result.ownerId));
+    req.contextValues.set(RPC_CONTEXT_KEY, { workspace, requestId: nanoid() });
+
+    return next(req);
+  };
+}
+```
+
+For validation, we use `@connectrpc/validate` which runs protovalidate constraints automatically. See the full implementation in [our repo](https://github.com/openstatushq/openstatus/tree/main/apps/server/src/routes/rpc).
+
+---
+
+## Before and After: Validation Moves to the Schema
+
+**Before (zod-openapi):** Validation defined in TypeScript, separate from the OpenAPI spec.
+
+```typescript
+import { createRoute, z } from "@hono/zod-openapi";
+
+const HTTPMonitorSchema = z.object({
+  name: z.string().min(1).max(256),
+  url: z.string().url().max(2048),
+  frequency: z.enum(["30s", "1m", "5m", "10m", "30m", "1h"]),
+  regions: z.array(z.enum(AVAILABLE_REGIONS)),
+  headers: z.array(headerSchema).optional(),
+  method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
+});
+
+const postRoute = createRoute({
+  method: "post",
+  tags: ["monitor"],
+  path: "/monitors/http",
+  request: {
+    body: {
+      content: { "application/json": { schema: HTTPMonitorSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { "application/json": { schema: MonitorSchema } },
+      description: "Monitor created",
+    },
+    ...openApiErrorResponses,
+  },
+});
+
+export function registerPostMonitorHTTP(api: typeof monitorsApi) {
+  return api.openapi(postRoute, async (c) => {
+    const workspaceId = c.get("workspace").id;
+    const input = c.req.valid("json");
+    // ... 50 more lines of validation and DB logic
+  });
+}
+```
+
+**After (ConnectRPC):** Schema defines validation. Handler is pure business logic.
+
+```protobuf
+// Proto defines the contract
+message HTTPMonitor {
+  string name = 2 [(buf.validate.field).string = { min_len: 1, max_len: 256 }];
+  string url = 3 [(buf.validate.field).string = { min_len: 1, max_len: 2048, uri: true }];
+  Periodicity periodicity = 4 [(buf.validate.field).enum = { not_in: [0] }];
+  repeated Region regions = 5;
+  HTTPMethod method = 7;
+}
+```
+
+```typescript
+// Service - just business logic
+async createHTTPMonitor(req, ctx) {
+  const rpcCtx = getRpcContext(ctx);  // Auth handled by interceptor
+  const mon = req.monitor!;            // Validation handled by interceptor
+
+  await checkMonitorLimits(rpcCtx.workspace.id, rpcCtx.workspace.limits, mon.periodicity, mon.regions);
+
+  const newMonitor = await db.insert(monitor).values({...}).returning().get();
+  return { monitor: dbMonitorToHttpProto(newMonitor) };
+}
+```
+
+The difference: validation constraints live in the proto schema and execute at runtime via protovalidate.
+
+---
+
+## The Payoff: Auto-Generated Hooks with Full Type Inference
+
+With `@connectrpc/connect-query`, we get TanStack Query hooks generated from the proto schema:
+
+**React Component:**
+
+```typescript
+"use client";
+
+import { useQuery, useMutation } from "@connectrpc/connect-query";
+import { listMonitors, createHTTPMonitor } from "@openstatus/proto/monitor/v1-MonitorService_connectquery";
+
+export function MonitorList() {
+  const { data, isLoading } = useQuery(listMonitors, { limit: 50 });
+  const createMutation = useMutation(createHTTPMonitor);
+
+  if (isLoading) return <Loading />;
+
+  return (
+    <div>
+      <ul>
+        {data?.httpMonitors.map(m => (
+          <li key={m.id}>{m.name} - {m.url}</li>
+        ))}
+      </ul>
+      <button onClick={() => createMutation.mutate({
+        monitor: {
+          name: "New Monitor",
+          url: "https://example.com",
+          periodicity: Periodicity.PERIODICITY_1M,
+          regions: [Region.REGION_AMS],
+          method: HTTPMethod.HTTP_METHOD_GET,
+        }
+      })}>
+        Add Monitor
+      </button>
+    </div>
+  );
+}
+```
+
+**Server Component (Next.js):**
+
+```typescript
+import { getRpcClient } from "@/lib/rpc/server";
+import { MonitorService } from "@openstatus/proto/monitor/v1";
+
+export default async function MonitorsPage() {
+  const client = await getRpcClient(MonitorService);
+  const { httpMonitors } = await client.listMonitors({ limit: 50 });
+
+  return (
+    <ul>
+      {httpMonitors.map(m => <li key={m.id}>{m.name}</li>)}
+    </ul>
+  );
+}
+```
+
+Full type safety. Auto-generated hooks. The same API your users consume.
+
+---
+
+## How AI Helped Us Ship Faster
+
+In early 2026, we treated this migration as a test case for AI-assisted development.
+
+The result? **AI is exceptionally good at schema work.**
+
+`.proto` files are declarative, highly structured, and pattern-heavy—perfect for LLMs. We used Claude to:
+
+1. Convert our Zod schemas into idiomatic Protobuf definitions
+2. Generate service implementations from existing REST handlers
+3. Flag inconsistencies between our internal and external APIs
+4. Write the interceptor patterns
+
+We shifted from "writing boilerplate" to "reviewing code." What we estimated at months is now tracking to finish in weeks.
+
+---
+
+## Testing: Just HTTP
+
+No special test setup. ConnectRPC endpoints are plain HTTP:
+
+```typescript
+import { describe, expect, test } from "bun:test";
+import { app } from "@/index";
+
+async function connectRequest(
+  method: string,
+  body: Record<string, unknown> = {},
+  headers: Record<string, string> = {},
+) {
+  return app.request(`/rpc/openstatus.monitor.v1.MonitorService/${method}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify(body),
+  });
+}
+
+describe("MonitorService", () => {
+  test("ListMonitors returns monitors", async () => {
+    const res = await connectRequest("ListMonitors", { limit: 10 });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(Array.isArray(data.httpMonitors)).toBe(true);
+  });
+
+  test("CreateHTTPMonitor validates input", async () => {
+    const res = await connectRequest("CreateHTTPMonitor", {
+      monitor: { name: "", url: "not-a-url" }  // Invalid
+    });
+    expect(res.status).toBe(400);  // InvalidArgument
+  });
+});
+```
+
+---
+
+## What's Next
+
+Two things:
+
+1. **Dogfooding.** We're migrating our dashboard to the public ConnectRPC API. Same DX we had with tRPC, but now we use exactly what our users use.
+
+2. **The SDK is live.** Build on our monitoring platform with type-safe, generated clients:
+
+```bash
+npx jsr add @openstatus/sdk
+```
+
+```typescript
+import { createOpenStatusClient } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const monitors = await client.monitor.v1.MonitorService.listMonitors({});
+console.log(monitors);
+```
+
+Once the migration is complete, no more maintaining two APIs. We just build.
+
+---
+
+**Ready to try it?**
+
+**[Get the SDK](https://jsr.io/@openstatus/sdk-node)** | **[View the Proto definitions](https://github.com/openstatushq/openstatus/tree/main/packages/proto)**
