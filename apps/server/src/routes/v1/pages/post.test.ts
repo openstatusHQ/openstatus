@@ -2,12 +2,7 @@ import { expect, test } from "bun:test";
 
 import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
-import {
-  monitor,
-  monitorsToPages,
-  page,
-  pageComponent,
-} from "@openstatus/db/src/schema";
+import { monitor, page, pageComponent } from "@openstatus/db/src/schema";
 import { PageSchema } from "./schema";
 
 test("create a valid page", async () => {
@@ -282,17 +277,6 @@ test("create a page with monitors as objects with order", async () => {
     expect(components.find((c) => c.monitorId === 1)?.order).toBe(1);
     expect(components.find((c) => c.monitorId === 2)?.order).toBe(0);
 
-    // Verify sync to legacy table
-    const legacyEntries = await db
-      .select()
-      .from(monitorsToPages)
-      .where(eq(monitorsToPages.pageId, result.data.id))
-      .all();
-
-    expect(legacyEntries.length).toBe(2);
-    expect(legacyEntries.find((e) => e.monitorId === 1)?.order).toBe(1);
-    expect(legacyEntries.find((e) => e.monitorId === 2)?.order).toBe(0);
-
     // Cleanup
     await db.delete(page).where(eq(page.id, result.data.id));
   }
@@ -389,7 +373,7 @@ test("create a page with partial invalid monitors should return 400", async () =
   expect(json.message).toContain("not found");
 });
 
-test("create a page syncs correctly to pageComponent and legacy monitorsToPages", async () => {
+test("create a page syncs correctly to pageComponent", async () => {
   const uniqueSlug = `sync-test-${Date.now()}`;
   const res = await app.request("/v1/page", {
     method: "POST",
@@ -420,16 +404,6 @@ test("create a page syncs correctly to pageComponent and legacy monitorsToPages"
     expect(components.length).toBe(1);
     expect(components[0].monitorId).toBe(1);
     expect(components[0].type).toBe("monitor");
-
-    // Verify monitorsToPages (legacy table)
-    const legacyEntries = await db
-      .select()
-      .from(monitorsToPages)
-      .where(eq(monitorsToPages.pageId, result.data.id))
-      .all();
-
-    expect(legacyEntries.length).toBe(1);
-    expect(legacyEntries[0].monitorId).toBe(1);
 
     // Cleanup
     await db.delete(page).where(eq(page.id, result.data.id));
@@ -474,6 +448,9 @@ test("create a page uses monitor externalName when available", async () => {
     expect(components.length).toBe(1);
     // Should use externalName if available, otherwise name
     const expectedName = monitorData?.externalName || monitorData?.name;
+    if (!expectedName) {
+      throw new Error("Expected name is undefined");
+    }
     expect(components[0].name).toBe(expectedName);
 
     // Cleanup

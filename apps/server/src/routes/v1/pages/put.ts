@@ -4,15 +4,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { notEmpty } from "@/utils/not-empty";
 import { Events } from "@openstatus/analytics";
-import {
-  and,
-  eq,
-  inArray,
-  isNull,
-  sql,
-  syncPageComponentToMonitorsToPageDelete,
-  syncPageComponentToMonitorsToPageInsertMany,
-} from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
@@ -185,7 +177,6 @@ export function registerPutPage(api: typeof pagesApi) {
       .returning()
       .get();
 
-    // Query current pageComponents instead of monitorsToPages
     const currentPageComponents = await db
       .select()
       .from(pageComponent)
@@ -200,7 +191,7 @@ export function registerPutPage(api: typeof pagesApi) {
       (id) => !monitorIds?.includes(id),
     );
 
-    // Delete removed monitors from pageComponent (primary table)
+    // Delete removed monitors from pageComponent
     if (removedMonitorIds.length) {
       await db
         .delete(pageComponent)
@@ -210,13 +201,6 @@ export function registerPutPage(api: typeof pagesApi) {
             eq(pageComponent.pageId, newPage.id),
           ),
         );
-      // Reverse sync delete to monitorsToPages (for backwards compatibility)
-      for (const monitorId of removedMonitorIds) {
-        await syncPageComponentToMonitorsToPageDelete(db, {
-          monitorId,
-          pageId: newPage.id,
-        });
-      }
     }
 
     // Insert or update pageComponents (primary table)
@@ -261,23 +245,6 @@ export function registerPutPage(api: typeof pagesApi) {
           })
           .run();
       }
-
-      // Reverse sync to monitorsToPages (for backwards compatibility)
-      const monitorsToPageValues = monitors.map((m, index) => {
-        const values = typeof m === "number" ? { monitorId: m } : m;
-        return {
-          pageId: newPage.id,
-          monitorId: values.monitorId,
-          order: "order" in values ? values.order : index,
-          monitorGroupId: null,
-          groupOrder: 0,
-        };
-      });
-
-      await syncPageComponentToMonitorsToPageInsertMany(
-        db,
-        monitorsToPageValues,
-      );
     }
 
     const data = transformPageData(

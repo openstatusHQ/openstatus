@@ -1,16 +1,6 @@
 import { z } from "zod";
 
-import {
-  type SQL,
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  inArray,
-  syncMaintenanceToPageComponentDeleteByMaintenance,
-  syncMaintenanceToPageComponentInsertMany,
-} from "@openstatus/db";
+import { type SQL, and, asc, desc, eq, gte, inArray } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
@@ -148,12 +138,6 @@ export const maintenanceRouter = createTRPCRouter({
               pageComponentId,
             })),
           );
-          // Sync to monitors (inverse sync for backward compatibility)
-          await syncMaintenanceToPageComponentInsertMany(
-            tx,
-            newMaintenance.id,
-            opts.input.pageComponents,
-          );
         }
 
         return newMaintenance;
@@ -226,11 +210,6 @@ export const maintenanceRouter = createTRPCRouter({
             eq(maintenancesToPageComponents.maintenanceId, _maintenance.id),
           )
           .run();
-        // Sync to monitors (inverse sync for backward compatibility)
-        await syncMaintenanceToPageComponentDeleteByMaintenance(
-          tx,
-          _maintenance.id,
-        );
 
         // Create new relations if page components are provided
         if (opts.input.pageComponents?.length) {
@@ -239,12 +218,6 @@ export const maintenanceRouter = createTRPCRouter({
               maintenanceId: _maintenance.id,
               pageComponentId,
             })),
-          );
-          // Sync to monitors (inverse sync for backward compatibility)
-          await syncMaintenanceToPageComponentInsertMany(
-            tx,
-            _maintenance.id,
-            opts.input.pageComponents,
           );
         }
 

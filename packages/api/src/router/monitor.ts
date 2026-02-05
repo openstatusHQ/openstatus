@@ -14,17 +14,7 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import {
-  type SQL,
-  and,
-  count,
-  eq,
-  inArray,
-  isNull,
-  syncMaintenanceToMonitorDeleteByMonitors,
-  syncMonitorsToPageDeleteByMonitors,
-  syncStatusReportToMonitorDeleteByMonitors,
-} from "@openstatus/db";
+import { type SQL, and, count, eq, inArray, isNull } from "@openstatus/db";
 import {
   insertMonitorSchema,
   maintenancesToMonitors,
@@ -94,14 +84,6 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(eq(maintenancesToMonitors.monitorId, monitorToDelete.id));
-        // Sync deletes to page components
-        await syncMonitorsToPageDeleteByMonitors(tx, [monitorToDelete.id]);
-        await syncStatusReportToMonitorDeleteByMonitors(tx, [
-          monitorToDelete.id,
-        ]);
-        await syncMaintenanceToMonitorDeleteByMonitors(tx, [
-          monitorToDelete.id,
-        ]);
       });
     }),
 
@@ -148,10 +130,6 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(maintenancesToMonitors)
           .where(inArray(maintenancesToMonitors.monitorId, opts.input.ids));
-        // Sync deletes to page components
-        await syncMonitorsToPageDeleteByMonitors(tx, opts.input.ids);
-        await syncStatusReportToMonitorDeleteByMonitors(tx, opts.input.ids);
-        await syncMaintenanceToMonitorDeleteByMonitors(tx, opts.input.ids);
       });
     }),
 

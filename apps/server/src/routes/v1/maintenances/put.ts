@@ -2,15 +2,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import {
-  and,
-  db,
-  eq,
-  inArray,
-  isNull,
-  syncMaintenanceToPageComponentDeleteByMaintenance,
-  syncMaintenanceToPageComponentInsertMany,
-} from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import { maintenance } from "@openstatus/db/src/schema/maintenances";
 import {
@@ -59,7 +51,11 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
 
     const _maintenance = await db.query.maintenance.findFirst({
       with: {
-        maintenancesToMonitors: true,
+        maintenancesToPageComponents: {
+          with: {
+            pageComponent: true,
+          },
+        },
       },
       where: and(
         eq(maintenance.id, Number(id)),
@@ -132,14 +128,11 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
         .get();
 
       if (monitorIds) {
-        // Delete from maintenancesToPageComponents FIRST (new primary source)
+        // Delete from maintenancesToPageComponents
         await tx
           .delete(maintenancesToPageComponents)
           .where(eq(maintenancesToPageComponents.maintenanceId, Number(id)))
           .run();
-
-        // Reverse sync delete to maintenancesToMonitors (for backward compatibility)
-        await syncMaintenanceToPageComponentDeleteByMaintenance(tx, Number(id));
 
         // Add new associations
         if (monitorIds.length > 0 && updated.pageId) {
@@ -156,7 +149,7 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
             .all();
 
           if (pageComponents.length > 0) {
-            // Insert to maintenancesToPageComponents FIRST
+            // Insert to maintenancesToPageComponents
             await tx
               .insert(maintenancesToPageComponents)
               .values(
@@ -166,13 +159,6 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
                 })),
               )
               .run();
-
-            // Reverse sync to maintenancesToMonitors
-            await syncMaintenanceToPageComponentInsertMany(
-              tx,
-              Number(id),
-              pageComponents.map((pc) => pc.id),
-            );
           }
         }
       }
@@ -184,7 +170,9 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
       ...updatedMaintenance,
       monitorIds:
         monitorIds ??
-        _maintenance.maintenancesToMonitors.map((m) => m.monitorId),
+        _maintenance.maintenancesToPageComponents
+          .map((m) => m.pageComponent.monitorId)
+          .filter((id): id is number => id !== null),
     });
 
     return c.json(data, 200);
