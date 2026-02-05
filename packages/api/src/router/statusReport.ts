@@ -1,15 +1,6 @@
 import { z } from "zod";
 
-import {
-  type SQL,
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  syncStatusReportToPageComponentDeleteByStatusReport,
-  syncStatusReportToPageComponentInsertMany,
-} from "@openstatus/db";
+import { type SQL, and, asc, desc, eq, gte } from "@openstatus/db";
 import {
   insertStatusReportUpdateSchema,
   selectPageComponentSchema,
@@ -187,12 +178,6 @@ export const statusReportRouter = createTRPCRouter({
               })),
             )
             .run();
-          // Reverse sync: page components -> monitors (for backward compatibility)
-          await syncStatusReportToPageComponentInsertMany(
-            tx,
-            newStatusReport.id,
-            opts.input.pageComponents,
-          );
         }
 
         return {
@@ -251,12 +236,6 @@ export const statusReportRouter = createTRPCRouter({
               })),
             )
             .run();
-          // Reverse sync: page components -> monitors (for backward compatibility)
-          await syncStatusReportToPageComponentInsertMany(
-            tx,
-            opts.input.id,
-            opts.input.pageComponents,
-          );
         }
       });
     }),

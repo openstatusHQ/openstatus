@@ -3,15 +3,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import {
-  and,
-  db,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  syncMaintenanceToPageComponentInsertMany,
-} from "@openstatus/db";
+import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import { monitor, page, pageSubscriber } from "@openstatus/db/src/schema";
 import { maintenance } from "@openstatus/db/src/schema/maintenances";
 import {
@@ -123,7 +115,7 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
           .all();
 
         if (pageComponents.length > 0) {
-          // Insert to maintenancesToPageComponents FIRST (new primary source)
+          // Insert to maintenancesToPageComponents
           await tx
             .insert(maintenancesToPageComponents)
             .values(
@@ -133,13 +125,6 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
               })),
             )
             .run();
-
-          // Reverse sync to maintenancesToMonitors (for backward compatibility)
-          await syncMaintenanceToPageComponentInsertMany(
-            tx,
-            newMaintenance.id,
-            pageComponents.map((pc) => pc.id),
-          );
         }
       }
 

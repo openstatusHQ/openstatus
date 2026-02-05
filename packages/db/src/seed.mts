@@ -5,11 +5,8 @@ import { env } from "../env.mjs";
 import {
   incidentTable,
   maintenance,
-  maintenancesToMonitors,
   maintenancesToPageComponents,
   monitor,
-  monitorsToPages,
-  monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
@@ -163,12 +160,6 @@ async function main() {
   await db
     .insert(usersToWorkspaces)
     .values({ workspaceId: 1, userId: 1 })
-    .onConflictDoNothing()
-    .run();
-
-  await db
-    .insert(monitorsToPages)
-    .values({ monitorId: 1, pageId: 1 })
     .onConflictDoNothing()
     .run();
 
@@ -364,28 +355,6 @@ async function main() {
         from: fiveDaysFromNow,
         to: fiveDaysFromNowPlus4Hours,
         pageId: 1,
-      },
-    ])
-    .onConflictDoNothing()
-    .run();
-
-  await db
-    .insert(maintenancesToMonitors)
-    .values([
-      {
-        maintenanceId: 1,
-        monitorId: 1,
-      },
-    ])
-    .onConflictDoNothing()
-    .run();
-
-  await db
-    .insert(monitorsToStatusReport)
-    .values([
-      {
-        monitorId: 1,
-        statusReportId: 2,
       },
     ])
     .onConflictDoNothing()

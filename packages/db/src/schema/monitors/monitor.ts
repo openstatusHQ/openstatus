@@ -88,6 +88,11 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
   privateLocationToMonitors: many(privateLocationToMonitors),
 }));
 
+/**
+ * @deprecated Legacy relation table - code removed, table exists but completely unused
+ * All code now uses pageComponent table instead
+ * Table will be dropped in future migration after verification period
+ */
 export const monitorsToPages = sqliteTable(
   "monitors_to_pages",
   {

@@ -1,16 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  type SQL,
-  and,
-  desc,
-  eq,
-  inArray,
-  isNull,
-  sql,
-  syncPageComponentToMonitorsToPageInsertMany,
-} from "@openstatus/db";
+import { type SQL, and, desc, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   insertPageSchema,
   monitor,
@@ -157,17 +148,11 @@ export const pageRouter = createTRPCRouter({
           .run();
 
         // Build values for reverse sync to monitorsToPages
-        const monitorsToPageValues = monitors.map(({ monitorId }, index) => ({
+        const _monitorsToPageValues = monitors.map(({ monitorId }, index) => ({
           pageId: newPage.id,
           order: index,
           monitorId,
         }));
-
-        // Reverse sync to monitorsToPages (for backwards compatibility)
-        await syncPageComponentToMonitorsToPageInsertMany(
-          opts.ctx.db,
-          monitorsToPageValues,
-        );
       }
 
       return newPage;

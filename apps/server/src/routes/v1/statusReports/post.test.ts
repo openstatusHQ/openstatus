@@ -3,7 +3,6 @@ import { expect, test } from "bun:test";
 import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
 import {
-  monitorsToStatusReport,
   pageComponent,
   statusReport,
   statusReportsToPageComponents,
@@ -166,7 +165,7 @@ test("no auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test("create a status report syncs correctly to statusReportsToPageComponents and legacy monitorsToStatusReport", async () => {
+test("create a status report links correctly to statusReportsToPageComponents", async () => {
   const date = new Date();
   date.setMilliseconds(0);
 
@@ -179,7 +178,7 @@ test("create a status report syncs correctly to statusReportsToPageComponents an
     body: JSON.stringify({
       status: "investigating",
       title: "Sync Test Status Report",
-      message: "Testing sync to both tables",
+      message: "Testing link to statusReportsToPageComponents",
       monitorIds: [1],
       date: date.toISOString(),
       pageId: 1,
@@ -193,7 +192,7 @@ test("create a status report syncs correctly to statusReportsToPageComponents an
   if (result.success) {
     const statusReportId = result.data.id;
 
-    // Verify statusReportsToPageComponents (primary table)
+    // Verify statusReportsToPageComponents
     const components = await db
       .select()
       .from(statusReportsToPageComponents)
@@ -214,16 +213,6 @@ test("create a status report syncs correctly to statusReportsToPageComponents an
     expect(pageComponents[0].pageId).toBe(1);
     expect(pageComponents[0].type).toBe("monitor");
 
-    // Verify monitorsToStatusReport (legacy table)
-    const legacyEntries = await db
-      .select()
-      .from(monitorsToStatusReport)
-      .where(eq(monitorsToStatusReport.statusReportId, statusReportId))
-      .all();
-
-    expect(legacyEntries.length).toBe(1);
-    expect(legacyEntries[0].monitorId).toBe(1);
-
     // Cleanup
     await db
       .delete(statusReport)
@@ -232,7 +221,7 @@ test("create a status report syncs correctly to statusReportsToPageComponents an
   }
 });
 
-test("create a status report with multiple monitors syncs correctly to both tables", async () => {
+test("create a status report with multiple monitors links correctly to statusReportsToPageComponents", async () => {
   const date = new Date();
   date.setMilliseconds(0);
 
@@ -260,8 +249,8 @@ test("create a status report with multiple monitors syncs correctly to both tabl
     },
     body: JSON.stringify({
       status: "investigating",
-      title: "Multi-Monitor Sync Test",
-      message: "Testing sync with multiple monitors",
+      title: "Multi-Monitor Test",
+      message: "Testing with multiple monitors",
       monitorIds: [1, 2],
       date: date.toISOString(),
       pageId: 1,
@@ -275,7 +264,7 @@ test("create a status report with multiple monitors syncs correctly to both tabl
   if (result.success) {
     const statusReportId = result.data.id;
 
-    // Verify statusReportsToPageComponents (primary table)
+    // Verify statusReportsToPageComponents
     const components = await db
       .select()
       .from(statusReportsToPageComponents)
@@ -285,20 +274,6 @@ test("create a status report with multiple monitors syncs correctly to both tabl
     // Should only link monitors that exist as page components on this page
     expect(components.length).toBe(existingMonitorIds.length);
 
-    // Verify monitorsToStatusReport (legacy table)
-    const legacyEntries = await db
-      .select()
-      .from(monitorsToStatusReport)
-      .where(eq(monitorsToStatusReport.statusReportId, statusReportId))
-      .all();
-
-    // Both tables should have the same number of entries
-    expect(legacyEntries.length).toBe(components.length);
-
-    // Verify the monitor IDs in legacy table match what we expect
-    const legacyMonitorIds = legacyEntries.map((e) => e.monitorId).sort();
-    expect(legacyMonitorIds).toEqual(existingMonitorIds.sort());
-
     // Cleanup
     await db
       .delete(statusReport)
@@ -307,7 +282,7 @@ test("create a status report with multiple monitors syncs correctly to both tabl
   }
 });
 
-test("create a status report without monitorIds should not create sync entries", async () => {
+test("create a status report without monitorIds should not create page component links", async () => {
   const date = new Date();
   date.setMilliseconds(0);
 
@@ -341,15 +316,6 @@ test("create a status report without monitorIds should not create sync entries",
       .all();
 
     expect(components.length).toBe(0);
-
-    // Verify no monitorsToStatusReport entries
-    const legacyEntries = await db
-      .select()
-      .from(monitorsToStatusReport)
-      .where(eq(monitorsToStatusReport.statusReportId, statusReportId))
-      .all();
-
-    expect(legacyEntries.length).toBe(0);
 
     // Cleanup
     await db

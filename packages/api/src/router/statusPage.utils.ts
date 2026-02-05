@@ -35,36 +35,6 @@ export function isMonitorComponent(
 }
 
 /**
- * Transforms pageComponents to legacy monitorsToStatusReports format
- */
-export function transformToMonitorsToStatusReports(
-  statusReportId: number,
-  pageComponents: PageComponentWithMonitorRelation[],
-) {
-  const monitors = pageComponents.filter(isMonitorComponent);
-  return monitors.map((m) => ({
-    statusReportId,
-    monitorId: m.monitor.id,
-    monitor: m.monitor,
-  }));
-}
-
-/**
- * Transforms pageComponents to legacy maintenancesToMonitors format
- */
-export function transformToMaintenancesToMonitors(
-  maintenanceId: number,
-  pageComponents: PageComponentWithMonitorRelation[],
-) {
-  const monitors = pageComponents.filter(isMonitorComponent);
-  return monitors.map((m) => ({
-    maintenanceId,
-    monitorId: m.monitor.id,
-    monitor: m.monitor,
-  }));
-}
-
-/**
  * Transforms statusReportsToPageComponents relations using a monitorByIdMap for performance
  */
 export function transformStatusReportWithPageComponents<

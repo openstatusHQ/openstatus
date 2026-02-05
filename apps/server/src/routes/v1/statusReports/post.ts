@@ -1,14 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import {
-  and,
-  db,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  syncStatusReportToPageComponentInsertMany,
-} from "@openstatus/db";
+import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
   monitor,
   page,
@@ -151,7 +143,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         )
         .all();
 
-      // Insert to statusReportsToPageComponents (primary table)
+      // Insert to statusReportsToPageComponents
       if (components.length > 0) {
         await db
           .insert(statusReportsToPageComponents)
@@ -162,13 +154,6 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
             })),
           )
           .run();
-
-        // Sync to legacy table for backwards compatibility
-        await syncStatusReportToPageComponentInsertMany(
-          db,
-          _newStatusReport.id,
-          components.map((c) => c.id),
-        );
       }
     }
 

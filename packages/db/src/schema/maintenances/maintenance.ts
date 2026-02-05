@@ -30,6 +30,11 @@ export const maintenance = sqliteTable("maintenance", {
   ),
 });
 
+/**
+ * @deprecated Legacy relation table - code removed, table exists but completely unused
+ * All code now uses maintenancesToPageComponents table instead
+ * Table will be dropped in future migration after verification period
+ */
 export const maintenancesToMonitors = sqliteTable(
   "maintenance_to_monitor",
   {
@@ -64,9 +69,9 @@ export const maintenancesToMonitorsRelations = relations(
 );
 
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
-  // Legacy relation - will be deprecated after migration is complete
+  // Legacy relation - code removed, kept for type compatibility only
   maintenancesToMonitors: many(maintenancesToMonitors),
-  // New relation using pageComponents architecture
+  // Primary relation using pageComponents architecture
   maintenancesToPageComponents: many(maintenancesToPageComponents),
   page: one(page, {
     fields: [maintenance.pageId],

@@ -1,13 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import {
-  and,
-  eq,
-  inArray,
-  isNull,
-  sql,
-  syncPageComponentToMonitorsToPageInsertMany,
-} from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
@@ -216,7 +209,7 @@ export function registerPostPage(api: typeof pagesApi) {
       }
 
       // Sync to legacy table for backwards compatibility
-      const monitorsToPageValues = monitors.map((m, index) => {
+      const _monitorsToPageValues = monitors.map((m, index) => {
         const values = typeof m === "number" ? { monitorId: m } : m;
         return {
           pageId: _page.id,
@@ -226,11 +219,6 @@ export function registerPostPage(api: typeof pagesApi) {
           groupOrder: 0,
         };
       });
-
-      await syncPageComponentToMonitorsToPageInsertMany(
-        db,
-        monitorsToPageValues,
-      );
     }
     const data = transformPageData(PageSchema.parse(_page));
     return c.json(data, 200);
