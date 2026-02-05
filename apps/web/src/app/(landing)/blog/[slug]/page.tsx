@@ -1,6 +1,5 @@
 import { CustomMDX } from "@/content/mdx";
-import { formatDate, getBlogPosts } from "@/content/utils";
-import { getAuthor } from "@/data/author";
+import { getBlogPosts } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -14,6 +13,7 @@ import {
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 
 export const dynamicParams = false;
@@ -85,10 +85,7 @@ export default async function Blog({
         }}
       />
       <h1>{post.metadata.title}</h1>
-      <p className="flex items-center gap-2.5 divide-x divide-border text-muted-foreground">
-        {formatDate(post.metadata.publishedAt)} | by{" "}
-        <Author author={post.metadata.author} /> | [{post.metadata.category}]
-      </p>
+      <ContentMetadata data={post} />
       {post.metadata.image ? (
         <div className="relative aspect-video w-full overflow-hidden border border-border">
           <Image
@@ -106,18 +103,5 @@ export default async function Blog({
         prefix="/blog"
       />
     </section>
-  );
-}
-
-function Author({ author }: { author: string }) {
-  const authorData = getAuthor(author);
-  if (typeof authorData === "string") {
-    return author;
-  }
-
-  return (
-    <a href={authorData.url} target="_blank" rel="noopener noreferrer">
-      {authorData.name}
-    </a>
   );
 }

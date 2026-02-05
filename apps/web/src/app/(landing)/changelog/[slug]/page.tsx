@@ -1,5 +1,5 @@
 import { CustomMDX } from "@/content/mdx";
-import { formatDate, getChangelogPosts } from "@/content/utils";
+import { getChangelogPosts } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
@@ -13,6 +13,7 @@ import {
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 
 export const dynamicParams = false;
@@ -84,10 +85,7 @@ export default async function Changelog({
         }}
       />
       <h1>{post.metadata.title}</h1>
-      <p className="flex items-center gap-2.5 divide-x divide-border text-muted-foreground">
-        {formatDate(post.metadata.publishedAt)} | by {post.metadata.author} | [
-        {post.metadata.category}]
-      </p>
+      <ContentMetadata data={post} />
       {post.metadata.image ? (
         <div className="relative aspect-video w-full overflow-hidden border border-border">
           <Image
