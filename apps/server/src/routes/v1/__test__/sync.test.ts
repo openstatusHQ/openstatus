@@ -154,7 +154,7 @@ describe("API Sync: POST /v1/maintenance - maintenance_to_page_component", () =>
     }
   });
 
-  test("creating maintenance with monitors syncs to maintenance_to_page_component", async () => {
+  test("creating maintenance with monitors creates maintenance_to_page_component and reverse syncs to maintenance_to_monitor", async () => {
     const from = new Date();
     const to = new Date(from.getTime() + 3600000);
 
@@ -179,7 +179,26 @@ describe("API Sync: POST /v1/maintenance - maintenance_to_page_component", () =>
     const data = await res.json();
     createdMaintenanceId = data.id;
 
-    // Verify maintenance_to_monitor was created
+    // Verify maintenance_to_page_component was created FIRST (primary source)
+    const component = await db.query.pageComponent.findFirst({
+      where: and(
+        eq(pageComponent.monitorId, testMonitorId),
+        eq(pageComponent.pageId, testPageId),
+      ),
+    });
+
+    expect(component).toBeDefined();
+
+    const maintenanceToComponent =
+      await db.query.maintenancesToPageComponents.findFirst({
+        where: and(
+          eq(maintenancesToPageComponents.maintenanceId, createdMaintenanceId),
+          eq(maintenancesToPageComponents.pageComponentId, component?.id),
+        ),
+      });
+    expect(maintenanceToComponent).toBeDefined();
+
+    // Verify maintenance_to_monitor was reverse synced (for backward compatibility)
     const maintenanceToMonitor =
       await db.query.maintenancesToMonitors.findFirst({
         where: and(
@@ -188,28 +207,6 @@ describe("API Sync: POST /v1/maintenance - maintenance_to_page_component", () =>
         ),
       });
     expect(maintenanceToMonitor).toBeDefined();
-
-    // Verify maintenance_to_page_component was synced
-    const component = await db.query.pageComponent.findFirst({
-      where: and(
-        eq(pageComponent.monitorId, testMonitorId),
-        eq(pageComponent.pageId, testPageId),
-      ),
-    });
-
-    if (component) {
-      const maintenanceToComponent =
-        await db.query.maintenancesToPageComponents.findFirst({
-          where: and(
-            eq(
-              maintenancesToPageComponents.maintenanceId,
-              createdMaintenanceId,
-            ),
-            eq(maintenancesToPageComponents.pageComponentId, component.id),
-          ),
-        });
-      expect(maintenanceToComponent).toBeDefined();
-    }
   });
 });
 
@@ -274,7 +271,7 @@ describe("API Sync: PUT /v1/maintenance - maintenance_to_page_component updates"
     }
   });
 
-  test("removing monitors from maintenance syncs delete to maintenance_to_page_component", async () => {
+  test("removing monitors from maintenance deletes from maintenance_to_page_component and reverse syncs delete to maintenance_to_monitor", async () => {
     const res = await app.request(`/v1/maintenance/${testMaintenanceId}`, {
       method: "PUT",
       headers: {
@@ -288,17 +285,7 @@ describe("API Sync: PUT /v1/maintenance - maintenance_to_page_component updates"
 
     expect(res.status).toBe(200);
 
-    // Verify maintenance_to_monitor was deleted
-    const maintenanceToMonitor =
-      await db.query.maintenancesToMonitors.findFirst({
-        where: and(
-          eq(maintenancesToMonitors.maintenanceId, testMaintenanceId),
-          eq(maintenancesToMonitors.monitorId, testMonitorId),
-        ),
-      });
-    expect(maintenanceToMonitor).toBeUndefined();
-
-    // Verify maintenance_to_page_component was also deleted
+    // Verify maintenance_to_page_component was deleted FIRST (primary source)
     const maintenanceToComponent =
       await db.query.maintenancesToPageComponents.findFirst({
         where: eq(
@@ -307,6 +294,16 @@ describe("API Sync: PUT /v1/maintenance - maintenance_to_page_component updates"
         ),
       });
     expect(maintenanceToComponent).toBeUndefined();
+
+    // Verify maintenance_to_monitor was reverse synced (deleted for backward compatibility)
+    const maintenanceToMonitor =
+      await db.query.maintenancesToMonitors.findFirst({
+        where: and(
+          eq(maintenancesToMonitors.maintenanceId, testMaintenanceId),
+          eq(maintenancesToMonitors.monitorId, testMonitorId),
+        ),
+      });
+    expect(maintenanceToMonitor).toBeUndefined();
   });
 });
 

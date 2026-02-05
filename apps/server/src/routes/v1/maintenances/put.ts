@@ -8,14 +8,15 @@ import {
   eq,
   inArray,
   isNull,
-  syncMaintenanceToMonitorDeleteByMaintenance,
-  syncMaintenanceToMonitorInsertMany,
+  syncMaintenanceToPageComponentDeleteByMaintenance,
+  syncMaintenanceToPageComponentInsertMany,
 } from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
+import { maintenance } from "@openstatus/db/src/schema/maintenances";
 import {
-  maintenance,
-  maintenancesToMonitors,
-} from "@openstatus/db/src/schema/maintenances";
+  maintenancesToPageComponents,
+  pageComponent,
+} from "@openstatus/db/src/schema/page_components";
 import type { maintenancesApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
 
@@ -131,27 +132,48 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
         .get();
 
       if (monitorIds) {
-        // Delete existing monitor associations
+        // Delete from maintenancesToPageComponents FIRST (new primary source)
         await tx
-          .delete(maintenancesToMonitors)
-          .where(eq(maintenancesToMonitors.maintenanceId, Number(id)))
+          .delete(maintenancesToPageComponents)
+          .where(eq(maintenancesToPageComponents.maintenanceId, Number(id)))
           .run();
-        // Sync delete to page components
-        await syncMaintenanceToMonitorDeleteByMaintenance(tx, Number(id));
 
-        // Add new monitor associations
-        if (monitorIds.length > 0) {
-          await tx
-            .insert(maintenancesToMonitors)
-            .values(
-              monitorIds.map((monitorId) => ({
-                maintenanceId: Number(id),
-                monitorId,
-              })),
+        // Reverse sync delete to maintenancesToMonitors (for backward compatibility)
+        await syncMaintenanceToPageComponentDeleteByMaintenance(tx, Number(id));
+
+        // Add new associations
+        if (monitorIds.length > 0 && updated.pageId) {
+          // Get page components for the new monitors
+          const pageComponents = await tx
+            .select({ id: pageComponent.id })
+            .from(pageComponent)
+            .where(
+              and(
+                inArray(pageComponent.monitorId, monitorIds),
+                eq(pageComponent.pageId, updated.pageId),
+              ),
             )
-            .run();
-          // Sync to page components
-          await syncMaintenanceToMonitorInsertMany(tx, Number(id), monitorIds);
+            .all();
+
+          if (pageComponents.length > 0) {
+            // Insert to maintenancesToPageComponents FIRST
+            await tx
+              .insert(maintenancesToPageComponents)
+              .values(
+                pageComponents.map((pc) => ({
+                  maintenanceId: Number(id),
+                  pageComponentId: pc.id,
+                })),
+              )
+              .run();
+
+            // Reverse sync to maintenancesToMonitors
+            await syncMaintenanceToPageComponentInsertMany(
+              tx,
+              Number(id),
+              pageComponents.map((pc) => pc.id),
+            );
+          }
         }
       }
 

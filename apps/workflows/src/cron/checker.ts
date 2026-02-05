@@ -2,17 +2,20 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { z } from "zod";
 
-import { and, eq, gte, lte, notInArray } from "@openstatus/db";
+import { and, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import {
   type MonitorStatus,
   maintenance,
-  maintenancesToMonitors,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import {
+  maintenancesToPageComponents,
+  pageComponent,
+} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
 import { db } from "../lib/db";
 
@@ -74,12 +77,17 @@ export async function sendCheckerTasks(
     .as("currentMaintenance");
 
   const currentMaintenanceMonitors = db
-    .select({ id: maintenancesToMonitors.monitorId })
-    .from(maintenancesToMonitors)
+    .select({ id: pageComponent.monitorId })
+    .from(maintenancesToPageComponents)
     .innerJoin(
       currentMaintenance,
-      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id),
-    );
+      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
+    )
+    .innerJoin(
+      pageComponent,
+      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
+    )
+    .where(isNotNull(pageComponent.monitorId));
 
   const result = await db
     .select()

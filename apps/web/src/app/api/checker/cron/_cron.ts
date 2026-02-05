@@ -3,16 +3,19 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
+import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   maintenance,
-  maintenancesToMonitors,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
+import {
+  maintenancesToPageComponents,
+  pageComponent,
+} from "@openstatus/db/src/schema/page_components";
 
 import { env } from "@/env";
 import type { Region } from "@openstatus/db/src/schema/constants";
@@ -65,12 +68,17 @@ export const cron = async ({
     .as("currentMaintenance");
 
   const currentMaintenanceMonitors = db
-    .select({ id: maintenancesToMonitors.monitorId })
-    .from(maintenancesToMonitors)
+    .select({ id: pageComponent.monitorId })
+    .from(maintenancesToPageComponents)
     .innerJoin(
       currentMaintenance,
-      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id),
-    );
+      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
+    )
+    .innerJoin(
+      pageComponent,
+      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
+    )
+    .where(isNotNull(pageComponent.monitorId));
 
   const result = await db
     .select()
