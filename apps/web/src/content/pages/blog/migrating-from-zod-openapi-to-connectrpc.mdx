@@ -1,13 +1,13 @@
 ---
 title: "One API to Rule Them All: Migrating from zod-openapi to ConnectRPC"
-description: "We are unifying our internal tRPC API and public REST API into a single ConnectRPC service. Here's how we did it—and how AI helped us finish in weeks instead of months."
+description: "We're unifying our internal tRPC API and public REST API into a single ConnectRPC service. Here's how we're doing it—and how AI is accelerating the migration."
 author: "Thibault Le Ouay Ducasse"
 publishedAt: "2026-02-04"
 image: ""
 category: "engineering"
 ---
 
-**TL;DR:** Two APIs. Double the bugs. Double the work. We maintained tRPC for ourselves and REST for everyone else—until we found ConnectRPC. Now we have one schema-first API that's type-safe *and* curl-able. AI helped us finish in weeks instead of months.
+**TL;DR:** Two APIs. Double the bugs. Double the work. We maintain tRPC for ourselves and REST for everyone else. We're unifying them with ConnectRPC—a schema-first API that's type-safe *and* curl-able. Here's how we're doing it, and how AI is accelerating the migration.
 
 ---
 
@@ -15,7 +15,7 @@ category: "engineering"
 
 Here's a confession: we weren't dogfooding our own public API.
 
-Internally, we used **tRPC** for its end-to-end type safety. For our public API, we built a separate REST layer with **zod-openapi**.
+Internally, we use **tRPC** for its end-to-end type safety. For our public API, we built a separate REST layer with **zod-openapi**.
 
 The result? The "Split Stack" problem:
 * **Two codebases.** Every endpoint defined twice.
@@ -468,7 +468,7 @@ The result? **AI is exceptionally good at schema work.**
 3. Flag inconsistencies between our internal and external APIs
 4. Write the interceptor patterns
 
-We shifted from "writing boilerplate" to "reviewing code." A migration we estimated at months finished in weeks.
+We shifted from "writing boilerplate" to "reviewing code." What we estimated at months is now tracking to finish in weeks.
 
 ---
 
@@ -534,7 +534,7 @@ const monitors = await client.monitor.v1.MonitorService.listMonitors({});
 console.log(monitors);
 ```
 
-No more maintaining two APIs. We just build.
+Once the migration is complete, no more maintaining two APIs. We just build.
 
 ---
 
