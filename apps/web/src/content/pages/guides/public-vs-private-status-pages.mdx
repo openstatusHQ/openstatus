@@ -1,0 +1,103 @@
+---
+title: "Public vs Private Status Pages"
+description: "Learn the key differences between public and private status pages, when to use each, and how to match transparency to your audience - customers, teams, and partners."
+author: "openstatus"
+publishedAt: "2026-02-05"
+category: "education"
+faq:
+  - question: "What's the main difference between public and private status pages?"
+    answer: "Public status pages are open to anyone and designed for customer-facing communication with reviewed, confirmed updates. Private status pages are access-controlled and designed for internal teams, partners, or enterprise clients with real-time metrics, auto-incidents, and detailed operational data."
+  - question: "When should I create a public status page?"
+    answer: "Create a public status page when you want to proactively communicate service status to customers, reduce support tickets, and build trust through transparency. It's especially important once you have paying customers or when your service reliability directly impacts user workflows."
+  - question: "When do I need a private status page?"
+    answer: "You need a private status page when you have more than 10 team members who need real-time operational visibility, when you have enterprise customers with contractual SLA requirements, or when you have partners integrating with your platform who need self-service status information."
+  - question: "Can I use auto-incidents on a private status page?"
+    answer: "Yes, but it depends on your audience. For internal teams, auto-incidents are highly valuable - they close the gap between detection and awareness. For partner-facing pages, skip auto-incidents and use reviewed status reports instead, as brief internal hiccups don't need to appear on your partner's dashboard."
+  - question: "What authentication methods are available for private status pages?"
+    answer: "Common authentication methods include email domain protection (for known organizations), simple password protection (for broader access or RSS support), SSO integration (for enterprise customers), and IP restriction (for locked-down network environments). Choose based on your audience and security requirements."
+  - question: "Should auto-incidents be enabled for customer-facing pages?"
+    answer: "No. Public status pages should not use auto-incidents. Every update should be reviewed before publication to ensure accuracy and appropriate messaging. A brief monitoring anomaly or false alarm shouldn't create unnecessary customer concern."
+---
+
+**TL;DR** - Public status pages face your customers and build trust through transparency. Private status pages face your team and partners, giving them deeper context behind authentication. Once you have more than a handful of engineers or paying enterprise customers, you'll need both.
+
+<Table
+  data={{
+    headers: ["", "Public", "Private"],
+    rows: [
+      [<strong>Audience</strong>, "Customers, end users, the internet", "Internal teams, partners, enterprise clients"],
+      [<strong>Access control</strong>, "None - open to anyone", "Password, SSO, IP restriction, email domain"],
+      [<strong>Transparency</strong>, "Measured - share what's confirmed", "High - share everything you can"],
+      [<strong>Communication</strong>, "Reviewed status reports", "Real-time metrics, auto-incidents, detailed reports"],
+      [<strong>Search engines</strong>, "Indexed and discoverable", "Hidden from crawlers"],
+    ],
+  }}
+/>
+
+## What Is a Public Status Page?
+
+A public status page is an unprotected, internet-facing page that communicates the operational state of your services to anyone who visits. It lives at a predictable URL-typically `status.yourcompany.com` - so customers can find it the moment something feels off, before frustration turns into a support ticket.
+
+Before they open a support ticket, before they tweet "@yourcompany is down??" to their 10,000 followers, they Google "[your product] status." If your page is there with a clear answer, you've just turned potential frustration into reassurance - and kept their trust intact.
+
+## When to Use a Public Status Page
+
+A public status page signals that you take reliability seriously enough to be open about it. But transparency doesn't mean immediacy - you shouldn't broadcast every anomaly the second it appears. A brief spike in latency might be a monitoring false alarm. A brief error spike might resolve in seconds.
+
+This is where a review process matters. Many teams gate public updates behind an internal check: is this real or a hiccup? What do we actually know? The delay between detection and public communication isn't a bug - it's responsible communication.
+
+**How you communicate is as important as what you communicate.** A status page that says "We are investigating an issue" with no follow-up for three hours doesn't build trust-it destroys it. Silence feels like negligence. Frequent, honest updates - even if the update is "we're still investigating" - maintain trust during incidents.
+
+And remember: your public page is visible to journalists, competitors, and investors too. That's a feature when you handle communication well, and a liability when you don't.
+
+## What Is a Private Status Page?
+
+A private status page is an access-controlled page that communicates service health to a restricted audience - your internal teams, selected partners, or enterprise customers. It sits behind authentication and is invisible to search engines, which means you can be radically transparent without worrying about public perception or competitor intel.
+
+It shows the real-time operational data your public page doesn't-metrics, detailed diagnostics, and unfiltered incident details.
+
+## When to Use a Private Status Page
+
+Private status pages serve two distinct contexts with different approaches.
+
+### For Internal Teams
+
+Internally, the goal is maximum context. Share as much as possible - don't be shy.
+
+Metrics and monitor charts are the backbone-latency by region, uptime check results, error rates-which means teams can assess severity themselves instead of waiting for someone to write a status report. An engineer sees degraded latency in `eu-west-1`. A support lead sees failing uptime pings. No one waits for a Slack message.
+
+Auto-incidents - where monitoring automatically creates an incident when a threshold is breached - close the gap between detection and awareness. The result: no "is X down?" questions flooding Slack at 2 AM. No support team scrambling for answers they don't have. Everyone sees the same incident data at the same time-so coordination happens instead of chaos.
+
+### For Partners and Enterprise Customers
+
+Partner-facing pages require more curation. You're behind authentication, but communicating with an audience that has contractual expectations.
+
+**Skip auto-incidents.** A brief internal hiccup that resolves in 30 seconds doesn't need to appear on your partner's dashboard. Use dedicated status reports instead, with context tailored to what your SLA allows you to share.
+
+**Do include metrics and monitor charts.** Partners benefit from self-assessing whether the API they depend on is healthy without emailing your support team. This is especially valuable for enterprise customers tracking uptime against custom SLA thresholds.
+
+Consider exposing staging or sandbox environment status too - partners integrating with your platform care about non-production almost as much as production.
+
+### Access Control Options
+
+The right authentication depends on your audience. **Email domain protection** works when you know which organizations should have access - set the allowed domains and authenticate via magic link. **Simple password protection** is better for broader audiences or when you need RSS support. **SSO** fits enterprise customers who expect integration with their identity provider. **IP restriction** suits locked-down network environments.
+
+Choose wrong and you'll either lock out legitimate users (too restrictive) or expose sensitive operational data to the wrong audience (too open).
+
+---
+
+## You Probably Need Both
+
+Teams with more than 10 people typically aren't choosing between public and private - they're choosing what goes where. The public page gets curated, reviewed updates. The private page gets raw metrics, auto-incidents, and detailed context.
+
+Match the transparency to the audience. Customers need confidence. Teams need context. Partners need something in between.
+
+**Openstatus gives you both.** Create public pages for customer transparency and private pages with full metrics for your team-all from one platform.
+
+---
+
+Start free. No credit card required. Set up your first status page in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
