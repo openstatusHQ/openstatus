@@ -27,7 +27,7 @@ export async function generateMetadata({
     return;
   }
 
-  const metadata = getPageMetadata(post);
+  const metadata = getPageMetadata(post, "compare");
 
   return metadata;
 }

@@ -11,7 +11,7 @@ import { Form } from "./client";
 
 export function generateMetadata(): Metadata {
   const page = getToolsPage("curl");
-  return getPageMetadata(page);
+  return getPageMetadata(page, "play");
 }
 
 export default function Page() {

@@ -21,7 +21,7 @@ import { searchParamsCache } from "./search-params";
 
 export function generateMetadata(): Metadata {
   const page = getToolsPage("checker");
-  return getPageMetadata(page);
+  return getPageMetadata(page, "play");
 }
 
 export default async function Page(props: {
