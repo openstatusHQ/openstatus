@@ -150,6 +150,16 @@ curl -X POST https://api.openstatus.dev/rpc/openstatus.monitor.v1.MonitorService
 
 Debuggable in Chrome DevTools. No special tooling required.
 
+### 4. Ship Types, Not Docs
+
+Documentation gets stale. Types don't compile if they're wrong.
+
+With OpenAPI, your docs and implementation can drift apart silently. With Protobuf, the schema *is* the implementation contract. If the types don't match, the build fails.
+
+This matters even more now that AI agents are consuming APIs. They work better with structured schemas than with prose documentation. For more on this idea, see Boris Tane's [Ship types, not docs](https://shiptypes.com?ref=openstatus.dev).
+
+
+
 ---
 
 ## How We Built It: Hono + ConnectRPC
