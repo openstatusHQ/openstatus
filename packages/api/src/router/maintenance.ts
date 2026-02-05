@@ -210,11 +210,6 @@ export const maintenanceRouter = createTRPCRouter({
             eq(maintenancesToPageComponents.maintenanceId, _maintenance.id),
           )
           .run();
-        // Sync to monitors (inverse sync for backward compatibility)
-        await syncMaintenanceToPageComponentDeleteByMaintenance(
-          tx,
-          _maintenance.id,
-        );
 
         // Create new relations if page components are provided
         if (opts.input.pageComponents?.length) {

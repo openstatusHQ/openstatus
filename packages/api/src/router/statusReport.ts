@@ -220,11 +220,6 @@ export const statusReportRouter = createTRPCRouter({
             eq(statusReportsToPageComponents.statusReportId, opts.input.id),
           )
           .run();
-        // Reverse sync: delete from monitors (for backward compatibility)
-        await syncStatusReportToPageComponentDeleteByStatusReport(
-          tx,
-          opts.input.id,
-        );
 
         if (opts.input.pageComponents.length > 0) {
           await tx
