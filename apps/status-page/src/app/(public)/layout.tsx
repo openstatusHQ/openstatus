@@ -4,9 +4,12 @@ import {
   SidebarTrigger,
   ThemeSidebar,
 } from "@/components/themes/theme-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/sonner";
 import { generateThemeStyles } from "@openstatus/theme-store";
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@openstatus/ui/components/ui/sidebar";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import PlausibleProvider from "next-plausible";
 import { Suspense } from "react";
 

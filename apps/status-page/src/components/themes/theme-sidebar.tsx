@@ -2,17 +2,29 @@
 
 import { searchParamsParsers } from "@/app/(public)/search-params";
 import { recomputeStyles } from "@/components/status-page/floating-button";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  THEMES,
+  type Theme,
+  type ThemeKey,
+  type ThemeVarName,
+} from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  ButtonGroup,
+  ButtonGroupText,
+} from "@openstatus/ui/components/ui/button-group";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { Label } from "@/components/ui/label";
+} from "@openstatus/ui/components/ui/collapsible";
+import {
+  InputGroup,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
+import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Sidebar,
   SidebarContent,
@@ -25,23 +37,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from "@openstatus/ui/components/ui/sidebar";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { useDebounce } from "@/hooks/use-debounce";
-import { cn } from "@/lib/utils";
-import {
-  THEMES,
-  type Theme,
-  type ThemeKey,
-  type ThemeVarName,
-} from "@openstatus/theme-store";
+} from "@openstatus/ui/components/ui/tooltip";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
+import { cn } from "@openstatus/ui/lib/utils";
 import {
   Check,
   ChevronDown,

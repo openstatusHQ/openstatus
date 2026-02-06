@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 import NextLink from "next/link";
 

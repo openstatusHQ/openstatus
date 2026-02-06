@@ -7,10 +7,10 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormPassword } from "@/components/forms/form-password";
-import { Button } from "@/components/ui/button";
-import { useCookieState } from "@/hooks/use-cookie-state";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 

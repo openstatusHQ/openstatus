@@ -6,13 +6,13 @@ import {
 } from "@/components/status-page/floating-button";
 import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import {
   THEME_KEYS,
   type ThemeKey,
   generateThemeStyles,
 } from "@openstatus/theme-store";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";

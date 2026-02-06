@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { useSidebar } from "@/components/ui/sidebar";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
+import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@openstatus/ui/components/ui/tooltip";
 import { Palette } from "lucide-react";
 
 export function ThemePalettePicker() {

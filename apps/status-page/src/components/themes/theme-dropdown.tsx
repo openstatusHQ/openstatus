@@ -3,18 +3,18 @@
 import { useTheme } from "next-themes";
 import type * as React from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/dropdown-menu";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";
-import { Skeleton } from "../ui/skeleton";
 
 function getThemeIcon(theme?: string | null) {
   if (theme === "light") return <Sun className="h-4 w-4" />;

@@ -2,17 +2,17 @@
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
+import { formatNumber } from "@/lib/formatter";
 import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { formatNumber } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/chart";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
-import { Skeleton } from "../ui/skeleton";
 import { ChartLegendBadge } from "./chart-legend-badge";
 
 const chartConfig = {
