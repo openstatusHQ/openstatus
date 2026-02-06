@@ -65,7 +65,7 @@ export default async function Page(props: {
         <Form defaultMethod={data?.method} defaultUrl={data?.url} />
         <ResponseStatus />
         <ResultTable />
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2">
           <ExportToCSVButton />
           <DetailsButtonLink />
         </div>

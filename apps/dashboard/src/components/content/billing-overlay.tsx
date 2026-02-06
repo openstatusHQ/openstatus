@@ -1,5 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function BillingOverlayContainer({
   children,

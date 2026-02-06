@@ -15,6 +15,10 @@
       "types": "./src/lib/*.ts",
       "default": "./src/lib/*.ts"
     },
+    "./hooks/*": {
+      "types": "./src/hooks/*.ts",
+      "default": "./src/hooks/*.ts"
+    },
     "./globals": "./src/globals.css"
   },
   "scripts": {
@@ -74,7 +78,7 @@
     "react": "19.2.3",
     "react-day-picker": "8.10.1",
     "react-hook-form": "7.68.0",
-    "recharts": "2.15.0",
+    "recharts": "2.15.4",
     "tailwind-merge": "2.5.5",
     "tailwindcss-animate": "1.0.7",
     "zod": "4.1.13"

@@ -3,20 +3,20 @@
 import { ChevronsUpDown, Plus } from "lucide-react";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useTRPC } from "@/lib/trpc/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "../common/link";
 
@@ -40,8 +40,7 @@ export function WorkspaceSwitcher() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              // FIXME: group-data-[collapsible=icon]:mx-8! (incl. nav-user)
-              className="h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2!"
+              className="h-14 rounded-none px-4 ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-2! group-data-[collapsible=icon]:rounded-lg! group-data-[collapsible=icon]:px-0!"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
                 <div className="size-8 overflow-hidden rounded-lg">

@@ -4,16 +4,16 @@ import { ChartLineRegion } from "@/components/chart/chart-line-region";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import type { RegionMetric } from "@/data/region-metrics";
+import { getActions } from "@/data/region-metrics.client";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { formatRegionCode, getRegionInfo } from "@openstatus/regions";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import type { RegionMetric } from "@/data/region-metrics";
-import { getActions } from "@/data/region-metrics.client";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { formatRegionCode, getRegionInfo } from "@openstatus/regions";
+} from "@openstatus/ui/components/ui/tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
 // import { toast } from "sonner";
 import { useRouter } from "next/navigation";

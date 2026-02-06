@@ -17,16 +17,16 @@ import {
   SidebarMenuSkeleton,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { getActions } from "@/data/monitors.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { getActions } from "@/data/monitors.client";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import Link from "next/link";

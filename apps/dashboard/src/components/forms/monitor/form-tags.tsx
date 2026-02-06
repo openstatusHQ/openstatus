@@ -10,8 +10,10 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -19,7 +21,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@openstatus/ui/components/ui/command";
 import {
   Form,
   FormControl,
@@ -27,15 +29,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/popover";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useTransition } from "react";

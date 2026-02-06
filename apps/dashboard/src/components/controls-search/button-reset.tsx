@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 

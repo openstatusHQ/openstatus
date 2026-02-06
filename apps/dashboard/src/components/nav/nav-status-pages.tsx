@@ -13,21 +13,21 @@ import {
   SidebarMenuSkeleton,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { getActions } from "@/data/status-pages.client";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { getActions } from "@/data/status-pages.client";
+} from "@openstatus/ui/components/ui/tooltip";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 

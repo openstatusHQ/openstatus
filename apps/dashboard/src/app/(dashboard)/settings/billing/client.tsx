@@ -25,10 +25,10 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";

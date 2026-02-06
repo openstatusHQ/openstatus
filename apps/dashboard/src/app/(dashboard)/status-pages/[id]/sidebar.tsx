@@ -3,14 +3,14 @@
 import { Link } from "@/components/common/link";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { useTRPC } from "@/lib/trpc/client";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/tooltip";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";

@@ -1,6 +1,9 @@
 "use client";
 
+// FIXME: use input-group instead
 import { InputWithAddons } from "@/components/common/input-with-addons";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -9,10 +12,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/form";
+import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useEffect, useTransition } from "react";

@@ -1,11 +1,11 @@
 import { NavFeedback } from "@/components/nav/nav-feedback";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@openstatus/ui/components/ui/tooltip";
 import { Book } from "lucide-react";
 
 export function NavActions() {

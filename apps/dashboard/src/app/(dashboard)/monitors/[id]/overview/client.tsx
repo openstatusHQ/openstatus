@@ -23,12 +23,17 @@ import { PopoverQuantile } from "@/components/popovers/popover-quantile";
 import { PopoverResolution } from "@/components/popovers/popover-resolution";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import { periodToFromDate } from "@/data/metrics.client";
 import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 import { useParams } from "next/navigation";

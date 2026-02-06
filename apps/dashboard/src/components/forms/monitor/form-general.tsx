@@ -11,43 +11,6 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   dnsRecords,
@@ -61,6 +24,46 @@ import {
   textBodyAssertion,
 } from "@openstatus/assertions";
 import { monitorMethods } from "@openstatus/db/src/schema";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { Switch } from "@openstatus/ui/components/ui/switch";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { Globe, Network, Plus, Server, X } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";

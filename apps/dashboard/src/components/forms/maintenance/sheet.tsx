@@ -15,7 +15,7 @@ import {
   FormMaintenance,
   type FormValues,
 } from "@/components/forms/maintenance/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useState } from "react";
 
 export function FormSheetMaintenance({

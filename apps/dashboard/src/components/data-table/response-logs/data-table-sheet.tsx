@@ -7,11 +7,11 @@ import {
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { RouterOutputs } from "@openstatus/api";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { Check, Copy } from "lucide-react";
 import { DataTableBasics } from "./data-table-basics";
 

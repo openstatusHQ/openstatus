@@ -12,7 +12,12 @@ export function useCopyToClipboard() {
       {
         timeout = 3000,
         withToast = false,
-      }: { timeout?: number; withToast?: boolean | string },
+        successMessage = "Copied to clipboard",
+      }: {
+        timeout?: number;
+        withToast?: boolean | string;
+        successMessage?: string;
+      },
     ) => {
       if (!navigator?.clipboard) {
         console.warn("Clipboard not supported");
@@ -33,7 +38,7 @@ export function useCopyToClipboard() {
           if (typeof withToast === "string") {
             toast.success(withToast);
           } else {
-            toast.success("Copied to clipboard");
+            toast.success(successMessage);
           }
         }
 

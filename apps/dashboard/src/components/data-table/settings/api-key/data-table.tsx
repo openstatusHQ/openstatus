@@ -1,4 +1,7 @@
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import {
   Table,
   TableBody,
@@ -6,10 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { formatDate } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/table";
 import { useMutation } from "@tanstack/react-query";
 
 type ApiKey = RouterOutputs["apiKeyRouter"]["getAll"][number];

@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { TRIGGER } from "@/data/metrics.client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,9 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { TRIGGER } from "@/data/metrics.client";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/dropdown-menu";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Check } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 

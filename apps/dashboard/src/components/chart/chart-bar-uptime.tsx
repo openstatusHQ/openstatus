@@ -3,21 +3,21 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
+  type PERIODS,
+  mapUptime,
+  periodToFromDate,
+  periodToInterval,
+} from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  type PERIODS,
-  mapUptime,
-  periodToFromDate,
-  periodToInterval,
-} from "@/data/metrics.client";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/chart";
+import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 

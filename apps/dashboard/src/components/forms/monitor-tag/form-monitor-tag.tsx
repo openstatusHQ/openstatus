@@ -1,7 +1,9 @@
 "use client";
 
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -9,11 +11,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
 import React, { useTransition } from "react";

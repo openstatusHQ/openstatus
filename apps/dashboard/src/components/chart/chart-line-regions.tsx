@@ -2,6 +2,11 @@
 
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
+import { getRegionColor } from "@/data/regions";
+import { cn } from "@/lib/utils";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import { getRegionInfo } from "@openstatus/regions";
 import {
   type ChartConfig,
   ChartContainer,
@@ -9,13 +14,8 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { getRegionColor } from "@/data/regions";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import { getRegionInfo } from "@openstatus/regions";
+} from "@openstatus/ui/components/ui/chart";
+import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 function getChartConfig(privateLocations?: PrivateLocation[]) {

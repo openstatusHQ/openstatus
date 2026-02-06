@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -8,7 +8,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
 
 import { Link } from "@/components/common/link";
 import {
@@ -16,13 +16,13 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Form } from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";

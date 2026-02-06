@@ -1,4 +1,4 @@
-import { Progress } from "@/components/ui/progress";
+import { Progress } from "@openstatus/ui/components/ui/progress";
 
 interface BillingProgressProps {
   label: string;

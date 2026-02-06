@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { signIn } from "@/lib/auth";
 import { GitHubIcon } from "@openstatus/icons";
 import { GoogleIcon } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import type { SearchParams } from "nuqs/server";
 import MagicLinkForm from "./_components/magic-link-form";
 import { searchParamsCache } from "./search-params";

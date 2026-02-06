@@ -11,8 +11,13 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  type Region,
+  monitorPeriodicity,
+} from "@openstatus/db/src/schema/constants";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -20,14 +25,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  type Region,
-  monitorPeriodicity,
-} from "@openstatus/db/src/schema/constants";
+} from "@openstatus/ui/components/ui/form";
+import { Slider } from "@openstatus/ui/components/ui/slider";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";

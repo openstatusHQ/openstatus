@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@openstatus/ui/components/ui/alert-dialog";
 import {
   Sheet,
   SheetContent,
@@ -18,8 +18,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/sheet";
+import { cn } from "@openstatus/ui/lib/utils";
 import React, {
   createContext,
   useContext,

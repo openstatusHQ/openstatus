@@ -19,9 +19,9 @@ import {
   FormCardFooter,
 } from "@/components/forms/form-card";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useTRPC } from "@/lib/trpc/client";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Page() {

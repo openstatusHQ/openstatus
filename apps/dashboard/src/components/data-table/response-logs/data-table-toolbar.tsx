@@ -3,7 +3,7 @@
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { regions } from "@/data/regions";

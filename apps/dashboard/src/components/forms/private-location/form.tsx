@@ -9,7 +9,8 @@ import {
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { Checkbox } from "@/components/ui/checkbox";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -18,18 +19,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group";
-import { Label } from "@/components/ui/label";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/input-group";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { Check, Copy } from "lucide-react";
 import React, { useTransition } from "react";
