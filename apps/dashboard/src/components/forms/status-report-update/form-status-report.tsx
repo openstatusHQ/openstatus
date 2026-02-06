@@ -376,7 +376,7 @@ export function FormStatusReportUpdateCard({
           ) : null}
         </form>
       </Form>
-      <FormCardFooter className="flex items-center gap-2 justify-end [&>:last-child]:ml-0">
+      <FormCardFooter className="flex items-center justify-end gap-2 [&>:last-child]:ml-0">
         <FormAlertDialog
           confirmationValue={update.status}
           submitAction={async () => {

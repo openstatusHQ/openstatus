@@ -64,6 +64,10 @@ export default function Page() {
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
 
+  const affected = statusReport.pageComponents
+    .map((component) => component.name)
+    .join(", ");
+
   return (
     <SectionGroup>
       <Section>
@@ -71,7 +75,11 @@ export default function Page() {
           <SectionHeader>
             <SectionTitle>{statusReport.title}</SectionTitle>
             <SectionDescription>
-              Manage updates for this status report.
+              Manage updates for this status report. Affects{" "}
+              <span className="text-foreground">
+                {affected ? affected : "zero"}
+              </span>{" "}
+              component(s).
             </SectionDescription>
           </SectionHeader>
         </SectionHeaderRow>
