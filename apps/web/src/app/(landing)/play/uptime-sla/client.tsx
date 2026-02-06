@@ -1,13 +1,13 @@
 "use client";
 
-import { Button } from "@openstatus/ui";
-import { Input } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   TabsContent,
   TabsList,
   Tabs as TabsPrimitive,
   TabsTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/tabs";
 import { useState } from "react";
 
 const periods = ["days", "weeks", "months", "years"] as const;

@@ -15,15 +15,15 @@ import {
   type Region,
   regionDict,
 } from "@openstatus/regions";
-import { Button } from "@openstatus/ui";
-import { Input } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";

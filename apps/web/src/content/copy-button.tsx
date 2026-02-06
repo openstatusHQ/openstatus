@@ -2,7 +2,7 @@
 
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
 
 export function CopyButton({
   className,

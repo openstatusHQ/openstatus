@@ -1,11 +1,27 @@
 {
   "name": "@openstatus/ui",
   "version": "0.0.0",
-  "main": "./src/index.tsx",
-  "types": "./src/index.tsx",
   "license": "MIT",
+  "exports": {
+    "./components/ui/*": {
+      "types": "./src/components/ui/*.tsx",
+      "default": "./src/components/ui/*.tsx"
+    },
+    "./components/blocks/*": {
+      "types": "./src/components/blocks/*.tsx",
+      "default": "./src/components/blocks/*.tsx"
+    },
+    "./lib/*": {
+      "types": "./src/lib/*.ts",
+      "default": "./src/lib/*.ts"
+    },
+    "./styles": {
+      "default": "./src/styles.css"
+    }
+  },
   "scripts": {
-    "lint": "biome lint \"**/*.ts*\""
+    "lint": "biome lint \"**/*.ts*\"",
+    "tsc": "tsc --noEmit"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

@@ -1,16 +1,16 @@
 import { headerLinks } from "@/data/content";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@openstatus/ui";
-import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/context-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import Link from "next/link";
 import { CmdK } from "./cmdk";
 

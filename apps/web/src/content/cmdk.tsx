@@ -12,10 +12,12 @@ import {
   CommandLoading,
   CommandSeparator,
   CommandShortcut,
+} from "@openstatus/ui/components/ui/command";
+import {
   Dialog,
   DialogContent,
   DialogTitle,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
 import { Loader2, Search } from "lucide-react";
