@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       new URL("https://openstatus.dev/**"),
       new URL("https://**.public.blob.vercel-storage.com/**"),
+      new URL("https://www.openstatus.dev/**"),
     ],
   },
   logging: {

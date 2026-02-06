@@ -74,6 +74,45 @@ export const statusReportRouter = createTRPCRouter({
       return selectStatusReportUpdateSchema.parse(currentStatusReportUpdate);
     }),
 
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db.query.statusReport.findFirst({
+        where: and(
+          eq(statusReport.id, opts.input.id),
+          eq(statusReport.workspaceId, opts.ctx.workspace.id),
+        ),
+        with: {
+          statusReportUpdates: true,
+          statusReportsToPageComponents: { with: { pageComponent: true } },
+          page: { with: { pageComponents: true } },
+        },
+      });
+
+      if (!result) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Status report not found",
+        });
+      }
+
+      return selectStatusReportSchema
+        .extend({
+          updates: z.array(selectStatusReportUpdateSchema).prefault([]),
+          pageComponents: z.array(selectPageComponentSchema).prefault([]),
+          page: selectPageSchema.extend({
+            pageComponents: z.array(selectPageComponentSchema).prefault([]),
+          }),
+        })
+        .parse({
+          ...result,
+          updates: result.statusReportUpdates,
+          pageComponents: result.statusReportsToPageComponents.map(
+            ({ pageComponent }) => pageComponent,
+          ),
+        });
+    }),
+
   list: protectedProcedure
     .input(
       z.object({

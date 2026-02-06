@@ -11,10 +11,11 @@ import {
   PanelTop,
   Users,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
+  const pathname = usePathname();
   const trpc = useTRPC();
   const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
@@ -31,7 +32,16 @@ export function Breadcrumb() {
           href: "/status-pages",
           icon: PanelTop,
         },
-        { type: "page", label: statusPage.title },
+        pathname === `/status-pages/${id}/status-reports`
+          ? {
+              type: "page",
+              label: statusPage.title,
+            }
+          : {
+              type: "link",
+              label: statusPage.title,
+              href: `/status-pages/${id}/status-reports`,
+            },
         {
           type: "select",
           items: [

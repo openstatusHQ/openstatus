@@ -4,10 +4,11 @@ import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Activity, Cog, LayoutGrid, Logs, Siren } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 
 export function Breadcrumb() {
   const { id } = useParams<{ id: string }>();
+  const pathname = usePathname();
   const trpc = useTRPC();
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
@@ -19,7 +20,13 @@ export function Breadcrumb() {
     <NavBreadcrumb
       items={[
         { type: "link", label: "Monitors", href: "/monitors", icon: Activity },
-        { type: "page", label: monitor.name },
+        pathname === `/monitors/${id}/overview`
+          ? { type: "page", label: monitor.name }
+          : {
+              type: "link",
+              label: monitor.name,
+              href: `/monitors/${id}/overview`,
+            },
         {
           type: "select",
           items: [

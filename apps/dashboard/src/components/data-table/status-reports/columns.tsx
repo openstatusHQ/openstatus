@@ -2,6 +2,7 @@
 
 import { TableCellBadge } from "@/components/data-table/table-cell-badge";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
@@ -51,6 +52,20 @@ export const columns: ColumnDef<StatusReport>[] = [
   {
     accessorKey: "title",
     header: "Title",
+    cell: ({ row }) => {
+      const { id, pageId } = row.original;
+
+      return (
+        <TableCellLink
+          href={`/status-pages/${pageId}/status-reports/${id}`}
+          onClick={(e) => {
+            // avoid expanding the row
+            e.stopPropagation();
+          }}
+          value={row.getValue("title")}
+        />
+      );
+    },
     enableSorting: false,
     enableHiding: false,
     meta: {
