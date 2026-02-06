@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "openstatus",
+  "homepage": "https://openstatus.dev",
+  "version": "0.1.0",
+  "style": "default",
+  "tailwind": {
+    "config": {
+      "theme": {
+        "extend": {
+          "colors": {
+            "success": "hsl(var(--success))",
+            "success-foreground": "hsl(var(--success-foreground))",
+            "warning": "hsl(var(--warning))",
+            "warning-foreground": "hsl(var(--warning-foreground))",
+            "destructive": "hsl(var(--destructive))",
+            "destructive-foreground": "hsl(var(--destructive-foreground))",
+            "info": "hsl(var(--info))",
+            "info-foreground": "hsl(var(--info-foreground))"
+          }
+        }
+      }
+    }
+  },
+  "cssVars": {
+    "light": {
+      "success": "142.1 76.2% 36.3%",
+      "success-foreground": "355.7 100% 97.3%",
+      "warning": "38 92% 50%",
+      "warning-foreground": "48 96% 89%",
+      "destructive": "0 84.2% 60.2%",
+      "destructive-foreground": "0 0% 98%",
+      "info": "221.2 83.2% 53.3%",
+      "info-foreground": "210 40% 98%"
+    },
+    "dark": {
+      "success": "142.1 70.6% 45.3%",
+      "success-foreground": "144.9 80.4% 10%",
+      "warning": "38 92% 50%",
+      "warning-foreground": "48 96% 89%",
+      "destructive": "0 72.2% 50.6%",
+      "destructive-foreground": "0 85.7% 97.3%",
+      "info": "217.2 91.2% 59.8%",
+      "info-foreground": "222.2 47.4% 11.2%"
+    }
+  },
+  "items": [
+    {
+      "name": "example",
+      "type": "registry:block",
+      "title": "Example",
+      "description": "Example block",
+      "registryDependencies": ["card", "button"],
+      "files": [
+        {
+          "path": "src/components/blocks/example.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/example.tsx"
+        }
+      ]
+    }
+  ]
+}

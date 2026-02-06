@@ -5,7 +5,8 @@
   "scripts": {
     "env": "bun env.ts",
     "dev": "next dev",
-    "build": "next build",
+    "build:registry": "turbo run registry:build --filter=@openstatus/ui",
+    "build": "pnpm build:registry && next build",
     "start": "next start",
     "lint": "next lint",
     "tsc": "tsc --noEmit"

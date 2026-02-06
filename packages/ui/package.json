@@ -18,6 +18,8 @@
     "./globals": "./src/globals.css"
   },
   "scripts": {
+    "build": "echo '@openstatus/ui has no build step (registry builds separately)'",
+    "registry:build": "node scripts/transform-imports.mjs && cd dist && shadcn build && cd .. && node scripts/copy-to-web.mjs",
     "lint": "biome lint \"**/*.ts*\"",
     "tsc": "tsc --noEmit"
   },
@@ -28,6 +30,7 @@
     "@types/node": "22.10.2",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "glob": "11.0.0",
     "shadcn": "3.8.4",
     "tailwindcss": "4.1.8",
     "typescript": "5.9.3"

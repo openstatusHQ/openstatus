@@ -69,3 +69,7 @@ apps/ingest-worker/.dev.vars
 apps/alerting-engine/tmp/
 
 .env.docker
+
+# UI Registry build output
+apps/web/public/r
+packages/ui/public/r
