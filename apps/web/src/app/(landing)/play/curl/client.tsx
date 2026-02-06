@@ -1,6 +1,5 @@
 "use client";
 
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import { Input } from "@openstatus/ui/components/ui/input";
@@ -13,6 +12,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { Fragment, useState } from "react";
 
 type Values = {

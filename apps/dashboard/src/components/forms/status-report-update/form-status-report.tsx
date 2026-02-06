@@ -390,13 +390,12 @@ export function FormStatusReportUpdateCard({
         >
           <Button
             variant="outline"
-            size="sm"
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             Delete
           </Button>
         </FormAlertDialog>
-        <Button type="submit" form={`update-form-${update.id}`} size="sm">
+        <Button type="submit" form={`update-form-${update.id}`}>
           {isPending ? "Submitting..." : "Submit"}
         </Button>
       </FormCardFooter>

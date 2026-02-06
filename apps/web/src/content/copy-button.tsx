@@ -1,8 +1,8 @@
 "use client";
 
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/components/ui/button";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function CopyButton({
   className,

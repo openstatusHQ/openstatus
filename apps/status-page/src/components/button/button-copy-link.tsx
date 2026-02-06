@@ -18,6 +18,7 @@ export function ButtonCopyLink({
       onClick={() =>
         copy(window.location.href, {
           successMessage: "Link copied to clipboard",
+          withToast: true,
         })
       }
       className={cn("size-8", className)}

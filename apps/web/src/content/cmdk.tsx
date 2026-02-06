@@ -1,8 +1,8 @@
 "use client";
 
 import type { MDXData } from "@/content/utils";
-import { useDebounce } from "@/hooks/use-debounce";
-import { cn } from "@/lib/utils";
+import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
+import { cn } from "@openstatus/ui/lib/utils";
 import {
   Command,
   CommandEmpty,

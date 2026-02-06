@@ -13,6 +13,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
+import { FormSheetWithDirtyProtection } from "@/components/forms/form-sheet";
 import type { FormValues } from "@/components/forms/status-report-update/form";
 import { FormStatusReportUpdateCard } from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
@@ -105,26 +106,27 @@ export default function Page() {
 
         <FormCardGroup>
           {updates.map((update, index) => (
-            <FormStatusReportUpdateCard
-              key={update.id}
-              id={`update-form-${update.id}`}
-              index={index}
-              update={update}
-              defaultValues={{
-                status: update.status,
-                message: update.message,
-                date: update.date,
-              }}
-              onSubmit={async (values: FormValues) => {
-                await updateStatusReportUpdateMutation.mutateAsync({
-                  id: update.id,
-                  statusReportId: statusReport.id,
-                  message: values.message,
-                  status: values.status,
-                  date: values.date,
-                });
-              }}
-            />
+            <FormSheetWithDirtyProtection key={update.id}>
+              <FormStatusReportUpdateCard
+                id={`update-form-${update.id}`}
+                index={index}
+                update={update}
+                defaultValues={{
+                  status: update.status,
+                  message: update.message,
+                  date: update.date,
+                }}
+                onSubmit={async (values: FormValues) => {
+                  await updateStatusReportUpdateMutation.mutateAsync({
+                    id: update.id,
+                    statusReportId: statusReport.id,
+                    message: values.message,
+                    status: values.status,
+                    date: values.date,
+                  });
+                }}
+              />
+            </FormSheetWithDirtyProtection>
           ))}
         </FormCardGroup>
       </Section>
