@@ -111,7 +111,7 @@
     "@types/node": "24.0.8",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
-    "shadcn": "2.7.0",
+    "shadcn": "3.8.4",
     "tailwindcss": "4.1.11",
     "tw-animate-css": "1.3.4",
     "typescript": "5.9.3"
