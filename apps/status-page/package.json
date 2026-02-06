@@ -32,6 +32,7 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
+    "@openstatus/ui": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@radix-ui/react-alert-dialog": "1.1.14",
     "@radix-ui/react-avatar": "1.1.10",

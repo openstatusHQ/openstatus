@@ -15,9 +15,7 @@
       "types": "./src/lib/*.ts",
       "default": "./src/lib/*.ts"
     },
-    "./styles": {
-      "default": "./src/styles.css"
-    }
+    "./globals": "./src/globals.css"
   },
   "scripts": {
     "lint": "biome lint \"**/*.ts*\"",

@@ -46,6 +46,7 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
+    "@openstatus/ui": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@radix-ui/react-alert-dialog": "1.1.14",

@@ -146,6 +146,9 @@ importers:
       '@openstatus/tracker':
         specifier: workspace:*
         version: link:../../packages/tracker
+      '@openstatus/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@openstatus/upstash':
         specifier: workspace:*
         version: link:../../packages/upstash
@@ -654,6 +657,9 @@ importers:
       '@openstatus/tracker':
         specifier: workspace:*
         version: link:../../packages/tracker
+      '@openstatus/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -1969,8 +1975,6 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
-
-  packages/react/dist: {}
 
   packages/regions:
     dependencies:
