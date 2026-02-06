@@ -42,6 +42,7 @@
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@radix-ui/react-portal": "1.1.9",
+    "@radix-ui/react-slot": "1.2.3",
     "@sentry/nextjs": "10.31.0",
     "@stripe/stripe-js": "2.1.6",
     "@t3-oss/env-nextjs": "0.7.0",
