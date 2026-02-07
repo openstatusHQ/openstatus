@@ -104,7 +104,7 @@
       "type": "registry:lib",
       "title": "Status Utilities",
       "description": "Utility functions for status formatting and display",
-      "dependencies": ["date-fns@2.30.0"],
+      "dependencies": ["date-fns"],
       "files": [
         {
           "path": "src/components/blocks/status.utils.ts",
@@ -119,7 +119,7 @@
       "title": "Status Icon",
       "description": "Unified status icon component with variants for different contexts",
       "registryDependencies": ["status-types"],
-      "dependencies": ["lucide-react@0.525.0"],
+      "dependencies": ["lucide-react"],
       "files": [
         {
           "path": "src/components/blocks/status-icon.tsx",
@@ -166,11 +166,7 @@
         "use-copy-to-clipboard",
         "use-media-query"
       ],
-      "dependencies": [
-        "date-fns@2.30.0",
-        "@date-fns/utc@2.1.0",
-        "lucide-react@0.525.0"
-      ],
+      "dependencies": ["date-fns", "@date-fns/utc@2.1.0", "lucide-react"],
       "files": [
         {
           "path": "src/components/blocks/status-timestamp.tsx",
@@ -211,7 +207,7 @@
         "tooltip",
         "use-media-query"
       ],
-      "dependencies": ["date-fns@2.30.0", "lucide-react@0.525.0"],
+      "dependencies": ["date-fns", "lucide-react"],
       "files": [
         {
           "path": "src/components/blocks/status-component.tsx",
@@ -251,7 +247,7 @@
         "separator",
         "tooltip"
       ],
-      "dependencies": ["date-fns@2.30.0", "lucide-react@0.525.0"],
+      "dependencies": ["date-fns", "lucide-react"],
       "files": [
         {
           "path": "src/components/blocks/status-events.tsx",
@@ -273,7 +269,7 @@
         "skeleton",
         "use-media-query"
       ],
-      "dependencies": ["date-fns@2.30.0"],
+      "dependencies": ["date-fns"],
       "files": [
         {
           "path": "src/components/blocks/status-bar.tsx",
