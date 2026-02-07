@@ -62,7 +62,7 @@
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
     "cobe": "0.6.3",
-    "date-fns": "2.30.0",
+    "date-fns": "3.6.0",
     "date-fns-tz": "2.0.0",
     "feed": "4.2.2",
     "gray-matter": "4.0.3",

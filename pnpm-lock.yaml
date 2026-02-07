@@ -73,7 +73,7 @@ importers:
         version: 0.15.15
       '@openpanel/nextjs':
         specifier: 1.0.8
-        version: 1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -214,7 +214,7 @@ importers:
         version: 1.2.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@sentry/nextjs':
         specifier: 10.31.0
-        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)
+        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)
       '@stripe/stripe-js':
         specifier: 2.1.6
         version: 2.1.6
@@ -229,7 +229,7 @@ importers:
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
         specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/react-query':
         specifier: 11.4.4
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -252,8 +252,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       date-fns:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 3.6.0
+        version: 3.6.0
       lucide-react:
         specifier: 0.525.0
         version: 0.525.0(react@19.2.3)
@@ -268,7 +268,7 @@ importers:
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
         specifier: 2.8.5
-        version: 2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       random-word-slugs:
         specifier: 0.1.7
         version: 0.1.7
@@ -277,7 +277,7 @@ importers:
         version: 19.2.3
       react-day-picker:
         specifier: 8.10.1
-        version: 8.10.1(date-fns@2.30.0)(react@19.2.3)
+        version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
@@ -629,7 +629,7 @@ importers:
         version: 0.15.15
       '@openpanel/nextjs':
         specifier: 1.0.8
-        version: 1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -722,7 +722,7 @@ importers:
         version: 1.2.7(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@sentry/nextjs':
         specifier: 10.31.0
-        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)
+        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)
       '@stripe/stripe-js':
         specifier: 2.1.6
         version: 2.1.6
@@ -737,7 +737,7 @@ importers:
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
         specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/react-query':
         specifier: 11.4.4
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -757,8 +757,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       date-fns:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 3.6.0
+        version: 3.6.0
       feed:
         specifier: 4.2.2
         version: 4.2.2
@@ -773,19 +773,19 @@ importers:
         version: 5.0.0-beta.29(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next-plausible:
         specifier: 3.12.5
-        version: 3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
         specifier: 2.8.5
-        version: 2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       react:
         specifier: 19.2.3
         version: 19.2.3
       react-day-picker:
         specifier: 8.10.1
-        version: 8.10.1(date-fns@2.30.0)(react@19.2.3)
+        version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
@@ -876,7 +876,7 @@ importers:
         version: 0.15.15
       '@openpanel/nextjs':
         specifier: 1.0.8
-        version: 1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -954,7 +954,7 @@ importers:
         version: 1.2.3(@types/react@19.2.2)(react@19.2.3)
       '@sentry/nextjs':
         specifier: 10.31.0
-        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)
+        version: 10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)
       '@stripe/stripe-js':
         specifier: 2.1.6
         version: 2.1.6
@@ -981,7 +981,7 @@ importers:
         version: 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/next':
         specifier: 11.4.4
-        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       '@trpc/react-query':
         specifier: 11.4.4
         version: 11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
@@ -1010,11 +1010,11 @@ importers:
         specifier: 0.6.3
         version: 0.6.3
       date-fns:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 3.6.0
+        version: 3.6.0
       date-fns-tz:
         specifier: 2.0.0
-        version: 2.0.0(date-fns@2.30.0)
+        version: 2.0.0(date-fns@3.6.0)
       feed:
         specifier: 4.2.2
         version: 4.2.2
@@ -1038,13 +1038,13 @@ importers:
         version: 5.0.0(@types/react@19.2.2)(react@19.2.3)
       next-plausible:
         specifier: 3.12.5
-        version: 3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-themes:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       nuqs:
         specifier: 2.8.5
-        version: 2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+        version: 2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       random-word-slugs:
         specifier: 0.1.7
         version: 0.1.7
@@ -1053,7 +1053,7 @@ importers:
         version: 19.2.3
       react-day-picker:
         specifier: 8.10.1
-        version: 8.10.1(date-fns@2.30.0)(react@19.2.3)
+        version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-dom:
         specifier: 19.2.3
         version: 19.2.3(react@19.2.3)
@@ -1331,8 +1331,8 @@ importers:
         specifier: 0.23.3
         version: 0.23.3
       date-fns:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 3.6.0
+        version: 3.6.0
       nanoid:
         specifier: 5.0.7
         version: 5.0.7
@@ -2140,8 +2140,8 @@ importers:
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@19.2.2(@types/react@19.2.2))(@types/react@19.2.2)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       date-fns:
-        specifier: 2.30.0
-        version: 2.30.0
+        specifier: 3.6.0
+        version: 3.6.0
       lucide-react:
         specifier: 0.525.0
         version: 0.525.0(react@19.2.3)
@@ -2162,7 +2162,7 @@ importers:
         version: 19.2.3
       react-day-picker:
         specifier: 8.10.1
-        version: 8.10.1(date-fns@2.30.0)(react@19.2.3)
+        version: 8.10.1(date-fns@3.6.0)(react@19.2.3)
       react-hook-form:
         specifier: 7.68.0
         version: 7.68.0(react@19.2.3)
@@ -7972,9 +7972,8 @@ packages:
     peerDependencies:
       date-fns: '>=2.0.0'
 
-  date-fns@2.30.0:
-    resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
-    engines: {node: '>=0.11'}
+  date-fns@3.6.0:
+    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
 
   debounce-fn@6.0.0:
     resolution: {integrity: sha512-rBMW+F2TXryBwB54Q0d8drNEI+TfoS9JpNTAoVpukbWEhjXQq4rySFYLaqXMFXwdv61Zb2OHtj5bviSoimqxRQ==}
@@ -14267,7 +14266,7 @@ snapshots:
       '@openpanel/web': 1.0.1
       astro: 5.16.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(rollup@4.53.3)(terser@5.44.1)(typescript@5.9.3)(yaml@2.8.1)
 
-  '@openpanel/nextjs@1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@openpanel/nextjs@1.0.8(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@openpanel/web': 1.0.1
       next: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -16604,7 +16603,7 @@ snapshots:
       '@sentry/types': 8.9.2
       '@sentry/utils': 8.9.2
 
-  '@sentry/nextjs@10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)':
+  '@sentry/nextjs@10.31.0(@opentelemetry/context-async-hooks@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.2.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.2.0(@opentelemetry/api@1.9.0))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)(webpack@5.103.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.38.0
@@ -17308,7 +17307,7 @@ snapshots:
       '@trpc/server': 11.4.4(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@trpc/next@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
+  '@trpc/next@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/react-query@11.4.4(@tanstack/react-query@5.81.5(react@19.2.3))(@trpc/client@11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(@trpc/server@11.4.4(typescript@5.9.3))(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)':
     dependencies:
       '@trpc/client': 11.4.4(@trpc/server@11.4.4(typescript@5.9.3))(typescript@5.9.3)
       '@trpc/server': 11.4.4(typescript@5.9.3)
@@ -18548,13 +18547,11 @@ snapshots:
 
   data-uri-to-buffer@6.0.2: {}
 
-  date-fns-tz@2.0.0(date-fns@2.30.0):
+  date-fns-tz@2.0.0(date-fns@3.6.0):
     dependencies:
-      date-fns: 2.30.0
+      date-fns: 3.6.0
 
-  date-fns@2.30.0:
-    dependencies:
-      '@babel/runtime': 7.28.4
+  date-fns@3.6.0: {}
 
   debounce-fn@6.0.0:
     dependencies:
@@ -20870,7 +20867,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  next-plausible@3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  next-plausible@3.12.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       next: 16.0.10(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
@@ -20962,7 +20959,7 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuqs@2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
+  nuqs@2.8.5(next@16.0.10(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3):
     dependencies:
       '@standard-schema/spec': 1.0.0
       react: 19.2.3
@@ -21563,9 +21560,9 @@ snapshots:
       minimist: 1.2.8
       strip-json-comments: 2.0.1
 
-  react-day-picker@8.10.1(date-fns@2.30.0)(react@19.2.3):
+  react-day-picker@8.10.1(date-fns@3.6.0)(react@19.2.3):
     dependencies:
-      date-fns: 2.30.0
+      date-fns: 3.6.0
       react: 19.2.3
 
   react-dom@19.2.3(react@19.2.3):
