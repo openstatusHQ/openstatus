@@ -78,14 +78,46 @@ writeFileSync(
   "utf-8",
 );
 
-// Copy necessary config files (exclude package.json to avoid workspace conflicts)
-console.log("📋 Copying config files...");
-const configFiles = ["registry.json"];
-for (const configFile of configFiles) {
-  const srcPath = join(ROOT_DIR, configFile);
-  if (existsSync(srcPath)) {
-    cpSync(srcPath, join(DIST_DIR, configFile));
+// Transform and copy registry.json with full URLs for custom dependencies
+console.log("📋 Transforming registry.json...");
+const registryJsonPath = join(ROOT_DIR, "registry.json");
+if (existsSync(registryJsonPath)) {
+  const registryJson = JSON.parse(readFileSync(registryJsonPath, "utf-8"));
+
+  // Determine the base URL for the registry
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}/r`
+    : "https://openstatus.dev/r";
+
+  console.log(`🔗 Using registry base URL: ${baseUrl}`);
+
+  // Transform registryDependencies for all items
+  if (registryJson.items) {
+    for (const item of registryJson.items) {
+      if (
+        item.registryDependencies &&
+        Array.isArray(item.registryDependencies)
+      ) {
+        item.registryDependencies = item.registryDependencies.map((dep) => {
+          // Prefix custom OpenStatus components (status-* and use-*) with full URL
+          if (dep.startsWith("status-") || dep.startsWith("use-")) {
+            return `${baseUrl}/${dep}.json`;
+          }
+          // Leave shadcn components unprefixed
+          return dep;
+        });
+      }
+    }
   }
+
+  writeFileSync(
+    join(DIST_DIR, "registry.json"),
+    JSON.stringify(registryJson, null, 2),
+    "utf-8",
+  );
+  console.log(
+    "✅ Transformed registry.json with full URLs for custom dependencies",
+  );
 }
 
 // Transform and copy components.json
