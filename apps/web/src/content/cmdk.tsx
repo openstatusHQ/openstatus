@@ -1,8 +1,6 @@
 "use client";
 
 import type { MDXData } from "@/content/utils";
-import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
-import { cn } from "@openstatus/ui/lib/utils";
 import {
   Command,
   CommandEmpty,
@@ -18,6 +16,8 @@ import {
   DialogContent,
   DialogTitle,
 } from "@openstatus/ui/components/ui/dialog";
+import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
 import { Loader2, Search } from "lucide-react";

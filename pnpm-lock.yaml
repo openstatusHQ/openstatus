@@ -2046,6 +2046,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@date-fns/utc':
+        specifier: 2.1.0
+        version: 2.1.0
       '@dnd-kit/core':
         specifier: 6.3.1
         version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
