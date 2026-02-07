@@ -16,6 +16,7 @@ import {
   formatDateTime,
 } from "@openstatus/ui/components/blocks/status.utils";
 import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
+import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
 
 export function StatusEventGroup({
   className,
@@ -264,7 +265,9 @@ export function StatusEventTimelineReportUpdate({
               <span>{incidentStatusLabels[report.status]}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
-                <span>{formatDateTime(report.date)}</span>
+                <StatusTimestamp date={report.date} variant="rich" asChild>
+                  <span>{formatDateTime(report.date)}</span>
+                </StatusTimestamp>
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">
@@ -322,9 +325,17 @@ export function StatusEventTimelineMaintenance({
               <span>{maintenance.title}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
-                <span>{from}</span>
+                <StatusTimestamp
+                  date={maintenance.from}
+                  variant="rich"
+                  asChild
+                >
+                  <span>{from}</span>
+                </StatusTimestamp>
                 {" - "}
-                <span>{to}</span>
+                <StatusTimestamp date={maintenance.to} variant="rich" asChild>
+                  <span>{to}</span>
+                </StatusTimestamp>
               </span>{" "}
               {duration ? (
                 <span className="font-mono text-muted-foreground/70 text-xs">

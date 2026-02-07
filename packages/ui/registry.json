@@ -73,6 +73,20 @@
       ]
     },
     {
+      "name": "use-copy-to-clipboard",
+      "type": "registry:hook",
+      "title": "Use Copy to Clipboard",
+      "description": "React hook for copying text to clipboard with toast notifications",
+      "registryDependencies": ["sonner"],
+      "files": [
+        {
+          "path": "src/hooks/use-copy-to-clipboard.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-copy-to-clipboard.ts"
+        }
+      ]
+    },
+    {
       "name": "status-types",
       "type": "registry:lib",
       "title": "Status Types",
@@ -142,6 +156,30 @@
       ]
     },
     {
+      "name": "status-timestamp",
+      "type": "registry:block",
+      "title": "Status Timestamp",
+      "description": "Interactive timestamp display with tooltip (simple) or hover-card (rich) variants showing multiple timezone formats",
+      "registryDependencies": [
+        "hover-card",
+        "tooltip",
+        "use-copy-to-clipboard",
+        "use-media-query"
+      ],
+      "dependencies": [
+        "date-fns@2.30.0",
+        "@date-fns/utc@2.1.0",
+        "lucide-react@0.525.0"
+      ],
+      "files": [
+        {
+          "path": "src/components/blocks/status-timestamp.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-timestamp.tsx"
+        }
+      ]
+    },
+    {
       "name": "status-banner",
       "type": "registry:block",
       "title": "Status Banner",
@@ -150,10 +188,9 @@
         "status-icon",
         "status-types",
         "status-utils",
-        "tabs",
-        "tooltip"
+        "status-timestamp",
+        "tabs"
       ],
-      "dependencies": ["date-fns@2.30.0", "@date-fns/utc@2.1.0"],
       "files": [
         {
           "path": "src/components/blocks/status-banner.tsx",
@@ -209,6 +246,7 @@
       "registryDependencies": [
         "status-types",
         "status-utils",
+        "status-timestamp",
         "badge",
         "separator",
         "tooltip"

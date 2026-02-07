@@ -1,21 +1,14 @@
-import { UTCDate } from "@date-fns/utc";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
-import { format } from "date-fns";
 import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
 import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
 import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
+import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
 
 export function StatusBanner({
   className,
@@ -226,30 +219,5 @@ export function StatusBannerTabsContent({
     <TabsContent className={cn("-mx-3", className)} {...props}>
       {children}
     </TabsContent>
-  );
-}
-
-export function StatusTimestamp({
-  date,
-  className,
-  ...props
-}: React.ComponentProps<typeof TooltipTrigger> & { date: Date }) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger
-          className={cn(
-            "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
-            className,
-          )}
-          {...props}
-        >
-          {format(new UTCDate(date), "LLL dd, y HH:mm (z)")}
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-mono">{format(date, "LLL dd, y HH:mm (z)")}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 }
