@@ -1,0 +1,98 @@
+---
+title: "Status Pages Should Be Boring"
+description: "Your status page has one job: tell users if your service is down. Learn why the best status pages prioritize speed, reliability, and simplicity over flashy design and modern frameworks."
+author: "openstatus"
+publishedAt: "2026-02-07"
+category: "education"
+faq:
+  - question: "Why should status pages be static instead of using JavaScript frameworks?"
+    answer: "JavaScript frameworks add load, parse, and execution time before rendering meaningful content. During an incident when users' connectivity might be degraded, this delay destroys trust. Static HTML renders instantly and works even when JavaScript fails, which is exactly what you need during a crisis."
+  - question: "What's wrong with using animated status indicators?"
+    answer: "Animated status indicators that require JavaScript to show if you're down create a critical failure mode - if the script fails, the page shows nothing, which is indistinguishable from being completely offline. Status information should be visible immediately in plain HTML."
+  - question: "Should I A/B test my status page?"
+    answer: "No. During an incident, different users seeing different versions of your status page creates confusion and erodes trust. When customers compare notes and realize they're seeing conflicting information, you've turned an operational problem into a credibility crisis."
+  - question: "Why avoid external dependencies on status pages?"
+    answer: "External dependencies like graphing services or CDNs create additional failure modes. When those services fail - and they will - your status page loses functionality at the exact moment it matters most. Plain HTML and CSS have decades of battle-testing with no unexpected edge cases."
+  - question: "What makes a status page accessible during incidents?"
+    answer: "A good status page works in grayscale for colorblind users, supports keyboard navigation and screen readers, loads instantly, provides RSS/Atom feeds for automated monitoring, and displays text-based updates that remain readable even if CSS fails. Accessibility isn't optional during high-stress moments."
+---
+
+Your status page is not a portfolio piece. It's not the place to showcase your design skills or demonstrate your mastery of modern web frameworks. It has one job: tell users if your service is down.
+
+When your API returns 500s at 2 AM and customers are frantically checking if the problem is on their end, they don't care about your animated gradients. They want an answer, and they want it fast.
+
+A status page that looks impressive but loads slowly doesn't just fail - it actively makes things worse. If users can't load your status page during an incident, they assume everything is broken, including your ability to communicate. Trust evaporates.
+
+The best status pages are boring. Static. Fast. Reliable. That's not a compromise - that's the entire point.
+
+## Every Millisecond Counts
+
+Users check status pages during incidents. Their own connectivity might be degraded. Their patience is thin. Every moment waiting for JavaScript to bootstrap feels like an eternity when production is on fire.
+
+Static HTML renders instantly. JavaScript frameworks - no matter how elegant your component architecture - add delay. They need to load, parse, and execute before rendering anything meaningful. During a crisis, that delay destroys trust.
+
+Your status page should feel instant. Use zero dependencies beyond basic HTML and CSS. If your status page needs its own deployment pipeline, its own monitoring, or requires emergency debugging during outages, you've fundamentally misunderstood what status infrastructure is supposed to do.
+
+Your status page should be the one thing that works when everything else is broken.
+
+## Show, Don't Hide
+
+Stressed users have zero cognitive bandwidth. They're troubleshooting, fielding messages from their own customers, and trying to figure out if they need to wake up their team. The status needs to be obvious: red, yellow, or green.
+
+Hover states and tooltips hide information. Every extra click or hover is friction. Show everything upfront. If you want to use hover states, use them to add context - like timezone conversion - not to gate essential information behind interactions.
+
+Support timezones so users can correlate your incident timeline with their own logs. Provide shareable links to specific incidents so support teams can send a direct reference instead of saying "check the status page." Make text copy-pasteable so they can quote your updates in their own communications.
+
+Markdown is fine for emphasis or linking to third-party status pages when upstream issues affect you. It's not an excuse for fancy formatting that adds visual complexity without adding clarity.
+
+## Don't Create New Failure Modes
+
+If your status page goes down when your service goes down, you've made the situation exponentially worse. Customers can't confirm there's an incident, so they flood support channels, blast social media, and lose faith in your operational maturity.
+
+Plain HTML, CSS, and HTTP have decades of battle-testing. No edge cases you haven't discovered yet. No subtle breaking changes in patch releases. They just work.
+
+Static sites on separate infrastructure are nearly indestructible. They don't share resources with your main app. They don't fail when your database crashes or your CDN has an outage. They're there when you need them most - which is when everything else isn't.
+
+## Good Status Pages Are Predictable
+
+Clear color coding works in grayscale because colorblind users exist and clarity shouldn't depend on perfect color perception.
+
+Accessibility isn't a checkbox - keyboard navigation, screen reader support, semantic HTML. Your status page needs to work for everyone, especially during high-stress moments when people are least equipped to deal with bad UX.
+
+Load times that feel instant. RSS or Atom feeds so customers can integrate status into their own systems - meaning their monitoring can automatically detect your incidents before their users notice. Historical uptime in simple tables, not interactive charts that fail when the graphing service is unreachable.
+
+Text-based incident updates that load instantly and stay readable even if CSS fails.
+
+## What Not to Do
+
+Animated status indicators that require JavaScript to show if you're down. If the script fails, the page shows nothing - indistinguishable from being completely offline.
+
+Complex modals and overlays hiding incident details. Users need to read, copy, and share that information. Every layer of interaction is a barrier.
+
+Fancy graphs dependent on external services. When those fail - and they will - your status page loses functionality at the exact moment it matters most.
+
+AB testing your status page. During an incident, different users seeing different versions of your status page creates confusion and erodes trust. When customers compare notes and realize they're seeing conflicting information, you've turned an operational problem into a credibility crisis. Your status page has one job - communicate clearly. There's no conversion rate to optimize here. 
+
+## Boring Wins
+
+Boring is reliable. Reliable builds trust. Trust is what you need during an outage.
+
+The best status page works when everything else is broken. It loads instantly, communicates clearly, and never becomes part of the problem it's meant to solve.
+
+Simple. Fast. Functional.
+
+That's not settling for less. That's understanding what matters.
+
+---
+
+**Openstatus gets this.** We build status infrastructure that's bulletproof, not flashy - because when your service goes down, the last thing you need is your status page joining it.
+
+Migrating from your current status page? [Contact us](mailto:ping@openstatus.dev), we'll help you move over.
+
+---
+
+Start free. No credit card required. Set up your first status page in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
