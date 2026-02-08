@@ -17,6 +17,7 @@ import { FormSheetWithDirtyProtection } from "@/components/forms/form-sheet";
 import type { FormValues } from "@/components/forms/status-report-update/form";
 import { FormStatusReportUpdateCard } from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { getNextStatus } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -87,6 +88,9 @@ export default function Page() {
         <EmptyStateContainer className="my-8 border-dashed">
           <EmptyStateDescription>Status Page Report</EmptyStateDescription>
           <FormSheetStatusReportUpdate
+            defaultValues={{
+              status: getNextStatus(statusReport.status),
+            }}
             onSubmit={async (values: FormValues) => {
               await createStatusReportUpdateMutation.mutateAsync({
                 statusReportId: statusReport.id,
