@@ -2,9 +2,9 @@
 
 import { useFormStatus } from "react-dom";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
 import { toast } from "sonner";
 import { signInWithResendAction } from "./actions";
 

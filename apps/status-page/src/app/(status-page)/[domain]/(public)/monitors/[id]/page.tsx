@@ -38,13 +38,13 @@ import {
   StatusMonitorTabsTriggerValue,
   StatusMonitorTabsTriggerValueSkeleton,
 } from "@/components/status-page/status-monitor-tabs";
-import { Badge } from "@/components/ui/badge";
 import {
   formatMillisecondsRange,
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp } from "lucide-react";
 import { useParams } from "next/navigation";

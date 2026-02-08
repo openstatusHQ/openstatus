@@ -14,7 +14,7 @@ import {
   FormStatusReportUpdate,
   type FormValues,
 } from "@/components/forms/status-report-update/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useState } from "react";
 
 export function FormSheetStatusReportUpdate({

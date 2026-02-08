@@ -3,8 +3,8 @@
 import { Link } from "@/components/common/link";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
 import { ThemeDropdown } from "@/components/themes/theme-dropdown";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useTRPC } from "@/lib/trpc/client";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react";
 import { useParams } from "next/navigation";

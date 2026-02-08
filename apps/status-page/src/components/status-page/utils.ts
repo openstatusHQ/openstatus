@@ -1,4 +1,4 @@
-import type { ChartConfig } from "@/components/ui/chart";
+import type { ChartConfig } from "@openstatus/ui/components/ui/chart";
 import { VARIANT, type VariantType } from "./floating-button";
 
 export const chartData = Array.from({ length: 45 }, (_, i) => {

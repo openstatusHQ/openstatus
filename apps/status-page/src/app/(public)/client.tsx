@@ -30,21 +30,21 @@ import {
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
-import { useSidebar } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
+import { monitors } from "@/data/monitors";
+import { useTRPC } from "@/lib/trpc/client";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { monitors } from "@/data/monitors";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";

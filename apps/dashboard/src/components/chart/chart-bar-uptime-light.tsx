@@ -1,17 +1,17 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { Bar, BarChart, XAxis } from "recharts";
 
+import { mapUptime } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { mapUptime } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
-import type { Region } from "@openstatus/db/src/schema/constants";
+} from "@openstatus/ui/components/ui/chart";
 import { useQuery } from "@tanstack/react-query";
 // import { startOfDay, subDays } from "date-fns";
 

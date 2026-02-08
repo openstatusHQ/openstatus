@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { cn } from "@openstatus/ui/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 

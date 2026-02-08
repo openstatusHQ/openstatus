@@ -5,24 +5,24 @@ import {
   type StatusUpdateType,
   StatusUpdates,
 } from "@/components/status-page/status-updates";
-import { Button } from "@/components/ui/button";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@openstatus/ui/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Menu, MessageCircleMore } from "lucide-react";

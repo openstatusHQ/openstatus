@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { getImageDimensions } from "@/lib/image-dimensions";
 import { cn } from "@/lib/utils";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
 import Image from "next/image";
 import Link from "next/link";

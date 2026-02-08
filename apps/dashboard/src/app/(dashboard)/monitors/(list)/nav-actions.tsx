@@ -2,8 +2,8 @@
 
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { NavFeedback } from "@/components/nav/nav-feedback";
-import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";

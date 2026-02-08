@@ -1,19 +1,24 @@
 "use client";
 
 import { FormSubscribeEmail } from "@/components/forms/form-subscribe-email";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { getBaseUrl } from "@/lib/base-url";
+import type { RouterOutputs } from "@openstatus/api";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { getBaseUrl } from "@/lib/base-url";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/popover";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
 
@@ -182,6 +187,7 @@ function CopyInputButton({
         onClick={(e) => {
           copy(value, {
             successMessage: "Link copied to clipboard",
+            withToast: true,
           });
           onClick?.(e);
         }}
@@ -216,7 +222,7 @@ function CopyButton({
     <Button
       size="sm"
       onClick={(e) => {
-        copy(value, {});
+        copy(value, { withToast: true });
         onClick?.(e);
       }}
       {...props}

@@ -10,6 +10,9 @@ import {
   YAxis,
 } from "recharts";
 
+import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
+import { periodToFromDate } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
 import {
   type ChartConfig,
   ChartContainer,
@@ -17,10 +20,7 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { type PERCENTILES, mapLatency } from "@/data/metrics.client";
-import { periodToFromDate } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/chart";
 import { useQuery } from "@tanstack/react-query";
 import { endOfDay } from "date-fns";
 import { ChartTooltipNumber } from "./chart-tooltip-number";

@@ -4,12 +4,12 @@ import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Kbd } from "@/components/common/kbd";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { formatDateForInput } from "@/lib/formatter";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Calendar } from "@openstatus/ui/components/ui/calendar";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import { endOfDay } from "date-fns";
 
 type DatePickerProps = {

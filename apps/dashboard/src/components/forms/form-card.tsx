@@ -5,9 +5,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/card";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { cn } from "@openstatus/ui/lib/utils";
 
 import { type VariantProps, cva } from "class-variance-authority";
 

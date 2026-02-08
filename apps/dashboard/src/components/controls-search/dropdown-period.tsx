@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { PERIODS } from "@/data/metrics.client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,8 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { PERIODS } from "@/data/metrics.client";
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import { Check } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 

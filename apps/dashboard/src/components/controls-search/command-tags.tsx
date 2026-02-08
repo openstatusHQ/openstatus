@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -8,14 +9,13 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@openstatus/ui/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/popover";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";

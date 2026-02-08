@@ -1,5 +1,5 @@
-import type { ChartConfig } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import type { ChartConfig } from "@openstatus/ui/components/ui/chart";
+import { cn } from "@openstatus/ui/lib/utils";
 import type {
   NameType,
   ValueType,

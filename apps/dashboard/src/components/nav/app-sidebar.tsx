@@ -31,7 +31,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@openstatus/ui/components/ui/tooltip";
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
 

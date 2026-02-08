@@ -21,8 +21,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,9 +31,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+} from "@openstatus/ui/components/ui/dropdown-menu";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { isTRPCClientError } from "@trpc/client";
 import { toast } from "sonner";

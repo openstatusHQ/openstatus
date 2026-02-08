@@ -18,6 +18,17 @@ import {
 } from "@/components/forms/form-card";
 import { STATUS } from "@/components/nav/nav-monitors";
 import {
+  Sortable,
+  SortableContent,
+  SortableItem,
+  SortableItemHandle,
+  SortableOverlay,
+} from "@/components/ui/sortable";
+import { cn } from "@/lib/utils";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { RouterOutputs } from "@openstatus/api";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -27,8 +38,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -36,7 +47,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@openstatus/ui/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +57,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -54,25 +65,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Sortable,
-  SortableContent,
-  SortableItem,
-  SortableItemHandle,
-  SortableOverlay,
-} from "@/components/ui/sortable";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type { UniqueIdentifier } from "@dnd-kit/core";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/tooltip";
 import { isTRPCClientError } from "@trpc/client";
 import {
   Check,

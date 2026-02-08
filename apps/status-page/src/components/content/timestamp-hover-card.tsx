@@ -1,11 +1,11 @@
+import { UTCDate } from "@date-fns/utc";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { UTCDate } from "@date-fns/utc";
+} from "@openstatus/ui/components/ui/hover-card";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import {
   type HoverCardContentProps,
   HoverCardPortal,
@@ -90,7 +90,7 @@ function Row({ value, label }: { value: string; label: string }) {
       className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
-        copy(value, {});
+        copy(value, { withToast: true });
       }}
     >
       <dt className="text-muted-foreground">{label}</dt>

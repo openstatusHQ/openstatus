@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
-import { Input } from "../ui/input";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export interface InputWithAddonsProps
   extends React.InputHTMLAttributes<HTMLInputElement> {

@@ -1,7 +1,8 @@
 "use client";
 
 import { Note } from "@/components/common/note";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -9,11 +10,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/components/ui/radio-group";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Check } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";

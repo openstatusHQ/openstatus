@@ -3,7 +3,12 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
-import { Button } from "@/components/ui/button";
+import { icons } from "@/data/icons";
+import { colors, getNextStatus } from "@/data/status-report-updates.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+import type { RouterOutputs } from "@openstatus/api";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Table,
   TableBody,
@@ -11,18 +16,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@openstatus/ui/components/ui/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { icons } from "@/data/icons";
-import { colors, getNextStatus } from "@/data/status-report-updates.client";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/tooltip";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useParams } from "next/navigation";

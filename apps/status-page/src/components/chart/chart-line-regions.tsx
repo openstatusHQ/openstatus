@@ -9,18 +9,18 @@ import {
   YAxis,
 } from "recharts";
 
+import { regions } from "@/data/regions";
+import { formatMilliseconds } from "@/lib/formatter";
+import type { MonitorRegion } from "@openstatus/db/src/schema";
 import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
-import { regions } from "@/data/regions";
-import { formatMilliseconds } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
-import type { MonitorRegion } from "@openstatus/db/src/schema";
+} from "@openstatus/ui/components/ui/chart";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";

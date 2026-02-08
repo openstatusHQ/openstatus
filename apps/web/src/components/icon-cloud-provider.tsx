@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/tooltip";
 import { Globe } from "lucide-react";
 
 export function IconCloudProvider({

@@ -11,19 +11,19 @@ import {
 } from "recharts";
 
 import {
+  type INTERVALS,
+  type PERCENTILES,
+  mapTimingPhases,
+} from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  type INTERVALS,
-  type PERCENTILES,
-  mapTimingPhases,
-} from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/chart";
 import { useQuery } from "@tanstack/react-query";
 import {
   ChartTooltipNumber,

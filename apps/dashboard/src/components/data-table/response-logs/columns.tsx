@@ -3,23 +3,22 @@
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { getStatusCodeVariant, textColors } from "@/data/status-codes";
+import type { RouterOutputs } from "@openstatus/api";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { getRegionInfo } from "@openstatus/regions";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from "@openstatus/ui/components/ui/hover-card";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { getStatusCodeVariant, textColors } from "@/data/status-codes";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { getRegionInfo } from "@openstatus/regions";
-import { HoverCardPortal } from "@radix-ui/react-hover-card";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Clock, Workflow } from "lucide-react";
 
@@ -196,12 +195,9 @@ function HoverCardTiming({
           ))}
         </div>
       </HoverCardTrigger>
-      {/* REMINDER: allows us to port the content to the document.body, which is helpful when using opacity-50 on the row element */}
-      <HoverCardPortal>
-        <HoverCardContent side="bottom" align="end" className="z-10 w-auto p-2">
-          <HoverCardTimingContent {...{ latency, timing }} />
-        </HoverCardContent>
-      </HoverCardPortal>
+      <HoverCardContent side="bottom" align="end" className="z-10 w-auto p-2">
+        <HoverCardTimingContent {...{ latency, timing }} />
+      </HoverCardContent>
     </HoverCard>
   );
 }

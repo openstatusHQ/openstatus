@@ -1,18 +1,18 @@
 "use client";
 
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { Button } from "@openstatus/ui";
-import { Checkbox } from "@openstatus/ui";
-import { Input } from "@openstatus/ui";
-import { Label } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui";
-import { Textarea } from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/select";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { Fragment, useState } from "react";
 
 type Values = {

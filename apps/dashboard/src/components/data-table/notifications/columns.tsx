@@ -1,9 +1,9 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { type NotifierProvider, config } from "@/data/notifications.client";
 import type { RouterOutputs } from "@openstatus/api";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { TableCellBadge } from "../table-cell-badge";

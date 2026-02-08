@@ -7,8 +7,8 @@ import {
   StatusBlankLink,
   StatusBlankTitle,
 } from "@/components/status-page/status-blank";
-import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 

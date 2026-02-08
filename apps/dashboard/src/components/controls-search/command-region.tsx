@@ -7,7 +7,10 @@ import {
   BillingOverlayButton,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
-import { Button } from "@/components/ui/button";
+import type { REGIONS } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { formatRegionCode, groupByContinent } from "@openstatus/regions";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -16,16 +19,13 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
+} from "@openstatus/ui/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import type { REGIONS } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { formatRegionCode, groupByContinent } from "@openstatus/regions";
+} from "@openstatus/ui/components/ui/popover";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Globe, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";

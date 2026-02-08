@@ -1,7 +1,13 @@
 "use client";
 
 import { ThemeSelect } from "@/components/themes/theme-select";
-import { Button } from "@/components/ui/button";
+import {
+  THEMES,
+  THEME_KEYS,
+  type ThemeDefinition,
+  generateThemeStyles,
+} from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -9,28 +15,22 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Label } from "@/components/ui/label";
+} from "@openstatus/ui/components/ui/command";
+import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@openstatus/ui/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-import {
-  THEMES,
-  THEME_KEYS,
-  type ThemeDefinition,
-  generateThemeStyles,
-} from "@openstatus/theme-store";
+} from "@openstatus/ui/components/ui/select";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Check, ChevronsUpDown, Settings } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import type React from "react";

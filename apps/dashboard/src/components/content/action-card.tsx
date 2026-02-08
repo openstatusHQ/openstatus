@@ -5,8 +5,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/card";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function ActionCard({
   children,

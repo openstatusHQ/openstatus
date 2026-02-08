@@ -1,11 +1,11 @@
 import { DatePicker } from "@/components/date-picker";
-import { Button } from "@/components/ui/button";
+import { formatDateRange } from "@/lib/formatter";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { formatDateRange } from "@/lib/formatter";
+} from "@openstatus/ui/components/ui/popover";
 import { endOfDay, startOfDay, subDays, subHours } from "date-fns";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";

@@ -14,7 +14,7 @@ import {
   FormPrivateLocation,
   type FormValues,
 } from "@/components/forms/private-location/form";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useState } from "react";
 
 export function FormSheetPrivateLocation({

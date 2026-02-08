@@ -2,6 +2,9 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
+    "registry:build": {
+      "outputs": ["public/r/**"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [

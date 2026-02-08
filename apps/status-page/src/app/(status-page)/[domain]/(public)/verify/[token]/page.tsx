@@ -7,7 +7,7 @@ import {
   StatusBlankTitle,
 } from "@/components/status-page/status-blank";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";

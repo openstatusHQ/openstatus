@@ -4,20 +4,25 @@ import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
 import { BlockWrapper } from "@/components/content/block-wrapper";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { getStatusCodeVariant, textColors } from "@/data/status-codes";
+import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
+import type { RouterOutputs } from "@openstatus/api";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+import { getRegionInfo } from "@openstatus/regions";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getStatusCodeVariant, textColors } from "@/data/status-codes";
-import { formatMilliseconds, formatPercentage } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { getRegionInfo } from "@openstatus/regions";
+} from "@openstatus/ui/components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Braces, TableProperties } from "lucide-react";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];

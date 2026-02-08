@@ -1,18 +1,18 @@
 "use client";
 
 import { Kbd } from "@/components/common/kbd";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { formatDateRange } from "@/lib/formatter";
+import type { RouterOutputs } from "@openstatus/api";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDateRange } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/hover-card";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
+import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";

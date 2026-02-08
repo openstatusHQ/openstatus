@@ -16,6 +16,15 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import {
+  Sortable,
+  SortableContent,
+  SortableItem,
+  SortableItemHandle,
+  SortableOverlay,
+} from "@/components/ui/sortable";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,8 +34,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -34,7 +43,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@openstatus/ui/components/ui/command";
 import {
   Form,
   FormControl,
@@ -43,26 +52,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { PopoverContent } from "@/components/ui/popover";
-import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Sortable,
-  SortableContent,
-  SortableItem,
-  SortableItemHandle,
-  SortableOverlay,
-} from "@/components/ui/sortable";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { PopoverContent } from "@openstatus/ui/components/ui/popover";
+import { Popover, PopoverTrigger } from "@openstatus/ui/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type { UniqueIdentifier } from "@dnd-kit/core";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import {
   Check,

@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function EmptyStateContainer({
   children,
