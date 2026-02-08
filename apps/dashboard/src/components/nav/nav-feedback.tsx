@@ -1,23 +1,23 @@
 "use client";
 
-import { Kbd } from "@/components/common/kbd";
-import { Button } from "@/components/ui/button";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
+import { Kbd } from "@openstatus/ui/components/ui/kbd";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/popover";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { useMutation } from "@tanstack/react-query";
 import { AudioLines, Inbox, LoaderCircle, Mic } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -167,7 +167,7 @@ export function NavFeedback() {
           className="group gap-0 px-2 text-muted-foreground text-sm hover:bg-transparent hover:text-foreground data-[state=open]:text-foreground"
         >
           Feedback{" "}
-          <Kbd className="font-mono group-hover:text-foreground group-data-[state=open]:text-foreground">
+          <Kbd className="ml-1 font-mono group-hover:text-foreground group-data-[state=open]:text-foreground">
             F
           </Kbd>
         </Button>
@@ -228,10 +228,10 @@ export function NavFeedback() {
                 ) : (
                   <>
                     Send
-                    <Kbd className="font-mono group-hover:text-foreground">
+                    <Kbd className="ml-1 font-mono group-hover:text-foreground">
                       ⌘
                     </Kbd>
-                    <Kbd className="font-mono group-hover:text-foreground">
+                    <Kbd className="ml-1 font-mono group-hover:text-foreground">
                       ↵
                     </Kbd>
                   </>

@@ -25,9 +25,9 @@ import {
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
 import { CreatePageForm } from "@/components/forms/onboarding/create-page";
 import { LearnFromForm } from "@/components/forms/onboarding/learn-from";
-import { Button } from "@/components/ui/button";
 import { extractDomain } from "@/lib/domains";
 import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";

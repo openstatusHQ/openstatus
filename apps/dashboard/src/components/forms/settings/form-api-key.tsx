@@ -16,6 +16,8 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -23,9 +25,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -34,7 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@openstatus/ui/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -42,18 +44,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/popover";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";

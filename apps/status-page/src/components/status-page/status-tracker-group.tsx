@@ -4,8 +4,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/collapsible";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useEffect, useState } from "react";
 import type { VariantType } from "./floating-button";
 import { StatusMonitorIcon, StatusMonitorStatus } from "./status-monitor";

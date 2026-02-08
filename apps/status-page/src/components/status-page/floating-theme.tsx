@@ -1,7 +1,8 @@
 "use client";
 
 import { ThemeSelect } from "@/components/themes/theme-select";
-import { Button } from "@/components/ui/button";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -9,15 +10,14 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
-import { Label } from "@/components/ui/label";
+} from "@openstatus/ui/components/ui/command";
+import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+} from "@openstatus/ui/components/ui/popover";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Check, ChevronsUpDown, Palette } from "lucide-react";
 import { useEffect } from "react";
 import { useState } from "react";

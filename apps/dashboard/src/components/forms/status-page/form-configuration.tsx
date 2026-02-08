@@ -13,7 +13,9 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -22,7 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from "@openstatus/ui/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -30,16 +32,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+} from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight } from "lucide-react";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";

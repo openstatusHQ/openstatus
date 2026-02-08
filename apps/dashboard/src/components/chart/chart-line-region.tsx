@@ -7,8 +7,8 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/chart";
+import { cn } from "@openstatus/ui/lib/utils";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartConfig = {

@@ -8,23 +8,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { useCookieState } from "@/hooks/use-cookie-state";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 
-import { ButtonGroup } from "@/components/ui/button-group";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Addons } from "@openstatus/db/src/schema/plan/schema";
 import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
+import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
+import { Input } from "@openstatus/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Check, MinusIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Input } from "../ui/input";
 
 type Workspace = RouterOutputs["workspace"]["get"];
 

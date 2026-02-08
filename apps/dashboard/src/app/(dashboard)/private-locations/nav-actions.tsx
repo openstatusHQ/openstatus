@@ -3,8 +3,8 @@
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetPrivateLocation } from "@/components/forms/private-location/sheet";
 import { NavFeedback } from "@/components/nav/nav-feedback";
-import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 

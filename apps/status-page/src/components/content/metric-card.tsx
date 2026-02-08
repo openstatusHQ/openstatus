@@ -2,9 +2,9 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@openstatus/ui/lib/utils";
 
 const metricCardVariants = cva(
   "flex flex-col gap-1 border rounded-lg px-3 py-2 text-card-foreground",

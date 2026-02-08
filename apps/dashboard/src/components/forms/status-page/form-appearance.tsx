@@ -11,7 +11,11 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { THEME_KEYS } from "@openstatus/theme-store";
+import { THEMES } from "@openstatus/theme-store";
+import type { ThemeKey } from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -19,7 +23,7 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command";
+} from "@openstatus/ui/components/ui/command";
 import {
   Form,
   FormControl,
@@ -28,24 +32,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@openstatus/ui/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { THEME_KEYS } from "@openstatus/theme-store";
-import { THEMES } from "@openstatus/theme-store";
-import type { ThemeKey } from "@openstatus/theme-store";
+} from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
 import { Check, ChevronsUpDown } from "lucide-react";

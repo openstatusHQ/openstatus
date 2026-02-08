@@ -15,15 +15,15 @@ import {
   type Region,
   regionDict,
 } from "@openstatus/regions";
-import { Button } from "@openstatus/ui";
-import { Input } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/select";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -409,12 +409,12 @@ export function DetailsButtonLink() {
   return (
     <Button
       variant="default"
-      className="h-full w-full rounded-none p-4 text-base"
+      className="h-auto! flex-1 rounded-none p-4 text-base"
       asChild
     >
       <Link
         href={`/play/checker/${id}`}
-        className="no-underline! text-background!"
+        className="no-underline! w-full text-background!"
       >
         Response details
       </Link>
@@ -432,7 +432,7 @@ export function ExportToCSVButton() {
   return (
     <Button
       variant="outline"
-      className="h-full w-full rounded-none p-4 text-base"
+      className="h-auto! flex-1 cursor-pointer rounded-none p-4 text-base"
       onClick={() => handleExportCSV(values)}
     >
       Export to CSV

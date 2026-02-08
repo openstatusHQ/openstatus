@@ -1,6 +1,6 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -8,26 +8,26 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
 
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { config } from "@/data/notifications.client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Form } from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { config } from "@/data/notifications.client";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/select";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";

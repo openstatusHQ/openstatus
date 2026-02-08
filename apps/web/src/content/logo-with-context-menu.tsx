@@ -5,7 +5,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/context-menu";
 import Image from "next/image";
 import Link from "next/link";
 

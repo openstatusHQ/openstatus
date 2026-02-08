@@ -8,8 +8,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/sheet";
+import { cn } from "@openstatus/ui/lib/utils";
 
 // TODO: rename to DataTableViewer?
 

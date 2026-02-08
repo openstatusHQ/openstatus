@@ -9,10 +9,10 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { Check, Copy } from "lucide-react";
 import { z } from "zod";
 

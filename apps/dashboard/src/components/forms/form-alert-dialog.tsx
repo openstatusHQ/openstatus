@@ -10,10 +10,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { isTRPCClientError } from "@trpc/client";
 import { Check, Copy } from "lucide-react";
 import { useState, useTransition } from "react";

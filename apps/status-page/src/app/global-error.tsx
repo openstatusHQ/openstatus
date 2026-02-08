@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/components/common/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 

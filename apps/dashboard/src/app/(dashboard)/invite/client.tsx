@@ -7,8 +7,8 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useQueryStates } from "nuqs";

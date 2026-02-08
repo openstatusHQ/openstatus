@@ -1,15 +1,15 @@
 "use client";
 
+import { formatMilliseconds } from "@/lib/formatter";
 import {
   type ChartConfig,
   ChartContainer,
   ChartLegend,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Skeleton } from "@/components/ui/skeleton";
-import { formatMilliseconds } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/chart";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import type { AxisDomain } from "recharts/types/util/types";

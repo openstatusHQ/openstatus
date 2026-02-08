@@ -2,9 +2,9 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/popover";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function PopoverResolution({
   children,

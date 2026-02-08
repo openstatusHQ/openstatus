@@ -10,15 +10,15 @@ import {
   DataTableActionBarAction,
   DataTableActionBarSelection,
 } from "@/components/ui/data-table/data-table-action-bar";
+import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/select";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
@@ -33,10 +33,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+} from "@openstatus/ui/components/ui/alert-dialog";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 

@@ -2,11 +2,11 @@
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
-import { Badge } from "@/components/ui/badge";
 import { monitorTypes } from "@/data/monitors.client";
 import { formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { deserialize } from "@openstatus/assertions";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";

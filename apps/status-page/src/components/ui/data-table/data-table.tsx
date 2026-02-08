@@ -26,7 +26,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@openstatus/ui/components/ui/table";
 import { Fragment } from "react";
 import type { DataTableActionBarProps } from "./data-table-action-bar";
 import type { DataTablePaginationProps } from "./data-table-pagination";

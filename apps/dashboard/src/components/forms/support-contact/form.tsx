@@ -12,17 +12,20 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/components/ui/form";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { SelectItem } from "@/components/ui/select";
-import { SelectContent, SelectValue } from "@/components/ui/select";
-import { SelectTrigger } from "@/components/ui/select";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { SelectItem } from "@openstatus/ui/components/ui/select";
+import {
+  SelectContent,
+  SelectValue,
+} from "@openstatus/ui/components/ui/select";
+import { SelectTrigger } from "@openstatus/ui/components/ui/select";
+import { Select } from "@openstatus/ui/components/ui/select";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { cn } from "@openstatus/ui/lib/utils";
 import { toast } from "sonner";
 
 export const types = [

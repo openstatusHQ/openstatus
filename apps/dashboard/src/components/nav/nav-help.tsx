@@ -2,13 +2,6 @@
 
 import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
@@ -18,6 +11,13 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { DiscordIcon } from "@openstatus/icons";
 import { GitHubIcon } from "@openstatus/icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import {
   Book,
   Braces,

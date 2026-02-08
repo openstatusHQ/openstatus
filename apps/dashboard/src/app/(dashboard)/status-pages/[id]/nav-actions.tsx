@@ -2,15 +2,15 @@
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { NavFeedback } from "@/components/nav/nav-feedback";
-import { Button } from "@/components/ui/button";
+import { getActions } from "@/data/status-pages.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { getActions } from "@/data/status-pages.client";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";

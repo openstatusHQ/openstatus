@@ -1,12 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { ChartConfig } from "@openstatus/ui";
+import type { ChartConfig } from "@openstatus/ui/components/ui/chart";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/chart";
 import { Line, LineChart, XAxis } from "recharts";
 
 const chartConfig = {

@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import { Fragment, useTransition } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,11 +12,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@openstatus/ui/components/ui/table";
 
-import { Badge } from "@/components/ui/badge";
 import { config as featureGroups, plans } from "@/data/plans";
-import { useCookieState } from "@/hooks/use-cookie-state";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
@@ -25,6 +23,8 @@ import {
   getAddonPriceConfig,
   getPriceConfig,
 } from "@openstatus/db/src/schema/plan/utils";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 const BASE_URL =

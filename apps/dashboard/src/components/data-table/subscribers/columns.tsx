@@ -1,8 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 

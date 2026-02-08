@@ -14,9 +14,9 @@ import {
   FormStatusReport,
   type FormValues,
 } from "@/components/forms/status-report/form";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import type { PageComponent } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useState } from "react";
 
 export function FormSheetStatusReport({

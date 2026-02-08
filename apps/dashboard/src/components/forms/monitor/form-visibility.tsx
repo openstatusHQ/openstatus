@@ -11,7 +11,8 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
   FormControl,
@@ -19,9 +20,8 @@ import {
   FormField,
   FormItem,
   FormLabel,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+} from "@openstatus/ui/components/ui/form";
+import { Switch } from "@openstatus/ui/components/ui/switch";
 import { Lock } from "lucide-react";
 import NextLink from "next/link";
 import { useTransition } from "react";

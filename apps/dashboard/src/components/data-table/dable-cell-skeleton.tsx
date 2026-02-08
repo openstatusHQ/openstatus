@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function TableCellSkeleton({
   className,

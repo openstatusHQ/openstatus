@@ -1,14 +1,19 @@
 import { Link } from "@/components/common/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+} from "@openstatus/ui/components/ui/dialog";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import type { DialogProps } from "@radix-ui/react-dialog";
 import { Check, Copy } from "lucide-react";
 

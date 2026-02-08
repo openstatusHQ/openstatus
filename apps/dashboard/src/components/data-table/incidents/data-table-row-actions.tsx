@@ -3,6 +3,9 @@
 import type { Row } from "@tanstack/react-table";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/incidents.client";
+import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,10 +15,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { getActions } from "@/data/incidents.client";
-import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/alert-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { useMemo, useState, useTransition } from "react";

@@ -1,16 +1,16 @@
 import { ProcessMessage } from "@/components/content/process-message";
 import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";

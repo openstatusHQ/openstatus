@@ -1,15 +1,15 @@
 "use client";
 
-import { Skeleton } from "@/components/ui/skeleton";
+import type { RouterOutputs } from "@openstatus/api";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { cn } from "@/lib/utils";
-import type { RouterOutputs } from "@openstatus/api";
+} from "@openstatus/ui/components/ui/tooltip";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
+import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceToNowStrict } from "date-fns";
 import {
   AlertCircleIcon,

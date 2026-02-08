@@ -12,8 +12,8 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormEmail, type FormValues } from "@/components/forms/form-email";
-import { Button } from "@/components/ui/button";
 import { generateServerActionPromise } from "@/lib/server-actions";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { Inbox } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";

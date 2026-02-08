@@ -7,7 +7,12 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
 import { FileDown, FileJson, Key, Terminal } from "lucide-react";
 import React from "react";
 

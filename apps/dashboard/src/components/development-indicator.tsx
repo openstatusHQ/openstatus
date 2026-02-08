@@ -1,14 +1,14 @@
 "use client";
 
-import { useIsMobile } from "@/hooks/use-mobile";
-import * as Portal from "@radix-ui/react-portal";
-import { Kbd } from "./common/kbd";
+import { Kbd } from "@openstatus/ui/components/ui/kbd";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from "@openstatus/ui/components/ui/tooltip";
+import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
+import * as Portal from "@radix-ui/react-portal";
 
 export function DevelopmentIndicator() {
   const isMobile = useIsMobile();
@@ -30,11 +30,8 @@ export function DevelopmentIndicator() {
               <TooltipContent side="top">
                 {!isMobile ? (
                   <p>
-                    Press{" "}
-                    <Kbd variant="secondary" className="-me-0 ms-0">
-                      F
-                    </Kbd>{" "}
-                    key to provide feedback.
+                    Press <Kbd className="-me-0 ms-0">F</Kbd> key to provide
+                    feedback.
                   </p>
                 ) : (
                   <p>Use a larger screen to provide feedback.</p>

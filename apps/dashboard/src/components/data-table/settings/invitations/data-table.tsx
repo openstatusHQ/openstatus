@@ -4,6 +4,8 @@ import {
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
 import {
   Table,
   TableBody,
@@ -11,9 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { formatDate } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
+} from "@openstatus/ui/components/ui/table";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function DataTable() {

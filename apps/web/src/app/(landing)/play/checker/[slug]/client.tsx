@@ -9,7 +9,7 @@ import {
 } from "@/lib/checker/utils";
 import { cn } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@openstatus/ui";
-import { Input } from "@openstatus/ui";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/dialog";
+import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
 import { useState } from "react";
 import { handleExportCSV } from "../utils";
 

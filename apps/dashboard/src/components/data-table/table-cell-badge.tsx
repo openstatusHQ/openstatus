@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
-import { Badge } from "../ui/badge";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "../ui/tooltip";
+} from "@openstatus/ui/components/ui/tooltip";
+import { useEffect, useRef, useState } from "react";
 
 export function TableCellBadge({
   value,

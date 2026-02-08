@@ -9,9 +9,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/select";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";

@@ -1,12 +1,13 @@
-import { badgeVariants } from "@/components/ui/badge";
-import { getPayloadConfigFromPayload, useChart } from "@/components/ui/chart";
+import { getPayloadConfigFromPayload } from "@/lib/chart";
+import { badgeVariants } from "@openstatus/ui/components/ui/badge";
+import { useChart } from "@openstatus/ui/components/ui/chart";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import * as React from "react";
 import type * as RechartsPrimitive from "recharts";
 import type { Payload } from "recharts/types/component/DefaultLegendContent";

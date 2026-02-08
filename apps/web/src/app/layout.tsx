@@ -6,7 +6,6 @@ import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
 import { env } from "@/env";
 import {
   defaultMetadata,
@@ -14,6 +13,7 @@ import {
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import { TRPCReactQueryProvider } from "@/trpc/rq-client";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import PlausibleProvider from "next-plausible";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 

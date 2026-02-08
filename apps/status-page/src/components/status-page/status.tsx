@@ -1,11 +1,11 @@
+import { UTCDate } from "@date-fns/utc";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { UTCDate } from "@date-fns/utc";
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
 import { format } from "date-fns";
 import {
   AlertCircleIcon,

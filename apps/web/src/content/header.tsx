@@ -4,7 +4,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/components/ui/dropdown-menu";
 import Link from "next/link";
 import { CmdK } from "./cmdk";
 import { LogoWithContextMenu } from "./logo-with-context-menu";

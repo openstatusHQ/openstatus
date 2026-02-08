@@ -2,13 +2,13 @@
 
 import * as React from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
+} from "@openstatus/ui/components/ui/collapsible";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export function BlockWrapper({
   className,

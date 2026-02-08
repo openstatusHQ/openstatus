@@ -26,10 +26,10 @@ import {
 import { StatusFeed } from "@/components/status-page/status-feed";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
-import { Separator } from "@/components/ui/separator";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";

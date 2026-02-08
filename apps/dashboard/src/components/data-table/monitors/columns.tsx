@@ -1,8 +1,8 @@
 "use client";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 

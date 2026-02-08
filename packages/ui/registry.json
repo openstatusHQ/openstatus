@@ -1,0 +1,329 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "openstatus",
+  "homepage": "https://openstatus.dev",
+  "version": "0.1.0",
+  "style": "default",
+  "tailwind": {
+    "config": {
+      "theme": {
+        "extend": {
+          "colors": {
+            "success": "hsl(var(--success))",
+            "success-foreground": "hsl(var(--success-foreground))",
+            "warning": "hsl(var(--warning))",
+            "warning-foreground": "hsl(var(--warning-foreground))",
+            "destructive": "hsl(var(--destructive))",
+            "destructive-foreground": "hsl(var(--destructive-foreground))",
+            "info": "hsl(var(--info))",
+            "info-foreground": "hsl(var(--info-foreground))"
+          }
+        }
+      }
+    }
+  },
+  "cssVars": {
+    "light": {
+      "success": "142.1 76.2% 36.3%",
+      "success-foreground": "355.7 100% 97.3%",
+      "warning": "38 92% 50%",
+      "warning-foreground": "48 96% 89%",
+      "destructive": "0 84.2% 60.2%",
+      "destructive-foreground": "0 0% 98%",
+      "info": "221.2 83.2% 53.3%",
+      "info-foreground": "210 40% 98%"
+    },
+    "dark": {
+      "success": "142.1 70.6% 45.3%",
+      "success-foreground": "144.9 80.4% 10%",
+      "warning": "38 92% 50%",
+      "warning-foreground": "48 96% 89%",
+      "destructive": "0 72.2% 50.6%",
+      "destructive-foreground": "0 85.7% 97.3%",
+      "info": "217.2 91.2% 59.8%",
+      "info-foreground": "222.2 47.4% 11.2%"
+    }
+  },
+  "items": [
+    {
+      "name": "example",
+      "type": "registry:block",
+      "title": "Example",
+      "description": "Example block",
+      "registryDependencies": ["card", "button"],
+      "files": [
+        {
+          "path": "src/components/blocks/example.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/example.tsx"
+        }
+      ]
+    },
+    {
+      "name": "use-media-query",
+      "type": "registry:hook",
+      "title": "Use Media Query",
+      "description": "React hook for responsive media query detection",
+      "files": [
+        {
+          "path": "src/hooks/use-media-query.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-media-query.ts"
+        }
+      ]
+    },
+    {
+      "name": "use-copy-to-clipboard",
+      "type": "registry:hook",
+      "title": "Use Copy to Clipboard",
+      "description": "React hook for copying text to clipboard with toast notifications",
+      "registryDependencies": ["sonner"],
+      "files": [
+        {
+          "path": "src/hooks/use-copy-to-clipboard.ts",
+          "type": "registry:hook",
+          "target": "hooks/use-copy-to-clipboard.ts"
+        }
+      ]
+    },
+    {
+      "name": "status-types",
+      "type": "registry:lib",
+      "title": "Status Types",
+      "description": "TypeScript type definitions for status components",
+      "files": [
+        {
+          "path": "src/components/blocks/status.types.ts",
+          "type": "registry:lib",
+          "target": "components/blocks/status.types.ts"
+        }
+      ]
+    },
+    {
+      "name": "status-utils",
+      "type": "registry:lib",
+      "title": "Status Utilities",
+      "description": "Utility functions for status formatting and display",
+      "dependencies": ["date-fns"],
+      "files": [
+        {
+          "path": "src/components/blocks/status.utils.ts",
+          "type": "registry:lib",
+          "target": "components/blocks/status.utils.ts"
+        }
+      ]
+    },
+    {
+      "name": "status-icon",
+      "type": "registry:block",
+      "title": "Status Icon",
+      "description": "Unified status icon component with variants for different contexts",
+      "registryDependencies": ["status-types"],
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-icon.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-icon.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-layout",
+      "type": "registry:block",
+      "title": "Status Layout",
+      "description": "Layout primitives for composing status displays (Status, StatusHeader, StatusTitle, etc.)",
+      "registryDependencies": ["status-icon"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-layout.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-layout.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-blank",
+      "type": "registry:block",
+      "title": "Status Blank States",
+      "description": "Empty and skeleton state components for loading and no-data scenarios",
+      "files": [
+        {
+          "path": "src/components/blocks/status-blank.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-blank.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-timestamp",
+      "type": "registry:block",
+      "title": "Status Timestamp",
+      "description": "Interactive timestamp display with tooltip (simple) or hover-card (rich) variants showing multiple timezone formats",
+      "registryDependencies": [
+        "hover-card",
+        "tooltip",
+        "use-copy-to-clipboard",
+        "use-media-query"
+      ],
+      "dependencies": ["date-fns", "@date-fns/utc@2.1.0", "lucide-react"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-timestamp.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-timestamp.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-banner",
+      "type": "registry:block",
+      "title": "Status Banner",
+      "description": "Alert-style status banner with tabs support and timestamp display",
+      "registryDependencies": [
+        "status-icon",
+        "status-types",
+        "status-utils",
+        "status-timestamp",
+        "tabs"
+      ],
+      "files": [
+        {
+          "path": "src/components/blocks/status-banner.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-banner.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-component",
+      "type": "registry:block",
+      "title": "Status Component",
+      "description": "Monitor component primitives for building status displays",
+      "registryDependencies": [
+        "status-icon",
+        "status-types",
+        "skeleton",
+        "tooltip",
+        "use-media-query"
+      ],
+      "dependencies": ["date-fns", "lucide-react"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-component.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-component.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-component-group",
+      "type": "registry:block",
+      "title": "Status Component Group",
+      "description": "Collapsible group wrapper for status components",
+      "registryDependencies": [
+        "status-component",
+        "status-types",
+        "collapsible"
+      ],
+      "files": [
+        {
+          "path": "src/components/blocks/status-component-group.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-component-group.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-events",
+      "type": "registry:block",
+      "title": "Status Events",
+      "description": "Event timeline components for displaying status reports and maintenance updates",
+      "registryDependencies": [
+        "status-types",
+        "status-utils",
+        "status-timestamp",
+        "badge",
+        "separator",
+        "tooltip"
+      ],
+      "dependencies": ["date-fns", "lucide-react"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-events.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-events.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-bar",
+      "type": "registry:block",
+      "title": "Status Bar",
+      "description": "Interactive status timeline with hover, keyboard navigation, and event display",
+      "registryDependencies": [
+        "status-types",
+        "status-utils",
+        "hover-card",
+        "separator",
+        "skeleton",
+        "use-media-query"
+      ],
+      "dependencies": ["date-fns"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-bar.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-bar.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-feed",
+      "type": "registry:block",
+      "title": "Status Feed",
+      "description": "Unified feed component combining status reports and maintenance events",
+      "registryDependencies": ["status-blank", "status-events", "status-types"],
+      "files": [
+        {
+          "path": "src/components/blocks/status-feed.tsx",
+          "type": "registry:ui",
+          "target": "components/blocks/status-feed.tsx"
+        }
+      ]
+    },
+    {
+      "name": "status-complete",
+      "type": "registry:block",
+      "title": "Status Page (Complete)",
+      "description": "Complete status page components including all primitives, displays, and interactive elements",
+      "registryDependencies": [
+        "status-types",
+        "status-utils",
+        "status-icon",
+        "status-layout",
+        "status-blank",
+        "status-banner",
+        "status-component",
+        "status-component-group",
+        "status-events",
+        "status-bar",
+        "status-feed"
+      ]
+    },
+    {
+      "name": "status-essentials",
+      "type": "registry:block",
+      "title": "Status Page (Essentials)",
+      "description": "Essential status page components for basic status displays",
+      "registryDependencies": [
+        "status-types",
+        "status-utils",
+        "status-icon",
+        "status-layout",
+        "status-banner",
+        "status-blank"
+      ]
+    }
+  ]
+}

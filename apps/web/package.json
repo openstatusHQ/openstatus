@@ -5,7 +5,8 @@
   "scripts": {
     "env": "bun env.ts",
     "dev": "next dev",
-    "build": "next build",
+    "build:registry": "turbo run registry:build --filter=@openstatus/ui",
+    "build": "pnpm build:registry && next build",
     "start": "next start",
     "lint": "next lint",
     "tsc": "tsc --noEmit"
@@ -41,6 +42,7 @@
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@radix-ui/react-portal": "1.1.9",
+    "@radix-ui/react-slot": "1.2.3",
     "@sentry/nextjs": "10.31.0",
     "@stripe/stripe-js": "2.1.6",
     "@t3-oss/env-nextjs": "0.7.0",
@@ -60,7 +62,7 @@
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
     "cobe": "0.6.3",
-    "date-fns": "2.30.0",
+    "date-fns": "3.6.0",
     "date-fns-tz": "2.0.0",
     "feed": "4.2.2",
     "gray-matter": "4.0.3",

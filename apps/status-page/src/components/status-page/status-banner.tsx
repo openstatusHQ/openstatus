@@ -1,5 +1,10 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
 import {
   AlertCircleIcon,
   CheckIcon,

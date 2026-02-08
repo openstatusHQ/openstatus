@@ -1,8 +1,13 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
 
 import { Note } from "@/components/common/note";
 import { getSubdomain } from "@/lib/domains";

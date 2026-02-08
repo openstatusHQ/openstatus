@@ -12,9 +12,12 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { config } from "@/data/notifications.client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { NotificationProvider } from "@openstatus/db/src/schema";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -22,11 +25,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { config } from "@/data/notifications.client";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { NotificationProvider } from "@openstatus/db/src/schema";
+} from "@openstatus/ui/components/ui/form";
+import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";

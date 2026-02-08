@@ -12,11 +12,12 @@ import {
   FormCardUpgrade,
 } from "@/components/forms/form-card";
 
-import { Label } from "@/components/ui/label";
+import { Label } from "@openstatus/ui/components/ui/label";
 
+// FIXME: use input-group instead
 import { InputWithAddons } from "@/components/common/input-with-addons";
-import { Button } from "@/components/ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { Lock } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,7 +25,12 @@ import { z } from "zod";
 import { Link } from "@/components/common/link";
 import DomainConfiguration from "@/components/domains/domain-configuration";
 import { useDomainStatus } from "@/components/domains/use-domain-status";
-import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@openstatus/ui/components/ui/form";
 import { isTRPCClientError } from "@trpc/client";
 import type React from "react";
 import { useEffect, useTransition } from "react";

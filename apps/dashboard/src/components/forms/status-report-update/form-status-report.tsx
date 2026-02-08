@@ -13,9 +13,16 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Checkbox } from "@/components/ui/checkbox";
+import { colors } from "@/data/status-report-updates.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  type StatusReportUpdate,
+  statusReportStatus,
+} from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Calendar } from "@openstatus/ui/components/ui/calendar";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -24,31 +31,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Popover } from "@/components/ui/popover";
+} from "@openstatus/ui/components/ui/form";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@openstatus/ui/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { TabsContent } from "@/components/ui/tabs";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tabs } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
-import { colors } from "@/data/status-report-updates.client";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  type StatusReportUpdate,
-  statusReportStatus,
-} from "@openstatus/db/src/schema";
+} from "@openstatus/ui/components/ui/select";
+import { TabsContent } from "@openstatus/ui/components/ui/tabs";
+import { TabsList, TabsTrigger } from "@openstatus/ui/components/ui/tabs";
+import { Tabs } from "@openstatus/ui/components/ui/tabs";
+import { Textarea } from "@openstatus/ui/components/ui/textarea";
+import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
+import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
@@ -387,13 +390,12 @@ export function FormStatusReportUpdateCard({
         >
           <Button
             variant="outline"
-            size="sm"
             className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           >
             Delete
           </Button>
         </FormAlertDialog>
-        <Button type="submit" form={`update-form-${update.id}`} size="sm">
+        <Button type="submit" form={`update-form-${update.id}`}>
           {isPending ? "Submitting..." : "Submit"}
         </Button>
       </FormCardFooter>
