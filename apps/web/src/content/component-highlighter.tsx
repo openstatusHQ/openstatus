@@ -140,7 +140,7 @@ export function ComponentHighlighter({
       {children}
       {hovered && (
         <div
-          className="pointer-events-none fixed z-[99999] rounded-lg bg-info/5 outline-2 outline-info transition-all duration-100 ease-in-out"
+          className="pointer-events-none fixed z-[99999] bg-info/5 outline-2 outline-info transition-all duration-100 ease-in-out"
           style={{
             top: hovered.rect.top,
             left: hovered.rect.left,
@@ -148,7 +148,7 @@ export function ComponentHighlighter({
             height: hovered.rect.height,
           }}
         >
-          <span className="-left-px -top-px absolute whitespace-nowrap rounded-tl-lg rounded-br-lg bg-info px-2 py-0.5 font-mono font-semibold text-[11px] text-white leading-tight">
+          <span className="-left-px -top-px absolute whitespace-nowrap bg-info px-2 py-0.5 font-mono font-semibold text-[11px] text-white leading-tight">
             {hovered.name}
           </span>
         </div>
