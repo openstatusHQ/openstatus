@@ -218,7 +218,7 @@ export function StatusFeed({
   }
 
   return (
-    <StatusEventGroup {...props}>
+    <StatusEventGroup data-slot="status-feed" {...props}>
       {unifiedEvents.map((event) => {
         // Use stable key to prevent flicker
         const key = `${event.type}-${event.id}`;
@@ -282,3 +282,4 @@ export function StatusFeed({
     </StatusEventGroup>
   );
 }
+StatusFeed.displayName = "StatusFeed";

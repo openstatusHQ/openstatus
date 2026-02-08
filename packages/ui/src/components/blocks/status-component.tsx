@@ -73,7 +73,7 @@ export function StatusComponent({
 }: StatusComponentProps) {
   return (
     <div
-      data-slot="status-monitor"
+      data-slot="status-component"
       data-variant={variant}
       className={cn("group/component space-y-2", className)}
       {...props}
@@ -82,6 +82,7 @@ export function StatusComponent({
     </div>
   );
 }
+StatusComponent.displayName = "StatusComponent";
 
 // ============================================================================
 // Header Components
@@ -116,6 +117,7 @@ export function StatusComponentHeader({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-component-header"
       className={cn("flex items-center justify-between", className)}
       {...props}
     >
@@ -123,6 +125,7 @@ export function StatusComponentHeader({
     </div>
   );
 }
+StatusComponentHeader.displayName = "StatusComponentHeader";
 
 /**
  * StatusComponentHeaderLeft - Left-aligned header content container
@@ -151,11 +154,16 @@ export function StatusComponentHeaderLeft({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex items-center gap-2", className)} {...props}>
+    <div
+      data-slot="status-component-header-left"
+      className={cn("flex items-center gap-2", className)}
+      {...props}
+    >
       {children}
     </div>
   );
 }
+StatusComponentHeaderLeft.displayName = "StatusComponentHeaderLeft";
 
 /**
  * StatusComponentHeaderRight - Right-aligned header content container
@@ -180,11 +188,16 @@ export function StatusComponentHeaderRight({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex items-center gap-3", className)} {...props}>
+    <div
+      data-slot="status-component-header-right"
+      className={cn("flex items-center gap-3", className)}
+      {...props}
+    >
       {children}
     </div>
   );
 }
+StatusComponentHeaderRight.displayName = "StatusComponentHeaderRight";
 
 // ============================================================================
 // Content Components
@@ -213,11 +226,16 @@ export function StatusComponentBody({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("space-y-2", className)} {...props}>
+    <div
+      data-slot="status-component-body"
+      className={cn("space-y-2", className)}
+      {...props}
+    >
       {children}
     </div>
   );
 }
+StatusComponentBody.displayName = "StatusComponentBody";
 
 // ============================================================================
 // Display Components
@@ -248,6 +266,7 @@ export function StatusComponentTitle({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-component-title"
       className={cn(
         "truncate font-medium font-mono text-base text-foreground leading-5",
         className,
@@ -258,6 +277,7 @@ export function StatusComponentTitle({
     </div>
   );
 }
+StatusComponentTitle.displayName = "StatusComponentTitle";
 
 /**
  * StatusComponentDescription - Info icon with tooltip for additional details
@@ -316,6 +336,7 @@ export function StatusComponentDescription({
     </TooltipProvider>
   );
 }
+StatusComponentDescription.displayName = "StatusComponentDescription";
 
 /**
  * StatusComponentIcon - Status indicator icon for component context
@@ -352,6 +373,7 @@ export function StatusComponentIcon({
     <UnifiedStatusIcon variant="component" className={className} {...props} />
   );
 }
+StatusComponentIcon.displayName = "StatusComponentIcon";
 
 /**
  * StatusComponentFooter - Date range footer for status visualizations
@@ -389,7 +411,10 @@ export function StatusComponentFooter({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none">
+    <div
+      data-slot="status-component-footer"
+      className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none"
+    >
       <div>
         {isLoading ? (
           <Skeleton className="h-3 w-18" />
@@ -406,6 +431,7 @@ export function StatusComponentFooter({
     </div>
   );
 }
+StatusComponentFooter.displayName = "StatusComponentFooter";
 
 /**
  * StatusComponentUptime - Uptime percentage display
@@ -434,16 +460,18 @@ export function StatusComponentUptime({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      {...props}
+      data-slot="status-component-uptime"
       className={cn(
         "font-mono text-foreground/80 text-sm leading-none",
         className,
       )}
+      {...props}
     >
       {children}
     </div>
   );
 }
+StatusComponentUptime.displayName = "StatusComponentUptime";
 
 /**
  * StatusComponentUptimeSkeleton - Loading skeleton for uptime percentage
@@ -514,6 +542,7 @@ export function StatusComponentStatus({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-component-status"
       className={cn(
         "font-mono text-sm leading-none",
         "group-data-[variant=success]/component:text-success",
@@ -539,3 +568,4 @@ export function StatusComponentStatus({
     </div>
   );
 }
+StatusComponentStatus.displayName = "StatusComponentStatus";

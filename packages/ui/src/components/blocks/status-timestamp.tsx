@@ -122,6 +122,7 @@ export function StatusTimestamp(props: StatusTimestampProps) {
 
     return (
       <RichTimestamp
+        data-slot="status-timestamp"
         date={date}
         side={side}
         align={align}
@@ -142,11 +143,17 @@ export function StatusTimestamp(props: StatusTimestampProps) {
   >;
 
   return (
-    <SimpleTimestamp date={date} className={className} {...triggerProps}>
+    <SimpleTimestamp
+      data-slot="status-timestamp"
+      date={date}
+      className={className}
+      {...triggerProps}
+    >
       {children}
     </SimpleTimestamp>
   );
 }
+StatusTimestamp.displayName = "StatusTimestamp";
 
 /**
  * SimpleTimestamp - Internal tooltip-based timestamp display
@@ -187,13 +194,14 @@ function SimpleTimestamp({
         >
           {children || format(new UTCDate(date), "LLL dd, y HH:mm (z)")}
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent data-slot="status-timestamp-content">
           <p className="font-mono">{format(date, "LLL dd, y HH:mm (z)")}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
+SimpleTimestamp.displayName = "SimpleTimestamp";
 
 /**
  * RichTimestamp - Internal hover card timestamp display with timezone details
@@ -275,21 +283,23 @@ function RichTimestamp({
         {children}
       </HoverCardTrigger>
       <HoverCardContent
+        data-slot="status-timestamp-content"
         className="z-10 w-auto p-2"
         {...{ side, align, alignOffset, sideOffset }}
       >
         <dl className="flex flex-col gap-1">
-          <Row value={formatted} label={timezone} />
-          <Row value={utc} label="UTC" />
-          <Row value={relative} label="Relative" />
+          <StatusTimestampRow value={formatted} label={timezone} />
+          <StatusTimestampRow value={utc} label="UTC" />
+          <StatusTimestampRow value={relative} label="Relative" />
         </dl>
       </HoverCardContent>
     </HoverCard>
   );
 }
+RichTimestamp.displayName = "RichTimestamp";
 
 /**
- * Row - Internal component for hover card timestamp rows
+ * StatusTimestampRow - Internal component for hover card timestamp rows
  *
  * Displays a single row in the rich timestamp hover card with a label (e.g., "UTC")
  * and value (e.g., "Jan 15, 2024 10:30:45"). The entire row is clickable to copy
@@ -301,11 +311,18 @@ function RichTimestamp({
  * @param value - The timestamp string to display and copy
  * @param label - The label for this timestamp (e.g., "UTC", "PST", "Relative")
  */
-function Row({ value, label }: { value: string; label: string }) {
+function StatusTimestampRow({
+  value,
+  label,
+}: {
+  value: string;
+  label: string;
+}) {
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
     <div
+      data-slot="status-timestamp-row"
       className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
@@ -326,3 +343,4 @@ function Row({ value, label }: { value: string; label: string }) {
     </div>
   );
 }
+StatusTimestampRow.displayName = "StatusTimestampRow";

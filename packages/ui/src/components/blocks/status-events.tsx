@@ -50,6 +50,7 @@ export function StatusEventGroup({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-event-group"
       className={cn("flex flex-col gap-4", className)}
       role="feed"
       aria-label="Status events and updates"
@@ -85,7 +86,11 @@ export function StatusEvent({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("relative flex flex-col gap-2", className)} {...props}>
+    <div
+      data-slot="status-event"
+      className={cn("relative flex flex-col gap-2", className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -121,6 +126,7 @@ export function StatusEventContent({
 }) {
   return (
     <div
+      data-slot="status-event-content"
       data-hoverable={hoverable}
       className={cn(
         "group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2",
@@ -151,7 +157,11 @@ export function StatusEventTitle({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("font-medium", className)} {...props}>
+    <div
+      data-slot="status-event-title"
+      className={cn("font-medium", className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -177,7 +187,11 @@ export function StatusEventTitleCheck({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex items-center pl-1", className)} {...props}>
+    <div
+      data-slot="status-event-title-check"
+      className={cn("flex items-center pl-1", className)}
+      {...props}
+    >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger aria-label="Report resolved">
@@ -219,7 +233,11 @@ export function StatusEventAffected({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex flex-wrap gap-1", className)} {...props}>
+    <div
+      data-slot="status-event-affected"
+      className={cn("flex flex-wrap gap-1", className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -243,6 +261,7 @@ export function StatusEventAffectedBadge({
 }: React.ComponentProps<"div">) {
   return (
     <Badge
+      data-slot="status-event-affected-badge"
       variant="secondary"
       className={cn("text-[10px]", className)}
       {...props}
@@ -281,11 +300,16 @@ export function StatusEventDate({
   const isFuture = date > new Date();
   const distance = formatDistanceStrict(date, new Date(), { addSuffix: true });
   return (
-    <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
+    <div
+      data-slot="status-event-date"
+      className={cn("flex gap-2 lg:flex-col", className)}
+      {...props}
+    >
       <div className="font-medium text-foreground">
         {formatDate(date, { month: "short" })}
       </div>{" "}
       <Badge
+        data-slot="status-event-date-badge"
         variant="secondary"
         className={cn(
           "text-[10px]",
@@ -323,7 +347,10 @@ export function StatusEventAside({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full">
+    <div
+      data-slot="status-event-aside"
+      className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full"
+    >
       <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
         {children}
       </div>
@@ -406,7 +433,11 @@ export function StatusEventTimelineReport({
     : sortedUpdates;
 
   return (
-    <div className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <div
+      data-slot="status-event-timeline-report"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    >
       {/* NOTE: make sure they are sorted by date */}
       {displayedUpdates.map((update, index) => {
         const updateDate = new Date(update.date);
@@ -489,7 +520,11 @@ export function StatusEventTimelineReportUpdate({
   isLast?: boolean;
 }) {
   return (
-    <div data-variant={report.status} className="group">
+    <div
+      data-slot="status-event-timeline-report-update"
+      data-variant={report.status}
+      className="group"
+    >
       <div className="flex flex-row items-center justify-between gap-2">
         <div className="flex flex-row gap-4">
           {withDot ? (
@@ -578,7 +613,11 @@ export function StatusEventTimelineMaintenance({
   // NOTE: because formatDateRange is sure to return a range, we can split it into two dates
   const [from, to] = range.split(" - ");
   return (
-    <div data-variant="maintenance" className="group">
+    <div
+      data-slot="status-event-timeline-maintenance"
+      data-variant="maintenance"
+      className="group"
+    >
       <div className="flex flex-row items-center justify-between gap-2">
         <div className="flex flex-row gap-4">
           {withDot ? (
@@ -594,11 +633,7 @@ export function StatusEventTimelineMaintenance({
               <span>{maintenance.title}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
               <span className="font-mono text-muted-foreground text-xs">
-                <StatusTimestamp
-                  date={maintenance.from}
-                  variant="rich"
-                  asChild
-                >
+                <StatusTimestamp date={maintenance.from} variant="rich" asChild>
                   <span>{from}</span>
                 </StatusTimestamp>
                 {" - "}
@@ -646,6 +681,7 @@ export function StatusEventTimelineTitle({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-event-timeline-title"
       className={cn("font-medium text-foreground text-sm", className)}
       {...props}
     >
@@ -674,6 +710,7 @@ export function StatusEventTimelineMessage({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-event-timeline-message"
       className={cn(
         "py-1.5 font-mono text-muted-foreground text-sm",
         className,
@@ -709,6 +746,7 @@ export function StatusEventTimelineDot({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-event-timeline-dot"
       className={cn(
         "size-2.5 shrink-0 rounded-full bg-muted",
         "group-data-[variant=resolved]:bg-success",
@@ -745,6 +783,7 @@ export function StatusEventTimelineSeparator({
 }: React.ComponentProps<typeof Separator>) {
   return (
     <Separator
+      data-slot="status-event-timeline-separator"
       orientation="vertical"
       className={cn(
         "mx-auto flex-1",

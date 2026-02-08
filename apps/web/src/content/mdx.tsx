@@ -9,6 +9,7 @@ import Link from "next/link";
 import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
 import { highlight } from "sugar-high";
+import { ComponentHighlighter } from "./component-highlighter";
 import { CopyButton } from "./copy-button";
 import { HighlightText } from "./highlight-text";
 import { ImageZoom } from "./image-zoom";
@@ -363,7 +364,11 @@ export const components = {
       </div>
     );
   },
-  StatusPageExample,
+  StatusPageExample: () => (
+    <ComponentHighlighter>
+      <StatusPageExample />
+    </ComponentHighlighter>
+  ),
 };
 
 function MDXContent(props: MDXRemoteProps) {

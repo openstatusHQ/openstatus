@@ -240,7 +240,7 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
           {
             // Navigate to previous monitor's status bar
             const prevMonitor = containerRef.current?.closest(
-              '[data-slot="status-monitor"]',
+              '[data-slot="status-component"]',
             )?.previousElementSibling;
             if (prevMonitor) {
               const prevBar = prevMonitor.querySelector('[role="toolbar"]');
@@ -258,7 +258,7 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
           {
             // Navigate to next monitor's status bar
             const nextMonitor = containerRef.current?.closest(
-              '[data-slot="status-monitor"]',
+              '[data-slot="status-component"]',
             )?.nextElementSibling;
             if (nextMonitor) {
               const nextBar = nextMonitor.querySelector('[role="toolbar"]');
@@ -434,6 +434,7 @@ export function StatusBar({
     <div
       ref={containerRef}
       className="flex h-[50px] w-full items-end"
+      data-slot="status-bar"
       role="toolbar"
       aria-label="Status tracker"
     >
@@ -461,6 +462,7 @@ export function StatusBar({
     </div>
   );
 }
+StatusBar.displayName = "StatusBar";
 
 interface StatusBarItemProps {
   index: number;
@@ -511,6 +513,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
             aria-label={`Day ${index + 1} status`}
             aria-pressed={isPinned}
             aria-expanded={isActive}
+            data-slot="status-bar-item"
           >
             {/* Render bar segments */}
             {item.bar.map((segment, segmentIndex) => {
@@ -558,7 +561,6 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
     );
   },
 );
-
 StatusBarItem.displayName = "StatusBarItem";
 
 interface StatusBarCardProps {
@@ -595,7 +597,7 @@ function StatusBarCard({
   renderEvent,
 }: StatusBarCardProps) {
   return (
-    <div>
+    <div data-slot="status-bar-card">
       <div className="p-2 text-xs">
         {new Date(item.day).toLocaleDateString("default", {
           day: "numeric",
@@ -653,6 +655,7 @@ function StatusBarCard({
     </div>
   );
 }
+StatusBarCard.displayName = "StatusBarCard";
 
 /**
  * StatusBarSkeleton - Loading skeleton for StatusBar
@@ -682,6 +685,7 @@ export function StatusBarSkeleton({
     />
   );
 }
+StatusBarSkeleton.displayName = "StatusBarSkeleton";
 
 /**
  * StatusBarContent - Internal component for status breakdown rows
@@ -707,7 +711,7 @@ function StatusBarContent({
   value: string;
 }) {
   return (
-    <div className="flex items-baseline gap-4">
+    <div className="flex items-baseline gap-4" data-slot="status-bar-content">
       <div className="flex items-center gap-2">
         <div
           className="h-2.5 w-2.5 rounded-sm"
@@ -723,6 +727,7 @@ function StatusBarContent({
     </div>
   );
 }
+StatusBarContent.displayName = "StatusBarContent";
 
 /**
  * StatusBarEvent - Event badge for incidents and maintenance
@@ -790,7 +795,7 @@ export function StatusBarEvent({
     type === "incident" ? "error" : type === "report" ? "degraded" : "info";
 
   return (
-    <div className="group relative text-sm">
+    <div className="group relative text-sm" data-slot="status-bar-event">
       {/* NOTE: this is to make the text truncate based on the width of the sibling element */}
       {/* REMINDER: height needs to be equal the text height */}
       <div className="h-4 w-full" />
@@ -814,6 +819,7 @@ export function StatusBarEvent({
     </div>
   );
 }
+StatusBarEvent.displayName = "StatusBarEvent";
 
 /**
  * formatDuration - Internal helper for formatting event durations
