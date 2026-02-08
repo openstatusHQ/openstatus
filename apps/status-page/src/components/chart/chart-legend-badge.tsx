@@ -1,6 +1,6 @@
-import { useChart } from "@/hooks/use-chart";
 import { getPayloadConfigFromPayload } from "@/lib/chart";
 import { badgeVariants } from "@openstatus/ui/components/ui/badge";
+import { useChart } from "@openstatus/ui/components/ui/chart";
 import {
   Tooltip,
   TooltipContent,
