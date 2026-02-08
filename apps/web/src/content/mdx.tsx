@@ -13,6 +13,7 @@ import { CopyButton } from "./copy-button";
 import { HighlightText } from "./highlight-text";
 import { ImageZoom } from "./image-zoom";
 import { LatencyChartTable } from "./latency-chart-table";
+import { StatusPageExample } from "./shadcn-registry-example";
 
 function Table({
   data,
@@ -362,6 +363,7 @@ export const components = {
       </div>
     );
   },
+  StatusPageExample,
 };
 
 function MDXContent(props: MDXRemoteProps) {

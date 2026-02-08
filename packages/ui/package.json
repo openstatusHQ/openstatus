@@ -7,6 +7,14 @@
       "types": "./src/components/ui/*.tsx",
       "default": "./src/components/ui/*.tsx"
     },
+    "./components/blocks/status.types": {
+      "types": "./src/components/blocks/status.types.ts",
+      "default": "./src/components/blocks/status.types.ts"
+    },
+    "./components/blocks/status.utils": {
+      "types": "./src/components/blocks/status.utils.ts",
+      "default": "./src/components/blocks/status.utils.ts"
+    },
     "./components/blocks/*": {
       "types": "./src/components/blocks/*.tsx",
       "default": "./src/components/blocks/*.tsx"

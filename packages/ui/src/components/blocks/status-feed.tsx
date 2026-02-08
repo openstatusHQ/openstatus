@@ -34,7 +34,21 @@ type UnifiedEvent = {
 );
 
 /**
- * Type guard to check if an event is a status report
+ * isStatusReport - Type guard for discriminating status reports
+ *
+ * Type guard function that narrows a UnifiedEvent to a status report event.
+ * Used internally by StatusFeed to distinguish between reports and maintenance.
+ *
+ * @param event - The unified event to check
+ * @returns True if the event is a status report
+ *
+ * @example
+ * ```tsx
+ * if (isStatusReport(event)) {
+ *   // TypeScript knows event.data is StatusReport
+ *   console.log(event.data.updates);
+ * }
+ * ```
  */
 function isStatusReport(
   event: UnifiedEvent,
@@ -43,7 +57,21 @@ function isStatusReport(
 }
 
 /**
- * Type guard to check if an event is a maintenance
+ * isMaintenance - Type guard for discriminating maintenance events
+ *
+ * Type guard function that narrows a UnifiedEvent to a maintenance event.
+ * Used internally by StatusFeed to distinguish between reports and maintenance.
+ *
+ * @param event - The unified event to check
+ * @returns True if the event is a maintenance
+ *
+ * @example
+ * ```tsx
+ * if (isMaintenance(event)) {
+ *   // TypeScript knows event.data is Maintenance
+ *   console.log(event.data.from, event.data.to);
+ * }
+ * ```
  */
 function isMaintenance(
   event: UnifiedEvent,
@@ -51,6 +79,93 @@ function isMaintenance(
   return event.type === "maintenance";
 }
 
+/**
+ * StatusFeed - Unified feed of incident reports and maintenance events
+ *
+ * Displays a chronological feed combining both status reports (incidents) and
+ * scheduled maintenance, sorted by date from newest to oldest. The component
+ * intelligently merges the two event types and renders them using a discriminated
+ * union pattern for type safety.
+ *
+ * **Key Features**:
+ * - **Unified Timeline**: Combines reports and maintenance in chronological order
+ * - **Discriminated Union**: Type-safe rendering using TypeScript discriminated unions
+ * - **Memoization**: Uses `useMemo` to prevent flicker on re-renders
+ * - **Empty State**: Shows a styled empty state when no events are present
+ * - **Automatic Rendering**: Each event type is rendered with appropriate components
+ *
+ * **Data Structure**:
+ * - **StatusReport**: Incident reports with updates timeline
+ *   - id, title, affected services
+ *   - updates array with status, message, date
+ * - **Maintenance**: Scheduled maintenance windows
+ *   - id, title, message, affected services
+ *   - from/to date range
+ *
+ * The component creates a unified event array internally, using stable keys
+ * (`${type}-${id}`) to prevent React flicker when data updates.
+ *
+ * @param statusReports - Array of incident reports to display
+ * @param maintenances - Array of maintenance events to display
+ *
+ * @example
+ * // Feed with both reports and maintenance
+ * ```tsx
+ * <StatusFeed
+ *   statusReports={[
+ *     {
+ *       id: 1,
+ *       title: "API Outage",
+ *       affected: ["API", "Database"],
+ *       updates: [
+ *         {
+ *           status: "resolved",
+ *           message: "All systems operational",
+ *           date: new Date("2024-01-15T12:00:00Z")
+ *         },
+ *         {
+ *           status: "investigating",
+ *           message: "Investigating API timeouts",
+ *           date: new Date("2024-01-15T11:00:00Z")
+ *         }
+ *       ]
+ *     }
+ *   ]}
+ *   maintenances={[
+ *     {
+ *       id: 2,
+ *       title: "Database Upgrade",
+ *       message: "Upgrading to PostgreSQL 15",
+ *       affected: ["Database"],
+ *       from: new Date("2024-01-20T02:00:00Z"),
+ *       to: new Date("2024-01-20T04:00:00Z")
+ *     }
+ *   ]}
+ * />
+ * ```
+ *
+ * @example
+ * // Empty state (no events)
+ * ```tsx
+ * <StatusFeed statusReports={[]} maintenances={[]} />
+ * // Displays: "No recent notifications" empty state
+ * ```
+ *
+ * @example
+ * // Only incident reports
+ * ```tsx
+ * <StatusFeed
+ *   statusReports={incidentReports}
+ *   maintenances={[]}
+ * />
+ * ```
+ *
+ * @see StatusEventGroup - For the feed container
+ * @see StatusEventTimelineReport - For incident rendering
+ * @see StatusEventTimelineMaintenance - For maintenance rendering
+ * @see isStatusReport - For type guard discrimination
+ * @see isMaintenance - For type guard discrimination
+ */
 export function StatusFeed({
   statusReports = [],
   maintenances = [],
