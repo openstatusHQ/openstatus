@@ -68,6 +68,7 @@ export function StatusBanner({
     </StatusBannerContainer>
   );
 }
+StatusBanner.displayName = "StatusBanner";
 
 /**
  * StatusBannerContainer - Base container for status banner composition
@@ -122,6 +123,7 @@ export function StatusBannerContainer({
     </div>
   );
 }
+StatusBannerContainer.displayName = "StatusBannerContainer";
 
 /**
  * StatusBannerMessage - Automatic status message display
@@ -217,6 +219,7 @@ export function StatusBannerTitle({
     </div>
   );
 }
+StatusBannerTitle.displayName = "StatusBannerTitle";
 
 /**
  * StatusBannerContent - Main content area for banner messages
@@ -254,6 +257,7 @@ export function StatusBannerContent({
     </div>
   );
 }
+StatusBannerContent.displayName = "StatusBannerContent";
 
 /**
  * StatusBannerIcon - Status indicator icon for banner context
@@ -287,6 +291,7 @@ export function StatusBannerIcon({
     <UnifiedStatusIcon variant="banner" className={className} {...props} />
   );
 }
+StatusBannerIcon.displayName = "StatusBannerIcon";
 
 // ============================================================================
 // Tab Components

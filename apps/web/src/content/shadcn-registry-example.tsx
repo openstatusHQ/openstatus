@@ -367,7 +367,10 @@ export function StatusPageExample() {
       : "success";
 
   return (
-    <Status variant={systemStatus} className="mx-auto max-w-2xl">
+    <Status
+      variant={systemStatus}
+      className="mx-auto max-w-[800px] px-[125px] py-2"
+    >
       <StatusHeader>
         <StatusTitle>System Status</StatusTitle>
         <StatusDescription>

@@ -121,7 +121,7 @@ export function StatusComponentGroup({
   className,
   defaultOpen = false,
   ...props
-}: React.ComponentProps<typeof CollapsibleTrigger> & {
+}: React.ComponentProps<"div"> & {
   title: string;
   status?: Exclude<StatusType, "empty">;
   children?: React.ReactNode;
@@ -134,41 +134,45 @@ export function StatusComponentGroup({
   }, []);
 
   return (
-    <Collapsible
-      defaultOpen={defaultOpen}
-      className={cn(
-        "-mx-3",
-        "rounded-lg border border-transparent bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",
-        className,
-      )}
-    >
-      <CollapsibleTrigger
+    <div data-slot="status-component-group" {...props}>
+      <Collapsible
+        defaultOpen={defaultOpen}
         className={cn(
-          "group/component flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium font-mono",
-          "cursor-pointer",
+          "-mx-3",
+          "rounded-lg border border-transparent bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",
           className,
         )}
-        data-variant={status}
-        aria-label={`Toggle ${title} status details`}
-        {...props}
       >
-        {title}
-        <div className="flex items-center gap-2">
-          <StatusComponentStatus className="text-sm" />
-          <StatusComponentIcon />
-        </div>
-      </CollapsibleTrigger>
-      <CollapsibleContent
-        data-animate={mounted}
-        className={cn(
-          "flex flex-col gap-3 border-border/50 border-t px-3 py-2",
-          "overflow-hidden",
-          // REMINDER: otherwise, if defaultOpen is true, the animation will be triggered and we have a layout shift
-          "data-[animate=true]:data-[state=closed]:animate-collapsible-up data-[animate=true]:data-[state=open]:animate-collapsible-down",
-        )}
-      >
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
+        <CollapsibleTrigger
+          data-slot="status-component-group-trigger"
+          className={cn(
+            "group/component flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium font-mono",
+            "cursor-pointer",
+            className,
+          )}
+          data-variant={status}
+          aria-label={`Toggle ${title} status details`}
+        >
+          {title}
+          <div className="flex items-center gap-2">
+            <StatusComponentStatus className="text-sm" />
+            <StatusComponentIcon />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent
+          data-slot="status-component-group-content"
+          data-animate={mounted}
+          className={cn(
+            "flex flex-col gap-3 border-border/50 border-t px-3 py-2",
+            "overflow-hidden",
+            // REMINDER: otherwise, if defaultOpen is true, the animation will be triggered and we have a layout shift
+            "data-[animate=true]:data-[state=closed]:animate-collapsible-up data-[animate=true]:data-[state=open]:animate-collapsible-down",
+          )}
+        >
+          {children}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 }
+StatusComponentGroup.displayName = "StatusComponentGroup";

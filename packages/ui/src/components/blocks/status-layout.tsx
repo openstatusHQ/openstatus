@@ -50,6 +50,7 @@ export function Status({
     </div>
   );
 }
+Status.displayName = "Status";
 
 /**
  * StatusBrand - Brand logo/image component for status page headers
@@ -81,6 +82,7 @@ export function StatusBrand({
     <img src={src} alt={alt} className={cn("size-8", className)} {...props} />
   );
 }
+StatusBrand.displayName = "StatusBrand";
 
 /**
  * StatusHeader - Header container for status page branding and title
@@ -124,6 +126,7 @@ export function StatusHeader({
     </div>
   );
 }
+StatusHeader.displayName = "StatusHeader";
 
 /**
  * StatusTitle - Primary heading for status page
@@ -151,6 +154,7 @@ export function StatusTitle({
 }: React.ComponentProps<"div">) {
   return (
     <div
+      data-slot="status-title"
       className={cn(
         "font-semibold text-foreground text-lg leading-none",
         className,
@@ -161,6 +165,7 @@ export function StatusTitle({
     </div>
   );
 }
+StatusTitle.displayName = "StatusTitle";
 
 /**
  * StatusDescription - Descriptive subtitle or secondary text
@@ -185,9 +190,12 @@ export function StatusDescription({
   className,
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("text-muted-foreground", className)}>{children}</div>
+    <div data-slot="status-description" className={cn("text-muted-foreground", className)}>
+      {children}
+    </div>
   );
 }
+StatusDescription.displayName = "StatusDescription";
 
 /**
  * StatusContent - Main content area for status page components
@@ -217,8 +225,13 @@ export function StatusContent({
   children,
   className,
 }: React.ComponentProps<"div">) {
-  return <div className={cn("flex flex-col gap-3", className)}>{children}</div>;
+  return (
+    <div data-slot="status-content" className={cn("flex flex-col gap-3", className)}>
+      {children}
+    </div>
+  );
 }
+StatusContent.displayName = "StatusContent";
 
 /**
  * StatusIcon - Status indicator icon wrapper for Status component context
@@ -252,3 +265,4 @@ export function StatusIcon({
     <UnifiedStatusIcon variant="default" className={className} {...props} />
   );
 }
+StatusIcon.displayName = "StatusIcon";
