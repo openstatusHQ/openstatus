@@ -46,8 +46,68 @@ interface UseStatusBarProps {
 type InteractionType = "pin" | "hover" | "focus" | null;
 
 /**
- * Custom hook to manage StatusBar state and interactions
- * Provides headless logic for keyboard navigation, mouse/touch interactions, and focus management
+ * useStatusBar - Headless hook for managing status bar interactions and keyboard navigation
+ *
+ * This hook provides the core logic for StatusBar interactions, implementing a
+ * headless UI pattern that separates state management from presentation. It handles:
+ *
+ * **Interaction Modes**:
+ * - **hover**: Desktop hover state (shows card on mouse hover, auto-hides on leave)
+ * - **pin**: Pinned state (click to pin card open, click again or Esc to close)
+ * - **focus**: Keyboard focus state (shows card while focused, hides on blur)
+ *
+ * **Keyboard Navigation**:
+ * - **Arrow Left/Right**: Navigate between bars in the same timeline
+ * - **Arrow Up/Down**: Navigate between timelines (different monitors)
+ * - **Enter/Space**: Pin/unpin the active bar
+ * - **Escape**: Close pinned card and remove focus
+ *
+ * **Touch Device Support**:
+ * - Disables hover state on touch devices (detected via `(hover: none)` media query)
+ * - Click interaction works on both touch and non-touch devices
+ *
+ * **Outside Click Handling**:
+ * - Automatically closes pinned cards when clicking outside the component
+ *
+ * @param dataLength - Total number of bars in the timeline
+ * @param isTouch - Whether the device supports touch (no hover capability)
+ *
+ * @returns Hook state and handlers:
+ * - `activeIndex`: Currently active bar index (null if none)
+ * - `isOpen`: Whether a card is currently displayed
+ * - `interactionType`: Current interaction mode ("pin" | "hover" | "focus" | null)
+ * - `containerRef`: Ref for the status bar container (for outside click detection)
+ * - `handlers`: Event handler functions for mouse/keyboard/focus interactions
+ * - `setButtonRef`: Function to register bar element refs (for keyboard navigation)
+ *
+ * @example
+ * ```tsx
+ * function CustomStatusBar({ data }) {
+ *   const isTouch = useMediaQuery("(hover: none)");
+ *   const { activeIndex, handlers, setButtonRef, containerRef } = useStatusBar({
+ *     dataLength: data.length,
+ *     isTouch,
+ *   });
+ *
+ *   return (
+ *     <div ref={containerRef} role="toolbar">
+ *       {data.map((item, index) => (
+ *         <button
+ *           key={index}
+ *           ref={(el) => setButtonRef(index, el)}
+ *           onClick={() => handlers.onClick(index)}
+ *           onFocus={() => handlers.onFocus(index)}
+ *           onKeyDown={(e) => handlers.onKeyDown(e, index)}
+ *         >
+ *           {// Custom bar rendering}
+ *         </button>
+ *       ))}
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @see StatusBar - For the complete implementation using this hook
  */
 function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -248,26 +308,114 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
 }
 
 /**
- * StatusBar - An interactive status timeline component
+ * StatusBar - Interactive uptime timeline with keyboard navigation and hover cards
  *
- * Displays a timeline of status data with interactive hover cards showing detailed information.
- * Supports keyboard navigation, mouse hover, and touch interactions.
+ * Displays a horizontal timeline of status bars, where each bar represents a day's
+ * status with color-coded segments. Interactive hover cards show detailed status
+ * information, events, and incidents for each day.
+ *
+ * **Key Features**:
+ * - **Visual Timeline**: Vertical bars with color-coded segments showing status over time
+ * - **Interactive Cards**: Hover/click to see detailed breakdowns and events
+ * - **Keyboard Navigation**: Full keyboard support with arrow keys, Enter, and Escape
+ * - **Touch Support**: Optimized interactions for touch devices
+ * - **Customizable Rendering**: Override default renderers for bars, cards, and events
+ * - **Accessibility**: ARIA roles, labels, and keyboard navigation
+ *
+ * **Interaction Modes**:
+ * - Desktop: Hover to preview, click to pin, Esc to close
+ * - Touch: Tap to toggle card open/closed
+ * - Keyboard: Arrow keys to navigate, Enter/Space to pin, Esc to close
+ *
+ * **Keyboard Navigation**:
+ * - **Left/Right Arrows**: Move between bars in the timeline
+ * - **Up/Down Arrows**: Navigate between different monitor timelines
+ * - **Enter/Space**: Pin or unpin the active card
+ * - **Escape**: Close card and remove focus
+ *
+ * **Data Structure**:
+ * Each data item represents a day and contains:
+ * - `day`: Date string
+ * - `bar`: Array of segments with status and height percentage
+ * - `card`: Array of status breakdowns to display in hover card
+ * - `events`: Array of incidents/maintenance events for that day
+ *
+ * @param data - Array of status bar data items (one per day)
+ * @param renderCard - Optional custom renderer for card content items
+ * @param renderBar - Optional custom renderer for bar segments
+ * @param renderEvent - Optional custom renderer for event badges
  *
  * @example
+ * // Basic usage with default rendering
  * ```tsx
- * <StatusBar data={statusData} />
+ * const uptimeData = [
+ *   {
+ *     day: "2024-01-15",
+ *     bar: [{ status: "success", height: 100 }],
+ *     card: [{ status: "success", value: "100%" }],
+ *     events: []
+ *   },
+ *   {
+ *     day: "2024-01-16",
+ *     bar: [
+ *       { status: "success", height: 80 },
+ *       { status: "error", height: 20 }
+ *     ],
+ *     card: [
+ *       { status: "success", value: "80%" },
+ *       { status: "error", value: "20%" }
+ *     ],
+ *     events: [
+ *       {
+ *         id: "inc-1",
+ *         type: "incident",
+ *         name: "API Downtime",
+ *         from: new Date("2024-01-16T10:00:00Z"),
+ *         to: new Date("2024-01-16T10:30:00Z")
+ *       }
+ *     ]
+ *   }
+ * ];
+ *
+ * <StatusBar data={uptimeData} />
  * ```
  *
  * @example
+ * // With custom bar renderer
  * ```tsx
- * // With custom renderers
  * <StatusBar
- *   data={statusData}
- *   renderCard={(card, index) => <CustomCard {...card} />}
- *   renderBar={(bar, index) => <CustomBar {...bar} />}
- *   renderEvent={(event, index) => <CustomEvent {...event} />}
+ *   data={uptimeData}
+ *   renderBar={(segment, index) => (
+ *     <div
+ *       key={index}
+ *       className="w-full transition-all"
+ *       style={{
+ *         height: `${segment.height}%`,
+ *         background: `linear-gradient(to top, ${statusColors[segment.status]}, transparent)`
+ *       }}
+ *     />
+ *   )}
  * />
  * ```
+ *
+ * @example
+ * // With custom event renderer
+ * ```tsx
+ * <StatusBar
+ *   data={uptimeData}
+ *   renderEvent={(event, index) => (
+ *     <Link key={index} href={`/incidents/${event.id}`}>
+ *       <div className="text-sm hover:underline">
+ *         {event.name}
+ *       </div>
+ *     </Link>
+ *   )}
+ * />
+ * ```
+ *
+ * @see useStatusBar - For the headless hook powering the interactions
+ * @see StatusBarSkeleton - For loading state
+ * @see StatusBarEvent - For event badge rendering
  */
 export function StatusBar({
   data,
@@ -422,7 +570,22 @@ interface StatusBarCardProps {
 }
 
 /**
- * StatusBarCard - The hover card content for a status bar item
+ * StatusBarCard - Internal hover card content component
+ *
+ * Displays detailed status information for a single day in a hover card, including:
+ * - Date header
+ * - Status breakdown percentages
+ * - Events/incidents for that day
+ * - Pin/unpin instructions (when pinned on desktop)
+ *
+ * The card automatically formats the date and renders status items and events
+ * using either custom renderers or default implementations.
+ *
+ * @param item - The status bar data for this day
+ * @param isPinned - Whether the card is currently pinned open
+ * @param isTouch - Whether the device supports touch
+ * @param renderCard - Optional custom renderer for status items
+ * @param renderEvent - Optional custom renderer for events
  */
 function StatusBarCard({
   item,
@@ -491,6 +654,23 @@ function StatusBarCard({
   );
 }
 
+/**
+ * StatusBarSkeleton - Loading skeleton for StatusBar
+ *
+ * Displays a skeleton loader matching the height and width of a StatusBar,
+ * used while status data is being fetched.
+ *
+ * @example
+ * ```tsx
+ * {isLoading ? (
+ *   <StatusBarSkeleton />
+ * ) : (
+ *   <StatusBar data={uptimeData} />
+ * )}
+ * ```
+ *
+ * @see StatusBar - For the actual status bar component
+ */
 export function StatusBarSkeleton({
   className,
   ...props
@@ -503,6 +683,22 @@ export function StatusBarSkeleton({
   );
 }
 
+/**
+ * StatusBarContent - Internal component for status breakdown rows
+ *
+ * Displays a single status item in the hover card with a colored indicator,
+ * status label, and percentage value. Used by StatusBarCard to show the
+ * breakdown of statuses for a day.
+ *
+ * @param status - The status type (success, degraded, error, info, empty)
+ * @param value - The percentage or count value to display
+ *
+ * @example
+ * ```tsx
+ * <StatusBarContent status="success" value="95.2%" />
+ * <StatusBarContent status="error" value="4.8%" />
+ * ```
+ */
 function StatusBarContent({
   status,
   value,
@@ -529,7 +725,53 @@ function StatusBarContent({
 }
 
 /**
- * StatusBarEvent - Displays an event badge in the status bar card
+ * StatusBarEvent - Event badge for incidents and maintenance
+ *
+ * Displays an event within a status bar hover card, showing:
+ * - Color-coded indicator (red for incidents, yellow for reports, blue for maintenance)
+ * - Event name with truncation for long names
+ * - Date range (formatted as "Since", "Until", or "Jan 15 - Jan 16")
+ * - Duration (formatted as "2 hours", "ongoing", or "across 3 days" for multiple incidents)
+ *
+ * The component automatically determines the status color based on the event type:
+ * - incident → error (red)
+ * - report → degraded (yellow)
+ * - maintenance → info (blue)
+ *
+ * Returns null if no start date is provided.
+ *
+ * @param name - Event name or title
+ * @param from - Event start date
+ * @param to - Event end date (null for ongoing events)
+ * @param type - Event type ("incident", "report", or "maintenance")
+ *
+ * @example
+ * ```tsx
+ * <StatusBarEvent
+ *   type="incident"
+ *   name="API Downtime"
+ *   from={new Date("2024-01-15T10:00:00Z")}
+ *   to={new Date("2024-01-15T10:30:00Z")}
+ * />
+ * // Displays: [●] API Downtime
+ * //           Jan 15, 10:00 AM - 10:30 AM  30 minutes
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // Ongoing incident
+ * <StatusBarEvent
+ *   type="incident"
+ *   name="Database connectivity issues"
+ *   from={new Date()}
+ *   to={null}
+ * />
+ * // Displays: [●] Database connectivity issues
+ * //           Since Jan 15, 2:30 PM  ongoing
+ * ```
+ *
+ * @see StatusBarCard - For the card that contains event badges
+ * @see formatDateRange - For date range formatting
  */
 export function StatusBarEvent({
   name,
@@ -573,6 +815,21 @@ export function StatusBarEvent({
   );
 }
 
+/**
+ * formatDuration - Internal helper for formatting event durations
+ *
+ * Formats the duration of an event based on start/end dates and event name:
+ * - No start date: returns null
+ * - No end date: returns "ongoing"
+ * - Multiple incidents (detected by "Downtime (" in name): returns "across {duration}"
+ * - Zero seconds duration: returns null (hides duration)
+ * - Otherwise: returns formatted duration (e.g., "2 hours", "3 days")
+ *
+ * @param from - Event start date
+ * @param to - Event end date
+ * @param name - Event name (used to detect multiple incident aggregations)
+ * @returns Formatted duration string or null
+ */
 const formatDuration = ({
   from,
   to,

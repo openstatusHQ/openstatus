@@ -46,20 +46,6 @@
   },
   "items": [
     {
-      "name": "example",
-      "type": "registry:block",
-      "title": "Example",
-      "description": "Example block",
-      "registryDependencies": ["card", "button"],
-      "files": [
-        {
-          "path": "src/components/blocks/example.tsx",
-          "type": "registry:ui",
-          "target": "components/blocks/example.tsx"
-        }
-      ]
-    },
-    {
       "name": "use-media-query",
       "type": "registry:hook",
       "title": "Use Media Query",

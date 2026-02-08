@@ -18,6 +18,31 @@ import {
 import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
 import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
 
+// ============================================================================
+// Container Components
+// ============================================================================
+
+/**
+ * StatusEventGroup - Root container for status events and incident reports
+ *
+ * Provides a vertical flex container with consistent spacing (gap-4) for
+ * displaying a feed of status events, incident reports, and maintenance notices.
+ * The component includes ARIA role="feed" for accessibility.
+ *
+ * @example
+ * ```tsx
+ * <StatusEventGroup>
+ *   <StatusEvent>
+ *     // First incident...
+ *   </StatusEvent>
+ *   <StatusEvent>
+ *     // Second incident...
+ *   </StatusEvent>
+ * </StatusEventGroup>
+ * ```
+ *
+ * @see StatusEvent - For individual event items
+ */
 export function StatusEventGroup({
   className,
   children,
@@ -35,6 +60,25 @@ export function StatusEventGroup({
   );
 }
 
+/**
+ * StatusEvent - Individual event container within StatusEventGroup
+ *
+ * Container for a single event (incident, report, or maintenance) with relative
+ * positioning to support absolutely positioned date aside elements.
+ *
+ * @example
+ * ```tsx
+ * <StatusEvent>
+ *   <StatusEventAside>
+ *     <StatusEventDate date={new Date()} />
+ *   </StatusEventAside>
+ *   <StatusEventContent>
+ *     <StatusEventTitle>API Outage</StatusEventTitle>
+ *     // Event details...
+ *   </StatusEventContent>
+ * </StatusEvent>
+ * ```
+ */
 export function StatusEvent({
   className,
   children,
@@ -47,6 +91,26 @@ export function StatusEvent({
   );
 }
 
+// ============================================================================
+// Content Components
+// ============================================================================
+
+/**
+ * StatusEventContent - Main content container for event details
+ *
+ * Provides a hoverable container with rounded borders and muted background on hover.
+ * The hoverable behavior can be disabled for non-interactive events.
+ *
+ * @param hoverable - Whether to show hover effects (default: true)
+ *
+ * @example
+ * ```tsx
+ * <StatusEventContent>
+ *   <StatusEventTitle>Database Maintenance</StatusEventTitle>
+ *   <p>Scheduled maintenance from 2-4 AM UTC</p>
+ * </StatusEventContent>
+ * ```
+ */
 export function StatusEventContent({
   className,
   hoverable = true,
@@ -70,6 +134,17 @@ export function StatusEventContent({
   );
 }
 
+/**
+ * StatusEventTitle - Title for status events
+ *
+ * Displays the event title in medium-weight font, typically used for incident
+ * names or maintenance titles.
+ *
+ * @example
+ * ```tsx
+ * <StatusEventTitle>API Gateway Outage</StatusEventTitle>
+ * ```
+ */
 export function StatusEventTitle({
   className,
   children,
@@ -82,6 +157,20 @@ export function StatusEventTitle({
   );
 }
 
+/**
+ * StatusEventTitleCheck - Resolved status indicator with tooltip
+ *
+ * Displays a green check icon in a circular badge with a tooltip explaining
+ * that the report has been resolved. Typically displayed next to event titles.
+ *
+ * @example
+ * ```tsx
+ * <div className="flex items-center gap-2">
+ *   <StatusEventTitle>API Outage</StatusEventTitle>
+ *   <StatusEventTitleCheck />
+ * </div>
+ * ```
+ */
 export function StatusEventTitleCheck({
   className,
   children,
@@ -105,6 +194,25 @@ export function StatusEventTitleCheck({
   );
 }
 
+// ============================================================================
+// Affected Services Components
+// ============================================================================
+
+/**
+ * StatusEventAffected - Container for affected service badges
+ *
+ * Displays a wrapping flex container for StatusEventAffectedBadge components,
+ * showing which services were impacted by an incident.
+ *
+ * @example
+ * ```tsx
+ * <StatusEventAffected>
+ *   <StatusEventAffectedBadge>API</StatusEventAffectedBadge>
+ *   <StatusEventAffectedBadge>Database</StatusEventAffectedBadge>
+ *   <StatusEventAffectedBadge>CDN</StatusEventAffectedBadge>
+ * </StatusEventAffected>
+ * ```
+ */
 export function StatusEventAffected({
   className,
   children,
@@ -117,6 +225,17 @@ export function StatusEventAffected({
   );
 }
 
+/**
+ * StatusEventAffectedBadge - Badge for individual affected service
+ *
+ * Displays a small secondary-style badge representing a single affected service.
+ * Uses a smaller font size (text-[10px]) for compact display.
+ *
+ * @example
+ * ```tsx
+ * <StatusEventAffectedBadge>REST API</StatusEventAffectedBadge>
+ * ```
+ */
 export function StatusEventAffectedBadge({
   className,
   children,
@@ -133,6 +252,25 @@ export function StatusEventAffectedBadge({
   );
 }
 
+// ============================================================================
+// Date/Time Components
+// ============================================================================
+
+/**
+ * StatusEventDate - Date display with relative time badge
+ *
+ * Displays a formatted date with a relative time badge (e.g., "2 days ago").
+ * For future dates, the badge is highlighted in info color. The layout is
+ * responsive: horizontal on mobile (gap-2), vertical on desktop (flex-col).
+ *
+ * @param date - The event date to display
+ *
+ * @example
+ * ```tsx
+ * <StatusEventDate date={new Date("2024-01-15")} />
+ * // Displays: "Jan 15, 2024" with "2 days ago" badge
+ * ```
+ */
 export function StatusEventDate({
   className,
   date,
@@ -160,6 +298,25 @@ export function StatusEventDate({
   );
 }
 
+/**
+ * StatusEventAside - Sidebar date container (desktop only)
+ *
+ * Positions the date to the left of event content on desktop screens (lg breakpoint).
+ * On mobile, it appears inline. Uses sticky positioning on desktop to keep dates
+ * visible while scrolling through long events.
+ *
+ * @example
+ * ```tsx
+ * <StatusEvent>
+ *   <StatusEventAside>
+ *     <StatusEventDate date={incidentDate} />
+ *   </StatusEventAside>
+ *   <StatusEventContent>
+ *     // Event content...
+ *   </StatusEventContent>
+ * </StatusEvent>
+ * ```
+ */
 export function StatusEventAside({
   className,
   children,
@@ -180,6 +337,56 @@ interface StatusReportUpdate {
   status: StatusReportUpdateType;
 }
 
+// ============================================================================
+// Timeline Components
+// ============================================================================
+
+/**
+ * StatusEventTimelineReport - Timeline of incident report updates
+ *
+ * Displays a chronological timeline of incident updates, sorted from newest to
+ * oldest. Each update shows the status (investigating → identified → monitoring → resolved),
+ * timestamp, message, and time elapsed between updates.
+ *
+ * **Automatic Duration Calculation**:
+ * - First update (most recent): Shows total time from start to resolution (if resolved)
+ * - Other updates: Shows time elapsed since the previous update
+ *
+ * @param updates - Array of report updates to display
+ * @param withDot - Whether to show colored status dots (default: true)
+ * @param maxUpdates - Maximum number of updates to display (optional, shows all if not specified)
+ *
+ * @example
+ * ```tsx
+ * <StatusEventTimelineReport
+ *   updates={[
+ *     {
+ *       status: "resolved",
+ *       message: "All services restored",
+ *       date: new Date("2024-01-15T12:00:00Z")
+ *     },
+ *     {
+ *       status: "monitoring",
+ *       message: "Fix deployed, monitoring recovery",
+ *       date: new Date("2024-01-15T11:45:00Z")
+ *     },
+ *     {
+ *       status: "identified",
+ *       message: "Root cause identified in database",
+ *       date: new Date("2024-01-15T11:15:00Z")
+ *     },
+ *     {
+ *       status: "investigating",
+ *       message: "Investigating API timeouts",
+ *       date: new Date("2024-01-15T11:00:00Z")
+ *     }
+ *   ]}
+ * />
+ * // Displays timeline with: "Resolved (in 1 hour)" → "Monitoring (15 minutes earlier)" → etc.
+ * ```
+ *
+ * @see StatusEventTimelineReportUpdate - For individual update rendering
+ */
 export function StatusEventTimelineReport({
   className,
   updates,
@@ -235,6 +442,39 @@ export function StatusEventTimelineReport({
   );
 }
 
+/**
+ * StatusEventTimelineReportUpdate - Single update entry in incident timeline
+ *
+ * Displays one update in the incident timeline with:
+ * - Colored dot indicator (red=investigating, yellow=identified, blue=monitoring, green=resolved)
+ * - Status label and timestamp (with StatusTimestamp for rich hover details)
+ * - Duration text (e.g., "in 1 hour" or "15 minutes earlier")
+ * - Update message
+ * - Optional vertical separator line connecting to next update
+ *
+ * @param report - The update data (status, message, date)
+ * @param duration - Optional duration text to display
+ * @param withSeparator - Whether to show separator line to next update (default: true)
+ * @param withDot - Whether to show colored status dot (default: true)
+ * @param isLast - Whether this is the last update (affects bottom margin)
+ *
+ * @example
+ * ```tsx
+ * <StatusEventTimelineReportUpdate
+ *   report={{
+ *     status: "resolved",
+ *     message: "All systems operational",
+ *     date: new Date()
+ *   }}
+ *   duration="(in 45 minutes)"
+ *   withSeparator={false}
+ *   isLast={true}
+ * />
+ * ```
+ *
+ * @see StatusEventTimelineDot - For the colored dot indicator
+ * @see StatusEventTimelineSeparator - For the connecting line
+ */
 export function StatusEventTimelineReportUpdate({
   report,
   duration,
@@ -297,6 +537,35 @@ interface StatusMaintenanceUpdate {
   to: Date;
 }
 
+/**
+ * StatusEventTimelineMaintenance - Timeline entry for maintenance windows
+ *
+ * Displays a maintenance window with title, date range, duration, and message.
+ * Uses a blue dot indicator to distinguish from incident updates.
+ *
+ * The date range is formatted and split to allow individual StatusTimestamp
+ * components for each date, providing rich hover details.
+ *
+ * @param maintenance - The maintenance data (title, message, from, to dates)
+ * @param withDot - Whether to show the blue maintenance dot (default: true)
+ *
+ * @example
+ * ```tsx
+ * <StatusEventTimelineMaintenance
+ *   maintenance={{
+ *     title: "Database Upgrade",
+ *     message: "Upgrading to PostgreSQL 15",
+ *     from: new Date("2024-01-20T02:00:00Z"),
+ *     to: new Date("2024-01-20T04:00:00Z")
+ *   }}
+ * />
+ * // Displays: [●] Database Upgrade · Jan 20, 2:00 AM - 4:00 AM (for 2 hours)
+ * //           Upgrading to PostgreSQL 15
+ * ```
+ *
+ * @see StatusEventTimelineDot - For the colored indicator
+ * @see StatusTimestamp - For rich timestamp hover cards
+ */
 export function StatusEventTimelineMaintenance({
   maintenance,
   withDot = true,
@@ -357,6 +626,19 @@ export function StatusEventTimelineMaintenance({
   );
 }
 
+/**
+ * StatusEventTimelineTitle - Title line for timeline entries
+ *
+ * Displays the title line of timeline entries with medium font weight,
+ * typically containing status label, timestamp, and duration.
+ *
+ * @example
+ * ```tsx
+ * <StatusEventTimelineTitle>
+ *   <span>Resolved</span> · <span>Jan 15, 10:30 AM</span>
+ * </StatusEventTimelineTitle>
+ * ```
+ */
 export function StatusEventTimelineTitle({
   className,
   children,
@@ -372,6 +654,19 @@ export function StatusEventTimelineTitle({
   );
 }
 
+/**
+ * StatusEventTimelineMessage - Message content for timeline entries
+ *
+ * Displays the update message in monospace font with muted color and
+ * consistent padding.
+ *
+ * @example
+ * ```tsx
+ * <StatusEventTimelineMessage>
+ *   We have identified the root cause and deployed a fix
+ * </StatusEventTimelineMessage>
+ * ```
+ */
 export function StatusEventTimelineMessage({
   className,
   children,
@@ -390,6 +685,24 @@ export function StatusEventTimelineMessage({
   );
 }
 
+/**
+ * StatusEventTimelineDot - Colored status indicator dot
+ *
+ * Displays a small circular dot with color based on the parent's data-variant:
+ * - investigating: Red (destructive)
+ * - identified: Yellow (warning)
+ * - monitoring: Blue (info)
+ * - resolved: Green (success)
+ * - maintenance: Blue (info)
+ *
+ * @example
+ * ```tsx
+ * <div data-variant="resolved">
+ *   <StatusEventTimelineDot />
+ *   // Displays green dot
+ * </div>
+ * ```
+ */
 export function StatusEventTimelineDot({
   className,
   ...props
@@ -410,6 +723,22 @@ export function StatusEventTimelineDot({
   );
 }
 
+/**
+ * StatusEventTimelineSeparator - Vertical line connecting timeline entries
+ *
+ * Displays a vertical separator line between timeline updates, colored to match
+ * the status of the update it's connected to. Uses the same color scheme as
+ * StatusEventTimelineDot.
+ *
+ * @example
+ * ```tsx
+ * <div data-variant="monitoring">
+ *   <StatusEventTimelineDot />
+ *   <StatusEventTimelineSeparator />
+ *   // Displays blue connecting line
+ * </div>
+ * ```
+ */
 export function StatusEventTimelineSeparator({
   className,
   ...props
