@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { icons } from "@/data/icons";
-import { colors } from "@/data/status-report-updates.client";
+import { colors, getNextStatus } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import type { RouterOutputs } from "@openstatus/api";
@@ -82,6 +82,9 @@ export function DataTable({
             <TooltipProvider>
               <Tooltip>
                 <FormSheetStatusReportUpdate
+                  defaultValues={{
+                    status: getNextStatus(updates[updates.length - 1].status),
+                  }}
                   onSubmit={async (values) => {
                     await createStatusReportUpdateMutation.mutateAsync({
                       statusReportId: reportId,

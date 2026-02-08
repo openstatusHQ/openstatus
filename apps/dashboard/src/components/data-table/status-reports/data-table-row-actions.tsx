@@ -3,6 +3,7 @@
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { getNextStatus } from "@/data/status-report-updates.client";
 import { getActions } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
@@ -143,6 +144,9 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         </button>
       </FormSheetStatusReport>
       <FormSheetStatusReportUpdate
+        defaultValues={{
+          status: getNextStatus(row.original.status),
+        }}
         onSubmit={async (values) => {
           await createStatusReportUpdateMutation.mutateAsync({
             statusReportId: row.original.id,

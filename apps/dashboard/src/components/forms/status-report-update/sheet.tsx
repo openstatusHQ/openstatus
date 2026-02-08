@@ -22,7 +22,7 @@ export function FormSheetStatusReportUpdate({
   defaultValues,
   onSubmit,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
-  defaultValues?: FormValues;
+  defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);

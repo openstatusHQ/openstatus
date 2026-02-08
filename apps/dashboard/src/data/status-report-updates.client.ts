@@ -39,3 +39,23 @@ export const colors = {
   identified:
     "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
 } as const satisfies Record<StatusReportStatus, string>;
+
+/**
+ * Get the next status in the progression:
+ * investigating → identified → monitoring → resolved
+ *
+ * @param currentStatus - The current status
+ * @returns The next status in the progression, or 'resolved' if already at the end, or 'investigating' for invalid statuses
+ */
+export function getNextStatus(currentStatus: string): StatusReportStatus {
+  const statusProgression: Record<StatusReportStatus, StatusReportStatus> = {
+    investigating: "identified",
+    identified: "monitoring",
+    monitoring: "resolved",
+    resolved: "resolved",
+  };
+
+  return (
+    statusProgression[currentStatus as StatusReportStatus] ?? "investigating"
+  );
+}

@@ -63,7 +63,7 @@ export function FormStatusReportUpdate({
   className,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
-  defaultValues?: FormValues;
+  defaultValues?: Partial<FormValues>;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const trpc = useTRPC();
@@ -74,11 +74,11 @@ export function FormStatusReportUpdate({
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ?? {
-      status: "identified",
-      message: "",
-      date: new Date(),
-      notifySubscribers: true,
+    defaultValues: {
+      status: defaultValues?.status ?? "identified",
+      message: defaultValues?.message ?? "",
+      date: defaultValues?.date ?? new Date(),
+      notifySubscribers: defaultValues?.notifySubscribers ?? true,
     },
   });
   const watchMessage = form.watch("message");
