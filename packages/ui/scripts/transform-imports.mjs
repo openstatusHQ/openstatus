@@ -85,9 +85,12 @@ if (existsSync(registryJsonPath)) {
   const registryJson = JSON.parse(readFileSync(registryJsonPath, "utf-8"));
 
   // Determine the base URL for the registry
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}/r`
-    : "https://openstatus.dev/r";
+  const baseUrl =
+    process.env.VERCEL_ENV === "production"
+      ? "https://openstatus.dev/r"
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}/r`
+        : "https://openstatus.dev/r";
 
   console.log(`🔗 Using registry base URL: ${baseUrl}`);
 
