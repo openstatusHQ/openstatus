@@ -369,7 +369,7 @@ export function StatusPageExample() {
   return (
     <Status
       variant={systemStatus}
-      className="mx-auto max-w-[800px] px-[125px] py-2"
+      className="mx-auto max-w-[800px] px-2 py-2 sm:px-4 md:px-[125px]"
     >
       <StatusHeader>
         <StatusTitle>System Status</StatusTitle>
