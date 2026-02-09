@@ -1,0 +1,211 @@
+---
+title: "SLA vs SLO vs SLI Explained"
+description: "Learn the critical differences between SLAs, SLOs, and SLIs. Understand how to measure service reliability, set internal targets, and make customer promises without over-committing or under-delivering."
+author: "openstatus"
+publishedAt: "2026-02-09"
+category: "education"
+faq:
+  - question: "What's the difference between SLI, SLO, and SLA?"
+    answer: "An SLI is a specific metric you measure (like API response time). An SLO is your internal target for that metric (stricter than customer promises). An SLA is your public promise to customers with consequences if you fail. They stack: SLI → SLO → SLA."
+  - question: "Why should my SLO be stricter than my SLA?"
+    answer: "The gap between your SLO and SLA is your error budget - the buffer that lets you deploy features, run experiments, and handle incidents without immediately violating customer agreements. If they're the same number, one bad deploy breaks your promises."
+  - question: "What makes a good SLI?"
+    answer: "A good SLI is specific, measurable, and directly correlates with user experience. If the metric degrades and users don't notice, it's not an SLI. Examples: P95 API response time under 200ms, 99.9% uptime, error rate below 0.1%."
+  - question: "How many SLIs should I track?"
+    answer: "Limit yourself to 3-5 SLIs. Pick metrics that directly impact user experience. Tracking too many creates alert fatigue and buries real issues under noise. Focus on what matters: availability, latency, and error rates."
+  - question: "Do startups need SLAs?"
+    answer: "No. Early-stage startups should skip SLAs entirely until they have the infrastructure to measure and maintain them. Focus on tracking 2-3 SLIs, being transparent about uptime, and communicating clearly during incidents. Formalize SLAs when enterprise customers start requesting them."
+---
+
+# SLA vs SLO vs SLI Explained
+
+Everyone throws these acronyms around at architecture reviews and planning meetings, but most teams confuse them. You'll hear "our SLA is 99.9%" when they mean SLO. Or "we need better SLIs" when they haven't defined what they're actually measuring.
+
+Getting this wrong has real consequences. Either you over-promise to customers and violate agreements you can't afford to break, or you set vague internal targets that don't guide any actual engineering decisions.
+
+Here's what they actually mean, how they relate, and how to use them without screwing up.
+
+---
+
+## What They Actually Are
+
+### SLI (Service Level Indicator)
+
+An SLI is a specific metric you can measure. Not a feeling. Not a goal. A measurement.
+
+**Examples:**
+- API response time: 95th percentile under 200ms
+- Uptime percentage: 99.9% availability
+- Error rate: less than 0.1% of requests fail
+
+"The site should feel fast" is not an SLI. "P95 page load time under 2 seconds" is an SLI. The difference is whether you can measure it objectively and build alerts around it.
+
+### SLO (Service Level Objective)
+
+An SLO is your internal target for an SLI. It's what you promise yourself, not what you promise customers.
+
+**Examples:**
+- "API requests should return in under 200ms (P95) 99.5% of the time"
+- "Homepage should be available 99.95% of the time per month"
+
+This is your goal. The bar you hold yourself to. It should be stricter than your customer-facing SLA because you need room to miss your internal target without breaking external promises.
+
+### SLA (Service Level Agreement)
+
+An SLA is your public promise to customers, with real consequences if you fail.
+
+**Examples:**
+- "We guarantee 99.9% uptime. If we fall below, you get 10% credit"
+- "API latency will be under 500ms (P95) or we refund 25% of your monthly bill"
+
+This is a legal commitment. It has teeth. Miss it and you're writing refund checks or issuing service credits. That's the point—it's supposed to cost you when you fail customers.
+
+---
+
+## The Hierarchy
+
+These aren't interchangeable terms. They stack:
+
+```
+SLI → What you measure
+SLO → Internal target for that measurement (stricter)
+SLA → External promise to customers (has buffer from SLO)
+```
+
+**Concrete example:**
+- **SLI:** API uptime percentage
+- **SLO:** 99.95% uptime (internal target)
+- **SLA:** 99.9% uptime (customer promise)
+
+The gap between your SLO (99.95%) and your SLA (99.9%) is your **error budget**. That's the buffer that lets you deploy new features, run experiments, and handle incidents without immediately violating customer agreements.
+
+If your SLO and SLA are the same number, one bad deploy breaks your promises. You've eliminated the margin that makes continuous deployment possible.
+
+---
+
+## Common Mistakes Teams Make
+
+### 1. SLA Without SLOs
+
+You promise customers 99.9% uptime but never actually track it internally. You have no alerts for when you're approaching a violation. You find out you've broken your SLA when angry customers email asking for refunds.
+
+**The fix:** Set stricter internal SLOs before you promise anything externally. Alert when you're at risk of missing the SLO—before you're at risk of breaking the SLA.
+
+### 2. SLIs That Don't Matter to Users
+
+You're tracking server CPU usage and disk I/O, but not API response time. Your monitoring dashboard is green. Your servers are happy. But users are experiencing 5-second page loads and your support inbox is filling up.
+
+The test for a real SLI: "If this metric degrades, do users notice?" If the answer is no, it's not an SLI—it's just a metric.
+
+### 3. No Error Budget
+
+Your internal target is the same as your customer promise. Both are 99.9%. That means you have zero room for error. One bad deploy that drops availability to 99.85% for an hour violates your SLA immediately.
+
+**The fix:** Build in buffer. If your SLA is 99.9%, set your internal SLO at 99.95%. That 0.05% is your error budget—the space to operate, deploy, and handle incidents without breaking promises.
+
+### 4. Too Many SLIs
+
+You're tracking 47 different metrics and calling them all "SLIs." Everything is critical. Nothing is prioritized. Alert fatigue sets in. When a real issue happens, it's buried under noise.
+
+**The fix:** Limit yourself to 3-5 SLIs. Pick the metrics that directly correlate with user experience. If users don't notice when it degrades, stop calling it an SLI.
+
+### 5. Unmeasurable SLIs
+
+Your documented SLI is "the site should feel fast." How do you measure feelings? How do you alert on "feels slow"? You can't.
+
+**The fix:** Define specific, measurable thresholds. "P95 page load time under 2 seconds" is measurable. "Feels fast" is not.
+
+---
+
+## Real-World Examples
+
+### Stripe (Doing It Right)
+
+- **SLI:** API success rate
+- **SLO:** 99.99% successful API calls (internal target)
+- **SLA:** 99.9% uptime with tiered service credits for violations
+
+The 0.09% gap between their internal target and customer promise is their error budget. It gives them room to deploy code, handle incidents, and operate without immediately breaching customer agreements. They track the SLI obsessively and have alerts long before they're at risk of SLA violations.
+
+### Fast Startup Inc (Doing It Wrong)
+
+- **SLA:** "99.99% uptime guaranteed!"
+- **SLO:** Not defined
+- **SLI:** Not systematically tracked
+
+They marketed an aggressive SLA to win enterprise deals but never built the infrastructure to measure or maintain it. They discover violations when customers complain. By then, it's too late—trust is gone and refund requests are piling up.
+
+The lesson: don't promise what you can't measure. And don't measure without setting realistic internal targets first.
+
+---
+
+## How Status Pages Fit In
+
+### Public Status Page (Display SLAs)
+
+Your public page shows the commitments you've made to customers. Historical uptime against SLA targets. Incident timelines showing when you came close to—but didn't breach—agreements.
+
+This is customer-facing transparency. It's not real-time operations data. It's curated, reviewed communication.
+
+### Private Status Page (Track SLOs)
+
+Your internal or partner page shows real-time SLO compliance. Dashboards tracking how much error budget you have left this month. Alerts when you're approaching SLO thresholds—before you're at risk of breaking the SLA.
+
+This is operational data for teams making deployment and incident response decisions.
+
+### Always Monitor SLIs
+
+Whether public or private, everything flows from the SLIs. If you can't measure it, you can't set targets for it. And if you can't set targets, you definitely can't promise it to customers.
+
+Your entire reliability strategy—internal targets, customer promises, incident response priorities—depends on accurate, continuous SLI measurement.
+
+---
+
+## "But We're Just Three People"
+
+If you're a small startup with 5 engineers and 200 customers, implementing a full SLI/SLO/SLA framework might feel like bringing a spreadsheet to a knife fight. You're not wrong.
+
+Here's the pragmatic path for early-stage teams:
+
+**Skip SLAs entirely.** Don't promise contractual uptime guarantees until you have the infrastructure and team to measure and maintain them. Your early customers chose you for the product, not the SLA. One missed SLA violation could cost you more in refunds than you made that month.
+
+**Track 2-3 SLIs, max.** Pick the metrics users actually notice: API availability, response time, error rate. Set up basic monitoring. That's it. Don't build a complex observability stack before you have product-market fit.
+
+**Use implicit SLOs.** You don't need documented internal targets tracked in spreadsheets. You need to know: "Is the site up? Is it fast?" If your monitoring shows 99.5% uptime and users aren't complaining, that's your implicit SLO. Formalize it later when you have the bandwidth.
+
+**Focus on transparency, not promises.** Put up a simple status page that shows current uptime. When things break, communicate clearly and quickly. Trust comes from honesty during incidents, not from contractual guarantees you may not hit.
+
+The three-tier framework (SLI → SLO → SLA) is the end state, not the starting point. Early on, just measure what matters and be honest when it breaks. That's reliability engineering for startups.
+
+You'll know when you need the full framework: when enterprise customers start asking for SLAs in contracts, when your team is big enough that "just check if it's up" stops scaling, or when you're mature enough that formal error budgets would actually guide deployment decisions.
+
+Until then? Keep it simple. Measure. Communicate. Don't over-promise.
+
+---
+
+## The Bottom Line
+
+You can't have reliable SLAs without disciplined SLOs. You can't have meaningful SLOs without accurate SLIs.
+
+Start from the bottom and work up:
+1. **Measure** (define SLIs that matter to users)
+2. **Set internal targets** (create SLOs with room for error)
+3. **Promise externally** (offer SLAs only after proving you can consistently hit SLOs)
+
+The gap between your SLO and SLA isn't waste—it's your safety margin. It's what makes continuous deployment possible. It's what lets you handle incidents without immediately breaking promises.
+
+If you can't measure it, you can't manage it. And you definitely shouldn't promise it.
+
+---
+
+**OpenStatus tracks all three layers.** Monitor your SLIs, set alerts for SLO thresholds, and display SLA compliance on public and private status pages—all from one platform.
+
+<ButtonLink href="/play/uptime-sla">Try out our SLA calculator</ButtonLink>
+
+---
+
+Start free. No credit card required. Set up your first status page in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
