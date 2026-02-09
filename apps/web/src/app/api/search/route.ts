@@ -71,6 +71,7 @@ function search(params: SearchParams) {
       ...getPages("compare"),
       ...getPages("product"),
       ...getPages("guides"),
+      ...getPages("unrelated"),
       home,
     ];
   } else {
