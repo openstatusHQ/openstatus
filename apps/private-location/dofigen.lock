@@ -3,18 +3,18 @@ effective: |
     builder:
       fromImage:
         path: golang
-        digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
+        digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
       label:
-        org.opencontainers.image.base.name: docker.io/golang:1.25-alpine
+        org.opencontainers.image.base.name: docker.io/golang:1.26-alpine
+        org.opencontainers.image.base.digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
         org.opencontainers.image.stage: builder
-        org.opencontainers.image.base.digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
       workdir: /go/src/app
       arg:
-        TARGETOS: ''
         TARGETARCH: ''
+        TARGETOS: ''
       env:
-        CGO_ENABLED: '0'
         TZ: UTC
+        CGO_ENABLED: '0'
       copy:
       - paths:
         - .
@@ -28,13 +28,13 @@ effective: |
     digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
   label:
     org.opencontainers.image.description: Private location orchestrator for OpenStatus
-    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
-    org.opencontainers.image.title: OpenStatus Private Location
     org.opencontainers.image.vendor: OpenStatus
+    io.dofigen.version: 2.6.0
+    org.opencontainers.image.title: OpenStatus Private Location
     org.opencontainers.image.base.digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
-    io.dofigen.version: 2.5.1
     org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.base.name: docker.io/alpine:3.21
+    org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
   user:
     user: '1000'
     group: '1000'
@@ -69,20 +69,20 @@ effective: |
 images:
   docker.io:
     library:
-      golang:
-        1.25-alpine:
-          digest: sha256:d3f0cf7723f3429e3f9ed846243970b20a2de7bae6a5b66fc5914e228d831bbb
       alpine:
         '3.21':
           digest: sha256:5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b
+      golang:
+        1.26-alpine:
+          digest: sha256:d4c4845f5d60c6a974c6000ce58ae079328d03ab7f721a0734277e69905473e5
 resources:
   dofigen.yml:
-    hash: 515b6b2ef60b8f0ea954fce96aed5dc7aadf75ceefa6c9ea56f514ac14e7422b
+    hash: acc14b01834402aab4f21cd4a168169eb464731acaa35ab27f1eaa2fd2cbdd28
     content: |
       builders:
         # Stage 1: Build Go binary
         builder:
-          fromImage: golang:1.25-alpine
+          fromImage: golang:1.26-alpine
           platform: $BUILDPLATFORM
           label:
             org.opencontainers.image.stage: builder
