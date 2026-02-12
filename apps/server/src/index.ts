@@ -198,7 +198,9 @@ app.get("/openapi.yaml", (c) => {
   return c.text(openapiYaml, 200, { "Content-Type": "application/yaml" });
 });
 app.get("/openapi-v1.json", (c) => {
-  return c.text(JSON.stringify(openapiV1Json), 200,{ "Content-Type": "application/json" });
+  return c.text(JSON.stringify(openapiV1Json), 200, {
+    "Content-Type": "application/json",
+  });
 });
 
 app.get(
