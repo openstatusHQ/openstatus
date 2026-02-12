@@ -18,7 +18,7 @@ import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conven
 import { Scalar } from "@scalar/hono-api-reference";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
-import openapiV1Json from "../static/openapi-v1.json" with { type: "text" };
+import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
 import openapiYaml from "../static/openapi.yaml" with { type: "text" };
 import { env } from "./env";
 import { handleError } from "./libs/errors";
@@ -198,7 +198,7 @@ app.get("/openapi.yaml", (c) => {
   return c.text(openapiYaml, 200, { "Content-Type": "application/yaml" });
 });
 app.get("/openapi-v1.json", (c) => {
-  return c.json(openapiV1Json, 200);
+  return c.text(JSON.stringify(openapiV1Json), 200,{ "Content-Type": "application/json" });
 });
 
 app.get(
