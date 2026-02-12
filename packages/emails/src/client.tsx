@@ -5,8 +5,8 @@ import { Effect, Schedule } from "effect";
 import { Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
-import PageSubscriptionEmail from "../emails/page-subscription";
-import type { PageSubscriptionProps } from "../emails/page-subscription";
+import PageSubscriptionVerificationEmail from "../emails/page-subscription-verification";
+import type { PageSubscriptionVerificationProps } from "../emails/page-subscription-verification";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
 import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
 import StatusReportEmail from "../emails/status-report";
@@ -206,16 +206,16 @@ export class EmailClient {
     }
   }
 
-  public async sendPageSubscription(
-    req: PageSubscriptionProps & { to: string },
+  public async sendPageSubscriptionVerification(
+    req: PageSubscriptionVerificationProps & { to: string },
   ) {
     if (process.env.NODE_ENV === "development") {
-      console.log(`Sending page subscription email to ${req.to}`);
+      console.log(`Sending page subscription verification email to ${req.to}`);
       return;
     }
 
     try {
-      const html = await render(<PageSubscriptionEmail {...req} />);
+      const html = await render(<PageSubscriptionVerificationEmail {...req} />);
       const result = await this.client.emails.send({
         from: "Status Page <notifications@notifications.openstatus.dev>",
         subject: `Confirm your subscription to ${req.page}`,
@@ -224,13 +224,16 @@ export class EmailClient {
       });
 
       if (!result.error) {
-        console.log(`Sent page subscription email to ${req.to}`);
+        console.log(`Sent page subscription verification email to ${req.to}`);
         return;
       }
 
       throw result.error;
     } catch (err) {
-      console.error(`Error sending page subscription to ${req.to}`, err);
+      console.error(
+        `Error sending page subscription verification to ${req.to}`,
+        err,
+      );
     }
   }
 

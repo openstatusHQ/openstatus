@@ -17,11 +17,11 @@ export default function UnsubscribePage() {
   const { token, domain } = useParams<{ token: string; domain: string }>();
 
   const subscriberQuery = useQuery(
-    trpc.statusPage.getSubscriberByToken.queryOptions({ token, domain }),
+    trpc.pageSubscription.getByToken.queryOptions({ token, domain }),
   );
 
   const unsubscribeMutation = useMutation(
-    trpc.statusPage.unsubscribe.mutationOptions({}),
+    trpc.pageSubscription.unsubscribe.mutationOptions({}),
   );
 
   const handleUnsubscribe = () => {
@@ -99,9 +99,7 @@ export default function UnsubscribePage() {
         <StatusBlankTitle>Unsubscribe from notifications</StatusBlankTitle>
         <StatusBlankDescription>
           You are about to unsubscribe{" "}
-          <span className="font-semibold">
-            {subscriberQuery.data.maskedEmail}
-          </span>{" "}
+          <span className="font-semibold">{subscriberQuery.data.email}</span>{" "}
           from{" "}
           <span className="font-semibold">{subscriberQuery.data.pageName}</span>{" "}
           status updates.

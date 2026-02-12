@@ -11,7 +11,7 @@ export default async function Layout({
   const { id } = await params;
 
   await queryClient.prefetchQuery(
-    trpc.pageSubscriber.list.queryOptions({ pageId: Number.parseInt(id) }),
+    trpc.pageSubscription.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
 
   return <HydrateClient>{children}</HydrateClient>;

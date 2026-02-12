@@ -38,6 +38,7 @@ builders:
       - packages/notifications/twillio-whatsapp/package.json
       - packages/notifications/twillio-sms/package.json
       - packages/notifications/webhook/package.json
+      - packages/subscriptions/package.json
       - packages/error/package.json
       - packages/regions/package.json
       - packages/tinybird/package.json

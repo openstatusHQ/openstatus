@@ -24,6 +24,7 @@ import { columns } from "@/components/data-table/subscribers/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -33,26 +34,28 @@ const EXAMPLES = [
   {
     id: 1,
     email: "max@openstatus.dev",
-    createdAt: new Date(),
-    updatedAt: null,
-    pageId: 1,
-    token: null,
-    acceptedAt: new Date(),
-    expiresAt: new Date(),
+    channelType: "email" as const,
+    verifiedAt: new Date(),
     unsubscribedAt: null,
+    createdAt: new Date(),
+    components: [],
+    isEntirePage: true,
+    pageId: 1,
+    webhookUrl: null,
   },
   {
     id: 2,
     email: "thibault@openstatus.dev",
-    createdAt: new Date(),
-    updatedAt: null,
-    pageId: 1,
-    token: null,
-    acceptedAt: new Date(),
-    expiresAt: new Date(),
+    channelType: "email" as const,
+    verifiedAt: new Date(),
     unsubscribedAt: null,
+    createdAt: new Date(),
+    components: [],
+    isEntirePage: true,
+    pageId: 1,
+    webhookUrl: null,
   },
-];
+] satisfies RouterOutputs["pageSubscription"]["list"][number][];
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -62,7 +65,7 @@ export default function Page() {
     trpc.page.get.queryOptions({ id: Number.parseInt(id) }),
   );
   const { data: subscribers } = useQuery(
-    trpc.pageSubscriber.list.queryOptions({ pageId: Number.parseInt(id) }),
+    trpc.pageSubscription.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
 

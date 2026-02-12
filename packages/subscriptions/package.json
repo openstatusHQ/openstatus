@@ -1,0 +1,26 @@
+{
+  "name": "@openstatus/subscriptions",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@openstatus/db": "workspace:*",
+    "@openstatus/emails": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/bun": "latest",
+    "typescript": "5.9.3"
+  }
+}

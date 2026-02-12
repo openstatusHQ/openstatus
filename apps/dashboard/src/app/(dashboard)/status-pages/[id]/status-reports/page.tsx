@@ -30,7 +30,7 @@ export default function Page() {
     trpc.statusReport.list.queryOptions({ pageId: Number.parseInt(id) }),
   );
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.emailRouter.sendStatusReportUpdate.mutationOptions(),
   );
   const createStatusReportMutation = useMutation(
     trpc.statusReport.create.mutationOptions({
@@ -38,7 +38,7 @@ export default function Page() {
         // TODO: move to server
         if (statusReport.notifySubscribers) {
           await sendStatusReportUpdateMutation.mutateAsync({
-            id: statusReport.id,
+            id: statusReport.statusReportId,
           });
         }
         //
