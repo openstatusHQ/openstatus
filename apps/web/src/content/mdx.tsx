@@ -375,6 +375,11 @@ function MDXContent(props: MDXRemoteProps) {
   return (
     <MDXRemote
       {...props}
+      options={{
+        blockJS: false, // Allow JS expressions in trusted MDX content
+        blockDangerousJS: true, // Still block dangerous operations
+        ...props.options,
+      }}
       components={
         {
           ...components,
