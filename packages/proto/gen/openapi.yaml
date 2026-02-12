@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  description: OpenStatus is a open-source status page platform with global uptime monitoring. \n\n The OpenStatus API allows you to interact with the OpenStatus platform programmatically. \n\n To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.
+  description: OpenStatus is a open-source status page platform with global uptime monitoring. The OpenStatus API allows you to interact with the OpenStatus platform programmatically. To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.
   title: OpenStatus API
   version: v2.0.0
   contact:
