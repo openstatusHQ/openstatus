@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.notification.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/notification/v1/notification.proto";
 import "openstatus/notification/v1/providers.proto";
 
@@ -14,10 +15,14 @@ service NotificationService {
   rpc CreateNotification(CreateNotificationRequest) returns (CreateNotificationResponse);
 
   // GetNotification retrieves a notification channel by ID.
-  rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse);
+  rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // ListNotifications returns a list of notification channels.
-  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // UpdateNotification updates an existing notification channel.
   rpc UpdateNotification(UpdateNotificationRequest) returns (UpdateNotificationResponse);
@@ -25,17 +30,26 @@ service NotificationService {
   // DeleteNotification removes a notification channel.
   rpc DeleteNotification(DeleteNotificationRequest) returns (DeleteNotificationResponse);
 
-  // SendTestNotification sends a test notification to verify configuration.
-  rpc SendTestNotification(SendTestNotificationRequest) returns (SendTestNotificationResponse);
+  // SendTestNotification sends a test notification to verify the provider configuration without requiring an existing notification channel.
+  rpc SendTestNotification(SendTestNotificationRequest) returns (SendTestNotificationResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Sends a test notification to the specified provider to verify that the configuration is correct. This does not require an existing notification channel - just provide the provider type and its configuration data. Returns success status and an error message if the test failed."
+    };
+  }
 
   // CheckNotificationLimit checks if the workspace has reached its notification limit.
-  rpc CheckNotificationLimit(CheckNotificationLimitRequest) returns (CheckNotificationLimitResponse);
+  rpc CheckNotificationLimit(CheckNotificationLimitRequest) returns (CheckNotificationLimitResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 }
 
 // CreateNotificationRequest is the request to create a new notification channel.
 message CreateNotificationRequest {
   // Display name for the notification channel.
-  string name = 1 [(buf.validate.field).string.min_len = 1];
+  string name = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "Slack Ops Channel"}}
+  ];
   // Provider type.
   NotificationProvider provider = 2 [(buf.validate.field).enum = {
     defined_only: true

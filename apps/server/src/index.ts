@@ -209,11 +209,11 @@ app.get(
     url: "/openapi.yaml",
     servers: [
       {
-        url: "https://api.openstatus.dev/rpc",
+        url: "https://api.openstatus.dev/",
         description: "Production server",
       },
       {
-        url: "http://localhost:3000/v1",
+        url: "http://localhost:3000/",
         description: "Dev server",
       },
     ],

@@ -8,6 +8,9 @@ info:
   contact:
     email: ping@openstatus.dev
     url: https://www.openstatus.dev
+externalDocs:
+  description: OpenStatus Documentation
+  url: https://docs.openstatus.dev
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -16,3 +19,26 @@ components:
       name: x-openstatus-key
 security:
   - ApiKeyAuth: []
+tags:
+  - name: MonitorService
+    description: |
+      Create, update, delete, and query monitors. Supports HTTP, TCP, and DNS monitor types
+      with configurable check intervals, regions, assertions, and alerting thresholds.
+  - name: StatusPageService
+    description: |
+      Manage public status pages with components, component groups, and email subscribers.
+      Includes endpoints for retrieving full page content and aggregated status.
+  - name: NotificationService
+    description: |
+      Configure notification channels (Slack, Discord, PagerDuty, email, webhooks, etc.)
+      and associate them with monitors. Supports 12 notification providers.
+  - name: StatusReportService
+    description: |
+      Create and manage incident reports with status updates. Reports follow a lifecycle:
+      investigating -> identified -> monitoring -> resolved.
+  - name: MaintenanceService
+    description: |
+      Schedule maintenance windows for status page components. Subscribers can be
+      notified automatically when maintenance is created.
+  - name: HealthService
+    description: Health check endpoint for load balancer probes. No authentication required.

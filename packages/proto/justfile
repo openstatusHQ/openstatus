@@ -17,4 +17,4 @@ gen-api:
     buf generate --path api/openstatus --template buf.gen.ts.yaml
 
 gen-openapi:
-    buf generate --path api/openstatus --template buf.gen.openapi.yaml
+    buf generate --path api/openstatus --template buf.gen.openapi.yaml && bun scripts/clean-openapi.ts
