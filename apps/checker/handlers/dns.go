@@ -43,22 +43,6 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	const defaultRetry = 3
 	dataSourceName := "dns_response__v0"
 
-	// Authorization check
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	// Fly region forwarding
-	if h.CloudProvider == "fly" {
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
-		}
-	}
-
 	// Parse request
 	var req request.DNSCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -95,12 +79,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return
 	}
 
-	statusMap := map[string]string{
-		"active":   "success",
-		"error":    "error",
-		"degraded": "degraded",
-	}
-	requestStatus := statusMap[req.Status]
+	requestStatus := mapMonitorStatus(req.Status)
 
 	data := DNSResponse{
 		ID:            id.String(),
@@ -207,11 +186,11 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	if f {
 		t := event.(map[string]any)
 		t["checker"] = map[string]string{
-			"uri": req.URI,
+			"uri":          req.URI,
 			"workspace_id": req.WorkspaceID,
-			"monitor_id":req.MonitorID,
-			"trigger": trigger,
-			"type": "dns",
+			"monitor_id":   req.MonitorID,
+			"trigger":      trigger,
+			"type":         "dns",
 		}
 		c.Set("event", t)
 	}
@@ -223,22 +202,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "check_dns_response__v0"
 	const defaultRetry = 3
-
-	// Authorization check
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-
-	// Fly region forwarding
-	if h.CloudProvider == "fly" {
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
-		}
-	}
 
 	// Parse request
 	var req request.DNSCheckerRequest
@@ -259,20 +222,19 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	workspaceId, _ := strconv.Atoi(req.WorkspaceID)
-
-	statusMap := map[string]string{
-		"active":   "success",
-		"error":    "error",
-		"degraded": "degraded",
+	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
+		return
 	}
-	requestStatus := statusMap[req.Status]
+
+	requestStatus := mapMonitorStatus(req.Status)
 
 	data := DNSResponse{
 		ID:            id.String(),
 		Region:        h.Region,
 		URI:           req.URI,
-		WorkspaceID:   int64(workspaceId),
+		WorkspaceID:   workspaceId,
 		CronTimestamp: req.CronTimestamp,
 		RequestStatus: requestStatus,
 		Timestamp:     time.Now().UTC().UnixMilli(),
@@ -340,37 +302,14 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 }
 
 func FormatDNSResult(result *checker.DnsResponse) map[string][]string {
-	r := make(map[string][]string)
-	a := make([]string, 0)
-	aaaa := make([]string, 0)
-	mx := make([]string, 0)
-	ns := make([]string, 0)
-	txt := make([]string, 0)
-
-	for _, v := range result.A {
-		a = append(a, v)
+	return map[string][]string{
+		"A":     result.A,
+		"AAAA":  result.AAAA,
+		"CNAME": {result.CNAME},
+		"MX":    result.MX,
+		"NS":    result.NS,
+		"TXT":   result.TXT,
 	}
-	r["A"] = a
-
-	for _, v := range result.AAAA {
-		aaaa = append(aaaa, v)
-	}
-	r["AAAA"] = aaaa
-
-	r["CNAME"] = []string{result.CNAME}
-	for _, v := range result.MX {
-		mx = append(mx, v)
-	}
-	r["MX"] = mx
-	for _, v := range result.NS {
-		ns = append(ns, v)
-	}
-	r["NS"] = ns
-	for _, v := range result.TXT {
-		txt = append(txt, v)
-	}
-	r["TXT"] = txt
-	return r
 }
 
 func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.DnsResponse) (bool, error) {

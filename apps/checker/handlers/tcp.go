@@ -40,23 +40,6 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "tcp_response__v0"
 
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
-		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
-	}
-
 	var req request.TCPCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
@@ -90,11 +73,11 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	if f {
 		t := e.(map[string]any)
 		t["checker"] = map[string]string{
-			"uri": req.URI,
+			"uri":          req.URI,
 			"workspace_id": req.WorkspaceID,
-			"monitor_id":req.MonitorID,
-			"trigger": trigger,
-			"type": "tcp",
+			"monitor_id":   req.MonitorID,
+			"trigger":      trigger,
+			"type":         "tcp",
 		}
 		c.Set("event", t)
 	}
@@ -122,16 +105,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		latency := res.TCPDone - res.TCPStart
 
-		var requestStatus = ""
-		switch req.Status {
-		case "active":
-			requestStatus = "success"
-		case "error":
-			requestStatus = "error"
-
-		case "degraded":
-			requestStatus = "degraded"
-		}
+		requestStatus := mapMonitorStatus(req.Status)
 
 		id, err := uuid.NewV7()
 		if err != nil {
@@ -165,39 +139,9 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			JobType: "tcp",
 		}
 
-		if req.DegradedAfter == 0 && req.Status != "active" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "active",
-				Region:        h.Region,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       latency,
-			})
-			data.RequestStatus = "success"
-		}
-
-		if (req.DegradedAfter > 0 && latency < req.DegradedAfter) && req.Status != "active" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "active",
-				Region:        h.Region,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       latency,
-			})
-			data.RequestStatus = "success"
-
-		}
-
-		if req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "degraded",
-				Region:        h.Region,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       latency,
-			})
-			data.RequestStatus = "degraded"
-
+		if newStatus := updateMonitorStatus(ctx, true, latency, req.DegradedAfter, req.CronTimestamp,
+			req.Status, req.MonitorID, h.Region, 0, ""); newStatus != "" {
+			data.RequestStatus = newStatus
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
@@ -258,23 +202,6 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		c.String(http.StatusBadRequest, "region is required")
 
 		return
-	}
-
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
-		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
 	}
 
 	var req request.TCPCheckerRequest

@@ -239,13 +239,18 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
 	router.Use(Logger())
-	router.POST("/checker", h.HTTPCheckerHandler)
-	router.POST("/checker/http", h.HTTPCheckerHandler)
-	router.POST("/checker/tcp", h.TCPHandler)
-	router.POST("/checker/dns", h.DNSHandler)
-	router.POST("/ping/:region", h.PingRegionHandler)
-	router.POST("/tcp/:region", h.TCPHandlerRegion)
-	router.POST("/dns/:region", h.DNSHandlerRegion)
+
+	authed := router.Group("/")
+	authed.Use(handlers.AuthMiddleware(cronSecret))
+	authed.Use(handlers.FlyRegionMiddleware(cloudProvider, region))
+
+	authed.POST("/checker", h.HTTPCheckerHandler)
+	authed.POST("/checker/http", h.HTTPCheckerHandler)
+	authed.POST("/checker/tcp", h.TCPHandler)
+	authed.POST("/checker/dns", h.DNSHandler)
+	authed.POST("/ping/:region", h.PingRegionHandler)
+	authed.POST("/tcp/:region", h.TCPHandlerRegion)
+	authed.POST("/dns/:region", h.DNSHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "region": region, "provider": cloudProvider})
