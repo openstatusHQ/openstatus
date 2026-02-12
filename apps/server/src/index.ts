@@ -15,6 +15,8 @@ import { showRoutes } from "hono/dev";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
+import { Scalar } from "@scalar/hono-api-reference";
+import { serveStatic } from "hono/bun";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { env } from "./env";
@@ -22,8 +24,6 @@ import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
 import { api } from "./routes/v1";
-import { serveStatic } from "hono/bun";
-import { Scalar } from "@scalar/hono-api-reference";
 
 type Env = {
   Variables: {
@@ -193,9 +193,8 @@ app.get("/ping", (c) => {
   );
 });
 
-app.get('/openapi.yaml', serveStatic({ path: './static/openapi.yaml' }))
-app.get('/openapi-v1.json', serveStatic({ path: './static/openapi-v1.json' }))
-
+app.get("/openapi.yaml", serveStatic({ path: "./static/openapi.yaml" }));
+app.get("/openapi-v1.json", serveStatic({ path: "./static/openapi-v1.json" }));
 
 app.get(
   "/openapi",
@@ -222,7 +221,6 @@ app.get(
     },
   }),
 );
-
 
 /**
  * API Routes v1

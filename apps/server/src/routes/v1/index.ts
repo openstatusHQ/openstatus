@@ -43,8 +43,7 @@ api.doc("/openapi", {
       email: "ping@openstatus.dev",
       url: "https://www.openstatus.dev",
     },
-    description:
-      "This version is deprecated please use v2",
+    description: "This version is deprecated please use v2",
   },
   tags: [
     {
