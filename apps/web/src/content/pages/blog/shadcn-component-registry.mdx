@@ -1,50 +1,296 @@
 ---
 title: "How We Built Our shadcn Component Registry"
-description: "From duplicated components across three apps to a clean registry - our journey to building a shadcn-compatible component library."
+description: "From duplicated components across three apps to a clean registry - our journey to building a shadcn/ui - compatible component library."
 author: "Maximilian Kaske"
-publishedAt: "2025-02-09"
+publishedAt: "2026-02-13"
 image: "/assets/posts/shadcn-component-registry/shadcn-component-registry.png"
 category: "engineering"
 ---
 
-After splitting our main web project into three distinct apps - dashboard, status-page, and web (our marketing site) - we'd duplicated the shadcn/ui components across each of them. Because why not, right? But it was time to clean up the repo and consolidate all our core UI components back into `packages/ui`.
+After splitting our main web project into three distinct apps - `dashboard`, `status-page`, and `web` (our marketing site) - we'd duplicated the [shadcn/ui](https://ui.shadcn.com) components across each of them. Quick and easy, but not sustainable. It was time to consolidate our UI components into `packages/ui`.
 
-**The advantage:** one component to maintain.
+**The advantage:** maintain components in one place.
 
-**The disadvantage:** every change needs to be validated across all three apps (mainly CSS).
+**The disadvantage:** every change needs validation across all three apps (especially CSS).
 
-So on a random Thursday, we found ourselves refactoring our entire UI component library. And naturally, that sparked an idea: what if we turned some of our "blocks" into proper shadcn components and distributed them via the shadcn CLI?
+While refactoring our component library, I realized we could take this further: what if we turned our custom "blocks" into proper shadcn registry components and distributed them via the shadcn CLI? Better yet, what if we could use the shadcn CLI itself to add and update components within our `packages/ui`?
 
-It wasn't as straightforward as we'd hoped. We wanted to use the exact same components in our codebase - no bundler or webpack configuration - while making sure we could distribute them easily using shadcn conventions.
+The challenge: we wanted to use the exact same components in our codebase - no build steps, no bundler, no webpack configuration - while making them easily distributable through shadcn's standard conventions.
 
-## First Approach: The Naive Way
+Our monorepo structure looks like this:
 
-We import components via aliases, so why not do the same in `packages/ui`? Well, it turns out you don't get any TypeScript errors in the package itself - but as soon as you use those components in the main app, the imports won't resolve because the subcomponents aren't available there.
+```
+openstatus/
+├── apps/
+│   ├── dashboard/        # Main dashboard app
+│   ├── status-page/      # Public status pages
+│   ├── web/              # Marketing site
+│   └── ...
+├── packages/
+│   ├── ui/               # Shared UI components
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   │   ├── ui/       # shadcn components
+│   │   │   │   └── blocks/   # Custom blocks
+│   │   │   ├── lib/
+│   │   │   └── hooks/
+│   │   ├── components.json
+│   │   ├── registry.json
+│   │   └── package.json
+│   ├── db/
+│   ├── api/
+│   └── ...
+└── pnpm-workspace.yaml
+```
 
-So, scratch that.
+## First Approach: Following the shadcn Defaults
 
-## Second Approach: The Bundler
+The most obvious approach: just follow shadcn's standard setup. Every shadcn project uses a `@/` alias, so why not do the same in `packages/ui`?
 
-Why not bundle the package and distribute the output? Sure, it's possible - but it felt over-engineered. We'd constantly need to manage that bundling step, and it added friction we didn't want.
+Here's the thing - TypeScript won't complain about this setup within the package itself. Everything type-checks perfectly. The problem only surfaces when you actually try to use these components in your apps.
 
-## Third Approach: Webpack Configuration
+The default shadcn approach uses a simple `@/` alias in `packages/ui/tsconfig.json`:
 
-Also possible, but the over-engineering just shifts elsewhere. Every major Next.js upgrade would mean updating the config. We didn't want to fight that battle.
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}
+```
 
-## Fourth Approach: The One That Worked
+And write components using this alias in `packages/ui/src/components/ui/button.tsx`:
 
-We didn't give up on plain imports.
+```tsx
+// ✅ The shadcn/ui way
+import { cn } from "@/lib/utils";
+import { Slot } from "@radix-ui/react-slot";
 
-What if we used the same aliases in both the app and the package? 🤯
+export function Button({ className, ...props }) {
+  return <button className={cn("...", className)} {...props} />;
+}
+```
 
-Since `@openstatus/ui` is already a package dependency in each app, why not use that exact alias within `packages/ui` itself? We set up the tsconfig aliases to match, and now every component imports with the `@openstatus/ui` prefix internally.
+The problem? When you import this button in your app:
 
-When we build the registry, we simply replace `@openstatus/ui` with `@` - and that's it. It could have gotten trickier with deeply nested relative paths, but this approach handles it cleanly. As a bonus, `components.json` is now fully aware of the structure, so we can add new shadcn components to the package without any extra configuration.
+```tsx
+// apps/dashboard/src/app/page.tsx
+import { Button } from "@openstatus/ui/components/ui/button";
+// ❌ Error: Cannot find module '@/lib/utils'
+// The @/ alias doesn't exist in the app's context!
+```
+
+## Second Approach: Bundle It Up
+
+If the imports are the problem, what if we bundle the package and distribute compiled output? Tools like tsup can handle this cleanly, and many modern component libraries go this route.
+
+Here's what this would look like with tsup:
+
+```ts
+// packages/ui/tsup.config.ts
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: ["src/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
+  sourcemap: true,
+  external: ["react", "react-dom"],
+  banner: {
+    js: '"use client";',
+  },
+});
+```
+
+And adding the build step to the package:
+
+```json
+// packages/ui/package.json
+{
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+}
+```
+
+The downsides:
+- Every change requires a rebuild (yes, even with `--watch` mode, there's still a delay)
+- Adds complexity to the development workflow
+- Build output needs to be managed and debugged
+- Still doesn't help with shadcn CLI integration for the registry
+
+## Third Approach: Configure Webpack
+
+What about webpack aliases? Next.js lets you customize the webpack config, so theoretically you could tell it how to resolve the imports. Here's what a working config would look like:
+
+```js
+// apps/dashboard/next.config.js
+const path = require("path");
+
+const nextConfig = {
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      // Resolve @openstatus/ui to source
+      "@openstatus/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      // ALSO resolve @/ to the ui package - this is critical!
+      "@": path.resolve(__dirname, "../../packages/ui/src"),
+    };
+    return config;
+  },
+  transpilePackages: ["@openstatus/ui"],
+};
+```
+
+The issue? You need **both** aliases. Just pointing `@openstatus/ui` to the source isn't enough - you also need to tell the app how to resolve the `@/` imports that appear _inside_ the package's components.
+
+But now you have a **new problem**: what if your app also wants to use `@/` for its own imports? You've just created a conflict! The `@/` alias now points to the UI package, not your app's source directory. You'd need to choose between:
+
+1. Never using `@/` in your app (use a different alias like `@app/`)
+2. Using a different alias in the UI package (but then it's not compatible with standard shadcn components)
+3. Some complex webpack resolver that checks the importing file's location to decide what `@/` means (maintainability nightmare)
+
+The problems:
+- Fragile configuration that breaks with Next.js updates
+- Needs to be duplicated in every app
+- Turbopack doesn't support custom webpack configs
+- **Most importantly:** Creates alias conflicts between app and package
+- Forces you to abandon standard `@/` convention in either the app or package
+
+## Fourth Approach: The Elegant Solution
+
+After three dead ends, we stepped back and thought differently. What if we stopped fighting against the monorepo structure and embraced it instead?
+
+The insight: `@openstatus/ui` is already a valid import in every app - it's right there in their `package.json`. What if we used that same alias **within** `packages/ui` itself?
+
+This means components would import from each other using `@openstatus/ui/...` internally. Then, when building the registry for distribution, we simply replace `@openstatus/ui` with `@`. That's it.
+
+No bundler. No webpack config. No alias conflicts. Just a clever use of TypeScript path mapping and a simple find-replace at build time.
+
+Here's the setup in `packages/ui/tsconfig.json`:
+
+```json
+{
+  "extends": "@openstatus/tsconfig/react-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@openstatus/ui/*": ["./src/*"]
+    }
+  }
+}
+```
+
+And the key part in `packages/ui/components.json`:
+
+```json
+{
+  "aliases": {
+    "components": "@openstatus/ui/components",
+    "utils": "@openstatus/ui/lib/utils",
+    "ui": "@openstatus/ui/components/ui",
+    "lib": "@openstatus/ui/lib",
+    "hooks": "@openstatus/ui/hooks"
+  }
+}
+```
+
+### The Bonus: shadcn CLI Integration
+
+This setup unlocks a powerful benefit: **we can use the shadcn CLI directly in our package!**
+
+When shadcn releases new components or updates, we simply run:
+
+```bash
+cd packages/ui
+npx shadcn add button      # Add new components
+npx shadcn diff button     # Check for updates
+```
+
+The CLI reads our `components.json` and automatically uses the `@openstatus/ui` aliases. Newly added components work immediately in both the package and all consuming apps - no manual import rewrites, no configuration updates. It just works.
+
+### How It Looks in Practice
+
+Components within the package import from each other using `@openstatus/ui`:
+
+```tsx
+// packages/ui/src/components/blocks/status-banner.tsx
+import { Tabs, TabsContent } from "@openstatus/ui/components/ui/tabs";
+import { cn } from "@openstatus/ui/lib/utils";
+import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
+```
+
+Apps import using the exact same pattern:
+
+```tsx
+// apps/dashboard/src/app/layout.tsx
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
+import { cn } from "@openstatus/ui/lib/utils";
+```
+
+Notice something? **The imports are identical.** Whether you're inside the package or inside an app, the import path is the same. This consistency eliminates a whole class of path-resolution bugs.
+
+### The Magic: Import Transformation
+
+When building the registry for public distribution, we transform the imports with a simple regex (`packages/ui/scripts/transform-imports.mjs`):
+
+```js
+// Transform: @openstatus/ui/components/ui/button → @/components/ui/button
+content = content.replace(
+  /@openstatus\/ui\/(components|lib|hooks|types)/g,
+  "@/$1"
+);
+```
+
+This converts our package-specific imports into the standard shadcn `@/` convention that everyone expects.
+
+### Publishing the Registry
+
+The last piece of the puzzle is getting our components into a public registry that others can install. The build pipeline is a three-step process defined in `packages/ui/package.json`:
+
+```json
+{
+  "scripts": {
+    "registry:build": "node scripts/transform-imports.mjs && cd dist && shadcn build && cd .. && node scripts/copy-to-web.mjs"
+  }
+}
+```
+
+Here's what each step does:
+
+1. **Transform imports** (`transform-imports.mjs`): Copies source files to `dist/` and rewrites all `@openstatus/ui` imports to `@` for standard shadcn compatibility
+2. **Build registry** (`shadcn build`): Generates the registry JSON files that describe each component and its dependencies
+3. **Copy to web** (`copy-to-web.mjs`): Moves the generated registry files to our Next.js app's public directory for hosting
+
+The `copy-to-web.mjs` script is simple:
+
+```js
+const registryDir = join(ROOT_DIR, "dist/public/r");
+const targetDir = join(WEB_APP_PUBLIC_DIR, "r");
+cpSync(registryDir, targetDir, { recursive: true, force: true });
+```
+
+Now when users run:
+
+```bash
+npx shadcn@latest add https://openstatus.dev/r/status-banner.json
+```
+
+They're pulling from `apps/web/public/r/status-banner.json`, which was generated from the same components we use internally.
 
 ## The Result
 
-That's it - head over to our [registry page](https://openstatus.dev/registry) if you need status page components.
+What started as a refactoring task turned into a clean solution for both our internal needs and public distribution:
 
-We can now maintain a single source of truth for our UI components while making them available to the community through the standard shadcn CLI. No bundler complexity, no webpack headaches, just a clever use of TypeScript path aliases.
+- **One source of truth**: All three apps import from `@openstatus/ui`
+- **Zero build overhead**: Components work directly in development with no compilation
+- **Standard shadcn workflow**: `npx shadcn add/diff` works seamlessly in the package
+- **Public registry**: Anyone can install our components via the shadcn CLI
 
-If you're building a similar multi-app monorepo with shared components, this pattern might save you some headaches too.
+The key insight was embracing the monorepo structure instead of fighting it. By using the package name as the import alias, we avoided all the pitfalls of other approaches: no bundler complexity, no webpack configuration fragility, and no alias conflicts.
+
+If you're running a multi-app monorepo with shared components, this pattern might save you considerable time and headaches. And if you need battle-tested status page components, check out our [component registry](/registry) - they're ready to drop into your project.
