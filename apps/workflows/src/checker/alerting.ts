@@ -32,11 +32,13 @@ export const triggerNotifications = async ({
   incidentId?: number;
   regions?: string[];
   latency?: number;
-}) => {
+}): Promise<{ notificationId: number; provider: string }[]> => {
   logger.info("Triggering alerting", {
     monitor_id: monitorId,
     notification_type: notifType,
   });
+
+  const triggered: { notificationId: number; provider: string }[] = [];
 
   let incident: Incident | undefined;
   if (incidentId) {
@@ -135,6 +137,10 @@ export const triggerNotifications = async ({
       logger.error("notification trigger already exists dont send again");
       continue;
     }
+    triggered.push({
+      notificationId: notif.notification.id,
+      provider: notif.notification.provider,
+    });
     switch (notifType) {
       case "alert":
         const alertResult = Effect.tryPromise({
@@ -244,6 +250,8 @@ export const triggerNotifications = async ({
       },
     });
   }
+
+  return triggered;
 };
 
 const insertNotificationTrigger = async ({
