@@ -1,0 +1,95 @@
+---
+title: "Why Uptime % Alone is Misleading"
+description: "99.9% uptime sounds impressive until you realize it tells you nothing about user experience. Learn why availability percentages hide the real story and what to measure instead."
+author: "openstatus"
+publishedAt: "2026-02-13"
+category: "education"
+---
+
+99.9% uptime sounds great in sales decks. It makes executives nod approvingly and looks impressive on your status page.
+
+But here's the truth: it's a vanity metric that hides more than it reveals.
+
+You can have excellent uptime percentages and terrible user experience. Teams spend months optimizing for an incomplete metric while their users suffer. Let's talk about why.
+
+## The Math Hides Context
+
+99.9% uptime means 43 minutes of downtime per month. Simple math, right?
+
+But **when** matters:
+
+- **Scenario A:** 43 separate 1-minute blips spread throughout the month. Users barely notice. They refresh and move on.
+- **Scenario B:** A single 43-minute outage at 2 PM on a Tuesday. Your CEO's phone explodes. Angry customers flood support. Social media erupts.
+
+Both scenarios give you 99.9% uptime. The impact? Radically different.
+
+**What** broke matters too:
+
+Your homepage returns 200 OK. Monitoring shows green across the board. You're patting yourself on the back for that 99.9% availability.
+
+Meanwhile, your payment API throws 503s. Your EU region is down. Your CDN times out. Aggregate those numbers and you still hit "99.9% available."
+
+And **who** was affected matters most:
+
+A 99.95% success rate looks stellar. But dig deeper: those 50 failures were all from one enterprise customer. They experienced 0% availability while your dashboard bragged about five nines.
+
+Clustering disappears in averages.
+
+---
+
+We've built an uptime SLA calculator to help you understand the real impact.
+
+<ButtonLink href="/play/uptime-sla">Uptime SLA Calculator</ButtonLink>
+
+---
+
+
+## "Available" ≠ "Usable"
+
+Your health check endpoint returns 200 OK in 50ms. Monitoring says "up." Dashboard is green. Perfect.
+
+Your users make actual requests. They get 200 OK responses... in 8 seconds. To them, your service is broken.
+
+You can have 99.9% uptime with P99 latency at 30 seconds. Technically available. Completely unusable.
+
+**Availability measures if it responds. Reliability measures if it works.**
+
+## The Five Nines Trap
+
+Teams obsess over pushing 99.9% to 99.99%. The cost grows exponentially in engineering time, infrastructure, and complexity.
+
+Meanwhile: 10-second P99 latencies. 2% payment failure rates. Broken features left unfixed.
+
+You hit your uptime target. Users churn anyway.
+
+**Optimizing the wrong metric is worse than not measuring at all.**
+
+## What to Measure Instead
+
+Stop obsessing over a single percentage. Start measuring what users actually experience:
+
+**Latency percentiles:** P50, P95, P99. How long do real requests take? A P99 of 10 seconds means 1 in 100 users have a terrible experience, even with perfect uptime.
+
+**Error rates:** Break them down by endpoint, status code, and region. A 0.1% global error rate could be a 5% error rate for your checkout endpoint.
+
+**User journey success:** Can users actually complete the things that matter? Login, checkout, file upload. Track the whole flow, not just individual endpoints.
+
+**Regional availability:** Don't aggregate global uptime into one number. Your service down in Asia won't show up if North America is fine.
+
+**Error budget burn rate:** Are you on track to blow your SLO? This metric is actionable. A percentage alone tells you nothing about trajectory.
+
+## Bottom Line
+
+Uptime percentage is useful for SLA tracking and executive dashboards. It's not useless—but it's insufficient for understanding user experience.
+
+Measure what users feel: latency, errors by feature, regional failures. If your monitoring shows green while users are frustrated, you're measuring the wrong things.
+
+Stop optimizing for a number that looks good in reports. Start optimizing for the experience your users actually have.
+
+---
+
+Start free. No credit card required. Set up your first status page in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---
