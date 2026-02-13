@@ -12,7 +12,7 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@openstatus/ui", "@openstatus/api"],
+  transpilePackages: ["@openstatus/ui", "@openstatus/api", "next-mdx-remote"],
   outputFileTracingIncludes: {
     "/": [
       "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
@@ -215,6 +215,18 @@ const nextConfig: NextConfig = {
             },
           ],
           destination: "https://www.stpg.dev/_next/:path*",
+        },
+        // Markdown content negotiation for AI tools
+        {
+          source: "/:path*",
+          destination: "/api/markdown/:path*",
+          has: [
+            {
+              type: "header",
+              key: "accept",
+              value: ".*text/markdown.*",
+            },
+          ],
         },
       ],
     };
