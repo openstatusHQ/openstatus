@@ -314,16 +314,11 @@ We are pinging this functions every 10 minutes.
 
 ## Conclusion
 
-<Table
-  data={{
-    headers: ["Runtime", "p50", "p95", "p99"],
-    rows: [
-      ["Serverless Cold Start", "859ms", "1,046ms", "1,156ms"],
-      ["Serverless Warm", "246ms", "563ms", "855ms"],
-      ["Edge", "106ms", "178ms", "328ms"],
-    ],
-  }}
-/>
+| Runtime | p50 | p95 | p99 |
+| --- | --- | --- | --- |
+| Serverless Cold Start | 859ms | 1 | 046ms |
+| Serverless Warm | 246ms | 563ms | 855ms |
+| Edge | 106ms | 178ms | 328ms |
 
 Globablly Edge functions are approximately 9 times faster than Serverless
 functions during cold starts, but only 2 times faster when the function is warm.

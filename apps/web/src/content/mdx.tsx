@@ -8,6 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
+import remarkGfm from "remark-gfm";
 import { highlight } from "sugar-high";
 import { ComponentHighlighter } from "./component-highlighter";
 import { CopyButton } from "./copy-button";
@@ -16,30 +17,10 @@ import { ImageZoom } from "./image-zoom";
 import { LatencyChartTable } from "./latency-chart-table";
 import { StatusPageExample } from "./shadcn-registry-example";
 
-function Table({
-  data,
-}: {
-  data: { headers: React.ReactNode[]; rows: React.ReactNode[][] };
-}) {
-  const headers = data.headers.map((header: React.ReactNode, index: number) => (
-    <th key={index}>{header}</th>
-  ));
-  const rows = data.rows.map((row: React.ReactNode[], index: number) => (
-    <tr key={index}>
-      {row.map((cell: React.ReactNode, cellIndex: number) => (
-        <td key={cellIndex}>{cell}</td>
-      ))}
-    </tr>
-  ));
-
+function Table(props: React.ComponentProps<"table">) {
   return (
     <div className="table-wrapper">
-      <table>
-        <thead>
-          <tr>{headers}</tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </table>
+      <table {...props} />
     </div>
   );
 }
@@ -352,7 +333,7 @@ export const components = {
   ButtonLink: ButtonLink,
   code: Code,
   pre: Pre,
-  Table,
+  table: Table,
   Grid,
   Details, // Capital D for JSX usage with props
   details: Details, // lowercase for HTML tag replacement
@@ -378,6 +359,10 @@ function MDXContent(props: MDXRemoteProps) {
       options={{
         blockJS: false, // Allow JS expressions in trusted MDX content
         blockDangerousJS: true, // Still block dangerous operations
+        mdxOptions: {
+          remarkPlugins: [remarkGfm],
+          ...props.options?.mdxOptions,
+        },
         ...props.options,
       }}
       components={
