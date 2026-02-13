@@ -1,0 +1,23 @@
+---
+title: Health Service
+description: "Check the OpenStatus API health status using the Node.js SDK"
+---
+
+Check API health status. No authentication required.
+
+```typescript
+import { openstatus, ServingStatus } from "@openstatus/sdk-node";
+
+const { status } = await openstatus.health.v1.HealthService.check({});
+console.log(ServingStatus[status]); // "SERVING"
+```
+
+Or with a configured client:
+
+```typescript
+import { createOpenStatusClient, ServingStatus } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient();
+const { status } = await client.health.v1.HealthService.check({});
+console.log(ServingStatus[status]); // "SERVING"
+```

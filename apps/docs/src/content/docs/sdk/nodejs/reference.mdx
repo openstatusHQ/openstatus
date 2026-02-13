@@ -1,0 +1,375 @@
+---
+title: Reference
+description: "Complete reference for enums, regions, assertions, and TypeScript type exports in the OpenStatus Node.js SDK"
+---
+
+## Enums
+
+### Periodicity
+
+| Value | Description |
+|-------|-------------|
+| `PERIODICITY_30S` | Every 30 seconds |
+| `PERIODICITY_1M` | Every 1 minute |
+| `PERIODICITY_5M` | Every 5 minutes |
+| `PERIODICITY_10M` | Every 10 minutes |
+| `PERIODICITY_30M` | Every 30 minutes |
+| `PERIODICITY_1H` | Every 1 hour |
+
+### HTTPMethod
+
+| Value | Description |
+|-------|-------------|
+| `HTTP_METHOD_GET` | GET |
+| `HTTP_METHOD_POST` | POST |
+| `HTTP_METHOD_HEAD` | HEAD |
+| `HTTP_METHOD_PUT` | PUT |
+| `HTTP_METHOD_PATCH` | PATCH |
+| `HTTP_METHOD_DELETE` | DELETE |
+| `HTTP_METHOD_TRACE` | TRACE |
+| `HTTP_METHOD_CONNECT` | CONNECT |
+| `HTTP_METHOD_OPTIONS` | OPTIONS |
+
+### MonitorStatus
+
+| Value | Description |
+|-------|-------------|
+| `ACTIVE` | Monitor is healthy |
+| `DEGRADED` | Latency threshold exceeded |
+| `ERROR` | Monitor is failing |
+
+### TimeRange
+
+| Value | Description |
+|-------|-------------|
+| `TIME_RANGE_1D` | Last 24 hours |
+| `TIME_RANGE_7D` | Last 7 days |
+| `TIME_RANGE_14D` | Last 14 days |
+
+### StatusReportStatus
+
+| Value | Description |
+|-------|-------------|
+| `INVESTIGATING` | Actively investigating the issue |
+| `IDENTIFIED` | Root cause has been identified |
+| `MONITORING` | Fix deployed, monitoring |
+| `RESOLVED` | Issue fully resolved |
+
+### OverallStatus
+
+| Value | Description |
+|-------|-------------|
+| `OPERATIONAL` | All systems operational |
+| `DEGRADED` | Performance is degraded |
+| `PARTIAL_OUTAGE` | Some systems are down |
+| `MAJOR_OUTAGE` | Major systems are down |
+| `MAINTENANCE` | Scheduled maintenance |
+| `UNKNOWN` | Status cannot be determined |
+
+### NotificationProvider
+
+| Value | Description |
+|-------|-------------|
+| `DISCORD` | Discord webhook |
+| `EMAIL` | Email notification |
+| `GOOGLE_CHAT` | Google Chat webhook |
+| `GRAFANA_ONCALL` | Grafana OnCall |
+| `NTFY` | Ntfy push service |
+| `PAGERDUTY` | PagerDuty |
+| `OPSGENIE` | Opsgenie |
+| `SLACK` | Slack webhook |
+| `SMS` | SMS notification |
+| `TELEGRAM` | Telegram bot |
+| `WEBHOOK` | Custom webhook |
+| `WHATSAPP` | WhatsApp |
+
+### OpsgenieRegion
+
+| Value | Description |
+|-------|-------------|
+| `US` | US region |
+| `EU` | EU region |
+
+### PageAccessType
+
+| Value | Description |
+|-------|-------------|
+| `PUBLIC` | Publicly accessible |
+| `PASSWORD_PROTECTED` | Requires password |
+| `AUTHENTICATED` | Requires authentication |
+
+### PageTheme
+
+| Value | Description |
+|-------|-------------|
+| `SYSTEM` | Follow system theme |
+| `LIGHT` | Light theme |
+| `DARK` | Dark theme |
+
+### PageComponentType
+
+| Value | Description |
+|-------|-------------|
+| `MONITOR` | Linked to a monitor |
+| `STATIC` | Static component (manual) |
+
+### NumberComparator
+
+| Value | Description |
+|-------|-------------|
+| `EQUAL` | Equal to target |
+| `NOT_EQUAL` | Not equal to target |
+| `GREATER_THAN` | Greater than target |
+| `GREATER_THAN_OR_EQUAL` | Greater than or equal |
+| `LESS_THAN` | Less than target |
+| `LESS_THAN_OR_EQUAL` | Less than or equal |
+
+### StringComparator
+
+| Value | Description |
+|-------|-------------|
+| `CONTAINS` | Contains target string |
+| `NOT_CONTAINS` | Does not contain target |
+| `EQUAL` | Equal to target |
+| `NOT_EQUAL` | Not equal to target |
+| `EMPTY` | Value is empty |
+| `NOT_EMPTY` | Value is not empty |
+| `GREATER_THAN` | Lexicographically greater |
+| `GREATER_THAN_OR_EQUAL` | Lexicographically greater than or equal to target |
+| `LESS_THAN` | Lexicographically less |
+| `LESS_THAN_OR_EQUAL` | Lexicographically less than or equal to target |
+
+### RecordComparator
+
+| Value | Description |
+|-------|-------------|
+| `EQUAL` | Equal to target |
+| `NOT_EQUAL` | Not equal to target |
+| `CONTAINS` | Contains target string |
+| `NOT_CONTAINS` | Does not contain target |
+
+### ServingStatus
+
+| Value | Description |
+|-------|-------------|
+| `SERVING` | Service is healthy and serving |
+| `NOT_SERVING` | Service is not healthy |
+
+## Regions
+
+Monitor from 28 global locations across multiple providers.
+
+```typescript
+import { Region } from "@openstatus/sdk-node";
+
+regions: [Region.FLY_AMS, Region.FLY_IAD, Region.KOYEB_FRA];
+```
+
+### Fly.io Regions (18)
+
+| Enum Value | Location |
+|------------|----------|
+| `FLY_AMS` | Amsterdam |
+| `FLY_ARN` | Stockholm |
+| `FLY_BOM` | Mumbai |
+| `FLY_CDG` | Paris |
+| `FLY_DFW` | Dallas |
+| `FLY_EWR` | Newark |
+| `FLY_FRA` | Frankfurt |
+| `FLY_GRU` | São Paulo |
+| `FLY_IAD` | Washington D.C. |
+| `FLY_JNB` | Johannesburg |
+| `FLY_LAX` | Los Angeles |
+| `FLY_LHR` | London |
+| `FLY_NRT` | Tokyo |
+| `FLY_ORD` | Chicago |
+| `FLY_SJC` | San Jose |
+| `FLY_SIN` | Singapore |
+| `FLY_SYD` | Sydney |
+| `FLY_YYZ` | Toronto |
+
+### Koyeb Regions (6)
+
+| Enum Value | Location |
+|------------|----------|
+| `KOYEB_FRA` | Frankfurt |
+| `KOYEB_PAR` | Paris |
+| `KOYEB_SFO` | San Francisco |
+| `KOYEB_SIN` | Singapore |
+| `KOYEB_TYO` | Tokyo |
+| `KOYEB_WAS` | Washington |
+
+### Railway Regions (4)
+
+| Enum Value | Location |
+|------------|----------|
+| `RAILWAY_US_WEST2` | US West |
+| `RAILWAY_US_EAST4` | US East |
+| `RAILWAY_EUROPE_WEST4` | Europe West |
+| `RAILWAY_ASIA_SOUTHEAST1` | Asia Southeast |
+
+## Assertions
+
+### Status Code Assertions
+
+Validate HTTP response status codes using `NumberComparator`.
+
+```typescript
+import { NumberComparator } from "@openstatus/sdk-node";
+
+statusCodeAssertions: [
+  { comparator: NumberComparator.EQUAL, target: BigInt(200) },
+  { comparator: NumberComparator.LESS_THAN, target: BigInt(400) },
+];
+```
+
+### Body Assertions
+
+Validate response body content using `StringComparator`.
+
+```typescript
+import { StringComparator } from "@openstatus/sdk-node";
+
+bodyAssertions: [
+  { comparator: StringComparator.CONTAINS, target: '"status":"ok"' },
+  { comparator: StringComparator.NOT_EMPTY, target: "" },
+];
+```
+
+### Header Assertions
+
+Validate response headers using `StringComparator` with a header `key`.
+
+```typescript
+import { StringComparator } from "@openstatus/sdk-node";
+
+headerAssertions: [
+  {
+    key: "content-type",
+    comparator: StringComparator.CONTAINS,
+    target: "application/json",
+  },
+];
+```
+
+### DNS Record Assertions
+
+Validate DNS records using `RecordComparator`. Supported record types: `A`, `AAAA`, `CNAME`, `MX`, `TXT`.
+
+```typescript
+import { RecordComparator } from "@openstatus/sdk-node";
+
+recordAssertions: [
+  {
+    record: "A",
+    comparator: RecordComparator.EQUAL,
+    target: "93.184.216.34",
+  },
+  {
+    record: "CNAME",
+    comparator: RecordComparator.CONTAINS,
+    target: "cdn",
+  },
+];
+```
+
+## TypeScript Type Exports
+
+All types and enums exported from `@openstatus/sdk-node`:
+
+### Monitor Types
+
+- `HTTPMonitor`, `Headers`, `OpenTelemetryConfig` — HTTP monitor configuration
+- `TCPMonitor` — TCP monitor configuration
+- `DNSMonitor` — DNS monitor configuration
+- `StatusCodeAssertion`, `BodyAssertion`, `HeaderAssertion`, `RecordAssertion` — assertion types
+- `CreateHTTPMonitorRequest`, `CreateHTTPMonitorResponse` — HTTP monitor CRUD
+- `CreateTCPMonitorRequest`, `CreateTCPMonitorResponse` — TCP monitor CRUD
+- `CreateDNSMonitorRequest`, `CreateDNSMonitorResponse` — DNS monitor CRUD
+- `UpdateHTTPMonitorRequest`, `UpdateHTTPMonitorResponse`
+- `UpdateTCPMonitorRequest`, `UpdateTCPMonitorResponse`
+- `UpdateDNSMonitorRequest`, `UpdateDNSMonitorResponse`
+- `ListMonitorsRequest`, `ListMonitorsResponse`
+- `DeleteMonitorRequest`, `DeleteMonitorResponse`
+- `TriggerMonitorRequest`, `TriggerMonitorResponse`
+- `GetMonitorStatusRequest`, `GetMonitorStatusResponse`, `RegionStatus`
+- `GetMonitorSummaryRequest`, `GetMonitorSummaryResponse`
+
+### Monitor Enums
+
+- `Periodicity` — check interval
+- `Region` — monitoring region
+- `MonitorStatus` — active / degraded / error
+- `HTTPMethod` — HTTP methods
+- `TimeRange` — metrics time range
+- `NumberComparator`, `StringComparator`, `RecordComparator` — assertion comparators
+
+### Health Types
+
+- `CheckRequest`, `CheckResponse`
+- `ServingStatus` — serving / not serving
+
+### Status Report Types
+
+- `StatusReport`, `StatusReportSummary`, `StatusReportUpdate`
+- `CreateStatusReportRequest`, `CreateStatusReportResponse`
+- `GetStatusReportRequest`, `GetStatusReportResponse`
+- `ListStatusReportsRequest`, `ListStatusReportsResponse`
+- `UpdateStatusReportRequest`, `UpdateStatusReportResponse`
+- `DeleteStatusReportRequest`, `DeleteStatusReportResponse`
+- `AddStatusReportUpdateRequest`, `AddStatusReportUpdateResponse`
+- `StatusReportStatus` — investigating / identified / monitoring / resolved
+
+### Status Page Types
+
+- `StatusPage`, `StatusPageSummary`
+- `PageComponent`, `PageComponentGroup`
+- `PageSubscriber`
+- `CreateStatusPageRequest`, `CreateStatusPageResponse`
+- `GetStatusPageRequest`, `GetStatusPageResponse`
+- `ListStatusPagesRequest`, `ListStatusPagesResponse`
+- `UpdateStatusPageRequest`, `UpdateStatusPageResponse`
+- `DeleteStatusPageRequest`, `DeleteStatusPageResponse`
+- `AddMonitorComponentRequest`, `AddMonitorComponentResponse`
+- `AddStaticComponentRequest`, `AddStaticComponentResponse`
+- `RemoveComponentRequest`, `RemoveComponentResponse`
+- `UpdateComponentRequest`, `UpdateComponentResponse`
+- `CreateComponentGroupRequest`, `CreateComponentGroupResponse`
+- `DeleteComponentGroupRequest`, `DeleteComponentGroupResponse`
+- `UpdateComponentGroupRequest`, `UpdateComponentGroupResponse`
+- `SubscribeToPageRequest`, `SubscribeToPageResponse`
+- `UnsubscribeFromPageRequest`, `UnsubscribeFromPageResponse`
+- `ListSubscribersRequest`, `ListSubscribersResponse`
+- `GetStatusPageContentRequest`, `GetStatusPageContentResponse`
+- `GetOverallStatusRequest`, `GetOverallStatusResponse`, `ComponentStatus`
+- `OverallStatus`, `PageAccessType`, `PageTheme`, `PageComponentType`
+
+### Maintenance Types
+
+- `Maintenance`, `MaintenanceSummary`
+- `CreateMaintenanceRequest`, `CreateMaintenanceResponse`
+- `GetMaintenanceRequest`, `GetMaintenanceResponse`
+- `ListMaintenancesRequest`, `ListMaintenancesResponse`
+- `UpdateMaintenanceRequest`, `UpdateMaintenanceResponse`
+- `DeleteMaintenanceRequest`, `DeleteMaintenanceResponse`
+
+### Notification Types
+
+- `Notification`, `NotificationSummary`
+- `NotificationData`
+- `DiscordData`, `EmailData`, `GoogleChatData`, `GrafanaOncallData`, `NtfyData`, `OpsgenieData`, `PagerDutyData`, `SlackData`, `SmsData`, `TelegramData`, `WebhookData`, `WebhookHeader`, `WhatsappData`
+- `CreateNotificationRequest`, `CreateNotificationResponse`
+- `GetNotificationRequest`, `GetNotificationResponse`
+- `ListNotificationsRequest`, `ListNotificationsResponse`
+- `UpdateNotificationRequest`, `UpdateNotificationResponse`
+- `DeleteNotificationRequest`, `DeleteNotificationResponse`
+- `SendTestNotificationRequest`, `SendTestNotificationResponse`
+- `CheckNotificationLimitRequest`, `CheckNotificationLimitResponse`
+- `NotificationProvider`, `OpsgenieRegion`
+
+### Client Types
+
+- `OpenStatusClient` — client interface
+- `OpenStatusClientOptions` — client configuration
+- `createOpenStatusClient` — factory function
+- `openstatus` — default client instance

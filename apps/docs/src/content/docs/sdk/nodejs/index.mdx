@@ -1,0 +1,141 @@
+---
+title: Getting Started
+description: "Install and start using the OpenStatus Node.js SDK"
+---
+
+## Installation
+
+### npm
+
+```bash
+npm install @openstatus/sdk-node
+```
+
+### JSR
+
+```bash
+npx jsr add @openstatus/sdk-node
+```
+
+### Deno
+
+```typescript
+import { createOpenStatusClient } from "jsr:@openstatus/sdk-node";
+```
+
+### Bun
+
+```bash
+bun add @openstatus/sdk-node
+```
+
+## Quick Start
+
+```typescript
+import {
+  createOpenStatusClient,
+  Periodicity,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+// Create an HTTP monitor
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "My API",
+    url: "https://api.example.com/health",
+    periodicity: Periodicity.PERIODICITY_1M,
+    regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
+    active: true,
+  },
+});
+
+console.log(`Monitor created: ${monitor?.id}`);
+
+// List all monitors
+const { httpMonitors, tcpMonitors, dnsMonitors, totalSize } =
+  await client.monitor.v1.MonitorService.listMonitors({});
+
+console.log(`Found ${totalSize} monitors`);
+```
+
+## Runtime Support
+
+| Runtime | Version | Module Format |
+|---------|---------|---------------|
+| Node.js | 18+     | ESM and CJS   |
+| Deno    | 2+      | ESM (native)  |
+| Bun     | Latest  | ESM           |
+
+## Full Workflow Example
+
+A complete example: create a monitor, set up a status page, add the monitor as a component, configure a Slack notification, and check overall status.
+
+```typescript
+import {
+  createOpenStatusClient,
+  NotificationProvider,
+  Periodicity,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+// 1. Check API health
+const health = await client.health.v1.HealthService.check({});
+console.log(`API status: ${health.status}`);
+
+// 2. Create an HTTP monitor
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "Production API",
+    url: "https://api.example.com/health",
+    periodicity: Periodicity.PERIODICITY_1M,
+    regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
+    active: true,
+  },
+});
+
+// 3. Create a status page
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .createStatusPage({
+    title: "Example Status",
+    slug: "example-status",
+    description: "Status page for Example services",
+  });
+
+// 4. Add the monitor as a component
+const { component } = await client.statusPage.v1.StatusPageService
+  .addMonitorComponent({
+    pageId: statusPage!.id,
+    monitorId: monitor!.id,
+    name: "Production API",
+  });
+
+// 5. Set up Slack notifications
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Slack Alerts",
+    provider: NotificationProvider.SLACK,
+    data: {
+      data: {
+        case: "slack",
+        value: { webhookUrl: "https://hooks.slack.com/services/..." },
+      },
+    },
+    monitorIds: [monitor!.id],
+  });
+
+// 6. Check overall status
+const { overallStatus } = await client.statusPage.v1.StatusPageService
+  .getOverallStatus({
+    identifier: { case: "id", value: statusPage!.id },
+  });
+
+console.log(`Overall status: ${overallStatus}`);
+```

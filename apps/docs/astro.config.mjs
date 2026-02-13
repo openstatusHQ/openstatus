@@ -149,6 +149,15 @@ export default defineConfig({
           ],
         },
         {
+          label: "SDK",
+          items: [
+            {
+              label: "Node SDK",
+              autogenerate: { directory: 'sdk/nodejs' },
+            },
+          ],
+        },
+        {
           label: "Reference",
           items: [
             {
