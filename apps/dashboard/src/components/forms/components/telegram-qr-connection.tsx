@@ -1,6 +1,6 @@
-import TelegramQRCode from "./telegram-qrcode";
+import type { UseFormReturn } from "react-hook-form";
 import { TelegramManualInput } from "./telegram-manual-input";
-import { UseFormReturn } from "react-hook-form";
+import TelegramQRCode from "./telegram-qrcode";
 
 interface TelegramQRConnectionProps {
   form: UseFormReturn<any>;

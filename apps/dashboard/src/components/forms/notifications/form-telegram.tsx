@@ -89,7 +89,8 @@ export function FormTelegram({
   // Start polling for updates
   const { data: updates } = useQuery({
     ...trpc.notification.getTelegramUpdates.queryOptions(),
-    enabled: !!tokenData?.token && !form.getValues("data.chatId") && mode === "qr",
+    enabled:
+      !!tokenData?.token && !form.getValues("data.chatId") && mode === "qr",
     refetchInterval: 5000,
   });
 
@@ -101,7 +102,9 @@ export function FormTelegram({
           form.setValue("data.chatId", String(lastUpdate.chat.id), {
             shouldDirty: true,
           });
-          toast.success(`Connected to ${lastUpdate.chat?.first_name || "chat"} telegram account`);
+          toast.success(
+            `Connected to ${lastUpdate.chat?.first_name || "chat"} telegram account`,
+          );
         });
       }
     }
