@@ -3,20 +3,29 @@ syntax = "proto3";
 package openstatus.status_report.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/status_report/v1/status_report.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_report/v1;statusreportv1";
 
 // StatusReportService provides CRUD operations for status reports.
 service StatusReportService {
-  // CreateStatusReport creates a new status report.
-  rpc CreateStatusReport(CreateStatusReportRequest) returns (CreateStatusReportResponse);
+  // CreateStatusReport creates a new status report with an initial update entry and optionally notifies subscribers.
+  rpc CreateStatusReport(CreateStatusReportRequest) returns (CreateStatusReportResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Creates a new status report with an initial update entry. The report is associated with a status page and optionally specific page components. An initial StatusReportUpdate is created automatically with the provided status, message, and date. If notify is true, subscribers of the associated page are notified by email."
+    };
+  }
 
   // GetStatusReport retrieves a specific status report by ID (includes full update timeline).
-  rpc GetStatusReport(GetStatusReportRequest) returns (GetStatusReportResponse);
+  rpc GetStatusReport(GetStatusReportRequest) returns (GetStatusReportResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // ListStatusReports returns all status reports for the workspace (metadata only).
-  rpc ListStatusReports(ListStatusReportsRequest) returns (ListStatusReportsResponse);
+  rpc ListStatusReports(ListStatusReportsRequest) returns (ListStatusReportsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // UpdateStatusReport updates the metadata of a status report (title, page components).
   rpc UpdateStatusReport(UpdateStatusReportRequest) returns (UpdateStatusReportResponse);
@@ -24,24 +33,36 @@ service StatusReportService {
   // DeleteStatusReport removes a status report and all its updates.
   rpc DeleteStatusReport(DeleteStatusReportRequest) returns (DeleteStatusReportResponse);
 
-  // AddStatusReportUpdate adds a new update to an existing status report timeline.
-  rpc AddStatusReportUpdate(AddStatusReportUpdateRequest) returns (AddStatusReportUpdateResponse);
+  // AddStatusReportUpdate adds a new update to an existing status report timeline and transitions the report status.
+  rpc AddStatusReportUpdate(AddStatusReportUpdateRequest) returns (AddStatusReportUpdateResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Adds a new update entry to an existing status report and transitions the report to the specified status. Status reports follow a lifecycle: investigating -> identified -> monitoring -> resolved. If notify is true, subscribers of the associated page are notified by email about the update."
+    };
+  }
 }
 
-// --- Create Status Report ---
-
+// CreateStatusReportRequest is the request to create a new status report.
 message CreateStatusReportRequest {
   // Title of the status report (required).
-  string title = 1 [(buf.validate.field).string.min_len = 1];
+  string title = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "API Degradation Investigation"}}
+  ];
 
   // Initial status (required).
   StatusReportStatus status = 2 [(buf.validate.field).enum.defined_only = true];
 
   // Initial message describing the incident (required).
-  string message = 3 [(buf.validate.field).string.min_len = 1];
+  string message = 3 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "We are investigating reports of increased API latency."}}
+  ];
 
   // Date when the event occurred (RFC 3339 format, required).
-  string date = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+  string date = 4 [
+    (buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$",
+    (gnostic.openapi.v3.property) = {example: {yaml: "2024-03-15T10:30:00Z"}}
+  ];
 
   // Page ID to associate with this report (required).
   string page_id = 5 [(buf.validate.field).string.min_len = 1];
@@ -53,25 +74,25 @@ message CreateStatusReportRequest {
   optional bool notify = 7;
 }
 
+// CreateStatusReportResponse is the response after creating a status report.
 message CreateStatusReportResponse {
   // The created status report.
   StatusReport status_report = 1;
 }
 
-// --- Get Status Report ---
-
+// GetStatusReportRequest is the request to get a status report by ID.
 message GetStatusReportRequest {
   // ID of the status report to retrieve (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// GetStatusReportResponse is the response containing the status report with its full update timeline.
 message GetStatusReportResponse {
   // The requested status report.
   StatusReport status_report = 1;
 }
 
-// --- List Status Reports ---
-
+// ListStatusReportsRequest is the request to list status reports.
 message ListStatusReportsRequest {
   // Maximum number of reports to return (1-100, defaults to 50).
   optional int32 limit = 1 [(buf.validate.field).int32 = {
@@ -86,6 +107,7 @@ message ListStatusReportsRequest {
   repeated StatusReportStatus statuses = 3;
 }
 
+// ListStatusReportsResponse is the response containing status report summaries.
 message ListStatusReportsResponse {
   // List of status reports (metadata only, use GetStatusReport for full details).
   repeated StatusReportSummary status_reports = 1;
@@ -94,8 +116,7 @@ message ListStatusReportsResponse {
   int32 total_size = 2;
 }
 
-// --- Update Status Report ---
-
+// UpdateStatusReportRequest is the request to update a status report's metadata.
 message UpdateStatusReportRequest {
   // ID of the status report to update (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
@@ -107,25 +128,25 @@ message UpdateStatusReportRequest {
   repeated string page_component_ids = 3;
 }
 
+// UpdateStatusReportResponse is the response after updating a status report.
 message UpdateStatusReportResponse {
   // The updated status report.
   StatusReport status_report = 1;
 }
 
-// --- Delete Status Report ---
-
+// DeleteStatusReportRequest is the request to delete a status report.
 message DeleteStatusReportRequest {
   // ID of the status report to delete (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// DeleteStatusReportResponse is the response after deleting a status report.
 message DeleteStatusReportResponse {
   // Whether the deletion was successful.
   bool success = 1;
 }
 
-// --- Add Status Report Update ---
-
+// AddStatusReportUpdateRequest is the request to add a new update to a status report.
 message AddStatusReportUpdateRequest {
   // ID of the status report to update (required).
   string status_report_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -143,6 +164,7 @@ message AddStatusReportUpdateRequest {
   optional bool notify = 5;
 }
 
+// AddStatusReportUpdateResponse is the response after adding an update to a status report.
 message AddStatusReportUpdateResponse {
   // The updated status report with the new update included.
   StatusReport status_report = 1;

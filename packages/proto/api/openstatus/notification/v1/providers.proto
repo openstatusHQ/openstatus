@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.notification.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/notification/v1;notificationv1";
 
@@ -39,13 +40,19 @@ enum NotificationProvider {
 // DiscordData contains configuration for Discord notifications.
 message DiscordData {
   // Discord webhook URL.
-  string webhook_url = 1 [(buf.validate.field).string.uri = true];
+  string webhook_url = 1 [
+    (buf.validate.field).string.uri = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "https://discord.com/api/webhooks/123/abc"}}
+  ];
 }
 
 // EmailData contains configuration for email notifications.
 message EmailData {
   // Email address to send notifications to.
-  string email = 1 [(buf.validate.field).string.email = true];
+  string email = 1 [
+    (buf.validate.field).string.email = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "ops-team@example.com"}}
+  ];
 }
 
 // GoogleChatData contains configuration for Google Chat notifications.
@@ -63,7 +70,10 @@ message GrafanaOncallData {
 // NtfyData contains configuration for Ntfy notifications.
 message NtfyData {
   // Ntfy topic to publish to.
-  string topic = 1 [(buf.validate.field).string.min_len = 1];
+  string topic = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "openstatus-alerts"}}
+  ];
   // Ntfy server URL (defaults to https://ntfy.sh).
   string server_url = 2;
   // Optional authentication token.
@@ -73,7 +83,10 @@ message NtfyData {
 // PagerDutyData contains configuration for PagerDuty notifications.
 message PagerDutyData {
   // PagerDuty integration key.
-  string integration_key = 1 [(buf.validate.field).string.min_len = 1];
+  string integration_key = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "a1b2c3d4e5f6g7h8i9j0"}}
+  ];
 }
 
 // OpsgenieRegion represents the Opsgenie API region.
@@ -97,19 +110,28 @@ message OpsgenieData {
 // SlackData contains configuration for Slack notifications.
 message SlackData {
   // Slack webhook URL.
-  string webhook_url = 1 [(buf.validate.field).string.uri = true];
+  string webhook_url = 1 [
+    (buf.validate.field).string.uri = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "https://hooks.slack.com/services/T00/B00/xxx"}}
+  ];
 }
 
 // SmsData contains configuration for SMS notifications.
 message SmsData {
   // Phone number to send SMS to.
-  string phone_number = 1 [(buf.validate.field).string.min_len = 1];
+  string phone_number = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "+14155551234"}}
+  ];
 }
 
 // TelegramData contains configuration for Telegram notifications.
 message TelegramData {
   // Telegram chat ID.
-  string chat_id = 1 [(buf.validate.field).string.min_len = 1];
+  string chat_id = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "-1001234567890"}}
+  ];
 }
 
 // WebhookHeader represents a custom header for webhook requests.
@@ -123,7 +145,10 @@ message WebhookHeader {
 // WebhookData contains configuration for custom webhook notifications.
 message WebhookData {
   // Webhook endpoint URL.
-  string endpoint = 1 [(buf.validate.field).string.uri = true];
+  string endpoint = 1 [
+    (buf.validate.field).string.uri = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "https://api.example.com/webhooks/openstatus"}}
+  ];
   // Optional custom headers.
   repeated WebhookHeader headers = 2;
 }

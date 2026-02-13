@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.monitor.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/assertions.proto";
 import "openstatus/monitor/v1/monitor.proto";
 
@@ -24,8 +25,15 @@ enum HTTPMethod {
 
 // Headers represents a key-value pair for HTTP headers.
 message Headers {
-  string key = 1 [(buf.validate.field).string.min_len = 1];
-  string value = 2;
+  // Header name.
+  string key = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (gnostic.openapi.v3.property) = {example: {yaml: "Authorization"}}
+  ];
+  // Header value.
+  string value = 2 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "Bearer token123"}}
+  ];
 }
 
 // OpenTelemetry configuration for exporting metrics.
@@ -43,17 +51,23 @@ message HTTPMonitor {
   string id = 1;
 
   // Name of the monitor (required, max 256 characters).
-  string name = 2 [(buf.validate.field).string = {
-    min_len: 1
-    max_len: 256
-  }];
+  string name = 2 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 256
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "Production API Health Check"}}
+  ];
 
   // URL to monitor (required, max 2048 characters).
-  string url = 3 [(buf.validate.field).string = {
-    min_len: 1
-    max_len: 2048
-    uri: true
-  }];
+  string url = 3 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 2048
+      uri: true
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "https://api.example.com/health"}}
+  ];
 
   // Check periodicity (required).
   Periodicity periodicity = 4 [(buf.validate.field).enum = {
@@ -66,7 +80,9 @@ message HTTPMonitor {
   }];
 
   // Request body (optional).
-  string body = 6;
+  string body = 6 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "{\"key\": \"value\"}"}}
+  ];
 
   // Timeout in milliseconds (0-120000, defaults to 45000).
   int64 timeout = 7 [(buf.validate.field).int64 = {
