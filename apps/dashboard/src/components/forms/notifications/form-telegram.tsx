@@ -10,7 +10,6 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 
-import { Link } from "@/components/common/link";
 import {
   FormCardContent,
   FormCardSeparator,
@@ -23,12 +22,14 @@ import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { TelegramManualInput } from "../components/telegram-manual-input";
+import { TelegramQRConnection } from "../components/telegram-qr-connection";
 
 const schema = z.object({
   name: z.string(),
@@ -36,6 +37,7 @@ const schema = z.object({
   data: z.object({
     chatId: z.string(),
   }),
+  chatType: z.enum(["group", "private"]),
   monitors: z.array(z.number()),
 });
 
@@ -60,6 +62,7 @@ export function FormTelegram({
       data: {
         chatId: "",
       },
+      chatType: "private",
       monitors: [],
     },
   });
@@ -74,6 +77,35 @@ export function FormTelegram({
   React.useEffect(() => {
     setIsDirty(formIsDirty);
   }, [formIsDirty, setIsDirty]);
+
+  // Create Telegram Token
+  const { data: tokenData, isLoading: isTokenLoading } = useQuery({
+    ...trpc.notification.createTelegramToken.queryOptions(),
+    refetchOnWindowFocus: false,
+  });
+
+  const [mode, setMode] = React.useState<"qr" | "manual" | null>(null);
+
+  // Start polling for updates
+  const { data: updates } = useQuery({
+    ...trpc.notification.getTelegramUpdates.queryOptions(),
+    enabled: !!tokenData?.token && !form.getValues("data.chatId") && mode === "qr",
+    refetchInterval: 5000,
+  });
+
+  React.useEffect(() => {
+    if (updates && updates.length > 0) {
+      const lastUpdate = updates[updates.length - 1];
+      if (lastUpdate?.chat?.id) {
+        startTransition(() => {
+          form.setValue("data.chatId", String(lastUpdate.chat.id), {
+            shouldDirty: true,
+          });
+          toast.success(`Connected to ${lastUpdate.chat?.first_name || "chat"} telegram account`);
+        });
+      }
+    }
+  }, [updates, form]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -155,29 +187,45 @@ export function FormTelegram({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="data.chatId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Telegram Chat ID</FormLabel>
-                <FormControl>
-                  <Input placeholder="1234567890" {...field} />
-                </FormControl>
-                <FormMessage />
-                <FormDescription>
-                  Enter the Telegram chat ID to send notifications to.{" "}
-                  <Link
-                    href="https://docs.openstatus.dev/reference/notification/#telegram"
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Learn more
-                  </Link>
-                </FormDescription>
-              </FormItem>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+              <Button
+                type="button"
+                variant={mode === "qr" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode("qr")}
+                className="cursor-pointer w-full"
+              >
+                Connect with QR
+              </Button>
+              <div className="flex items-center gap-2 min-w-[40px]">
+                <div className="h-px bg-border flex-1" />
+                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                  Or
+                </span>
+                <div className="h-px bg-border flex-1" />
+              </div>
+              <Button
+                type="button"
+                variant={mode === "manual" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMode("manual")}
+                className="cursor-pointer w-full"
+              >
+                Enter ChatID manually
+              </Button>
+            </div>
+
+            {mode === "manual" && <TelegramManualInput form={form} />}
+            {mode === "qr" && (
+              <TelegramQRConnection
+                form={form}
+                token={tokenData?.token}
+                isLoading={isTokenLoading}
+                isPolling={!!tokenData?.token && !form.getValues("data.chatId")}
+              />
             )}
-          />
+          </div>
           <div>
             <Button
               variant="outline"
