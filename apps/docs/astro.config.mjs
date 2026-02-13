@@ -153,7 +153,7 @@ export default defineConfig({
           items: [
             {
               label: "Node SDK",
-              autogenerate: { directory: 'sdk/nodejs' },
+              autogenerate: { directory: "sdk/nodejs" },
             },
           ],
         },
