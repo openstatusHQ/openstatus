@@ -1,5 +1,6 @@
 "use client";
 
+import { Link } from "@/components/common/link";
 import {
   FormControl,
   FormDescription,
@@ -9,8 +10,7 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
-import { Link } from "@/components/common/link";
-import { UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 
 interface TelegramManualInputProps {
   form: UseFormReturn<any>;
