@@ -82,6 +82,7 @@ export default function RootLayout({
             info: null,
             loading: null,
           }}
+          richColors
         />
       </body>
     </html>
