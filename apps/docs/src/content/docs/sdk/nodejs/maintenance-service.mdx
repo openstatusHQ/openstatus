@@ -1,0 +1,71 @@
+---
+title: Maintenance Service
+description: "Manage scheduled maintenance windows with the OpenStatus Node.js SDK"
+---
+
+Manage scheduled maintenance windows. The Maintenance Service provides 5 RPC methods.
+
+## Create Maintenance Window
+
+```typescript
+const { maintenance } = await client.maintenance.v1.MaintenanceService
+  .createMaintenance({
+    title: "Database Upgrade",
+    message: "We will be upgrading our database infrastructure.",
+    from: "2024-01-20T02:00:00Z",
+    to: "2024-01-20T04:00:00Z",
+    pageId: "page_123",
+    pageComponentIds: ["comp_456"],
+    notify: true,
+  });
+
+console.log(`Maintenance created: ${maintenance?.id}`);
+```
+
+All date fields (`from`, `to`) must be in RFC 3339 format.
+
+## List Maintenances
+
+List maintenance windows with optional page filtering.
+
+```typescript
+const { maintenances, totalSize } = await client.maintenance.v1
+  .MaintenanceService.listMaintenances({
+    limit: 10,
+    offset: 0,
+    pageId: "page_123",
+  });
+
+console.log(`Found ${totalSize} maintenance windows`);
+```
+
+## Get / Update / Delete Maintenance Windows
+
+### Get Maintenance
+
+```typescript
+const { maintenance } = await client.maintenance.v1.MaintenanceService
+  .getMaintenance({ id: "maint_123" });
+
+console.log(`Title: ${maintenance?.title}`);
+console.log(`From: ${maintenance?.from}`);
+console.log(`To: ${maintenance?.to}`);
+```
+
+### Update Maintenance
+
+```typescript
+const { maintenance } = await client.maintenance.v1.MaintenanceService
+  .updateMaintenance({
+    id: "maint_123",
+    title: "Extended Database Upgrade",
+    to: "2024-01-20T06:00:00Z",
+  });
+```
+
+### Delete Maintenance
+
+```typescript
+const { success } = await client.maintenance.v1.MaintenanceService
+  .deleteMaintenance({ id: "maint_123" });
+```
