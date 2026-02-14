@@ -236,7 +236,7 @@ export default defineConfig({
         starlightLlmsTxt({
           projectName: "openstatus docs",
           description:
-            "openstatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.",
+            "openstatus is an open-source status page platform with global monitoring (HTTP, TCP, DNS).",
         }),
         starlightImageZoom(),
         starlightLinksValidator({
