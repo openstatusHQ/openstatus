@@ -13,7 +13,7 @@ import { highlight } from "sugar-high";
 import { ComponentHighlighter } from "./component-highlighter";
 import { CopyButton } from "./copy-button";
 import { HighlightText } from "./highlight-text";
-import { ImageZoom } from "./image-zoom";
+import { ImageZoom, ZoomableImage } from "./image-zoom";
 import { LatencyChartTable } from "./latency-chart-table";
 import { StatusPageExample } from "./shadcn-registry-example";
 
@@ -281,43 +281,15 @@ function CustomImage({
   const useDarkImage = checkDarkImageExists(darkSrc);
 
   return (
-    <figure>
-      <ImageZoom
-        backdropClassName={cn(
-          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
-        )}
-        zoomMargin={16}
-      >
-        <Image
-          {...rest}
-          src={src}
-          alt={alt ?? ""}
-          width={imageWidth}
-          height={imageHeight}
-          sizes="100vw"
-          style={{ width: "100%", height: "auto" }}
-          className={cn("block dark:hidden", className)}
-        />
-      </ImageZoom>
-      <ImageZoom
-        backdropClassName={cn(
-          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
-        )}
-        zoomMargin={16}
-      >
-        <Image
-          {...rest}
-          src={useDarkImage ? darkSrc : src}
-          alt={alt ?? ""}
-          width={imageWidth}
-          height={imageHeight}
-          sizes="100vw"
-          style={{ width: "100%", height: "auto" }}
-          className={cn("hidden dark:block", className)}
-        />
-      </ImageZoom>
-      {alt && <figcaption>{alt}</figcaption>}
-    </figure>
+    <ZoomableImage
+      {...rest}
+      src={src}
+      alt={alt}
+      className={className}
+      darkSrc={useDarkImage ? darkSrc : undefined}
+      imageWidth={imageWidth as number}
+      imageHeight={imageHeight as number}
+    />
   );
 }
 
