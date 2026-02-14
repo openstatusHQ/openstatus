@@ -1,6 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import type { ImageProps } from "next/image";
+import { useEffect, useState } from "react";
 import Zoom, {
   type ControlledProps,
   type UncontrolledProps,
@@ -11,14 +15,20 @@ export type ImageZoomProps = UncontrolledProps & {
   onZoomChange?: ControlledProps["onZoomChange"];
   className?: string;
   backdropClassName?: string;
+  "aria-hidden"?: boolean;
+  inert?: true;
 };
 
 export const ImageZoom = ({
   className,
   backdropClassName,
+  "aria-hidden": ariaHidden,
+  inert,
   ...props
 }: ImageZoomProps) => (
   <div
+    aria-hidden={ariaHidden}
+    inert={inert}
     className={cn(
       "relative",
       "[&_[data-rmiz-ghost]]:pointer-events-none [&_[data-rmiz-ghost]]:absolute",
@@ -50,3 +60,73 @@ export const ImageZoom = ({
     />
   </div>
 );
+
+interface ZoomableImageProps extends ImageProps {
+  darkSrc?: string;
+  imageWidth: number;
+  imageHeight: number;
+}
+
+export function ZoomableImage({
+  src,
+  alt,
+  className,
+  darkSrc,
+  imageWidth,
+  imageHeight,
+  ...rest
+}: ZoomableImageProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const isDark = resolvedTheme === "dark";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <figure>
+      <ImageZoom
+        backdropClassName={cn(
+          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
+        )}
+        zoomMargin={16}
+        aria-hidden={mounted ? isDark : undefined}
+        inert={mounted && isDark ? true : undefined}
+        className="block dark:hidden"
+      >
+        <Image
+          {...rest}
+          src={src}
+          alt={alt ?? ""}
+          width={imageWidth}
+          height={imageHeight}
+          sizes="100vw"
+          style={{ width: "100%", height: "auto" }}
+          className={className}
+        />
+      </ImageZoom>
+      <ImageZoom
+        backdropClassName={cn(
+          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
+        )}
+        zoomMargin={16}
+        aria-hidden={mounted ? !isDark : undefined}
+        inert={mounted && !isDark ? true : undefined}
+        className="hidden dark:block"
+      >
+        <Image
+          {...rest}
+          src={darkSrc ?? src}
+          alt={alt ?? ""}
+          width={imageWidth}
+          height={imageHeight}
+          sizes="100vw"
+          style={{ width: "100%", height: "auto" }}
+          className={className}
+        />
+      </ImageZoom>
+      {alt && <figcaption>{alt}</figcaption>}
+    </figure>
+  );
+}

@@ -48,7 +48,7 @@ export function Header() {
       <CmdK />
       <Link
         href="https://app.openstatus.dev/login"
-        className="truncate text-info"
+        className="truncate text-blue-700 dark:text-blue-400"
       >
         Dashboard
       </Link>

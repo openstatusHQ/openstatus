@@ -35,14 +35,29 @@ export function FooterStatus() {
 }
 
 const STATUS = {
-  operational: { color: "text-success", label: "Operational" },
+  operational: {
+    color: "text-green-700 dark:text-green-400",
+    label: "Operational",
+  },
   degraded_performance: {
-    color: "text-warning",
+    color: "text-yellow-700 dark:text-yellow-400",
     label: "Degraded Performance",
   },
-  partial_outage: { color: "text-warning", label: "Partial Outage" },
-  major_outage: { color: "text-error", label: "Major Outage" },
-  under_maintenance: { color: "text-info", label: "Under Maintenance" },
-  unknown: { color: "text-gray-500", label: "Unknown" },
-  incident: { color: "text-warning", label: "Incident" },
+  partial_outage: {
+    color: "text-yellow-700 dark:text-yellow-400",
+    label: "Partial Outage",
+  },
+  major_outage: {
+    color: "text-red-700 dark:text-red-400",
+    label: "Major Outage",
+  },
+  under_maintenance: {
+    color: "text-blue-700 dark:text-blue-400",
+    label: "Under Maintenance",
+  },
+  unknown: { color: "text-gray-700 dark:text-gray-400", label: "Unknown" },
+  incident: {
+    color: "text-yellow-700 dark:text-yellow-400",
+    label: "Incident",
+  },
 } satisfies Record<StatusResponse["status"], { color: string; label: string }>;
