@@ -41,7 +41,7 @@ export async function sendWebhookVerification(
     throw new Error("Webhook URL is required for webhook channel");
   }
 
-  await fetch(subscription.webhookUrl, {
+  const response = await fetch(subscription.webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -49,7 +49,14 @@ export async function sendWebhookVerification(
       token: subscription.token,
       verifyUrl,
     }),
+    signal: AbortSignal.timeout(10000), // 10s timeout
   });
+
+  if (!response.ok) {
+    throw new Error(
+      `Webhook verification failed: ${response.status} ${response.statusText}`,
+    );
+  }
 }
 
 /**
@@ -101,11 +108,27 @@ export async function sendWebhookNotifications(
       // const signature = config.secret ? createHmac(config.secret, payload) : undefined;
       // if (signature) headers['X-OpenStatus-Signature'] = signature;
 
-      await fetch(subscription.webhookUrl, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload),
-      });
+      try {
+        const response = await fetch(subscription.webhookUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(10000), // 10s timeout
+        });
+
+        if (!response.ok) {
+          console.error(
+            `Webhook notification failed for ${subscription.webhookUrl}: ${response.status} ${response.statusText}`,
+          );
+          throw new Error(`Webhook returned ${response.status}`);
+        }
+      } catch (error) {
+        console.error(
+          `Failed to send webhook notification to ${subscription.webhookUrl}:`,
+          error,
+        );
+        throw error;
+      }
     }),
   );
 }

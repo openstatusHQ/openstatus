@@ -175,77 +175,79 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       const date = parseDate(req.date);
 
       // Create status report, associations, and initial update in a transaction
-      const { report: newReport, pageId } = await db.transaction(async (tx) => {
-        // Validate page component IDs inside transaction to prevent TOCTOU race condition
-        const validatedComponents = await validatePageComponentIds(
-          req.pageComponentIds,
-          workspaceId,
-          tx,
-        );
-
-        // Validate that provided pageId matches the components' page
-        const derivedPageId = validatedComponents.pageId;
-        const providedPageId = req.pageId?.trim();
-        if (
-          derivedPageId !== null &&
-          providedPageId &&
-          providedPageId !== "" &&
-          Number(providedPageId) !== derivedPageId
-        ) {
-          throw pageIdComponentMismatchError(
-            providedPageId,
-            String(derivedPageId),
-          );
-        }
-
-        // Use the derived pageId from components (null if no components)
-        const pageId = Number(providedPageId);
-
-        // Create the status report
-        const report = await tx
-          .insert(statusReport)
-          .values({
+      const { report: newReport, updateId } = await db.transaction(
+        async (tx) => {
+          // Validate page component IDs inside transaction to prevent TOCTOU race condition
+          const validatedComponents = await validatePageComponentIds(
+            req.pageComponentIds,
             workspaceId,
-            pageId,
-            title: req.title,
-            status: protoStatusToDb(req.status),
-          })
-          .returning()
-          .get();
+            tx,
+          );
 
-        if (!report) {
-          throw statusReportCreateFailedError();
-        }
+          // Validate that provided pageId matches the components' page
+          const derivedPageId = validatedComponents.pageId;
+          const providedPageId = req.pageId?.trim();
+          if (
+            derivedPageId !== null &&
+            providedPageId &&
+            providedPageId !== "" &&
+            Number(providedPageId) !== derivedPageId
+          ) {
+            throw pageIdComponentMismatchError(
+              providedPageId,
+              String(derivedPageId),
+            );
+          }
 
-        // Create page component associations
-        await updatePageComponentAssociations(
-          report.id,
-          validatedComponents.componentIds,
-          tx,
-        );
+          // Use the derived pageId from components (null if no components)
+          const pageId = Number(providedPageId);
 
-        // Create the initial update
-        const newUpdate = await tx
-          .insert(statusReportUpdate)
-          .values({
-            statusReportId: report.id,
-            status: protoStatusToDb(req.status),
-            date,
-            message: req.message,
-          })
-          .returning()
-          .get();
+          // Create the status report
+          const report = await tx
+            .insert(statusReport)
+            .values({
+              workspaceId,
+              pageId,
+              title: req.title,
+              status: protoStatusToDb(req.status),
+            })
+            .returning()
+            .get();
 
-        if (!newUpdate) {
-          throw statusReportCreateFailedError();
-        }
+          if (!report) {
+            throw statusReportCreateFailedError();
+          }
 
-        return { report, pageId, updateId: newUpdate.id };
-      });
+          // Create page component associations
+          await updatePageComponentAssociations(
+            report.id,
+            validatedComponents.componentIds,
+            tx,
+          );
+
+          // Create the initial update
+          const newUpdate = await tx
+            .insert(statusReportUpdate)
+            .values({
+              statusReportId: report.id,
+              status: protoStatusToDb(req.status),
+              date,
+              message: req.message,
+            })
+            .returning()
+            .get();
+
+          if (!newUpdate) {
+            throw statusReportCreateFailedError();
+          }
+
+          return { report, pageId, updateId: newUpdate.id };
+        },
+      );
 
       // Send notifications if requested (outside transaction)
       if (req.notify && rpcCtx.workspace.limits["status-subscribers"]) {
-        await dispatchStatusReportUpdate(newReport.id);
+        await dispatchStatusReportUpdate(updateId);
       }
 
       // Fetch the updates for the response

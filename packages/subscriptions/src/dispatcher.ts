@@ -1,9 +1,8 @@
-import { and, db, eq, isNotNull, isNull, sql } from "@openstatus/db";
+import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
   maintenance,
   page,
   pageSubscription,
-  pageSubscriptionToPageComponent,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { getChannel } from "./channels";
@@ -17,9 +16,17 @@ import type { PageUpdate, Subscription } from "./types";
 
 /**
  * Dispatch notifications for a status report update
- * Queries the status report update and parent report with components
+ *
+ * Fetches the status report update with its parent report and components,
+ * then dispatches notifications to all matching subscriptions.
  *
  * @param statusReportUpdateId - The ID of the status report update
+ *
+ * @example
+ * ```ts
+ * // Called when a new status report update is created
+ * await dispatchStatusReportUpdate(updateId);
+ * ```
  */
 export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
   // Get status report update with parent report and components
@@ -65,9 +72,17 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
 
 /**
  * Dispatch notifications for a maintenance update
- * Queries the maintenance and formats it as a PageUpdate
+ *
+ * Fetches the maintenance record with its components, formats it as a page update,
+ * then dispatches notifications to all matching subscriptions.
  *
  * @param maintenanceId - The ID of the maintenance record
+ *
+ * @example
+ * ```ts
+ * // Called when a maintenance window is scheduled/started
+ * await dispatchMaintenanceUpdate(maintenanceId);
+ * ```
  */
 export async function dispatchMaintenanceUpdate(maintenanceId: number) {
   // Get maintenance with components
@@ -109,10 +124,42 @@ export async function dispatchMaintenanceUpdate(maintenanceId: number) {
 }
 
 /**
- * When a page update (status report/maintenance) is created/updated, find all matching subscriptions
- * and send notifications in batches per channel
+ * Dispatch notifications for a page update to all matching subscriptions
+ *
+ * Finds all verified, active subscriptions for the page and sends notifications
+ * via their configured channels (email, webhook). Subscriptions are filtered by
+ * component scope - component-specific subscriptions only receive notifications
+ * for updates affecting their subscribed components.
  *
  * @param pageUpdate - The page update event
+ * @param pageUpdate.id - Update ID (status report or maintenance)
+ * @param pageUpdate.pageId - Page ID
+ * @param pageUpdate.title - Update title
+ * @param pageUpdate.status - Status (investigating, identified, monitoring, resolved, maintenance)
+ * @param pageUpdate.message - Update message
+ * @param pageUpdate.pageComponentIds - Component IDs affected by this update
+ * @param pageUpdate.pageComponents - Component names affected by this update
+ * @param pageUpdate.date - Update timestamp (ISO string)
+ *
+ * @example
+ * ```ts
+ * await dispatchPageUpdate({
+ *   id: 1,
+ *   pageId: 123,
+ *   title: "API Degradation",
+ *   status: "investigating",
+ *   message: "We're investigating slow response times",
+ *   pageComponentIds: [1, 2],
+ *   pageComponents: ["API", "Database"],
+ *   date: new Date().toISOString()
+ * });
+ * ```
+ *
+ * Notification behavior:
+ * - Email: Sent in batches of 100 (via Resend batch API)
+ * - Webhook: Sent in parallel with individual requests
+ * - Entire page subscriptions (no components): Always notified
+ * - Component subscriptions: Only notified if any affected component matches
  */
 export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
   const affectedComponentIds = pageUpdate.pageComponentIds;
@@ -134,41 +181,19 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
     return;
   }
 
-  // Optimized query: Single LEFT JOIN with GROUP_CONCAT
-  // Fetches all subscriptions with their component IDs in one query
-  const subscriptionsWithComponents = await db
-    .select({
-      id: pageSubscription.id,
-      email: pageSubscription.email,
-      webhookUrl: pageSubscription.webhookUrl,
-      pageId: pageSubscription.pageId,
-      workspaceId: pageSubscription.workspaceId,
-      channelType: pageSubscription.channelType,
-      channelConfig: pageSubscription.channelConfig,
-      token: pageSubscription.token,
-      verifiedAt: pageSubscription.verifiedAt,
-      // Aggregate component IDs as comma-separated string (NULL if empty)
-      componentIds: sql<string>`GROUP_CONCAT(${pageSubscriptionToPageComponent.pageComponentId})`,
-    })
-    .from(pageSubscription)
-    .leftJoin(
-      pageSubscriptionToPageComponent,
-      eq(
-        pageSubscription.id,
-        pageSubscriptionToPageComponent.pageSubscriptionId,
-      ),
-    )
-    .where(
-      and(
-        eq(pageSubscription.pageId, pageUpdate.pageId),
-        isNotNull(pageSubscription.verifiedAt),
-        isNull(pageSubscription.unsubscribedAt),
-      ),
-    )
-    .groupBy(pageSubscription.id)
-    .all();
+  // Fetch subscriptions with their components using relational query
+  const subscriptionsWithComponents = await db.query.pageSubscription.findMany({
+    where: and(
+      eq(pageSubscription.pageId, pageUpdate.pageId),
+      isNotNull(pageSubscription.verifiedAt),
+      isNull(pageSubscription.unsubscribedAt),
+    ),
+    with: {
+      components: true,
+    },
+  });
 
-  // Parse component IDs, add page data, and filter by page update scope
+  // Map to internal format and filter by page update scope
   const matchingSubscriptions: Subscription[] = subscriptionsWithComponents
     .map((sub) => ({
       id: sub.id,
@@ -183,9 +208,7 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
       channelConfig: sub.channelConfig ?? undefined,
       token: sub.token,
       verifiedAt: sub.verifiedAt ?? undefined,
-      componentIds: sub.componentIds
-        ? sub.componentIds.split(",").map(Number)
-        : [], // Empty = entire page subscription (NULL from GROUP_CONCAT)
+      componentIds: sub.components.map((c) => c.pageComponentId),
     }))
     .filter((sub) => {
       // Entire page subscription (empty componentIds) matches all page updates

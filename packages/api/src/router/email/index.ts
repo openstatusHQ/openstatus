@@ -5,6 +5,7 @@ import {
   invitation,
   maintenance,
   pageSubscription,
+  selectWorkspaceSchema,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
@@ -39,8 +40,26 @@ export const emailRouter = createTRPCRouter({
         where: eq(pageSubscription.id, opts.input.id),
         with: {
           page: true,
+          workspace: true,
         },
       });
+
+      const workspace = selectWorkspaceSchema.safeParse(
+        subscription?.workspace,
+      );
+
+      if (!workspace.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Invalid workspace",
+        });
+      }
+
+      const limits = workspace.data.limits;
+
+      if (!limits["status-subscribers"]) {
+        return;
+      }
 
       if (!subscription) {
         throw new TRPCError({

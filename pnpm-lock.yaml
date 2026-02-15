@@ -2007,8 +2007,8 @@ importers:
         specifier: workspace:*
         version: link:../emails
       zod:
-        specifier: ^3.24.1
-        version: 3.25.76
+        specifier: 4.1.13
+        version: 4.1.13
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*

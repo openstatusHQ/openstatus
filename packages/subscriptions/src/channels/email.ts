@@ -7,20 +7,25 @@ import type { PageUpdate, Subscription } from "../types";
  * Uses EmailClient for batched sending (chunks of 100, with retry logic)
  */
 
-// Validate RESEND_API_KEY exists
-if (!process.env.RESEND_API_KEY) {
-  throw new Error(
-    "RESEND_API_KEY environment variable is required for email notifications",
-  );
+// Lazy initialization of email client to avoid crashing in dev/test environments
+let emailClient: EmailClient | null = null;
+
+function getEmailClient(): EmailClient {
+  if (!emailClient) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error(
+        "RESEND_API_KEY environment variable is required for email notifications",
+      );
+    }
+    emailClient = new EmailClient({
+      apiKey: process.env.RESEND_API_KEY,
+    });
+  }
+  return emailClient;
 }
 
-// Create email client directly
-const emailClient = new EmailClient({
-  apiKey: process.env.RESEND_API_KEY,
-});
-
 export async function validateEmailConfig(config: unknown) {
-  const email = z.string().email().safeParse(config);
+  const email = z.email().safeParse(config);
   return { valid: email.success, error: email.error?.message };
 }
 
@@ -44,7 +49,8 @@ export async function sendEmailVerification(
     throw new Error("Email is required for email channel");
   }
 
-  await emailClient.sendPageSubscriptionVerification({
+  const client = getEmailClient();
+  await client.sendPageSubscriptionVerification({
     to: subscription.email,
     link: verifyUrl,
     page: subscription.pageName,
@@ -72,7 +78,8 @@ export async function sendEmailNotifications(
   // Get page info from first subscription (all subscriptions are for same page)
   const firstSub = validSubscriptions[0];
 
-  await emailClient.sendStatusReportUpdate({
+  const client = getEmailClient();
+  await client.sendStatusReportUpdate({
     subscribers: validSubscriptions.map((sub) => ({
       email: sub.email,
       token: sub.token,

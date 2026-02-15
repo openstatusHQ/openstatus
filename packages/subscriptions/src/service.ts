@@ -12,6 +12,22 @@ import {
  * Handles all subscription CRUD operations
  */
 
+// Verification token expiry configuration
+const VERIFICATION_EXPIRY_DAYS = 7;
+const VERIFICATION_EXPIRY_MS = VERIFICATION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+
+/**
+ * Mask email address for privacy (e.g., "john@example.com" -> "j***@example.com")
+ */
+function maskEmail(email: string): string {
+  const [localPart, domain] = email.split("@");
+  if (!domain) return email; // Invalid email, return as-is
+
+  // Show first character + *** + @domain
+  const masked = localPart.length > 0 ? `${localPart[0]}***` : "***";
+  return `${masked}@${domain}`;
+}
+
 interface UpsertEmailSubscriptionInput {
   email: string;
   pageId: number;
@@ -26,9 +42,36 @@ interface UpdateSubscriptionScopeInput {
 
 /**
  * Create or update email subscription (ADD behavior)
- * - If no active subscription exists: create new
- * - If active subscription exists: merge components
- * - If unsubscribed subscription exists: reactivate with new token
+ *
+ * @param input - Subscription details
+ * @param input.email - Email address (will be normalized to lowercase)
+ * @param input.pageId - Page ID to subscribe to
+ * @param input.componentIds - Optional array of component IDs. Empty array = entire page subscription
+ *
+ * @returns Subscription object with token for verification
+ *
+ * @throws Error if page not found or component IDs are invalid
+ *
+ * @example
+ * ```ts
+ * // Subscribe to entire page
+ * const sub = await upsertEmailSubscription({
+ *   email: "user@example.com",
+ *   pageId: 123
+ * });
+ *
+ * // Subscribe to specific components
+ * const sub = await upsertEmailSubscription({
+ *   email: "user@example.com",
+ *   pageId: 123,
+ *   componentIds: [1, 2, 3]
+ * });
+ * ```
+ *
+ * Behavior:
+ * - If no active subscription exists: creates new subscription
+ * - If active subscription exists: merges components (adds new ones)
+ * - If unsubscribed subscription exists: reactivates with new token
  */
 export async function upsertEmailSubscription(
   input: UpsertEmailSubscriptionInput,
@@ -117,7 +160,7 @@ export async function upsertEmailSubscription(
 
     // If not verified yet, update expiry
     if (!existing.verifiedAt) {
-      const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const newExpiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_MS);
       await db
         .update(pageSubscription)
         .set({
@@ -135,7 +178,7 @@ export async function upsertEmailSubscription(
       pageSlug: pageData.slug,
       customDomain: pageData.customDomain,
       workspaceId: existing.workspaceId,
-      channelType: "email",
+      channelType: existing.channelType,
       email: existing.email ?? undefined,
       token: existing.token,
       verifiedAt: existing.verifiedAt ?? undefined,
@@ -145,7 +188,7 @@ export async function upsertEmailSubscription(
 
   // No existing subscription - create new one
   const token = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+  const expiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_MS);
 
   const subscription = await db.transaction(async (tx) => {
     const sub = await tx
@@ -206,7 +249,7 @@ async function reactivateSubscription(
   >,
 ) {
   const newToken = crypto.randomUUID();
-  const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const newExpiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_MS);
 
   const updated = await db.transaction(async (tx) => {
     // Reactivate subscription
@@ -263,6 +306,18 @@ async function reactivateSubscription(
 
 /**
  * Verify a subscription by token
+ *
+ * @param token - Unique verification token from the subscription
+ * @param domain - Optional domain validation (page slug or custom domain)
+ *
+ * @returns Verified subscription object, or null if not found/invalid domain
+ *
+ * @throws Error if verification token is expired
+ *
+ * @example
+ * ```ts
+ * const verified = await verifySubscription(token, "status.example.com");
+ * ```
  */
 export async function verifySubscription(token: string, domain?: string) {
   const subscription = await db.query.pageSubscription.findFirst({
@@ -341,6 +396,19 @@ export async function verifySubscription(token: string, domain?: string) {
 
 /**
  * Get subscription by token (for management UI)
+ *
+ * @param token - Unique subscription token
+ * @param domain - Optional domain validation (page slug or custom domain)
+ *
+ * @returns Subscription object with all details, or null if not found/invalid domain
+ *
+ * @example
+ * ```ts
+ * const sub = await getSubscriptionByToken(token, "status.example.com");
+ * if (sub) {
+ *   console.log(`Subscribed to ${sub.componentIds.length || "all"} components`);
+ * }
+ * ```
  */
 export async function getSubscriptionByToken(token: string, domain?: string) {
   const subscription = await db.query.pageSubscription.findFirst({
@@ -374,7 +442,7 @@ export async function getSubscriptionByToken(token: string, domain?: string) {
     customDomain: subscription.page.customDomain,
     workspaceId: subscription.workspaceId,
     channelType: subscription.channelType as "email" | "webhook",
-    email: subscription.email ?? undefined,
+    email: subscription.email ? maskEmail(subscription.email) : undefined,
     webhookUrl: subscription.webhookUrl ?? undefined,
     token: subscription.token,
     verifiedAt: subscription.verifiedAt ?? undefined,
@@ -385,6 +453,31 @@ export async function getSubscriptionByToken(token: string, domain?: string) {
 
 /**
  * Update subscription scope (replace all components)
+ *
+ * @param input - Update details
+ * @param input.token - Subscription token
+ * @param input.componentIds - New component IDs (replaces existing). Empty array = entire page
+ * @param input.domain - Optional domain validation (page slug or custom domain)
+ *
+ * @returns Updated subscription object
+ *
+ * @throws Error if subscription not found, invalid domain, or component IDs don't belong to page
+ *
+ * @example
+ * ```ts
+ * // Update to specific components
+ * await updateSubscriptionScope({
+ *   token: "abc-123",
+ *   componentIds: [1, 2],
+ *   domain: "status.example.com"
+ * });
+ *
+ * // Update to entire page
+ * await updateSubscriptionScope({
+ *   token: "abc-123",
+ *   componentIds: []
+ * });
+ * ```
  */
 export async function updateSubscriptionScope(
   input: UpdateSubscriptionScopeInput,
@@ -480,6 +573,16 @@ export async function updateSubscriptionScope(
 
 /**
  * Unsubscribe by token
+ *
+ * @param token - Subscription token
+ * @param domain - Optional domain validation (page slug or custom domain)
+ *
+ * @throws Error if subscription not found, invalid domain, or already unsubscribed
+ *
+ * @example
+ * ```ts
+ * await unsubscribe(token, "status.example.com");
+ * ```
  */
 export async function unsubscribe(token: string, domain?: string) {
   const subscription = await db.query.pageSubscription.findFirst({

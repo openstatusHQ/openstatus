@@ -27,7 +27,6 @@ export const pageSubscriptionRouter = createTRPCRouter({
         email: z.email(),
         pageId: z.number().int().positive(),
         componentIds: z.array(z.number().int().positive()).optional(),
-        groupId: z.number().int().positive().optional(),
       }),
     )
     .mutation(async (opts) => {
