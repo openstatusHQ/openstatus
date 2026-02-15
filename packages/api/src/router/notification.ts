@@ -23,6 +23,8 @@ import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
+import { redis } from "@openstatus/upstash";
+import { nanoid } from "nanoid";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -547,4 +549,39 @@ export const notificationRouter = createTRPCRouter({
         message: "Invalid provider",
       });
     }),
+
+  createTelegramToken: protectedProcedure.query(async (opts) => {
+    const token = nanoid();
+    await redis.set(`telegram:token:${token}`, opts.ctx.workspace.id, {
+      ex: 259200, // 3 days
+    });
+    return { token };
+  }),
+
+  getTelegramUpdates: protectedProcedure.query(async (opts) => {
+    const res = await fetch(
+      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getUpdates`,
+    );
+    const data = await res.json();
+    if (!data.ok || !data.result) return [];
+
+    const validUpdates: { chat: any; user: any }[] = [];
+    for (const update of data.result) {
+      if (!update.message?.text?.startsWith("/start ")) continue;
+      const token = update.message.text.split(" ")[1];
+      if (!token) continue;
+
+      const workspaceId = await redis.get<string | number>(
+        `telegram:token:${token}`,
+      );
+      if (workspaceId == opts.ctx.workspace.id) {
+        await redis.expire(`telegram:token:${token}`, 10800);
+        validUpdates.push({
+          chat: update.message.chat,
+          user: update.message.from,
+        });
+      }
+    }
+    return validUpdates;
+  }),
 });
