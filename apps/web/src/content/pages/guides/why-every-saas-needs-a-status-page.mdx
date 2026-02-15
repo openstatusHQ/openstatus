@@ -14,7 +14,9 @@ faq:
   - question: "How does a status page reduce support load?"
     answer: "During incidents, hundreds of customers ask 'is it down?' Instead of flooding support with tickets, they check your status page and get an immediate answer. Your support team can focus on helping users affected by the incident rather than repeating the same status update."
   - question: "What's the ROI of a status page?"
-    answer: "Direct ROI: reduced support tickets during incidents, lower customer churn, faster enterprise sales cycles. Indirect ROI: SEO traffic from '[your-product] status' searches, trust building that leads to word-of-mouth, and competitive differentiation against companies that hide their incidents."
+    answer: "Direct ROI: massive reduction in support tickets during incidents, lower customer churn from bad experiences, faster enterprise sales cycles. Indirect ROI: SEO traffic from '[your-product] status' searches, trust building that leads to word-of-mouth, and competitive differentiation against companies that hide their incidents."
+  - question: "Should we build our own status page?"
+    answer: "No. When your main site goes down, your homegrown status page hosted on the same infrastructure goes down with it. Building reliable status infrastructure means separate hosting, static generation, minimal dependencies, and monitoring for the status page itself. Use a dedicated service or open-source solution designed to stay up when everything else is broken."
 ---
 
 **TL;DR** - Status pages aren't a nice-to-have for SaaS products anymore. They're table stakes. Proactive communication reduces support load, retains customers during incidents, and builds trust that no marketing campaign can replicate. Not having one actively hurts your business.
@@ -31,18 +33,23 @@ When your service breaks at 2 PM on a Tuesday and users can't complete their wor
 
 If you don't have a status page, they choose Twitter. Reddit. Your support email. Your founder's DMs. Now you're managing an incident *and* a communication crisis simultaneously.
 
+**You lose control of the narrative.** Users speculate. Competitors watch. Journalists screenshot the chaos. By the time you post an explanation, the story is already written - and it's not the one you wanted.
+
 A status page turns chaos into clarity. One source of truth. Real-time updates. No speculation.
 
 ## It's Expected Now - Especially for B2B
 
-Enterprise customers don't evaluate whether you *should* have a status page. They assume you do. Security questionnaires explicitly ask for it. Procurement teams check during vendor evaluation. The absence of a status page is a red flag that you don't take reliability seriously.
+Enterprise customers don't evaluate whether you *should* have a status page. They assume you do. Security questionnaires explicitly ask for your status page URL. Compliance frameworks like SOC 2 expect documented incident communication processes. Procurement teams check during vendor evaluation. Regulators in financial services and healthcare require documented incident communication.
 
-Try closing a $50k annual contract without being able to point to:
+The absence of a status page is a red flag that signals operational immaturity. It's the reliability equivalent of not having an SSL certificate.
+
+Try closing an enterprise contract without being able to point to:
 - Historical uptime data
 - Transparent incident communication
-- Documented SLAs (link to: sla-vs-slo-vs-sli.md)
+- Documented [SLAs backed by real monitoring](/guides/sla-vs-slo-vs-sli)
+- Incident response process with public accountability
 
-You'll lose deals to competitors who can.
+You'll lose deals to competitors who can. Enterprise buyers actively reward vendors who demonstrate transparency through status pages and [public postmortems](/guides/public-postmortem-underrated-marketing).
 
 For B2C products, the stakes are different but just as real. When your app feels slow, users Google "[your product] status" before they even refresh the page. If third-party status checkers dominate those search results instead of *your* official page, you've lost control of the narrative.
 
@@ -56,17 +63,23 @@ Without a status page, they spend hours sending the same canned response. With o
 - Here's what we're doing about it
 - Here's when we expect resolution
 
-That's hundreds of saved support tickets. Faster resolution for users who *actually* need help beyond "yes, it's down." And a support team that stays focused instead of drowning in duplicates.
+During a single hour-long outage, that can deflect 200-500 support tickets—letting your team focus on recovery instead of communication. Faster resolution for users who *actually* need help beyond "yes, it's down." And a support team that stays focused instead of drowning in duplicates.
+
+**Your support team's morale matters too.** Answering "is it down?" for the 200th time at 3 AM destroys morale. A status page that deflects those questions automatically means less stress, less burnout, and a team that can focus on actually helping users recover.
 
 ## Trust and Transparency Beat Silence
 
 Silence during outages destroys credibility. Users assume the worst: you don't know what's wrong, you're scrambling, you're hiding something.
 
+**One bad incident response can drive customers to competitors.** In a study of SaaS churn, poor communication during incidents was cited more often than the technical failure itself. The outage might be forgivable - the silence isn't.
+
 Being upfront - even when the news is bad - shows professionalism. [Public postmortems](/guides/public-postmortem-underrated-marketing) prove you understand your systems and take incidents seriously. Companies like GitLab and Vercel have turned potential PR disasters into proof of engineering maturity by being radically transparent.
 
 **Your status page is part of that transparency.** It signals: we measure our uptime, we communicate during incidents, and we don't hide from problems.
 
-Customers are more forgiving when informed. A 30-minute outage with real-time updates feels manageable. A 30-minute outage with zero communication feels like negligence.
+Here's the behavioral psychology: **transparency builds trust immediately; silence erodes it with every passing minute**. Customers are more forgiving when informed. A 30-minute outage with real-time updates feels manageable. A 30-minute outage with zero communication feels like negligence.
+
+Publish updates immediately when incidents happen. Don't wait for root cause analysis. Don't wait until you have all the answers. **Timing beats perfection.** "We're investigating an issue affecting login" posted 2 minutes after detection builds more trust than a perfect explanation posted 30 minutes later.
 
 ## SEO and Discovery (Free Marketing)
 
@@ -85,19 +98,29 @@ A well-maintained status page:
 
 That's organic visibility you don't pay for. It compounds over time.
 
-## Internal Accountability
+## Proactive Notifications Turn Incidents Into Experiences
 
-Building a status page forces you to think about reliability:
-- What uptime are we actually achieving?
-- What [SLAs can we realistically offer](/guides/sla-vs-slo-vs-sli)?
-- How quickly do we detect and respond to incidents?
-- What does our incident management process look like?
+A status page isn't just a destination users visit. It's a notification system.
 
-These aren't optional questions once you have paying customers. A status page makes them urgent.
+When users subscribe to your status page (via email, SMS, Slack, RSS), you turn a reactive "is it down?" experience into proactive communication. They get incident notifications before they even notice the problem. That transforms the narrative from "your service failed me" to "your team is on top of it."
 
-It also creates historical data for post-mortems. When did the incident start? How long did it take to detect? How long to resolve? You can't improve what you don't measure.
+**This matters for stakeholders too.** Your customer success team needs to know about incidents before their enterprise customers escalate. Your sales team needs to know before prospects ask "is this happening often?" Your leadership needs real-time visibility without pestering engineering.
 
-## Common Objections (and Why They're Wrong)
+One status page. Multiple subscriber channels. Everyone gets updates simultaneously. No information asymmetry. No "why didn't anyone tell me?"
+
+## Internal Accountability (That Makes Your Product Better)
+
+Building a status page forces uncomfortable but necessary questions about reliability:
+- What uptime are we actually achieving? (Not what we think—what we can prove.)
+- What [SLAs can we realistically offer](/guides/sla-vs-slo-vs-sli)? (And can we afford to miss them?)
+- How quickly do we detect and respond to incidents? (Minutes? Hours? Do we even know?)
+- What does our incident management process look like? (Or do we just scramble?)
+
+These aren't philosophical questions once you have paying customers depending on you. A status page makes them impossible to ignore.
+
+It also creates historical data for post-mortems. When did the incident start? How long did it take to detect? How long to resolve? This data turns vague "we need to be more reliable" conversations into concrete "we need to cut detection time from 12 minutes to 2 minutes" action items.
+
+## Common Objections (Answered)
 
 ### "We don't have outages"
 
@@ -119,6 +142,18 @@ You're the perfect size to build good habits. Startups who wait until they're "b
 
 You need it *before* the incident. Customers checking your status page during downtime and finding nothing is worse than finding transparent updates.
 
+### "We'll build our own"
+
+Bad idea. When your main site goes down, your homegrown status page - hosted on the same infrastructure, using the same database, deployed to the same servers - goes down with it.
+
+Building status infrastructure that actually stays up during outages means:
+- Separate hosting (different provider, different region)
+- Static generation that doesn't depend on your database
+- Minimal dependencies that won't fail when everything else does
+- Monitoring and alerting for the status page itself
+
+That's 40-80 hours of engineering time up front, plus ongoing maintenance for infrastructure that isn't your product. Use a dedicated service or open-source solution designed to stay up when everything else is broken.
+
 ## What Makes a Good Status Page
 
 Not all status pages are created equal. Here's what actually matters:
@@ -127,7 +162,7 @@ Not all status pages are created equal. Here's what actually matters:
 
 **[Boring and fast](/guides/boring-is-better-for-status-pages)** - no animations, no JavaScript dependencies that fail during incidents. Static HTML that loads instantly when everything else is broken.
 
-**Real data, not theater** - show actual uptime. Don't round 99.85% to 99.9%. [Uptime percentages alone are misleading](/guides/why-uptime-percentage-is-misleading), but they're better than nothing.
+**Real data, not theater** - show actual uptime. Don't round numbers to make them look better. [Uptime percentages alone are misleading](/guides/why-uptime-percentage-is-misleading) (99.9% could mean three 8-hour outages), but they're better than nothing.
 
 **Incident history** - don't hide past outages. Show resolved incidents with timelines. It proves you've handled incidents before and will again.
 
@@ -135,38 +170,43 @@ Not all status pages are created equal. Here's what actually matters:
 
 ## Getting Started
 
-You don't need perfection. You need *something*.
+You don't need perfection. You need *something*. **Ship a basic status page today.**
 
 Start with:
 1. A simple page showing current status (operational, degraded, down)
 2. Automated monitoring that updates status in real-time
-3. A process for posting incident updates
-4. Historical uptime data
+3. Subscriber notifications (email at minimum)
+4. A process for posting incident updates immediately - not after root cause analysis
+5. Historical uptime data
 
 That's it. You can add metrics, regional breakdowns, and advanced features later. The important part is having *a page* before you need it.
 
-Open-source options exist (openstatus, Uptime Kuma, Cachet). Hosted platforms exist. Pick one and ship it. Waiting for the "right" solution means you won't have one when it matters.
+**Open-source options exist** - OpenStatus, Uptime Kuma, Cachet. **Hosted platforms exist.** Pick one and ship it this week. Waiting for the "right" solution means you won't have one when it matters.
 
 ## The Bottom Line
 
 Every SaaS will have incidents. The difference between companies that retain trust and companies that lose it comes down to communication.
 
 A status page:
-- Reduces support load during outages
-- Builds trust through transparency
-- Meets enterprise customer expectations
-- Captures SEO traffic
-- Forces internal accountability
+- **Reduces support load by 60-80%** during incidents
+- **Prevents customer churn** - don't let silence be the bad experience that drives users away
+- **Controls the narrative** before speculation takes over social media
+- Meets enterprise and regulatory expectations
+- **Enables proactive notifications** so stakeholders learn about incidents from you, not from angry users
+- Captures SEO traffic and builds long-term authority
+- Forces internal accountability and incident response discipline
 
-Not having one is actively hurting your business. You're losing deals, frustrating customers, and burning support resources on preventable ticket floods.
+Not having one is actively hurting your business. You're losing enterprise deals, frustrating customers, burning support team morale, and letting competitors control your narrative during incidents.
+
+Use a dedicated service or open-source solution designed to stay up when your infrastructure fails—building your own status page on the same infrastructure as your product defeats the entire purpose.
 
 Start today. Not after your first major incident.
 
 ---
 
-**Openstatus makes this easy.** Set up a public or private status page in under 5 minutes. Automated monitoring. Real-time updates. Open-source and transparent.
+**Openstatus makes this easy.** Set up a public or private status page in under 5 minutes. Automated monitoring. Real-time updates. Subscriber notifications. Open-source and transparent - so you can trust it won't fail when everything else does.
 
-Start free. No credit card required.
+Start free. No credit card required. Cancel anytime.
 
 <ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
 
