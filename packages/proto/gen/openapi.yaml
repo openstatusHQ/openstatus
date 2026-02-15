@@ -1,0 +1,4967 @@
+openapi: 3.1.0
+info:
+  description: OpenStatus is a open-source status page platform with global uptime monitoring. The OpenStatus API allows you to interact with the OpenStatus platform programmatically. To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.
+  title: OpenStatus API
+  version: v2.0.0
+  contact:
+    email: ping@openstatus.dev
+    url: https://www.openstatus.dev
+externalDocs:
+  description: OpenStatus Documentation
+  url: https://docs.openstatus.dev
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-openstatus-key
+  schemas:
+    connect.error:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - not_found
+          enum:
+            - canceled
+            - unknown
+            - invalid_argument
+            - deadline_exceeded
+            - not_found
+            - already_exists
+            - permission_denied
+            - resource_exhausted
+            - failed_precondition
+            - aborted
+            - out_of_range
+            - unimplemented
+            - internal
+            - unavailable
+            - data_loss
+            - unauthenticated
+          description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/connect.error_details.Any'
+          description: A list of messages that carry the error details. There is no limit on the number of messages.
+      title: Connect Error
+      additionalProperties: true
+      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+    connect.error_details.Any:
+      type: object
+      properties:
+        type:
+          type: string
+          description: 'A URL that acts as a globally unique identifier for the type of the serialized message. For example: `type.googleapis.com/google.rpc.ErrorInfo`. This is used to determine the schema of the data in the `value` field and is the discriminator for the `debug` field.'
+        value:
+          type: string
+          format: binary
+          description: The Protobuf message, serialized as bytes and base64-encoded. The specific message type is identified by the `type` field.
+        debug:
+          oneOf:
+            - type: object
+              title: Any
+              additionalProperties: true
+              description: Detailed error information.
+          discriminator:
+            propertyName: type
+          title: Debug
+          description: Deserialized error detail payload. The 'type' field indicates the schema. This field is for easier debugging and should not be relied upon for application logic.
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message, with an additional debug field for ConnectRPC error details.
+    openstatus.health.v1.CheckRequest:
+      type: object
+      properties:
+        service:
+          type: string
+          title: service
+          description: Optional service name to check. If empty, checks overall service health.
+      title: CheckRequest
+      additionalProperties: false
+      description: CheckRequest is the request message for health checks.
+    openstatus.health.v1.CheckResponse:
+      type: object
+      properties:
+        status:
+          title: status
+          description: The serving status of the service.
+          $ref: '#/components/schemas/openstatus.health.v1.CheckResponse.ServingStatus'
+      title: CheckResponse
+      additionalProperties: false
+      description: CheckResponse is the response message for health checks.
+    openstatus.health.v1.CheckResponse.ServingStatus:
+      type: string
+      title: ServingStatus
+      enum:
+        - SERVING_STATUS_UNSPECIFIED
+        - SERVING_STATUS_SERVING
+        - SERVING_STATUS_NOT_SERVING
+      description: ServingStatus represents the health status of the service.
+    openstatus.maintenance.v1.CreateMaintenanceRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+            - Database Migration
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: Title of the maintenance (required, 1-256 characters).
+        message:
+          type: string
+          title: message
+          minLength: 1
+          description: Message describing the maintenance (required).
+        from:
+          type: string
+          examples:
+            - "2024-03-01T02:00:00Z"
+          title: from
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: Start time of the maintenance window (RFC 3339 format, required).
+        to:
+          type: string
+          examples:
+            - "2024-03-01T06:00:00Z"
+          title: to
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: End time of the maintenance window (RFC 3339 format, required).
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: Page ID to associate with this maintenance (required).
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: Page component IDs to associate with this maintenance (optional).
+        notify:
+          type:
+            - boolean
+            - "null"
+          title: notify
+          description: Whether to notify subscribers about this maintenance (optional, defaults to false).
+      title: CreateMaintenanceRequest
+      additionalProperties: false
+      description: CreateMaintenanceRequest is the request to create a new maintenance window.
+    openstatus.maintenance.v1.CreateMaintenanceResponse:
+      type: object
+      properties:
+        maintenance:
+          title: maintenance
+          description: The created maintenance.
+          $ref: '#/components/schemas/openstatus.maintenance.v1.Maintenance'
+      title: CreateMaintenanceResponse
+      additionalProperties: false
+      description: CreateMaintenanceResponse is the response after creating a maintenance window.
+    openstatus.maintenance.v1.DeleteMaintenanceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the maintenance to delete (required).
+      title: DeleteMaintenanceRequest
+      additionalProperties: false
+      description: DeleteMaintenanceRequest is the request to delete a maintenance window.
+    openstatus.maintenance.v1.DeleteMaintenanceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteMaintenanceResponse
+      additionalProperties: false
+      description: DeleteMaintenanceResponse is the response after deleting a maintenance window.
+    openstatus.maintenance.v1.GetMaintenanceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the maintenance to retrieve (required).
+      title: GetMaintenanceRequest
+      additionalProperties: false
+      description: GetMaintenanceRequest is the request to get a maintenance window by ID.
+    openstatus.maintenance.v1.GetMaintenanceResponse:
+      type: object
+      properties:
+        maintenance:
+          title: maintenance
+          description: The requested maintenance.
+          $ref: '#/components/schemas/openstatus.maintenance.v1.Maintenance'
+      title: GetMaintenanceResponse
+      additionalProperties: false
+      description: GetMaintenanceResponse is the response containing the maintenance window.
+    openstatus.maintenance.v1.ListMaintenancesRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of maintenances to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of maintenances to skip for pagination (defaults to 0).
+        pageId:
+          type:
+            - string
+            - "null"
+          title: page_id
+          description: Filter by page ID (optional).
+      title: ListMaintenancesRequest
+      additionalProperties: false
+      description: ListMaintenancesRequest is the request to list maintenance windows.
+    openstatus.maintenance.v1.ListMaintenancesResponse:
+      type: object
+      properties:
+        maintenances:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+          title: maintenances
+          description: List of maintenances.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of maintenances matching the filter.
+      title: ListMaintenancesResponse
+      additionalProperties: false
+      description: ListMaintenancesResponse is the response containing maintenance window summaries.
+    openstatus.maintenance.v1.Maintenance:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the maintenance.
+        title:
+          type: string
+          title: title
+          description: Title of the maintenance.
+        message:
+          type: string
+          title: message
+          description: Message describing the maintenance.
+        from:
+          type: string
+          title: from
+          description: Start time of the maintenance window (RFC 3339 format).
+        to:
+          type: string
+          title: to
+          description: End time of the maintenance window (RFC 3339 format).
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the page this maintenance is associated with.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the maintenance was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the maintenance was last updated (RFC 3339 format).
+      title: Maintenance
+      additionalProperties: false
+      description: Maintenance represents a maintenance window with full details.
+    openstatus.maintenance.v1.MaintenanceSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the maintenance.
+        title:
+          type: string
+          title: title
+          description: Title of the maintenance.
+        message:
+          type: string
+          title: message
+          description: Message describing the maintenance.
+        from:
+          type: string
+          title: from
+          description: Start time of the maintenance window (RFC 3339 format).
+        to:
+          type: string
+          title: to
+          description: End time of the maintenance window (RFC 3339 format).
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the page this maintenance is associated with.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the maintenance was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the maintenance was last updated (RFC 3339 format).
+      title: MaintenanceSummary
+      additionalProperties: false
+      description: MaintenanceSummary represents metadata for a maintenance window (used in list responses).
+    openstatus.maintenance.v1.UpdateMaintenanceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the maintenance to update (required).
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: New title for the maintenance (optional).
+        message:
+          type:
+            - string
+            - "null"
+          title: message
+          description: New message for the maintenance (optional).
+        from:
+          type:
+            - string
+            - "null"
+          title: from
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: New start time (RFC 3339 format, optional).
+        to:
+          type:
+            - string
+            - "null"
+          title: to
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: New end time (RFC 3339 format, optional).
+        pageId:
+          type:
+            - string
+            - "null"
+          title: page_id
+          description: New page ID (optional).
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: New list of page component IDs (optional, replaces existing list).
+      title: UpdateMaintenanceRequest
+      additionalProperties: false
+      description: UpdateMaintenanceRequest is the request to update a maintenance window.
+    openstatus.maintenance.v1.UpdateMaintenanceResponse:
+      type: object
+      properties:
+        maintenance:
+          title: maintenance
+          description: The updated maintenance.
+          $ref: '#/components/schemas/openstatus.maintenance.v1.Maintenance'
+      title: UpdateMaintenanceResponse
+      additionalProperties: false
+      description: UpdateMaintenanceResponse is the response after updating a maintenance window.
+    openstatus.monitor.v1.BodyAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - STRING_COMPARATOR_UNSPECIFIED
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+      title: BodyAssertion
+      additionalProperties: false
+      description: BodyAssertion defines an assertion for response body content.
+    openstatus.monitor.v1.CreateDNSMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: CreateDNSMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateDNSMonitorRequest is the request to create a new DNS monitor.
+    openstatus.monitor.v1.CreateDNSMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: CreateDNSMonitorResponse
+      additionalProperties: false
+      description: CreateDNSMonitorResponse is the response after creating a DNS monitor.
+    openstatus.monitor.v1.CreateHTTPMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: CreateHTTPMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
+    openstatus.monitor.v1.CreateHTTPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: CreateHTTPMonitorResponse
+      additionalProperties: false
+      description: CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
+    openstatus.monitor.v1.CreateTCPMonitorRequest:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: Monitor configuration (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: CreateTCPMonitorRequest
+      required:
+        - monitor
+      additionalProperties: false
+      description: CreateTCPMonitorRequest is the request to create a new TCP monitor.
+    openstatus.monitor.v1.CreateTCPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The created monitor with assigned ID.
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: CreateTCPMonitorResponse
+      additionalProperties: false
+      description: CreateTCPMonitorResponse is the response after creating a TCP monitor.
+    openstatus.monitor.v1.DNSMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - DNS Resolution Check
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          examples:
+            - example.com
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: Domain to resolve (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        recordAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.RecordAssertion'
+          title: record_assertions
+          maxItems: 10
+          description: DNS record assertions for validation.
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: DNSMonitor
+      additionalProperties: false
+      description: DNSMonitor defines the configuration for a DNS monitor.
+    openstatus.monitor.v1.DeleteMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to delete (required).
+      title: DeleteMonitorRequest
+      additionalProperties: false
+      description: DeleteMonitorRequest is the request to delete a monitor.
+    openstatus.monitor.v1.DeleteMonitorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteMonitorResponse
+      additionalProperties: false
+      description: DeleteMonitorResponse is the response after deleting a monitor.
+    openstatus.monitor.v1.GetMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to retrieve (required).
+      title: GetMonitorRequest
+      additionalProperties: false
+      description: GetMonitorRequest is the request to get a single monitor by ID.
+    openstatus.monitor.v1.GetMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The monitor configuration (one of HTTP, TCP, or DNS).
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorConfig'
+      title: GetMonitorResponse
+      additionalProperties: false
+      description: GetMonitorResponse is the response containing the monitor.
+    openstatus.monitor.v1.GetMonitorStatusRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to get status for (required).
+      title: GetMonitorStatusRequest
+      additionalProperties: false
+      description: GetMonitorStatusRequest is the request to get the status of all regions for a monitor.
+    openstatus.monitor.v1.GetMonitorStatusResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Monitor ID.
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.RegionStatus'
+          title: regions
+          description: Status for each region.
+      title: GetMonitorStatusResponse
+      additionalProperties: false
+      description: GetMonitorStatusResponse is the response containing the status of all regions for a monitor.
+    openstatus.monitor.v1.GetMonitorSummaryRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to get summary for (required).
+        timeRange:
+          title: time_range
+          description: Time range for metrics aggregation (defaults to 1 day if unspecified).
+          $ref: '#/components/schemas/openstatus.monitor.v1.TimeRange'
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Optional filter by regions. If empty, returns metrics for all regions.
+      title: GetMonitorSummaryRequest
+      additionalProperties: false
+      description: GetMonitorSummaryRequest is the request to get aggregated metrics for a monitor.
+    openstatus.monitor.v1.GetMonitorSummaryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Monitor ID.
+        lastPingAt:
+          type: string
+          title: last_ping_at
+          description: Timestamp of the last check in RFC 3339 format.
+        totalSuccessful:
+          type:
+            - integer
+            - string
+          title: total_successful
+          format: int64
+          description: Total number of successful requests.
+        totalDegraded:
+          type:
+            - integer
+            - string
+          title: total_degraded
+          format: int64
+          description: Total number of degraded requests.
+        totalFailed:
+          type:
+            - integer
+            - string
+          title: total_failed
+          format: int64
+          description: Total number of failed requests.
+        p50:
+          type:
+            - integer
+            - string
+          title: p50
+          format: int64
+          description: 50th percentile (median) latency in milliseconds.
+        p75:
+          type:
+            - integer
+            - string
+          title: p75
+          format: int64
+          description: 75th percentile latency in milliseconds.
+        p90:
+          type:
+            - integer
+            - string
+          title: p90
+          format: int64
+          description: 90th percentile latency in milliseconds.
+        p95:
+          type:
+            - integer
+            - string
+          title: p95
+          format: int64
+          description: 95th percentile latency in milliseconds.
+        p99:
+          type:
+            - integer
+            - string
+          title: p99
+          format: int64
+          description: 99th percentile latency in milliseconds.
+        timeRange:
+          title: time_range
+          description: Time range used for the metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.TimeRange'
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          description: Regions included in the metrics.
+      title: GetMonitorSummaryResponse
+      additionalProperties: false
+      description: GetMonitorSummaryResponse is the response containing aggregated metrics for a monitor.
+    openstatus.monitor.v1.HTTPMethod:
+      type: string
+      title: HTTPMethod
+      enum:
+        - HTTP_METHOD_UNSPECIFIED
+        - HTTP_METHOD_GET
+        - HTTP_METHOD_POST
+        - HTTP_METHOD_HEAD
+        - HTTP_METHOD_PUT
+        - HTTP_METHOD_PATCH
+        - HTTP_METHOD_DELETE
+        - HTTP_METHOD_TRACE
+        - HTTP_METHOD_CONNECT
+        - HTTP_METHOD_OPTIONS
+      description: HTTP methods supported for monitors.
+    openstatus.monitor.v1.HTTPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - Production API Health Check
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        url:
+          type: string
+          examples:
+            - https://api.example.com/health
+          title: url
+          maxLength: 2048
+          minLength: 1
+          format: uri
+          description: URL to monitor (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        method:
+          not:
+            enum:
+              - HTTP_METHOD_UNSPECIFIED
+          title: method
+          description: HTTP method to use (defaults to GET).
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMethod'
+        body:
+          type: string
+          examples:
+            - map[key:value]
+          title: body
+          description: Request body (optional).
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        followRedirects:
+          type:
+            - boolean
+            - "null"
+          title: follow_redirects
+          description: Whether to follow HTTP redirects (defaults to true when not specified).
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for the request.
+        statusCodeAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.StatusCodeAssertion'
+          title: status_code_assertions
+          maxItems: 10
+          description: Status code assertions for the response.
+        bodyAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.BodyAssertion'
+          title: body_assertions
+          maxItems: 10
+          description: Body content assertions for the response.
+        headerAssertions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HeaderAssertion'
+          title: header_assertions
+          maxItems: 10
+          description: Header assertions for the response.
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: HTTPMonitor
+      additionalProperties: false
+      description: HTTPMonitor defines the configuration for an HTTP monitor.
+    openstatus.monitor.v1.HeaderAssertion:
+      type: object
+      properties:
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+        comparator:
+          not:
+            enum:
+              - STRING_COMPARATOR_UNSPECIFIED
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header key to check (required).
+      title: HeaderAssertion
+      additionalProperties: false
+      description: HeaderAssertion defines an assertion for response headers.
+    openstatus.monitor.v1.Headers:
+      type: object
+      properties:
+        key:
+          type: string
+          examples:
+            - Authorization
+          title: key
+          minLength: 1
+          description: Header name.
+        value:
+          type: string
+          examples:
+            - Bearer token123
+          title: value
+          description: Header value.
+      title: Headers
+      additionalProperties: false
+      description: Headers represents a key-value pair for HTTP headers.
+    openstatus.monitor.v1.ListMonitorsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of monitors to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of monitors to skip for pagination (defaults to 0).
+      title: ListMonitorsRequest
+      additionalProperties: false
+      description: ListMonitorsRequest is the request to list monitors.
+    openstatus.monitor.v1.ListMonitorsResponse:
+      type: object
+      properties:
+        httpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          title: http_monitors
+          description: HTTP monitors in the workspace.
+        tcpMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          title: tcp_monitors
+          description: TCP monitors in the workspace.
+        dnsMonitors:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          title: dns_monitors
+          description: DNS monitors in the workspace.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of monitors across all types.
+      title: ListMonitorsResponse
+      additionalProperties: false
+      description: ListMonitorsResponse is the response containing a list of monitors.
+    openstatus.monitor.v1.MonitorConfig:
+      type: object
+      oneOf:
+        - properties:
+            dns:
+              title: dns
+              description: DNS monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          title: dns
+          required:
+            - dns
+        - properties:
+            http:
+              title: http
+              description: HTTP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          title: http
+          required:
+            - http
+        - properties:
+            tcp:
+              title: tcp
+              description: TCP monitor configuration.
+              $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          title: tcp
+          required:
+            - tcp
+      title: MonitorConfig
+      additionalProperties: false
+      description: MonitorConfig represents the type-specific configuration for a monitor.
+    openstatus.monitor.v1.MonitorStatus:
+      type: string
+      title: MonitorStatus
+      enum:
+        - MONITOR_STATUS_UNSPECIFIED
+        - MONITOR_STATUS_ACTIVE
+        - MONITOR_STATUS_DEGRADED
+        - MONITOR_STATUS_ERROR
+      description: MonitorStatus represents the operational status of a monitor.
+    openstatus.monitor.v1.NumberComparator:
+      type: string
+      title: NumberComparator
+      enum:
+        - NUMBER_COMPARATOR_UNSPECIFIED
+        - NUMBER_COMPARATOR_EQUAL
+        - NUMBER_COMPARATOR_NOT_EQUAL
+        - NUMBER_COMPARATOR_GREATER_THAN
+        - NUMBER_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - NUMBER_COMPARATOR_LESS_THAN
+        - NUMBER_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: NumberComparator defines comparison operations for numeric values.
+    openstatus.monitor.v1.OpenTelemetryConfig:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          title: endpoint
+          maxLength: 2048
+          description: OTEL endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+          title: headers
+          maxItems: 20
+          description: Custom headers for OTEL requests.
+      title: OpenTelemetryConfig
+      additionalProperties: false
+      description: OpenTelemetry configuration for exporting metrics.
+    openstatus.monitor.v1.Periodicity:
+      type: string
+      title: Periodicity
+      enum:
+        - PERIODICITY_UNSPECIFIED
+        - PERIODICITY_30S
+        - PERIODICITY_1M
+        - PERIODICITY_5M
+        - PERIODICITY_10M
+        - PERIODICITY_30M
+        - PERIODICITY_1H
+      description: Monitor periodicity options.
+    openstatus.monitor.v1.RecordAssertion:
+      type: object
+      properties:
+        record:
+          type: string
+          title: record
+          enum:
+            - A
+            - AAAA
+            - CNAME
+            - MX
+            - TXT
+          description: DNS record type (e.g., "A", "AAAA", "CNAME", "MX", "TXT").
+        comparator:
+          not:
+            enum:
+              - RECORD_COMPARATOR_UNSPECIFIED
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.RecordComparator'
+        target:
+          type: string
+          title: target
+          description: Target value to compare against.
+      title: RecordAssertion
+      additionalProperties: false
+      description: RecordAssertion defines an assertion for DNS records.
+    openstatus.monitor.v1.RecordComparator:
+      type: string
+      title: RecordComparator
+      enum:
+        - RECORD_COMPARATOR_UNSPECIFIED
+        - RECORD_COMPARATOR_EQUAL
+        - RECORD_COMPARATOR_NOT_EQUAL
+        - RECORD_COMPARATOR_CONTAINS
+        - RECORD_COMPARATOR_NOT_CONTAINS
+      description: RecordComparator defines comparison operations for DNS records.
+    openstatus.monitor.v1.Region:
+      type: string
+      title: Region
+      enum:
+        - REGION_UNSPECIFIED
+        - REGION_FLY_AMS
+        - REGION_FLY_ARN
+        - REGION_FLY_BOM
+        - REGION_FLY_CDG
+        - REGION_FLY_DFW
+        - REGION_FLY_EWR
+        - REGION_FLY_FRA
+        - REGION_FLY_GRU
+        - REGION_FLY_IAD
+        - REGION_FLY_JNB
+        - REGION_FLY_LAX
+        - REGION_FLY_LHR
+        - REGION_FLY_NRT
+        - REGION_FLY_ORD
+        - REGION_FLY_SJC
+        - REGION_FLY_SIN
+        - REGION_FLY_SYD
+        - REGION_FLY_YYZ
+        - REGION_KOYEB_FRA
+        - REGION_KOYEB_PAR
+        - REGION_KOYEB_SFO
+        - REGION_KOYEB_SIN
+        - REGION_KOYEB_TYO
+        - REGION_KOYEB_WAS
+        - REGION_RAILWAY_US_WEST2
+        - REGION_RAILWAY_US_EAST4
+        - REGION_RAILWAY_EUROPE_WEST4
+        - REGION_RAILWAY_ASIA_SOUTHEAST1
+      description: Geographic regions where monitors can run checks from.
+    openstatus.monitor.v1.RegionStatus:
+      type: object
+      properties:
+        region:
+          title: region
+          description: The region identifier.
+          $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+        status:
+          title: status
+          description: The status of the monitor in this region.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: RegionStatus
+      additionalProperties: false
+      description: RegionStatus represents the status of a monitor in a specific region.
+    openstatus.monitor.v1.StatusCodeAssertion:
+      type: object
+      properties:
+        target:
+          type:
+            - integer
+            - string
+          title: target
+          maximum: 599
+          minimum: 100
+          format: int64
+          description: Target status code to compare against (100-599).
+        comparator:
+          not:
+            enum:
+              - NUMBER_COMPARATOR_UNSPECIFIED
+          title: comparator
+          description: Comparison operation (required, must not be UNSPECIFIED).
+          $ref: '#/components/schemas/openstatus.monitor.v1.NumberComparator'
+      title: StatusCodeAssertion
+      additionalProperties: false
+      description: StatusCodeAssertion defines an assertion for HTTP status codes.
+    openstatus.monitor.v1.StringComparator:
+      type: string
+      title: StringComparator
+      enum:
+        - STRING_COMPARATOR_UNSPECIFIED
+        - STRING_COMPARATOR_CONTAINS
+        - STRING_COMPARATOR_NOT_CONTAINS
+        - STRING_COMPARATOR_EQUAL
+        - STRING_COMPARATOR_NOT_EQUAL
+        - STRING_COMPARATOR_EMPTY
+        - STRING_COMPARATOR_NOT_EMPTY
+        - STRING_COMPARATOR_GREATER_THAN
+        - STRING_COMPARATOR_GREATER_THAN_OR_EQUAL
+        - STRING_COMPARATOR_LESS_THAN
+        - STRING_COMPARATOR_LESS_THAN_OR_EQUAL
+      description: StringComparator defines comparison operations for string values.
+    openstatus.monitor.v1.TCPMonitor:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the monitor (output only for create requests).
+        name:
+          type: string
+          examples:
+            - Database Connection Check
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Name of the monitor (required, max 256 characters).
+        uri:
+          type: string
+          examples:
+            - tcp://db.example.com:5432
+          title: uri
+          maxLength: 2048
+          minLength: 1
+          description: URI to monitor in format "host:port" (required, max 2048 characters).
+        periodicity:
+          not:
+            enum:
+              - PERIODICITY_UNSPECIFIED
+          title: periodicity
+          description: Check periodicity (required).
+          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+        timeout:
+          type:
+            - integer
+            - string
+          title: timeout
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Timeout in milliseconds (0-120000, defaults to 45000).
+        degradedAt:
+          type:
+            - integer
+            - string
+            - "null"
+          title: degraded_at
+          maximum: 120000
+          minimum: 0
+          format: int64
+          description: Latency threshold for degraded status in milliseconds (optional, 0-120000).
+        retry:
+          type:
+            - integer
+            - string
+          title: retry
+          maximum: 10
+          minimum: 0
+          format: int64
+          description: Number of retry attempts (0-10, defaults to 3).
+        description:
+          type: string
+          title: description
+          maxLength: 1024
+          description: Description of the monitor (optional).
+        active:
+          type: boolean
+          title: active
+          description: Whether the monitor is active (defaults to false).
+        public:
+          type: boolean
+          title: public
+          description: Whether the monitor is publicly visible (defaults to false).
+        regions:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          title: regions
+          maxItems: 28
+          description: Geographic regions to run checks from.
+        openTelemetry:
+          title: open_telemetry
+          description: OpenTelemetry configuration for exporting metrics.
+          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+        status:
+          title: status
+          description: Current operational status of the monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+      title: TCPMonitor
+      additionalProperties: false
+      description: TCPMonitor defines the configuration for a TCP monitor.
+    openstatus.monitor.v1.TimeRange:
+      type: string
+      title: TimeRange
+      enum:
+        - TIME_RANGE_UNSPECIFIED
+        - TIME_RANGE_1D
+        - TIME_RANGE_7D
+        - TIME_RANGE_14D
+      description: TimeRange represents the time period for metrics aggregation.
+    openstatus.monitor.v1.TriggerMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to trigger (required).
+      title: TriggerMonitorRequest
+      additionalProperties: false
+      description: TriggerMonitorRequest is the request to trigger a monitor check.
+    openstatus.monitor.v1.TriggerMonitorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the trigger was successful.
+      title: TriggerMonitorResponse
+      additionalProperties: false
+      description: TriggerMonitorResponse is the response after triggering a monitor.
+    openstatus.monitor.v1.UpdateDNSMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+            - type: "null"
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+      title: UpdateDNSMonitorRequest
+      additionalProperties: false
+      description: UpdateDNSMonitorRequest is the request to update an existing DNS monitor.
+    openstatus.monitor.v1.UpdateDNSMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+      title: UpdateDNSMonitorResponse
+      additionalProperties: false
+      description: UpdateDNSMonitorResponse is the response after updating a DNS monitor.
+    openstatus.monitor.v1.UpdateHTTPMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+            - type: "null"
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+      title: UpdateHTTPMonitorRequest
+      additionalProperties: false
+      description: UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
+    openstatus.monitor.v1.UpdateHTTPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+      title: UpdateHTTPMonitorResponse
+      additionalProperties: false
+      description: UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
+    openstatus.monitor.v1.UpdateTCPMonitorRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Monitor ID to update (required).
+        monitor:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+            - type: "null"
+          title: monitor
+          description: Updated monitor configuration (all fields optional for partial updates).
+      title: UpdateTCPMonitorRequest
+      additionalProperties: false
+      description: UpdateTCPMonitorRequest is the request to update an existing TCP monitor.
+    openstatus.monitor.v1.UpdateTCPMonitorResponse:
+      type: object
+      properties:
+        monitor:
+          title: monitor
+          description: The updated monitor.
+          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+      title: UpdateTCPMonitorResponse
+      additionalProperties: false
+      description: UpdateTCPMonitorResponse is the response after updating a TCP monitor.
+    openstatus.notification.v1.CheckNotificationLimitRequest:
+      type: object
+      title: CheckNotificationLimitRequest
+      additionalProperties: false
+      description: CheckNotificationLimitRequest is the request to check notification limits.
+    openstatus.notification.v1.CheckNotificationLimitResponse:
+      type: object
+      properties:
+        limitReached:
+          type: boolean
+          title: limit_reached
+          description: Whether the workspace has reached its notification limit.
+        currentCount:
+          type: integer
+          title: current_count
+          format: int32
+          description: Current number of notification channels.
+        maxCount:
+          type: integer
+          title: max_count
+          format: int32
+          description: Maximum allowed notification channels.
+      title: CheckNotificationLimitResponse
+      additionalProperties: false
+      description: CheckNotificationLimitResponse is the response containing limit information.
+    openstatus.notification.v1.CreateNotificationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          examples:
+            - Slack Ops Channel
+          title: name
+          minLength: 1
+          description: Display name for the notification channel.
+        provider:
+          not:
+            enum:
+              - NOTIFICATION_PROVIDER_UNSPECIFIED
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        data:
+          title: data
+          description: Provider-specific configuration.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors to associate with this notification.
+      title: CreateNotificationRequest
+      required:
+        - data
+      additionalProperties: false
+      description: CreateNotificationRequest is the request to create a new notification channel.
+    openstatus.notification.v1.CreateNotificationResponse:
+      type: object
+      properties:
+        notification:
+          title: notification
+          description: The created notification channel.
+          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+      title: CreateNotificationResponse
+      additionalProperties: false
+      description: CreateNotificationResponse is the response after creating a notification channel.
+    openstatus.notification.v1.DeleteNotificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Notification ID to delete (required).
+      title: DeleteNotificationRequest
+      additionalProperties: false
+      description: DeleteNotificationRequest is the request to delete a notification channel.
+    openstatus.notification.v1.DeleteNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteNotificationResponse
+      additionalProperties: false
+      description: DeleteNotificationResponse is the response after deleting a notification channel.
+    openstatus.notification.v1.DiscordData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          examples:
+            - https://discord.com/api/webhooks/123/abc
+          title: webhook_url
+          format: uri
+          description: Discord webhook URL.
+      title: DiscordData
+      additionalProperties: false
+      description: DiscordData contains configuration for Discord notifications.
+    openstatus.notification.v1.EmailData:
+      type: object
+      properties:
+        email:
+          type: string
+          examples:
+            - ops-team@example.com
+          title: email
+          format: email
+          description: Email address to send notifications to.
+      title: EmailData
+      additionalProperties: false
+      description: EmailData contains configuration for email notifications.
+    openstatus.notification.v1.GetNotificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Notification ID to retrieve (required).
+      title: GetNotificationRequest
+      additionalProperties: false
+      description: GetNotificationRequest is the request to get a notification channel.
+    openstatus.notification.v1.GetNotificationResponse:
+      type: object
+      properties:
+        notification:
+          title: notification
+          description: The notification channel.
+          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+      title: GetNotificationResponse
+      additionalProperties: false
+      description: GetNotificationResponse is the response containing the notification channel.
+    openstatus.notification.v1.GoogleChatData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Google Chat webhook URL.
+      title: GoogleChatData
+      additionalProperties: false
+      description: GoogleChatData contains configuration for Google Chat notifications.
+    openstatus.notification.v1.GrafanaOncallData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          title: webhook_url
+          format: uri
+          description: Grafana OnCall webhook URL.
+      title: GrafanaOncallData
+      additionalProperties: false
+      description: GrafanaOncallData contains configuration for Grafana OnCall notifications.
+    openstatus.notification.v1.ListNotificationsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of notifications to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of notifications to skip for pagination (defaults to 0).
+      title: ListNotificationsRequest
+      additionalProperties: false
+      description: ListNotificationsRequest is the request to list notification channels.
+    openstatus.notification.v1.ListNotificationsResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.notification.v1.NotificationSummary'
+          title: notifications
+          description: Notification channel summaries.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of notification channels.
+      title: ListNotificationsResponse
+      additionalProperties: false
+      description: ListNotificationsResponse is the response containing notification channels.
+    openstatus.notification.v1.Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the notification.
+        name:
+          type: string
+          title: name
+          description: Display name for the notification channel.
+        provider:
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        data:
+          title: data
+          description: Provider-specific configuration.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: IDs of monitors associated with this notification.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the notification was created (RFC 3339).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the notification was last updated (RFC 3339).
+      title: Notification
+      additionalProperties: false
+      description: Notification represents a notification channel with full details.
+    openstatus.notification.v1.NotificationData:
+      type: object
+      oneOf:
+        - properties:
+            discord:
+              title: discord
+              description: Discord configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.DiscordData'
+          title: discord
+          required:
+            - discord
+        - properties:
+            email:
+              title: email
+              description: Email configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.EmailData'
+          title: email
+          required:
+            - email
+        - properties:
+            googleChat:
+              title: google_chat
+              description: Google Chat configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.GoogleChatData'
+          title: google_chat
+          required:
+            - googleChat
+        - properties:
+            grafanaOncall:
+              title: grafana_oncall
+              description: Grafana OnCall configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.GrafanaOncallData'
+          title: grafana_oncall
+          required:
+            - grafanaOncall
+        - properties:
+            ntfy:
+              title: ntfy
+              description: Ntfy configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.NtfyData'
+          title: ntfy
+          required:
+            - ntfy
+        - properties:
+            opsgenie:
+              title: opsgenie
+              description: Opsgenie configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieData'
+          title: opsgenie
+          required:
+            - opsgenie
+        - properties:
+            pagerduty:
+              title: pagerduty
+              description: PagerDuty configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.PagerDutyData'
+          title: pagerduty
+          required:
+            - pagerduty
+        - properties:
+            slack:
+              title: slack
+              description: Slack configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.SlackData'
+          title: slack
+          required:
+            - slack
+        - properties:
+            sms:
+              title: sms
+              description: SMS configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.SmsData'
+          title: sms
+          required:
+            - sms
+        - properties:
+            telegram:
+              title: telegram
+              description: Telegram configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.TelegramData'
+          title: telegram
+          required:
+            - telegram
+        - properties:
+            webhook:
+              title: webhook
+              description: Webhook configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.WebhookData'
+          title: webhook
+          required:
+            - webhook
+        - properties:
+            whatsapp:
+              title: whatsapp
+              description: WhatsApp configuration.
+              $ref: '#/components/schemas/openstatus.notification.v1.WhatsappData'
+          title: whatsapp
+          required:
+            - whatsapp
+      title: NotificationData
+      additionalProperties: false
+      description: NotificationData is a union of provider-specific configuration.
+    openstatus.notification.v1.NotificationProvider:
+      type: string
+      title: NotificationProvider
+      enum:
+        - NOTIFICATION_PROVIDER_UNSPECIFIED
+        - NOTIFICATION_PROVIDER_DISCORD
+        - NOTIFICATION_PROVIDER_EMAIL
+        - NOTIFICATION_PROVIDER_GOOGLE_CHAT
+        - NOTIFICATION_PROVIDER_GRAFANA_ONCALL
+        - NOTIFICATION_PROVIDER_NTFY
+        - NOTIFICATION_PROVIDER_PAGERDUTY
+        - NOTIFICATION_PROVIDER_OPSGENIE
+        - NOTIFICATION_PROVIDER_SLACK
+        - NOTIFICATION_PROVIDER_SMS
+        - NOTIFICATION_PROVIDER_TELEGRAM
+        - NOTIFICATION_PROVIDER_WEBHOOK
+        - NOTIFICATION_PROVIDER_WHATSAPP
+      description: NotificationProvider represents the supported notification channel types.
+    openstatus.notification.v1.NotificationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the notification.
+        name:
+          type: string
+          title: name
+          description: Display name for the notification channel.
+        provider:
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        monitorCount:
+          type: integer
+          title: monitor_count
+          format: int32
+          description: Number of monitors associated with this notification.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the notification was created (RFC 3339).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the notification was last updated (RFC 3339).
+      title: NotificationSummary
+      additionalProperties: false
+      description: NotificationSummary represents a notification channel summary for list responses.
+    openstatus.notification.v1.NtfyData:
+      type: object
+      properties:
+        topic:
+          type: string
+          examples:
+            - openstatus-alerts
+          title: topic
+          minLength: 1
+          description: Ntfy topic to publish to.
+        serverUrl:
+          type: string
+          title: server_url
+          description: Ntfy server URL (defaults to https://ntfy.sh).
+        token:
+          type:
+            - string
+            - "null"
+          title: token
+          description: Optional authentication token.
+      title: NtfyData
+      additionalProperties: false
+      description: NtfyData contains configuration for Ntfy notifications.
+    openstatus.notification.v1.OpsgenieData:
+      type: object
+      properties:
+        apiKey:
+          type: string
+          title: api_key
+          minLength: 1
+          description: Opsgenie API key.
+        region:
+          title: region
+          description: Opsgenie region.
+          $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieRegion'
+      title: OpsgenieData
+      additionalProperties: false
+      description: OpsgenieData contains configuration for Opsgenie notifications.
+    openstatus.notification.v1.OpsgenieRegion:
+      type: string
+      title: OpsgenieRegion
+      enum:
+        - OPSGENIE_REGION_UNSPECIFIED
+        - OPSGENIE_REGION_US
+        - OPSGENIE_REGION_EU
+      description: OpsgenieRegion represents the Opsgenie API region.
+    openstatus.notification.v1.PagerDutyData:
+      type: object
+      properties:
+        integrationKey:
+          type: string
+          examples:
+            - a1b2c3d4e5f6g7h8i9j0
+          title: integration_key
+          minLength: 1
+          description: PagerDuty integration key.
+      title: PagerDutyData
+      additionalProperties: false
+      description: PagerDutyData contains configuration for PagerDuty notifications.
+    openstatus.notification.v1.SendTestNotificationRequest:
+      type: object
+      properties:
+        provider:
+          not:
+            enum:
+              - NOTIFICATION_PROVIDER_UNSPECIFIED
+          title: provider
+          description: Provider type.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+        data:
+          title: data
+          description: Provider-specific configuration.
+          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+      title: SendTestNotificationRequest
+      required:
+        - data
+      additionalProperties: false
+      description: SendTestNotificationRequest is the request to send a test notification.
+    openstatus.notification.v1.SendTestNotificationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the test was successful.
+        errorMessage:
+          type:
+            - string
+            - "null"
+          title: error_message
+          description: Optional error message if the test failed.
+      title: SendTestNotificationResponse
+      additionalProperties: false
+      description: SendTestNotificationResponse is the response after sending a test notification.
+    openstatus.notification.v1.SlackData:
+      type: object
+      properties:
+        webhookUrl:
+          type: string
+          examples:
+            - https://hooks.slack.com/services/T00/B00/xxx
+          title: webhook_url
+          format: uri
+          description: Slack webhook URL.
+      title: SlackData
+      additionalProperties: false
+      description: SlackData contains configuration for Slack notifications.
+    openstatus.notification.v1.SmsData:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          examples:
+            - "+14155551234"
+          title: phone_number
+          minLength: 1
+          description: Phone number to send SMS to.
+      title: SmsData
+      additionalProperties: false
+      description: SmsData contains configuration for SMS notifications.
+    openstatus.notification.v1.TelegramData:
+      type: object
+      properties:
+        chatId:
+          type: string
+          examples:
+            - "-1001234567890"
+          title: chat_id
+          minLength: 1
+          description: Telegram chat ID.
+      title: TelegramData
+      additionalProperties: false
+      description: TelegramData contains configuration for Telegram notifications.
+    openstatus.notification.v1.UpdateNotificationRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: Notification ID to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          description: Updated display name.
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+            - type: "null"
+          title: data
+          description: Updated provider-specific configuration.
+        monitorIds:
+          type: array
+          items:
+            type: string
+          title: monitor_ids
+          description: Updated monitor IDs to associate.
+      title: UpdateNotificationRequest
+      additionalProperties: false
+      description: UpdateNotificationRequest is the request to update a notification channel.
+    openstatus.notification.v1.UpdateNotificationResponse:
+      type: object
+      properties:
+        notification:
+          title: notification
+          description: The updated notification channel.
+          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+      title: UpdateNotificationResponse
+      additionalProperties: false
+      description: UpdateNotificationResponse is the response after updating a notification channel.
+    openstatus.notification.v1.WebhookData:
+      type: object
+      properties:
+        endpoint:
+          type: string
+          examples:
+            - https://api.example.com/webhooks/openstatus
+          title: endpoint
+          format: uri
+          description: Webhook endpoint URL.
+        headers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.notification.v1.WebhookHeader'
+          title: headers
+          description: Optional custom headers.
+      title: WebhookData
+      additionalProperties: false
+      description: WebhookData contains configuration for custom webhook notifications.
+    openstatus.notification.v1.WebhookHeader:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+          minLength: 1
+          description: Header name.
+        value:
+          type: string
+          title: value
+          description: Header value.
+      title: WebhookHeader
+      additionalProperties: false
+      description: WebhookHeader represents a custom header for webhook requests.
+    openstatus.notification.v1.WhatsappData:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          title: phone_number
+          minLength: 1
+          description: Phone number to send WhatsApp messages to.
+      title: WhatsappData
+      additionalProperties: false
+      description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.status_page.v1.AddMonitorComponentRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to add the component to (required).
+        monitorId:
+          type: string
+          title: monitor_id
+          minLength: 1
+          description: ID of the monitor to associate with this component (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          description: Display name for the component (optional, defaults to monitor name).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: Description of the component (optional).
+        order:
+          type:
+            - integer
+            - "null"
+          title: order
+          format: int32
+          description: Display order of the component (optional).
+        groupId:
+          type:
+            - string
+            - "null"
+          title: group_id
+          description: ID of the group to add this component to (optional).
+      title: AddMonitorComponentRequest
+      additionalProperties: false
+      description: AddMonitorComponentRequest is the request to add a monitor-based component to a status page.
+    openstatus.status_page.v1.AddMonitorComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The created component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: AddMonitorComponentResponse
+      additionalProperties: false
+      description: AddMonitorComponentResponse is the response after adding a monitor component.
+    openstatus.status_page.v1.AddStaticComponentRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to add the component to (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the component (required).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: Description of the component (optional).
+        order:
+          type:
+            - integer
+            - "null"
+          title: order
+          format: int32
+          description: Display order of the component (optional).
+        groupId:
+          type:
+            - string
+            - "null"
+          title: group_id
+          description: ID of the group to add this component to (optional).
+      title: AddStaticComponentRequest
+      additionalProperties: false
+      description: AddStaticComponentRequest is the request to add a static component to a status page.
+    openstatus.status_page.v1.AddStaticComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The created component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: AddStaticComponentResponse
+      additionalProperties: false
+      description: AddStaticComponentResponse is the response after adding a static component.
+    openstatus.status_page.v1.ComponentStatus:
+      type: object
+      properties:
+        componentId:
+          type: string
+          title: component_id
+          description: ID of the component.
+        status:
+          title: status
+          description: Current status of the component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+      title: ComponentStatus
+      additionalProperties: false
+      description: ComponentStatus represents the status of a single component.
+    openstatus.status_page.v1.CreateComponentGroupRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to create the group in (required).
+        name:
+          type: string
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: Display name for the group (required).
+      title: CreateComponentGroupRequest
+      additionalProperties: false
+      description: CreateComponentGroupRequest is the request to create a new component group.
+    openstatus.status_page.v1.CreateComponentGroupResponse:
+      type: object
+      properties:
+        group:
+          title: group
+          description: The created component group.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+      title: CreateComponentGroupResponse
+      additionalProperties: false
+      description: CreateComponentGroupResponse is the response after creating a component group.
+    openstatus.status_page.v1.CreateStatusPageRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+            - Acme Corp Status
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: Title of the status page (required).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: Description of the status page (optional).
+        slug:
+          type: string
+          examples:
+            - my-status-page
+          title: slug
+          maxLength: 256
+          minLength: 1
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+          description: URL-friendly slug for the status page (required). Must be lowercase alphanumeric with hyphens.
+        homepageUrl:
+          type:
+            - string
+            - "null"
+          examples:
+            - https://www.example.com
+          title: homepage_url
+          description: URL to the homepage (optional).
+        contactUrl:
+          type:
+            - string
+            - "null"
+          title: contact_url
+          description: URL to the contact page (optional).
+      title: CreateStatusPageRequest
+      additionalProperties: false
+      description: CreateStatusPageRequest is the request to create a new status page.
+    openstatus.status_page.v1.CreateStatusPageResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The created status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+      title: CreateStatusPageResponse
+      additionalProperties: false
+      description: CreateStatusPageResponse is the response after creating a status page.
+    openstatus.status_page.v1.DeleteComponentGroupRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component group to delete (required).
+      title: DeleteComponentGroupRequest
+      additionalProperties: false
+      description: DeleteComponentGroupRequest is the request to delete a component group.
+    openstatus.status_page.v1.DeleteComponentGroupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteComponentGroupResponse
+      additionalProperties: false
+      description: DeleteComponentGroupResponse is the response after deleting a component group.
+    openstatus.status_page.v1.DeleteStatusPageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page to delete (required).
+      title: DeleteStatusPageRequest
+      additionalProperties: false
+      description: DeleteStatusPageRequest is the request to delete a status page.
+    openstatus.status_page.v1.DeleteStatusPageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteStatusPageResponse
+      additionalProperties: false
+      description: DeleteStatusPageResponse is the response after deleting a status page.
+    openstatus.status_page.v1.GetOverallStatusRequest:
+      type: object
+      oneOf:
+        - properties:
+            id:
+              type: string
+              title: id
+              description: ID of the status page.
+          title: id
+          required:
+            - id
+        - properties:
+            slug:
+              type: string
+              title: slug
+              description: Slug of the status page.
+          title: slug
+          required:
+            - slug
+      title: GetOverallStatusRequest
+      additionalProperties: false
+      description: GetOverallStatusRequest is the request to get the overall status of a status page.
+    openstatus.status_page.v1.GetOverallStatusResponse:
+      type: object
+      properties:
+        overallStatus:
+          title: overall_status
+          description: Aggregated status across all components.
+          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+        componentStatuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentStatus'
+          title: component_statuses
+          description: Status of individual components.
+      title: GetOverallStatusResponse
+      additionalProperties: false
+      description: GetOverallStatusResponse is the response containing the overall status and individual component statuses.
+    openstatus.status_page.v1.GetStatusPageContentRequest:
+      type: object
+      oneOf:
+        - properties:
+            id:
+              type: string
+              title: id
+              description: ID of the status page.
+          title: id
+          required:
+            - id
+        - properties:
+            slug:
+              type: string
+              title: slug
+              description: Slug of the status page.
+          title: slug
+          required:
+            - slug
+      title: GetStatusPageContentRequest
+      additionalProperties: false
+      description: GetStatusPageContentRequest is the request to get the full content of a status page.
+    openstatus.status_page.v1.GetStatusPageContentResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The status page details.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          title: components
+          description: Components on the status page.
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          title: groups
+          description: Component groups on the status page.
+        statusReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          title: status_reports
+          description: Active and recent status reports.
+        maintenances:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+          title: maintenances
+          description: Scheduled maintenances.
+      title: GetStatusPageContentResponse
+      additionalProperties: false
+      description: GetStatusPageContentResponse is the response containing the full status page content.
+    openstatus.status_page.v1.GetStatusPageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page to retrieve (required).
+      title: GetStatusPageRequest
+      additionalProperties: false
+      description: GetStatusPageRequest is the request to get a status page by ID.
+    openstatus.status_page.v1.GetStatusPageResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The requested status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+      title: GetStatusPageResponse
+      additionalProperties: false
+      description: GetStatusPageResponse is the response containing the status page.
+    openstatus.status_page.v1.ListStatusPagesRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of pages to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of pages to skip for pagination (defaults to 0).
+      title: ListStatusPagesRequest
+      additionalProperties: false
+      description: ListStatusPagesRequest is the request to list status pages.
+    openstatus.status_page.v1.ListStatusPagesResponse:
+      type: object
+      properties:
+        statusPages:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.StatusPageSummary'
+          title: status_pages
+          description: List of status pages (metadata only).
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of status pages.
+      title: ListStatusPagesResponse
+      additionalProperties: false
+      description: ListStatusPagesResponse is the response containing status page summaries.
+    openstatus.status_page.v1.ListSubscribersRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to list subscribers for (required).
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of subscribers to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of subscribers to skip for pagination (defaults to 0).
+        includeUnsubscribed:
+          type:
+            - boolean
+            - "null"
+          title: include_unsubscribed
+          description: Whether to include unsubscribed users (defaults to false).
+      title: ListSubscribersRequest
+      additionalProperties: false
+      description: ListSubscribersRequest is the request to list subscribers of a status page.
+    openstatus.status_page.v1.ListSubscribersResponse:
+      type: object
+      properties:
+        subscribers:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+          title: subscribers
+          description: List of subscribers.
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of subscribers matching the filter.
+      title: ListSubscribersResponse
+      additionalProperties: false
+      description: ListSubscribersResponse is the response containing status page subscribers.
+    openstatus.status_page.v1.OverallStatus:
+      type: string
+      title: OverallStatus
+      enum:
+        - OVERALL_STATUS_UNSPECIFIED
+        - OVERALL_STATUS_OPERATIONAL
+        - OVERALL_STATUS_DEGRADED
+        - OVERALL_STATUS_PARTIAL_OUTAGE
+        - OVERALL_STATUS_MAJOR_OUTAGE
+        - OVERALL_STATUS_MAINTENANCE
+        - OVERALL_STATUS_UNKNOWN
+      description: OverallStatus represents the aggregated status of all components on a page.
+    openstatus.status_page.v1.PageAccessType:
+      type: string
+      title: PageAccessType
+      enum:
+        - PAGE_ACCESS_TYPE_UNSPECIFIED
+        - PAGE_ACCESS_TYPE_PUBLIC
+        - PAGE_ACCESS_TYPE_PASSWORD_PROTECTED
+        - PAGE_ACCESS_TYPE_AUTHENTICATED
+      description: PageAccessType defines who can access the status page.
+    openstatus.status_page.v1.PageComponent:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the component.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page this component belongs to.
+        name:
+          type: string
+          title: name
+          description: Display name of the component.
+        description:
+          type: string
+          title: description
+          description: Description of the component (optional).
+        type:
+          title: type
+          description: Type of the component (monitor or static).
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentType'
+        monitorId:
+          type: string
+          title: monitor_id
+          description: ID of the monitor if type is MONITOR (optional).
+        order:
+          type: integer
+          title: order
+          format: int32
+          description: Display order of the component.
+        groupId:
+          type: string
+          title: group_id
+          description: ID of the group this component belongs to (optional).
+        groupOrder:
+          type: integer
+          title: group_order
+          format: int32
+          description: Order within the group if grouped.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the component was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the component was last updated (RFC 3339 format).
+      title: PageComponent
+      additionalProperties: false
+      description: PageComponent represents a component displayed on a status page.
+    openstatus.status_page.v1.PageComponentGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the group.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page this group belongs to.
+        name:
+          type: string
+          title: name
+          description: Display name of the group.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the group was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the group was last updated (RFC 3339 format).
+      title: PageComponentGroup
+      additionalProperties: false
+      description: PageComponentGroup represents a group of components on a status page.
+    openstatus.status_page.v1.PageComponentType:
+      type: string
+      title: PageComponentType
+      enum:
+        - PAGE_COMPONENT_TYPE_UNSPECIFIED
+        - PAGE_COMPONENT_TYPE_MONITOR
+        - PAGE_COMPONENT_TYPE_STATIC
+      description: PageComponentType defines the type of a component on a status page.
+    openstatus.status_page.v1.PageSubscriber:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the subscriber.
+        pageId:
+          type: string
+          title: page_id
+          description: ID of the status page the user is subscribed to.
+        email:
+          type: string
+          title: email
+          description: Email address of the subscriber.
+        acceptedAt:
+          type: string
+          title: accepted_at
+          description: Timestamp when the subscription was accepted/confirmed (RFC 3339 format, optional).
+        unsubscribedAt:
+          type: string
+          title: unsubscribed_at
+          description: Timestamp when the user unsubscribed (RFC 3339 format, optional).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the subscription was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the subscription was last updated (RFC 3339 format).
+      title: PageSubscriber
+      additionalProperties: false
+      description: PageSubscriber represents a subscriber to a status page.
+    openstatus.status_page.v1.PageTheme:
+      type: string
+      title: PageTheme
+      enum:
+        - PAGE_THEME_UNSPECIFIED
+        - PAGE_THEME_SYSTEM
+        - PAGE_THEME_LIGHT
+        - PAGE_THEME_DARK
+      description: PageTheme defines the visual theme of the status page.
+    openstatus.status_page.v1.RemoveComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to remove (required).
+      title: RemoveComponentRequest
+      additionalProperties: false
+      description: RemoveComponentRequest is the request to remove a component from a status page.
+    openstatus.status_page.v1.RemoveComponentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the removal was successful.
+      title: RemoveComponentResponse
+      additionalProperties: false
+      description: RemoveComponentResponse is the response after removing a component.
+    openstatus.status_page.v1.StatusPage:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status page.
+        title:
+          type: string
+          title: title
+          description: Title of the status page.
+        description:
+          type: string
+          title: description
+          description: Description of the status page.
+        slug:
+          type: string
+          examples:
+            - acme-corp
+          title: slug
+          description: URL-friendly slug for the status page.
+        customDomain:
+          type: string
+          examples:
+            - status.example.com
+          title: custom_domain
+          description: Custom domain for the status page (optional).
+        published:
+          type: boolean
+          title: published
+          description: Whether the status page is published and visible.
+        accessType:
+          title: access_type
+          description: Access type for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageAccessType'
+        theme:
+          title: theme
+          description: Visual theme for the status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageTheme'
+        homepageUrl:
+          type: string
+          title: homepage_url
+          description: URL to the homepage (optional).
+        contactUrl:
+          type: string
+          title: contact_url
+          description: URL to the contact page (optional).
+        icon:
+          type: string
+          title: icon
+          description: Icon URL for the status page (optional).
+        createdAt:
+          type: string
+          examples:
+            - "2024-01-15T09:00:00Z"
+          title: created_at
+          description: Timestamp when the page was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          examples:
+            - "2024-06-20T14:30:00Z"
+          title: updated_at
+          description: Timestamp when the page was last updated (RFC 3339 format).
+      title: StatusPage
+      additionalProperties: false
+      description: StatusPage represents a full status page with all details.
+    openstatus.status_page.v1.StatusPageSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status page.
+        title:
+          type: string
+          title: title
+          description: Title of the status page.
+        slug:
+          type: string
+          title: slug
+          description: URL-friendly slug for the status page.
+        published:
+          type: boolean
+          title: published
+          description: Whether the status page is published and visible.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the page was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the page was last updated (RFC 3339 format).
+      title: StatusPageSummary
+      additionalProperties: false
+      description: StatusPageSummary represents metadata for a status page (used in list responses).
+    openstatus.status_page.v1.SubscribeToPageRequest:
+      type: object
+      properties:
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: ID of the status page to subscribe to (required).
+        email:
+          type: string
+          examples:
+            - user@example.com
+          title: email
+          format: email
+          description: Email address to subscribe (required).
+      title: SubscribeToPageRequest
+      additionalProperties: false
+      description: SubscribeToPageRequest is the request to subscribe an email to a status page.
+    openstatus.status_page.v1.SubscribeToPageResponse:
+      type: object
+      properties:
+        subscriber:
+          title: subscriber
+          description: The created subscriber.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+      title: SubscribeToPageResponse
+      additionalProperties: false
+      description: SubscribeToPageResponse is the response after subscribing to a status page.
+    openstatus.status_page.v1.UnsubscribeFromPageRequest:
+      type: object
+      allOf:
+        - properties:
+            pageId:
+              type: string
+              title: page_id
+              minLength: 1
+              description: ID of the status page to unsubscribe from (required).
+        - oneOf:
+            - properties:
+                email:
+                  type: string
+                  title: email
+                  description: Email address to unsubscribe.
+              title: email
+              required:
+                - email
+            - properties:
+                id:
+                  type: string
+                  title: id
+                  description: Subscriber ID.
+              title: id
+              required:
+                - id
+      title: UnsubscribeFromPageRequest
+      additionalProperties: false
+      description: UnsubscribeFromPageRequest is the request to unsubscribe from a status page.
+    openstatus.status_page.v1.UnsubscribeFromPageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the unsubscription was successful.
+      title: UnsubscribeFromPageResponse
+      additionalProperties: false
+      description: UnsubscribeFromPageResponse is the response after unsubscribing from a status page.
+    openstatus.status_page.v1.UpdateComponentGroupRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component group to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          minLength: 1
+          description: New display name for the group (optional).
+      title: UpdateComponentGroupRequest
+      additionalProperties: false
+      description: UpdateComponentGroupRequest is the request to update a component group.
+    openstatus.status_page.v1.UpdateComponentGroupResponse:
+      type: object
+      properties:
+        group:
+          title: group
+          description: The updated component group.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+      title: UpdateComponentGroupResponse
+      additionalProperties: false
+      description: UpdateComponentGroupResponse is the response after updating a component group.
+    openstatus.status_page.v1.UpdateComponentRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the component to update (required).
+        name:
+          type:
+            - string
+            - "null"
+          title: name
+          maxLength: 256
+          description: New display name for the component (optional).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: New description for the component (optional).
+        order:
+          type:
+            - integer
+            - "null"
+          title: order
+          format: int32
+          description: New display order (optional).
+        groupId:
+          type:
+            - string
+            - "null"
+          title: group_id
+          description: New group ID (optional, set to empty string to remove from group).
+        groupOrder:
+          type:
+            - integer
+            - "null"
+          title: group_order
+          format: int32
+          description: New order within the group (optional).
+      title: UpdateComponentRequest
+      additionalProperties: false
+      description: UpdateComponentRequest is the request to update a component.
+    openstatus.status_page.v1.UpdateComponentResponse:
+      type: object
+      properties:
+        component:
+          title: component
+          description: The updated component.
+          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+      title: UpdateComponentResponse
+      additionalProperties: false
+      description: UpdateComponentResponse is the response after updating a component.
+    openstatus.status_page.v1.UpdateStatusPageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status page to update (required).
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+          maxLength: 256
+          minLength: 1
+          description: New title for the status page (optional).
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 1024
+          description: New description for the status page (optional).
+        slug:
+          type:
+            - string
+            - "null"
+          title: slug
+          maxLength: 256
+          minLength: 1
+          pattern: ^[a-z0-9]+(?:-[a-z0-9]+)*$
+          description: New slug for the status page (optional).
+        homepageUrl:
+          type:
+            - string
+            - "null"
+          title: homepage_url
+          description: New homepage URL (optional).
+        contactUrl:
+          type:
+            - string
+            - "null"
+          title: contact_url
+          description: New contact URL (optional).
+      title: UpdateStatusPageRequest
+      additionalProperties: false
+      description: UpdateStatusPageRequest is the request to update a status page.
+    openstatus.status_page.v1.UpdateStatusPageResponse:
+      type: object
+      properties:
+        statusPage:
+          title: status_page
+          description: The updated status page.
+          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+      title: UpdateStatusPageResponse
+      additionalProperties: false
+      description: UpdateStatusPageResponse is the response after updating a status page.
+    openstatus.status_report.v1.AddStatusReportUpdateRequest:
+      type: object
+      properties:
+        statusReportId:
+          type: string
+          title: status_report_id
+          minLength: 1
+          description: ID of the status report to update (required).
+        status:
+          title: status
+          description: New status for the report (required).
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        message:
+          type: string
+          title: message
+          minLength: 1
+          description: Message describing what changed (required).
+        date:
+          type:
+            - string
+            - "null"
+          title: date
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: Optional date for the update (RFC 3339 format). Defaults to current time if not provided.
+        notify:
+          type:
+            - boolean
+            - "null"
+          title: notify
+          description: Whether to notify subscribers about this update (optional, defaults to false).
+      title: AddStatusReportUpdateRequest
+      additionalProperties: false
+      description: AddStatusReportUpdateRequest is the request to add a new update to a status report.
+    openstatus.status_report.v1.AddStatusReportUpdateResponse:
+      type: object
+      properties:
+        statusReport:
+          title: status_report
+          description: The updated status report with the new update included.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+      title: AddStatusReportUpdateResponse
+      additionalProperties: false
+      description: AddStatusReportUpdateResponse is the response after adding an update to a status report.
+    openstatus.status_report.v1.CreateStatusReportRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          examples:
+            - API Degradation Investigation
+          title: title
+          minLength: 1
+          description: Title of the status report (required).
+        status:
+          title: status
+          description: Initial status (required).
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        message:
+          type: string
+          examples:
+            - We are investigating reports of increased API latency.
+          title: message
+          minLength: 1
+          description: Initial message describing the incident (required).
+        date:
+          type: string
+          examples:
+            - "2024-03-15T10:30:00Z"
+          title: date
+          pattern: ^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$
+          description: Date when the event occurred (RFC 3339 format, required).
+        pageId:
+          type: string
+          title: page_id
+          minLength: 1
+          description: Page ID to associate with this report (required).
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: Page component IDs to associate with this report (optional).
+        notify:
+          type:
+            - boolean
+            - "null"
+          title: notify
+          description: Whether to notify subscribers about this status report (optional, defaults to false).
+      title: CreateStatusReportRequest
+      additionalProperties: false
+      description: CreateStatusReportRequest is the request to create a new status report.
+    openstatus.status_report.v1.CreateStatusReportResponse:
+      type: object
+      properties:
+        statusReport:
+          title: status_report
+          description: The created status report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+      title: CreateStatusReportResponse
+      additionalProperties: false
+      description: CreateStatusReportResponse is the response after creating a status report.
+    openstatus.status_report.v1.DeleteStatusReportRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status report to delete (required).
+      title: DeleteStatusReportRequest
+      additionalProperties: false
+      description: DeleteStatusReportRequest is the request to delete a status report.
+    openstatus.status_report.v1.DeleteStatusReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeleteStatusReportResponse
+      additionalProperties: false
+      description: DeleteStatusReportResponse is the response after deleting a status report.
+    openstatus.status_report.v1.GetStatusReportRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status report to retrieve (required).
+      title: GetStatusReportRequest
+      additionalProperties: false
+      description: GetStatusReportRequest is the request to get a status report by ID.
+    openstatus.status_report.v1.GetStatusReportResponse:
+      type: object
+      properties:
+        statusReport:
+          title: status_report
+          description: The requested status report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+      title: GetStatusReportResponse
+      additionalProperties: false
+      description: GetStatusReportResponse is the response containing the status report with its full update timeline.
+    openstatus.status_report.v1.ListStatusReportsRequest:
+      type: object
+      properties:
+        limit:
+          type:
+            - integer
+            - "null"
+          title: limit
+          maximum: 100
+          minimum: 1
+          format: int32
+          description: Maximum number of reports to return (1-100, defaults to 50).
+        offset:
+          type:
+            - integer
+            - "null"
+          title: offset
+          minimum: 0
+          format: int32
+          description: Number of reports to skip for pagination (defaults to 0).
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+          title: statuses
+          description: Filter by status (optional). If empty, returns all statuses.
+      title: ListStatusReportsRequest
+      additionalProperties: false
+      description: ListStatusReportsRequest is the request to list status reports.
+    openstatus.status_report.v1.ListStatusReportsResponse:
+      type: object
+      properties:
+        statusReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportSummary'
+          title: status_reports
+          description: List of status reports (metadata only, use GetStatusReport for full details).
+        totalSize:
+          type: integer
+          title: total_size
+          format: int32
+          description: Total number of reports matching the filter.
+      title: ListStatusReportsResponse
+      additionalProperties: false
+      description: ListStatusReportsResponse is the response containing status report summaries.
+    openstatus.status_report.v1.StatusReport:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status report.
+        status:
+          title: status
+          description: Current status of the report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        title:
+          type: string
+          title: title
+          description: Title of the status report.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        updates:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportUpdate'
+          title: updates
+          description: Timeline of updates for this report (only included in GetStatusReport).
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the report was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the report was last updated (RFC 3339 format).
+      title: StatusReport
+      additionalProperties: false
+      description: StatusReport represents an incident or maintenance report with full details.
+    openstatus.status_report.v1.StatusReportStatus:
+      type: string
+      title: StatusReportStatus
+      enum:
+        - STATUS_REPORT_STATUS_UNSPECIFIED
+        - STATUS_REPORT_STATUS_INVESTIGATING
+        - STATUS_REPORT_STATUS_IDENTIFIED
+        - STATUS_REPORT_STATUS_MONITORING
+        - STATUS_REPORT_STATUS_RESOLVED
+      description: StatusReportStatus represents the current state of a status report.
+    openstatus.status_report.v1.StatusReportSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the status report.
+        status:
+          title: status
+          description: Current status of the report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        title:
+          type: string
+          title: title
+          description: Title of the status report.
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: IDs of affected page components.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the report was created (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the report was last updated (RFC 3339 format).
+      title: StatusReportSummary
+      additionalProperties: false
+      description: StatusReportSummary represents metadata for a status report (used in list responses).
+    openstatus.status_report.v1.StatusReportUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          description: Unique identifier for the update.
+        status:
+          title: status
+          description: Status at the time of this update.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+        date:
+          type: string
+          title: date
+          description: Timestamp when this update occurred (RFC 3339 format).
+        message:
+          type: string
+          title: message
+          description: Message describing the update.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the update was created (RFC 3339 format).
+      title: StatusReportUpdate
+      additionalProperties: false
+      description: StatusReportUpdate represents a single update entry in a status report timeline.
+    openstatus.status_report.v1.UpdateStatusReportRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+          minLength: 1
+          description: ID of the status report to update (required).
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+          description: New title for the report (optional).
+        pageComponentIds:
+          type: array
+          items:
+            type: string
+          title: page_component_ids
+          description: New list of page component IDs (optional, replaces existing list).
+      title: UpdateStatusReportRequest
+      additionalProperties: false
+      description: UpdateStatusReportRequest is the request to update a status report's metadata.
+    openstatus.status_report.v1.UpdateStatusReportResponse:
+      type: object
+      properties:
+        statusReport:
+          title: status_report
+          description: The updated status report.
+          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+      title: UpdateStatusReportResponse
+      additionalProperties: false
+      description: UpdateStatusReportResponse is the response after updating a status report.
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: MonitorService
+    description: |
+      Create, update, delete, and query monitors. Supports HTTP, TCP, and DNS monitor types
+      with configurable check intervals, regions, assertions, and alerting thresholds.
+  - name: StatusPageService
+    description: |
+      Manage public status pages with components, component groups, and email subscribers.
+      Includes endpoints for retrieving full page content and aggregated status.
+  - name: NotificationService
+    description: |
+      Configure notification channels (Slack, Discord, PagerDuty, email, webhooks, etc.)
+      and associate them with monitors. Supports 12 notification providers.
+  - name: StatusReportService
+    description: |
+      Create and manage incident reports with status updates. Reports follow a lifecycle:
+      investigating -> identified -> monitoring -> resolved.
+  - name: MaintenanceService
+    description: |
+      Schedule maintenance windows for status page components. Subscribers can be
+      notified automatically when maintenance is created.
+  - name: HealthService
+    description: Health check endpoint for load balancer probes. No authentication required.
+paths:
+  /rpc/openstatus.health.v1.HealthService/Check:
+    get:
+      tags:
+        - HealthService
+      summary: Check
+      description: Check returns the current serving status of the service.
+      operationId: HealthService_Check.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+    post:
+      tags:
+        - HealthService
+      summary: Check
+      description: Check returns the current serving status of the service.
+      operationId: HealthService_Check
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/CreateMaintenance:
+    post:
+      tags:
+        - MaintenanceService
+      summary: CreateMaintenance
+      description: CreateMaintenance creates a new maintenance window.
+      operationId: MaintenanceService_CreateMaintenance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/DeleteMaintenance:
+    post:
+      tags:
+        - MaintenanceService
+      summary: DeleteMaintenance
+      description: DeleteMaintenance removes a maintenance window.
+      operationId: MaintenanceService_DeleteMaintenance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/GetMaintenance:
+    get:
+      tags:
+        - MaintenanceService
+      summary: GetMaintenance
+      description: GetMaintenance retrieves a specific maintenance window by ID.
+      operationId: MaintenanceService_GetMaintenance.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceResponse'
+    post:
+      tags:
+        - MaintenanceService
+      summary: GetMaintenance
+      description: GetMaintenance retrieves a specific maintenance window by ID.
+      operationId: MaintenanceService_GetMaintenance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/ListMaintenances:
+    get:
+      tags:
+        - MaintenanceService
+      summary: ListMaintenances
+      description: ListMaintenances returns all maintenance windows for the workspace.
+      operationId: MaintenanceService_ListMaintenances.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesResponse'
+    post:
+      tags:
+        - MaintenanceService
+      summary: ListMaintenances
+      description: ListMaintenances returns all maintenance windows for the workspace.
+      operationId: MaintenanceService_ListMaintenances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesResponse'
+  /rpc/openstatus.maintenance.v1.MaintenanceService/UpdateMaintenance:
+    post:
+      tags:
+        - MaintenanceService
+      summary: UpdateMaintenance
+      description: UpdateMaintenance updates a maintenance window.
+      operationId: MaintenanceService_UpdateMaintenance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/CreateDNSMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: CreateDNSMonitor
+      description: CreateDNSMonitor creates a new DNS monitor.
+      operationId: MonitorService_CreateDNSMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/CreateHTTPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: CreateHTTPMonitor
+      description: Creates a new HTTP monitor in the authenticated workspace. Configure the target URL, HTTP method, request headers and body, response assertions (status code, body content, headers), check periodicity, geographic regions, and optional OpenTelemetry export. The monitor starts checking immediately if set to active.
+      operationId: MonitorService_CreateHTTPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/CreateTCPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: CreateTCPMonitor
+      description: CreateTCPMonitor creates a new TCP monitor.
+      operationId: MonitorService_CreateTCPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/DeleteMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: DeleteMonitor
+      description: DeleteMonitor removes a monitor.
+      operationId: MonitorService_DeleteMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/GetMonitor:
+    get:
+      tags:
+        - MonitorService
+      summary: GetMonitor
+      description: |-
+        GetMonitor returns a single monitor by ID within the authenticated workspace.
+         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+      operationId: MonitorService_GetMonitor.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: GetMonitor
+      description: |-
+        GetMonitor returns a single monitor by ID within the authenticated workspace.
+         Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+      operationId: MonitorService_GetMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/GetMonitorStatus:
+    get:
+      tags:
+        - MonitorService
+      summary: GetMonitorStatus
+      description: GetMonitorStatus returns the current status of all regions for a monitor.
+      operationId: MonitorService_GetMonitorStatus.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: GetMonitorStatus
+      description: GetMonitorStatus returns the current status of all regions for a monitor.
+      operationId: MonitorService_GetMonitorStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/GetMonitorSummary:
+    get:
+      tags:
+        - MonitorService
+      summary: GetMonitorSummary
+      description: Returns aggregated metrics for a monitor including latency percentiles (p50, p75, p90, p95, p99), request counts by status (successful, degraded, failed), and the timestamp of the last check. Metrics can be scoped to a time range (1 day, 7 days, or 14 days) and filtered by specific regions.
+      operationId: MonitorService_GetMonitorSummary.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: GetMonitorSummary
+      description: Returns aggregated metrics for a monitor including latency percentiles (p50, p75, p90, p95, p99), request counts by status (successful, degraded, failed), and the timestamp of the last check. Metrics can be scoped to a time range (1 day, 7 days, or 14 days) and filtered by specific regions.
+      operationId: MonitorService_GetMonitorSummary
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/ListMonitors:
+    get:
+      tags:
+        - MonitorService
+      summary: ListMonitors
+      description: ListMonitors returns a paginated list of all monitors in the workspace.
+      operationId: MonitorService_ListMonitors.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse'
+    post:
+      tags:
+        - MonitorService
+      summary: ListMonitors
+      description: ListMonitors returns a paginated list of all monitors in the workspace.
+      operationId: MonitorService_ListMonitors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/TriggerMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: TriggerMonitor
+      description: Manually triggers an immediate check for the specified monitor across all configured regions. This operation is rate-limited under the synthetic-checks quota. A monitor run record is created and the check is dispatched to the checker service.
+      operationId: MonitorService_TriggerMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/UpdateDNSMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: UpdateDNSMonitor
+      description: UpdateDNSMonitor updates an existing DNS monitor.
+      operationId: MonitorService_UpdateDNSMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: UpdateHTTPMonitor
+      description: UpdateHTTPMonitor updates an existing HTTP monitor.
+      operationId: MonitorService_UpdateHTTPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse'
+  /rpc/openstatus.monitor.v1.MonitorService/UpdateTCPMonitor:
+    post:
+      tags:
+        - MonitorService
+      summary: UpdateTCPMonitor
+      description: UpdateTCPMonitor updates an existing TCP monitor.
+      operationId: MonitorService_UpdateTCPMonitor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorResponse'
+  /rpc/openstatus.notification.v1.NotificationService/CheckNotificationLimit:
+    get:
+      tags:
+        - NotificationService
+      summary: CheckNotificationLimit
+      description: CheckNotificationLimit checks if the workspace has reached its notification limit.
+      operationId: NotificationService_CheckNotificationLimit.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse'
+    post:
+      tags:
+        - NotificationService
+      summary: CheckNotificationLimit
+      description: CheckNotificationLimit checks if the workspace has reached its notification limit.
+      operationId: NotificationService_CheckNotificationLimit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse'
+  /rpc/openstatus.notification.v1.NotificationService/CreateNotification:
+    post:
+      tags:
+        - NotificationService
+      summary: CreateNotification
+      description: CreateNotification creates a new notification channel.
+      operationId: NotificationService_CreateNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationResponse'
+  /rpc/openstatus.notification.v1.NotificationService/DeleteNotification:
+    post:
+      tags:
+        - NotificationService
+      summary: DeleteNotification
+      description: DeleteNotification removes a notification channel.
+      operationId: NotificationService_DeleteNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationResponse'
+  /rpc/openstatus.notification.v1.NotificationService/GetNotification:
+    get:
+      tags:
+        - NotificationService
+      summary: GetNotification
+      description: GetNotification retrieves a notification channel by ID.
+      operationId: NotificationService_GetNotification.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationResponse'
+    post:
+      tags:
+        - NotificationService
+      summary: GetNotification
+      description: GetNotification retrieves a notification channel by ID.
+      operationId: NotificationService_GetNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationResponse'
+  /rpc/openstatus.notification.v1.NotificationService/ListNotifications:
+    get:
+      tags:
+        - NotificationService
+      summary: ListNotifications
+      description: ListNotifications returns a list of notification channels.
+      operationId: NotificationService_ListNotifications.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsResponse'
+    post:
+      tags:
+        - NotificationService
+      summary: ListNotifications
+      description: ListNotifications returns a list of notification channels.
+      operationId: NotificationService_ListNotifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsResponse'
+  /rpc/openstatus.notification.v1.NotificationService/SendTestNotification:
+    post:
+      tags:
+        - NotificationService
+      summary: SendTestNotification
+      description: Sends a test notification to the specified provider to verify that the configuration is correct. This does not require an existing notification channel - just provide the provider type and its configuration data. Returns success status and an error message if the test failed.
+      operationId: NotificationService_SendTestNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationResponse'
+  /rpc/openstatus.notification.v1.NotificationService/UpdateNotification:
+    post:
+      tags:
+        - NotificationService
+      summary: UpdateNotification
+      description: UpdateNotification updates an existing notification channel.
+      operationId: NotificationService_UpdateNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
+    post:
+      tags:
+        - StatusPageService
+      summary: AddMonitorComponent
+      description: AddMonitorComponent adds a monitor-based component to a status page.
+      operationId: StatusPageService_AddMonitorComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/AddStaticComponent:
+    post:
+      tags:
+        - StatusPageService
+      summary: AddStaticComponent
+      description: AddStaticComponent adds a static component to a status page.
+      operationId: StatusPageService_AddStaticComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/CreateComponentGroup:
+    post:
+      tags:
+        - StatusPageService
+      summary: CreateComponentGroup
+      description: CreateComponentGroup creates a new component group.
+      operationId: StatusPageService_CreateComponentGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/CreateStatusPage:
+    post:
+      tags:
+        - StatusPageService
+      summary: CreateStatusPage
+      description: CreateStatusPage creates a new status page.
+      operationId: StatusPageService_CreateStatusPage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/DeleteComponentGroup:
+    post:
+      tags:
+        - StatusPageService
+      summary: DeleteComponentGroup
+      description: DeleteComponentGroup removes a component group.
+      operationId: StatusPageService_DeleteComponentGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/DeleteStatusPage:
+    post:
+      tags:
+        - StatusPageService
+      summary: DeleteStatusPage
+      description: DeleteStatusPage removes a status page.
+      operationId: StatusPageService_DeleteStatusPage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetOverallStatus:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetOverallStatus
+      description: 'Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational.'
+      operationId: StatusPageService_GetOverallStatus.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetOverallStatus
+      description: 'Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational.'
+      operationId: StatusPageService_GetOverallStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPage:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetStatusPage
+      description: GetStatusPage retrieves a specific status page by ID.
+      operationId: StatusPageService_GetStatusPage.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetStatusPage
+      description: GetStatusPage retrieves a specific status page by ID.
+      operationId: StatusPageService_GetStatusPage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageContent:
+    get:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageContent
+      description: 'Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      operationId: StatusPageService_GetStatusPageContent.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: GetStatusPageContent
+      description: 'Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      operationId: StatusPageService_GetStatusPageContent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages:
+    get:
+      tags:
+        - StatusPageService
+      summary: ListStatusPages
+      description: ListStatusPages returns all status pages for the workspace.
+      operationId: StatusPageService_ListStatusPages.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: ListStatusPages
+      description: ListStatusPages returns all status pages for the workspace.
+      operationId: StatusPageService_ListStatusPages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/ListSubscribers:
+    get:
+      tags:
+        - StatusPageService
+      summary: ListSubscribers
+      description: ListSubscribers returns all subscribers for a status page.
+      operationId: StatusPageService_ListSubscribers.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse'
+    post:
+      tags:
+        - StatusPageService
+      summary: ListSubscribers
+      description: ListSubscribers returns all subscribers for a status page.
+      operationId: StatusPageService_ListSubscribers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/RemoveComponent:
+    post:
+      tags:
+        - StatusPageService
+      summary: RemoveComponent
+      description: RemoveComponent removes a component from a status page.
+      operationId: StatusPageService_RemoveComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/SubscribeToPage:
+    post:
+      tags:
+        - StatusPageService
+      summary: SubscribeToPage
+      description: Subscribes an email address to receive notifications from a status page. If the email was previously unsubscribed, the subscription is reactivated instead of creating a duplicate.
+      operationId: StatusPageService_SubscribeToPage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/UnsubscribeFromPage:
+    post:
+      tags:
+        - StatusPageService
+      summary: UnsubscribeFromPage
+      description: UnsubscribeFromPage removes a subscription from a status page.
+      operationId: StatusPageService_UnsubscribeFromPage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/UpdateComponent:
+    post:
+      tags:
+        - StatusPageService
+      summary: UpdateComponent
+      description: UpdateComponent updates an existing component.
+      operationId: StatusPageService_UpdateComponent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/UpdateComponentGroup:
+    post:
+      tags:
+        - StatusPageService
+      summary: UpdateComponentGroup
+      description: UpdateComponentGroup updates an existing component group.
+      operationId: StatusPageService_UpdateComponentGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupResponse'
+  /rpc/openstatus.status_page.v1.StatusPageService/UpdateStatusPage:
+    post:
+      tags:
+        - StatusPageService
+      summary: UpdateStatusPage
+      description: UpdateStatusPage updates an existing status page.
+      operationId: StatusPageService_UpdateStatusPage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/AddStatusReportUpdate:
+    post:
+      tags:
+        - StatusReportService
+      summary: AddStatusReportUpdate
+      description: 'Adds a new update entry to an existing status report and transitions the report to the specified status. Status reports follow a lifecycle: investigating -> identified -> monitoring -> resolved. If notify is true, subscribers of the associated page are notified by email about the update.'
+      operationId: StatusReportService_AddStatusReportUpdate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/CreateStatusReport:
+    post:
+      tags:
+        - StatusReportService
+      summary: CreateStatusReport
+      description: Creates a new status report with an initial update entry. The report is associated with a status page and optionally specific page components. An initial StatusReportUpdate is created automatically with the provided status, message, and date. If notify is true, subscribers of the associated page are notified by email.
+      operationId: StatusReportService_CreateStatusReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.CreateStatusReportRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.CreateStatusReportResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/DeleteStatusReport:
+    post:
+      tags:
+        - StatusReportService
+      summary: DeleteStatusReport
+      description: DeleteStatusReport removes a status report and all its updates.
+      operationId: StatusReportService_DeleteStatusReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/GetStatusReport:
+    get:
+      tags:
+        - StatusReportService
+      summary: GetStatusReport
+      description: GetStatusReport retrieves a specific status report by ID (includes full update timeline).
+      operationId: StatusReportService_GetStatusReport.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportResponse'
+    post:
+      tags:
+        - StatusReportService
+      summary: GetStatusReport
+      description: GetStatusReport retrieves a specific status report by ID (includes full update timeline).
+      operationId: StatusReportService_GetStatusReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/ListStatusReports:
+    get:
+      tags:
+        - StatusReportService
+      summary: ListStatusReports
+      description: ListStatusReports returns all status reports for the workspace (metadata only).
+      operationId: StatusReportService_ListStatusReports.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest'
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsResponse'
+    post:
+      tags:
+        - StatusReportService
+      summary: ListStatusReports
+      description: ListStatusReports returns all status reports for the workspace (metadata only).
+      operationId: StatusReportService_ListStatusReports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsResponse'
+  /rpc/openstatus.status_report.v1.StatusReportService/UpdateStatusReport:
+    post:
+      tags:
+        - StatusReportService
+      summary: UpdateStatusReport
+      description: UpdateStatusReport updates the metadata of a status report (title, page components).
+      operationId: StatusReportService_UpdateStatusReport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportResponse'

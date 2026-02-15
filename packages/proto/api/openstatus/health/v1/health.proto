@@ -7,7 +7,9 @@ option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatu
 // HealthService provides health check endpoints for load balancer probes.
 service HealthService {
   // Check returns the current serving status of the service.
-  rpc Check(CheckRequest) returns (CheckResponse);
+  rpc Check(CheckRequest) returns (CheckResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 }
 
 // CheckRequest is the request message for health checks.

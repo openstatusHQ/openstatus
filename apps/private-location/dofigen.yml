@@ -1,7 +1,7 @@
 builders:
   # Stage 1: Build Go binary
   builder:
-    fromImage: golang:1.25-alpine
+    fromImage: golang:1.26-alpine
     platform: $BUILDPLATFORM
     label:
       org.opencontainers.image.stage: builder

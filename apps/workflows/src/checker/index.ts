@@ -98,14 +98,6 @@ checkerRoute.post("/updateStatus", async (c) => {
   if (!result.success) {
     return c.text("Unprocessable Entity", 422);
   }
-  event.status_update = {
-    status: result.data.status,
-    message: result.data.message,
-    region: result.data.region,
-    status_code: result.data.statusCode,
-    cron_timestamp: result.data.cronTimestamp,
-    latency_ms: result.data.latency,
-  };
 
   const {
     monitorId,
@@ -158,6 +150,17 @@ checkerRoute.post("/updateStatus", async (c) => {
   const affectedRegionsList = affectedRegions.map((r) => r.region);
   const affectedRegionCount = affectedRegionsList.length;
 
+  event.status_update = {
+    status: result.data.status,
+    message: result.data.message,
+    region: result.data.region,
+    status_code: result.data.statusCode,
+    cron_timestamp: result.data.cronTimestamp,
+    latency_ms: result.data.latency,
+    affectedRegionsCount: affectedRegionCount,
+    monitorId: monitor.id,
+  };
+
   if (affectedRegionCount === 0) {
     return c.json({ success: true }, 200);
   }
@@ -207,6 +210,9 @@ checkerRoute.post("/updateStatus", async (c) => {
       break;
   }
 
+  let triggeredNotifications: { notificationId: number; provider: string }[] =
+    [];
+
   if (affectedRegionCount >= numberOfRegions / 2 || numberOfRegions === 1) {
     switch (status) {
       case "active": {
@@ -228,7 +234,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           incident = await resolveIncident({ monitorId, cronTimestamp });
         }
 
-        await triggerNotifications({
+        triggeredNotifications = await triggerNotifications({
           monitorId,
           statusCode,
           message,
@@ -264,7 +270,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           });
         }
 
-        await triggerNotifications({
+        triggeredNotifications = await triggerNotifications({
           monitorId,
           statusCode,
           message,
@@ -320,7 +326,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             metadata: { cronTimestamp, incidentId: newIncident.id },
           });
 
-          await triggerNotifications({
+          triggeredNotifications = await triggerNotifications({
             monitorId,
             statusCode,
             message,
@@ -340,6 +346,11 @@ checkerRoute.post("/updateStatus", async (c) => {
         break;
     }
   }
+
+  (event.status_update as Record<string, unknown>).notificationTriggered =
+    triggeredNotifications.length > 0;
+  (event.status_update as Record<string, unknown>).notifications =
+    triggeredNotifications;
 
   return c.text("Ok", 200);
 });

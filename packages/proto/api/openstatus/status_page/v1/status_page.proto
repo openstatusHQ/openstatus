@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package openstatus.status_page.v1;
 
+import "gnostic/openapi/v3/annotations.proto";
+
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
 
 // PageAccessType defines who can access the status page.
@@ -43,10 +45,14 @@ message StatusPage {
   string description = 3;
 
   // URL-friendly slug for the status page.
-  string slug = 4;
+  string slug = 4 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "acme-corp"}}
+  ];
 
   // Custom domain for the status page (optional).
-  string custom_domain = 5;
+  string custom_domain = 5 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "status.example.com"}}
+  ];
 
   // Whether the status page is published and visible.
   bool published = 6;
@@ -67,10 +73,14 @@ message StatusPage {
   string icon = 11;
 
   // Timestamp when the page was created (RFC 3339 format).
-  string created_at = 12;
+  string created_at = 12 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "2024-01-15T09:00:00Z"}}
+  ];
 
   // Timestamp when the page was last updated (RFC 3339 format).
-  string updated_at = 13;
+  string updated_at = 13 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "2024-06-20T14:30:00Z"}}
+  ];
 }
 
 // StatusPageSummary represents metadata for a status page (used in list responses).
@@ -93,4 +103,3 @@ message StatusPageSummary {
   // Timestamp when the page was last updated (RFC 3339 format).
   string updated_at = 6;
 }
-

@@ -1,0 +1,336 @@
+---
+title: Notification Service
+description: "Manage notification channels and providers with the OpenStatus Node.js SDK"
+---
+
+Manage notification channels for monitor alerts. Supports 12 providers. The Notification Service provides 7 RPC methods.
+
+## Create Notification
+
+```typescript
+import {
+  createOpenStatusClient,
+  NotificationProvider,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Slack Alerts",
+    provider: NotificationProvider.SLACK,
+    data: {
+      data: {
+        case: "slack",
+        value: { webhookUrl: "https://hooks.slack.com/services/..." },
+      },
+    },
+    monitorIds: ["mon_123", "mon_456"],
+  });
+
+console.log(`Notification created: ${notification?.id}`);
+```
+
+The `data` field uses a nested oneof pattern: the outer `data` is the `NotificationData` message, and `data.data` is the oneof that selects the provider-specific configuration. The `case` must match the provider type in lowercase.
+
+## Provider Configurations
+
+Each provider shown as a complete `createNotification` call.
+
+### Slack
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Slack Alerts",
+    provider: NotificationProvider.SLACK,
+    data: {
+      data: {
+        case: "slack",
+        value: { webhookUrl: "https://hooks.slack.com/services/..." },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Discord
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Discord Alerts",
+    provider: NotificationProvider.DISCORD,
+    data: {
+      data: {
+        case: "discord",
+        value: { webhookUrl: "https://discord.com/api/webhooks/..." },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Email
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Email Alerts",
+    provider: NotificationProvider.EMAIL,
+    data: {
+      data: {
+        case: "email",
+        value: { email: "alerts@example.com" },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### PagerDuty
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "PagerDuty Alerts",
+    provider: NotificationProvider.PAGERDUTY,
+    data: {
+      data: {
+        case: "pagerduty",
+        value: { integrationKey: "your-integration-key" },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Opsgenie
+
+```typescript
+import { NotificationProvider, OpsgenieRegion } from "@openstatus/sdk-node";
+
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Opsgenie Alerts",
+    provider: NotificationProvider.OPSGENIE,
+    data: {
+      data: {
+        case: "opsgenie",
+        value: { apiKey: "your-api-key", region: OpsgenieRegion.US },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Telegram
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Telegram Alerts",
+    provider: NotificationProvider.TELEGRAM,
+    data: {
+      data: {
+        case: "telegram",
+        value: { chatId: "123456789" },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Google Chat
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Google Chat Alerts",
+    provider: NotificationProvider.GOOGLE_CHAT,
+    data: {
+      data: {
+        case: "googleChat",
+        value: { webhookUrl: "https://chat.googleapis.com/v1/spaces/..." },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Grafana OnCall
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Grafana OnCall",
+    provider: NotificationProvider.GRAFANA_ONCALL,
+    data: {
+      data: {
+        case: "grafanaOncall",
+        value: { webhookUrl: "https://oncall.example.com/..." },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Ntfy
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Ntfy Alerts",
+    provider: NotificationProvider.NTFY,
+    data: {
+      data: {
+        case: "ntfy",
+        value: {
+          topic: "my-alerts",
+          serverUrl: "https://ntfy.sh",
+          token: "tk_...",
+        },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### SMS
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "SMS Alerts",
+    provider: NotificationProvider.SMS,
+    data: {
+      data: {
+        case: "sms",
+        value: { phoneNumber: "+1234567890" },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### WhatsApp
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "WhatsApp Alerts",
+    provider: NotificationProvider.WHATSAPP,
+    data: {
+      data: {
+        case: "whatsapp",
+        value: { phoneNumber: "+1234567890" },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+### Custom Webhook
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Custom Webhook",
+    provider: NotificationProvider.WEBHOOK,
+    data: {
+      data: {
+        case: "webhook",
+        value: {
+          endpoint: "https://api.example.com/webhook",
+          headers: [
+            { key: "Authorization", value: "Bearer token" },
+            { key: "X-Custom-Header", value: "value" },
+          ],
+        },
+      },
+    },
+    monitorIds: ["mon_123"],
+  });
+```
+
+## Send Test Notification
+
+Verify a notification configuration without creating a channel.
+
+```typescript
+import { NotificationProvider } from "@openstatus/sdk-node";
+
+const { success, errorMessage } = await client.notification.v1
+  .NotificationService.sendTestNotification({
+    provider: NotificationProvider.SLACK,
+    data: {
+      data: {
+        case: "slack",
+        value: { webhookUrl: "https://hooks.slack.com/services/..." },
+      },
+    },
+  });
+
+if (success) {
+  console.log("Test notification sent successfully");
+} else {
+  console.log(`Test failed: ${errorMessage}`);
+}
+```
+
+## Check Notification Limits
+
+Check if the workspace has reached its notification channel limit.
+
+```typescript
+const { limitReached, currentCount, maxCount } = await client.notification.v1
+  .NotificationService.checkNotificationLimit({});
+
+console.log(`${currentCount}/${maxCount} notification channels used`);
+if (limitReached) {
+  console.log("Notification limit reached — upgrade your plan");
+}
+```
+
+## List / Get / Update / Delete Notifications
+
+### List Notifications
+
+```typescript
+const { notifications, totalSize } = await client.notification.v1
+  .NotificationService.listNotifications({ limit: 10, offset: 0 });
+
+console.log(`Found ${totalSize} notification channels`);
+```
+
+### Get Notification
+
+```typescript
+import { NotificationProvider } from "@openstatus/sdk-node";
+
+const { notification } = await client.notification.v1.NotificationService
+  .getNotification({ id: "notif_123" });
+
+console.log(`Name: ${notification?.name}`);
+console.log(`Provider: ${NotificationProvider[notification?.provider ?? 0]}`);
+```
+
+### Update Notification
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .updateNotification({
+    id: "notif_123",
+    name: "Updated Slack Alerts",
+    monitorIds: ["mon_123", "mon_456", "mon_789"],
+  });
+```
+
+### Delete Notification
+
+```typescript
+const { success } = await client.notification.v1.NotificationService
+  .deleteNotification({ id: "notif_123" });
+```

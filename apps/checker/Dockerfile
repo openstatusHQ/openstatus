@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine as builder
+FROM golang:1.26-alpine as builder
 
 WORKDIR /go/src/app
 COPY ca/ca-bundle.crt /usr/local/share/ca-certificates/ca-bundle.crt

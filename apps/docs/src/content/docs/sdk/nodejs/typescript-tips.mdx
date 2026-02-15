@@ -1,0 +1,154 @@
+---
+title: TypeScript Tips
+description: "Tips for working with bigint fields, oneof types, and migrating clients in the OpenStatus Node.js SDK"
+---
+
+## Working with bigint Fields
+
+Protocol Buffers `int64` fields map to `bigint` in TypeScript. This affects:
+
+- **Monitor configuration**: `timeout`, `retry`, `degradedAt`
+- **Assertions**: `StatusCodeAssertion.target`
+- **Monitor summary**: `totalSuccessful`, `totalDegraded`, `totalFailed`, `p50`, `p75`, `p90`, `p95`, `p99`
+
+Use `BigInt()` to create values:
+
+```typescript
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "My API",
+    url: "https://example.com",
+    periodicity: Periodicity.PERIODICITY_1M,
+    active: true,
+    timeout: BigInt(30000),       // 30 seconds
+    retry: BigInt(5),             // 5 retries
+    degradedAt: BigInt(3000),     // degraded after 3s
+    statusCodeAssertions: [
+      { comparator: NumberComparator.EQUAL, target: BigInt(200) },
+    ],
+  },
+});
+```
+
+Reading bigint values:
+
+```typescript
+const summary = await client.monitor.v1.MonitorService.getMonitorSummary({
+  id: "mon_123",
+  timeRange: TimeRange.TIME_RANGE_7D,
+  regions: [],
+});
+
+// bigint values — use Number() for display if values are safe
+console.log(`P95 latency: ${summary.p95}ms`);
+console.log(`Total checks: ${summary.totalSuccessful + summary.totalDegraded + summary.totalFailed}`);
+```
+
+## Handling oneof Types
+
+Several responses use protobuf `oneof` fields, which map to discriminated unions in TypeScript.
+
+### MonitorConfig (getMonitor)
+
+```typescript
+const { monitor } = await client.monitor.v1.MonitorService.getMonitor({
+  id: "mon_123",
+});
+
+switch (monitor?.config.case) {
+  case "http":
+    // monitor.config.value is HTTPMonitor
+    console.log(`URL: ${monitor.config.value.url}`);
+    break;
+  case "tcp":
+    // monitor.config.value is TCPMonitor
+    console.log(`URI: ${monitor.config.value.uri}`);
+    break;
+  case "dns":
+    // monitor.config.value is DNSMonitor
+    console.log(`Domain: ${monitor.config.value.uri}`);
+    break;
+}
+```
+
+### NotificationData (createNotification)
+
+The `data.data` field selects the provider-specific configuration:
+
+```typescript
+// The case string matches the provider in camelCase
+data: {
+  data: { case: "slack", value: { webhookUrl: "..." } }
+}
+data: {
+  data: { case: "googleChat", value: { webhookUrl: "..." } }
+}
+data: {
+  data: { case: "grafanaOncall", value: { webhookUrl: "..." } }
+}
+```
+
+### Status Page Identifiers
+
+`getStatusPageContent` and `getOverallStatus` accept a page identifier by ID or slug:
+
+```typescript
+// By ID
+{ identifier: { case: "id", value: "page_123" } }
+
+// By slug
+{ identifier: { case: "slug", value: "my-service" } }
+```
+
+### Unsubscribe Identifier
+
+`unsubscribeFromPage` accepts an email or subscriber ID:
+
+```typescript
+// By email
+{ identifier: { case: "email", value: "user@example.com" } }
+
+// By subscriber ID
+{ identifier: { case: "id", value: "sub_456" } }
+```
+
+## Migrating from Default Client to createOpenStatusClient
+
+**Before** — manual headers on every call:
+
+```typescript
+import { openstatus } from "@openstatus/sdk-node";
+
+const headers = { "x-openstatus-key": process.env.OPENSTATUS_API_KEY };
+
+const { httpMonitors } = await openstatus.monitor.v1.MonitorService
+  .listMonitors({}, { headers });
+
+const { monitor } = await openstatus.monitor.v1.MonitorService
+  .createHTTPMonitor({
+    monitor: { name: "API", url: "https://example.com", periodicity: 2, active: true },
+  }, { headers });
+```
+
+**After** — configure once, use everywhere:
+
+```typescript
+import { createOpenStatusClient, Periodicity } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { httpMonitors } = await client.monitor.v1.MonitorService
+  .listMonitors({});
+
+const { monitor } = await client.monitor.v1.MonitorService
+  .createHTTPMonitor({
+    monitor: {
+      name: "API",
+      url: "https://example.com",
+      periodicity: Periodicity.PERIODICITY_1M,
+      active: true,
+    },
+  });
+```
