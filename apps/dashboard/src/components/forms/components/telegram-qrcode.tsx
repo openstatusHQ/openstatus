@@ -36,10 +36,14 @@ export default function TelegramQRCode({
         ) : isPolling ? (
           <>
             <Loader2 className="w-3 h-3 animate-spin" />
-            Retreiving chat id...
+            {chatType === "private"
+              ? "Retrieving your account..."
+              : "Waiting for group connection..."}
           </>
         ) : (
-          "Scan the QR code to start the bot"
+          chatType === "private"
+            ? "Scan the QR code to connect your account"
+            : "Scan to add the bot to your group"
         )}
       </div>
     </div>

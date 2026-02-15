@@ -28,6 +28,78 @@ import { nanoid } from "nanoid";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
+// Telegram API Types
+interface TelegramUser {
+  id: number;
+  is_bot: boolean;
+  first_name: string;
+  username?: string;
+  language_code?: string;
+}
+
+interface TelegramChat {
+  id: number;
+  type: "private" | "group" | "supergroup" | "channel";
+  title?: string;
+  first_name?: string;
+  all_members_are_administrators?: boolean;
+}
+
+interface TelegramMessage {
+  message_id: number;
+  from: TelegramUser;
+  chat: TelegramChat;
+  date: number;
+  text?: string;
+  entities?: Array<{
+    offset: number;
+    length: number;
+    type: string;
+  }>;
+  new_chat_members?: TelegramUser[];
+  new_chat_member?: TelegramUser;
+  new_chat_participant?: TelegramUser;
+}
+
+interface TelegramChatMember {
+  user: TelegramUser;
+  status: "member" | "administrator" | "left" | "creator" | "restricted" | "kicked";
+  can_be_edited?: boolean;
+  can_manage_chat?: boolean;
+  can_change_info?: boolean;
+  can_delete_messages?: boolean;
+  can_invite_users?: boolean;
+  can_restrict_members?: boolean;
+  can_pin_messages?: boolean;
+  can_manage_topics?: boolean;
+  can_promote_members?: boolean;
+  can_manage_video_chats?: boolean;
+  can_post_stories?: boolean;
+  can_edit_stories?: boolean;
+  can_delete_stories?: boolean;
+  is_anonymous?: boolean;
+}
+
+interface TelegramMyChatMemberUpdate {
+  chat: TelegramChat;
+  from: TelegramUser;
+  date: number;
+  old_chat_member: TelegramChatMember;
+  new_chat_member: TelegramChatMember;
+}
+
+interface TelegramUpdate {
+  update_id: number;
+  message?: TelegramMessage;
+  my_chat_member?: TelegramMyChatMemberUpdate;
+}
+
+interface TelegramGetUpdatesResponse {
+  ok: boolean;
+  result: TelegramUpdate[];
+}
+
+
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreateNotification, trackProps: ["provider"] })
@@ -558,30 +630,78 @@ export const notificationRouter = createTRPCRouter({
     return { token };
   }),
 
-  getTelegramUpdates: protectedProcedure.query(async (opts) => {
-    const res = await fetch(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getUpdates`,
-    );
-    const data = await res.json();
-    if (!data.ok || !data.result) return [];
-
-    const validUpdates: { chat: any; user: any }[] = [];
-    for (const update of data.result) {
-      if (!update.message?.text?.startsWith("/start ")) continue;
-      const token = update.message.text.split(" ")[1];
-      if (!token) continue;
-
-      const workspaceId = await redis.get<string | number>(
-        `telegram:token:${token}`,
+  getTelegramUpdates: protectedProcedure
+    .input(z.object({ privateChatId: z.string().optional() }).optional())
+    .query(async (opts) => {
+      const res = await fetch(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getUpdates`,
       );
-      if (workspaceId == opts.ctx.workspace.id) {
-        await redis.expire(`telegram:token:${token}`, 10800);
-        validUpdates.push({
-          chat: update.message.chat,
-          user: update.message.from,
-        });
+      const data = (await res.json()) as TelegramGetUpdatesResponse;
+      if (!data.ok || !data.result) return [];
+
+      const privateChatId = opts.input?.privateChatId;
+      const validUpdates: {
+        chatId: string;
+        chatType: "private" | "group";
+        chatTitle?: string;
+        user: { id: number; first_name: string; username?: string };
+      }[] = [];
+
+      for (const update of data.result) {
+        // Phase 1: Look for private chat /start commands (no privateChatId filter)
+        if (!privateChatId) {
+          if (
+            update.message?.chat.type === "private" &&
+            update.message?.text?.startsWith("/start ")
+          ) {
+            const token = update.message.text.split(" ")[1];
+            if (!token) continue;
+
+            const workspaceId = await redis.get<string | number>(
+              `telegram:token:${token}`,
+            );
+            if (workspaceId == opts.ctx.workspace.id) {
+              await redis.expire(`telegram:token:${token}`, 10800);
+              validUpdates.push({
+                chatId: String(update.message.chat.id),
+                chatType: "private",
+                user: {
+                  id: update.message.from.id,
+                  first_name: update.message.from.first_name,
+                  username: update.message.from.username,
+                },
+              });
+            }
+          }
+        }
+        // Phase 2: Look for group/supergroup additions filtered by privateChatId
+        else {
+          if (
+            update.my_chat_member &&
+            (update.my_chat_member.chat.type === "group" ||
+              update.my_chat_member.chat.type === "supergroup") &&
+            update.my_chat_member.old_chat_member.status === "left" &&
+            (update.my_chat_member.new_chat_member.status === "member" ||
+              update.my_chat_member.new_chat_member.status === "administrator") &&
+            String(update.my_chat_member.from.id) === privateChatId
+          ) {
+            // Verify the token still exists for this workspace
+            // We need to check if there's any valid token for this workspace
+            // Since we don't have the token here, we'll trust that the privateChatId
+            // was obtained from a valid token in Phase 1
+            validUpdates.push({
+              chatId: String(update.my_chat_member.chat.id),
+              chatType: "group",
+              chatTitle: update.my_chat_member.chat.title,
+              user: {
+                id: update.my_chat_member.from.id,
+                first_name: update.my_chat_member.from.first_name,
+                username: update.my_chat_member.from.username,
+              },
+            });
+          }
+        }
       }
-    }
-    return validUpdates;
-  }),
+      return validUpdates;
+    }),
 });

@@ -85,10 +85,14 @@ export function FormTelegram({
   });
 
   const [mode, setMode] = React.useState<"qr" | "manual" | null>(null);
+  const [flowStep, setFlowStep] = React.useState<"private" | "group">("private");
+  const [privateChatId, setPrivateChatId] = React.useState<string | null>(null);
 
   // Start polling for updates
   const { data: updates } = useQuery({
-    ...trpc.notification.getTelegramUpdates.queryOptions(),
+    ...trpc.notification.getTelegramUpdates.queryOptions({
+      privateChatId: flowStep === "group" ? privateChatId ?? undefined : undefined,
+    }),
     enabled:
       !!tokenData?.token && !form.getValues("data.chatId") && mode === "qr",
     refetchInterval: 5000,
@@ -97,18 +101,28 @@ export function FormTelegram({
   React.useEffect(() => {
     if (updates && updates.length > 0) {
       const lastUpdate = updates[updates.length - 1];
-      if (lastUpdate?.chat?.id) {
+      
+      // Phase 1: Private chat ID received
+      if (lastUpdate.chatType === "private" && flowStep === "private") {
+        setPrivateChatId(lastUpdate.chatId);
+        setFlowStep("group");
+        toast.success(
+          `Connected to ${lastUpdate.user.first_name}'s account. Now add the bot to your group.`,
+        );
+      }
+      // Phase 2: Group chat ID received
+      else if (lastUpdate.chatType === "group" && flowStep === "group") {
         startTransition(() => {
-          form.setValue("data.chatId", String(lastUpdate.chat.id), {
+          form.setValue("data.chatId", lastUpdate.chatId, {
             shouldDirty: true,
           });
           toast.success(
-            `Connected to ${lastUpdate.chat?.first_name || "chat"} telegram account`,
+            `Connected to group "${lastUpdate.chatTitle || "Unknown"}"`,
           );
         });
       }
     }
-  }, [updates, form]);
+  }, [updates, form, flowStep]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -226,6 +240,8 @@ export function FormTelegram({
                 token={tokenData?.token}
                 isLoading={isTokenLoading}
                 isPolling={!!tokenData?.token && !form.getValues("data.chatId")}
+                flowStep={flowStep}
+                privateChatId={privateChatId}
               />
             )}
           </div>

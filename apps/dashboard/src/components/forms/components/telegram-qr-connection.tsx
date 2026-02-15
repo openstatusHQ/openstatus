@@ -7,6 +7,8 @@ interface TelegramQRConnectionProps {
   token?: string;
   isLoading: boolean;
   isPolling?: boolean;
+  flowStep: "private" | "group";
+  privateChatId: string | null;
 }
 
 export function TelegramQRConnection({
@@ -14,6 +16,8 @@ export function TelegramQRConnection({
   token,
   isLoading,
   isPolling,
+  flowStep,
+  privateChatId,
 }: TelegramQRConnectionProps) {
   const chatId = form.watch("data.chatId");
 
@@ -22,11 +26,23 @@ export function TelegramQRConnection({
   }
 
   return (
-    <TelegramQRCode
-      chatType="private"
-      token={token}
-      isLoading={isLoading}
-      isPolling={isPolling}
-    />
+    <>
+      {flowStep === "private" && (
+        <div className="text-sm text-muted-foreground mb-2">
+          Step 1 of 2: Connect your Telegram account
+        </div>
+      )}
+      {flowStep === "group" && privateChatId && (
+        <div className="text-sm text-muted-foreground mb-2">
+          Step 2 of 2: Add bot to your group
+        </div>
+      )}
+      <TelegramQRCode
+        chatType={flowStep === "private" ? "private" : "group"}
+        token={token}
+        isLoading={isLoading}
+        isPolling={isPolling}
+      />
+    </>
   );
 }
