@@ -433,7 +433,7 @@ export function StatusBar({
   return (
     <div
       ref={containerRef}
-      className="flex h-[50px] w-full items-end"
+      className="flex h-[50px] w-full items-end gap-px"
       data-slot="status-bar"
       role="toolbar"
       aria-label="Status tracker"
@@ -498,10 +498,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
         <HoverCardTrigger asChild>
           <div
             ref={ref}
-            className={cn(
-              "group relative mx-px flex h-full w-full cursor-pointer flex-col rounded-full outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
-              "overflow-hidden rounded-full",
-            )}
+            className="group relative flex h-full flex-1 cursor-pointer flex-col outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80 rounded-full"
             onClick={() => handlers.onClick(index)}
             onFocus={() => handlers.onFocus(index)}
             onBlur={handlers.onBlur}
@@ -515,25 +512,27 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
             aria-expanded={isActive}
             data-slot="status-bar-item"
           >
-            {/* Render bar segments */}
-            {item.bar.map((segment, segmentIndex) => {
-              if (renderBar) {
-                return renderBar(segment, segmentIndex);
-              }
-              return (
-                <div
-                  key={`${item.day}-${segment.status}-${segmentIndex}`}
-                  className={cn("w-full transition-all", {
-                    "rounded-t-full": segmentIndex === 0,
-                    "rounded-b-full": segmentIndex === item.bar.length - 1,
-                  })}
-                  style={{
-                    height: `${segment.height}%`,
-                    backgroundColor: statusColors[segment.status],
-                  }}
-                />
-              );
-            })}
+            <div className="flex h-full w-full flex-col overflow-hidden rounded-full">
+              {/* Render bar segments */}
+              {item.bar.map((segment, segmentIndex) => {
+                if (renderBar) {
+                  return renderBar(segment, segmentIndex);
+                }
+                return (
+                  <div
+                    key={`${item.day}-${segment.status}-${segmentIndex}`}
+                    className={cn("w-full transition-all", {
+                      "rounded-t-full": segmentIndex === 0,
+                      "rounded-b-full": segmentIndex === item.bar.length - 1,
+                    })}
+                    style={{
+                      height: `${segment.height}%`,
+                      backgroundColor: statusColors[segment.status],
+                    }}
+                  />
+                );
+              })}
+            </div>
           </div>
         </HoverCardTrigger>
         <HoverCardContent

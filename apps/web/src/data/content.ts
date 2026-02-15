@@ -123,6 +123,10 @@ const toolsSection = {
         href: `/play/${page.slug}`,
       })),
     {
+      label: "Shadcn Component Registry",
+      href: "/registry",
+    },
+    {
       label: "Theme Explorer",
       href: "https://themes.openstatus.dev",
     },
@@ -179,6 +183,10 @@ export const playSection = {
     {
       label: "Theme Explorer",
       href: "https://themes.openstatus.dev",
+    },
+    {
+      label: "Shadcn Component Registry",
+      href: "/registry",
     },
     {
       label: "All Status Codes",
