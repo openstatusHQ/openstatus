@@ -51,14 +51,6 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Start of /ping/%s\n", region)
-
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
-		return
-	}
-
 	if h.CloudProvider == "fly" {
 		if region != h.Region {
 			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
