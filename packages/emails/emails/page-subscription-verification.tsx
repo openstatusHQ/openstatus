@@ -13,7 +13,7 @@ import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
-export const PageSubscriptionSchema = z.object({
+export const PageSubscriptionVerificationSchema = z.object({
   page: z.string(),
   link: z.string(),
   img: z
@@ -25,9 +25,15 @@ export const PageSubscriptionSchema = z.object({
     .optional(),
 });
 
-export type PageSubscriptionProps = z.infer<typeof PageSubscriptionSchema>;
+export type PageSubscriptionVerificationProps = z.infer<
+  typeof PageSubscriptionVerificationSchema
+>;
 
-const PageSubscriptionEmail = ({ page, link, img }: PageSubscriptionProps) => {
+const PageSubscriptionVerificationEmail = ({
+  page,
+  link,
+  img,
+}: PageSubscriptionVerificationProps) => {
   return (
     <Html>
       <Head />
@@ -57,9 +63,9 @@ const PageSubscriptionEmail = ({ page, link, img }: PageSubscriptionProps) => {
   );
 };
 
-PageSubscriptionEmail.PreviewProps = {
+PageSubscriptionVerificationEmail.PreviewProps = {
   link: "https://slug.openstatus.dev/verify/token",
   page: "OpenStatus",
-} satisfies PageSubscriptionProps;
+} satisfies PageSubscriptionVerificationProps;
 
-export default PageSubscriptionEmail;
+export default PageSubscriptionVerificationEmail;

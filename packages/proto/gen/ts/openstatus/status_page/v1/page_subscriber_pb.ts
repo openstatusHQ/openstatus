@@ -10,10 +10,113 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_page/v1/page_subscriber.proto.
  */
 export const file_openstatus_status_page_v1_page_subscriber: GenFile = /*@__PURE__*/
-  fileDesc("Ci9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3BhZ2Vfc3Vic2NyaWJlci5wcm90bxIZb3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MSKSAQoOUGFnZVN1YnNjcmliZXISCgoCaWQYASABKAkSDwoHcGFnZV9pZBgCIAEoCRINCgVlbWFpbBgDIAEoCRITCgthY2NlcHRlZF9hdBgEIAEoCRIXCg91bnN1YnNjcmliZWRfYXQYBSABKAkSEgoKY3JlYXRlZF9hdBgGIAEoCRISCgp1cGRhdGVkX2F0GAcgASgJQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw");
+  fileDesc("Ci9vcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3BhZ2Vfc3Vic2NyaWJlci5wcm90bxIZb3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MSKJAgoQUGFnZVN1YnNjcmlwdGlvbhIKCgJpZBgBIAEoCRIPCgdwYWdlX2lkGAIgASgJEhQKDHdvcmtzcGFjZV9pZBgDIAEoCRIUCgxjaGFubmVsX3R5cGUYBCABKAkSDQoFZW1haWwYBSABKAkSEwoLd2ViaG9va191cmwYBiABKAkSGgoScGFnZV9jb21wb25lbnRfaWRzGAcgAygJEhYKDmNoYW5uZWxfY29uZmlnGAggASgJEhMKC3ZlcmlmaWVkX2F0GAkgASgJEhcKD3Vuc3Vic2NyaWJlZF9hdBgKIAEoCRISCgpjcmVhdGVkX2F0GAsgASgJEhIKCnVwZGF0ZWRfYXQYDCABKAkikgEKDlBhZ2VTdWJzY3JpYmVyEgoKAmlkGAEgASgJEg8KB3BhZ2VfaWQYAiABKAkSDQoFZW1haWwYAyABKAkSEwoLYWNjZXB0ZWRfYXQYBCABKAkSFwoPdW5zdWJzY3JpYmVkX2F0GAUgASgJEhIKCmNyZWF0ZWRfYXQYBiABKAkSEgoKdXBkYXRlZF9hdBgHIAEoCUJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM");
 
 /**
- * PageSubscriber represents a subscriber to a status page.
+ * PageSubscription represents a multi-channel subscription to a status page.
+ * Supports component-level granularity and multiple notification channels.
+ *
+ * @generated from message openstatus.status_page.v1.PageSubscription
+ */
+export type PageSubscription = Message<"openstatus.status_page.v1.PageSubscription"> & {
+  /**
+   * Unique identifier for the subscription.
+   *
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * ID of the status page the user is subscribed to.
+   *
+   * @generated from field: string page_id = 2;
+   */
+  pageId: string;
+
+  /**
+   * ID of the workspace (for limits checking).
+   *
+   * @generated from field: string workspace_id = 3;
+   */
+  workspaceId: string;
+
+  /**
+   * Channel type (email, webhook, etc.).
+   *
+   * @generated from field: string channel_type = 4;
+   */
+  channelType: string;
+
+  /**
+   * Email address of the subscriber (populated if channel_type = 'email').
+   * Normalized to lowercase.
+   *
+   * @generated from field: string email = 5;
+   */
+  email: string;
+
+  /**
+   * Webhook URL (populated if channel_type = 'webhook').
+   *
+   * @generated from field: string webhook_url = 6;
+   */
+  webhookUrl: string;
+
+  /**
+   * Component scope (empty = entire page, populated = specific components).
+   * This is a list of page_component IDs that the subscription covers.
+   *
+   * @generated from field: repeated string page_component_ids = 7;
+   */
+  pageComponentIds: string[];
+
+  /**
+   * Channel-specific configuration (JSON, optional).
+   * For webhooks: contains headers, secrets, etc.
+   *
+   * @generated from field: string channel_config = 8;
+   */
+  channelConfig: string;
+
+  /**
+   * Timestamp when the subscription was verified (RFC 3339 format, optional).
+   *
+   * @generated from field: string verified_at = 9;
+   */
+  verifiedAt: string;
+
+  /**
+   * Timestamp when the user unsubscribed (RFC 3339 format, optional).
+   *
+   * @generated from field: string unsubscribed_at = 10;
+   */
+  unsubscribedAt: string;
+
+  /**
+   * Timestamp when the subscription was created (RFC 3339 format).
+   *
+   * @generated from field: string created_at = 11;
+   */
+  createdAt: string;
+
+  /**
+   * Timestamp when the subscription was last updated (RFC 3339 format).
+   *
+   * @generated from field: string updated_at = 12;
+   */
+  updatedAt: string;
+};
+
+/**
+ * Describes the message openstatus.status_page.v1.PageSubscription.
+ * Use `create(PageSubscriptionSchema)` to create a new message.
+ */
+export const PageSubscriptionSchema: GenMessage<PageSubscription> = /*@__PURE__*/
+  messageDesc(file_openstatus_status_page_v1_page_subscriber, 0);
+
+/**
+ * Deprecated: Use PageSubscription instead.
+ * Kept for backward compatibility during migration.
  *
  * @generated from message openstatus.status_page.v1.PageSubscriber
  */
@@ -73,5 +176,5 @@ export type PageSubscriber = Message<"openstatus.status_page.v1.PageSubscriber">
  * Use `create(PageSubscriberSchema)` to create a new message.
  */
 export const PageSubscriberSchema: GenMessage<PageSubscriber> = /*@__PURE__*/
-  messageDesc(file_openstatus_status_page_v1_page_subscriber, 0);
+  messageDesc(file_openstatus_status_page_v1_page_subscriber, 1);
 

@@ -45,7 +45,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     trpc.page.get.queryOptions({ id: row.original.pageId }),
   );
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.emailRouter.sendStatusReportUpdate.mutationOptions(),
   );
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({

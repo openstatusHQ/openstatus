@@ -6,7 +6,7 @@ import { Badge } from "@openstatus/ui/components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
+type Subscriber = RouterOutputs["pageSubscription"]["list"][number];
 
 export const columns: ColumnDef<Subscriber>[] = [
   {
@@ -16,19 +16,39 @@ export const columns: ColumnDef<Subscriber>[] = [
     enableHiding: false,
   },
   {
+    id: "scope",
+    header: "Scope",
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const isEntirePage = row.original.isEntirePage;
+      const componentCount = row.original.components.length;
+
+      if (isEntirePage) {
+        return <Badge variant="outline">Entire Page</Badge>;
+      }
+
+      return (
+        <Badge variant="secondary">
+          {componentCount} {componentCount === 1 ? "Component" : "Components"}
+        </Badge>
+      );
+    },
+  },
+  {
     id: "status",
     header: "Status",
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
       const unsubscribedAt = row.original.unsubscribedAt;
-      const acceptedAt = row.original.acceptedAt;
+      const verifiedAt = row.original.verifiedAt;
 
       if (unsubscribedAt) {
         return <Badge variant="destructive">Unsubscribed</Badge>;
       }
 
-      if (!acceptedAt) {
+      if (!verifiedAt) {
         return <Badge variant="outline">Pending</Badge>;
       }
 
@@ -51,12 +71,12 @@ export const columns: ColumnDef<Subscriber>[] = [
     },
   },
   {
-    accessorKey: "acceptedAt",
-    header: "Accepted At",
+    accessorKey: "verifiedAt",
+    header: "Verified At",
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("acceptedAt");
+      const value = row.getValue("verifiedAt");
       if (value instanceof Date) return formatDate(value);
       if (!value) return "-";
       return value;

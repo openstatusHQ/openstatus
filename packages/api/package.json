@@ -18,6 +18,7 @@
     "@openstatus/notification-telegram": "workspace:*",
     "@openstatus/notification-twillio-whatsapp": "workspace:*",
     "@openstatus/regions": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",

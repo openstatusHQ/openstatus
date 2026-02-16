@@ -6,7 +6,7 @@ import type { RouterOutputs } from "@openstatus/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 
-type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
+type Subscriber = RouterOutputs["pageSubscription"]["list"][number];
 
 interface DataTableRowActionsProps {
   row: Row<Subscriber>;
@@ -14,14 +14,15 @@ interface DataTableRowActionsProps {
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const trpc = useTRPC();
+
   const { refetch } = useQuery(
-    trpc.pageSubscriber.list.queryOptions({
+    trpc.pageSubscription.list.queryOptions({
       pageId: row.original.pageId,
     }),
   );
 
   const deleteAction = useMutation(
-    trpc.pageSubscriber.delete.mutationOptions({
+    trpc.pageSubscription.delete.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );

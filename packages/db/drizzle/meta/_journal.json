@@ -393,6 +393,13 @@
       "when": 1769675142003,
       "tag": "0055_spicy_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1770908393605,
+      "tag": "0056_clammy_tombstone",
+      "breakpoints": true
     }
   ]
 }
