@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.status_page.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/maintenance/v1/maintenance.proto";
 import "openstatus/status_page/v1/page_component.proto";
 import "openstatus/status_page/v1/page_subscriber.proto";
@@ -11,26 +12,27 @@ import "openstatus/status_report/v1/status_report.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
 
-// StatusPageService provides CRUD and management operations for status pages.
+// StatusPageService provides CRUD and management operations for status pages,
+// including component management, component grouping, subscriber handling, and aggregated status queries.
 service StatusPageService {
-  // --- Page CRUD ---
-
   // CreateStatusPage creates a new status page.
   rpc CreateStatusPage(CreateStatusPageRequest) returns (CreateStatusPageResponse);
 
   // GetStatusPage retrieves a specific status page by ID.
-  rpc GetStatusPage(GetStatusPageRequest) returns (GetStatusPageResponse);
+  rpc GetStatusPage(GetStatusPageRequest) returns (GetStatusPageResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // ListStatusPages returns all status pages for the workspace.
-  rpc ListStatusPages(ListStatusPagesRequest) returns (ListStatusPagesResponse);
+  rpc ListStatusPages(ListStatusPagesRequest) returns (ListStatusPagesResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // UpdateStatusPage updates an existing status page.
   rpc UpdateStatusPage(UpdateStatusPageRequest) returns (UpdateStatusPageResponse);
 
   // DeleteStatusPage removes a status page.
   rpc DeleteStatusPage(DeleteStatusPageRequest) returns (DeleteStatusPageResponse);
-
-  // --- Component Management ---
 
   // AddMonitorComponent adds a monitor-based component to a status page.
   rpc AddMonitorComponent(AddMonitorComponentRequest) returns (AddMonitorComponentResponse);
@@ -44,8 +46,6 @@ service StatusPageService {
   // UpdateComponent updates an existing component.
   rpc UpdateComponent(UpdateComponentRequest) returns (UpdateComponentResponse);
 
-  // --- Component Groups ---
-
   // CreateComponentGroup creates a new component group.
   rpc CreateComponentGroup(CreateComponentGroupRequest) returns (CreateComponentGroupResponse);
 
@@ -55,75 +55,90 @@ service StatusPageService {
   // UpdateComponentGroup updates an existing component group.
   rpc UpdateComponentGroup(UpdateComponentGroupRequest) returns (UpdateComponentGroupResponse);
 
-  // --- Subscribers ---
-
-  // SubscribeToPage subscribes an email to a status page.
-  rpc SubscribeToPage(SubscribeToPageRequest) returns (SubscribeToPageResponse);
+  // SubscribeToPage subscribes an email to a status page. If the email was previously unsubscribed, the subscription is reactivated.
+  rpc SubscribeToPage(SubscribeToPageRequest) returns (SubscribeToPageResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Subscribes an email address to receive notifications from a status page. If the email was previously unsubscribed, the subscription is reactivated instead of creating a duplicate."
+    };
+  }
 
   // UnsubscribeFromPage removes a subscription from a status page.
   rpc UnsubscribeFromPage(UnsubscribeFromPageRequest) returns (UnsubscribeFromPageResponse);
 
   // ListSubscribers returns all subscribers for a status page.
-  rpc ListSubscribers(ListSubscribersRequest) returns (ListSubscribersResponse);
+  rpc ListSubscribers(ListSubscribersRequest) returns (ListSubscribersResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
-  // --- Full Content & Status ---
+  // GetStatusPageContent retrieves the full content of a status page including components, groups, active reports, and maintenances.
+  rpc GetStatusPageContent(GetStatusPageContentRequest) returns (GetStatusPageContentResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC)."
+    };
+  }
 
-  // GetStatusPageContent retrieves the full content of a status page including components and reports.
-  rpc GetStatusPageContent(GetStatusPageContentRequest) returns (GetStatusPageContentResponse);
-
-  // GetOverallStatus returns the aggregated status of a status page.
-  rpc GetOverallStatus(GetOverallStatusRequest) returns (GetOverallStatusResponse);
+  // GetOverallStatus returns the aggregated status of a status page and its individual components.
+  rpc GetOverallStatus(GetOverallStatusRequest) returns (GetOverallStatusResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational."
+    };
+  }
 }
 
 // =============================================================================
 // Page CRUD Messages
 // =============================================================================
 
-// --- Create Status Page ---
-
+// CreateStatusPageRequest is the request to create a new status page.
 message CreateStatusPageRequest {
   // Title of the status page (required).
   string title = 1 [
     (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 256
+    (buf.validate.field).string.max_len = 256,
+    (gnostic.openapi.v3.property) = {example: {yaml: "Acme Corp Status"}}
   ];
 
   // Description of the status page (optional).
   optional string description = 2 [(buf.validate.field).string.max_len = 1024];
 
-  // URL-friendly slug for the status page (required).
+  // URL-friendly slug for the status page (required). Must be lowercase alphanumeric with hyphens.
   string slug = 3 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 256,
-    (buf.validate.field).string.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    (buf.validate.field).string.pattern = "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+    (gnostic.openapi.v3.property) = {example: {yaml: "my-status-page"}}
   ];
 
   // URL to the homepage (optional).
-  optional string homepage_url = 4;
+  optional string homepage_url = 4 [
+    (gnostic.openapi.v3.property) = {example: {yaml: "https://www.example.com"}}
+  ];
 
   // URL to the contact page (optional).
   optional string contact_url = 5;
 }
 
+// CreateStatusPageResponse is the response after creating a status page.
 message CreateStatusPageResponse {
   // The created status page.
   StatusPage status_page = 1;
 }
 
-// --- Get Status Page ---
-
+// GetStatusPageRequest is the request to get a status page by ID.
 message GetStatusPageRequest {
   // ID of the status page to retrieve (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// GetStatusPageResponse is the response containing the status page.
 message GetStatusPageResponse {
   // The requested status page.
   StatusPage status_page = 1;
 }
 
-// --- List Status Pages ---
-
+// ListStatusPagesRequest is the request to list status pages.
 message ListStatusPagesRequest {
   // Maximum number of pages to return (1-100, defaults to 50).
   optional int32 limit = 1 [(buf.validate.field).int32 = {
@@ -135,6 +150,7 @@ message ListStatusPagesRequest {
   optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
 }
 
+// ListStatusPagesResponse is the response containing status page summaries.
 message ListStatusPagesResponse {
   // List of status pages (metadata only).
   repeated StatusPageSummary status_pages = 1;
@@ -143,8 +159,7 @@ message ListStatusPagesResponse {
   int32 total_size = 2;
 }
 
-// --- Update Status Page ---
-
+// UpdateStatusPageRequest is the request to update a status page.
 message UpdateStatusPageRequest {
   // ID of the status page to update (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
@@ -172,18 +187,19 @@ message UpdateStatusPageRequest {
   optional string contact_url = 6;
 }
 
+// UpdateStatusPageResponse is the response after updating a status page.
 message UpdateStatusPageResponse {
   // The updated status page.
   StatusPage status_page = 1;
 }
 
-// --- Delete Status Page ---
-
+// DeleteStatusPageRequest is the request to delete a status page.
 message DeleteStatusPageRequest {
   // ID of the status page to delete (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// DeleteStatusPageResponse is the response after deleting a status page.
 message DeleteStatusPageResponse {
   // Whether the deletion was successful.
   bool success = 1;
@@ -193,8 +209,7 @@ message DeleteStatusPageResponse {
 // Component Management Messages
 // =============================================================================
 
-// --- Add Monitor Component ---
-
+// AddMonitorComponentRequest is the request to add a monitor-based component to a status page.
 message AddMonitorComponentRequest {
   // ID of the status page to add the component to (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -215,13 +230,13 @@ message AddMonitorComponentRequest {
   optional string group_id = 6;
 }
 
+// AddMonitorComponentResponse is the response after adding a monitor component.
 message AddMonitorComponentResponse {
   // The created component.
   PageComponent component = 1;
 }
 
-// --- Add Static Component ---
-
+// AddStaticComponentRequest is the request to add a static component to a status page.
 message AddStaticComponentRequest {
   // ID of the status page to add the component to (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -242,25 +257,25 @@ message AddStaticComponentRequest {
   optional string group_id = 5;
 }
 
+// AddStaticComponentResponse is the response after adding a static component.
 message AddStaticComponentResponse {
   // The created component.
   PageComponent component = 1;
 }
 
-// --- Remove Component ---
-
+// RemoveComponentRequest is the request to remove a component from a status page.
 message RemoveComponentRequest {
   // ID of the component to remove (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// RemoveComponentResponse is the response after removing a component.
 message RemoveComponentResponse {
   // Whether the removal was successful.
   bool success = 1;
 }
 
-// --- Update Component ---
-
+// UpdateComponentRequest is the request to update a component.
 message UpdateComponentRequest {
   // ID of the component to update (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
@@ -281,6 +296,7 @@ message UpdateComponentRequest {
   optional int32 group_order = 6;
 }
 
+// UpdateComponentResponse is the response after updating a component.
 message UpdateComponentResponse {
   // The updated component.
   PageComponent component = 1;
@@ -290,8 +306,7 @@ message UpdateComponentResponse {
 // Component Group Messages
 // =============================================================================
 
-// --- Create Component Group ---
-
+// CreateComponentGroupRequest is the request to create a new component group.
 message CreateComponentGroupRequest {
   // ID of the status page to create the group in (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -303,25 +318,25 @@ message CreateComponentGroupRequest {
   ];
 }
 
+// CreateComponentGroupResponse is the response after creating a component group.
 message CreateComponentGroupResponse {
   // The created component group.
   PageComponentGroup group = 1;
 }
 
-// --- Delete Component Group ---
-
+// DeleteComponentGroupRequest is the request to delete a component group.
 message DeleteComponentGroupRequest {
   // ID of the component group to delete (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// DeleteComponentGroupResponse is the response after deleting a component group.
 message DeleteComponentGroupResponse {
   // Whether the deletion was successful.
   bool success = 1;
 }
 
-// --- Update Component Group ---
-
+// UpdateComponentGroupRequest is the request to update a component group.
 message UpdateComponentGroupRequest {
   // ID of the component group to update (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
@@ -333,6 +348,7 @@ message UpdateComponentGroupRequest {
   }];
 }
 
+// UpdateComponentGroupResponse is the response after updating a component group.
 message UpdateComponentGroupResponse {
   // The updated component group.
   PageComponentGroup group = 1;
@@ -342,23 +358,25 @@ message UpdateComponentGroupResponse {
 // Subscriber Messages
 // =============================================================================
 
-// --- Subscribe To Page ---
-
+// SubscribeToPageRequest is the request to subscribe an email to a status page.
 message SubscribeToPageRequest {
   // ID of the status page to subscribe to (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
 
   // Email address to subscribe (required).
-  string email = 2 [(buf.validate.field).string.email = true];
+  string email = 2 [
+    (buf.validate.field).string.email = true,
+    (gnostic.openapi.v3.property) = {example: {yaml: "user@example.com"}}
+  ];
 }
 
+// SubscribeToPageResponse is the response after subscribing to a status page.
 message SubscribeToPageResponse {
   // The created subscriber.
   PageSubscriber subscriber = 1;
 }
 
-// --- Unsubscribe From Page ---
-
+// UnsubscribeFromPageRequest is the request to unsubscribe from a status page.
 message UnsubscribeFromPageRequest {
   // ID of the status page to unsubscribe from (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -372,13 +390,13 @@ message UnsubscribeFromPageRequest {
   }
 }
 
+// UnsubscribeFromPageResponse is the response after unsubscribing from a status page.
 message UnsubscribeFromPageResponse {
   // Whether the unsubscription was successful.
   bool success = 1;
 }
 
-// --- List Subscribers ---
-
+// ListSubscribersRequest is the request to list subscribers of a status page.
 message ListSubscribersRequest {
   // ID of the status page to list subscribers for (required).
   string page_id = 1 [(buf.validate.field).string.min_len = 1];
@@ -396,6 +414,7 @@ message ListSubscribersRequest {
   optional bool include_unsubscribed = 4;
 }
 
+// ListSubscribersResponse is the response containing status page subscribers.
 message ListSubscribersResponse {
   // List of subscribers.
   repeated PageSubscriber subscribers = 1;
@@ -408,8 +427,7 @@ message ListSubscribersResponse {
 // Full Content & Status Messages
 // =============================================================================
 
-// --- Get Status Page Content ---
-
+// GetStatusPageContentRequest is the request to get the full content of a status page.
 message GetStatusPageContentRequest {
   // Identifier for the status page (either id or slug).
   oneof identifier {
@@ -420,6 +438,7 @@ message GetStatusPageContentRequest {
   }
 }
 
+// GetStatusPageContentResponse is the response containing the full status page content.
 message GetStatusPageContentResponse {
   // The status page details.
   StatusPage status_page = 1;
@@ -437,8 +456,7 @@ message GetStatusPageContentResponse {
   repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 5;
 }
 
-// --- Get Overall Status ---
-
+// GetOverallStatusRequest is the request to get the overall status of a status page.
 message GetOverallStatusRequest {
   // Identifier for the status page (either id or slug).
   oneof identifier {
@@ -458,6 +476,7 @@ message ComponentStatus {
   OverallStatus status = 2;
 }
 
+// GetOverallStatusResponse is the response containing the overall status and individual component statuses.
 message GetOverallStatusResponse {
   // Aggregated status across all components.
   OverallStatus overall_status = 1;

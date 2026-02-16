@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.monitor.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
 import "openstatus/monitor/v1/monitor.proto";
 
@@ -14,16 +15,22 @@ message TCPMonitor {
   string id = 1;
 
   // Name of the monitor (required, max 256 characters).
-  string name = 2 [(buf.validate.field).string = {
-    min_len: 1
-    max_len: 256
-  }];
+  string name = 2 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 256
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "Database Connection Check"}}
+  ];
 
   // URI to monitor in format "host:port" (required, max 2048 characters).
-  string uri = 3 [(buf.validate.field).string = {
-    min_len: 1
-    max_len: 2048
-  }];
+  string uri = 3 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 2048
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "tcp://db.example.com:5432"}}
+  ];
 
   // Check periodicity (required).
   Periodicity periodicity = 4 [(buf.validate.field).enum = {

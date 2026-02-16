@@ -73,3 +73,6 @@ apps/alerting-engine/tmp/
 # UI Registry build output
 apps/web/public/r
 packages/ui/public/r
+# For vibing
+research.md
+plan.md

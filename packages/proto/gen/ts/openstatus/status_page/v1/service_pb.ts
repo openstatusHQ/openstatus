@@ -5,6 +5,7 @@
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
+import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
 import type { MaintenanceSummary } from "../../maintenance/v1/maintenance_pb.ts";
 import { file_openstatus_maintenance_v1_maintenance } from "../../maintenance/v1/maintenance_pb.ts";
 import type { PageComponent, PageComponentGroup } from "./page_component_pb.ts";
@@ -21,9 +22,11 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/status_page/v1/service.proto.
  */
 export const file_openstatus_status_page_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEi9AEKF0NyZWF0ZVN0YXR1c1BhZ2VSZXF1ZXN0EhkKBXRpdGxlGAEgASgJQgq6SAdyBRABGIACEiIKC2Rlc2NyaXB0aW9uGAIgASgJQgi6SAVyAxiACEgAiAEBEjQKBHNsdWcYAyABKAlCJrpII3IhEAEYgAIyGl5bYS16MC05XSsoPzotW2EtejAtOV0rKSokEhkKDGhvbWVwYWdlX3VybBgEIAEoCUgBiAEBEhgKC2NvbnRhY3RfdXJsGAUgASgJSAKIAQFCDgoMX2Rlc2NyaXB0aW9uQg8KDV9ob21lcGFnZV91cmxCDgoMX2NvbnRhY3RfdXJsIlYKGENyZWF0ZVN0YXR1c1BhZ2VSZXNwb25zZRI6CgtzdGF0dXNfcGFnZRgBIAEoCzIlLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3RhdHVzUGFnZSIrChRHZXRTdGF0dXNQYWdlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJTChVHZXRTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiagoWTGlzdFN0YXR1c1BhZ2VzUmVxdWVzdBIdCgVsaW1pdBgBIAEoBUIJukgGGgQYZCgBSACIAQESHAoGb2Zmc2V0GAIgASgFQge6SAQaAigASAGIAQFCCAoGX2xpbWl0QgkKB19vZmZzZXQicQoXTGlzdFN0YXR1c1BhZ2VzUmVzcG9uc2USQgoMc3RhdHVzX3BhZ2VzGAEgAygLMiwub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlU3VtbWFyeRISCgp0b3RhbF9zaXplGAIgASgFIqYCChdVcGRhdGVTdGF0dXNQYWdlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIeCgV0aXRsZRgCIAEoCUIKukgHcgUQARiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAMgASgJQgi6SAVyAxiACEgBiAEBEjkKBHNsdWcYBCABKAlCJrpII3IhEAEYgAIyGl5bYS16MC05XSsoPzotW2EtejAtOV0rKSokSAKIAQESGQoMaG9tZXBhZ2VfdXJsGAUgASgJSAOIAQESGAoLY29udGFjdF91cmwYBiABKAlIBIgBAUIICgZfdGl0bGVCDgoMX2Rlc2NyaXB0aW9uQgcKBV9zbHVnQg8KDV9ob21lcGFnZV91cmxCDgoMX2NvbnRhY3RfdXJsIlYKGFVwZGF0ZVN0YXR1c1BhZ2VSZXNwb25zZRI6CgtzdGF0dXNfcGFnZRgBIAEoCzIlLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3RhdHVzUGFnZSIuChdEZWxldGVTdGF0dXNQYWdlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASIrChhEZWxldGVTdGF0dXNQYWdlUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCLvAQoaQWRkTW9uaXRvckNvbXBvbmVudFJlcXVlc3QSGAoHcGFnZV9pZBgBIAEoCUIHukgEcgIQARIbCgptb25pdG9yX2lkGAIgASgJQge6SARyAhABEhsKBG5hbWUYAyABKAlCCLpIBXIDGIACSACIAQESIgoLZGVzY3JpcHRpb24YBCABKAlCCLpIBXIDGIAISAGIAQESEgoFb3JkZXIYBSABKAVIAogBARIVCghncm91cF9pZBgGIAEoCUgDiAEBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbkIICgZfb3JkZXJCCwoJX2dyb3VwX2lkIloKG0FkZE1vbml0b3JDb21wb25lbnRSZXNwb25zZRI7Cgljb21wb25lbnQYASABKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQixQEKGUFkZFN0YXRpY0NvbXBvbmVudFJlcXVlc3QSGAoHcGFnZV9pZBgBIAEoCUIHukgEcgIQARIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACEiIKC2Rlc2NyaXB0aW9uGAMgASgJQgi6SAVyAxiACEgAiAEBEhIKBW9yZGVyGAQgASgFSAGIAQESFQoIZ3JvdXBfaWQYBSABKAlIAogBAUIOCgxfZGVzY3JpcHRpb25CCAoGX29yZGVyQgsKCV9ncm91cF9pZCJZChpBZGRTdGF0aWNDb21wb25lbnRSZXNwb25zZRI7Cgljb21wb25lbnQYASABKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQiLQoWUmVtb3ZlQ29tcG9uZW50UmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASIqChdSZW1vdmVDb21wb25lbnRSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIvMBChZVcGRhdGVDb21wb25lbnRSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEhsKBG5hbWUYAiABKAlCCLpIBXIDGIACSACIAQESIgoLZGVzY3JpcHRpb24YAyABKAlCCLpIBXIDGIAISAGIAQESEgoFb3JkZXIYBCABKAVIAogBARIVCghncm91cF9pZBgFIAEoCUgDiAEBEhgKC2dyb3VwX29yZGVyGAYgASgFSASIAQFCBwoFX25hbWVCDgoMX2Rlc2NyaXB0aW9uQggKBl9vcmRlckILCglfZ3JvdXBfaWRCDgoMX2dyb3VwX29yZGVyIlYKF1VwZGF0ZUNvbXBvbmVudFJlc3BvbnNlEjsKCWNvbXBvbmVudBgBIAEoCzIoLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuUGFnZUNvbXBvbmVudCJRChtDcmVhdGVDb21wb25lbnRHcm91cFJlcXVlc3QSGAoHcGFnZV9pZBgBIAEoCUIHukgEcgIQARIYCgRuYW1lGAIgASgJQgq6SAdyBRABGIACIlwKHENyZWF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USPAoFZ3JvdXAYASABKAsyLS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnRHcm91cCIyChtEZWxldGVDb21wb25lbnRHcm91cFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiLwocRGVsZXRlQ29tcG9uZW50R3JvdXBSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIloKG1VwZGF0ZUNvbXBvbmVudEdyb3VwUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIdCgRuYW1lGAIgASgJQgq6SAdyBRABGIACSACIAQFCBwoFX25hbWUiXAocVXBkYXRlQ29tcG9uZW50R3JvdXBSZXNwb25zZRI8CgVncm91cBgBIAEoCzItLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuUGFnZUNvbXBvbmVudEdyb3VwIkoKFlN1YnNjcmliZVRvUGFnZVJlcXVlc3QSGAoHcGFnZV9pZBgBIAEoCUIHukgEcgIQARIWCgVlbWFpbBgCIAEoCUIHukgEcgJgASJYChdTdWJzY3JpYmVUb1BhZ2VSZXNwb25zZRI9CgpzdWJzY3JpYmVyGAEgASgLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlciJjChpVbnN1YnNjcmliZUZyb21QYWdlUmVxdWVzdBIYCgdwYWdlX2lkGAEgASgJQge6SARyAhABEg8KBWVtYWlsGAIgASgJSAASDAoCaWQYAyABKAlIAEIMCgppZGVudGlmaWVyIi4KG1Vuc3Vic2NyaWJlRnJvbVBhZ2VSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIsABChZMaXN0U3Vic2NyaWJlcnNSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESHQoFbGltaXQYAiABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgDIAEoBUIHukgEGgIoAEgBiAEBEiEKFGluY2x1ZGVfdW5zdWJzY3JpYmVkGAQgASgISAKIAQFCCAoGX2xpbWl0QgkKB19vZmZzZXRCFwoVX2luY2x1ZGVfdW5zdWJzY3JpYmVkIm0KF0xpc3RTdWJzY3JpYmVyc1Jlc3BvbnNlEj4KC3N1YnNjcmliZXJzGAEgAygLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlchISCgp0b3RhbF9zaXplGAIgASgFIkkKG0dldFN0YXR1c1BhZ2VDb250ZW50UmVxdWVzdBIMCgJpZBgBIAEoCUgAEg4KBHNsdWcYAiABKAlIAEIMCgppZGVudGlmaWVyIt8CChxHZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlEjwKCmNvbXBvbmVudHMYAiADKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQSPQoGZ3JvdXBzGAMgAygLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXASQQoOc3RhdHVzX3JlcG9ydHMYBCADKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0EkMKDG1haW50ZW5hbmNlcxgFIAMoCzItLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2VTdW1tYXJ5IkUKF0dldE92ZXJhbGxTdGF0dXNSZXF1ZXN0EgwKAmlkGAEgASgJSAASDgoEc2x1ZxgCIAEoCUgAQgwKCmlkZW50aWZpZXIiYQoPQ29tcG9uZW50U3RhdHVzEhQKDGNvbXBvbmVudF9pZBgBIAEoCRI4CgZzdGF0dXMYAiABKA4yKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLk92ZXJhbGxTdGF0dXMipAEKGEdldE92ZXJhbGxTdGF0dXNSZXNwb25zZRJACg5vdmVyYWxsX3N0YXR1cxgBIAEoDjIoLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuT3ZlcmFsbFN0YXR1cxJGChJjb21wb25lbnRfc3RhdHVzZXMYAiADKAsyKi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNvbXBvbmVudFN0YXR1czKXEQoRU3RhdHVzUGFnZVNlcnZpY2USewoQQ3JlYXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3JlYXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZVN0YXR1c1BhZ2VSZXNwb25zZRJyCg1HZXRTdGF0dXNQYWdlEi8ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlUmVxdWVzdBowLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZVJlc3BvbnNlEngKD0xpc3RTdGF0dXNQYWdlcxIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTGlzdFN0YXR1c1BhZ2VzUmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTGlzdFN0YXR1c1BhZ2VzUmVzcG9uc2USewoQVXBkYXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZVN0YXR1c1BhZ2VSZXNwb25zZRJ7ChBEZWxldGVTdGF0dXNQYWdlEjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5EZWxldGVTdGF0dXNQYWdlUmVxdWVzdBozLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuRGVsZXRlU3RhdHVzUGFnZVJlc3BvbnNlEoQBChNBZGRNb25pdG9yQ29tcG9uZW50EjUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRNb25pdG9yQ29tcG9uZW50UmVxdWVzdBo2Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQWRkTW9uaXRvckNvbXBvbmVudFJlc3BvbnNlEoEBChJBZGRTdGF0aWNDb21wb25lbnQSNC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkFkZFN0YXRpY0NvbXBvbmVudFJlcXVlc3QaNS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkFkZFN0YXRpY0NvbXBvbmVudFJlc3BvbnNlEngKD1JlbW92ZUNvbXBvbmVudBIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuUmVtb3ZlQ29tcG9uZW50UmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuUmVtb3ZlQ29tcG9uZW50UmVzcG9uc2USeAoPVXBkYXRlQ29tcG9uZW50EjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVDb21wb25lbnRSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVDb21wb25lbnRSZXNwb25zZRKHAQoUQ3JlYXRlQ29tcG9uZW50R3JvdXASNi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZUNvbXBvbmVudEdyb3VwUmVxdWVzdBo3Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3JlYXRlQ29tcG9uZW50R3JvdXBSZXNwb25zZRKHAQoURGVsZXRlQ29tcG9uZW50R3JvdXASNi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZUNvbXBvbmVudEdyb3VwUmVxdWVzdBo3Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuRGVsZXRlQ29tcG9uZW50R3JvdXBSZXNwb25zZRKHAQoUVXBkYXRlQ29tcG9uZW50R3JvdXASNi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZUNvbXBvbmVudEdyb3VwUmVxdWVzdBo3Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50R3JvdXBSZXNwb25zZRJ4Cg9TdWJzY3JpYmVUb1BhZ2USMS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN1YnNjcmliZVRvUGFnZVJlcXVlc3QaMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN1YnNjcmliZVRvUGFnZVJlc3BvbnNlEoQBChNVbnN1YnNjcmliZUZyb21QYWdlEjUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VbnN1YnNjcmliZUZyb21QYWdlUmVxdWVzdBo2Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVW5zdWJzY3JpYmVGcm9tUGFnZVJlc3BvbnNlEngKD0xpc3RTdWJzY3JpYmVycxIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTGlzdFN1YnNjcmliZXJzUmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuTGlzdFN1YnNjcmliZXJzUmVzcG9uc2UShwEKFEdldFN0YXR1c1BhZ2VDb250ZW50EjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlQ29udGVudFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkdldFN0YXR1c1BhZ2VDb250ZW50UmVzcG9uc2USewoQR2V0T3ZlcmFsbFN0YXR1cxIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0T3ZlcmFsbFN0YXR1c1JlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkdldE92ZXJhbGxTdGF0dXNSZXNwb25zZUJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM", [file_buf_validate_validate, file_openstatus_maintenance_v1_maintenance, file_openstatus_status_page_v1_page_component, file_openstatus_status_page_v1_page_subscriber, file_openstatus_status_page_v1_status_page, file_openstatus_status_report_v1_status_report]);
+  fileDesc("CidvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEiwAIKF0NyZWF0ZVN0YXR1c1BhZ2VSZXF1ZXN0EjAKBXRpdGxlGAEgASgJQiG6RxQ6EhIQQWNtZSBDb3JwIFN0YXR1c7pIB3IFEAEYgAISIgoLZGVzY3JpcHRpb24YAiABKAlCCLpIBXIDGIAISACIAQESSQoEc2x1ZxgDIAEoCUI7ukcSOhASDm15LXN0YXR1cy1wYWdlukgjciEQARiAAjIaXlthLXowLTldKyg/Oi1bYS16MC05XSspKiQSOQoMaG9tZXBhZ2VfdXJsGAQgASgJQh66Rxs6GRIXaHR0cHM6Ly93d3cuZXhhbXBsZS5jb21IAYgBARIYCgtjb250YWN0X3VybBgFIAEoCUgCiAEBQg4KDF9kZXNjcmlwdGlvbkIPCg1faG9tZXBhZ2VfdXJsQg4KDF9jb250YWN0X3VybCJWChhDcmVhdGVTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiKwoUR2V0U3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiUwoVR2V0U3RhdHVzUGFnZVJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlImoKFkxpc3RTdGF0dXNQYWdlc1JlcXVlc3QSHQoFbGltaXQYASABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgCIAEoBUIHukgEGgIoAEgBiAEBQggKBl9saW1pdEIJCgdfb2Zmc2V0InEKF0xpc3RTdGF0dXNQYWdlc1Jlc3BvbnNlEkIKDHN0YXR1c19wYWdlcxgBIAMoCzIsLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3RhdHVzUGFnZVN1bW1hcnkSEgoKdG90YWxfc2l6ZRgCIAEoBSKmAgoXVXBkYXRlU3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESHgoFdGl0bGUYAiABKAlCCrpIB3IFEAEYgAJIAIgBARIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAYgBARI5CgRzbHVnGAQgASgJQia6SCNyIRABGIACMhpeW2EtejAtOV0rKD86LVthLXowLTldKykqJEgCiAEBEhkKDGhvbWVwYWdlX3VybBgFIAEoCUgDiAEBEhgKC2NvbnRhY3RfdXJsGAYgASgJSASIAQFCCAoGX3RpdGxlQg4KDF9kZXNjcmlwdGlvbkIHCgVfc2x1Z0IPCg1faG9tZXBhZ2VfdXJsQg4KDF9jb250YWN0X3VybCJWChhVcGRhdGVTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiLgoXRGVsZXRlU3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKwoYRGVsZXRlU3RhdHVzUGFnZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgi7wEKGkFkZE1vbml0b3JDb21wb25lbnRSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGwoKbW9uaXRvcl9pZBgCIAEoCUIHukgEcgIQARIbCgRuYW1lGAMgASgJQgi6SAVyAxiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAQgASgJQgi6SAVyAxiACEgBiAEBEhIKBW9yZGVyGAUgASgFSAKIAQESFQoIZ3JvdXBfaWQYBiABKAlIA4gBAUIHCgVfbmFtZUIOCgxfZGVzY3JpcHRpb25CCAoGX29yZGVyQgsKCV9ncm91cF9pZCJaChtBZGRNb25pdG9yQ29tcG9uZW50UmVzcG9uc2USOwoJY29tcG9uZW50GAEgASgLMigub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50IsUBChlBZGRTdGF0aWNDb21wb25lbnRSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAhIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAIgBARISCgVvcmRlchgEIAEoBUgBiAEBEhUKCGdyb3VwX2lkGAUgASgJSAKIAQFCDgoMX2Rlc2NyaXB0aW9uQggKBl9vcmRlckILCglfZ3JvdXBfaWQiWQoaQWRkU3RhdGljQ29tcG9uZW50UmVzcG9uc2USOwoJY29tcG9uZW50GAEgASgLMigub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50Ii0KFlJlbW92ZUNvbXBvbmVudFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKgoXUmVtb3ZlQ29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCLzAQoWVXBkYXRlQ29tcG9uZW50UmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIbCgRuYW1lGAIgASgJQgi6SAVyAxiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAMgASgJQgi6SAVyAxiACEgBiAEBEhIKBW9yZGVyGAQgASgFSAKIAQESFQoIZ3JvdXBfaWQYBSABKAlIA4gBARIYCgtncm91cF9vcmRlchgGIAEoBUgEiAEBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbkIICgZfb3JkZXJCCwoJX2dyb3VwX2lkQg4KDF9ncm91cF9vcmRlciJWChdVcGRhdGVDb21wb25lbnRSZXNwb25zZRI7Cgljb21wb25lbnQYASABKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQiUQobQ3JlYXRlQ29tcG9uZW50R3JvdXBSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAiJcChxDcmVhdGVDb21wb25lbnRHcm91cFJlc3BvbnNlEjwKBWdyb3VwGAEgASgLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXAiMgobRGVsZXRlQ29tcG9uZW50R3JvdXBSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIi8KHERlbGV0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJaChtVcGRhdGVDb21wb25lbnRHcm91cFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESHQoEbmFtZRgCIAEoCUIKukgHcgUQARiAAkgAiAEBQgcKBV9uYW1lIlwKHFVwZGF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USPAoFZ3JvdXAYASABKAsyLS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnRHcm91cCJhChZTdWJzY3JpYmVUb1BhZ2VSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESLQoFZW1haWwYAiABKAlCHrpHFDoSEhB1c2VyQGV4YW1wbGUuY29tukgEcgJgASJYChdTdWJzY3JpYmVUb1BhZ2VSZXNwb25zZRI9CgpzdWJzY3JpYmVyGAEgASgLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlciJjChpVbnN1YnNjcmliZUZyb21QYWdlUmVxdWVzdBIYCgdwYWdlX2lkGAEgASgJQge6SARyAhABEg8KBWVtYWlsGAIgASgJSAASDAoCaWQYAyABKAlIAEIMCgppZGVudGlmaWVyIi4KG1Vuc3Vic2NyaWJlRnJvbVBhZ2VSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIsABChZMaXN0U3Vic2NyaWJlcnNSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESHQoFbGltaXQYAiABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgDIAEoBUIHukgEGgIoAEgBiAEBEiEKFGluY2x1ZGVfdW5zdWJzY3JpYmVkGAQgASgISAKIAQFCCAoGX2xpbWl0QgkKB19vZmZzZXRCFwoVX2luY2x1ZGVfdW5zdWJzY3JpYmVkIm0KF0xpc3RTdWJzY3JpYmVyc1Jlc3BvbnNlEj4KC3N1YnNjcmliZXJzGAEgAygLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlchISCgp0b3RhbF9zaXplGAIgASgFIkkKG0dldFN0YXR1c1BhZ2VDb250ZW50UmVxdWVzdBIMCgJpZBgBIAEoCUgAEg4KBHNsdWcYAiABKAlIAEIMCgppZGVudGlmaWVyIt8CChxHZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlEjwKCmNvbXBvbmVudHMYAiADKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQSPQoGZ3JvdXBzGAMgAygLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXASQQoOc3RhdHVzX3JlcG9ydHMYBCADKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0EkMKDG1haW50ZW5hbmNlcxgFIAMoCzItLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2VTdW1tYXJ5IkUKF0dldE92ZXJhbGxTdGF0dXNSZXF1ZXN0EgwKAmlkGAEgASgJSAASDgoEc2x1ZxgCIAEoCUgAQgwKCmlkZW50aWZpZXIiYQoPQ29tcG9uZW50U3RhdHVzEhQKDGNvbXBvbmVudF9pZBgBIAEoCRI4CgZzdGF0dXMYAiABKA4yKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLk92ZXJhbGxTdGF0dXMipAEKGEdldE92ZXJhbGxTdGF0dXNSZXNwb25zZRJACg5vdmVyYWxsX3N0YXR1cxgBIAEoDjIoLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuT3ZlcmFsbFN0YXR1cxJGChJjb21wb25lbnRfc3RhdHVzZXMYAiADKAsyKi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNvbXBvbmVudFN0YXR1czLNFwoRU3RhdHVzUGFnZVNlcnZpY2USewoQQ3JlYXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3JlYXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZVN0YXR1c1BhZ2VSZXNwb25zZRJ3Cg1HZXRTdGF0dXNQYWdlEi8ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlUmVxdWVzdBowLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZVJlc3BvbnNlIgOQAgESfQoPTGlzdFN0YXR1c1BhZ2VzEjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3RhdHVzUGFnZXNSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3RhdHVzUGFnZXNSZXNwb25zZSIDkAIBEnsKEFVwZGF0ZVN0YXR1c1BhZ2USMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZVN0YXR1c1BhZ2VSZXF1ZXN0GjMub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVTdGF0dXNQYWdlUmVzcG9uc2USewoQRGVsZXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuRGVsZXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZVN0YXR1c1BhZ2VSZXNwb25zZRKEAQoTQWRkTW9uaXRvckNvbXBvbmVudBI1Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQWRkTW9uaXRvckNvbXBvbmVudFJlcXVlc3QaNi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkFkZE1vbml0b3JDb21wb25lbnRSZXNwb25zZRKBAQoSQWRkU3RhdGljQ29tcG9uZW50EjQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRTdGF0aWNDb21wb25lbnRSZXF1ZXN0GjUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRTdGF0aWNDb21wb25lbnRSZXNwb25zZRJ4Cg9SZW1vdmVDb21wb25lbnQSMS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlJlbW92ZUNvbXBvbmVudFJlcXVlc3QaMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlJlbW92ZUNvbXBvbmVudFJlc3BvbnNlEngKD1VwZGF0ZUNvbXBvbmVudBIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50UmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50UmVzcG9uc2UShwEKFENyZWF0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DcmVhdGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UShwEKFERlbGV0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5EZWxldGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UShwEKFFVwZGF0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UStQIKD1N1YnNjcmliZVRvUGFnZRIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlVG9QYWdlUmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlVG9QYWdlUmVzcG9uc2UiugG6R7YBGrMBU3Vic2NyaWJlcyBhbiBlbWFpbCBhZGRyZXNzIHRvIHJlY2VpdmUgbm90aWZpY2F0aW9ucyBmcm9tIGEgc3RhdHVzIHBhZ2UuIElmIHRoZSBlbWFpbCB3YXMgcHJldmlvdXNseSB1bnN1YnNjcmliZWQsIHRoZSBzdWJzY3JpcHRpb24gaXMgcmVhY3RpdmF0ZWQgaW5zdGVhZCBvZiBjcmVhdGluZyBhIGR1cGxpY2F0ZS4ShAEKE1Vuc3Vic2NyaWJlRnJvbVBhZ2USNS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVuc3Vic2NyaWJlRnJvbVBhZ2VSZXF1ZXN0GjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VbnN1YnNjcmliZUZyb21QYWdlUmVzcG9uc2USfQoPTGlzdFN1YnNjcmliZXJzEjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3Vic2NyaWJlcnNSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3Vic2NyaWJlcnNSZXNwb25zZSIDkAIBEsADChRHZXRTdGF0dXNQYWdlQ29udGVudBI2Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZUNvbnRlbnRSZXF1ZXN0Gjcub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlIrYCkAIBukevAhqsAlJldHVybnMgdGhlIGZ1bGwgY29udGVudCBvZiBhIHN0YXR1cyBwYWdlIGluY2x1ZGluZyBpdHMgY29tcG9uZW50cywgY29tcG9uZW50IGdyb3VwcywgYWN0aXZlIHN0YXR1cyByZXBvcnRzLCBhbmQgc2NoZWR1bGVkIG1haW50ZW5hbmNlcy4gU3VwcG9ydHMgdHdvIGFjY2VzcyBwYXRoczogYnkgSUQgKHJlcXVpcmVzIGF1dGhlbnRpY2F0aW9uLCB3b3Jrc3BhY2Utc2NvcGVkKSBvciBieSBzbHVnIChwdWJsaWMgYWNjZXNzLCByZXF1aXJlcyB0aGUgcGFnZSB0byBiZSBwdWJsaXNoZWQgd2l0aCBhY2Nlc3NfdHlwZT1QVUJMSUMpLhKqAwoQR2V0T3ZlcmFsbFN0YXR1cxIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0T3ZlcmFsbFN0YXR1c1JlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkdldE92ZXJhbGxTdGF0dXNSZXNwb25zZSKsApACAbpHpQIaogJSZXR1cm5zIHRoZSBvdmVyYWxsIHN0YXR1cyBvZiBhIHN0YXR1cyBwYWdlIGFsb25nIHdpdGggaW5kaXZpZHVhbCBjb21wb25lbnQgc3RhdHVzZXMuIFRoZSBvdmVyYWxsIHN0YXR1cyBpcyBjb21wdXRlZCBmcm9tIGFjdGl2ZSBzdGF0dXMgcmVwb3J0cyBhbmQgbWFpbnRlbmFuY2VzIHdpdGggdGhlIGZvbGxvd2luZyBwcmlvcml0eTogZGVncmFkZWQgKGZyb20gYWN0aXZlIHN0YXR1cyByZXBvcnRzKSA+IG1haW50ZW5hbmNlIChmcm9tIGFjdGl2ZSBtYWludGVuYW5jZSB3aW5kb3dzKSA+IG9wZXJhdGlvbmFsLkJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_maintenance_v1_maintenance, file_openstatus_status_page_v1_page_component, file_openstatus_status_page_v1_page_subscriber, file_openstatus_status_page_v1_status_page, file_openstatus_status_report_v1_status_report]);
 
 /**
+ * CreateStatusPageRequest is the request to create a new status page.
+ *
  * @generated from message openstatus.status_page.v1.CreateStatusPageRequest
  */
 export type CreateStatusPageRequest = Message<"openstatus.status_page.v1.CreateStatusPageRequest"> & {
@@ -42,7 +45,7 @@ export type CreateStatusPageRequest = Message<"openstatus.status_page.v1.CreateS
   description?: string;
 
   /**
-   * URL-friendly slug for the status page (required).
+   * URL-friendly slug for the status page (required). Must be lowercase alphanumeric with hyphens.
    *
    * @generated from field: string slug = 3;
    */
@@ -71,6 +74,8 @@ export const CreateStatusPageRequestSchema: GenMessage<CreateStatusPageRequest> 
   messageDesc(file_openstatus_status_page_v1_service, 0);
 
 /**
+ * CreateStatusPageResponse is the response after creating a status page.
+ *
  * @generated from message openstatus.status_page.v1.CreateStatusPageResponse
  */
 export type CreateStatusPageResponse = Message<"openstatus.status_page.v1.CreateStatusPageResponse"> & {
@@ -90,6 +95,8 @@ export const CreateStatusPageResponseSchema: GenMessage<CreateStatusPageResponse
   messageDesc(file_openstatus_status_page_v1_service, 1);
 
 /**
+ * GetStatusPageRequest is the request to get a status page by ID.
+ *
  * @generated from message openstatus.status_page.v1.GetStatusPageRequest
  */
 export type GetStatusPageRequest = Message<"openstatus.status_page.v1.GetStatusPageRequest"> & {
@@ -109,6 +116,8 @@ export const GetStatusPageRequestSchema: GenMessage<GetStatusPageRequest> = /*@_
   messageDesc(file_openstatus_status_page_v1_service, 2);
 
 /**
+ * GetStatusPageResponse is the response containing the status page.
+ *
  * @generated from message openstatus.status_page.v1.GetStatusPageResponse
  */
 export type GetStatusPageResponse = Message<"openstatus.status_page.v1.GetStatusPageResponse"> & {
@@ -128,6 +137,8 @@ export const GetStatusPageResponseSchema: GenMessage<GetStatusPageResponse> = /*
   messageDesc(file_openstatus_status_page_v1_service, 3);
 
 /**
+ * ListStatusPagesRequest is the request to list status pages.
+ *
  * @generated from message openstatus.status_page.v1.ListStatusPagesRequest
  */
 export type ListStatusPagesRequest = Message<"openstatus.status_page.v1.ListStatusPagesRequest"> & {
@@ -154,6 +165,8 @@ export const ListStatusPagesRequestSchema: GenMessage<ListStatusPagesRequest> = 
   messageDesc(file_openstatus_status_page_v1_service, 4);
 
 /**
+ * ListStatusPagesResponse is the response containing status page summaries.
+ *
  * @generated from message openstatus.status_page.v1.ListStatusPagesResponse
  */
 export type ListStatusPagesResponse = Message<"openstatus.status_page.v1.ListStatusPagesResponse"> & {
@@ -180,6 +193,8 @@ export const ListStatusPagesResponseSchema: GenMessage<ListStatusPagesResponse> 
   messageDesc(file_openstatus_status_page_v1_service, 5);
 
 /**
+ * UpdateStatusPageRequest is the request to update a status page.
+ *
  * @generated from message openstatus.status_page.v1.UpdateStatusPageRequest
  */
 export type UpdateStatusPageRequest = Message<"openstatus.status_page.v1.UpdateStatusPageRequest"> & {
@@ -234,6 +249,8 @@ export const UpdateStatusPageRequestSchema: GenMessage<UpdateStatusPageRequest> 
   messageDesc(file_openstatus_status_page_v1_service, 6);
 
 /**
+ * UpdateStatusPageResponse is the response after updating a status page.
+ *
  * @generated from message openstatus.status_page.v1.UpdateStatusPageResponse
  */
 export type UpdateStatusPageResponse = Message<"openstatus.status_page.v1.UpdateStatusPageResponse"> & {
@@ -253,6 +270,8 @@ export const UpdateStatusPageResponseSchema: GenMessage<UpdateStatusPageResponse
   messageDesc(file_openstatus_status_page_v1_service, 7);
 
 /**
+ * DeleteStatusPageRequest is the request to delete a status page.
+ *
  * @generated from message openstatus.status_page.v1.DeleteStatusPageRequest
  */
 export type DeleteStatusPageRequest = Message<"openstatus.status_page.v1.DeleteStatusPageRequest"> & {
@@ -272,6 +291,8 @@ export const DeleteStatusPageRequestSchema: GenMessage<DeleteStatusPageRequest> 
   messageDesc(file_openstatus_status_page_v1_service, 8);
 
 /**
+ * DeleteStatusPageResponse is the response after deleting a status page.
+ *
  * @generated from message openstatus.status_page.v1.DeleteStatusPageResponse
  */
 export type DeleteStatusPageResponse = Message<"openstatus.status_page.v1.DeleteStatusPageResponse"> & {
@@ -291,6 +312,8 @@ export const DeleteStatusPageResponseSchema: GenMessage<DeleteStatusPageResponse
   messageDesc(file_openstatus_status_page_v1_service, 9);
 
 /**
+ * AddMonitorComponentRequest is the request to add a monitor-based component to a status page.
+ *
  * @generated from message openstatus.status_page.v1.AddMonitorComponentRequest
  */
 export type AddMonitorComponentRequest = Message<"openstatus.status_page.v1.AddMonitorComponentRequest"> & {
@@ -345,6 +368,8 @@ export const AddMonitorComponentRequestSchema: GenMessage<AddMonitorComponentReq
   messageDesc(file_openstatus_status_page_v1_service, 10);
 
 /**
+ * AddMonitorComponentResponse is the response after adding a monitor component.
+ *
  * @generated from message openstatus.status_page.v1.AddMonitorComponentResponse
  */
 export type AddMonitorComponentResponse = Message<"openstatus.status_page.v1.AddMonitorComponentResponse"> & {
@@ -364,6 +389,8 @@ export const AddMonitorComponentResponseSchema: GenMessage<AddMonitorComponentRe
   messageDesc(file_openstatus_status_page_v1_service, 11);
 
 /**
+ * AddStaticComponentRequest is the request to add a static component to a status page.
+ *
  * @generated from message openstatus.status_page.v1.AddStaticComponentRequest
  */
 export type AddStaticComponentRequest = Message<"openstatus.status_page.v1.AddStaticComponentRequest"> & {
@@ -411,6 +438,8 @@ export const AddStaticComponentRequestSchema: GenMessage<AddStaticComponentReque
   messageDesc(file_openstatus_status_page_v1_service, 12);
 
 /**
+ * AddStaticComponentResponse is the response after adding a static component.
+ *
  * @generated from message openstatus.status_page.v1.AddStaticComponentResponse
  */
 export type AddStaticComponentResponse = Message<"openstatus.status_page.v1.AddStaticComponentResponse"> & {
@@ -430,6 +459,8 @@ export const AddStaticComponentResponseSchema: GenMessage<AddStaticComponentResp
   messageDesc(file_openstatus_status_page_v1_service, 13);
 
 /**
+ * RemoveComponentRequest is the request to remove a component from a status page.
+ *
  * @generated from message openstatus.status_page.v1.RemoveComponentRequest
  */
 export type RemoveComponentRequest = Message<"openstatus.status_page.v1.RemoveComponentRequest"> & {
@@ -449,6 +480,8 @@ export const RemoveComponentRequestSchema: GenMessage<RemoveComponentRequest> = 
   messageDesc(file_openstatus_status_page_v1_service, 14);
 
 /**
+ * RemoveComponentResponse is the response after removing a component.
+ *
  * @generated from message openstatus.status_page.v1.RemoveComponentResponse
  */
 export type RemoveComponentResponse = Message<"openstatus.status_page.v1.RemoveComponentResponse"> & {
@@ -468,6 +501,8 @@ export const RemoveComponentResponseSchema: GenMessage<RemoveComponentResponse> 
   messageDesc(file_openstatus_status_page_v1_service, 15);
 
 /**
+ * UpdateComponentRequest is the request to update a component.
+ *
  * @generated from message openstatus.status_page.v1.UpdateComponentRequest
  */
 export type UpdateComponentRequest = Message<"openstatus.status_page.v1.UpdateComponentRequest"> & {
@@ -522,6 +557,8 @@ export const UpdateComponentRequestSchema: GenMessage<UpdateComponentRequest> = 
   messageDesc(file_openstatus_status_page_v1_service, 16);
 
 /**
+ * UpdateComponentResponse is the response after updating a component.
+ *
  * @generated from message openstatus.status_page.v1.UpdateComponentResponse
  */
 export type UpdateComponentResponse = Message<"openstatus.status_page.v1.UpdateComponentResponse"> & {
@@ -541,6 +578,8 @@ export const UpdateComponentResponseSchema: GenMessage<UpdateComponentResponse> 
   messageDesc(file_openstatus_status_page_v1_service, 17);
 
 /**
+ * CreateComponentGroupRequest is the request to create a new component group.
+ *
  * @generated from message openstatus.status_page.v1.CreateComponentGroupRequest
  */
 export type CreateComponentGroupRequest = Message<"openstatus.status_page.v1.CreateComponentGroupRequest"> & {
@@ -567,6 +606,8 @@ export const CreateComponentGroupRequestSchema: GenMessage<CreateComponentGroupR
   messageDesc(file_openstatus_status_page_v1_service, 18);
 
 /**
+ * CreateComponentGroupResponse is the response after creating a component group.
+ *
  * @generated from message openstatus.status_page.v1.CreateComponentGroupResponse
  */
 export type CreateComponentGroupResponse = Message<"openstatus.status_page.v1.CreateComponentGroupResponse"> & {
@@ -586,6 +627,8 @@ export const CreateComponentGroupResponseSchema: GenMessage<CreateComponentGroup
   messageDesc(file_openstatus_status_page_v1_service, 19);
 
 /**
+ * DeleteComponentGroupRequest is the request to delete a component group.
+ *
  * @generated from message openstatus.status_page.v1.DeleteComponentGroupRequest
  */
 export type DeleteComponentGroupRequest = Message<"openstatus.status_page.v1.DeleteComponentGroupRequest"> & {
@@ -605,6 +648,8 @@ export const DeleteComponentGroupRequestSchema: GenMessage<DeleteComponentGroupR
   messageDesc(file_openstatus_status_page_v1_service, 20);
 
 /**
+ * DeleteComponentGroupResponse is the response after deleting a component group.
+ *
  * @generated from message openstatus.status_page.v1.DeleteComponentGroupResponse
  */
 export type DeleteComponentGroupResponse = Message<"openstatus.status_page.v1.DeleteComponentGroupResponse"> & {
@@ -624,6 +669,8 @@ export const DeleteComponentGroupResponseSchema: GenMessage<DeleteComponentGroup
   messageDesc(file_openstatus_status_page_v1_service, 21);
 
 /**
+ * UpdateComponentGroupRequest is the request to update a component group.
+ *
  * @generated from message openstatus.status_page.v1.UpdateComponentGroupRequest
  */
 export type UpdateComponentGroupRequest = Message<"openstatus.status_page.v1.UpdateComponentGroupRequest"> & {
@@ -650,6 +697,8 @@ export const UpdateComponentGroupRequestSchema: GenMessage<UpdateComponentGroupR
   messageDesc(file_openstatus_status_page_v1_service, 22);
 
 /**
+ * UpdateComponentGroupResponse is the response after updating a component group.
+ *
  * @generated from message openstatus.status_page.v1.UpdateComponentGroupResponse
  */
 export type UpdateComponentGroupResponse = Message<"openstatus.status_page.v1.UpdateComponentGroupResponse"> & {
@@ -669,6 +718,8 @@ export const UpdateComponentGroupResponseSchema: GenMessage<UpdateComponentGroup
   messageDesc(file_openstatus_status_page_v1_service, 23);
 
 /**
+ * SubscribeToPageRequest is the request to subscribe an email to a status page.
+ *
  * @generated from message openstatus.status_page.v1.SubscribeToPageRequest
  */
 export type SubscribeToPageRequest = Message<"openstatus.status_page.v1.SubscribeToPageRequest"> & {
@@ -695,6 +746,8 @@ export const SubscribeToPageRequestSchema: GenMessage<SubscribeToPageRequest> = 
   messageDesc(file_openstatus_status_page_v1_service, 24);
 
 /**
+ * SubscribeToPageResponse is the response after subscribing to a status page.
+ *
  * @generated from message openstatus.status_page.v1.SubscribeToPageResponse
  */
 export type SubscribeToPageResponse = Message<"openstatus.status_page.v1.SubscribeToPageResponse"> & {
@@ -714,6 +767,8 @@ export const SubscribeToPageResponseSchema: GenMessage<SubscribeToPageResponse> 
   messageDesc(file_openstatus_status_page_v1_service, 25);
 
 /**
+ * UnsubscribeFromPageRequest is the request to unsubscribe from a status page.
+ *
  * @generated from message openstatus.status_page.v1.UnsubscribeFromPageRequest
  */
 export type UnsubscribeFromPageRequest = Message<"openstatus.status_page.v1.UnsubscribeFromPageRequest"> & {
@@ -756,6 +811,8 @@ export const UnsubscribeFromPageRequestSchema: GenMessage<UnsubscribeFromPageReq
   messageDesc(file_openstatus_status_page_v1_service, 26);
 
 /**
+ * UnsubscribeFromPageResponse is the response after unsubscribing from a status page.
+ *
  * @generated from message openstatus.status_page.v1.UnsubscribeFromPageResponse
  */
 export type UnsubscribeFromPageResponse = Message<"openstatus.status_page.v1.UnsubscribeFromPageResponse"> & {
@@ -775,6 +832,8 @@ export const UnsubscribeFromPageResponseSchema: GenMessage<UnsubscribeFromPageRe
   messageDesc(file_openstatus_status_page_v1_service, 27);
 
 /**
+ * ListSubscribersRequest is the request to list subscribers of a status page.
+ *
  * @generated from message openstatus.status_page.v1.ListSubscribersRequest
  */
 export type ListSubscribersRequest = Message<"openstatus.status_page.v1.ListSubscribersRequest"> & {
@@ -815,6 +874,8 @@ export const ListSubscribersRequestSchema: GenMessage<ListSubscribersRequest> = 
   messageDesc(file_openstatus_status_page_v1_service, 28);
 
 /**
+ * ListSubscribersResponse is the response containing status page subscribers.
+ *
  * @generated from message openstatus.status_page.v1.ListSubscribersResponse
  */
 export type ListSubscribersResponse = Message<"openstatus.status_page.v1.ListSubscribersResponse"> & {
@@ -841,6 +902,8 @@ export const ListSubscribersResponseSchema: GenMessage<ListSubscribersResponse> 
   messageDesc(file_openstatus_status_page_v1_service, 29);
 
 /**
+ * GetStatusPageContentRequest is the request to get the full content of a status page.
+ *
  * @generated from message openstatus.status_page.v1.GetStatusPageContentRequest
  */
 export type GetStatusPageContentRequest = Message<"openstatus.status_page.v1.GetStatusPageContentRequest"> & {
@@ -876,6 +939,8 @@ export const GetStatusPageContentRequestSchema: GenMessage<GetStatusPageContentR
   messageDesc(file_openstatus_status_page_v1_service, 30);
 
 /**
+ * GetStatusPageContentResponse is the response containing the full status page content.
+ *
  * @generated from message openstatus.status_page.v1.GetStatusPageContentResponse
  */
 export type GetStatusPageContentResponse = Message<"openstatus.status_page.v1.GetStatusPageContentResponse"> & {
@@ -923,6 +988,8 @@ export const GetStatusPageContentResponseSchema: GenMessage<GetStatusPageContent
   messageDesc(file_openstatus_status_page_v1_service, 31);
 
 /**
+ * GetOverallStatusRequest is the request to get the overall status of a status page.
+ *
  * @generated from message openstatus.status_page.v1.GetOverallStatusRequest
  */
 export type GetOverallStatusRequest = Message<"openstatus.status_page.v1.GetOverallStatusRequest"> & {
@@ -986,6 +1053,8 @@ export const ComponentStatusSchema: GenMessage<ComponentStatus> = /*@__PURE__*/
   messageDesc(file_openstatus_status_page_v1_service, 33);
 
 /**
+ * GetOverallStatusResponse is the response containing the overall status and individual component statuses.
+ *
  * @generated from message openstatus.status_page.v1.GetOverallStatusResponse
  */
 export type GetOverallStatusResponse = Message<"openstatus.status_page.v1.GetOverallStatusResponse"> & {
@@ -1012,9 +1081,8 @@ export const GetOverallStatusResponseSchema: GenMessage<GetOverallStatusResponse
   messageDesc(file_openstatus_status_page_v1_service, 34);
 
 /**
- * StatusPageService provides CRUD and management operations for status pages.
- *
- * --- Page CRUD ---
+ * StatusPageService provides CRUD and management operations for status pages,
+ * including component management, component grouping, subscriber handling, and aggregated status queries.
  *
  * @generated from service openstatus.status_page.v1.StatusPageService
  */
@@ -1140,7 +1208,7 @@ export const StatusPageService: GenService<{
     output: typeof UpdateComponentGroupResponseSchema;
   },
   /**
-   * SubscribeToPage subscribes an email to a status page.
+   * SubscribeToPage subscribes an email to a status page. If the email was previously unsubscribed, the subscription is reactivated.
    *
    * @generated from rpc openstatus.status_page.v1.StatusPageService.SubscribeToPage
    */
@@ -1170,7 +1238,7 @@ export const StatusPageService: GenService<{
     output: typeof ListSubscribersResponseSchema;
   },
   /**
-   * GetStatusPageContent retrieves the full content of a status page including components and reports.
+   * GetStatusPageContent retrieves the full content of a status page including components, groups, active reports, and maintenances.
    *
    * @generated from rpc openstatus.status_page.v1.StatusPageService.GetStatusPageContent
    */
@@ -1180,7 +1248,7 @@ export const StatusPageService: GenService<{
     output: typeof GetStatusPageContentResponseSchema;
   },
   /**
-   * GetOverallStatus returns the aggregated status of a status page.
+   * GetOverallStatus returns the aggregated status of a status page and its individual components.
    *
    * @generated from rpc openstatus.status_page.v1.StatusPageService.GetOverallStatus
    */

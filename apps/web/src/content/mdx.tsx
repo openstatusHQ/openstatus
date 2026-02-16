@@ -8,38 +8,19 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
+import remarkGfm from "remark-gfm";
 import { highlight } from "sugar-high";
 import { ComponentHighlighter } from "./component-highlighter";
 import { CopyButton } from "./copy-button";
 import { HighlightText } from "./highlight-text";
-import { ImageZoom } from "./image-zoom";
+import { ImageZoom, ZoomableImage } from "./image-zoom";
 import { LatencyChartTable } from "./latency-chart-table";
 import { StatusPageExample } from "./shadcn-registry-example";
 
-function Table({
-  data,
-}: {
-  data: { headers: React.ReactNode[]; rows: React.ReactNode[][] };
-}) {
-  const headers = data.headers.map((header: React.ReactNode, index: number) => (
-    <th key={index}>{header}</th>
-  ));
-  const rows = data.rows.map((row: React.ReactNode[], index: number) => (
-    <tr key={index}>
-      {row.map((cell: React.ReactNode, cellIndex: number) => (
-        <td key={cellIndex}>{cell}</td>
-      ))}
-    </tr>
-  ));
-
+function Table(props: React.ComponentProps<"table">) {
   return (
     <div className="table-wrapper">
-      <table>
-        <thead>
-          <tr>{headers}</tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </table>
+      <table {...props} />
     </div>
   );
 }
@@ -300,43 +281,15 @@ function CustomImage({
   const useDarkImage = checkDarkImageExists(darkSrc);
 
   return (
-    <figure>
-      <ImageZoom
-        backdropClassName={cn(
-          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
-        )}
-        zoomMargin={16}
-      >
-        <Image
-          {...rest}
-          src={src}
-          alt={alt ?? ""}
-          width={imageWidth}
-          height={imageHeight}
-          sizes="100vw"
-          style={{ width: "100%", height: "auto" }}
-          className={cn("block dark:hidden", className)}
-        />
-      </ImageZoom>
-      <ImageZoom
-        backdropClassName={cn(
-          '[&_[data-rmiz-modal-overlay="visible"]]:bg-black/80',
-        )}
-        zoomMargin={16}
-      >
-        <Image
-          {...rest}
-          src={useDarkImage ? darkSrc : src}
-          alt={alt ?? ""}
-          width={imageWidth}
-          height={imageHeight}
-          sizes="100vw"
-          style={{ width: "100%", height: "auto" }}
-          className={cn("hidden dark:block", className)}
-        />
-      </ImageZoom>
-      {alt && <figcaption>{alt}</figcaption>}
-    </figure>
+    <ZoomableImage
+      {...rest}
+      src={src}
+      alt={alt}
+      className={className}
+      darkSrc={useDarkImage ? darkSrc : undefined}
+      imageWidth={imageWidth as number}
+      imageHeight={imageHeight as number}
+    />
   );
 }
 
@@ -352,7 +305,7 @@ export const components = {
   ButtonLink: ButtonLink,
   code: Code,
   pre: Pre,
-  Table,
+  table: Table,
   Grid,
   Details, // Capital D for JSX usage with props
   details: Details, // lowercase for HTML tag replacement
@@ -375,6 +328,15 @@ function MDXContent(props: MDXRemoteProps) {
   return (
     <MDXRemote
       {...props}
+      options={{
+        blockJS: false, // Allow JS expressions in trusted MDX content
+        blockDangerousJS: true, // Still block dangerous operations
+        mdxOptions: {
+          remarkPlugins: [remarkGfm],
+          ...props.options?.mdxOptions,
+        },
+        ...props.options,
+      }}
       components={
         {
           ...components,

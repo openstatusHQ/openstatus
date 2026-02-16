@@ -15,8 +15,11 @@ import { showRoutes } from "hono/dev";
 
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
+import { Scalar } from "@scalar/hono-api-reference";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
+import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
+import openapiYaml from "../static/openapi.yaml" with { type: "text" };
 import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
@@ -173,6 +176,7 @@ app.onError(handleError);
 /**
  * ConnectRPC Routes API v2 ftw
  */
+
 mountRpcRoutes(app);
 
 /**
@@ -189,6 +193,41 @@ app.get("/ping", (c) => {
     200,
   );
 });
+
+app.get("/openapi.yaml", (c) => {
+  return c.text(openapiYaml, 200, { "Content-Type": "application/yaml" });
+});
+app.get("/openapi-v1.json", (c) => {
+  return c.text(JSON.stringify(openapiV1Json), 200, {
+    "Content-Type": "application/json",
+  });
+});
+
+app.get(
+  "/openapi",
+  Scalar({
+    url: "/openapi.yaml",
+    servers: [
+      {
+        url: "https://api.openstatus.dev/",
+        description: "Production server",
+      },
+      {
+        url: "http://localhost:3000/",
+        description: "Dev server",
+      },
+    ],
+    metaData: {
+      title: "OpenStatus API",
+      description: "Start building with OpenStatus API",
+      ogDescription: "API Reference",
+      ogTitle: "OpenStatus API",
+      ogImage:
+        "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
+      twitterCard: "summary_large_image",
+    },
+  }),
+);
 
 /**
  * API Routes v1

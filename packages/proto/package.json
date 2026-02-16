@@ -35,6 +35,7 @@
     }
   },
   "scripts": {
+    "buf:openapi": "buf generate --path api/openstatus --template buf.gen.openapi.yaml && bun scripts/clean-openapi.ts",
     "buf:ts": "buf generate --path api/openstatus --template buf.gen.ts.yaml",
     "buf:go": "buf generate --path internal/private_location --template buf.gen.go.yaml",
     "buf:lint": "buf lint",

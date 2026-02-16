@@ -149,6 +149,16 @@ export default defineConfig({
           ],
         },
         {
+          label: "SDK",
+          items: [
+            {
+              label: "Node SDK",
+              autogenerate: { directory: "sdk/nodejs" },
+              collapsed: true,
+            },
+          ],
+        },
+        {
           label: "Reference",
           items: [
             {
@@ -156,8 +166,16 @@ export default defineConfig({
               slug: "reference/cli-reference",
             },
             {
-              label: "API Reference",
+              label: "API Reference V1 - Deprecated",
               link: "https://api.openstatus.dev/v1",
+              // badge: { text: 'External' },
+              attrs: {
+                target: "_blank",
+              },
+            },
+            {
+              label: "API Reference V2",
+              link: "https://api.openstatus.dev/openapi",
               // badge: { text: 'External' },
               attrs: {
                 target: "_blank",

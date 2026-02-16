@@ -1,0 +1,13 @@
+version: v2
+plugins:
+  - local: protoc-gen-connect-openapi
+    out: gen
+    strategy: all
+    opt:
+      - path=openapi.yaml
+      - base=base.openapi.yaml
+      - short-operation-ids
+      - short-service-tags
+      - allow-get
+      - trim-unused-types
+      - path-prefix=/rpc

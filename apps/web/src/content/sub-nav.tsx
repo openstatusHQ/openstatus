@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
-import { CopyButton } from "./copy-button";
+import { CopyDropdownButton } from "./copy-button";
 
 export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
   const pathname = usePathname();
@@ -27,11 +27,7 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
           </Fragment>
         ))}
       </div>
-      <CopyButton
-        copyText={typeof window !== "undefined" ? window.location.href : ""}
-        buttonText="copy link"
-        copiedText="link copied"
-      />
+      <CopyDropdownButton />
     </div>
   );
 }

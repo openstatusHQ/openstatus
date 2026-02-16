@@ -1,0 +1,347 @@
+---
+title: Monitor Service
+description: "Create and manage HTTP, TCP, and DNS monitors with the OpenStatus Node.js SDK"
+---
+
+Manage HTTP, TCP, and DNS monitors. The Monitor Service provides 12 RPC methods for creating, updating, listing, triggering, deleting, and querying monitor status and metrics.
+
+All examples assume you have created a client:
+
+```typescript
+import { createOpenStatusClient } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+```
+
+## HTTP Monitors
+
+### Create HTTP Monitor
+
+```typescript
+import {
+  createOpenStatusClient,
+  HTTPMethod,
+  NumberComparator,
+  Periodicity,
+  Region,
+  StringComparator,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "My API",
+    url: "https://api.example.com/health",
+    periodicity: Periodicity.PERIODICITY_1M,
+    method: HTTPMethod.HTTP_METHOD_GET,
+    regions: [Region.FLY_AMS, Region.FLY_IAD, Region.FLY_SYD],
+    active: true,
+    timeout: BigInt(30000),
+    retry: BigInt(3),
+    followRedirects: true,
+    degradedAt: BigInt(5000),
+    headers: [
+      { key: "Authorization", value: "Bearer my-token" },
+    ],
+    statusCodeAssertions: [
+      { comparator: NumberComparator.EQUAL, target: BigInt(200) },
+    ],
+    bodyAssertions: [
+      { comparator: StringComparator.CONTAINS, target: '"status":"ok"' },
+    ],
+    headerAssertions: [
+      {
+        key: "content-type",
+        comparator: StringComparator.CONTAINS,
+        target: "application/json",
+      },
+    ],
+    description: "Health check for the production API",
+    public: false,
+    openTelemetry: {
+      endpoint: "https://otel.example.com/v1/traces",
+      headers: [{ key: "Authorization", value: "Bearer otel-token" }],
+    },
+  },
+});
+
+console.log(`Created monitor: ${monitor?.id}`);
+```
+
+### Update HTTP Monitor
+
+Updates are partial — only include the fields you want to change.
+
+```typescript
+const { monitor } = await client.monitor.v1.MonitorService.updateHTTPMonitor({
+  id: "mon_123",
+  monitor: {
+    name: "Updated API Monitor",
+    active: false,
+  },
+});
+```
+
+### HTTP Monitor Options
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `name` | string | Yes | Monitor name (max 256 chars) |
+| `url` | string | Yes | URL to monitor (max 2048 chars) |
+| `periodicity` | Periodicity | Yes | Check interval |
+| `method` | HTTPMethod | No | HTTP method (default: GET) |
+| `body` | string | No | Request body |
+| `headers` | Headers[] | No | Custom headers `{ key, value }[]` |
+| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 120000) |
+| `retry` | bigint | No | Retry attempts (default: 3, max: 10) |
+| `followRedirects` | boolean | No | Follow redirects (default: true) |
+| `regions` | Region[] | No | Regions for checks |
+| `active` | boolean | No | Enable monitoring (default: false) |
+| `public` | boolean | No | Public visibility (default: false) |
+| `degradedAt` | bigint | No | Latency threshold (ms) for degraded status |
+| `description` | string | No | Monitor description (max 1024 chars) |
+| `statusCodeAssertions` | StatusCodeAssertion[] | No | Status code assertions |
+| `bodyAssertions` | BodyAssertion[] | No | Body assertions |
+| `headerAssertions` | HeaderAssertion[] | No | Header assertions |
+| `openTelemetry` | OpenTelemetryConfig | No | OpenTelemetry export configuration |
+
+## TCP Monitors
+
+### Create TCP Monitor
+
+```typescript
+import {
+  createOpenStatusClient,
+  Periodicity,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { monitor } = await client.monitor.v1.MonitorService.createTCPMonitor({
+  monitor: {
+    name: "Database",
+    uri: "db.example.com:5432",
+    periodicity: Periodicity.PERIODICITY_5M,
+    regions: [Region.FLY_AMS, Region.FLY_IAD],
+    active: true,
+  },
+});
+```
+
+### Update TCP Monitor
+
+```typescript
+const { monitor } = await client.monitor.v1.MonitorService.updateTCPMonitor({
+  id: "mon_123",
+  monitor: {
+    name: "Updated Database Monitor",
+  },
+});
+```
+
+### TCP Monitor Options
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `name` | string | Yes | Monitor name (max 256 chars) |
+| `uri` | string | Yes | `host:port` to monitor (max 2048 chars) |
+| `periodicity` | Periodicity | Yes | Check interval |
+| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 120000) |
+| `retry` | bigint | No | Retry attempts (default: 3, max: 10) |
+| `regions` | Region[] | No | Regions for checks |
+| `active` | boolean | No | Enable monitoring (default: false) |
+| `public` | boolean | No | Public visibility (default: false) |
+| `degradedAt` | bigint | No | Latency threshold (ms) for degraded status |
+| `description` | string | No | Monitor description (max 1024 chars) |
+| `openTelemetry` | OpenTelemetryConfig | No | OpenTelemetry export configuration |
+
+## DNS Monitors
+
+### Create DNS Monitor
+
+```typescript
+import {
+  createOpenStatusClient,
+  Periodicity,
+  RecordComparator,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { monitor } = await client.monitor.v1.MonitorService.createDNSMonitor({
+  monitor: {
+    name: "DNS Check",
+    uri: "example.com",
+    periodicity: Periodicity.PERIODICITY_10M,
+    regions: [Region.FLY_AMS],
+    active: true,
+    recordAssertions: [
+      {
+        record: "A",
+        comparator: RecordComparator.EQUAL,
+        target: "93.184.216.34",
+      },
+      {
+        record: "CNAME",
+        comparator: RecordComparator.CONTAINS,
+        target: "cdn",
+      },
+    ],
+  },
+});
+```
+
+### Update DNS Monitor
+
+```typescript
+const { monitor } = await client.monitor.v1.MonitorService.updateDNSMonitor({
+  id: "mon_123",
+  monitor: {
+    name: "Updated DNS Check",
+  },
+});
+```
+
+### DNS Monitor Options
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `name` | string | Yes | Monitor name (max 256 chars) |
+| `uri` | string | Yes | Domain to resolve (max 2048 chars) |
+| `periodicity` | Periodicity | Yes | Check interval |
+| `timeout` | bigint | No | Timeout in ms (default: 45000, max: 120000) |
+| `retry` | bigint | No | Retry attempts (default: 3, max: 10) |
+| `regions` | Region[] | No | Regions for checks |
+| `active` | boolean | No | Enable monitoring (default: false) |
+| `public` | boolean | No | Public visibility (default: false) |
+| `degradedAt` | bigint | No | Latency threshold (ms) for degraded status |
+| `description` | string | No | Monitor description (max 1024 chars) |
+| `recordAssertions` | RecordAssertion[] | No | DNS record assertions |
+| `openTelemetry` | OpenTelemetryConfig | No | OpenTelemetry export configuration |
+
+## List Monitors
+
+List all monitors with offset-based pagination. Returns monitors grouped by type.
+
+```typescript
+const { httpMonitors, tcpMonitors, dnsMonitors, totalSize } =
+  await client.monitor.v1.MonitorService.listMonitors({
+    limit: 10,
+    offset: 0,
+  });
+
+console.log(`Total: ${totalSize}`);
+console.log(`HTTP: ${httpMonitors.length}`);
+console.log(`TCP: ${tcpMonitors.length}`);
+console.log(`DNS: ${dnsMonitors.length}`);
+```
+
+Pagination parameters:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `limit` | number (optional) | Max results to return (1–100, default 50) |
+| `offset` | number (optional) | Number of results to skip (default 0) |
+
+## Get Monitor
+
+Get a single monitor by ID. The response uses a `MonitorConfig` oneof type that contains one of HTTP, TCP, or DNS configuration.
+
+```typescript
+const { monitor } = await client.monitor.v1.MonitorService.getMonitor({
+  id: "mon_123",
+});
+
+if (monitor?.config.case === "http") {
+  console.log(`HTTP Monitor: ${monitor.config.value.name} — ${monitor.config.value.url}`);
+} else if (monitor?.config.case === "tcp") {
+  console.log(`TCP Monitor: ${monitor.config.value.name} — ${monitor.config.value.uri}`);
+} else if (monitor?.config.case === "dns") {
+  console.log(`DNS Monitor: ${monitor.config.value.name} — ${monitor.config.value.uri}`);
+}
+```
+
+## Trigger Monitor
+
+Trigger an immediate check for a monitor.
+
+```typescript
+const { success } = await client.monitor.v1.MonitorService.triggerMonitor({
+  id: "mon_123",
+});
+
+console.log(`Trigger successful: ${success}`);
+```
+
+## Delete Monitor
+
+```typescript
+const { success } = await client.monitor.v1.MonitorService.deleteMonitor({
+  id: "mon_123",
+});
+```
+
+## Get Monitor Status
+
+Get the current status of a monitor across all configured regions.
+
+```typescript
+import {
+  createOpenStatusClient,
+  MonitorStatus,
+  Region,
+} from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { id, regions } = await client.monitor.v1.MonitorService.getMonitorStatus(
+  { id: "mon_123" },
+);
+
+for (const { region, status } of regions) {
+  console.log(`${Region[region]}: ${MonitorStatus[status]}`);
+}
+```
+
+## Get Monitor Summary
+
+Get aggregated metrics and latency percentiles for a monitor over a time range.
+
+```typescript
+import { createOpenStatusClient, TimeRange } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const summary = await client.monitor.v1.MonitorService.getMonitorSummary({
+  id: "mon_123",
+  timeRange: TimeRange.TIME_RANGE_7D,
+  regions: [],
+});
+
+console.log(`Last ping: ${summary.lastPingAt}`);
+console.log(`Successful: ${summary.totalSuccessful}`);
+console.log(`Degraded: ${summary.totalDegraded}`);
+console.log(`Failed: ${summary.totalFailed}`);
+console.log(`P50: ${summary.p50}ms`);
+console.log(`P75: ${summary.p75}ms`);
+console.log(`P90: ${summary.p90}ms`);
+console.log(`P95: ${summary.p95}ms`);
+console.log(`P99: ${summary.p99}ms`);
+```
+
+The latency fields (`p50`, `p75`, `p90`, `p95`, `p99`) and count fields (`totalSuccessful`, `totalDegraded`, `totalFailed`) are `bigint` values. The `regions` parameter is optional — pass an empty array to get metrics across all regions.

@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.maintenance.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/maintenance/v1/maintenance.proto";
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/maintenance/v1;maintenancev1";
@@ -13,10 +14,14 @@ service MaintenanceService {
   rpc CreateMaintenance(CreateMaintenanceRequest) returns (CreateMaintenanceResponse);
 
   // GetMaintenance retrieves a specific maintenance window by ID.
-  rpc GetMaintenance(GetMaintenanceRequest) returns (GetMaintenanceResponse);
+  rpc GetMaintenance(GetMaintenanceRequest) returns (GetMaintenanceResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // ListMaintenances returns all maintenance windows for the workspace.
-  rpc ListMaintenances(ListMaintenancesRequest) returns (ListMaintenancesResponse);
+  rpc ListMaintenances(ListMaintenancesRequest) returns (ListMaintenancesResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
   // UpdateMaintenance updates a maintenance window.
   rpc UpdateMaintenance(UpdateMaintenanceRequest) returns (UpdateMaintenanceResponse);
@@ -25,23 +30,31 @@ service MaintenanceService {
   rpc DeleteMaintenance(DeleteMaintenanceRequest) returns (DeleteMaintenanceResponse);
 }
 
-// --- Create Maintenance ---
-
+// CreateMaintenanceRequest is the request to create a new maintenance window.
 message CreateMaintenanceRequest {
   // Title of the maintenance (required, 1-256 characters).
-  string title = 1 [(buf.validate.field).string = {
-    min_len: 1
-    max_len: 256
-  }];
+  string title = 1 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 256
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "Database Migration"}}
+  ];
 
   // Message describing the maintenance (required).
   string message = 2 [(buf.validate.field).string.min_len = 1];
 
   // Start time of the maintenance window (RFC 3339 format, required).
-  string from = 3 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+  string from = 3 [
+    (buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$",
+    (gnostic.openapi.v3.property) = {example: {yaml: "2024-03-01T02:00:00Z"}}
+  ];
 
   // End time of the maintenance window (RFC 3339 format, required).
-  string to = 4 [(buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$"];
+  string to = 4 [
+    (buf.validate.field).string.pattern = "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?(Z|[+-]\\d{2}:\\d{2})$",
+    (gnostic.openapi.v3.property) = {example: {yaml: "2024-03-01T06:00:00Z"}}
+  ];
 
   // Page ID to associate with this maintenance (required).
   string page_id = 5 [(buf.validate.field).string.min_len = 1];
@@ -53,25 +66,25 @@ message CreateMaintenanceRequest {
   optional bool notify = 7;
 }
 
+// CreateMaintenanceResponse is the response after creating a maintenance window.
 message CreateMaintenanceResponse {
   // The created maintenance.
   Maintenance maintenance = 1;
 }
 
-// --- Get Maintenance ---
-
+// GetMaintenanceRequest is the request to get a maintenance window by ID.
 message GetMaintenanceRequest {
   // ID of the maintenance to retrieve (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// GetMaintenanceResponse is the response containing the maintenance window.
 message GetMaintenanceResponse {
   // The requested maintenance.
   Maintenance maintenance = 1;
 }
 
-// --- List Maintenances ---
-
+// ListMaintenancesRequest is the request to list maintenance windows.
 message ListMaintenancesRequest {
   // Maximum number of maintenances to return (1-100, defaults to 50).
   optional int32 limit = 1 [(buf.validate.field).int32 = {
@@ -86,6 +99,7 @@ message ListMaintenancesRequest {
   optional string page_id = 3;
 }
 
+// ListMaintenancesResponse is the response containing maintenance window summaries.
 message ListMaintenancesResponse {
   // List of maintenances.
   repeated MaintenanceSummary maintenances = 1;
@@ -94,8 +108,7 @@ message ListMaintenancesResponse {
   int32 total_size = 2;
 }
 
-// --- Update Maintenance ---
-
+// UpdateMaintenanceRequest is the request to update a maintenance window.
 message UpdateMaintenanceRequest {
   // ID of the maintenance to update (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
@@ -122,18 +135,19 @@ message UpdateMaintenanceRequest {
   repeated string page_component_ids = 7;
 }
 
+// UpdateMaintenanceResponse is the response after updating a maintenance window.
 message UpdateMaintenanceResponse {
   // The updated maintenance.
   Maintenance maintenance = 1;
 }
 
-// --- Delete Maintenance ---
-
+// DeleteMaintenanceRequest is the request to delete a maintenance window.
 message DeleteMaintenanceRequest {
   // ID of the maintenance to delete (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
+// DeleteMaintenanceResponse is the response after deleting a maintenance window.
 message DeleteMaintenanceResponse {
   // Whether the deletion was successful.
   bool success = 1;

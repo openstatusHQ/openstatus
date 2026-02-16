@@ -1,0 +1,224 @@
+---
+title: Status Page Service
+description: "Manage status pages, components, groups, and subscribers with the OpenStatus Node.js SDK"
+---
+
+Manage status pages, components, component groups, and subscribers. The Status Page Service provides 17 RPC methods.
+
+## Status Page CRUD
+
+### Create Status Page
+
+```typescript
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .createStatusPage({
+    title: "My Service Status",
+    slug: "my-service",
+    description: "Status page for My Service",
+    homepageUrl: "https://example.com",
+    contactUrl: "https://example.com/contact",
+  });
+
+console.log(`Status page created: ${statusPage?.id}`);
+```
+
+### Get Status Page
+
+```typescript
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .getStatusPage({ id: "page_123" });
+```
+
+### List Status Pages
+
+```typescript
+const { statusPages, totalSize } = await client.statusPage.v1.StatusPageService
+  .listStatusPages({ limit: 10, offset: 0 });
+
+console.log(`Found ${totalSize} status pages`);
+```
+
+### Update Status Page
+
+```typescript
+const { statusPage } = await client.statusPage.v1.StatusPageService
+  .updateStatusPage({
+    id: "page_123",
+    title: "Updated Title",
+    description: "Updated description",
+  });
+```
+
+### Delete Status Page
+
+```typescript
+const { success } = await client.statusPage.v1.StatusPageService
+  .deleteStatusPage({ id: "page_123" });
+```
+
+## Components
+
+Components represent individual services on a status page. They can be linked to a monitor (automatically reflects monitor status) or static (manually managed).
+
+### Add Monitor Component
+
+```typescript
+const { component } = await client.statusPage.v1.StatusPageService
+  .addMonitorComponent({
+    pageId: "page_123",
+    monitorId: "mon_456",
+    name: "API Server",
+    description: "Main API endpoint",
+    order: 1,
+    groupId: "group_789",
+  });
+```
+
+### Add Static Component
+
+```typescript
+const { component } = await client.statusPage.v1.StatusPageService
+  .addStaticComponent({
+    pageId: "page_123",
+    name: "Third-party Service",
+    description: "External dependency",
+    order: 2,
+  });
+```
+
+### Update Component
+
+```typescript
+const { component } = await client.statusPage.v1.StatusPageService
+  .updateComponent({
+    id: "comp_123",
+    name: "Updated Component Name",
+    description: "Updated description",
+    order: 3,
+    groupId: "group_789",
+    groupOrder: 1,
+  });
+```
+
+### Remove Component
+
+```typescript
+const { success } = await client.statusPage.v1.StatusPageService
+  .removeComponent({ id: "comp_123" });
+```
+
+## Component Groups
+
+Group related components together on a status page.
+
+### Create Component Group
+
+```typescript
+const { group } = await client.statusPage.v1.StatusPageService
+  .createComponentGroup({
+    pageId: "page_123",
+    name: "Core Services",
+  });
+```
+
+### Update Component Group
+
+```typescript
+const { group } = await client.statusPage.v1.StatusPageService
+  .updateComponentGroup({
+    id: "group_123",
+    name: "Updated Group Name",
+  });
+```
+
+### Delete Component Group
+
+```typescript
+const { success } = await client.statusPage.v1.StatusPageService
+  .deleteComponentGroup({ id: "group_123" });
+```
+
+## Subscribers
+
+Manage email subscriptions to status page updates.
+
+### Subscribe to Page
+
+```typescript
+const { subscriber } = await client.statusPage.v1.StatusPageService
+  .subscribeToPage({
+    pageId: "page_123",
+    email: "user@example.com",
+  });
+```
+
+### Unsubscribe from Page
+
+Unsubscribe by email or subscriber ID using the `identifier` oneof:
+
+```typescript
+// By email
+const { success } = await client.statusPage.v1.StatusPageService
+  .unsubscribeFromPage({
+    pageId: "page_123",
+    identifier: { case: "email", value: "user@example.com" },
+  });
+
+// By subscriber ID
+const { success: success2 } = await client.statusPage.v1.StatusPageService
+  .unsubscribeFromPage({
+    pageId: "page_123",
+    identifier: { case: "id", value: "sub_456" },
+  });
+```
+
+### List Subscribers
+
+```typescript
+const { subscribers, totalSize } = await client.statusPage.v1.StatusPageService
+  .listSubscribers({
+    pageId: "page_123",
+    limit: 50,
+    offset: 0,
+    includeUnsubscribed: false,
+  });
+```
+
+## Get Status Page Content
+
+Get the full content of a status page including components, groups, active status reports, and maintenance windows. Identify the page by ID or slug.
+
+```typescript
+const content = await client.statusPage.v1.StatusPageService
+  .getStatusPageContent({
+    identifier: { case: "slug", value: "my-service" },
+  });
+
+console.log(`Page: ${content.statusPage?.title}`);
+console.log(`Components: ${content.components.length}`);
+console.log(`Groups: ${content.groups.length}`);
+console.log(`Active reports: ${content.statusReports.length}`);
+console.log(`Maintenances: ${content.maintenances.length}`);
+```
+
+## Get Overall Status
+
+Get the aggregated status of a status page and per-component statuses.
+
+```typescript
+import { createOpenStatusClient, OverallStatus } from "@openstatus/sdk-node";
+
+const client = createOpenStatusClient({
+  apiKey: process.env.OPENSTATUS_API_KEY,
+});
+
+const { overallStatus, componentStatuses } = await client.statusPage.v1
+  .StatusPageService.getOverallStatus({
+    identifier: { case: "id", value: "page_123" },
+  });
+
+console.log(`Overall: ${OverallStatus[overallStatus]}`);
+for (const { componentId, status } of componentStatuses) {
+  console.log(`  ${componentId}: ${OverallStatus[status]}`);
+}
+```

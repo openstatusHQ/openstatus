@@ -3,6 +3,7 @@ syntax = "proto3";
 package openstatus.monitor.v1;
 
 import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
 import "openstatus/monitor/v1/monitor.proto";
@@ -24,8 +25,12 @@ enum TimeRange {
 
 // MonitorService provides CRUD and operational commands for monitors.
 service MonitorService {
-  // CreateHTTPMonitor creates a new HTTP monitor.
-  rpc CreateHTTPMonitor(CreateHTTPMonitorRequest) returns (CreateHTTPMonitorResponse);
+  // CreateHTTPMonitor creates a new HTTP monitor with URL, method, headers, assertions, and optional OpenTelemetry configuration.
+  rpc CreateHTTPMonitor(CreateHTTPMonitorRequest) returns (CreateHTTPMonitorResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Creates a new HTTP monitor in the authenticated workspace. Configure the target URL, HTTP method, request headers and body, response assertions (status code, body content, headers), check periodicity, geographic regions, and optional OpenTelemetry export. The monitor starts checking immediately if set to active."
+    };
+  }
 
   // CreateTCPMonitor creates a new TCP monitor.
   rpc CreateTCPMonitor(CreateTCPMonitorRequest) returns (CreateTCPMonitorResponse);
@@ -42,24 +47,39 @@ service MonitorService {
   // UpdateDNSMonitor updates an existing DNS monitor.
   rpc UpdateDNSMonitor(UpdateDNSMonitorRequest) returns (UpdateDNSMonitorResponse);
 
-  // TriggerMonitor initiates an immediate check for a monitor.
-  rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse);
+  // TriggerMonitor initiates an immediate check for a monitor across all configured regions.
+  rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Manually triggers an immediate check for the specified monitor across all configured regions. This operation is rate-limited under the synthetic-checks quota. A monitor run record is created and the check is dispatched to the checker service."
+    };
+  }
 
   // DeleteMonitor removes a monitor.
   rpc DeleteMonitor(DeleteMonitorRequest) returns (DeleteMonitorResponse);
 
-  // ListMonitors returns a list of monitors.
-  rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse);
+  // ListMonitors returns a paginated list of all monitors in the workspace.
+  rpc ListMonitors(ListMonitorsRequest) returns (ListMonitorsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
-  // GetMonitorStatus returns the status of all regions for a monitor.
-  rpc GetMonitorStatus(GetMonitorStatusRequest) returns (GetMonitorStatusResponse);
+  // GetMonitorStatus returns the current status of all regions for a monitor.
+  rpc GetMonitorStatus(GetMonitorStatusRequest) returns (GetMonitorStatusResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 
-  // GetMonitorSummary returns aggregated metrics and statistics for a monitor.
-  rpc GetMonitorSummary(GetMonitorSummaryRequest) returns (GetMonitorSummaryResponse);
+  // GetMonitorSummary returns aggregated metrics and statistics for a monitor over a configurable time range.
+  rpc GetMonitorSummary(GetMonitorSummaryRequest) returns (GetMonitorSummaryResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns aggregated metrics for a monitor including latency percentiles (p50, p75, p90, p95, p99), request counts by status (successful, degraded, failed), and the timestamp of the last check. Metrics can be scoped to a time range (1 day, 7 days, or 14 days) and filtered by specific regions."
+    };
+  }
 
   // GetMonitor returns a single monitor by ID within the authenticated workspace.
   // Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
-  rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse);
+  rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
 }
 
 // CreateHTTPMonitorRequest is the request to create a new HTTP monitor.
