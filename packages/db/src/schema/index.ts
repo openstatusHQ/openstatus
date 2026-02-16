@@ -5,6 +5,7 @@ export * from "./integration";
 export * from "./pages";
 export * from "./monitors";
 export * from "./page_subscribers";
+export * from "./page_subscriptions";
 export * from "./shared";
 export * from "./notifications";
 export * from "./monitor_status";

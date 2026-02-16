@@ -78,23 +78,23 @@ export function Header(props: React.ComponentProps<"header">) {
     ...trpc.statusPage.get.queryOptions({ slug: domain }),
   });
 
-  const sendPageSubscriptionMutation = useMutation(
-    trpc.emailRouter.sendPageSubscription.mutationOptions({}),
+  const sendVerificationEmailMutation = useMutation(
+    trpc.emailRouter.sendPageSubscriptionVerification.mutationOptions({}),
   );
 
   const subscribeMutation = useMutation(
-    trpc.statusPage.subscribe.mutationOptions({
-      onSuccess: (id) => {
-        console.log("subscribeMutation onSuccess", id);
-        if (!id) return;
-        sendPageSubscriptionMutation.mutate(
-          { id },
+    trpc.pageSubscription.upsert.mutationOptions({
+      onSuccess: (result) => {
+        console.log("subscribeMutation onSuccess", result);
+        if (!result.subscription.id) return;
+        sendVerificationEmailMutation.mutate(
+          { id: result.subscription.id },
           {
             onError: (error) => {
               if (isTRPCClientError(error)) {
                 toast.error(error.message);
               } else {
-                toast.error("Failed to subscribe");
+                toast.error("Failed to send verification email");
               }
             },
           },
@@ -149,7 +149,11 @@ export function Header(props: React.ComponentProps<"header">) {
           <StatusUpdates
             types={getStatusUpdateTypes(page)}
             onSubscribe={async (email) => {
-              await subscribeMutation.mutateAsync({ slug: domain, email });
+              if (!page?.id) return;
+              await subscribeMutation.mutateAsync({
+                email,
+                pageId: page.id,
+              });
             }}
             page={page}
           />

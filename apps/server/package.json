@@ -40,6 +40,7 @@
     "@openstatus/error": "workspace:*",
     "@openstatus/proto": "workspace:*",
     "@openstatus/regions": "workspace:*",
+    "@openstatus/subscriptions": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",

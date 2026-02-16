@@ -4,7 +4,51 @@ package openstatus.status_page.v1;
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_page/v1;statuspagev1";
 
-// PageSubscriber represents a subscriber to a status page.
+// PageSubscription represents a multi-channel subscription to a status page.
+// Supports component-level granularity and multiple notification channels.
+message PageSubscription {
+  // Unique identifier for the subscription.
+  string id = 1;
+
+  // ID of the status page the user is subscribed to.
+  string page_id = 2;
+
+  // ID of the workspace (for limits checking).
+  string workspace_id = 3;
+
+  // Channel type (email, webhook, etc.).
+  string channel_type = 4;
+
+  // Email address of the subscriber (populated if channel_type = 'email').
+  // Normalized to lowercase.
+  string email = 5;
+
+  // Webhook URL (populated if channel_type = 'webhook').
+  string webhook_url = 6;
+
+  // Component scope (empty = entire page, populated = specific components).
+  // This is a list of page_component IDs that the subscription covers.
+  repeated string page_component_ids = 7;
+
+  // Channel-specific configuration (JSON, optional).
+  // For webhooks: contains headers, secrets, etc.
+  string channel_config = 8;
+
+  // Timestamp when the subscription was verified (RFC 3339 format, optional).
+  string verified_at = 9;
+
+  // Timestamp when the user unsubscribed (RFC 3339 format, optional).
+  string unsubscribed_at = 10;
+
+  // Timestamp when the subscription was created (RFC 3339 format).
+  string created_at = 11;
+
+  // Timestamp when the subscription was last updated (RFC 3339 format).
+  string updated_at = 12;
+}
+
+// Deprecated: Use PageSubscription instead.
+// Kept for backward compatibility during migration.
 message PageSubscriber {
   // Unique identifier for the subscriber.
   string id = 1;

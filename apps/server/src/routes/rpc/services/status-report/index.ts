@@ -1,32 +1,15 @@
 import type { ServiceImpl } from "@connectrpc/connect";
+import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
 import {
-  and,
-  db,
-  desc,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  sql,
-} from "@openstatus/db";
-
-// Type that works with both db instance and transaction
-type DB = typeof db;
-type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
-import {
-  page,
   pageComponent,
-  pageSubscriber,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
-import { EmailClient } from "@openstatus/emails";
 import type { StatusReportService } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
+import { dispatchStatusReportUpdate } from "@openstatus/subscriptions";
 
-import { env } from "@/env";
 import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,
@@ -44,90 +27,9 @@ import {
   statusReportUpdateFailedError,
 } from "./errors";
 
-const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
-
-/**
- * Helper to send status report notifications to page subscribers.
- */
-async function sendStatusReportNotification(params: {
-  statusReportId: number;
-  pageId: number;
-  reportTitle: string;
-  status: "investigating" | "identified" | "monitoring" | "resolved";
-  message: string;
-  date: Date;
-  limits: Limits;
-}) {
-  const { statusReportId, pageId, reportTitle, status, message, date, limits } =
-    params;
-
-  // Check if workspace has status-subscribers feature enabled
-  if (!limits["status-subscribers"]) {
-    return;
-  }
-
-  // Get page info
-  const pageInfo = await db.query.page.findFirst({
-    where: eq(page.id, pageId),
-  });
-
-  if (!pageInfo) {
-    return;
-  }
-
-  // Get verified subscribers who haven't unsubscribed
-  const subscribers = await db
-    .select()
-    .from(pageSubscriber)
-    .where(
-      and(
-        eq(pageSubscriber.pageId, pageId),
-        isNotNull(pageSubscriber.acceptedAt),
-        isNull(pageSubscriber.unsubscribedAt),
-      ),
-    )
-    .all();
-
-  const validSubscribers = subscribers.filter(
-    (s): s is typeof s & { token: string } =>
-      s.token !== null && s.acceptedAt !== null && s.unsubscribedAt === null,
-  );
-
-  if (validSubscribers.length === 0) {
-    return;
-  }
-
-  // Get page components for this status report
-  const statusReportWithComponents = await db.query.statusReport.findFirst({
-    where: eq(statusReport.id, statusReportId),
-    with: {
-      statusReportsToPageComponents: {
-        with: { pageComponent: true },
-      },
-    },
-  });
-
-  const pageComponents =
-    statusReportWithComponents?.statusReportsToPageComponents.map(
-      (i) => i.pageComponent.name,
-    ) ?? [];
-
-  // Send notification emails
-  await emailClient.sendStatusReportUpdate({
-    subscribers: validSubscribers.map((subscriber) => ({
-      email: subscriber.email,
-      token: subscriber.token,
-    })),
-    pageTitle: pageInfo.title,
-    pageSlug: pageInfo.slug,
-    customDomain: pageInfo.customDomain,
-    reportTitle,
-    status,
-    message,
-    date: date.toISOString(),
-    pageComponents,
-  });
-}
+// Type that works with both db instance and transaction
+type DB = typeof db;
+type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
 
 /**
  * Helper to get a status report by ID with workspace scope.
@@ -273,85 +175,79 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       const date = parseDate(req.date);
 
       // Create status report, associations, and initial update in a transaction
-      const { report: newReport, pageId } = await db.transaction(async (tx) => {
-        // Validate page component IDs inside transaction to prevent TOCTOU race condition
-        const validatedComponents = await validatePageComponentIds(
-          req.pageComponentIds,
-          workspaceId,
-          tx,
-        );
-
-        // Validate that provided pageId matches the components' page
-        const derivedPageId = validatedComponents.pageId;
-        const providedPageId = req.pageId?.trim();
-        if (
-          derivedPageId !== null &&
-          providedPageId &&
-          providedPageId !== "" &&
-          Number(providedPageId) !== derivedPageId
-        ) {
-          throw pageIdComponentMismatchError(
-            providedPageId,
-            String(derivedPageId),
-          );
-        }
-
-        // Use the derived pageId from components (null if no components)
-        const pageId = Number(providedPageId);
-
-        // Create the status report
-        const report = await tx
-          .insert(statusReport)
-          .values({
+      const { report: newReport, updateId } = await db.transaction(
+        async (tx) => {
+          // Validate page component IDs inside transaction to prevent TOCTOU race condition
+          const validatedComponents = await validatePageComponentIds(
+            req.pageComponentIds,
             workspaceId,
-            pageId,
-            title: req.title,
-            status: protoStatusToDb(req.status),
-          })
-          .returning()
-          .get();
+            tx,
+          );
 
-        if (!report) {
-          throw statusReportCreateFailedError();
-        }
+          // Validate that provided pageId matches the components' page
+          const derivedPageId = validatedComponents.pageId;
+          const providedPageId = req.pageId?.trim();
+          if (
+            derivedPageId !== null &&
+            providedPageId &&
+            providedPageId !== "" &&
+            Number(providedPageId) !== derivedPageId
+          ) {
+            throw pageIdComponentMismatchError(
+              providedPageId,
+              String(derivedPageId),
+            );
+          }
 
-        // Create page component associations
-        await updatePageComponentAssociations(
-          report.id,
-          validatedComponents.componentIds,
-          tx,
-        );
+          // Use the derived pageId from components (null if no components)
+          const pageId = Number(providedPageId);
 
-        // Create the initial update
-        const newUpdate = await tx
-          .insert(statusReportUpdate)
-          .values({
-            statusReportId: report.id,
-            status: protoStatusToDb(req.status),
-            date,
-            message: req.message,
-          })
-          .returning()
-          .get();
+          // Create the status report
+          const report = await tx
+            .insert(statusReport)
+            .values({
+              workspaceId,
+              pageId,
+              title: req.title,
+              status: protoStatusToDb(req.status),
+            })
+            .returning()
+            .get();
 
-        if (!newUpdate) {
-          throw statusReportCreateFailedError();
-        }
+          if (!report) {
+            throw statusReportCreateFailedError();
+          }
 
-        return { report, pageId };
-      });
+          // Create page component associations
+          await updatePageComponentAssociations(
+            report.id,
+            validatedComponents.componentIds,
+            tx,
+          );
+
+          // Create the initial update
+          const newUpdate = await tx
+            .insert(statusReportUpdate)
+            .values({
+              statusReportId: report.id,
+              status: protoStatusToDb(req.status),
+              date,
+              message: req.message,
+            })
+            .returning()
+            .get();
+
+          if (!newUpdate) {
+            throw statusReportCreateFailedError();
+          }
+
+          return { report, pageId, updateId: newUpdate.id };
+        },
+      );
 
       // Send notifications if requested (outside transaction)
-      if (req.notify) {
-        await sendStatusReportNotification({
-          statusReportId: newReport.id,
-          pageId,
-          reportTitle: newReport.title,
-          status: protoStatusToDb(req.status),
-          message: req.message,
-          date,
-          limits: rpcCtx.workspace.limits,
-        });
+      if (req.notify && rpcCtx.workspace.limits["status-subscribers"]) {
+        await dispatchStatusReportUpdate(updateId);
       }
 
       // Fetch the updates for the response
@@ -544,7 +440,7 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
       const date = req.date ? parseDate(req.date) : new Date();
 
       // Create update and update status report in a transaction
-      const updatedReport = await db.transaction(async (tx) => {
+      const { updatedReport, updateId } = await db.transaction(async (tx) => {
         // Create the update
         const newUpdate = await tx
           .insert(statusReportUpdate)
@@ -576,20 +472,16 @@ export const statusReportServiceImpl: ServiceImpl<typeof StatusReportService> =
           throw statusReportUpdateFailedError(req.statusReportId);
         }
 
-        return updated;
+        return { updatedReport: updated, updateId: newUpdate.id };
       });
 
       // Send notifications if requested (outside transaction)
-      if (req.notify && updatedReport.pageId) {
-        await sendStatusReportNotification({
-          statusReportId: updatedReport.id,
-          pageId: updatedReport.pageId,
-          reportTitle: updatedReport.title,
-          status: protoStatusToDb(req.status),
-          message: req.message,
-          date,
-          limits: rpcCtx.workspace.limits,
-        });
+      if (
+        req.notify &&
+        updatedReport.pageId &&
+        rpcCtx.workspace.limits["status-subscribers"]
+      ) {
+        await dispatchStatusReportUpdate(updateId);
       }
 
       // Fetch all updates

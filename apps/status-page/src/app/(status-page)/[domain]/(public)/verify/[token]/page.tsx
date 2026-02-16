@@ -16,16 +16,16 @@ export default function VerifyPage() {
   const trpc = useTRPC();
   const { token, domain } = useParams<{ token: string; domain: string }>();
   const verifyEmailMutation = useMutation(
-    trpc.statusPage.verifyEmail.mutationOptions({}),
+    trpc.pageSubscription.verify.mutationOptions({}),
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    verifyEmailMutation.mutate({ slug: domain, token });
-  }, [domain, token]);
+    verifyEmailMutation.mutate({ token, domain });
+  }, [token, domain]);
 
   const title = verifyEmailMutation.isSuccess
-    ? `All set to receive updates to ${verifyEmailMutation.data?.email}!`
+    ? `All set to receive updates to ${verifyEmailMutation.data?.subscription.email}!`
     : verifyEmailMutation.isError
       ? verifyEmailMutation.error?.message || "Something went wrong"
       : "Hang tight - we're confirming your subscription";

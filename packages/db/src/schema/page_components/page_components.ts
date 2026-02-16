@@ -11,6 +11,7 @@ import {
 import { maintenance } from "../maintenances";
 import { monitor } from "../monitors";
 import { pageComponentGroup } from "../page_component_groups";
+import { pageSubscriptionToPageComponent } from "../page_subscriptions";
 import { page } from "../pages";
 import { statusReport } from "../status_reports";
 import { workspace } from "../workspaces";
@@ -81,6 +82,7 @@ export const pageComponentRelations = relations(
     }),
     statusReportsToPageComponents: many(statusReportsToPageComponents),
     maintenancesToPageComponents: many(maintenancesToPageComponents),
+    pageSubscriptions: many(pageSubscriptionToPageComponent),
   }),
 );
 

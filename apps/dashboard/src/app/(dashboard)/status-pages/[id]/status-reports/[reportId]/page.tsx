@@ -34,7 +34,7 @@ export default function Page() {
   );
 
   const sendStatusReportUpdateMutation = useMutation(
-    trpc.emailRouter.sendStatusReport.mutationOptions(),
+    trpc.emailRouter.sendStatusReportUpdate.mutationOptions(),
   );
 
   const createStatusReportUpdateMutation = useMutation(
