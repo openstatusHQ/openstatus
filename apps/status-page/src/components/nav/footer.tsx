@@ -33,7 +33,7 @@ export function Footer(props: React.ComponentProps<"footer">) {
             <p className="font-mono text-muted-foreground text-xs leading-none sm:text-sm">
               powered by{" "}
               <Link
-                href="https://openstatus.dev"
+                href={`https://openstatus.dev?utm_medium=status-page&utm_source=${page.slug}`}
                 target="_blank"
                 rel="noreferrer"
               >
