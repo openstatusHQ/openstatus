@@ -292,7 +292,7 @@ describe("updateSubscriptionScope", () => {
 });
 
 describe("getSubscriptionByToken", () => {
-  test("should get subscription by token", async () => {
+  test("should get subscription by token with masked email", async () => {
     const sub = await upsertEmailSubscription({
       email: "get@example.com",
       pageId: testPageId,
@@ -302,13 +302,14 @@ describe("getSubscriptionByToken", () => {
 
     expect(result).not.toBeNull();
     expect(result?.id).toBe(sub.id);
-    expect(result?.email).toBe("get@example.com");
+    // Email should be masked for privacy (first char + *** + @domain)
+    expect(result?.email).toBe("g***@example.com");
 
     // Cleanup
     await db.delete(pageSubscription).where(eq(pageSubscription.id, sub.id));
   });
 
-  test("should get subscription with correct domain validation", async () => {
+  test("should get subscription with correct domain validation and masked email", async () => {
     const sub = await upsertEmailSubscription({
       email: "get-domain@example.com",
       pageId: testPageId,
@@ -318,6 +319,8 @@ describe("getSubscriptionByToken", () => {
 
     expect(result).not.toBeNull();
     expect(result?.id).toBe(sub.id);
+    // Email should be masked for privacy
+    expect(result?.email).toBe("g***@example.com");
 
     // Cleanup
     await db.delete(pageSubscription).where(eq(pageSubscription.id, sub.id));
@@ -335,6 +338,37 @@ describe("getSubscriptionByToken", () => {
 
     // Cleanup
     await db.delete(pageSubscription).where(eq(pageSubscription.id, sub.id));
+  });
+
+  test("should mask emails correctly for various formats", async () => {
+    // Test single character email
+    const sub1 = await upsertEmailSubscription({
+      email: "a@example.com",
+      pageId: testPageId,
+    });
+    const result1 = await getSubscriptionByToken(sub1.token);
+    expect(result1?.email).toBe("a***@example.com");
+
+    // Test longer email
+    const sub2 = await upsertEmailSubscription({
+      email: "john.doe@example.com",
+      pageId: testPageId,
+    });
+    const result2 = await getSubscriptionByToken(sub2.token);
+    expect(result2?.email).toBe("j***@example.com");
+
+    // Test email with subdomain
+    const sub3 = await upsertEmailSubscription({
+      email: "user@subdomain.example.co.uk",
+      pageId: testPageId,
+    });
+    const result3 = await getSubscriptionByToken(sub3.token);
+    expect(result3?.email).toBe("u***@subdomain.example.co.uk");
+
+    // Cleanup
+    await db.delete(pageSubscription).where(eq(pageSubscription.id, sub1.id));
+    await db.delete(pageSubscription).where(eq(pageSubscription.id, sub2.id));
+    await db.delete(pageSubscription).where(eq(pageSubscription.id, sub3.id));
   });
 });
 
