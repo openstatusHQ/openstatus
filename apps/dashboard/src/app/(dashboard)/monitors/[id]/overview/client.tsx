@@ -133,7 +133,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Uptime</SectionTitle>
           <SectionDescription>
-            Uptime accross all the selected regions
+            Uptime across all the selected regions
           </SectionDescription>
         </SectionHeader>
         <ChartBarUptime
@@ -148,7 +148,7 @@ export function Client() {
         <SectionHeader>
           <SectionTitle>Latency</SectionTitle>
           <SectionDescription>
-            Response time accross all the regions
+            Response time across all the regions
           </SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
