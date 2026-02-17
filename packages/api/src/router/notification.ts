@@ -26,84 +26,11 @@ import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-w
 import { redis } from "@openstatus/upstash";
 import { nanoid } from "nanoid";
 
+import {
+  type TelegramGetUpdatesResponse,
+  processTelegramUpdates,
+} from "../service/telegram-updates";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-
-// Telegram API Types
-interface TelegramUser {
-  id: number;
-  is_bot: boolean;
-  first_name: string;
-  username?: string;
-  language_code?: string;
-}
-
-interface TelegramChat {
-  id: number;
-  type: "private" | "group" | "supergroup" | "channel";
-  title?: string;
-  first_name?: string;
-  all_members_are_administrators?: boolean;
-}
-
-interface TelegramMessage {
-  message_id: number;
-  from: TelegramUser;
-  chat: TelegramChat;
-  date: number;
-  text?: string;
-  entities?: Array<{
-    offset: number;
-    length: number;
-    type: string;
-  }>;
-  new_chat_members?: TelegramUser[];
-  new_chat_member?: TelegramUser;
-  new_chat_participant?: TelegramUser;
-}
-
-interface TelegramChatMember {
-  user: TelegramUser;
-  status:
-    | "member"
-    | "administrator"
-    | "left"
-    | "creator"
-    | "restricted"
-    | "kicked";
-  can_be_edited?: boolean;
-  can_manage_chat?: boolean;
-  can_change_info?: boolean;
-  can_delete_messages?: boolean;
-  can_invite_users?: boolean;
-  can_restrict_members?: boolean;
-  can_pin_messages?: boolean;
-  can_manage_topics?: boolean;
-  can_promote_members?: boolean;
-  can_manage_video_chats?: boolean;
-  can_post_stories?: boolean;
-  can_edit_stories?: boolean;
-  can_delete_stories?: boolean;
-  is_anonymous?: boolean;
-}
-
-interface TelegramMyChatMemberUpdate {
-  chat: TelegramChat;
-  from: TelegramUser;
-  date: number;
-  old_chat_member: TelegramChatMember;
-  new_chat_member: TelegramChatMember;
-}
-
-interface TelegramUpdate {
-  update_id: number;
-  message?: TelegramMessage;
-  my_chat_member?: TelegramMyChatMemberUpdate;
-}
-
-interface TelegramGetUpdatesResponse {
-  ok: boolean;
-  result: TelegramUpdate[];
-}
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -655,89 +582,21 @@ export const notificationRouter = createTRPCRouter({
       const data = (await res.json()) as TelegramGetUpdatesResponse;
       if (!data.ok || !data.result) return [];
 
-      const privateChatId = opts.input?.privateChatId;
       const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
-
-      const validUpdates: {
-        chatId: string;
-        chatType: "private" | "group";
-        chatTitle?: string;
-        user: { id: number; first_name: string; username?: string };
-      }[] = [];
-
-      for (const update of data.result) {
-        // Phase 1: Look for private chat /start commands (no privateChatId filter)
-        if (!privateChatId) {
-          if (
-            update.message?.chat.type === "private" &&
-            update.message?.text?.startsWith("/start ")
-          ) {
-            const token = update.message.text.split(" ")[1];
-            if (!token) continue;
-
-            const workspaceId = opts.ctx.workspace.id;
-            const storedRandomId = await redis.get<string>(
-              `telegram:workspace_token:${workspaceId}`,
-            );
-
-            if (storedRandomId === token) {
-              // Filter by timestamp if provided
-              if (opts.input?.since && update.message.date < opts.input.since) {
-                continue;
-              }
-
-              // Reset expiry on use
-              await redis.del(`telegram:workspace_token:${workspaceId}`);
-              validUpdates.push({
-                chatId: String(update.message.chat.id),
-                chatType: "private",
-                user: {
-                  id: update.message.from.id,
-                  first_name: update.message.from.first_name,
-                  username: update.message.from.username,
-                },
-              });
-            }
-          }
-        }
-        // Phase 2: Look for group/supergroup additions filtered by privateChatId
-        else {
-          // Check for new chat member (bot being added)
-          const message = update.message;
-          if (
-            message &&
-            (message.chat.type === "group" ||
-              message.chat.type === "supergroup") &&
-            String(message.from.id) === privateChatId
-          ) {
-            // Check if the bot itself was added
-            const isBotAdded =
-              (message.new_chat_participant?.username &&
-                message.new_chat_participant.username === botUsername) ||
-              (message.new_chat_member?.username &&
-                message.new_chat_member.username === botUsername) ||
-              message.new_chat_members?.some((m) => m.username === botUsername);
-
-            if (isBotAdded) {
-              // Filter by timestamp if provided
-              if (opts.input?.since && message.date < opts.input.since) {
-                continue;
-              }
-
-              validUpdates.push({
-                chatId: String(message.chat.id),
-                chatType: "group",
-                chatTitle: message.chat.title,
-                user: {
-                  id: message.from.id,
-                  first_name: message.from.first_name,
-                  username: message.from.username,
-                },
-              });
-            }
-          }
-        }
+      if (!botUsername) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Telegram bot username not configured",
+        });
       }
-      return validUpdates;
+
+      return processTelegramUpdates({
+        updates: data.result,
+        workspaceId: opts.ctx.workspace.id,
+        privateChatId: opts.input?.privateChatId,
+        since: opts.input?.since,
+        botUsername,
+        redisClient: redis,
+      });
     }),
 });

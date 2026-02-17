@@ -44,12 +44,12 @@ export function TelegramQRConnection({
   return (
     <>
       {flowStep === "private" && (
-        <div className="text-sm text-muted-foreground mb-2">
+        <div className="mb-2 text-muted-foreground text-sm">
           Step 1 of 2: Connect your Telegram account
         </div>
       )}
       {flowStep === "group" && privateChatId && (
-        <div className="text-sm text-muted-foreground mb-2">
+        <div className="mb-2 text-muted-foreground text-sm">
           Step 2 of 2: Add bot to your group
         </div>
       )}

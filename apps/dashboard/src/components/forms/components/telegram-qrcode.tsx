@@ -35,7 +35,7 @@ export default function TelegramQRCode({
           "Generating QR Code..."
         ) : isPolling ? (
           <>
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin" />
             {chatType === "private"
               ? "Retrieving your account..."
               : "Waiting for group connection..."}
