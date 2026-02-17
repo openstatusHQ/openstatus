@@ -270,9 +270,17 @@ export function FormTelegram({
                 form={form}
                 token={tokenData?.token}
                 isLoading={isTokenLoading}
-                isPolling={!!tokenData?.token && !form.getValues("data.chatId")}
+                isPolling={
+                  !!tokenData?.token &&
+                  !form.watch("data.chatId") &&
+                  mode === "qr"
+                }
                 flowStep={flowStep}
                 privateChatId={privateChatId}
+                onReset={() => {
+                  form.setValue("data.chatId", "", { shouldDirty: true });
+                  setSessionStartTime(Math.floor(Date.now() / 1000));
+                }}
               />
             )}
           </div>

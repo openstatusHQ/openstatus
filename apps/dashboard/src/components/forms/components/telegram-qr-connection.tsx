@@ -1,3 +1,4 @@
+import { Button } from "@openstatus/ui/components/ui/button";
 import type { UseFormReturn } from "react-hook-form";
 import { TelegramManualInput } from "./telegram-manual-input";
 import TelegramQRCode from "./telegram-qrcode";
@@ -9,6 +10,7 @@ interface TelegramQRConnectionProps {
   isPolling?: boolean;
   flowStep: "private" | "group";
   privateChatId: string | null;
+  onReset?: () => void;
 }
 
 export function TelegramQRConnection({
@@ -18,11 +20,25 @@ export function TelegramQRConnection({
   isPolling,
   flowStep,
   privateChatId,
+  onReset,
 }: TelegramQRConnectionProps) {
   const chatId = form.watch("data.chatId");
 
   if (chatId) {
-    return <TelegramManualInput form={form} />;
+    return (
+      <div className="flex flex-col gap-2">
+        <TelegramManualInput form={form} />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onReset}
+          className="w-full"
+        >
+          Reset Group ID
+        </Button>
+      </div>
+    );
   }
 
   return (
