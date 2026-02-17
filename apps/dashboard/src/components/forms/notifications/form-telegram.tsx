@@ -87,11 +87,36 @@ export function FormTelegram({
   const [mode, setMode] = React.useState<"qr" | "manual" | null>(null);
   const [flowStep, setFlowStep] = React.useState<"private" | "group">("private");
   const [privateChatId, setPrivateChatId] = React.useState<string | null>(null);
+  const [sessionStartTime, setSessionStartTime] = React.useState<number | null>(
+    null,
+  );
+
+  // Set session start time when entering QR mode
+  React.useEffect(() => {
+    if (mode === "qr") {
+      setSessionStartTime(Math.floor(Date.now() / 1000));
+    } else if (mode === null) {
+      setSessionStartTime(null);
+    }
+  }, [mode]);
+
+  // Cleanup: Reset UI state when component unmounts (e.g., on discard)
+  React.useEffect(() => {
+    return () => {
+      // This runs when component unmounts
+      setMode(null);
+      setFlowStep("private");
+      setPrivateChatId(null);
+      setSessionStartTime(null);
+    };
+  }, []);
 
   // Start polling for updates
   const { data: updates } = useQuery({
     ...trpc.notification.getTelegramUpdates.queryOptions({
-      privateChatId: flowStep === "group" ? privateChatId ?? undefined : undefined,
+      privateChatId:
+        flowStep === "group" ? privateChatId ?? undefined : undefined,
+      since: sessionStartTime ?? undefined,
     }),
     enabled:
       !!tokenData?.token && !form.getValues("data.chatId") && mode === "qr",
@@ -141,6 +166,12 @@ export function FormTelegram({
           },
         });
         await promise;
+        
+        // Reset UI state after successful submission
+        setMode(null);
+        setFlowStep("private");
+        setPrivateChatId(null);
+        form.reset();
       } catch (error) {
         console.error(error);
       }

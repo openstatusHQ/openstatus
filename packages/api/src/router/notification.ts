@@ -623,15 +623,26 @@ export const notificationRouter = createTRPCRouter({
     }),
 
   createTelegramToken: protectedProcedure.query(async (opts) => {
-    const token = nanoid();
-    await redis.set(`telegram:token:${token}`, opts.ctx.workspace.id, {
-      ex: 259200, // 3 days
+    const workspaceId = opts.ctx.workspace.id;
+    const randomId = nanoid(12);
+    const EXPIRY = 1800; // 30 minutes
+
+    await redis.set(`telegram:workspace_token:${workspaceId}`, randomId, {
+      ex: EXPIRY,
     });
-    return { token };
+
+    return { token: randomId };
   }),
 
   getTelegramUpdates: protectedProcedure
-    .input(z.object({ privateChatId: z.string().optional() }).optional())
+    .input(
+      z
+        .object({
+          privateChatId: z.string().optional(),
+          since: z.number().optional(),
+        })
+        .optional(),
+    )
     .query(async (opts) => {
       const res = await fetch(
         `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getUpdates`,
@@ -640,6 +651,8 @@ export const notificationRouter = createTRPCRouter({
       if (!data.ok || !data.result) return [];
 
       const privateChatId = opts.input?.privateChatId;
+      const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+
       const validUpdates: {
         chatId: string;
         chatType: "private" | "group";
@@ -657,11 +670,22 @@ export const notificationRouter = createTRPCRouter({
             const token = update.message.text.split(" ")[1];
             if (!token) continue;
 
-            const workspaceId = await redis.get<string | number>(
-              `telegram:token:${token}`,
+            const workspaceId = opts.ctx.workspace.id;
+            const storedRandomId = await redis.get<string>(
+              `telegram:workspace_token:${workspaceId}`,
             );
-            if (workspaceId == opts.ctx.workspace.id) {
-              await redis.expire(`telegram:token:${token}`, 10800);
+
+            if (storedRandomId === token) {
+              // Filter by timestamp if provided
+              if (
+                opts.input?.since &&
+                update.message.date < opts.input.since
+              ) {
+                continue;
+              }
+
+              // Reset expiry on use
+              await redis.del(`telegram:workspace_token:${workspaceId}`);
               validUpdates.push({
                 chatId: String(update.message.chat.id),
                 chatType: "private",
@@ -676,29 +700,41 @@ export const notificationRouter = createTRPCRouter({
         }
         // Phase 2: Look for group/supergroup additions filtered by privateChatId
         else {
+          // Check for new chat member (bot being added)
+          const message = update.message;
           if (
-            update.my_chat_member &&
-            (update.my_chat_member.chat.type === "group" ||
-              update.my_chat_member.chat.type === "supergroup") &&
-            update.my_chat_member.old_chat_member.status === "left" &&
-            (update.my_chat_member.new_chat_member.status === "member" ||
-              update.my_chat_member.new_chat_member.status === "administrator") &&
-            String(update.my_chat_member.from.id) === privateChatId
+            message &&
+            (message.chat.type === "group" ||
+              message.chat.type === "supergroup") &&
+            String(message.from.id) === privateChatId
           ) {
-            // Verify the token still exists for this workspace
-            // We need to check if there's any valid token for this workspace
-            // Since we don't have the token here, we'll trust that the privateChatId
-            // was obtained from a valid token in Phase 1
-            validUpdates.push({
-              chatId: String(update.my_chat_member.chat.id),
-              chatType: "group",
-              chatTitle: update.my_chat_member.chat.title,
-              user: {
-                id: update.my_chat_member.from.id,
-                first_name: update.my_chat_member.from.first_name,
-                username: update.my_chat_member.from.username,
-              },
-            });
+            // Check if the bot itself was added
+            const isBotAdded =
+              (message.new_chat_participant?.username &&
+                message.new_chat_participant.username === botUsername) ||
+              (message.new_chat_member?.username &&
+                message.new_chat_member.username === botUsername) ||
+              message.new_chat_members?.some(
+                (m) => m.username === botUsername,
+              );
+
+            if (isBotAdded) {
+              // Filter by timestamp if provided
+              if (opts.input?.since && message.date < opts.input.since) {
+                continue;
+              }
+
+              validUpdates.push({
+                chatId: String(message.chat.id),
+                chatType: "group",
+                chatTitle: message.chat.title,
+                user: {
+                  id: message.from.id,
+                  first_name: message.from.first_name,
+                  username: message.from.username,
+                },
+              });
+            }
           }
         }
       }
