@@ -85,7 +85,9 @@ export function FormTelegram({
   });
 
   const [mode, setMode] = React.useState<"qr" | "manual" | null>(null);
-  const [flowStep, setFlowStep] = React.useState<"private" | "group">("private");
+  const [flowStep, setFlowStep] = React.useState<"private" | "group">(
+    "private",
+  );
   const [privateChatId, setPrivateChatId] = React.useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = React.useState<number | null>(
     null,
@@ -126,7 +128,7 @@ export function FormTelegram({
   React.useEffect(() => {
     if (updates && updates.length > 0) {
       const lastUpdate = updates[updates.length - 1];
-      
+
       // Phase 1: Private chat ID received
       if (lastUpdate.chatType === "private" && flowStep === "private") {
         setPrivateChatId(lastUpdate.chatId);
@@ -166,7 +168,7 @@ export function FormTelegram({
           },
         });
         await promise;
-        
+
         // Reset UI state after successful submission
         setMode(null);
         setFlowStep("private");

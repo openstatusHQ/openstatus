@@ -40,10 +40,10 @@ export default function TelegramQRCode({
               ? "Retrieving your account..."
               : "Waiting for group connection..."}
           </>
+        ) : chatType === "private" ? (
+          "Scan the QR code to connect your account"
         ) : (
-          chatType === "private"
-            ? "Scan the QR code to connect your account"
-            : "Scan to add the bot to your group"
+          "Scan to add the bot to your group"
         )}
       </div>
     </div>

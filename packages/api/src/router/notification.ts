@@ -63,7 +63,13 @@ interface TelegramMessage {
 
 interface TelegramChatMember {
   user: TelegramUser;
-  status: "member" | "administrator" | "left" | "creator" | "restricted" | "kicked";
+  status:
+    | "member"
+    | "administrator"
+    | "left"
+    | "creator"
+    | "restricted"
+    | "kicked";
   can_be_edited?: boolean;
   can_manage_chat?: boolean;
   can_change_info?: boolean;
@@ -98,7 +104,6 @@ interface TelegramGetUpdatesResponse {
   ok: boolean;
   result: TelegramUpdate[];
 }
-
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -677,10 +682,7 @@ export const notificationRouter = createTRPCRouter({
 
             if (storedRandomId === token) {
               // Filter by timestamp if provided
-              if (
-                opts.input?.since &&
-                update.message.date < opts.input.since
-              ) {
+              if (opts.input?.since && update.message.date < opts.input.since) {
                 continue;
               }
 
@@ -714,9 +716,7 @@ export const notificationRouter = createTRPCRouter({
                 message.new_chat_participant.username === botUsername) ||
               (message.new_chat_member?.username &&
                 message.new_chat_member.username === botUsername) ||
-              message.new_chat_members?.some(
-                (m) => m.username === botUsername,
-              );
+              message.new_chat_members?.some((m) => m.username === botUsername);
 
             if (isBotAdded) {
               // Filter by timestamp if provided
