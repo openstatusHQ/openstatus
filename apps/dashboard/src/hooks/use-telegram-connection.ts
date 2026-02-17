@@ -28,6 +28,8 @@ export function useTelegramConnection({
     "private",
   );
   const [privateChatId, setPrivateChatId] = React.useState<string | null>(null);
+  const [userName, setUserName] = React.useState<string | null>(null);
+  const [groupTitle, setGroupTitle] = React.useState<string | null>(null);
   const [sessionStartTime, setSessionStartTime] = React.useState<number | null>(
     null,
   );
@@ -47,6 +49,8 @@ export function useTelegramConnection({
       // This runs when component unmounts
       setFlowStep("private");
       setPrivateChatId(null);
+      setUserName(null);
+      setGroupTitle(null);
       setSessionStartTime(null);
     };
   }, []);
@@ -70,13 +74,15 @@ export function useTelegramConnection({
       // Phase 1: Private chat ID received
       if (lastUpdate.chatType === "private" && flowStep === "private") {
         setPrivateChatId(lastUpdate.chatId);
+        setUserName(lastUpdate.user?.first_name || "Unknown");
         setFlowStep("group");
         toast.success(
-          `Connected to ${lastUpdate.user.first_name}'s account. Now add the bot to your group.`,
+          `Connected to ${lastUpdate.user?.first_name || "Unknown"}'s account. Now add the bot to your group.`,
         );
       }
       // Phase 2: Group chat ID received
       else if (lastUpdate.chatType === "group" && flowStep === "group") {
+        setGroupTitle(lastUpdate.chatTitle || "Unknown");
         startTransition(() => {
           form.setValue("data.chatId", lastUpdate.chatId, {
             shouldDirty: true,
@@ -92,6 +98,7 @@ export function useTelegramConnection({
   const resetConnection = React.useCallback(() => {
     // Only reset the group chat ID, keep privateChatId
     form.setValue("data.chatId", "", { shouldDirty: true });
+    setGroupTitle(null);
     // Update session start time to listen for new group updates
     setSessionStartTime(Math.floor(Date.now() / 1000));
     // Keep flowStep as "group" since we already have privateChatId
@@ -108,6 +115,8 @@ export function useTelegramConnection({
     isTokenLoading,
     flowStep,
     privateChatId,
+    userName,
+    groupTitle,
     isPolling:
       !!tokenData?.token && !form.watch("data.chatId") && mode === "qr",
     resetConnection,

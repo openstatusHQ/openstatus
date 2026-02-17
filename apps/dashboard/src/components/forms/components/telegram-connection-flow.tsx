@@ -22,6 +22,8 @@ export function TelegramConnectionFlow({
     isTokenLoading,
     flowStep,
     privateChatId,
+    userName,
+    groupTitle,
     isPolling,
     resetConnection,
   } = useTelegramConnection({ form, mode });
@@ -65,6 +67,8 @@ export function TelegramConnectionFlow({
           isPolling={isPolling}
           flowStep={flowStep}
           privateChatId={privateChatId}
+          userName={userName}
+          groupTitle={groupTitle}
           onReset={resetConnection}
         />
       )}
