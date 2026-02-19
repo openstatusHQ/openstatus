@@ -11,9 +11,10 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import type { UseFormReturn } from "react-hook-form";
+import type { FormValues } from "../notifications/form-telegram";
 
 interface TelegramManualInputProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FormValues>;
 }
 
 export function TelegramManualInput({ form }: TelegramManualInputProps) {

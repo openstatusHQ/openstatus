@@ -3,11 +3,12 @@
 import { useTelegramConnection } from "@/hooks/use-telegram-connection";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { UseFormReturn } from "react-hook-form";
+import type { FormValues } from "../notifications/form-telegram";
 import { TelegramManualInput } from "./telegram-manual-input";
 import { TelegramQRConnection } from "./telegram-qr-connection";
 
 interface TelegramConnectionFlowProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FormValues>;
   mode: "qr" | "manual" | null;
   onModeChange: (mode: "qr" | "manual" | null) => void;
 }

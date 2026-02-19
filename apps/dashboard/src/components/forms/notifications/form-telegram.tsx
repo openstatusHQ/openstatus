@@ -39,7 +39,7 @@ const schema = z.object({
   monitors: z.array(z.number()),
 });
 
-type FormValues = z.infer<typeof schema>;
+export type FormValues = z.infer<typeof schema>;
 
 export function FormTelegram({
   monitors,

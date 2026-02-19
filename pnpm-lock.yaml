@@ -2158,7 +2158,7 @@ importers:
         specifier: 0.4.6
         version: 0.4.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       qr-code-styling:
-        specifier: ^1.9.2
+        specifier: 1.9.2
         version: 1.9.2
       radix-ui:
         specifier: 1.4.3

@@ -7,9 +7,10 @@ import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
+import type { FormValues } from "../notifications/form-telegram";
 
 interface TelegramFormActionsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FormValues>;
   isPending: boolean;
 }
 

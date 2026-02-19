@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import QRCodeStyling, {
   type Options as QRCodeOptions,
-  type FileExtension,
 } from "qr-code-styling";
-
-import { cn } from "../../lib/utils";
+import { cn } from "@openstatus/ui/lib/utils";
 
 export interface QRCodeProps {
   data: string;

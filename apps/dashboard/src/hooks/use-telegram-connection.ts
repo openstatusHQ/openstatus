@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormValues } from "@/components/forms/notifications/form-telegram";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import React, { useTransition } from "react";
@@ -7,7 +8,7 @@ import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 
 interface UseTelegramConnectionProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FormValues>;
   mode: "qr" | "manual" | null;
 }
 

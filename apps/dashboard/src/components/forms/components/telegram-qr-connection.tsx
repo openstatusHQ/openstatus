@@ -2,11 +2,12 @@ import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import type { UseFormReturn } from "react-hook-form";
+import type { FormValues } from "../notifications/form-telegram";
 import { TelegramManualInput } from "./telegram-manual-input";
 import TelegramQRCode from "./telegram-qrcode";
 
 interface TelegramQRConnectionProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<FormValues>;
   token?: string;
   isLoading: boolean;
   isPolling?: boolean;
