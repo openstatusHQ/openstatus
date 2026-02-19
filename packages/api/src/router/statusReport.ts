@@ -64,6 +64,18 @@ export const statusReportRouter = createTRPCRouter({
 
       if (!statusReportUpdateInput.id) return;
 
+      const existing = await opts.ctx.db.query.statusReportUpdate.findFirst({
+        where: eq(statusReportUpdate.id, statusReportUpdateInput.id),
+        with: { statusReport: true },
+      });
+
+      if (existing?.statusReport.workspaceId !== opts.ctx.workspace.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not allowed to update this status report update",
+        });
+      }
+
       const currentStatusReportUpdate = await opts.ctx.db
         .update(statusReportUpdate)
         .set({ ...statusReportUpdateInput, updatedAt: new Date() })
