@@ -3,7 +3,7 @@
 import type { FormValues } from "@/components/forms/notifications/form-telegram";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import React, { useTransition } from "react";
+import React, { useReducer, useTransition } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -12,12 +12,81 @@ interface UseTelegramConnectionProps {
   mode: "qr" | "manual" | null;
 }
 
+interface TelegramConnectionState {
+  flowStep: "private" | "group";
+  privateChatId: string | null;
+  userName: string | null;
+  groupTitle: string | null;
+  sessionStartTime: number | null;
+}
+
+type TelegramConnectionAction =
+  | { type: "SET_SESSION_START_TIME"; payload: number | null }
+  | { type: "RESET_STATE" }
+  | { type: "RESET_GROUP_CONNECTION" }
+  | {
+      type: "SET_PRIVATE_CONNECTION_DATA";
+      payload: {
+        privateChatId: string;
+        userName: string;
+      };
+    }
+  | {
+      type: "SET_GROUP_CONNECTION_DATA";
+      payload: {
+        groupTitle: string;
+        chatId: string;
+      };
+    };
+
+const initialState: TelegramConnectionState = {
+  flowStep: "private",
+  privateChatId: null,
+  userName: null,
+  groupTitle: null,
+  sessionStartTime: null,
+};
+
+function telegramConnectionReducer(
+  state: TelegramConnectionState,
+  action: TelegramConnectionAction,
+): TelegramConnectionState {
+  switch (action.type) {
+    case "SET_SESSION_START_TIME":
+      return { ...state, sessionStartTime: action.payload };
+    case "RESET_STATE":
+      return initialState;
+    case "RESET_GROUP_CONNECTION":
+      return {
+        ...state,
+        groupTitle: null,
+        sessionStartTime: Math.floor(Date.now() / 1000),
+        flowStep: state.privateChatId ? "group" : "private",
+      };
+    case "SET_PRIVATE_CONNECTION_DATA":
+      return {
+        ...state,
+        privateChatId: action.payload.privateChatId,
+        userName: action.payload.userName,
+        flowStep: "group",
+      };
+    case "SET_GROUP_CONNECTION_DATA":
+      return {
+        ...state,
+        groupTitle: action.payload.groupTitle,
+      };
+    default:
+      return state;
+  }
+}
+
 export function useTelegramConnection({
   form,
   mode,
 }: UseTelegramConnectionProps) {
   const [isPending, startTransition] = useTransition();
   const trpc = useTRPC();
+  const [state, dispatch] = useReducer(telegramConnectionReducer, initialState);
 
   // Create Telegram Token
   const { data: tokenData, isLoading: isTokenLoading } = useQuery({
@@ -25,22 +94,15 @@ export function useTelegramConnection({
     refetchOnWindowFocus: false,
   });
 
-  const [flowStep, setFlowStep] = React.useState<"private" | "group">(
-    "private",
-  );
-  const [privateChatId, setPrivateChatId] = React.useState<string | null>(null);
-  const [userName, setUserName] = React.useState<string | null>(null);
-  const [groupTitle, setGroupTitle] = React.useState<string | null>(null);
-  const [sessionStartTime, setSessionStartTime] = React.useState<number | null>(
-    null,
-  );
-
   // Set session start time when entering QR mode
   React.useEffect(() => {
     if (mode === "qr") {
-      setSessionStartTime(Math.floor(Date.now() / 1000));
+      dispatch({
+        type: "SET_SESSION_START_TIME",
+        payload: Math.floor(Date.now() / 1000),
+      });
     } else if (mode === null) {
-      setSessionStartTime(null);
+      dispatch({ type: "SET_SESSION_START_TIME", payload: null });
     }
   }, [mode]);
 
@@ -48,11 +110,7 @@ export function useTelegramConnection({
   React.useEffect(() => {
     return () => {
       // This runs when component unmounts
-      setFlowStep("private");
-      setPrivateChatId(null);
-      setUserName(null);
-      setGroupTitle(null);
-      setSessionStartTime(null);
+      dispatch({ type: "RESET_STATE" });
     };
   }, []);
 
@@ -60,8 +118,10 @@ export function useTelegramConnection({
   const { data: updates } = useQuery({
     ...trpc.notification.getTelegramUpdates.queryOptions({
       privateChatId:
-        flowStep === "group" ? privateChatId ?? undefined : undefined,
-      since: sessionStartTime ?? undefined,
+        state.flowStep === "group"
+          ? state.privateChatId ?? undefined
+          : undefined,
+      since: state.sessionStartTime ?? undefined,
     }),
     enabled:
       !!tokenData?.token && !form.getValues("data.chatId") && mode === "qr",
@@ -73,17 +133,27 @@ export function useTelegramConnection({
       const lastUpdate = updates[updates.length - 1];
 
       // Phase 1: Private chat ID received
-      if (lastUpdate.chatType === "private" && flowStep === "private") {
-        setPrivateChatId(lastUpdate.chatId);
-        setUserName(lastUpdate.user?.first_name || "Unknown");
-        setFlowStep("group");
+      if (lastUpdate.chatType === "private" && state.flowStep === "private") {
+        dispatch({
+          type: "SET_PRIVATE_CONNECTION_DATA",
+          payload: {
+            privateChatId: lastUpdate.chatId,
+            userName: lastUpdate.user?.first_name || "Unknown",
+          },
+        });
         toast.success(
           `Connected to ${lastUpdate.user?.first_name || "Unknown"}'s account. Now add the bot to your group.`,
         );
       }
       // Phase 2: Group chat ID received
-      else if (lastUpdate.chatType === "group" && flowStep === "group") {
-        setGroupTitle(lastUpdate.chatTitle || "Unknown");
+      else if (lastUpdate.chatType === "group" && state.flowStep === "group") {
+        dispatch({
+          type: "SET_GROUP_CONNECTION_DATA",
+          payload: {
+            groupTitle: lastUpdate.chatTitle || "Unknown",
+            chatId: lastUpdate.chatId,
+          },
+        });
         startTransition(() => {
           form.setValue("data.chatId", lastUpdate.chatId, {
             shouldDirty: true,
@@ -94,30 +164,21 @@ export function useTelegramConnection({
         });
       }
     }
-  }, [updates, form, flowStep]);
+  }, [updates, form, state.flowStep]);
 
   const resetConnection = React.useCallback(() => {
     // Only reset the group chat ID, keep privateChatId
     form.setValue("data.chatId", "", { shouldDirty: true });
-    setGroupTitle(null);
-    // Update session start time to listen for new group updates
-    setSessionStartTime(Math.floor(Date.now() / 1000));
-    // Keep flowStep as "group" since we already have privateChatId
-    // This allows connecting to a new group with the same private chat
-    if (privateChatId) {
-      setFlowStep("group");
-    } else {
-      setFlowStep("private");
-    }
-  }, [form, privateChatId]);
+    dispatch({ type: "RESET_GROUP_CONNECTION" });
+  }, [form]);
 
   return {
     tokenData,
     isTokenLoading,
-    flowStep,
-    privateChatId,
-    userName,
-    groupTitle,
+    flowStep: state.flowStep,
+    privateChatId: state.privateChatId,
+    userName: state.userName,
+    groupTitle: state.groupTitle,
     isPolling:
       !!tokenData?.token && !form.watch("data.chatId") && mode === "qr",
     resetConnection,
