@@ -35,13 +35,11 @@ export function TelegramQRConnection({
   if (chatId) {
     return (
       <div className="flex flex-col gap-2">
-        <TelegramManualInput form={form} />
-        {groupTitle && (
-          <div className="text-muted-foreground text-sm">
-            Connected to group:{" "}
-            <span className="font-medium">{groupTitle}</span>
-          </div>
-        )}
+        <TelegramManualInput
+          form={form}
+          successMsg={`Connected to ${groupTitle}`}
+          showDescription={false}
+        />
         <Button
           type="button"
           variant="outline"
@@ -64,8 +62,8 @@ export function TelegramQRConnection({
           <Label>Private Chat ID</Label>
           <Input value={privateChatId} readOnly className="bg-muted" />
           {userName && (
-            <div className="text-muted-foreground text-sm">
-              Connected to: <span className="font-medium">{userName}</span>
+            <div className="font-medium text-green-600 text-sm">
+              {`Connected to: ${userName}`}
             </div>
           )}
         </div>

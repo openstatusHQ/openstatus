@@ -15,9 +15,15 @@ import type { FormValues } from "../notifications/form-telegram";
 
 interface TelegramManualInputProps {
   form: UseFormReturn<FormValues>;
+  successMsg?: string;
+  showDescription?: boolean;
 }
 
-export function TelegramManualInput({ form }: TelegramManualInputProps) {
+export function TelegramManualInput({
+  form,
+  successMsg,
+  showDescription = true,
+}: TelegramManualInputProps) {
   return (
     <FormField
       control={form.control}
@@ -29,16 +35,23 @@ export function TelegramManualInput({ form }: TelegramManualInputProps) {
             <Input placeholder="1234567890" {...field} />
           </FormControl>
           <FormMessage />
-          <FormDescription>
-            Enter the Telegram chat ID to send notifications to.{" "}
-            <Link
-              href="https://docs.openstatus.dev/reference/notification/#telegram"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Learn more
-            </Link>
-          </FormDescription>
+          {successMsg && (
+            <div className="font-medium text-green-600 text-sm">
+              {successMsg}
+            </div>
+          )}
+          {showDescription && (
+            <FormDescription>
+              Enter the Telegram chat ID to send notifications to.{" "}
+              <Link
+                href="https://docs.openstatus.dev/reference/notification/#telegram"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Learn more
+              </Link>
+            </FormDescription>
+          )}
         </FormItem>
       )}
     />
