@@ -18,6 +18,9 @@ export const env = createEnv({
     RESEND_API_KEY: z.string(),
     AXIOM_TOKEN: z.string(),
     AXIOM_DATASET: z.string(),
+    SLACK_BOT_TOKEN: z.string().optional(),
+    SLACK_SIGNING_SECRET: z.string().optional(),
+    AI_GATEWAY_API_KEY: z.string().optional(),
   },
 
   /**

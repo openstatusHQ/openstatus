@@ -24,6 +24,7 @@ import { env } from "./env";
 import { handleError } from "./libs/errors";
 import { publicRoute } from "./routes/public";
 import { mountRpcRoutes } from "./routes/rpc";
+import { slackRoute } from "./routes/slack";
 import { api } from "./routes/v1";
 
 type Env = {
@@ -233,6 +234,11 @@ app.get(
  * API Routes v1
  */
 app.route("/v1", api);
+
+/**
+ * Slack Agent Routes
+ */
+app.route("/slack", slackRoute);
 
 /**
  * TODO: move to `workflows` app
