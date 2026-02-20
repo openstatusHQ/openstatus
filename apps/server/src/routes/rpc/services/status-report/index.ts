@@ -49,7 +49,7 @@ const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 /**
  * Helper to send status report notifications to page subscribers.
  */
-async function sendStatusReportNotification(params: {
+export async function sendStatusReportNotification(params: {
   statusReportId: number;
   pageId: number;
   reportTitle: string;
@@ -132,7 +132,7 @@ async function sendStatusReportNotification(params: {
 /**
  * Helper to get a status report by ID with workspace scope.
  */
-async function getStatusReportById(id: number, workspaceId: number) {
+export async function getStatusReportById(id: number, workspaceId: number) {
   return db
     .select()
     .from(statusReport)
@@ -145,7 +145,7 @@ async function getStatusReportById(id: number, workspaceId: number) {
 /**
  * Helper to get page component IDs for a status report.
  */
-async function getPageComponentIdsForReport(statusReportId: number) {
+export async function getPageComponentIdsForReport(statusReportId: number) {
   const components = await db
     .select({ pageComponentId: statusReportsToPageComponents.pageComponentId })
     .from(statusReportsToPageComponents)
@@ -179,7 +179,7 @@ interface ValidatedPageComponents {
  * Helper to validate page component IDs belong to the workspace and same page.
  * Accepts an optional transaction to ensure atomicity with subsequent operations.
  */
-async function validatePageComponentIds(
+export async function validatePageComponentIds(
   pageComponentIds: string[],
   workspaceId: number,
   tx: DB | Transaction = db,
@@ -227,7 +227,7 @@ async function validatePageComponentIds(
  * Helper to update page component associations for a status report.
  * Accepts an optional transaction to ensure atomicity.
  */
-async function updatePageComponentAssociations(
+export async function updatePageComponentAssociations(
   statusReportId: number,
   pageComponentIds: number[],
   tx: DB | Transaction = db,
