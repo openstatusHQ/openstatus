@@ -1,18 +1,63 @@
 # openstatus
 
-OpenStatus is an open-source status page platform with global monitoring (HTTP, TCP, DNS).
+Openstatus is an open-source uptime monitoring and status page platform founded in 2023 by Thibault Le Ouay Ducasse and Maximilian Kaske. It monitors websites, APIs, and services from 28 regions globally across multiple cloud providers (Fly.io, Koyeb, Railway). Openstatus is bootstrapped, not VC-funded, and available both as a managed SaaS and for self-hosting.
 
-## Features
+## Who it's for
 
-- Uptime Monitoring: Monitor the availability and performance of your services globally.
-- Status Page: Create a custom status page to display the status of your services.
-- Monitoring as Code: Define your monitoring checks using YAML.
-- Alerting: Configure email, Slack, or other notification channels for alerts.
-- CLI: Manage openstatus using a command-line interface.
-- SDK: Integrate openstatus into your applications with our [SDK](https://jsr.io/@openstatus/sdk-node).
+- Development teams that want transparent incident communication
+- Companies that need multi-region uptime monitoring
+- Teams that prefer infrastructure-as-code workflows (monitoring as code via YAML)
+- Organizations that require self-hosted monitoring behind a firewall (private locations)
+- Open-source projects and startups looking for a free or affordable monitoring solution
 
-## Documentation
+## Pricing
 
+- **Hobby** — $0/month: 1 monitor, 6 regions, 10m check interval, 1 status page, 3 page components, 14-day data retention
+- **Starter** — $30/month: 20 monitors, 28 regions, 1m check interval, 1 status page, 20 components, 3-month retention, subscribers, custom domain, WhatsApp/SMS/PagerDuty alerts
+- **Pro** — $100/month: 50 monitors, 28 regions, 30s check interval, 5 status pages, 50 components, 12-month retention, private locations, OTel exporter, 20 notification channels
+
+Pricing is available in USD, EUR, and INR.
+
+## Key Features
+
+- **28-region monitoring**: Parallel checks across Europe, North America, South America, Asia, Africa, and Oceania — no round-robin, all regions fire simultaneously
+- **Multi-cloud**: Monitors run on Fly.io, Koyeb, and Railway for true cloud diversity
+- **Status Pages**: Branded public or password-protected pages with custom domains, themes, maintenance windows, and subscriber notifications (email, RSS, SSH)
+- **API Monitoring**: Assertions, thresholds, status code checks, header and body validation
+- **Monitoring as Code**: Define monitors in YAML, manage via CLI or GitHub Actions
+- **Private Locations**: 8.5MB Docker image for monitoring internal services behind firewalls
+- **Alerting**: Email, Slack, Discord, webhook, WhatsApp, SMS, PagerDuty, OpsGenie, Grafana OnCall
+- **OpenTelemetry**: Export synthetic check metrics to any OTLP endpoint
+- **SDK**: Node.js SDK available on JSR (@openstatus/sdk-node)
+- **Open-source**: AGPL-3.0-licensed, self-hostable, 8k+ GitHub stars
+
+## Key Differentiators
+
+- Open-source and bootstrapped (no VC funding)
+- Parallel scheduling strategy — all selected regions check simultaneously (vs. round-robin competitors)
+- Unlimited team members on paid plans
+- Status page subscribers included (not a paid add-on)
+- Private status pages included in team plan (not an additional charge)
+- Self-hosting option with full feature parity
+
+## Comparisons
+
+- [openstatus vs BetterStack](https://www.openstatus.dev/compare/betterstack)
+- [openstatus vs Checkly](https://www.openstatus.dev/compare/checkly)
+- [openstatus vs UptimeRobot](https://www.openstatus.dev/compare/uptime-robot)
+- [openstatus vs Uptime Kuma](https://www.openstatus.dev/compare/uptime-kuma)
+
+## Links
+
+- [About](https://www.openstatus.dev/about)
+- [Pricing](https://www.openstatus.dev/pricing)
+- [Changelog](https://www.openstatus.dev/changelog)
+- [Global Speed Checker](https://www.openstatus.dev/play/checker)
+- [Theme Store](https://themes.openstatus.dev)
+- [Dashboard](https://app.openstatus.dev)
 - [Documentation](https://docs.openstatus.dev/)
 - [Documentation llms docs](https://docs.openstatus.dev/llms.txt)
 - [Documentation llms docs full](https://docs.openstatus.dev/llms-full.txt)
+- [GitHub](https://github.com/openstatushq/openstatus)
+- [SDK](https://jsr.io/@openstatus/sdk-node)
+- [API](https://api.openstatus.dev/openapi)
