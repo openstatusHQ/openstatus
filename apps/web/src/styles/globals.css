@@ -241,12 +241,11 @@
 
 .prose ul {
   list-style-type: "- ";
-  @apply pl-4 list-outside marker:text-muted-foreground;
+  @apply list-inside marker:text-muted-foreground;
 }
 
 .prose ol {
-  /* NOTE: maybe replace by default pl and list-inside */
-  @apply pl-4 list-outside list-decimal marker:text-muted-foreground;
+  @apply list-inside list-decimal marker:text-muted-foreground;
 }
 
 .prose li {

@@ -191,11 +191,15 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
-      // TODO Add some check ?
       await opts.ctx.db
         .update(page)
         .set({ customDomain: opts.input.customDomain, updatedAt: new Date() })
-        .where(eq(page.id, opts.input.pageId))
+        .where(
+          and(
+            eq(page.id, opts.input.pageId),
+            eq(page.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
         .returning()
         .get();
     }),

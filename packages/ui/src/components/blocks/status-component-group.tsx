@@ -134,9 +134,10 @@ export function StatusComponentGroup({
   }, []);
 
   return (
-    <div data-slot="status-component-group" {...props}>
+    <div {...props}>
       <Collapsible
         defaultOpen={defaultOpen}
+        data-slot="status-component-group"
         className={cn(
           "-mx-3",
           "rounded-lg border border-transparent bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",

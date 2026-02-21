@@ -6,21 +6,21 @@ description: "Install beautiful, accessible React components for status pages. P
 category: "Documentation"
 ---
 
-Build your status page in minutes, not hours. The Openstatus registry gives you production-ready React components specifically designed for status pages. Built on top of [shadcn/ui](https://ui.shadcn.com), these components are accessible, customizable, and battle-tested in production.
+Build your status page in minutes, not hours. The openstatus registry provides production-ready React components specifically designed for status pages. Built on top of [shadcn/ui](https://ui.shadcn.com), these components are accessible, customizable, and battle-tested in production.
 
 ## What is the Registry?
 
-The Openstatus registry is a shadcn/ui-compatible collection of pre-built components for common status page patterns. Instead of building status indicators, event timelines, and monitoring displays from scratch, you can install and customize these components directly into your project.
+The openstatus registry is a collection of shadcn/ui-compatible, pre-built components for common status page patterns. Instead of building status indicators, event timelines, and monitoring displays from scratch, install and customize these components directly into your project.
 
 All components are:
 - **Accessible** - Built with ARIA patterns and keyboard navigation
 - **Customizable** - Fully themeable with Tailwind CSS
 - **Type-safe** - Written in TypeScript with complete type definitions
-- **Production-ready** - Battle-tested in production at Openstatus
+- **Production-ready** - Battle-tested in production at openstatus
 
-## Complete Example
+## Example
 
-Hover the example below to learn which component is being used.
+Hover over the example below to see which component is being used.
 
 <Grid cols={1}>
 
@@ -32,9 +32,9 @@ Hover the example below to learn which component is being used.
 
 </Grid>
 
-> We are working on matching the component `Props` and the [`@openstatus/sdk-node`](https://jsr.io/@openstatus/sdk-node) return values, allowing you to use our SDK to build your own custom status page.
+> We are working on aligning component `Props` with [`@openstatus/sdk-node`](https://jsr.io/@openstatus/sdk-node) return values, enabling you to use our SDK to build your own custom status page.
 
-See the [complete example](https://github.com/openstatusHQ/openstatus/tree/main/apps/web/src/content/shadcn-registry-example.tsx) for full source code and usage patterns.
+View the [GitHub source code](https://github.com/openstatusHQ/openstatus/tree/main/apps/web/src/content/shadcn-registry-example.tsx) for examples and usage patterns.
 
 ## Installation
 
@@ -44,18 +44,30 @@ Install any component with a single [shadcn CLI](https://ui.shadcn.com/docs/cli)
 npx shadcn@latest add https://openstatus.dev/r/status-complete
 ```
 
+Or install the registry first:
+
+```bash
+pnpm dlx shadcn@latest registry add @openstatus
+```
+ 
+ And install the component via:
+
+```bash
+pnpm dlx shadcn@latest add @openstatus/status-complete
+```
+
 ### Available Components
 
-Components are organized by function:
+Components are organized by functionality:
 
 - **Collections:** `status-complete`, `status-essentials` - Full status page bundles
 - **Building Blocks:** `status-banner`, `status-bar`, `status-feed`, `status-events`, `status-component`, `status-icon`, `status-layout`, `status-timestamp` - Individual components
 
-Browse the full registry at [openstatus.dev/r/registry.json](https://openstatus.dev/r/registry.json)
+Explore the full registry at [openstatus.dev/r/registry.json](https://openstatus.dev/r/registry.json)
 
 ---
 
-Using openstatus but want a custom theme?
+Want to customize your theme?
 
 <ButtonLink href="https://themes.openstatus.dev" children="Go to Themes Explorer" />
 
@@ -63,11 +75,11 @@ Using openstatus but want a custom theme?
 
 ## Learn More
 
-- [Complete Example](https://github.com/openstatusHQ/openstatus/tree/main/apps/web/src/content/shadcn-registry-example.tsx) - See all components in action
+- [Source Code Example](https://github.com/openstatusHQ/openstatus/tree/main/apps/web/src/content/shadcn-registry-example.tsx) - See all components in action
+- [Blog Post](/blog/shadcn-component-registry) - How We Build Our shadcn Component Registry
 - [Openstatus SDK](https://jsr.io/@openstatus/sdk-node) - Build on top of openstatus with our SDK
 - [shadcn/ui Documentation](https://ui.shadcn.com) - Learn about the underlying component system
 - [Openstatus GitHub](https://github.com/openstatusHQ/openstatus) - Star the project and contribute
-- [Component Source Code](https://github.com/openstatusHQ/openstatus/tree/main/packages/ui/src/components) - Browse the implementation
 - [Theme Explorer](https://themes.openstatus.dev) - Explore community themes
 
 ## Support
