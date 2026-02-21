@@ -107,10 +107,12 @@ const companySection = {
 
 const compareSection = {
   label: "Compare",
-  items: getComparePages().map((page) => ({
-    label: page.metadata.title,
-    href: `/compare/${page.slug}`,
-  })),
+  items: getComparePages()
+    .map((page) => ({
+      label: page.metadata.title,
+      href: `/compare/${page.slug}`,
+    }))
+    .slice(0, 7),
 };
 
 const toolsSection = {
