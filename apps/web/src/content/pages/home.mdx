@@ -3,18 +3,22 @@ title: "The open-source status page with uptime monitoring"
 publishedAt: "2025-11-10"
 author: "openstatus"
 description: "Openstatus helps you communicate openly during incidents. Share what's happening, keep users updated, and let your status page automatically populate real-time data from our uptime monitoring solution."
-category: "Product"
+category: "product"
 faq:
-  - question: "What are the free limits?"
-    answer: "As free user you will start with a total of one monitor and one status page (incl. three page components) as well as cron jobs of min. 10m. You can upgrade to a paid plan at any time. No credit card is required to sign up and you can cancel at any time."
-  - question: "Who are we?"
-    answer: "We are Thibault and Max and we take you with us on our journey. Read more on our about page at https://www.openstatus.dev/about."
-  - question: "How does it work?"
-    answer: "We ping your endpoints from multiple regions to calculate uptime and display the current status on your status page. We also collect response time data like headers and timing phases and display it on your dashboard."
-  - question: "What regions do we support?"
-    answer: "We support monitoring from 28 regions worldwide across all continents: Europe (Amsterdam, Stockholm, Paris, Frankfurt, London), North America (Dallas, New Jersey, Los Angeles, San Jose, Chicago, Toronto), South America (São Paulo), Asia (Mumbai, Tokyo, Singapore), Africa (Johannesburg), and Oceania (Sydney)."
-  - question: "How can I help?"
-    answer: "There are many ways you can help us: Spread the word by telling your friends and colleagues about OpenStatus, report bugs if you find them, suggest new features, contribute to the project if you are a developer, become a paid user if you are a business, or star our project on GitHub."
+  - question: "What is openstatus?"
+    answer: "Openstatus is an open-source uptime monitoring and status page platform. It monitors websites, APIs, and services from 28 regions globally across multiple cloud providers (Fly.io, Koyeb, Railway), helping teams detect downtime immediately and communicate incidents through branded status pages. Openstatus is bootstrapped, not VC-funded, and available as a managed SaaS or for self-hosting."
+  - question: "What does the free plan include?"
+    answer: "The free plan includes one monitor, one status page with three page components, and a minimum check interval of 10 minutes. No credit card is required, and you can upgrade or cancel at any time."
+  - question: "Who is behind openstatus?"
+    answer: "Openstatus is built by Thibault and Max, a bootstrapped two-person team. They share their journey openly — learn more on the about page."
+  - question: "How does uptime monitoring work?"
+    answer: "Openstatus pings your endpoints from multiple regions at your configured interval to calculate uptime and response times. It validates responses using assertions (status codes, headers, body content) and alert thresholds. Results appear on your dashboard and automatically reflect on your status page. You can also export metrics to OpenTelemetry."
+  - question: "What regions does openstatus monitor from?"
+    answer: "Openstatus monitors from 28 regions worldwide: Europe (Amsterdam, Stockholm, Paris, Frankfurt, London), North America (Dallas, New Jersey, Los Angeles, San Jose, Chicago, Toronto), South America (São Paulo), Asia (Mumbai, Tokyo, Singapore), Africa (Johannesburg), and Oceania (Sydney)."
+  - question: "Can I self-host openstatus?"
+    answer: "Yes. Openstatus is fully open source and can be self-hosted using its 8.5MB Docker image. You can also deploy private monitoring locations behind your firewall for internal services. The source code is available on GitHub."
+  - question: "How can I contribute to openstatus?"
+    answer: "Star the project on GitHub, report bugs, suggest features, contribute code, or become a paid user. You can also spread the word or join the Discord community."
 ---
 
 <div className="space-x-2">
@@ -102,17 +106,25 @@ Check your website's latency
 
 ## FAQs
 
-<Details summary="What are the free limits?">
+<Details summary="What is openstatus?">
 
-As free user you will start with a total of **one monitor** and **one status page (incl. three page components)** as well as cron jobs of min. `10m`. You can upgrade to a paid plan at any time. Check the pricing table for more details.
+Openstatus is an open-source uptime monitoring and status page platform. It monitors websites, APIs, and services from **28 regions** globally across multiple cloud providers (Fly.io, Koyeb, Railway), helping teams detect downtime immediately and communicate incidents through branded status pages.
 
-No credit card is required to sign up and you can cancel at any time.
+Openstatus is bootstrapped, not VC-funded, and available as a [managed SaaS](https://app.openstatus.dev) or for [self-hosting](https://github.com/openstatushq/openstatus).
 
 </Details>
 
-<Details summary="Who are we?">
+<Details summary="What does the free plan include?">
 
-We are [Thibault](https://bsky.app/profile/thibaultleouay.dev) and [Max](https://x.com/mxkaske) and we take you with us on our journey.
+The free plan includes **one monitor**, **one status page** (with three page components), and a minimum check interval of `10m`. Check the pricing table for a full comparison.
+
+No credit card required — upgrade or cancel at any time.
+
+</Details>
+
+<Details summary="Who is behind openstatus?">
+
+Openstatus is built by [Thibault](https://bsky.app/profile/thibaultleouay.dev) and [Max](https://x.com/mxkaske) — a bootstrapped two-person team building in public.
 
 Read more on [our about page](/about).
 
@@ -125,17 +137,19 @@ Read more on [our about page](/about).
 </Details>
 
 
-<Details summary="How does it work?">
+<Details summary="How does uptime monitoring work?">
 
-We ping your endpoints from multiple regions to calculate uptime and display the current status on your status page. We also collect response time data like headers and timing phases and display it on your dashboard.
+Openstatus pings your endpoints from multiple regions at your configured interval. Each check validates the response using **assertions** (status codes, headers, body content) and **alert thresholds**. Response time data — including timing phases like DNS, connect, and TTFB — is collected and displayed on your dashboard.
 
-Try out the [Speed Checker](/play/checker).
+When a check fails, you get notified immediately via your chosen channel (email, Slack, Discord, PagerDuty, and more). Your status page reflects the current state automatically.
+
+Try the [Speed Checker](/play/checker) to see real-time data from all regions.
 
 </Details>
 
-<Details summary="What regions do we support?">
+<Details summary="What regions does openstatus monitor from?">
 
-We support **monitoring from 28 regions worldwide** across all continents:
+Openstatus monitors from **28 regions worldwide** across all continents:
 
 **Europe**
 
@@ -165,15 +179,26 @@ Sydney 🇦🇺
 
 </Details>
 
-<Details summary="How can I help?">
+<Details summary="Can I self-host openstatus?">
 
-There are many ways you can help us:
+Yes. Openstatus is fully open source and can be self-hosted using its **8.5MB Docker image**. You can also deploy **private monitoring locations** behind your firewall to check internal services not exposed to the internet.
 
-- **Spread the word**: Tell your friends and colleagues about OpenStatus. The more people use it, the more we can improve it.
-- **Report bugs**: If you find a bug, please report it.
-- **Suggest features**: If you have an idea for a new feature, please let us know.
-- **Contribute**: If you are a developer, you can contribute to the project.
-- **Become a paid user**: If you are a business, you can become a paid user.
-- **Star our project**: If you like our project, you can star it on [GitHub](https://openstatus.dev/github).
+- [Self-hosting the full openstatus stack](https://docs.openstatus.dev/guides/self-hosting-openstatus/)
+- [Self-hosting the status page only](https://docs.openstatus.dev/guides/self-host-status-page-only/)
+
+The source code is available on [GitHub](https://openstatus.dev/github).
+
+</Details>
+
+<Details summary="How can I contribute to openstatus?">
+
+There are many ways to support the project:
+
+- **Star on GitHub**: Show your support and help others discover it.
+- **Spread the word**: Tell your team or write about your experience.
+- **Report bugs**: Found something broken? [Open an issue](https://openstatus.dev/github).
+- **Suggest features**: Have an idea? Let us know on [Discord](https://openstatus.dev/discord) or [GitHub](https://openstatus.dev/github).
+- **Contribute code**: Pull requests are welcome.
+- **Become a paid user**: The best way to sustain an indie project.
 
 </Details>
