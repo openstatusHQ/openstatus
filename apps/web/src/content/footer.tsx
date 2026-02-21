@@ -15,7 +15,7 @@ export function Footer() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="block w-full hover:bg-muted"
+                    className="block w-full truncate hover:bg-muted"
                   >
                     {item.label}
                   </Link>
