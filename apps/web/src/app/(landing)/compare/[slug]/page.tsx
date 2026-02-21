@@ -1,3 +1,4 @@
+import { ContentPagination } from "@/app/(landing)/content-pagination";
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
@@ -46,7 +47,14 @@ export default async function Blog({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getComparePages().find((post) => post.slug === slug);
+  const posts = getComparePages().sort(
+    (a, b) =>
+      b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
+  );
+  const postIndex = posts.findIndex((post) => post.slug === slug);
+  const post = posts[postIndex];
+  const previousPost = posts[postIndex - 1];
+  const nextPost = posts[postIndex + 1];
 
   if (!post) {
     notFound();
@@ -78,6 +86,11 @@ export default async function Blog({
       <h1>{post.metadata.title}</h1>
       <p className="text-lg">{post.metadata.description}</p>
       <CustomMDX source={post.content} />
+      <ContentPagination
+        previousPost={previousPost}
+        nextPost={nextPost}
+        prefix="/compare"
+      />
     </section>
   );
 }
