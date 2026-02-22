@@ -1,0 +1,210 @@
+---
+title: "HTTP Headers Every Developer Should Know"
+description: "A practical reference for common HTTP request and response headers, security headers, and the cloud provider-specific headers you'll encounter when monitoring APIs."
+author: "openstatus"
+publishedAt: "2026-02-22"
+category: "education"
+faq:
+  - question: "What are HTTP headers?"
+    answer: "HTTP headers are metadata key-value pairs sent alongside HTTP requests and responses. They define content types, authentication, caching behavior, security policies, and more."
+  - question: "What is Cache-Control?"
+    answer: "Cache-Control is an HTTP response header that tells browsers and CDNs how long to cache a response. Directives like max-age, no-cache, and no-store control caching behavior."
+  - question: "What's the difference between X-Forwarded-For and X-Real-IP?"
+    answer: "X-Forwarded-For contains a chain of IPs added by each proxy. X-Real-IP is set by the first proxy and reflects just the original client IP."
+  - question: "What is a CF-Ray header?"
+    answer: "CF-Ray is a Cloudflare-specific header that uniquely identifies a request. It's the first thing Cloudflare support will ask for when debugging an issue."
+---
+
+# HTTP Headers Every Developer Should Know
+
+HTTP headers are key-value pairs sent alongside requests and responses. They carry metadata about authentication, content format, caching, and security—and are the first place to look when something behaves unexpectedly.
+
+```
+Header-Name: header-value
+```
+
+Header names are case-insensitive; values are not.
+
+---
+
+## Request Headers
+
+**`Accept`**
+Which content types the client can handle. The `q` parameter sets preference weight.
+```
+Accept: application/json, text/html;q=0.9
+```
+
+**`Accept-Encoding`**
+Compression algorithms the client supports. Servers compress responses accordingly.
+```
+Accept-Encoding: gzip, br, deflate
+```
+
+**`Accept-Language`**
+The client's preferred language for response content.
+```
+Accept-Language: en-US,en;q=0.9
+```
+
+**`Authorization`**
+Credentials for accessing protected resources. Common schemes: `Bearer`, `Basic`, `ApiKey`.
+```
+Authorization: Bearer <token>
+```
+
+**`Content-Type`**
+The format of the request body. Required for `POST`/`PUT` requests with a body.
+```
+Content-Type: application/json
+```
+
+**`Cookie`**
+Previously stored cookies sent back to the server for session or user identification.
+```
+Cookie: sessionId=abc123; theme=dark
+```
+
+**`If-Modified-Since`**
+Conditional request—returns the resource only if it changed after the given date. Used with `Last-Modified` for cache revalidation.
+```
+If-Modified-Since: Wed, 21 Oct 2023 07:28:00 GMT
+```
+
+**`Referer`**
+The URL of the page that linked to the current resource. Note the historical misspelling.
+```
+Referer: https://example.com/previous-page
+```
+
+**`User-Agent`**
+Identifies the client—browser, SDK, or monitoring tool.
+```
+User-Agent: OpenStatus-Monitor/1.0
+```
+
+---
+
+## Response Headers
+
+**`Cache-Control`**
+How and how long responses can be cached. Key directives:
+- `max-age=3600` — cache for 1 hour
+- `s-maxage=60` — CDN-specific override
+- `no-cache` — revalidate before serving cached content
+- `no-store` — never cache
+
+**`Content-Length`**
+The response body size in bytes.
+
+**`ETag`**
+A fingerprint for a specific version of a resource. Clients echo it back in `If-None-Match`; unchanged resources return `304 Not Modified` with no body.
+
+**`Location`**
+Target URL for redirect responses (`3xx`).
+```
+Location: https://api.example.com/users/123
+```
+
+**`Server`**
+The server software that generated the response. Often worth stripping in production to reduce information exposure.
+```
+Server: nginx/1.21.0
+```
+
+**`Set-Cookie`**
+Instructs the client to store a cookie with given attributes.
+```
+Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict
+```
+
+---
+
+## Security Headers
+
+**`Content-Security-Policy`**
+Controls which resources the browser can load. Primary defense against XSS.
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'
+```
+
+**`Strict-Transport-Security`**
+Forces HTTPS for future requests. `includeSubDomains` extends coverage.
+```
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+```
+
+**`X-Content-Type-Options`**
+Prevents browsers from MIME-sniffing the declared content type.
+```
+X-Content-Type-Options: nosniff
+```
+
+**`X-Frame-Options`**
+Protects against clickjacking by controlling iframe embedding.
+```
+X-Frame-Options: DENY
+```
+
+---
+
+## Proxy and Infrastructure Headers
+
+Set by reverse proxies, load balancers, and CDNs—not your origin server.
+
+| Header | Purpose |
+|---|---|
+| `X-Forwarded-For` | Chain of IPs through each proxy |
+| `X-Forwarded-Host` | Original `Host` before proxy rewrites |
+| `X-Forwarded-Proto` | Original protocol (`http` or `https`) |
+| `X-Real-IP` | Original client IP, set by the first proxy |
+| `X-Request-ID` | Unique identifier for tracing a request across services |
+| `X-RateLimit-Limit` | Maximum requests allowed in a window |
+| `X-RateLimit-Remaining` | Requests remaining in the current window |
+| `X-RateLimit-Reset` | Unix timestamp when the rate limit resets |
+
+---
+
+## Cloud Provider Headers
+
+Each provider injects its own headers. Recognizing them tells you which layer handled the request—and where to look when something fails.
+
+### Cloudflare
+
+| Header | Purpose |
+|---|---|
+| `CF-Ray` | Unique request ID—always include this in Cloudflare support tickets |
+| `CF-Cache-Status` | `HIT`, `MISS`, `EXPIRED`, or `BYPASS` |
+| `CF-Connecting-IP` | Original client IP—prefer this over `X-Forwarded-For` behind Cloudflare |
+| `CF-IPCountry` | Two-letter country code of the client |
+
+### Vercel
+
+| Header | Purpose |
+|---|---|
+| `X-Vercel-Id` | Unique request ID, includes region prefix (e.g. `cdg1::`) |
+| `X-Vercel-Cache` | `HIT`, `MISS`, or `STALE` from Vercel's edge cache |
+
+### Fly.io
+
+| Header | Purpose |
+|---|---|
+| `Fly-Request-Id` | Unique request ID for tracing |
+| `Fly-Region` | The region that handled the request (e.g. `ams`, `lax`) |
+
+### Railway / Koyeb
+
+Both proxy requests through standard infrastructure. Expect `X-Forwarded-*` headers; request IDs may appear as `X-Request-Id` or `X-Correlation-Id` depending on your app framework.
+
+---
+
+## Why This Matters for Monitoring
+
+Response headers reveal more than status codes alone:
+
+- `CF-Cache-Status: HIT` means you're hitting the cache, not your origin
+- `X-Vercel-Id` with an unexpected region prefix can reveal routing issues
+- Missing `Strict-Transport-Security` on production is worth alerting on
+- `Cache-Control: no-store` on a high-traffic route means zero caching is helping you
+
+<ButtonLink href="https://app.openstatus.dev">Start monitoring your API responses</ButtonLink>
