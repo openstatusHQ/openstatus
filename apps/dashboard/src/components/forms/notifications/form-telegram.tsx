@@ -10,25 +10,24 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 
-import { Link } from "@/components/common/link";
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
 import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
-import { useMutation } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { TelegramConnectionFlow } from "../components/telegram-connection-flow";
+import { TelegramFormActions } from "../components/telegram-form-actions";
+import { TelegramManualInput } from "../components/telegram-manual-input";
 
 const schema = z.object({
   name: z.string(),
@@ -36,10 +35,11 @@ const schema = z.object({
   data: z.object({
     chatId: z.string(),
   }),
+  chatType: z.enum(["group", "private"]),
   monitors: z.array(z.number()),
 });
 
-type FormValues = z.infer<typeof schema>;
+export type FormValues = z.infer<typeof schema>;
 
 export function FormTelegram({
   monitors,
@@ -60,20 +60,24 @@ export function FormTelegram({
       data: {
         chatId: "",
       },
+      chatType: "private",
       monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
   const { setIsDirty } = useFormSheetDirty();
-  const trpc = useTRPC();
-  const sendTestMutation = useMutation(
-    trpc.notification.sendTest.mutationOptions(),
-  );
 
   const formIsDirty = form.formState.isDirty;
   React.useEffect(() => {
     setIsDirty(formIsDirty);
   }, [formIsDirty, setIsDirty]);
+
+  // Check if we're editing an existing notification (has chatID) or creating a new one
+  const isEditMode = React.useMemo(() => {
+    return Boolean(defaultValues?.data?.chatId);
+  }, [defaultValues]);
+
+  const [mode, setMode] = React.useState<"qr" | "manual" | null>(null);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -92,39 +96,10 @@ export function FormTelegram({
           },
         });
         await promise;
-      } catch (error) {
-        console.error(error);
-      }
-    });
-  }
 
-  function testAction() {
-    if (isPending) return;
-
-    startTransition(async () => {
-      try {
-        const provider = form.getValues("provider");
-        const data = form.getValues("data");
-        const promise = sendTestMutation.mutateAsync({
-          provider,
-          data: {
-            telegram: { chatId: data.chatId },
-          },
-        });
-        toast.promise(promise, {
-          loading: "Sending test...",
-          success: "Test sent",
-          error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
-            }
-            if (error instanceof Error) {
-              return error.message;
-            }
-            return "Failed to send test";
-          },
-        });
-        await promise;
+        // Reset UI state after successful submission
+        setMode(null);
+        form.reset();
       } catch (error) {
         console.error(error);
       }
@@ -155,39 +130,20 @@ export function FormTelegram({
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="data.chatId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Telegram Chat ID</FormLabel>
-                <FormControl>
-                  <Input placeholder="1234567890" {...field} />
-                </FormControl>
-                <FormMessage />
-                <FormDescription>
-                  Enter the Telegram chat ID to send notifications to.{" "}
-                  <Link
-                    href="https://docs.openstatus.dev/reference/notification/#telegram"
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Learn more
-                  </Link>
-                </FormDescription>
-              </FormItem>
+          <div className="flex flex-col gap-4">
+            {isEditMode ? (
+              // Edit mode: Show editable chatID input only
+              <TelegramManualInput form={form} />
+            ) : (
+              // Create mode: Show QR/manual connection flow
+              <TelegramConnectionFlow
+                form={form}
+                mode={mode}
+                onModeChange={setMode}
+              />
             )}
-          />
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              type="button"
-              onClick={testAction}
-            >
-              Send Test
-            </Button>
           </div>
+          <TelegramFormActions form={form} isPending={isPending} />
         </FormCardContent>
         <FormCardSeparator />
         <FormCardContent>

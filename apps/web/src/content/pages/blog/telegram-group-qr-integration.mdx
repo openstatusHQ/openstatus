@@ -1,0 +1,232 @@
+---
+title: "Connecting Telegram Groups Without a Webhook"
+description: "How we implemented a two-phase QR code flow to securely link Telegram groups to OpenStatus using Redis, polling, and stale-update filtering — no webhooks needed."
+author: "Moulik Aggarwal"
+publishedAt: "2026-02-21"
+image: "/assets/posts/telegram-group-qr-integration/telegram.png"
+category: "engineering"
+---
+
+Most Telegram bot integrations follow the same playbook: spin up a webhook endpoint, expose it to the internet, and handle updates as they arrive. It's well-documented, straightforward, and used by just about every platform that offers a "Connect your Telegram" button.
+
+We didn't do that.
+
+This post explains the two-phase QR code flow we built to connect Telegram groups to OpenStatus — and why the approach we took is more reliable, simpler to deploy, and doesn't require us to maintain a live webhook endpoint at all.
+
+---
+
+## The Problem with Webhooks
+
+Webhooks are powerful, but they come with operational overhead that can exceed the complexity of a one-time setup flow:
+
+- **Infrastructure requirements**: You need a publicly accessible HTTPS endpoint that stays online 24/7
+- **Request handling**: You must implement retry logic, ensure request ordering, and handle deduplication
+- **Security validation**: Every incoming request needs verification against a Telegram secret token
+- **State consistency**: Mismatches between the webhook receiver and your database become a real problem at scale
+
+For our use case — a one-time group connection during initial setup — this felt disproportionate. We weren't building a real-time chat pipeline. We were building a configuration UI.
+
+The alternative? Telegram's `getUpdates` long-polling API. It's the simpler sibling of webhooks, designed for bots that pull updates on demand rather than receive them pushed. We already had the infrastructure: a working API, Redis, and a frontend capable of polling. So we leaned in.
+
+---
+
+## The Two-Phase Flow
+
+The core challenge with Telegram group notifications is that **you can't directly obtain a group chat ID from a user**. Unlike a "Log in with Telegram" flow, groups don't have a built-in sign-in mechanism. The user can't just authenticate and grant group access.
+
+The solution is a two-step handshake:
+
+**Phase 1 — Identity Verification (Private Chat)**
+
+The user scans a QR code that opens a direct message with the bot, pre-filled with `/start <token>`. When they send it, the bot receives a private message containing the token. We verify the token matches what we stored in Redis for that workspace, then return the user's private `chatId` to the frontend.
+
+**Phase 2 — Group Detection**
+
+Now that we know *who* initiated the flow (via their private `chatId`), we wait for that same user to add our bot to a group. The bot receives a `new_chat_members` update. We verify:
+- The bot was actually added to the group
+- The bot was added *by the same user from Phase 1*
+- The event happened *after* the session started
+
+Once both phases complete, we have the group's `chatId` — which is what gets stored and used for alert delivery.
+
+---
+
+## Token Management: One Key per Workspace
+
+During Phase 1, we need to issue a short-lived, single-use token that links a QR scan back to a specific OpenStatus workspace.
+
+Our strategy is simple: **one Redis key per workspace**.
+
+```
+telegram:workspace_token:${workspaceId}  →  "a3kXp9bN1qRt"  (30 min TTL)
+```
+
+The token is a 12-character random ID generated with `nanoid(12)`. This is short enough to fit comfortably in a Telegram deep-link URL parameter (Telegram limits `start` parameters to 64 characters, giving us plenty of headroom), yet random enough to be effectively unguessable.
+
+Key properties of this design:
+
+- **One active token per workspace** — generating a new QR code automatically invalidates the previous one. There's no accumulation of stale tokens floating around.
+- **30-minute hard expiry** — set at the Redis level using TTL, so cleanup is free and automatic.
+- **Single-use deletion** — once Phase 1 succeeds, we immediately delete the key. Even if a user somehow replays the same QR code, it won't match anymore.
+
+```ts
+// Phase 1 server-side verification
+const tokenKey = `telegram:workspace_token:${workspaceId}`;
+const storedToken = await redis.get<string>(tokenKey);
+
+if (storedToken && receivedToken === storedToken) {
+  await redis.del(tokenKey); // one-time use
+  return { chatId: String(message.chat.id), user: message.from };
+}
+```
+
+This approach scales horizontally: adding new workspaces requires no coordination between API instances, since each one can independently manage its own Redis keys.
+
+---
+
+## Stale Update Prevention: Timestamp Filtering
+
+Here's the subtle problem with `getUpdates`: **Telegram's API returns updates from the last 24 hours by default**. If a user previously added the bot to a group (even accidentally), that event would still be in the update feed.
+
+Without filtering, Phase 2 would instantly succeed with stale data — connecting the user to the wrong group.
+
+Our fix: **session start time**.
+
+When the user clicks "Connect with QR", the frontend records a Unix timestamp (`sessionStartTime = Math.floor(Date.now() / 1000)`). This value is passed as `since` with every polling request. The backend skips any update older than this threshold.
+
+```ts
+const recentUpdates = since
+  ? updates.filter((u) => u.message && u.message.date >= since)
+  : updates;
+```
+
+This also cleanly handles the **reset flow**. If a user accidentally adds the bot to the wrong group, they can click "Reset Group ID". We clear the stored `chatId`, generate a new `sessionStartTime`, and resume polling. The previous group-add event is now older than the new session start — so it gets filtered out automatically, with no server-side cleanup needed.
+
+The beauty of this approach: **the client drives the filtering logic**, and the server is just a passive validator. No state needs to be stored on the backend beyond the 30-minute token.
+
+---
+
+## Ownership Verification in Phase 2
+
+Detecting that the bot was added to a group is straightforward. But we need to make sure *the right user* did it. Otherwise, any user who scans the QR could add the bot to an arbitrary group that doesn't belong to them.
+
+The verification chain in Phase 2:
+
+1. The update must be a `group` or `supergroup` event (not a private chat)
+2. The `new_chat_members` array must include our bot's username
+3. The `message.from.id` must match the `privateChatId` returned from Phase 1
+4. The `message.date` must be `>= since` (the session start time)
+
+
+```ts
+function extractGroupBotAddition(update, privateChatId, botUsername) {
+  const { message } = update;
+  if (!message || !["group", "supergroup"].includes(message.chat.type)) return null;
+  if (String(message.from.id) !== privateChatId) return null;
+
+  // Telegram uses all three field names inconsistently across versions
+  const isBotAdded =
+    message.new_chat_participant?.username === botUsername ||
+    message.new_chat_member?.username === botUsername ||
+    message.new_chat_members?.some((m) => m.username === botUsername);
+
+  if (!isBotAdded) return null;
+
+  return { chatId: String(message.chat.id), chatTitle: message.chat.title };
+}
+```
+
+All three Telegram field variants (`new_chat_participant`, `new_chat_member`, `new_chat_members`) are checked because the field name varies across bot API versions and group types. It's defensive, but necessary — we've learned that Telegram's API isn't always consistent across versions and group configurations.
+
+---
+
+## Frontend State: A Reducer-Driven Flow
+
+Managing the two-phase flow on the client required careful state handling. We used `useReducer` to model the flow explicitly, treating the entire QR connection process as a state machine.
+
+The state machine looks like this:
+
+```
+flowStep: "private"  →  (Phase 1 success)  →  flowStep: "group"  →  (Phase 2 success)
+                                               ↓
+                                         (Phase 2 success)
+                                               ↓
+                                         chatId written to form
+```
+
+The reducer handles five actions:
+
+| Action | Effect |
+|--------|--------|
+| `SET_SESSION_START_TIME` | Captures Unix timestamp when QR mode is entered |
+| `SET_PRIVATE_CONNECTION_DATA` | Stores `privateChatId`, advances flow to `"group"` step |
+| `SET_GROUP_CONNECTION_DATA` | Stores `groupTitle`, triggers form update with final `chatId` |
+| `RESET_GROUP_CONNECTION` | Clears group data, generates new `sessionStartTime`, keeps `privateChatId` |
+| `RESET_STATE` | Full reset on unmount or user discard |
+
+The polling query is driven by this state:
+
+```ts
+const { data: updates } = useQuery({
+  ...trpc.notification.getTelegramUpdates.queryOptions({
+    privateChatId: state.flowStep === "group" ? state.privateChatId : undefined,
+    since: state.sessionStartTime ?? undefined,
+  }),
+  enabled: !!tokenData?.token && !form.watch("data.chatId") && mode === "qr",
+  refetchInterval: 5000,
+});
+```
+
+Polling automatically stops once `chatId` is set in the form — there's no manual cleanup needed. The `enabled` flag handles it reactively. This means the frontend naturally stops polling once the connection succeeds, freeing up resources without explicit teardown logic.
+
+---
+
+## Why This Architecture Scales
+
+The thing that makes this design hold up at scale is that **the server stays stateless between polls**.
+
+- No WebSocket connections to manage or monitor for leaks
+- No long-lived processes that could accumulate state
+- No event listeners that need memory cleanup
+- No webhook endpoint that requires uptime SLAs
+
+Each poll is a short-lived tRPC call that:
+1. Fetches updates from Telegram
+2. Runs a few comparisons against a single Redis key
+3. Returns the result
+
+Redis handles token TTL and single-use deletion atomically. The frontend manages all UX state locally via the reducer. There's no coordination needed between API instances.
+
+Adding a new workspace doesn't change anything server-side. The Redis key pattern `telegram:workspace_token:${workspaceId}` scales horizontally with zero coordination between instances. If you double your API servers, the system just works.
+
+---
+
+## The User Experience
+
+From a user's perspective, the flow is straightforward:
+
+1. Open the "Connect Telegram" panel in OpenStatus
+2. Scan the QR code with your phone
+3. Telegram opens a DM with the bot — you hit send on the pre-filled `/start` message
+4. The dashboard immediately detects the connection and shows your Telegram username
+5. You add the bot to your Telegram group
+6. The dashboard detects the group and auto-fills the notification channel
+7. Alerts now flow directly to that group
+
+No webhooks. No manual token copying. No server-side secrets exposed in URLs. No stale data from leftover `getUpdates` history. The setup takes about 10 seconds.
+
+---
+
+## Key Takeaways
+
+This pattern works well when:
+
+- **Setup is one-time**: You're not streaming real-time events; you're wiring up a configuration
+- **Latency tolerance exists**: A 5-second poll interval is acceptable (vs. instant webhook delivery)
+- **Operational simplicity matters**: You want to avoid running a public endpoint with its attendant security and availability requirements
+
+If you need true real-time bidirectional communication with Telegram (a chat application, for instance), webhooks are the right choice. But for one-shot integrations like "connect your group for alerts," this polling approach is simpler, more reliable, and far easier to deploy.
+
+---
+
+_Set up Telegram alerting on [Openstatus](/app/login) and get notified the moment a monitor fails._

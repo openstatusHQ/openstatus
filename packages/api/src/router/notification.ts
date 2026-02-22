@@ -23,7 +23,13 @@ import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
+import { redis } from "@openstatus/upstash";
+import { nanoid } from "nanoid";
 
+import {
+  type TelegramGetUpdatesResponse,
+  processTelegramUpdates,
+} from "../service/telegram-updates";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
@@ -545,6 +551,52 @@ export const notificationRouter = createTRPCRouter({
       throw new TRPCError({
         code: "BAD_REQUEST",
         message: "Invalid provider",
+      });
+    }),
+
+  createTelegramToken: protectedProcedure.query(async (opts) => {
+    const workspaceId = opts.ctx.workspace.id;
+    const randomId = nanoid(12);
+    const EXPIRY = 1800; // 30 minutes
+
+    await redis.set(`telegram:workspace_token:${workspaceId}`, randomId, {
+      ex: EXPIRY,
+    });
+
+    return { token: randomId };
+  }),
+
+  getTelegramUpdates: protectedProcedure
+    .input(
+      z
+        .object({
+          privateChatId: z.string().optional(),
+          since: z.number().optional(),
+        })
+        .optional(),
+    )
+    .query(async (opts) => {
+      const res = await fetch(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getUpdates`,
+      );
+      const data = (await res.json()) as TelegramGetUpdatesResponse;
+      if (!data.ok || !data.result) return [];
+
+      const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+      if (!botUsername) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Telegram bot username not configured",
+        });
+      }
+
+      return processTelegramUpdates({
+        updates: data.result,
+        workspaceId: opts.ctx.workspace.id,
+        privateChatId: opts.input?.privateChatId,
+        since: opts.input?.since,
+        botUsername,
+        redisClient: redis,
       });
     }),
 });
