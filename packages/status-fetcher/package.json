@@ -1,0 +1,23 @@
+{
+  "name": "@openstatus/status-fetcher",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./fetchers": "./src/fetchers/index.ts",
+    "./data": "./src/data/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.1.13",
+    "node-html-parser": "6.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
