@@ -15,7 +15,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.integration.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.integrationRouter.list.queryOptions());
   await queryClient.prefetchQuery(trpc.workspace.get.queryOptions());
 
   return (
