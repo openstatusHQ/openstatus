@@ -192,9 +192,9 @@ async function handleConfirmation(
     confirmationResult.toolName as PendingAction["action"]["type"];
   const action = { type: actionType, params } as PendingAction["action"];
 
-  const existing = findByThread(threadTs);
+  const existing = await findByThread(threadTs);
   if (existing) {
-    replace(existing.id, action);
+    await replace(existing.id, action);
 
     const blocks = buildConfirmationBlocks(existing.id, action);
     await slack.chat.update({
@@ -210,7 +210,7 @@ async function handleConfirmation(
       blocks,
     });
   } else {
-    const actionId = store({
+    const actionId = await store({
       workspaceId: workspace.id,
       limits: workspace.limits,
       botToken,

@@ -54,7 +54,7 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  const pending = retrieve(pendingId);
+  const pending = await retrieve(pendingId);
 
   let botToken: string | undefined = pending?.botToken;
   if (!botToken && teamId) {

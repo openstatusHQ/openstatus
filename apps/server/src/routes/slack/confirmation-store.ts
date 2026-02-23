@@ -1,125 +1,152 @@
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
 import { nanoid } from "nanoid";
+import { z } from "zod";
+import { redis } from "@/libs/clients";
 
-type CreateStatusReportAction = {
-  type: "createStatusReport";
-  params: {
-    title: string;
-    status: "investigating" | "identified" | "monitoring" | "resolved";
-    message: string;
-    pageId: number;
-    pageComponentIds?: string[];
-  };
-};
+const statusEnum = z.enum([
+  "investigating",
+  "identified",
+  "monitoring",
+  "resolved",
+]);
 
-type AddStatusReportUpdateAction = {
-  type: "addStatusReportUpdate";
-  params: {
-    statusReportId: number;
-    status: "investigating" | "identified" | "monitoring" | "resolved";
-    message: string;
-  };
-};
+const createStatusReportActionSchema = z.object({
+  type: z.literal("createStatusReport"),
+  params: z.object({
+    title: z.string(),
+    status: statusEnum,
+    message: z.string(),
+    pageId: z.number(),
+    pageComponentIds: z.array(z.string()).optional(),
+  }),
+});
 
-type UpdateStatusReportAction = {
-  type: "updateStatusReport";
-  params: {
-    statusReportId: number;
-    title?: string;
-    pageComponentIds?: string[];
-  };
-};
+const addStatusReportUpdateActionSchema = z.object({
+  type: z.literal("addStatusReportUpdate"),
+  params: z.object({
+    statusReportId: z.number(),
+    status: statusEnum,
+    message: z.string(),
+  }),
+});
 
-type ResolveStatusReportAction = {
-  type: "resolveStatusReport";
-  params: {
-    statusReportId: number;
-    message: string;
-  };
-};
+const updateStatusReportActionSchema = z.object({
+  type: z.literal("updateStatusReport"),
+  params: z.object({
+    statusReportId: z.number(),
+    title: z.string().optional(),
+    pageComponentIds: z.array(z.string()).optional(),
+  }),
+});
 
-export type PendingAction = {
-  id: string;
-  workspaceId: number;
-  limits: Limits;
-  botToken: string;
-  channelId: string;
-  threadTs: string;
-  messageTs: string;
-  userId: string;
-  createdAt: number;
-  action:
-    | CreateStatusReportAction
-    | AddStatusReportUpdateAction
-    | UpdateStatusReportAction
-    | ResolveStatusReportAction;
-};
+const resolveStatusReportActionSchema = z.object({
+  type: z.literal("resolveStatusReport"),
+  params: z.object({
+    statusReportId: z.number(),
+    message: z.string(),
+  }),
+});
 
-const TTL_MS = 5 * 60 * 1000;
+const actionSchema = z.discriminatedUnion("type", [
+  createStatusReportActionSchema,
+  addStatusReportUpdateActionSchema,
+  updateStatusReportActionSchema,
+  resolveStatusReportActionSchema,
+]);
 
-const actions = new Map<string, PendingAction>();
-const threadIndex = new Map<string, string>();
+const pendingActionSchema = z.object({
+  id: z.string(),
+  workspaceId: z.number(),
+  limits: limitsSchema,
+  botToken: z.string(),
+  channelId: z.string(),
+  threadTs: z.string(),
+  messageTs: z.string(),
+  userId: z.string(),
+  createdAt: z.number(),
+  action: actionSchema,
+});
 
-function cleanup() {
-  const now = Date.now();
-  for (const [id, action] of actions) {
-    if (now - action.createdAt > TTL_MS) {
-      actions.delete(id);
-      if (threadIndex.get(action.threadTs) === id) {
-        threadIndex.delete(action.threadTs);
-      }
-    }
+export type PendingAction = z.infer<typeof pendingActionSchema>;
+
+const TTL_SECONDS = 5 * 60;
+const ACTION_PREFIX = "slack:action:";
+const THREAD_PREFIX = "slack:thread:";
+
+function parse(raw: unknown): PendingAction | undefined {
+  const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+  const result = pendingActionSchema.safeParse(data);
+  if (!result.success) {
+    console.error("[slack confirmation-store] invalid data:", result.error);
+    return undefined;
   }
+  return result.data;
 }
 
-export function store(action: Omit<PendingAction, "id" | "createdAt">): string {
-  cleanup();
+export async function store(
+  action: Omit<PendingAction, "id" | "createdAt">,
+): Promise<string> {
   const id = nanoid();
   const pending: PendingAction = { ...action, id, createdAt: Date.now() };
-  actions.set(id, pending);
-  threadIndex.set(action.threadTs, id);
+
+  await Promise.all([
+    redis.set(`${ACTION_PREFIX}${id}`, JSON.stringify(pending), {
+      ex: TTL_SECONDS,
+    }),
+    redis.set(`${THREAD_PREFIX}${action.threadTs}`, id, {
+      ex: TTL_SECONDS,
+    }),
+  ]);
+
   return id;
 }
 
-export function retrieve(actionId: string): PendingAction | undefined {
-  const action = actions.get(actionId);
+export async function retrieve(
+  actionId: string,
+): Promise<PendingAction | undefined> {
+  const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);
+  if (!raw) return undefined;
+
+  const action = parse(raw);
   if (!action) return undefined;
-  if (Date.now() - action.createdAt > TTL_MS) {
-    actions.delete(actionId);
-    if (threadIndex.get(action.threadTs) === actionId) {
-      threadIndex.delete(action.threadTs);
-    }
-    return undefined;
-  }
-  actions.delete(actionId);
-  if (threadIndex.get(action.threadTs) === actionId) {
-    threadIndex.delete(action.threadTs);
-  }
+
+  await Promise.all([
+    redis.del(`${ACTION_PREFIX}${actionId}`),
+    redis.del(`${THREAD_PREFIX}${action.threadTs}`),
+  ]);
+
   return action;
 }
 
-export function findByThread(threadTs: string): PendingAction | undefined {
-  const actionId = threadIndex.get(threadTs);
+export async function findByThread(
+  threadTs: string,
+): Promise<PendingAction | undefined> {
+  const actionId = await redis.get<string>(`${THREAD_PREFIX}${threadTs}`);
   if (!actionId) return undefined;
-  const action = actions.get(actionId);
-  if (!action) {
-    threadIndex.delete(threadTs);
+
+  const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);
+  if (!raw) {
+    await redis.del(`${THREAD_PREFIX}${threadTs}`);
     return undefined;
   }
-  if (Date.now() - action.createdAt > TTL_MS) {
-    actions.delete(actionId);
-    threadIndex.delete(threadTs);
-    return undefined;
-  }
-  return action;
+
+  return parse(raw);
 }
 
-export function replace(
+export async function replace(
   actionId: string,
   newAction: PendingAction["action"],
-): void {
-  const existing = actions.get(actionId);
+): Promise<void> {
+  const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);
+  if (!raw) return;
+
+  const existing = parse(raw);
   if (!existing) return;
+
   existing.action = newAction;
   existing.createdAt = Date.now();
+
+  await redis.set(`${ACTION_PREFIX}${actionId}`, JSON.stringify(existing), {
+    ex: TTL_SECONDS,
+  });
 }
