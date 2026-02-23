@@ -36,10 +36,10 @@ export function SlackIntegrationCard({
   const isConnected = !!integration;
 
   const deleteIntegration = useMutation(
-    trpc.integration.deleteIntegration.mutationOptions({
+    trpc.integrationRouter.deleteIntegration.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: trpc.integration.list.queryKey(),
+          queryKey: trpc.integrationRouter.list.queryKey(),
         });
         router.refresh();
       },
@@ -47,7 +47,7 @@ export function SlackIntegrationCard({
   );
 
   const generateToken = useMutation(
-    trpc.integration.generateInstallToken.mutationOptions({
+    trpc.integrationRouter.generateInstallToken.mutationOptions({
       onSuccess: (data) => {
         window.location.href = `${SERVER_URL}/slack/install?token=${data.token}`;
       },

@@ -3,7 +3,6 @@ import { checkerRouter } from "./router/checker";
 import { domainRouter } from "./router/domain";
 import { feedbackRouter } from "./router/feedback";
 import { incidentRouter } from "./router/incident";
-import { integrationRouter } from "./router/integration";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
 import { memberRouter } from "./router/member";
@@ -29,7 +28,6 @@ export const edgeRouter = createTRPCRouter({
   pageComponent: pageComponentRouter,
   statusReport: statusReportRouter,
   domain: domainRouter,
-  integration: integrationRouter,
   user: userRouter,
   notification: notificationRouter,
   invitation: invitationRouter,
