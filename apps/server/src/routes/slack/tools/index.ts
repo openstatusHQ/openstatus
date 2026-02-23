@@ -3,6 +3,7 @@ import { createAddStatusReportUpdateTool } from "./add-status-report-update";
 import { createCreateStatusReportTool } from "./create-status-report";
 import { createListStatusPagesTool } from "./list-status-pages";
 import { createListStatusReportsTool } from "./list-status-reports";
+import { createResolveStatusReportTool } from "./resolve-status-report";
 import { createUpdateStatusReportTool } from "./update-status-report";
 
 export function createTools(workspace: Workspace) {
@@ -12,5 +13,6 @@ export function createTools(workspace: Workspace) {
     createStatusReport: createCreateStatusReportTool(),
     addStatusReportUpdate: createAddStatusReportUpdateTool(),
     updateStatusReport: createUpdateStatusReportTool(),
+    resolveStatusReport: createResolveStatusReportTool(),
   };
 }
