@@ -162,7 +162,7 @@ describe("handleSlackInteraction", () => {
     expect(res.status).toBe(200);
     const ephemeral = slackCalls.find((c) => c.method === "postEphemeral");
     expect(ephemeral).toBeDefined();
-    expect(ephemeral!.args.text as string).toContain("Only the person");
+    expect(ephemeral?.args.text as string).toContain("Only the person");
 
     // Pending action should NOT be consumed — still available for the real owner
     expect(redisStore.has(`slack:action:${pendingData.id}`)).toBe(true);

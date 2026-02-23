@@ -54,7 +54,7 @@ describe("confirmation-store", () => {
       expect(redisStore.has(actionKey)).toBe(true);
       expect(redisStore.has(threadKey)).toBe(true);
 
-      const stored = JSON.parse(redisStore.get(actionKey)!);
+      const stored = JSON.parse(redisStore.get(actionKey) as string);
       expect(stored.id).toBe(id);
       expect(stored.workspaceId).toBe(1);
       expect(stored.action.type).toBe("createStatusReport");
@@ -70,8 +70,8 @@ describe("confirmation-store", () => {
 
       const result = await get(id);
       expect(result).toBeDefined();
-      expect(result!.id).toBe(id);
-      expect(result!.action.type).toBe("createStatusReport");
+      expect(result?.id).toBe(id);
+      expect(result?.action.type).toBe("createStatusReport");
 
       // Keys should still exist
       expect(redisStore.has(`slack:action:${id}`)).toBe(true);
@@ -98,8 +98,8 @@ describe("confirmation-store", () => {
 
       const result = await consume(id);
       expect(result).toBeDefined();
-      expect(result!.id).toBe(id);
-      expect(result!.action.type).toBe("createStatusReport");
+      expect(result?.id).toBe(id);
+      expect(result?.action.type).toBe("createStatusReport");
 
       expect(redisStore.has(`slack:action:${id}`)).toBe(false);
       expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(false);
@@ -125,7 +125,7 @@ describe("confirmation-store", () => {
 
       const result = await findByThread(input.threadTs);
       expect(result).toBeDefined();
-      expect(result!.id).toBe(id);
+      expect(result?.id).toBe(id);
     });
 
     test("returns undefined for unknown thread", async () => {
@@ -160,9 +160,9 @@ describe("confirmation-store", () => {
 
       const result = await consume(id);
       expect(result).toBeDefined();
-      expect(result!.action.type).toBe("addStatusReportUpdate");
-      if (result!.action.type === "addStatusReportUpdate") {
-        expect(result!.action.params.statusReportId).toBe(42);
+      expect(result?.action.type).toBe("addStatusReportUpdate");
+      if (result?.action.type === "addStatusReportUpdate") {
+        expect(result?.action.params.statusReportId).toBe(42);
       }
     });
 
@@ -210,7 +210,7 @@ describe("confirmation-store", () => {
         const id = await store(input);
         const result = await consume(id);
         expect(result).toBeDefined();
-        expect(result!.action.type).toBe(action.type);
+        expect(result?.action.type).toBe(action.type);
       }
     });
 

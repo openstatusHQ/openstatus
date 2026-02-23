@@ -43,7 +43,8 @@ describe("handleSlackInstall", () => {
     const res = await app.request(`/slack/install?token=${token}`);
 
     expect(res.status).toBe(302);
-    const location = res.headers.get("location")!;
+    const location = res.headers.get("location");
+    expect(location).toBeDefined();
     expect(location).toContain("https://slack.com/oauth/v2/authorize");
     expect(location).toContain("client_id=test-client-id");
     expect(location).toContain("scope=");
@@ -82,9 +83,10 @@ describe("handleSlackInstall", () => {
   test("includes all required bot scopes", async () => {
     const token = makeInstallToken(1);
     const res = await app.request(`/slack/install?token=${token}`);
-    const location = res.headers.get("location")!;
-    const url = new URL(location);
-    const scope = url.searchParams.get("scope")!;
+    const location = res.headers.get("location");
+    expect(location).toBeDefined();
+    const url = new URL(location as string);
+    const scope = url.searchParams.get("scope");
 
     const expectedScopes = [
       "app_mentions:read",
@@ -105,11 +107,13 @@ describe("handleSlackInstall", () => {
   test("state contains signed workspaceId", async () => {
     const token = makeInstallToken(42);
     const res = await app.request(`/slack/install?token=${token}`);
-    const location = res.headers.get("location")!;
-    const url = new URL(location);
-    const state = url.searchParams.get("state")!;
+    const location = res.headers.get("location");
+    expect(location).toBeDefined();
+    const url = new URL(location as string);
+    const state = url.searchParams.get("state");
+    expect(state).toBeDefined();
 
-    const decoded = Buffer.from(state, "base64url").toString();
+    const decoded = Buffer.from(state as string, "base64url").toString();
     const dotIdx = decoded.lastIndexOf(".");
     const payload = JSON.parse(decoded.slice(0, dotIdx));
 
@@ -125,7 +129,7 @@ describe("handleSlackOAuthCallback", () => {
     const res = await app.request("/slack/oauth/callback?error=access_denied");
 
     expect(res.status).toBe(302);
-    const location = res.headers.get("location")!;
+    const location = res.headers.get("location");
     expect(location).toContain("slack=error");
   });
 

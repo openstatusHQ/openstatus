@@ -14,10 +14,9 @@ import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: integrations } = useQuery(trpc.integration.list.queryOptions());
 
-  if (!workspace || !integrations) return null;
+  if (!integrations) return null;
 
   const slackIntegration = integrations.find((i) => i.name === "slack-agent");
 
@@ -32,7 +31,6 @@ export default function Page() {
         </SectionHeader>
         <FormCardGroup>
           <SlackIntegrationCard
-            workspaceId={workspace.id}
             integration={
               slackIntegration
                 ? {

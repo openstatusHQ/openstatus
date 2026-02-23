@@ -20,7 +20,6 @@ const SERVER_URL =
     : "http://localhost:3000";
 
 interface SlackIntegrationCardProps {
-  workspaceId: number;
   integration: {
     id: number;
     externalId: string;
@@ -29,7 +28,6 @@ interface SlackIntegrationCardProps {
 }
 
 export function SlackIntegrationCard({
-  workspaceId,
   integration,
 }: SlackIntegrationCardProps) {
   const router = useRouter();

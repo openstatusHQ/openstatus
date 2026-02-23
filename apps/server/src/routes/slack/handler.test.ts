@@ -179,7 +179,6 @@ describe("handleSlackEvent", () => {
 
     await signAndPost(app, body);
     await new Promise((r) => setTimeout(r, 50));
-    const countAfterFirst = slackMessages.length;
 
     slackMessages = [];
     await signAndPost(app, body);
