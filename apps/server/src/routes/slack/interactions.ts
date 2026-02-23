@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -15,17 +14,15 @@ import {
 } from "../rpc/services/status-report";
 import { retrieve } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
+import { resolveWorkspace } from "./workspace-resolver";
 
 interface SlackInteractionPayload {
   type: string;
   user: { id: string };
   channel: { id: string };
   message: { ts: string };
+  team?: { id: string };
   actions: Array<{ action_id: string; value?: string }>;
-}
-
-function getSlackClient(): WebClient {
-  return new WebClient(env.SLACK_BOT_TOKEN);
 }
 
 export async function handleSlackInteraction(c: Context) {
@@ -39,6 +36,7 @@ export async function handleSlackInteraction(c: Context) {
   const channelId = payload.channel.id;
   const messageTs = payload.message.ts;
   const userId = payload.user.id;
+  const teamId = payload.team?.id;
 
   let type: "approve" | "approve_notify" | "cancel";
   let pendingId: string;
@@ -56,8 +54,19 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  const slack = getSlackClient();
   const pending = retrieve(pendingId);
+
+  let botToken: string | undefined = pending?.botToken;
+  if (!botToken && teamId) {
+    const resolved = await resolveWorkspace(teamId);
+    botToken = resolved?.botToken;
+  }
+
+  if (!botToken) {
+    return c.json({ ok: true });
+  }
+
+  const slack = new WebClient(botToken);
 
   if (!pending) {
     await slack.chat.update({
@@ -105,7 +114,10 @@ export async function handleSlackInteraction(c: Context) {
   return c.json({ ok: true });
 }
 
-async function getReportUrl(pageId: number, reportId: number): Promise<string> {
+async function getReportUrl(
+  pageId: number,
+  reportId: number,
+): Promise<string> {
   const statusPage = await db
     .select({ slug: page.slug, customDomain: page.customDomain })
     .from(page)

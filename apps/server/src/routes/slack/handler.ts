@@ -1,4 +1,5 @@
-import { env } from "@/env";
+import { and, db, eq } from "@openstatus/db";
+import { integration } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { runAgent } from "./agent";
@@ -43,19 +44,6 @@ interface ThreadMessage {
   ts?: string;
 }
 
-let cachedBotUserId: string | null = null;
-
-function getSlackClient(): WebClient {
-  return new WebClient(env.SLACK_BOT_TOKEN);
-}
-
-async function getBotUserId(slack: WebClient): Promise<string> {
-  if (cachedBotUserId) return cachedBotUserId;
-  const authInfo = await slack.auth.test();
-  cachedBotUserId = authInfo.user_id ?? "";
-  return cachedBotUserId;
-}
-
 export async function handleSlackEvent(c: Context) {
   const body = c.get("slackBody") as SlackEvent;
 
@@ -72,7 +60,9 @@ export async function handleSlackEvent(c: Context) {
   }
 
   const promise = processEvent(body);
-  promise.catch((err) => console.error("[slack] event processing error:", err));
+  promise.catch((err) =>
+    console.error("[slack] event processing error:", err),
+  );
 
   return c.json({ ok: true });
 }
@@ -81,22 +71,42 @@ async function processEvent(body: SlackEvent) {
   const event = body.event;
   if (!event) return;
 
+  if (event.type === "app_uninstalled" || event.type === "tokens_revoked") {
+    const teamId = body.team_id;
+    if (teamId) {
+      await db
+        .delete(integration)
+        .where(
+          and(
+            eq(integration.name, "slack-agent"),
+            eq(integration.externalId, teamId),
+          ),
+        );
+      console.log(`[slack] cleaned up integration for team ${teamId}`);
+    }
+    return;
+  }
+
   if (event.type !== "app_mention" && event.type !== "message") return;
   if (event.type === "message" && event.bot_id) return;
 
   const teamId = body.team_id;
   if (!teamId || !event.channel || !event.ts) return;
 
-  const slack = getSlackClient();
-  const threadTs = event.thread_ts ?? event.ts;
-  const botUserId = await getBotUserId(slack);
+  const resolved = await resolveWorkspace(teamId);
+  if (!resolved) {
+    console.warn(`[slack] no integration found for team ${teamId}`);
+    return;
+  }
 
-  // For channel messages, only respond if the bot is mentioned or it's a DM
+  const slack = new WebClient(resolved.botToken);
+  const botUserId = resolved.botUserId;
+  const threadTs = event.thread_ts ?? event.ts;
+
   if (event.type === "message" && event.channel_type !== "im") {
     if (!event.text?.includes(`<@${botUserId}>`)) return;
   }
 
-  // Post "Thinking..." immediately so the user sees feedback
   const thinkingMsg = await slack.chat.postMessage({
     channel: event.channel,
     thread_ts: threadTs,
@@ -104,18 +114,7 @@ async function processEvent(body: SlackEvent) {
   });
   const thinkingTs = thinkingMsg.ts ?? "";
 
-  const workspace = await resolveWorkspace(teamId);
-  if (!workspace) {
-    await slack.chat.update({
-      channel: event.channel,
-      ts: thinkingTs,
-      text: "This Slack workspace is not connected to an OpenStatus workspace. Please set up the integration first.",
-    });
-    return;
-  }
-
   try {
-    // Fetch thread history (exclude the "Thinking..." message)
     let thread: ThreadMessage[] = [];
     if (event.thread_ts) {
       const replies = await slack.conversations.replies({
@@ -130,7 +129,12 @@ async function processEvent(body: SlackEvent) {
       thread = [{ user: event.user, text: event.text, ts: event.ts }];
     }
 
-    const result = await runAgent(workspace, thread, botUserId, event.text);
+    const result = await runAgent(
+      resolved.workspace,
+      thread,
+      botUserId,
+      event.text,
+    );
 
     const confirmationResult = result.toolResults.find(
       (tr) =>
@@ -147,7 +151,8 @@ async function processEvent(body: SlackEvent) {
         threadTs,
         thinkingTs,
         event.user ?? "",
-        workspace,
+        resolved.workspace,
+        resolved.botToken,
         confirmationResult,
       );
     } else {
@@ -174,7 +179,8 @@ async function handleConfirmation(
   threadTs: string,
   thinkingTs: string,
   userId: string,
-  workspace: { id: number; limits: unknown },
+  workspace: { id: number; limits: PendingAction["limits"] },
+  botToken: string,
   confirmationResult: { toolName: string; result: unknown },
 ) {
   const { params } = confirmationResult.result as {
@@ -207,6 +213,7 @@ async function handleConfirmation(
     const actionId = store({
       workspaceId: workspace.id,
       limits: workspace.limits,
+      botToken,
       channelId: channel,
       threadTs,
       messageTs: thinkingTs,

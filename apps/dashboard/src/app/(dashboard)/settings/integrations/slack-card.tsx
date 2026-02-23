@@ -1,0 +1,102 @@
+"use client";
+
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+
+const SERVER_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://api.openstatus.dev"
+    : "http://localhost:3000";
+
+interface SlackIntegrationCardProps {
+  workspaceId: number;
+  integration: {
+    id: number;
+    externalId: string;
+    data: { teamName?: string };
+  } | null;
+}
+
+export function SlackIntegrationCard({
+  workspaceId,
+  integration,
+}: SlackIntegrationCardProps) {
+  const router = useRouter();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const isConnected = !!integration;
+
+  const deleteIntegration = useMutation(
+    trpc.integration.deleteIntegration.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.integration.list.queryKey(),
+        });
+        router.refresh();
+      },
+    }),
+  );
+
+  const handleInstall = () => {
+    router.push(`${SERVER_URL}/slack/install?workspaceId=${workspaceId}`);
+  };
+
+  const handleDisconnect = () => {
+    if (!integration) return;
+    deleteIntegration.mutate({ integrationId: integration.id });
+  };
+
+  return (
+    <FormCard>
+      <FormCardHeader>
+        <div className="flex items-center gap-2">
+          <FormCardTitle>Slack</FormCardTitle>
+          {isConnected && <Badge variant="secondary">Connected</Badge>}
+        </div>
+        <FormCardDescription>
+          Manage status reports directly from Slack. Mention the bot in a
+          channel to create and update incidents.
+        </FormCardDescription>
+      </FormCardHeader>
+      <FormCardContent>
+        {isConnected ? (
+          <p className="text-muted-foreground text-sm">
+            Connected to{" "}
+            <strong>{integration.data?.teamName ?? "Slack workspace"}</strong>
+          </p>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            Connect your Slack workspace to get started.
+          </p>
+        )}
+      </FormCardContent>
+      <FormCardFooter>
+        {isConnected ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDisconnect}
+            disabled={deleteIntegration.isPending}
+          >
+            {deleteIntegration.isPending ? "Disconnecting..." : "Disconnect"}
+          </Button>
+        ) : (
+          <Button size="sm" onClick={handleInstall}>
+            Add to Slack
+          </Button>
+        )}
+      </FormCardFooter>
+    </FormCard>
+  );
+}

@@ -6,11 +6,25 @@ import {
 } from "@openstatus/db/src/schema";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
 
+export interface SlackWorkspace {
+  workspace: Workspace;
+  botToken: string;
+  botUserId: string;
+}
+
+interface IntegrationCredential {
+  botToken: string;
+  botUserId: string;
+}
+
 export async function resolveWorkspace(
   teamId: string,
-): Promise<Workspace | null> {
+): Promise<SlackWorkspace | null> {
   const row = await db
-    .select({ workspaceId: integration.workspaceId })
+    .select({
+      workspaceId: integration.workspaceId,
+      credential: integration.credential,
+    })
     .from(integration)
     .where(
       and(
@@ -21,6 +35,9 @@ export async function resolveWorkspace(
     .get();
 
   if (!row?.workspaceId) return null;
+
+  const credential = row.credential as IntegrationCredential | null;
+  if (!credential?.botToken) return null;
 
   const ws = await db
     .select()
@@ -33,5 +50,9 @@ export async function resolveWorkspace(
   const parsed = selectWorkspaceSchema.safeParse(ws);
   if (!parsed.success) return null;
 
-  return parsed.data;
+  return {
+    workspace: parsed.data,
+    botToken: credential.botToken,
+    botUserId: credential.botUserId ?? "",
+  };
 }

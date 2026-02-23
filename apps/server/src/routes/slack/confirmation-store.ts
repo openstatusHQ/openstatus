@@ -42,6 +42,7 @@ export type PendingAction = {
   id: string;
   workspaceId: number;
   limits: Limits;
+  botToken: string;
   channelId: string;
   threadTs: string;
   messageTs: string;

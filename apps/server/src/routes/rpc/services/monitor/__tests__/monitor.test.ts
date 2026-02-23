@@ -1989,11 +1989,11 @@ describe("MonitorService.GetMonitor", () => {
     // Insert a monitor with invalid data that will fail selectMonitorSchema parsing
     const corruptedMon = await db
       .insert(monitor)
+      // @ts-expect-error - intentionally invalid periodicity to test parse failure
       .values({
         workspaceId: 1,
         name: `${TEST_PREFIX}-corrupted-data`,
         url: "https://corrupted.example.com",
-        // @ts-expect-error - intentionally invalid periodicity to test parse failure
         periodicity: "invalid-periodicity",
         active: true,
         regions: "ams",

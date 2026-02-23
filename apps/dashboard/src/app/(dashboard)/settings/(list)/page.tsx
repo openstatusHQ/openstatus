@@ -30,6 +30,11 @@ const settings = [
     description: "Manage your account information.",
     href: "/settings/account",
   },
+  {
+    title: "Integrations",
+    description: "Connect third-party services to your workspace.",
+    href: "/settings/integrations",
+  },
 ];
 export default function Page() {
   return (
