@@ -179,7 +179,7 @@ function decodeState(encoded: string): OAuthState | null {
     const payload = decoded.slice(0, dotIdx);
     const signature = decoded.slice(dotIdx + 1);
 
-    if (computeHmac(payload) !== signature) return null;
+    if (!verifyHmac(payload, signature)) return null;
 
     return JSON.parse(payload) as OAuthState;
   } catch {
@@ -193,6 +193,15 @@ function computeHmac(payload: string): string {
   return crypto.createHmac("sha256", secret).update(payload).digest("hex");
 }
 
+function verifyHmac(payload: string, signature: string): boolean {
+  const expected = computeHmac(payload);
+  if (expected.length !== signature.length) return false;
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature),
+  );
+}
+
 const INSTALL_TOKEN_TTL_MS = 5 * 60 * 1000;
 
 function verifyInstallToken(token: string): { workspaceId: number } | null {
@@ -204,7 +213,7 @@ function verifyInstallToken(token: string): { workspaceId: number } | null {
     const payload = decoded.slice(0, dotIdx);
     const signature = decoded.slice(dotIdx + 1);
 
-    if (computeHmac(payload) !== signature) return null;
+    if (!verifyHmac(payload, signature)) return null;
 
     const data = JSON.parse(payload) as { workspaceId: number; ts: number };
     if (Date.now() - data.ts > INSTALL_TOKEN_TTL_MS) return null;

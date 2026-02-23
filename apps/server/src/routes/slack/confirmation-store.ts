@@ -112,16 +112,15 @@ export async function get(
 export async function consume(
   actionId: string,
 ): Promise<PendingAction | undefined> {
-  const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);
+  // Atomic read+delete to prevent double execution from concurrent requests
+  const raw = await redis.getdel<string>(`${ACTION_PREFIX}${actionId}`);
   if (!raw) return undefined;
 
   const action = parse(raw);
   if (!action) return undefined;
 
-  await Promise.all([
-    redis.del(`${ACTION_PREFIX}${actionId}`),
-    redis.del(`${THREAD_PREFIX}${action.threadTs}`),
-  ]);
+  // Clean up the thread mapping (best-effort, not critical for atomicity)
+  await redis.del(`${THREAD_PREFIX}${action.threadTs}`);
 
   return action;
 }
@@ -154,7 +153,10 @@ export async function replace(
   existing.action = newAction;
   existing.createdAt = Date.now();
 
-  await redis.set(`${ACTION_PREFIX}${actionId}`, JSON.stringify(existing), {
-    ex: TTL_SECONDS,
-  });
+  await Promise.all([
+    redis.set(`${ACTION_PREFIX}${actionId}`, JSON.stringify(existing), {
+      ex: TTL_SECONDS,
+    }),
+    redis.expire(`${THREAD_PREFIX}${existing.threadTs}`, TTL_SECONDS),
+  ]);
 }

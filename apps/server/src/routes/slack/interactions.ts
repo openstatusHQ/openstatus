@@ -54,6 +54,7 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
+  // Non-atomic read for botToken resolution and authorization checks
   const pending = await get(pendingId);
 
   let botToken: string | undefined = pending?.botToken;
@@ -87,8 +88,12 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  // User is authorized — consume the pending action from Redis
-  await consume(pendingId);
+  // Atomic consume — prevents double execution from concurrent requests (e.g. double-click).
+  // If another request already consumed this action, consume() returns undefined.
+  const consumed = await consume(pendingId);
+  if (!consumed) {
+    return c.json({ ok: true });
+  }
 
   if (type === "cancel") {
     await slack.chat.update({
@@ -103,7 +108,7 @@ export async function handleSlackInteraction(c: Context) {
   const notify = type === "approve_notify";
 
   try {
-    await executeAction(pending, notify, slack, channelId, messageTs);
+    await executeAction(consumed, notify, slack, channelId, messageTs);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : "Unknown error";
     await slack.chat.update({

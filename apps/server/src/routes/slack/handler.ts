@@ -110,7 +110,12 @@ async function processEvent(body: SlackEvent) {
     thread_ts: threadTs,
     text: ":hourglass_flowing_sand: Thinking...",
   });
-  const thinkingTs = thinkingMsg.ts ?? "";
+  const thinkingTs = thinkingMsg.ts;
+
+  if (!thinkingTs) {
+    console.error("[slack] failed to post thinking message — no ts returned");
+    return;
+  }
 
   try {
     let thread: ThreadMessage[] = [];

@@ -60,6 +60,11 @@ function convertThreadToMessages(
       messages.push({ role: "user", content: msg.text });
     }
   }
+  // The API requires the first message to have role "user".
+  // Drop any leading assistant messages (e.g. bot confirmations from a prior turn).
+  while (messages.length > 0 && messages[0].role !== "user") {
+    messages.shift();
+  }
   return messages;
 }
 
