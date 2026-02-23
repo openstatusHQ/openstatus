@@ -21,6 +21,7 @@ describe("createTools", () => {
       "createStatusReport",
       "listStatusPages",
       "listStatusReports",
+      "resolveStatusReport",
       "updateStatusReport",
     ]);
   });

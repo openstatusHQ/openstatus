@@ -17,6 +17,14 @@ mock.module("@openstatus/upstash", () => ({
           testRedisStore.delete(key);
           return Promise.resolve(existed);
         },
+        getdel: (key: string) => {
+          const value = testRedisStore.get(key) ?? null;
+          testRedisStore.delete(key);
+          return Promise.resolve(value);
+        },
+        expire: (_key: string, _seconds: number) => {
+          return Promise.resolve(1);
+        },
       };
     },
   },

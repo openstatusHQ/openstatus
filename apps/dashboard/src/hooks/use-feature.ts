@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
  * Record<feature, [workspaceId, ...]>
  */
 const features = {
-  "dns-checker": [1],
+  "slack-agent": [1,6850],
 };
 
 export function useFeature(feature: keyof typeof features) {
