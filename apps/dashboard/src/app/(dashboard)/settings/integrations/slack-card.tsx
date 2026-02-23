@@ -55,7 +55,7 @@ export function SlackIntegrationCard({
   );
 
   const handleInstall = () => {
-    generateToken.mutate({});
+    generateToken.mutate();
   };
 
   const handleDisconnect = () => {
