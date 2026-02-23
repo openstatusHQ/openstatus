@@ -16,7 +16,7 @@ import { ZodError } from "zod";
 const statusAssertion = z
   .object({
     type: z.literal("status"),
-    compare: numberCompare.openapi({
+    compare: z.enum(numberCompare.options).openapi({
       description: "Comparison operator",
       examples: ["eq", "not_eq", "gt", "gte", "lt", "lte"],
     }),
@@ -474,7 +474,7 @@ const dnsRequestSchema = z.object({
 const statusCodeAssertion = z
   .object({
     kind: z.literal("statusCode"),
-    compare: numberCompare.openapi({
+    compare: z.enum(numberCompare.options).openapi({
       description: "Comparison operator",
       examples: ["eq", "not_eq", "gt", "gte", "lt", "lte"],
     }),
@@ -505,7 +505,7 @@ const statusCodeAssertion = z
 
 const headerAssertions = z.object({
   kind: z.literal("header"),
-  compare: stringCompare.openapi({
+  compare: z.enum(stringCompare.options).openapi({
     description: "Comparison operator",
     examples: ["eq", "not_eq", "contains", "not_contains"],
   }),
@@ -521,7 +521,7 @@ const headerAssertions = z.object({
 
 const textBodyAssertions = z.object({
   kind: z.literal("textBody"),
-  compare: stringCompare.openapi({
+  compare: z.enum(stringCompare.options).openapi({
     description: "Comparison operator",
     examples: ["eq", "not_eq", "contains", "not_contains"],
   }),
@@ -537,7 +537,7 @@ const dnsRecordAssertion = z.object({
     description: "Type of DNS record to check",
     examples: ["A", "CNAME"],
   }),
-  compare: recordCompare.openapi({
+  compare: z.enum(recordCompare.options).openapi({
     description: "Comparison operator",
     examples: ["eq", "not_eq", "contains", "not_contains"],
   }),

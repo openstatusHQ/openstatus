@@ -1,8 +1,6 @@
 import { z } from "@hono/zod-openapi";
-import {
-  NotificationDataSchema,
-  notificationProviderSchema,
-} from "@openstatus/db/src/schema";
+
+import { notificationProvider } from "@openstatus/db/src/schema/notifications/constants";
 
 export const ParamsSchema = z.object({
   id: z
@@ -27,11 +25,11 @@ export const NotificationSchema = z
       description: "The name of the notification",
       example: "OpenStatus Discord",
     }),
-    provider: notificationProviderSchema.openapi({
+    provider: z.enum(notificationProvider).openapi({
       description: "The provider of the notification",
       example: "discord",
     }),
-    payload: NotificationDataSchema.openapi({
+    payload: z.any().openapi({
       description: "The data of the notification",
     }),
     monitors: z
