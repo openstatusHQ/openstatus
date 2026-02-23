@@ -22,7 +22,9 @@ import { SlackIntegrationCard } from "./slack-card";
 export default function Page() {
   const trpc = useTRPC();
   const isSlackAgentEnabled = useFeature("slack-agent");
-  const { data: integrations } = useQuery(trpc.integrationRouter.list.queryOptions());
+  const { data: integrations } = useQuery(
+    trpc.integrationRouter.list.queryOptions(),
+  );
 
   if (!integrations) return null;
 
