@@ -12,7 +12,7 @@ import {
   updatePageComponentAssociations,
   validatePageComponentIds,
 } from "../rpc/services/status-report";
-import { retrieve } from "./confirmation-store";
+import { consume, get } from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 import { resolveWorkspace } from "./workspace-resolver";
 
@@ -54,7 +54,7 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
-  const pending = await retrieve(pendingId);
+  const pending = await get(pendingId);
 
   let botToken: string | undefined = pending?.botToken;
   if (!botToken && teamId) {
@@ -87,6 +87,9 @@ export async function handleSlackInteraction(c: Context) {
     return c.json({ ok: true });
   }
 
+  // User is authorized — consume the pending action from Redis
+  await consume(pendingId);
+
   if (type === "cancel") {
     await slack.chat.update({
       channel: channelId,
@@ -114,10 +117,7 @@ export async function handleSlackInteraction(c: Context) {
   return c.json({ ok: true });
 }
 
-async function getReportUrl(
-  pageId: number,
-  reportId: number,
-): Promise<string> {
+async function getReportUrl(pageId: number, reportId: number): Promise<string> {
   const statusPage = await db
     .select({ slug: page.slug, customDomain: page.customDomain })
     .from(page)

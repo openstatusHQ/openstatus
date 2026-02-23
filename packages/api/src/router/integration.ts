@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { z } from "zod";
 
 import { and, eq, sql } from "@openstatus/db";
@@ -7,6 +8,14 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+
+function signInstallToken(workspaceId: number, ts: number): string {
+  const secret = process.env.SLACK_SIGNING_SECRET;
+  if (!secret) throw new Error("Slack not configured");
+  const payload = JSON.stringify({ workspaceId, ts });
+  const sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
+  return Buffer.from(`${payload}.${sig}`).toString("base64url");
+}
 
 function safeJsonParse(value: string | null): Record<string, unknown> {
   if (!value) return {};
@@ -64,6 +73,11 @@ export const integrationRouter = createTRPCRouter({
       data: safeJsonParse(row.rawData),
       createdAt: row.createdAt,
     }));
+  }),
+
+  generateInstallToken: protectedProcedure.mutation(async (opts) => {
+    const token = signInstallToken(opts.ctx.workspace.id, Date.now());
+    return { token };
   }),
 
   deleteIntegration: protectedProcedure

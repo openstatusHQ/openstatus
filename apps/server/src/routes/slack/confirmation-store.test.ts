@@ -1,5 +1,11 @@
-import { describe, expect, test, beforeEach } from "bun:test";
-import { store, retrieve, findByThread, replace } from "./confirmation-store";
+import { beforeEach, describe, expect, test } from "bun:test";
+import {
+  consume,
+  findByThread,
+  get,
+  replace,
+  store,
+} from "./confirmation-store";
 import type { PendingAction } from "./confirmation-store";
 
 const redisStore = (globalThis as Record<string, unknown>)
@@ -57,12 +63,40 @@ describe("confirmation-store", () => {
     });
   });
 
-  describe("retrieve", () => {
+  describe("get", () => {
+    test("returns stored action without deleting it", async () => {
+      const input = makePendingInput();
+      const id = await store(input);
+
+      const result = await get(id);
+      expect(result).toBeDefined();
+      expect(result!.id).toBe(id);
+      expect(result!.action.type).toBe("createStatusReport");
+
+      // Keys should still exist
+      expect(redisStore.has(`slack:action:${id}`)).toBe(true);
+      expect(redisStore.has(`slack:thread:${input.threadTs}`)).toBe(true);
+    });
+
+    test("returns undefined for unknown id", async () => {
+      const result = await get("nonexistent");
+      expect(result).toBeUndefined();
+    });
+
+    test("returns undefined for invalid data in redis", async () => {
+      redisStore.set("slack:action:bad", JSON.stringify({ invalid: true }));
+
+      const result = await get("bad");
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe("consume", () => {
     test("returns stored action and deletes it", async () => {
       const input = makePendingInput();
       const id = await store(input);
 
-      const result = await retrieve(id);
+      const result = await consume(id);
       expect(result).toBeDefined();
       expect(result!.id).toBe(id);
       expect(result!.action.type).toBe("createStatusReport");
@@ -72,14 +106,14 @@ describe("confirmation-store", () => {
     });
 
     test("returns undefined for unknown id", async () => {
-      const result = await retrieve("nonexistent");
+      const result = await consume("nonexistent");
       expect(result).toBeUndefined();
     });
 
     test("returns undefined for invalid data in redis", async () => {
       redisStore.set("slack:action:bad", JSON.stringify({ invalid: true }));
 
-      const result = await retrieve("bad");
+      const result = await consume("bad");
       expect(result).toBeUndefined();
     });
   });
@@ -124,7 +158,7 @@ describe("confirmation-store", () => {
 
       await replace(id, newAction);
 
-      const result = await retrieve(id);
+      const result = await consume(id);
       expect(result).toBeDefined();
       expect(result!.action.type).toBe("addStatusReportUpdate");
       if (result!.action.type === "addStatusReportUpdate") {
@@ -174,7 +208,7 @@ describe("confirmation-store", () => {
       for (const action of actions) {
         const input = { ...makePendingInput(), action };
         const id = await store(input);
-        const result = await retrieve(id);
+        const result = await consume(id);
         expect(result).toBeDefined();
         expect(result!.action.type).toBe(action.type);
       }
@@ -203,7 +237,7 @@ describe("confirmation-store", () => {
       });
 
       redisStore.set("slack:action:bad-status", raw);
-      const result = await retrieve("bad-status");
+      const result = await consume("bad-status");
       expect(result).toBeUndefined();
     });
   });

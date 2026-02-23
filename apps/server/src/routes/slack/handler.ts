@@ -60,9 +60,7 @@ export async function handleSlackEvent(c: Context) {
   }
 
   const promise = processEvent(body);
-  promise.catch((err) =>
-    console.error("[slack] event processing error:", err),
-  );
+  promise.catch((err) => console.error("[slack] event processing error:", err));
 
   return c.json({ ok: true });
 }

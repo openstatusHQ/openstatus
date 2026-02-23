@@ -37,9 +37,14 @@ interface SlackOAuthResponse {
 }
 
 export async function handleSlackInstall(c: Context) {
-  const workspaceId = c.req.query("workspaceId");
-  if (!workspaceId) {
-    return c.json({ error: "workspaceId is required" }, 400);
+  const token = c.req.query("token");
+  if (!token) {
+    return c.json({ error: "token is required" }, 400);
+  }
+
+  const installPayload = verifyInstallToken(token);
+  if (!installPayload) {
+    return c.json({ error: "Invalid or expired token" }, 403);
   }
 
   if (!env.SLACK_CLIENT_ID) {
@@ -47,7 +52,7 @@ export async function handleSlackInstall(c: Context) {
   }
 
   const state = encodeState({
-    workspaceId: Number(workspaceId),
+    workspaceId: installPayload.workspaceId,
     ts: Date.now(),
   });
 
@@ -144,9 +149,7 @@ export async function handleSlackOAuthCallback(c: Context) {
     });
   }
 
-  return c.redirect(
-    `${getDashboardUrl()}/settings/integrations?slack=success`,
-  );
+  return c.redirect(`${getDashboardUrl()}/settings/integrations?slack=success`);
 }
 
 function getRedirectUri(c: Context): string {
@@ -185,8 +188,29 @@ function decodeState(encoded: string): OAuthState | null {
 }
 
 function computeHmac(payload: string): string {
-  return crypto
-    .createHmac("sha256", env.SLACK_SIGNING_SECRET ?? "")
-    .update(payload)
-    .digest("hex");
+  const secret = env.SLACK_SIGNING_SECRET;
+  if (!secret) throw new Error("Slack signing secret not configured");
+  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+const INSTALL_TOKEN_TTL_MS = 5 * 60 * 1000;
+
+function verifyInstallToken(token: string): { workspaceId: number } | null {
+  try {
+    const decoded = Buffer.from(token, "base64url").toString();
+    const dotIdx = decoded.lastIndexOf(".");
+    if (dotIdx === -1) return null;
+
+    const payload = decoded.slice(0, dotIdx);
+    const signature = decoded.slice(dotIdx + 1);
+
+    if (computeHmac(payload) !== signature) return null;
+
+    const data = JSON.parse(payload) as { workspaceId: number; ts: number };
+    if (Date.now() - data.ts > INSTALL_TOKEN_TTL_MS) return null;
+
+    return { workspaceId: data.workspaceId };
+  } catch {
+    return null;
+  }
 }

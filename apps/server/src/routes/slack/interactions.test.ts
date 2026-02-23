@@ -1,4 +1,4 @@
-import { describe, expect, mock, test, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import crypto from "node:crypto";
 import { Hono } from "hono";
 
@@ -67,10 +67,7 @@ function createTestApp() {
 }
 
 function seedPendingAction() {
-  redisStore.set(
-    `slack:action:${pendingData.id}`,
-    JSON.stringify(pendingData),
-  );
+  redisStore.set(`slack:action:${pendingData.id}`, JSON.stringify(pendingData));
   redisStore.set(`slack:thread:${pendingData.threadTs}`, pendingData.id);
 }
 
@@ -145,8 +142,7 @@ describe("handleSlackInteraction", () => {
     expect(res.status).toBe(200);
     const cancelCall = slackCalls.find(
       (c) =>
-        c.method === "update" &&
-        (c.args.text as string).includes("Cancelled"),
+        c.method === "update" && (c.args.text as string).includes("Cancelled"),
     );
     expect(cancelCall).toBeDefined();
   });
@@ -166,7 +162,10 @@ describe("handleSlackInteraction", () => {
     expect(res.status).toBe(200);
     const ephemeral = slackCalls.find((c) => c.method === "postEphemeral");
     expect(ephemeral).toBeDefined();
-    expect((ephemeral!.args.text as string)).toContain("Only the person");
+    expect(ephemeral!.args.text as string).toContain("Only the person");
+
+    // Pending action should NOT be consumed — still available for the real owner
+    expect(redisStore.has(`slack:action:${pendingData.id}`)).toBe(true);
   });
 
   test("shows expired message when pending action not found", async () => {
@@ -182,8 +181,7 @@ describe("handleSlackInteraction", () => {
     expect(res.status).toBe(200);
     const expiredCall = slackCalls.find(
       (c) =>
-        c.method === "update" &&
-        (c.args.text as string).includes("expired"),
+        c.method === "update" && (c.args.text as string).includes("expired"),
     );
     expect(expiredCall).toBeDefined();
   });
@@ -227,8 +225,7 @@ describe("handleSlackInteraction", () => {
     // Should still work via workspace resolver fallback
     const cancelCall = slackCalls.find(
       (c) =>
-        c.method === "update" &&
-        (c.args.text as string).includes("Cancelled"),
+        c.method === "update" && (c.args.text as string).includes("Cancelled"),
     );
     expect(cancelCall).toBeDefined();
   });

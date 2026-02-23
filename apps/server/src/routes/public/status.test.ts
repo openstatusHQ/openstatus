@@ -1,4 +1,11 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
 

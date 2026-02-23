@@ -6,7 +6,6 @@ export const verifySlackSignature = createMiddleware<{
 }>(async (c, next) => {
   const signingSecret = env.SLACK_SIGNING_SECRET;
 
-  console.log("Verifying Slack signature with signing secret:", signingSecret);
   if (!signingSecret) {
     return c.json({ error: "Slack not configured" }, 503);
   }

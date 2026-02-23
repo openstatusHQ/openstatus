@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { createTools } from "./index";
-import { createCreateStatusReportTool } from "./create-status-report";
-import { createAddStatusReportUpdateTool } from "./add-status-report-update";
-import { createUpdateStatusReportTool } from "./update-status-report";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+import { createAddStatusReportUpdateTool } from "./add-status-report-update";
+import { createCreateStatusReportTool } from "./create-status-report";
+import { createTools } from "./index";
+import { createUpdateStatusReportTool } from "./update-status-report";
 
 const mockWorkspace = {
   id: 1,

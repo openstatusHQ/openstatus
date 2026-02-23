@@ -48,8 +48,16 @@ export function SlackIntegrationCard({
     }),
   );
 
+  const generateToken = useMutation(
+    trpc.integration.generateInstallToken.mutationOptions({
+      onSuccess: (data) => {
+        window.location.href = `${SERVER_URL}/slack/install?token=${data.token}`;
+      },
+    }),
+  );
+
   const handleInstall = () => {
-    router.push(`${SERVER_URL}/slack/install?workspaceId=${workspaceId}`);
+    generateToken.mutate({});
   };
 
   const handleDisconnect = () => {
@@ -92,8 +100,12 @@ export function SlackIntegrationCard({
             {deleteIntegration.isPending ? "Disconnecting..." : "Disconnect"}
           </Button>
         ) : (
-          <Button size="sm" onClick={handleInstall}>
-            Add to Slack
+          <Button
+            size="sm"
+            onClick={handleInstall}
+            disabled={generateToken.isPending}
+          >
+            {generateToken.isPending ? "Connecting..." : "Add to Slack"}
           </Button>
         )}
       </FormCardFooter>

@@ -15,9 +15,7 @@ import { SlackIntegrationCard } from "./slack-card";
 export default function Page() {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-  const { data: integrations } = useQuery(
-    trpc.integration.list.queryOptions(),
-  );
+  const { data: integrations } = useQuery(trpc.integration.list.queryOptions());
 
   if (!workspace || !integrations) return null;
 

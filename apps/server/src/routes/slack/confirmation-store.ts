@@ -1,7 +1,7 @@
+import { redis } from "@/libs/clients";
 import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { redis } from "@/libs/clients";
 
 const statusEnum = z.enum([
   "investigating",
@@ -101,7 +101,15 @@ export async function store(
   return id;
 }
 
-export async function retrieve(
+export async function get(
+  actionId: string,
+): Promise<PendingAction | undefined> {
+  const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);
+  if (!raw) return undefined;
+  return parse(raw);
+}
+
+export async function consume(
   actionId: string,
 ): Promise<PendingAction | undefined> {
   const raw = await redis.get<string>(`${ACTION_PREFIX}${actionId}`);

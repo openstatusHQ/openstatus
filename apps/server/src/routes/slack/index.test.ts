@@ -16,6 +16,15 @@ function signRequest(body: string, timestamp: number): string {
   return `v0=${hmac}`;
 }
 
+function makeInstallToken(workspaceId: number): string {
+  const payload = JSON.stringify({ workspaceId, ts: Date.now() });
+  const sig = crypto
+    .createHmac("sha256", SIGNING_SECRET)
+    .update(payload)
+    .digest("hex");
+  return Buffer.from(`${payload}.${sig}`).toString("base64url");
+}
+
 describe("slack route middleware", () => {
   test("returns 503 when SLACK_SIGNING_SECRET is missing", async () => {
     const originalSecret = process.env.SLACK_SIGNING_SECRET;
@@ -26,7 +35,7 @@ describe("slack route middleware", () => {
     const app = new Hono();
     app.route("/slack", slackRoute);
 
-    const res = await app.request("/slack/install?workspaceId=1");
+    const res = await app.request("/slack/install?token=invalid");
     // Restore
     process.env.SLACK_SIGNING_SECRET = originalSecret;
 
@@ -43,20 +52,30 @@ describe("slack route middleware", () => {
     const app = new Hono();
     app.route("/slack", slackRoute);
 
-    const res = await app.request("/slack/install?workspaceId=1");
+    const res = await app.request("/slack/install?token=invalid");
     process.env.AI_GATEWAY_API_KEY = originalKey;
 
     expect(res.status).toBe(503);
   });
 
-  test("GET /install is accessible", async () => {
+  test("GET /install is accessible with valid token", async () => {
     const { slackRoute } = await import("./index");
     const app = new Hono();
     app.route("/slack", slackRoute);
 
-    const res = await app.request("/slack/install?workspaceId=1");
+    const token = makeInstallToken(1);
+    const res = await app.request(`/slack/install?token=${token}`);
     // Should redirect (302) to Slack OAuth, not 404
     expect(res.status).toBe(302);
+  });
+
+  test("GET /install rejects invalid token", async () => {
+    const { slackRoute } = await import("./index");
+    const app = new Hono();
+    app.route("/slack", slackRoute);
+
+    const res = await app.request("/slack/install?token=invalid");
+    expect(res.status).toBe(403);
   });
 
   test("POST /events requires signature verification", async () => {
