@@ -8,12 +8,20 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
+import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@openstatus/ui/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {
   const trpc = useTRPC();
+  const isSlackAgentEnabled = useFeature("slack-agent");
   const { data: integrations } = useQuery(trpc.integration.list.queryOptions());
 
   if (!integrations) return null;
@@ -30,19 +38,31 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          <SlackIntegrationCard
-            integration={
-              slackIntegration
-                ? {
-                    id: slackIntegration.id,
-                    externalId: slackIntegration.externalId,
-                    data: slackIntegration.data as {
-                      teamName?: string;
-                    },
-                  }
-                : null
-            }
-          />
+          {isSlackAgentEnabled ? (
+            <SlackIntegrationCard
+              integration={
+                slackIntegration
+                  ? {
+                      id: slackIntegration.id,
+                      externalId: slackIntegration.externalId,
+                      data: slackIntegration.data as {
+                        teamName?: string;
+                      },
+                    }
+                  : null
+              }
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>No integrations available</CardTitle>
+              </CardHeader>
+              <CardContent>
+                Slack integration is coming soon; send us a message if you want
+                to try it.
+              </CardContent>
+            </Card>
+          )}
         </FormCardGroup>
       </Section>
     </SectionGroup>

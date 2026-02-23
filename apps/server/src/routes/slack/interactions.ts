@@ -154,11 +154,25 @@ async function executeAction(
           ? await validatePageComponentIds(pageComponentIds, workspaceId, tx)
           : { componentIds: [], pageId: null };
 
+        // Validate that provided pageId matches the components' page
+        if (
+          validated.pageId !== null &&
+          pageId != null &&
+          pageId !== validated.pageId
+        ) {
+          throw new Error(
+            `pageId ${pageId} does not match the page (${validated.pageId}) that the selected components belong to`,
+          );
+        }
+
+        // Prefer the validated pageId derived from components
+        const resolvedPageId = validated.pageId ?? pageId;
+
         const report = await tx
           .insert(statusReport)
           .values({
             workspaceId,
-            pageId,
+            pageId: resolvedPageId,
             title,
             status,
           })
@@ -186,11 +200,13 @@ async function executeAction(
 
         return report;
       });
-
+      if (!result || !result.pageId) {
+        throw new Error("Failed to create status report");
+      }
       if (notify) {
         await sendStatusReportNotification({
           statusReportId: result.id,
-          pageId,
+          pageId: result.pageId,
           reportTitle: title,
           status,
           message,
@@ -199,7 +215,7 @@ async function executeAction(
         });
       }
 
-      const reportUrl = await getReportUrl(pageId, result.id);
+      const reportUrl = await getReportUrl(result.pageId, result.id);
 
       await slack.chat.update({
         channel: channelId,
