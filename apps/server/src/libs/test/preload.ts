@@ -1,11 +1,22 @@
 import { mock } from "bun:test";
 
+const testRedisStore = new Map<string, string>();
+(globalThis as Record<string, unknown>).__testRedisStore = testRedisStore;
+
 mock.module("@openstatus/upstash", () => ({
   Redis: {
     fromEnv() {
       return {
-        get: () => Promise.resolve(undefined),
-        set: () => Promise.resolve([]),
+        get: (key: string) => Promise.resolve(testRedisStore.get(key) ?? null),
+        set: (key: string, value: string) => {
+          testRedisStore.set(key, value);
+          return Promise.resolve("OK");
+        },
+        del: (key: string) => {
+          const existed = testRedisStore.has(key) ? 1 : 0;
+          testRedisStore.delete(key);
+          return Promise.resolve(existed);
+        },
       };
     },
   },

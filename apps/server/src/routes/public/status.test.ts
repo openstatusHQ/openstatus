@@ -1,6 +1,9 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
+
+const testRedisStore = (globalThis as Record<string, unknown>)
+  .__testRedisStore as Map<string, string> | undefined;
 import {
   incidentTable,
   maintenance,
@@ -104,6 +107,10 @@ beforeAll(async () => {
     name: `${TEST_PREFIX}-monitor-2`,
     order: 2,
   });
+});
+
+beforeEach(() => {
+  testRedisStore?.clear();
 });
 
 afterAll(async () => {
