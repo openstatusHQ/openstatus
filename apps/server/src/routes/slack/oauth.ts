@@ -196,10 +196,7 @@ function computeHmac(payload: string): string {
 function verifyHmac(payload: string, signature: string): boolean {
   const expected = computeHmac(payload);
   if (expected.length !== signature.length) return false;
-  return crypto.timingSafeEqual(
-    Buffer.from(expected),
-    Buffer.from(signature),
-  );
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
 const INSTALL_TOKEN_TTL_MS = 5 * 60 * 1000;

@@ -6,9 +6,7 @@ export function createResolveStatusReportTool() {
     description:
       "Resolve an active status report. This marks the incident as resolved and adds a final update message to the public status page.",
     inputSchema: z.object({
-      statusReportId: z
-        .number()
-        .describe("ID of the status report to resolve"),
+      statusReportId: z.number().describe("ID of the status report to resolve"),
       message: z
         .string()
         .describe(
