@@ -206,4 +206,145 @@ describe("handleSlackEvent", () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(slackMessages.length).toBe(0);
   });
+
+  test("ignores message events from bots", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_bot_${Date.now()}`,
+      event: {
+        type: "message",
+        text: "bot message",
+        bot_id: "B123",
+        channel: "C1",
+        ts: `${Date.now()}.3`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("ignores channel message without bot mention", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_nomention_${Date.now()}`,
+      event: {
+        type: "message",
+        text: "just a regular message",
+        user: "U1",
+        channel: "C1",
+        channel_type: "channel",
+        ts: `${Date.now()}.4`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("processes DM messages without bot mention", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_dm_${Date.now()}`,
+      event: {
+        type: "message",
+        text: "hello in DM",
+        user: "U1",
+        channel: "D1",
+        channel_type: "im",
+        ts: `${Date.now()}.5`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    // DM should trigger a response (postMessage for "Thinking...")
+    expect(slackMessages.length).toBeGreaterThan(0);
+  });
+
+  test("ignores events without channel", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_nochan_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        ts: `${Date.now()}.6`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("ignores events without timestamp", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_nots_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("ignores events without team_id", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      event_id: `evt_noteam_${Date.now()}`,
+      event: {
+        type: "app_mention",
+        text: "<@UBOT> hello",
+        user: "U1",
+        channel: "C1",
+        ts: `${Date.now()}.7`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("ignores unsupported event types", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_unsupported_${Date.now()}`,
+      event: {
+        type: "channel_created",
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
+
+  test("ignores events with no event payload", async () => {
+    const res = await signAndPost(app, {
+      type: "event_callback",
+      team_id: "T_KNOWN",
+      event_id: `evt_noevent_${Date.now()}`,
+    });
+
+    expect(res.status).toBe(200);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(slackMessages.length).toBe(0);
+  });
 });

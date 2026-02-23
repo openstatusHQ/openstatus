@@ -201,4 +201,95 @@ describe("handleSlackInteraction", () => {
     expect(res.status).toBe(200);
     expect(slackCalls).toHaveLength(0);
   });
+
+  test("falls back to workspace resolver when pending has no botToken", async () => {
+    const noTokenPending = {
+      ...pendingData,
+      id: "pending-notoken",
+      botToken: "",
+      createdAt: Date.now(),
+    };
+    redisStore.set(
+      `slack:action:${noTokenPending.id}`,
+      JSON.stringify(noTokenPending),
+    );
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "cancel_pending-notoken" }],
+    });
+
+    expect(res.status).toBe(200);
+    // Should still work via workspace resolver fallback
+    const cancelCall = slackCalls.find(
+      (c) =>
+        c.method === "update" &&
+        (c.args.text as string).includes("Cancelled"),
+    );
+    expect(cancelCall).toBeDefined();
+  });
+
+  test("returns ok with empty actions array", async () => {
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U1" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [],
+    });
+
+    expect(res.status).toBe(200);
+    expect(slackCalls).toHaveLength(0);
+  });
+
+  test("parses approve_notify prefix correctly", async () => {
+    seedPendingAction();
+
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "approve_notify_pending-123" }],
+    });
+
+    // approve_notify should extract pending ID as "pending-123"
+    // Since the action exists and user matches, it tries to execute
+    expect(res.status).toBe(200);
+  });
+
+  test("returns ok when no team id and no pending", async () => {
+    const res = await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U1" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      actions: [{ action_id: "approve_orphan-id" }],
+    });
+
+    expect(res.status).toBe(200);
+    expect(slackCalls).toHaveLength(0);
+  });
+
+  test("cancel consumes pending action from redis", async () => {
+    seedPendingAction();
+
+    await signAndPost(app, {
+      type: "block_actions",
+      user: { id: "U_OWNER" },
+      channel: { id: "C1" },
+      message: { ts: "1.2" },
+      team: { id: "T_KNOWN" },
+      actions: [{ action_id: "cancel_pending-123" }],
+    });
+
+    // After cancel, the pending action should be consumed from redis
+    expect(redisStore.has(`slack:action:${pendingData.id}`)).toBe(false);
+  });
 });

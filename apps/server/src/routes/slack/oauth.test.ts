@@ -137,4 +137,57 @@ describe("handleSlackOAuthCallback", () => {
     const json = (await res.json()) as { error: string };
     expect(json.error).toBe("Invalid or expired state");
   });
+
+  test("returns 400 for invalid base64 state", async () => {
+    const res = await app.request(
+      "/slack/oauth/callback?code=test-code&state=not-valid-base64!!!",
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 for state without dot separator", async () => {
+    const noDotState = Buffer.from("nodothere").toString("base64url");
+    const res = await app.request(
+      `/slack/oauth/callback?code=test-code&state=${noDotState}`,
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 for state with valid signature but invalid JSON", async () => {
+    const payload = "not-json";
+    const signature = crypto
+      .createHmac("sha256", SIGNING_SECRET)
+      .update(payload)
+      .digest("hex");
+    const state = Buffer.from(`${payload}.${signature}`).toString("base64url");
+
+    const res = await app.request(
+      `/slack/oauth/callback?code=test-code&state=${state}`,
+    );
+
+    expect(res.status).toBe(400);
+  });
+
+  test("returns 400 when both code and state are missing", async () => {
+    const res = await app.request("/slack/oauth/callback");
+    expect(res.status).toBe(400);
+  });
+
+  test("accepts state within 10 minute window", async () => {
+    const validState = encodeState({
+      workspaceId: 1,
+      ts: Date.now() - 9 * 60 * 1000,
+    });
+    // This will proceed to the token exchange which will fail (no mock for fetch)
+    // but it won't fail on state validation
+    const res = await app.request(
+      `/slack/oauth/callback?code=test-code&state=${validState}`,
+    );
+
+    // Will get a redirect to error page because token exchange fails,
+    // but NOT a 400 for invalid state
+    expect(res.status).not.toBe(400);
+  });
 });
