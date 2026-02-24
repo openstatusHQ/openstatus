@@ -1,0 +1,115 @@
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/server/**"
+      - "apps/dashboard/**"
+      - "apps/workflows/**"
+      - "apps/private-location/**"
+      - "apps/status-page/**"
+      - "apps/checker/**"
+      - "packages/**"
+      - "docker-compose.yaml"
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Services to build (comma-separated)'
+        required: false
+        default: 'server,dashboard,workflows,private-location,status-page,checker'
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: openstatus
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    
+    strategy:
+      matrix:
+        service: [server, dashboard, workflows, private-location, status-page, checker]
+        include:
+          - service: server
+            context: .
+            dockerfile: apps/server/Dockerfile
+            port: 3001
+          - service: dashboard
+            context: .
+            dockerfile: apps/dashboard/Dockerfile
+            port: 3002
+          - service: workflows
+            context: .
+            dockerfile: apps/workflows/Dockerfile
+            port: 3000
+          - service: private-location
+            context: apps/private-location
+            dockerfile: Dockerfile
+            port: 8081
+          - service: status-page
+            context: .
+            dockerfile: apps/status-page/Dockerfile
+            port: 3003
+          - service: checker
+            context: apps/checker
+            dockerfile: Dockerfile
+            port: 8082
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch,suffix=-${{ matrix.service }}
+            type=ref,event=pr,suffix=-${{ matrix.service }}
+            type=sha,prefix={{branch}}-,suffix=-${{ matrix.service }}
+            type=raw,value=latest,enable={{is_default_branch}},suffix=-${{ matrix.service }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}@${{ steps.build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom-${{ matrix.service }}.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom-${{ matrix.service }}.spdx.json
+          retention-days: 30

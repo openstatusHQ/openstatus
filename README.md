@@ -85,6 +85,22 @@ Made with [Contrib.rocks](https://contrib.rocks)
 
 [![Built with Depot](https://depot.dev/badges/built-with-depot.svg)](https://depot.dev/?utm_source=Opource=OpenStatus)
 
+## Quick Start with Coolify 🚀
+
+We provide pre-built Docker images for easy deployment with Coolify:
+
+```bash
+# Example Coolify configuration
+ghcr.io/aggmoulik/openstatus-openstatus-server:latest
+ghcr.io/aggmoulik/openstatus-openstatus-dashboard:latest
+ghcr.io/aggmoulik/openstatus-openstatus-workflows:latest
+ghcr.io/aggmoulik/openstatus-openstatus-private-location:latest
+ghcr.io/aggmoulik/openstatus-openstatus-status-page:latest
+ghcr.io/aggmoulik/openstatus-openstatus-checker:latest
+```
+
+📖 **[Complete Coolify Deployment Guide](./COOLIFY_DEPLOYMENT.md)**
+
 ## Getting Started 🚀
 
 ### With Docker (Recommended)

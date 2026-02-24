@@ -1,0 +1,142 @@
+name: Publish Docker Images (Development)
+
+on:
+  pull_request:
+    paths:
+      - "apps/server/**"
+      - "apps/dashboard/**"
+      - "apps/workflows/**"
+      - "apps/private-location/**"
+      - "apps/status-page/**"
+      - "apps/checker/**"
+      - "packages/**"
+      - "docker-compose.yaml"
+  push:
+    branches:
+      - develop
+      - feature/*
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: openstatus
+
+jobs:
+  build-and-push-dev:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    
+    strategy:
+      matrix:
+        service: [server, dashboard, workflows, private-location, status-page, checker]
+        include:
+          - service: server
+            context: .
+            dockerfile: apps/server/Dockerfile
+            port: 3001
+          - service: dashboard
+            context: .
+            dockerfile: apps/dashboard/Dockerfile
+            port: 3002
+          - service: workflows
+            context: .
+            dockerfile: apps/workflows/Dockerfile
+            port: 3000
+          - service: private-location
+            context: apps/private-location
+            dockerfile: Dockerfile
+            port: 8081
+          - service: status-page
+            context: .
+            dockerfile: apps/status-page/Dockerfile
+            port: 3003
+          - service: checker
+            context: apps/checker
+            dockerfile: Dockerfile
+            port: 8082
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch,suffix=-${{ matrix.service }}
+            type=ref,event=pr,suffix=-${{ matrix.service }}
+            type=sha,prefix=dev-,suffix=-${{ matrix.service }}
+            type=raw,value=dev-latest,suffix=-${{ matrix.service }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+
+  test-images:
+    runs-on: ubuntu-latest
+    needs: build-and-push-dev
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
+      - name: Create test compose file
+        run: |
+          cp docker-compose.github-packages.yaml docker-compose.test.yaml
+          # Replace latest tags with dev-latest for testing
+          sed -i 's/:latest/:dev-latest/g' docker-compose.test.yaml
+
+      - name: Test service startup
+        run: |
+          # Start external services first
+          docker-compose -f docker-compose.test.yaml up -d libsql tinybird-local
+          
+          # Wait for external services to be healthy
+          timeout 120 bash -c 'until docker-compose -f docker-compose.test.yaml ps libsql | grep -q "healthy"; do sleep 5; done'
+          timeout 120 bash -c 'until docker-compose -f docker-compose.test.yaml ps tinybird-local | grep -q "healthy"; do sleep 5; done'
+          
+          # Start one service for basic testing
+          docker-compose -f docker-compose.test.yaml up -d workflows
+          
+          # Wait and check if it's running
+          sleep 30
+          if ! docker-compose -f docker-compose.test.yaml ps workflows | grep -q "Up"; then
+            echo "Workflows service failed to start"
+            docker-compose -f docker-compose.test.yaml logs workflows
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yaml down -v
