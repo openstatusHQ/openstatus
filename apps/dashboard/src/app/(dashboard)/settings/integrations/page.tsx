@@ -27,6 +27,7 @@ export default function Page() {
     trpc.integrationRouter.list.queryOptions(),
   );
 
+
   if (!integrations) return null;
 
   const slackIntegration = integrations.find((i) => i.name === "slack-agent");
@@ -41,7 +42,7 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          {workspace?.plan !== "free" ? (
+          {workspace?.limits['slack-agent'] ? (
             <SlackIntegrationCard
               integration={
                 slackIntegration

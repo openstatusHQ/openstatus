@@ -53,6 +53,11 @@ export const limitsSchema = z.object({
    */
   members: z.literal("Unlimited").or(z.number()).prefault(1),
   "audit-log": z.boolean().prefault(false),
+
+  /**
+   * Other limits
+   */
+  "slack-agent": z.boolean().prefault(false),
 });
 
 export type Limits = z.infer<typeof limitsSchema>;

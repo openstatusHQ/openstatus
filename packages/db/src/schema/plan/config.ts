@@ -61,6 +61,7 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "audit-log": false,
       regions: [...FREE_FLY_REGIONS],
       "private-locations": false,
+      "slack-agent": false,
     },
   },
   starter: {
@@ -135,6 +136,7 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "audit-log": false,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": false,
+      "slack-agent": false,
     },
   },
   team: {
@@ -209,6 +211,7 @@ export const allPlans: Record<WorkspacePlan, PlanConfig> = {
       "audit-log": true,
       regions: [...AVAILABLE_REGIONS],
       "private-locations": true,
+      "slack-agent": false,
     },
   },
 };
