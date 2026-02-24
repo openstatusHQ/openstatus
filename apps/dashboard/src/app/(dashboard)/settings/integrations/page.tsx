@@ -8,7 +8,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
-import { useFeature } from "@/hooks/use-feature";
 import { useTRPC } from "@/lib/trpc/client";
 import {
   Card,
@@ -21,7 +20,9 @@ import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {
   const trpc = useTRPC();
-  const isSlackAgentEnabled = useFeature("slack-agent");
+  //  FIXME: we should use workspace limit here
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
   const { data: integrations } = useQuery(
     trpc.integrationRouter.list.queryOptions(),
   );
@@ -40,7 +41,7 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          {isSlackAgentEnabled ? (
+          {workspace?.plan !== "free" ? (
             <SlackIntegrationCard
               integration={
                 slackIntegration
@@ -60,8 +61,8 @@ export default function Page() {
                 <CardTitle>No integrations available</CardTitle>
               </CardHeader>
               <CardContent>
-                Slack integration is coming soon; send us a message if you want
-                to try it.
+                Upgrade to a paid plan to access integrations and connect your
+                workspace to slack.
               </CardContent>
             </Card>
           )}
