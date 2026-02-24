@@ -1,4 +1,5 @@
 # @openstatus/notification-telegram
+
 To install dependencies:
 
 ```bash
@@ -13,7 +14,6 @@ bun run src/index.ts
 
 This project was created using `bun init` in bun v1.0.0. [Bun](https://bun.sh)
 is a fast all-in-one JavaScript runtime.
-
 
 ---
 
@@ -45,4 +45,3 @@ An improved UX option:
 2. we listen to the `/getUpdates` messages and generate an id, store it for a few days in redis, and send it back to the user's chat id
 3. user enters generated id into openstatus dashboard to connect with chat id - we validate it from the `/getUpdates`
 ```
-

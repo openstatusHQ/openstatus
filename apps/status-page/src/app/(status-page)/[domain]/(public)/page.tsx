@@ -1,5 +1,12 @@
 "use client";
 
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { notFound, useParams } from "next/navigation";
+import { useMemo } from "react";
+
 import { useStatusPage } from "@/components/status-page/floating-button";
 import {
   Status,
@@ -28,12 +35,6 @@ import { StatusMonitor } from "@/components/status-page/status-monitor";
 import { StatusTrackerGroup } from "@/components/status-page/status-tracker-group";
 import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import { useTRPC } from "@/lib/trpc/client";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
-import { useMemo } from "react";
 
 export default function Page() {
   const prefix = usePathnamePrefix();
@@ -141,7 +142,7 @@ export default function Page() {
                     (report) => report.id === e.id,
                   );
                   if (!report) return null;
-                  const lastUpdate = report.statusReportUpdates.sort(
+                  const lastUpdate = report.statusReportUpdates.toSorted(
                     (a, b) => b.date.getTime() - a.date.getTime(),
                   )[0];
                   if (!lastUpdate) return null;

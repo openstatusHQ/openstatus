@@ -1,11 +1,13 @@
+import type { PendingAction } from "./confirmation-store";
+import type { Context } from "hono";
+
 import { and, db, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
-import type { Context } from "hono";
+
 import { runAgent } from "./agent";
 import { buildConfirmationBlocks } from "./blocks";
 import { findByThread, replace, store } from "./confirmation-store";
-import type { PendingAction } from "./confirmation-store";
 import { resolveWorkspace } from "./workspace-resolver";
 
 const processedEvents = new Map<string, number>();

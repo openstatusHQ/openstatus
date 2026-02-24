@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { and, eq, isNotNull } from "@openstatus/db";
 import {
   invitation,
@@ -10,6 +8,8 @@ import {
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { env } from "../../env";
 import {
   createTRPCRouter,

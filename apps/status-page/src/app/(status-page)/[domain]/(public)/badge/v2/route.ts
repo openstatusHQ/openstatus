@@ -1,6 +1,6 @@
+import type { Status } from "@openstatus/react";
 import type { NextRequest } from "next/server";
 
-import type { Status } from "@openstatus/react";
 import { getStatus } from "@openstatus/react";
 
 const statusDictionary: Record<Status, { label: string; hexColor: string }> = {

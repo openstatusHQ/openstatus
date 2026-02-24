@@ -34,7 +34,6 @@ tb pipe rm tb_datasource_union.pipe --yes
 Link to the [issue](https://github.com/openstatusHQ/openstatus/issues/278) from
 Gonzalo as reference.
 
-
 <!-- FIXME: more content -->
 
 ```bash

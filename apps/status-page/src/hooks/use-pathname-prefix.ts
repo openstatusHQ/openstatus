@@ -1,9 +1,10 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { useTRPC } from "@/lib/trpc/client";
 
 export function usePathnamePrefix() {
   const trpc = useTRPC();

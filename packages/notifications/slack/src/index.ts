@@ -4,13 +4,13 @@ import {
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
+
 import {
   buildAlertBlocks,
   buildDegradedBlocks,
   buildRecoveryBlocks,
 } from "./blocks";
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
   if (!webhookUrl || webhookUrl.trim() === "") {
     throw new Error("Slack webhook URL is required");

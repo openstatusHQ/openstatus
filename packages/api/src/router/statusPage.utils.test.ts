@@ -1,4 +1,3 @@
-import { describe, expect, it } from "bun:test";
 import type {
   Incident,
   Maintenance,
@@ -6,6 +5,9 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
+
+import { describe, expect, it } from "bun:test";
+
 import {
   fillStatusDataFor45Days,
   getEvents,
@@ -1037,7 +1039,7 @@ describe("getEvents - pageComponent filtering", () => {
 
     const maintenanceEvents = events.filter((e) => e.type === "maintenance");
     expect(maintenanceEvents).toHaveLength(2);
-    expect(maintenanceEvents.map((e) => e.id).sort()).toEqual([1, 3]);
+    expect(maintenanceEvents.map((e) => e.id).toSorted()).toEqual([1, 3]);
   });
 
   it("should filter status reports by pageComponentId", () => {
@@ -1057,7 +1059,7 @@ describe("getEvents - pageComponent filtering", () => {
 
     const reportEvents = events.filter((e) => e.type === "report");
     expect(reportEvents).toHaveLength(2);
-    expect(reportEvents.map((e) => e.id).sort()).toEqual([1, 3]);
+    expect(reportEvents.map((e) => e.id).toSorted()).toEqual([1, 3]);
   });
 
   it("should exclude incidents for static components", () => {

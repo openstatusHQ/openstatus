@@ -1,8 +1,10 @@
-import { emailDataSchema } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import { EmailClient } from "@openstatus/emails/src/client";
 import type { NotificationContext } from "@openstatus/notification-base";
+
+import { emailDataSchema } from "@openstatus/db/src/schema";
+import { EmailClient } from "@openstatus/emails/src/client";
 import { regionDict } from "@openstatus/regions";
+
 import { env } from "../env";
 
 export const sendAlert = async ({

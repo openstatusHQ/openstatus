@@ -1,18 +1,20 @@
 /** @jsxImportSource react */
 
+import type { MonitorAlertProps } from "../emails/monitor-alert";
+import type { PageSubscriptionProps } from "../emails/page-subscription";
+import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
+import type { StatusReportProps } from "../emails/status-report";
+import type { TeamInvitationProps } from "../emails/team-invitation";
+
 import { render } from "@react-email/render";
 import { Effect, Schedule } from "effect";
 import { Resend } from "resend";
+
 import FollowUpEmail from "../emails/followup";
-import type { MonitorAlertProps } from "../emails/monitor-alert";
 import PageSubscriptionEmail from "../emails/page-subscription";
-import type { PageSubscriptionProps } from "../emails/page-subscription";
 import StatusPageMagicLinkEmail from "../emails/status-page-magic-link";
-import type { StatusPageMagicLinkProps } from "../emails/status-page-magic-link";
 import StatusReportEmail from "../emails/status-report";
-import type { StatusReportProps } from "../emails/status-report";
 import TeamInvitationEmail from "../emails/team-invitation";
-import type { TeamInvitationProps } from "../emails/team-invitation";
 import { monitorAlertEmail } from "../hotfix/monitor-alert";
 
 // split an array into chunks of a given size.

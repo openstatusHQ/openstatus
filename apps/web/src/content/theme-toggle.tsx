@@ -1,10 +1,12 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import type * as React from "react";
+
 import { Laptop, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import type * as React from "react";
 import { useEffect, useState } from "react";
+
+import { cn } from "@/lib/utils";
 
 export function ThemeToggle({
   className,
@@ -21,7 +23,7 @@ export function ThemeToggle({
     return (
       <div
         className={cn(
-          "flex items-center gap-px bg-border [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:bg-background [&>*]:p-4",
+          "bg-border [&>*]:bg-background flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
           className,
         )}
         {...props}
@@ -42,7 +44,7 @@ export function ThemeToggle({
   return (
     <div
       className={cn(
-        "flex items-center gap-px bg-border [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:bg-background [&>*]:p-4 [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted",
+        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
         className,
       )}
       {...props}

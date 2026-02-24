@@ -1,10 +1,8 @@
-import * as React from "react";
-
 import { Input } from "@openstatus/ui/components/ui/input";
 import { cn } from "@openstatus/ui/lib/utils";
+import * as React from "react";
 
-export interface InputWithAddonsProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputWithAddonsProps extends React.InputHTMLAttributes<HTMLInputElement> {
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
 }
@@ -20,7 +18,7 @@ const InputWithAddons = React.forwardRef<
   return (
     <div className={cn("flex rounded-md shadow-xs", className)}>
       {leading ? (
-        <span className="inline-flex items-center rounded-s-md border border-input bg-muted px-3 text-muted-foreground text-sm">
+        <span className="border-input bg-muted text-muted-foreground inline-flex items-center rounded-s-md border px-3 text-sm">
           {leading}
         </span>
       ) : null}
@@ -35,7 +33,7 @@ const InputWithAddons = React.forwardRef<
         {...props}
       />
       {trailing ? (
-        <span className="inline-flex items-center rounded-e-md border border-input bg-muted px-3 text-muted-foreground text-sm">
+        <span className="border-input bg-muted text-muted-foreground inline-flex items-center rounded-e-md border px-3 text-sm">
           {trailing}
         </span>
       ) : null}

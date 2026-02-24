@@ -22,35 +22,35 @@ import { endOfDay, isSameDay, startOfDay } from "date-fns";
  * // => "January 1, 10:00 AM - 3:00 PM"
  */
 export function formatDateRange(from?: Date, to?: Date) {
-	const sameDay = from && to && isSameDay(from, to);
-	const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
-	const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
+  const sameDay = from && to && isSameDay(from, to);
+  const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
+  const isToEndDay = to && endOfDay(to).getTime() === to.getTime();
 
-	if (sameDay) {
-		if (from && to && from.getTime() === to.getTime()) {
-			return formatDateTime(from);
-		}
-		if (from && to) {
-			return `${formatDateTime(from)} - ${formatTime(to)}`;
-		}
-	}
+  if (sameDay) {
+    if (from && to && from.getTime() === to.getTime()) {
+      return formatDateTime(from);
+    }
+    if (from && to) {
+      return `${formatDateTime(from)} - ${formatTime(to)}`;
+    }
+  }
 
-	if (from && to) {
-		if (isFromStartDay && isToEndDay) {
-			return `${formatDate(from)} - ${formatDate(to)}`;
-		}
-		return `${formatDateTime(from)} - ${formatDateTime(to)}`;
-	}
+  if (from && to) {
+    if (isFromStartDay && isToEndDay) {
+      return `${formatDate(from)} - ${formatDate(to)}`;
+    }
+    return `${formatDateTime(from)} - ${formatDateTime(to)}`;
+  }
 
-	if (to) {
-		return `Until ${formatDateTime(to)}`;
-	}
+  if (to) {
+    return `Until ${formatDateTime(to)}`;
+  }
 
-	if (from) {
-		return `Since ${formatDateTime(from)}`;
-	}
+  if (from) {
+    return `Since ${formatDateTime(from)}`;
+  }
 
-	return "All time";
+  return "All time";
 }
 
 /**
@@ -62,16 +62,16 @@ export function formatDateRange(from?: Date, to?: Date) {
  * @returns A formatted date string
  */
 export function formatDate(
-	date: Date,
-	options?: Intl.DateTimeFormatOptions,
-	locale = "en-US",
+  date: Date,
+  options?: Intl.DateTimeFormatOptions,
+  locale = "en-US",
 ) {
-	return date.toLocaleDateString(locale, {
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-		...options,
-	});
+  return date.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    ...options,
+  });
 }
 
 /**
@@ -82,12 +82,12 @@ export function formatDate(
  * @returns A formatted date and time string
  */
 export function formatDateTime(date: Date, locale = "en-US") {
-	return date.toLocaleDateString(locale, {
-		month: "long",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	});
+  return date.toLocaleDateString(locale, {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
 }
 
 /**
@@ -98,15 +98,15 @@ export function formatDateTime(date: Date, locale = "en-US") {
  * @returns A formatted time string
  */
 export function formatTime(date: Date, locale = "en-US") {
-	return date.toLocaleTimeString(locale, {
-		hour: "numeric",
-		minute: "numeric",
-	});
+  return date.toLocaleTimeString(locale, {
+    hour: "numeric",
+    minute: "numeric",
+  });
 }
 
 import type {
-	StatusReportUpdateType,
-	StatusType,
+  StatusReportUpdateType,
+  StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
 
 /**
@@ -114,29 +114,29 @@ import type {
  * Used for displaying status banner and component statuses
  */
 export const systemStatusLabels: Record<
-	StatusType,
-	{ long: string; short: string }
+  StatusType,
+  { long: string; short: string }
 > = {
-	success: {
-		long: "All Systems Operational",
-		short: "Operational",
-	},
-	degraded: {
-		long: "Degraded Performance",
-		short: "Degraded",
-	},
-	error: {
-		long: "Partial Outage",
-		short: "Outage",
-	},
-	info: {
-		long: "Maintenance",
-		short: "Maintenance",
-	},
-	empty: {
-		long: "No Data",
-		short: "No Data",
-	},
+  success: {
+    long: "All Systems Operational",
+    short: "Operational",
+  },
+  degraded: {
+    long: "Degraded Performance",
+    short: "Degraded",
+  },
+  error: {
+    long: "Partial Outage",
+    short: "Outage",
+  },
+  info: {
+    long: "Maintenance",
+    short: "Maintenance",
+  },
+  empty: {
+    long: "No Data",
+    short: "No Data",
+  },
 } as const;
 
 /**
@@ -144,20 +144,20 @@ export const systemStatusLabels: Record<
  * @deprecated Use systemStatusLabels instead
  */
 export const messages = {
-	long: {
-		success: systemStatusLabels.success.long,
-		degraded: systemStatusLabels.degraded.long,
-		error: systemStatusLabels.error.long,
-		info: systemStatusLabels.info.long,
-		empty: systemStatusLabels.empty.long,
-	},
-	short: {
-		success: systemStatusLabels.success.short,
-		degraded: systemStatusLabels.degraded.short,
-		error: systemStatusLabels.error.short,
-		info: systemStatusLabels.info.short,
-		empty: systemStatusLabels.empty.short,
-	},
+  long: {
+    success: systemStatusLabels.success.long,
+    degraded: systemStatusLabels.degraded.long,
+    error: systemStatusLabels.error.long,
+    info: systemStatusLabels.info.long,
+    empty: systemStatusLabels.empty.long,
+  },
+  short: {
+    success: systemStatusLabels.success.short,
+    degraded: systemStatusLabels.degraded.short,
+    error: systemStatusLabels.error.short,
+    info: systemStatusLabels.info.short,
+    empty: systemStatusLabels.empty.short,
+  },
 } as const;
 
 /**
@@ -165,11 +165,11 @@ export const messages = {
  * Used for displaying individual request statuses
  */
 export const requestStatusLabels: Record<StatusType, string> = {
-	success: "Normal",
-	degraded: "Degraded",
-	error: "Error",
-	info: "Maintenance",
-	empty: "No Data",
+  success: "Normal",
+  degraded: "Degraded",
+  error: "Error",
+  info: "Maintenance",
+  empty: "No Data",
 } as const;
 
 /**
@@ -183,10 +183,10 @@ export const requests = requestStatusLabels;
  * Used for displaying incident report update statuses
  */
 export const incidentStatusLabels: Record<StatusReportUpdateType, string> = {
-	resolved: "Resolved",
-	monitoring: "Monitoring",
-	identified: "Identified",
-	investigating: "Investigating",
+  resolved: "Resolved",
+  monitoring: "Monitoring",
+  identified: "Identified",
+  investigating: "Investigating",
 } as const;
 
 /**
@@ -200,11 +200,11 @@ export const status = incidentStatusLabels;
  * Maps StatusType to corresponding CSS custom properties
  */
 export const statusColors: Record<StatusType, string> = {
-	success: "var(--success)",
-	degraded: "var(--warning)",
-	error: "var(--destructive)",
-	info: "var(--info)",
-	empty: "var(--muted)",
+  success: "var(--success)",
+  degraded: "var(--warning)",
+  error: "var(--destructive)",
+  info: "var(--info)",
+  empty: "var(--muted)",
 } as const;
 
 /**

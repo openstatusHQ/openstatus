@@ -1,9 +1,11 @@
 import type { Variables } from "@/types";
+import type { Context, Next } from "hono";
+
 import {
   type Workspace,
   workspacePlanHierarchy,
 } from "@openstatus/db/src/schema";
-import type { Context, Next } from "hono";
+
 import { OpenStatusApiError } from "../errors";
 
 /**

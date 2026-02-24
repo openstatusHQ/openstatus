@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, expect, mock, test } from "bun:test";
+
 import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,
@@ -306,7 +307,7 @@ describe("triggerNotifications with multiple providers", () => {
     expect(mockDiscordSendRecovery).toHaveBeenCalledTimes(1);
 
     expect(result).toHaveLength(2);
-    const providers = result.map((r) => r.provider).sort();
+    const providers = result.map((r) => r.provider).toSorted();
     expect(providers).toEqual(["discord", "slack"]);
   });
 });

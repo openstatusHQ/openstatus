@@ -1,11 +1,12 @@
 import type { Variables } from "@/types";
+import type { Context, Next } from "hono";
+
 import { getLogger } from "@logtape/logtape";
 import {
   type EventProps,
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
-import type { Context, Next } from "hono";
 
 const logger = getLogger("api-server");
 

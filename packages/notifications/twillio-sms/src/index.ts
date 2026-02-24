@@ -1,5 +1,7 @@
-import { phoneDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+
+import { phoneDataSchema } from "@openstatus/db/src/schema";
+
 import { env } from "./env";
 
 export const sendAlert = async ({

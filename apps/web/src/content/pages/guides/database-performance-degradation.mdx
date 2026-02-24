@@ -51,6 +51,7 @@ Database performance has been fully restored. All queries are executing at norma
 **Impact**: 1.8% combined failure rate, peaking at 10%
 
 **What they did well**:
+
 - Quantified impact with specific percentages
 - Identified multiple affected services
 - Committed to post-incident RCA (Root Cause Analysis)
@@ -64,6 +65,7 @@ Database performance has been fully restored. All queries are executing at norma
 **Approach**: Geographic specificity
 
 **What they did well**:
+
 - Identified specific region (IAD = Ashburn, Virginia)
 - Focused on infrastructure layer
 - Technical but clear naming
@@ -81,6 +83,7 @@ This demonstrates the value of being specific about location when database issue
 ## Customization Ideas
 
 For **developer audiences**:
+
 ```
 We are experiencing elevated p95 latency (2.5s vs normal 150ms)
 on write operations to our primary PostgreSQL cluster.
@@ -93,6 +96,7 @@ from 100 to 150 connections, added query timeouts.
 ```
 
 For **general users**:
+
 ```
 We are experiencing slower than normal response times for some
 features. Our team is working to resolve this quickly.
@@ -101,6 +105,7 @@ features. Our team is working to resolve this quickly.
 ## Warning Signs to Monitor
 
 Watch for these indicators that might trigger using this template:
+
 - P95 latency > 2x normal
 - Error rate > 1%
 - Connection timeouts

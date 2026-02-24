@@ -13,9 +13,7 @@ In this post, we'll dive into the process of creating dynamic breadcrumbs in Nex
 
 Breadcrumbs are an essential navigation aid in web applications, helping users understand their current location within a site's hierarchy. With Next.js 13's introduction of parallel routes, we have new tools to create more dynamic and flexible navigation structures.
 
-
 You can find the complete, working example for this tutorial on [GitHub](https://github.com/openstatusHQ/nextjs-dynamic-breadcrumb/). The project uses Next.js 15 and demonstrates the implementation of parallel routes alongside our dynamic breadcrumb.
-
 
 ## The Challenge
 
@@ -24,7 +22,6 @@ We're building a website that showcases a catalog of dogs and cats. Our primary 
 ### Project Structure
 
 Our repository is organized as follows:
-
 
 ```
 src/
@@ -41,9 +38,7 @@ src/
                 page.tsx
 ```
 
-
 ### Desired Breadcrumb Behavior
-
 
 1. On the homepage:
 
@@ -61,33 +56,30 @@ Here we only have the pet id, so we need to fetch the pet name from the server s
 
 The key is to fetch the necessary data on the server side and dynamically update the breadcrumb based on the current route instead of displaying the pet id.
 
-
-
 ### Parallel route 🚀
 
 [Parallel routes](https://nextjs.org/docs/app/building-your-application/routing/parallel-routes) in Next.js allow us to render multiple pages in the same layout simultaneously. This feature is particularly useful for our breadcrumb implementation as it allows us to maintain a consistent navigation structure across different page types.
 
-
 #### Homepage
 
-In our root layout  we will use slot to render the breadcrumb component.
+In our root layout we will use slot to render the breadcrumb component.
 
 ```tsx
 export default function RootLayout({
-	breadcrumb,
-	children,
+  breadcrumb,
+  children,
 }: Readonly<{
-	breadcrumb: React.ReactNode;
-	children: React.ReactNode;
+  breadcrumb: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<html lang="en">
-			<body>
-				{breadcrumb}
-				{children}
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en">
+      <body>
+        {breadcrumb}
+        {children}
+      </body>
+    </html>
+  );
 }
 ```
 
@@ -97,22 +89,22 @@ Here we create a new file `page.tsx` that will be responsible for rendering the 
 
 ```tsx
 import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
 } from "@/components/ui/breadcrumb";
 
 export default function BreadcrumbSlot() {
-	return (
-		<Breadcrumb>
-			<BreadcrumbList>
-				<BreadcrumbItem>
-					<BreadcrumbLink href="/">Home</BreadcrumbLink>
-				</BreadcrumbItem>
-			</BreadcrumbList>
-		</Breadcrumb>
-	);
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 ```
 
@@ -122,57 +114,60 @@ We also want to create a catch all components for the dynamic routes in the `app
 
 ```tsx
 import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import React from "react";
 import type { ReactElement } from "react";
 
 export default function BreadcrumbSlot({
-	params,
-}: { params: { all: string[] } }) {
-	const breadcrumbItems: ReactElement[] = [];
-	let breadcrumbPage: ReactElement = <></>;
-	for (let i = 0; i < params.all.length; i++) {
-		const route = params.all[i];
-		const href = `/${params.all.at(0)}/${route}`;
-		if (i === params.all.length - 1) {
-			breadcrumbPage = (
-				<BreadcrumbItem>
-					<BreadcrumbPage className="capitalize">{route}</BreadcrumbPage>
-				</BreadcrumbItem>
-			);
-		} else {
-			breadcrumbItems.push(
-				<React.Fragment key={href}>
-					<BreadcrumbItem>
-						<BreadcrumbLink href={href} className="capitalize">
-							{route}
-						</BreadcrumbLink>
-					</BreadcrumbItem>
-				</React.Fragment>,
-			);
-		}
-	}
+  params,
+}: {
+  params: { all: string[] };
+}) {
+  const breadcrumbItems: ReactElement[] = [];
+  let breadcrumbPage: ReactElement = <></>;
+  for (let i = 0; i < params.all.length; i++) {
+    const route = params.all[i];
+    const href = `/${params.all.at(0)}/${route}`;
+    if (i === params.all.length - 1) {
+      breadcrumbPage = (
+        <BreadcrumbItem>
+          <BreadcrumbPage className="capitalize">{route}</BreadcrumbPage>
+        </BreadcrumbItem>
+      );
+    } else {
+      breadcrumbItems.push(
+        <React.Fragment key={href}>
+          <BreadcrumbItem>
+            <BreadcrumbLink href={href} className="capitalize">
+              {route}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </React.Fragment>,
+      );
+    }
+  }
 
-	return (
-		<Breadcrumb>
-			<BreadcrumbList>
-				<BreadcrumbItem>
-					<BreadcrumbLink href="/">Home</BreadcrumbLink>
-				</BreadcrumbItem>
-				{breadcrumbItems}
-				<BreadcrumbSeparator />
-				{breadcrumbPage}
-			</BreadcrumbList>
-		</Breadcrumb>
-	);
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">Home</BreadcrumbLink>
+        </BreadcrumbItem>
+        {breadcrumbItems}
+        <BreadcrumbSeparator />
+        {breadcrumbPage}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
 }
 ```
+
 This code was taken from the [Jeremy's post](https://jeremykreutzbender.com/blog/app-router-dynamic-breadcrumbs) about dynamic breadcrumbs in Next.js.
 
 #### Dogs and Cats pages
@@ -181,37 +176,39 @@ We need to create a new file `page.tsx` in the `@breadcrumb/dogs/[id]` folder, w
 In this component we will fetch the pet name from the server side and display it in the breadcrumb.
 
 ```tsx
-
 import {
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-export default async function BreadcrumbSlot({params}: {params: {id: string}}) {
-	// Fetch our cat information from the database
-	const cat = await fetchCat({id: params.id});
+export default async function BreadcrumbSlot({
+  params,
+}: {
+  params: { id: string };
+}) {
+  // Fetch our cat information from the database
+  const cat = await fetchCat({ id: params.id });
 
-	return (
-		<BreadcrumbList>
-			<BreadcrumbItem>
-				<BreadcrumbLink href="/">Home</BreadcrumbLink>
-			</BreadcrumbItem>
-			<BreadcrumbSeparator />
-			<BreadcrumbItem>
-				<BreadcrumbLink href="/cats">Cats</BreadcrumbLink>
-			</BreadcrumbItem>
-			<BreadcrumbSeparator />
-			<BreadcrumbItem>
-				<BreadcrumbPage className="capitalize">{cat.name}</BreadcrumbPage>
-			</BreadcrumbItem>
-		</BreadcrumbList>
-	);
+  return (
+    <BreadcrumbList>
+      <BreadcrumbItem>
+        <BreadcrumbLink href="/">Home</BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+      <BreadcrumbItem>
+        <BreadcrumbLink href="/cats">Cats</BreadcrumbLink>
+      </BreadcrumbItem>
+      <BreadcrumbSeparator />
+      <BreadcrumbItem>
+        <BreadcrumbPage className="capitalize">{cat.name}</BreadcrumbPage>
+      </BreadcrumbItem>
+    </BreadcrumbList>
+  );
 }
 ```
-
 
 ## Conclusion
 

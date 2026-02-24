@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import {
@@ -7,8 +5,9 @@ import {
   usersToWorkspaces,
   workspaceRole,
 } from "@openstatus/db/src/schema";
-
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const memberRouter = createTRPCRouter({

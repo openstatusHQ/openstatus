@@ -1,5 +1,23 @@
 "use client";
 
+import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Input } from "@openstatus/ui/components/ui/input";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
+import { useQueryStates } from "nuqs";
+import { useEffect, useState } from "react";
+
 import { Link } from "@/components/common/link";
 import {
   Section,
@@ -32,23 +50,7 @@ import { ThemePalettePicker } from "@/components/themes/theme-palette-picker";
 import { ThemeSelect } from "@/components/themes/theme-select";
 import { monitors } from "@/data/monitors";
 import { useTRPC } from "@/lib/trpc/client";
-import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Input } from "@openstatus/ui/components/ui/input";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { useSidebar } from "@openstatus/ui/components/ui/sidebar";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "next-themes";
-import { useQueryStates } from "nuqs";
-import { useEffect, useState } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 const MAIN_COLORS = [
@@ -81,10 +83,10 @@ export function Client() {
   return (
     <SectionGroup>
       <SectionGroupHeader>
-        <h1 className="font-bold text-2xl md:text-4xl">
+        <h1 className="text-2xl font-bold md:text-4xl">
           Status Page Theme Explorer
         </h1>
-        <h2 className="font-medium text-muted-foreground md:text-lg">
+        <h2 className="text-muted-foreground font-medium md:text-lg">
           View all the openstatus themes for your status page and learn how to
           create your own theme.
         </h2>
@@ -97,9 +99,9 @@ export function Client() {
             <Link href="#contribute-theme">Contribute your own?</Link>
           </SectionDescription>
         </SectionHeader>
-        <div className="sticky top-0 z-10 overflow-hidden rounded-lg border border-border bg-background outline-[3px] outline-background sm:relative">
+        <div className="border-border bg-background outline-background sticky top-0 z-10 overflow-hidden rounded-lg border outline-[3px] sm:relative">
           <div className="relative">
-            <div className="absolute top-0 right-0 rounded-bl-lg border-border border-b border-l bg-muted/50 px-2 py-0.5 text-[10px]">
+            <div className="border-border bg-muted/50 absolute top-0 right-0 rounded-bl-lg border-b border-l px-2 py-0.5 text-[10px]">
               {theme?.name}
             </div>
             <div className="sm:p-8">
@@ -108,7 +110,7 @@ export function Client() {
           </div>
         </div>
         <div className="flex gap-3">
-          <ThemeSelect className="min-w-[125px] max-w-[125px]" />
+          <ThemeSelect className="max-w-[125px] min-w-[125px]" />
           <Input
             placeholder={`Search from ${THEME_KEYS.length} themes`}
             value={q ?? ""}
@@ -142,7 +144,7 @@ export function Client() {
                   data-active={k === t}
                   data-slot="theme-card"
                   data-theme={k}
-                  className="relative h-40 cursor-pointer overflow-hidden rounded-md border border-border outline-none transition-all focus:outline-ring/50 focus:ring-2 focus:ring-ring/50 data-[active=true]:border-ring data-[active=true]:outline-[3px] data-[active=true]:outline-ring/50"
+                  className="border-border focus:outline-ring/50 focus:ring-ring/50 data-[active=true]:border-ring data-[active=true]:outline-ring/50 relative h-40 cursor-pointer overflow-hidden rounded-md border transition-all outline-none focus:ring-2 data-[active=true]:outline-[3px]"
                   onClick={() => setSearchParams({ t: k })}
                   role="button"
                   tabIndex={0}
@@ -154,7 +156,7 @@ export function Client() {
                 >
                   {isMounted ? (
                     <div
-                      className="absolute h-full w-full bg-background text-foreground"
+                      className="bg-background text-foreground absolute h-full w-full"
                       style={style as React.CSSProperties}
                       inert
                     >
@@ -166,7 +168,7 @@ export function Client() {
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-0.5 truncate">
-                    <div className="truncate font-medium text-foreground text-sm leading-none">
+                    <div className="text-foreground truncate text-sm leading-none font-medium">
                       {theme.name}
                     </div>
                     <div className="font-mono text-xs">
@@ -199,7 +201,7 @@ export function Client() {
                           <Tooltip>
                             <TooltipTrigger>
                               <div
-                                className="size-3.5 rounded-sm border bg-muted-foreground"
+                                className="bg-muted-foreground size-3.5 rounded-sm border"
                                 style={{ backgroundColor }}
                               />
                             </TooltipTrigger>

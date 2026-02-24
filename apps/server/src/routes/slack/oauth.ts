@@ -1,8 +1,11 @@
+import type { Context } from "hono";
+
 import crypto from "node:crypto";
-import { env } from "@/env";
+
 import { and, db, eq } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
-import type { Context } from "hono";
+
+import { env } from "@/env";
 
 const SLACK_OAUTH_URL = "https://slack.com/oauth/v2/authorize";
 const SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access";

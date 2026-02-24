@@ -1,10 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -13,9 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { SelectItem } from "@openstatus/ui/components/ui/select";
 import {
@@ -26,7 +21,10 @@ import { SelectTrigger } from "@openstatus/ui/components/ui/select";
 import { Select } from "@openstatus/ui/components/ui/select";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 export const types = [
   {
@@ -192,7 +190,7 @@ export function ContactForm({
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormLabel className="font-normal leading-none">
+                <FormLabel className="leading-none font-normal">
                   This bug prevents me from using the product.
                 </FormLabel>
               </FormItem>

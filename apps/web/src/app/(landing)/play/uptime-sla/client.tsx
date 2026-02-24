@@ -27,7 +27,6 @@ function parseDowntimeToSeconds(downtime: string): number {
   let totalSeconds = 0;
   let match: RegExpExecArray | null = null;
 
-  // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
   while ((match = regex.exec(downtime)) !== null) {
     const value = Number.parseInt(match[1], 10);
     const unit = match[2];
@@ -158,7 +157,7 @@ export function Calculation() {
             return (
               <li key={period}>
                 <span className="capitalize">{period} reporting:</span>{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {formatDuration(Math.round(allowedDowntimeSeconds))}
                 </span>{" "}
                 <span>downtime</span>
@@ -202,7 +201,7 @@ export function Calculation() {
             return (
               <li key={period}>
                 <span className="capitalize">{period} reporting:</span>{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {uptimePercentage.toFixed(5)}%
                 </span>{" "}
                 <span>uptime</span>

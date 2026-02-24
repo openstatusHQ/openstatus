@@ -1,11 +1,14 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { ColumnDef } from "@tanstack/react-table";
+
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import Link from "next/link";
+
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { type NotifierProvider, config } from "@/data/notifications.client";
-import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
+
 import { TableCellBadge } from "../table-cell-badge";
 import { DataTableRowActions } from "./data-table-row-actions";
 

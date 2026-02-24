@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -12,6 +13,7 @@ import { EmailClient } from "@openstatus/emails";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 
 import { app } from "@/index";
+
 import { protoStatusToDb } from "../converters";
 
 // Mock the sendStatusReportUpdate method

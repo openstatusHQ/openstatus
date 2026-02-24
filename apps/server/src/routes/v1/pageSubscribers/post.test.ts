@@ -1,8 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { app } from "@/index";
 import { db, eq } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
+
+import { app } from "@/index";
+
 import { PageSubscriberSchema } from "./schema";
 
 test("create a page subscription", async () => {

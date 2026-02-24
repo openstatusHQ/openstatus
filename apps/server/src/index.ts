@@ -10,14 +10,14 @@ import {
   withContext,
 } from "@logtape/logtape";
 import { getOpenTelemetrySink } from "@logtape/otel";
-import { Hono } from "hono";
-import { showRoutes } from "hono/dev";
-
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import { Scalar } from "@scalar/hono-api-reference";
+import { Hono } from "hono";
+import { showRoutes } from "hono/dev";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
+
 import openapiV1Json from "../static/openapi-v1.json" with { type: "json" };
 import openapiYaml from "../static/openapi.yaml" with { type: "text" };
 import { env } from "./env";
@@ -80,7 +80,6 @@ await configure({
   contextLocalStorage: new AsyncLocalStorage(),
 });
 
-/* biome-ignore lint/suspicious/noExplicitAny: <explanation> */
 function shouldSample(event: Record<string, any>): boolean {
   // Always keep errors
   if (event.status_code >= 500) return true;

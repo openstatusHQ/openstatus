@@ -1,6 +1,10 @@
 export type StatusType = "success" | "degraded" | "error" | "info" | "empty";
 export type StatusEventType = "incident" | "report" | "maintenance";
-export type StatusReportUpdateType = "investigating" | "identified" | "monitoring" | "resolved"
+export type StatusReportUpdateType =
+  | "investigating"
+  | "identified"
+  | "monitoring"
+  | "resolved";
 
 export interface StatusReportUpdate {
   date: Date;
@@ -30,21 +34,21 @@ export type StatusEventData =
   | { type: "maintenance"; data: Maintenance };
 
 export type StatusBarData = {
-    day: string;
-    bar: {
-        status: StatusType;
-        // NOTE: is in percentage! should sum up to 100%
-        height: number;
-    }[];
-    card: {
-        status: StatusType;
-        value: string;
-    }[];
-    events: {
-        id: number;
-        name: string;
-        type: StatusEventType;
-        from: Date | null;
-        to: Date | null;
-    }[];
-}
+  day: string;
+  bar: {
+    status: StatusType;
+    // NOTE: is in percentage! should sum up to 100%
+    height: number;
+  }[];
+  card: {
+    status: StatusType;
+    value: string;
+  }[];
+  events: {
+    id: number;
+    name: string;
+    type: StatusEventType;
+    from: Date | null;
+    to: Date | null;
+  }[];
+};

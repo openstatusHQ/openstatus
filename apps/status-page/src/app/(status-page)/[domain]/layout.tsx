@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+import {
+  THEME_KEYS,
+  type ThemeKey,
+  generateThemeStyles,
+} from "@openstatus/theme-store";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
+import { notFound } from "next/navigation";
+import { z } from "zod";
+
 import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/metadata";
 import { PasswordWrapper } from "@/components/password-wrapper";
 import {
@@ -7,15 +18,6 @@ import {
 import { FloatingTheme } from "@/components/status-page/floating-theme";
 import { ThemeProvider } from "@/components/themes/theme-provider";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import {
-  THEME_KEYS,
-  type ThemeKey,
-  generateThemeStyles,
-} from "@openstatus/theme-store";
-import { Toaster } from "@openstatus/ui/components/ui/sonner";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { z } from "zod";
 
 export const schema = z.object({
   value: z.enum(["duration", "requests", "manual"]).prefault("duration"),
@@ -46,7 +48,6 @@ export default async function Layout({
     <HydrateClient>
       <style
         id="theme-styles"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
           __html: generateThemeStyles(communityTheme),
         }}

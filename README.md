@@ -110,13 +110,13 @@ open http://localhost:3003  # Status Pages
 You can use [Devbox](https://www.jetify.com/devbox/) and get started with the following commands:
 
 1. Install Devbox
-    ```sh
-    curl -fsSL https://get.jetify.com/devbox | bash
-    ```
+   ```sh
+   curl -fsSL https://get.jetify.com/devbox | bash
+   ```
 2. Install project dependencies, build and start services
-    ```sh
-    devbox services up
-    ```
+   ```sh
+   devbox services up
+   ```
 
 ### Manual Setup
 

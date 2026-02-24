@@ -1,12 +1,12 @@
 import type { DefaultSession } from "next-auth";
-import NextAuth from "next-auth";
 
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
-
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
+import NextAuth from "next-auth";
 import { headers } from "next/headers";
+
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
 

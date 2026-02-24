@@ -1,11 +1,13 @@
 "use client";
 
-import type { MetricCard } from "@/components/content/metric-card";
-import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
-import type { RouterOutputs } from "@openstatus/api";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import type { RegionMetric } from "./region-metrics";
 import type { Region } from "./regions";
+import type { MetricCard } from "@/components/content/metric-card";
+import type { RouterOutputs } from "@openstatus/api";
+
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
+
+import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d"] as const;
@@ -101,7 +103,7 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
         total: status.success + status.error + status.degraded,
       };
     })
-    .reverse();
+    .toReversed();
 }
 
 /**
@@ -114,7 +116,7 @@ export function mapRegionMetrics(
 ): RegionMetric[] {
   if (!timeline)
     return (regions
-      .sort((a, b) => a.localeCompare(b))
+      .toSorted((a, b) => a.localeCompare(b))
       .map((region) => ({
         region,
         p50: 0,
@@ -146,7 +148,7 @@ export function mapRegionMetrics(
 
   (timeline.data as TimelineRow[])
     .filter((row) => regions.includes(row.region as Region))
-    .sort((a, b) => a.region.localeCompare(b.region))
+    .toSorted((a, b) => a.region.localeCompare(b.region))
     .forEach((row) => {
       const region = row.region as Region;
       const entry = map.get(region) ?? {
@@ -282,7 +284,7 @@ export function getMonitorListMetrics(
         value = monitors.filter((m) => m.active === false).length;
         break;
       case "p95":
-        const p95 = data.sort((a, b) => b.p95Latency - a.p95Latency)[0]
+        const p95 = data.toSorted((a, b) => b.p95Latency - a.p95Latency)[0]
           ?.p95Latency;
         value = p95 ? formatMilliseconds(p95) : "N/A";
         break;

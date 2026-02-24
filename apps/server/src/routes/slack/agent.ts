@@ -1,6 +1,8 @@
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
-import { generateText, stepCountIs } from "ai";
 import type { ModelMessage } from "ai";
+
+import { generateText, stepCountIs } from "ai";
+
 import { createTools } from "./tools";
 
 interface SlackThreadMessage {

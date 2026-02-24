@@ -1,3 +1,8 @@
+import type { RouterOutputs } from "@openstatus/api";
+import type { Addons } from "@openstatus/db/src/schema/plan/schema";
+
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,21 +15,17 @@ import {
   AlertDialogTrigger,
 } from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { Label } from "@openstatus/ui/components/ui/label";
-import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
-
-import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import type { Addons } from "@openstatus/db/src/schema/plan/schema";
-import { getAddonPriceConfig } from "@openstatus/db/src/schema/plan/utils";
 import { ButtonGroup } from "@openstatus/ui/components/ui/button-group";
 import { Input } from "@openstatus/ui/components/ui/input";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isTRPCClientError } from "@trpc/client";
 import { Check, MinusIcon, PlusIcon } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+
+import { useTRPC } from "@/lib/trpc/client";
 
 type Workspace = RouterOutputs["workspace"]["get"];
 
@@ -123,15 +124,15 @@ export function BillingAddons({
             <div className="text-muted-foreground">{description}</div>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="font-mono text-foreground text-sm">
+            <span className="text-foreground font-mono text-sm">
               {formatPrice(price)}
               {isQuantity ? "/mo./each" : "/mo."}
             </span>
             {hasAddon && !isQuantity ? (
-              <Check className="size-4 text-success" />
+              <Check className="text-success size-4" />
             ) : null}
             {hasAddon && isQuantity ? (
-              <span className="font-mono text-success">+{defaultValue}</span>
+              <span className="text-success font-mono">+{defaultValue}</span>
             ) : null}
           </div>
           <div className="col-span-2 flex items-center justify-end gap-1.5 lg:col-span-1">

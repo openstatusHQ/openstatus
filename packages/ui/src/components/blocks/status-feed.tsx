@@ -1,5 +1,9 @@
 "use client";
-import { useMemo } from "react";
+import type {
+  StatusReport,
+  Maintenance,
+} from "@openstatus/ui/components/blocks/status.types";
+
 import {
   StatusBlankContainer,
   StatusBlankContent,
@@ -19,10 +23,7 @@ import {
   StatusEventTimelineReport,
   StatusEventTitle,
 } from "@openstatus/ui/components/blocks/status-events";
-import type {
-  StatusReport,
-  Maintenance,
-} from "@openstatus/ui/components/blocks/status.types";
+import { useMemo } from "react";
 
 type UnifiedEvent = {
   id: number;
@@ -196,15 +197,15 @@ export function StatusFeed({
           data: maintenance,
         }),
       ),
-    ].sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+    ].toSorted((a, b) => b.startDate.getTime() - a.startDate.getTime());
   }, [statusReports, maintenances]);
 
   if (unifiedEvents.length === 0) {
     return (
       <StatusBlankContainer>
         <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-          <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-          <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+          <StatusBlankReport className="absolute -top-16 scale-60 opacity-50" />
+          <StatusBlankReport className="absolute -top-8 scale-80 opacity-80" />
           <StatusBlankReport />
         </div>
         <StatusBlankContent>

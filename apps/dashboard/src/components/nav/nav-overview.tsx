@@ -2,6 +2,9 @@
 
 import type { LucideIcon } from "lucide-react";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -10,8 +13,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 export function NavOverview({
   items,

@@ -1,8 +1,10 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { notFound, useParams } from "next/navigation";
+
+import { useTRPC } from "@/lib/trpc/client";
+
 import { SectionMagicLink } from "./_components/section-magic-link";
 import { SectionPassword } from "./_components/section-password";
 

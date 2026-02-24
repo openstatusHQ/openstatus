@@ -89,7 +89,7 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 
 - **Total Icons**: 75 unique icons
 - **Most Common**: Check, Plus, X, ChevronRight, ChevronDown, ChevronUp
-- **Categories**: 
+- **Categories**:
   - Navigation (Chevron*, Arrow*, MoreHorizontal)
   - Actions (Plus, X, Trash2, Copy, Pencil)
   - Status (Check, AlertCircle, CheckCircle2, XCircle)
@@ -99,6 +99,7 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 ## Icon Categories
 
 ### Navigation & Direction
+
 - ArrowUpRight
 - ChevronDown, ChevronDownIcon
 - ChevronLeft
@@ -107,6 +108,7 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 - ChevronsUpDown
 
 ### Actions & Operations
+
 - Check, CheckIcon
 - Copy, CopyPlus
 - Eye
@@ -116,6 +118,7 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 - X, XIcon
 
 ### Status & Feedback
+
 - AlertCircle
 - CheckCircle2
 - CircleCheck
@@ -124,6 +127,7 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 - XCircle
 
 ### UI & Interface
+
 - Bell
 - Lock
 - MoreHorizontal
@@ -132,6 +136,7 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 - Settings, Settings2
 
 ### Content & Data
+
 - Book
 - Braces
 - TableProperties
@@ -140,17 +145,20 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 - Terminal
 
 ### Time & Calendar
+
 - CalendarClock
 - CalendarIcon
 - Clock, ClockIcon
 
 ### User & Account
+
 - CreditCard
 - LogOut
 - User
 - Users
 
 ### System & Technical
+
 - Activity
 - Cog
 - FileDown, FileJson
@@ -159,17 +167,20 @@ This document lists all the lucide-react icons currently used in the OpenStatus 
 - Workflow
 
 ### Theme & Appearance
+
 - Laptop
 - Moon
 - Sun
 
 ### Communication
+
 - AudioLines
 - Inbox
 - Mic
 - Megaphone
 
 ### Miscellaneous
+
 - Bookmark
 - ExternalLink
 - Filter

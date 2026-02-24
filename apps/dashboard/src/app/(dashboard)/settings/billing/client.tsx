@@ -1,5 +1,15 @@
 "use client";
 
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { useEffect, useMemo, useTransition } from "react";
+import { toast } from "sonner";
+
 import { BillingAddons } from "@/components/content/billing-addons";
 import { BillingProgress } from "@/components/content/billing-progress";
 import {
@@ -26,14 +36,7 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useTransition } from "react";
-import { toast } from "sonner";
+
 import { searchParamsParsers } from "./search-params";
 
 const BASE_URL =

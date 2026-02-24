@@ -1,4 +1,5 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
+
 import { Cog, Trash2 } from "lucide-react";
 
 export const actions = [

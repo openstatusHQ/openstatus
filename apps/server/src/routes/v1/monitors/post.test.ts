@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 
 import { app } from "@/index";
 import { createErrorSchema } from "@/libs/errors";
+
 import { MonitorSchema } from "./schema";
 
 test("create a valid monitor", async () => {

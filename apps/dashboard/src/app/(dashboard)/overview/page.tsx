@@ -1,17 +1,22 @@
 "use client";
 
-import {
-  SectionDescription,
-  SectionGroup,
-  SectionHeader,
-  SectionTitle,
-} from "@/components/content/section";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNowStrict } from "date-fns";
+import { List, Search } from "lucide-react";
+import { Terminal } from "lucide-react";
+import Link from "next/link";
 
 import { Note, NoteButton } from "@/components/common/note";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import {
+  SectionDescription,
+  SectionGroup,
+  SectionHeader,
+  SectionTitle,
+} from "@/components/content/section";
 import { Section } from "@/components/content/section";
 import { columns as incidentsColumns } from "@/components/data-table/incidents/columns";
 import { columns as maintenancesColumns } from "@/components/data-table/maintenances/columns";
@@ -25,11 +30,7 @@ import {
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict } from "date-fns";
-import { List, Search } from "lucide-react";
-import { Terminal } from "lucide-react";
-import Link from "next/link";
+
 import { DataTableStatusReports } from "./data-table-status-reports";
 
 // FIXME: the page is server side

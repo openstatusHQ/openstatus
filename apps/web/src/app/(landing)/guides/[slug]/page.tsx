@@ -1,3 +1,8 @@
+import type { Metadata } from "next";
+
+import Image from "next/image";
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getGuides } from "@/content/utils";
 import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
@@ -10,9 +15,7 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import Image from "next/image";
-import { notFound } from "next/navigation";
+
 import { ContentMetadata } from "../../content-metadata";
 import { ContentPagination } from "../../content-pagination";
 
@@ -48,7 +51,7 @@ export default async function Guide({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const posts = getGuides().sort(
+  const posts = getGuides().toSorted(
     (a, b) =>
       b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
   );
@@ -79,7 +82,6 @@ export default async function Guide({
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
@@ -87,7 +89,7 @@ export default async function Guide({
       <h1>{post.metadata.title}</h1>
       <ContentMetadata data={post} />
       {post.metadata.image ? (
-        <div className="relative aspect-video w-full overflow-hidden border border-border">
+        <div className="border-border relative aspect-video w-full overflow-hidden border">
           <Image
             src={post.metadata.image}
             alt={post.metadata.title}

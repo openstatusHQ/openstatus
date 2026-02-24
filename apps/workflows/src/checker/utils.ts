@@ -1,5 +1,6 @@
 import type { NotificationProvider } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+
 import {
   sendAlert as sendDiscordAlert,
   sendDegraded as sendDiscordDegraded,

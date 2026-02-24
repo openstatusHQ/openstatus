@@ -129,6 +129,6 @@ export function transformPageData<
   return {
     ...data,
     passwordProtected:
-      data.accessType === "password" ? true : data.passwordProtected ?? false,
+      data.accessType === "password" ? true : (data.passwordProtected ?? false),
   };
 }

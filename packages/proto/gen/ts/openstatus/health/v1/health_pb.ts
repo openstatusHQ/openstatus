@@ -2,15 +2,27 @@
 // @generated from file openstatus/health/v1/health.proto (package openstatus.health.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenEnum,
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv2";
+
+import {
+  enumDesc,
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
 
 /**
  * Describes the file openstatus/health/v1/health.proto.
  */
-export const file_openstatus_health_v1_health: GenFile = /*@__PURE__*/
-  fileDesc("CiFvcGVuc3RhdHVzL2hlYWx0aC92MS9oZWFsdGgucHJvdG8SFG9wZW5zdGF0dXMuaGVhbHRoLnYxIh8KDENoZWNrUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJIr8BCg1DaGVja1Jlc3BvbnNlEkEKBnN0YXR1cxgBIAEoDjIxLm9wZW5zdGF0dXMuaGVhbHRoLnYxLkNoZWNrUmVzcG9uc2UuU2VydmluZ1N0YXR1cyJrCg1TZXJ2aW5nU3RhdHVzEh4KGlNFUlZJTkdfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWU0VSVklOR19TVEFUVVNfU0VSVklORxABEh4KGlNFUlZJTkdfU1RBVFVTX05PVF9TRVJWSU5HEAIyZgoNSGVhbHRoU2VydmljZRJVCgVDaGVjaxIiLm9wZW5zdGF0dXMuaGVhbHRoLnYxLkNoZWNrUmVxdWVzdBojLm9wZW5zdGF0dXMuaGVhbHRoLnYxLkNoZWNrUmVzcG9uc2UiA5ACAUJRWk9naXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvaGVhbHRoL3YxO2hlYWx0aHYxYgZwcm90bzM");
+export const file_openstatus_health_v1_health: GenFile /*@__PURE__*/ = fileDesc(
+  "CiFvcGVuc3RhdHVzL2hlYWx0aC92MS9oZWFsdGgucHJvdG8SFG9wZW5zdGF0dXMuaGVhbHRoLnYxIh8KDENoZWNrUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJIr8BCg1DaGVja1Jlc3BvbnNlEkEKBnN0YXR1cxgBIAEoDjIxLm9wZW5zdGF0dXMuaGVhbHRoLnYxLkNoZWNrUmVzcG9uc2UuU2VydmluZ1N0YXR1cyJrCg1TZXJ2aW5nU3RhdHVzEh4KGlNFUlZJTkdfU1RBVFVTX1VOU1BFQ0lGSUVEEAASGgoWU0VSVklOR19TVEFUVVNfU0VSVklORxABEh4KGlNFUlZJTkdfU1RBVFVTX05PVF9TRVJWSU5HEAIyZgoNSGVhbHRoU2VydmljZRJVCgVDaGVjaxIiLm9wZW5zdGF0dXMuaGVhbHRoLnYxLkNoZWNrUmVxdWVzdBojLm9wZW5zdGF0dXMuaGVhbHRoLnYxLkNoZWNrUmVzcG9uc2UiA5ACAUJRWk9naXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvaGVhbHRoL3YxO2hlYWx0aHYxYgZwcm90bzM",
+);
 
 /**
  * CheckRequest is the request message for health checks.
@@ -30,7 +42,7 @@ export type CheckRequest = Message<"openstatus.health.v1.CheckRequest"> & {
  * Describes the message openstatus.health.v1.CheckRequest.
  * Use `create(CheckRequestSchema)` to create a new message.
  */
-export const CheckRequestSchema: GenMessage<CheckRequest> = /*@__PURE__*/
+export const CheckRequestSchema: GenMessage<CheckRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_health_v1_health, 0);
 
 /**
@@ -51,7 +63,7 @@ export type CheckResponse = Message<"openstatus.health.v1.CheckResponse"> & {
  * Describes the message openstatus.health.v1.CheckResponse.
  * Use `create(CheckResponseSchema)` to create a new message.
  */
-export const CheckResponseSchema: GenMessage<CheckResponse> = /*@__PURE__*/
+export const CheckResponseSchema: GenMessage<CheckResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_health_v1_health, 1);
 
 /**
@@ -85,7 +97,7 @@ export enum CheckResponse_ServingStatus {
 /**
  * Describes the enum openstatus.health.v1.CheckResponse.ServingStatus.
  */
-export const CheckResponse_ServingStatusSchema: GenEnum<CheckResponse_ServingStatus> = /*@__PURE__*/
+export const CheckResponse_ServingStatusSchema: GenEnum<CheckResponse_ServingStatus> /*@__PURE__*/ =
   enumDesc(file_openstatus_health_v1_health, 1, 0);
 
 /**
@@ -103,7 +115,5 @@ export const HealthService: GenService<{
     methodKind: "unary";
     input: typeof CheckRequestSchema;
     output: typeof CheckResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_openstatus_health_v1_health, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_openstatus_health_v1_health, 0);

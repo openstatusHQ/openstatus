@@ -1,7 +1,3 @@
-import { ProcessMessage } from "@/components/content/process-message";
-import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
@@ -14,6 +10,12 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
+
+import { ProcessMessage } from "@/components/content/process-message";
+import { TimestampHoverCard } from "@/components/content/timestamp-hover-card";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { formatDate, formatDateRange, formatDateTime } from "@/lib/formatter";
+
 import { status } from "./messages";
 
 export function StatusEventGroup({
@@ -54,7 +56,7 @@ export function StatusEventContent({
       data-hoverable={hoverable}
       className={cn(
         "group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2",
-        "data-[hoverable=true]:hover:cursor-pointer data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50",
+        "data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50 data-[hoverable=true]:hover:cursor-pointer",
         className,
       )}
       {...props}
@@ -86,7 +88,7 @@ export function StatusEventTitleCheck({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger>
-            <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
+            <div className="border-success/20 bg-success/10 text-success rounded-full border p-0.5">
               <Check className="size-3 shrink-0" />
             </div>
           </TooltipTrigger>
@@ -139,7 +141,7 @@ export function StatusEventDate({
   const distance = formatDistanceStrict(date, new Date(), { addSuffix: true });
   return (
     <div className={cn("flex gap-2 lg:flex-col", className)} {...props}>
-      <div className="font-medium text-foreground">
+      <div className="text-foreground font-medium">
         {formatDate(date, { month: "short" })}
       </div>{" "}
       <Badge
@@ -161,7 +163,7 @@ export function StatusEventAside({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full">
+    <div className="border border-transparent lg:absolute lg:top-0 lg:-left-32 lg:h-full">
       <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
         {children}
       </div>
@@ -188,7 +190,7 @@ export function StatusEventTimelineReport({
   maxUpdates?: number;
 }) {
   const _prefix = usePathnamePrefix();
-  const sortedUpdates = [...updates].sort(
+  const sortedUpdates = [...updates].toSorted(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
   const _hasMoreUpdates = maxUpdates && sortedUpdates.length > maxUpdates;
@@ -266,13 +268,13 @@ export function StatusEventTimelineReportUpdate({
             <StatusEventTimelineTitle>
               <span>{status[report.status]}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
+              <span className="text-muted-foreground font-mono text-xs">
                 <TimestampHoverCard date={new Date(report.date)} asChild>
                   <span>{formatDateTime(report.date)}</span>
                 </TimestampHoverCard>
               </span>{" "}
               {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
+                <span className="text-muted-foreground/70 font-mono text-xs">
                   {duration}
                 </span>
               ) : null}
@@ -305,13 +307,13 @@ function StatusEventTimelineReadMore({
           {withDot ? (
             <div className="flex flex-col">
               <div className="flex h-5 flex-col items-center justify-center">
-                <div className="size-2.5 shrink-0 rounded-full bg-muted" />
+                <div className="bg-muted size-2.5 shrink-0 rounded-full" />
               </div>
             </div>
           ) : null}
           <Link
             href={href}
-            className="flex items-center gap-1 font-medium text-muted-foreground text-sm hover:text-foreground hover:underline"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm font-medium hover:underline"
           >
             View full report
             <ChevronRight className="size-4" />
@@ -354,7 +356,7 @@ export function StatusEventTimelineMaintenance({
             <StatusEventTimelineTitle>
               <span>Maintenance</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
+              <span className="text-muted-foreground font-mono text-xs">
                 <TimestampHoverCard date={maintenance.from} asChild>
                   <span>{from}</span>
                 </TimestampHoverCard>
@@ -364,7 +366,7 @@ export function StatusEventTimelineMaintenance({
                 </TimestampHoverCard>
               </span>{" "}
               {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
+                <span className="text-muted-foreground/70 font-mono text-xs">
                   (for {duration})
                 </span>
               ) : null}
@@ -390,7 +392,7 @@ export function StatusEventTimelineTitle({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-medium text-foreground text-sm", className)}
+      className={cn("text-foreground text-sm font-medium", className)}
       {...props}
     >
       {children}
@@ -406,7 +408,7 @@ export function StatusEventTimelineMessage({
   return (
     <div
       className={cn(
-        "py-1.5 font-mono text-muted-foreground text-sm",
+        "text-muted-foreground py-1.5 font-mono text-sm",
         className,
       )}
       {...props}
@@ -423,7 +425,7 @@ export function StatusEventTimelineDot({
   return (
     <div
       className={cn(
-        "size-2.5 shrink-0 rounded-full bg-muted",
+        "bg-muted size-2.5 shrink-0 rounded-full",
         "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",

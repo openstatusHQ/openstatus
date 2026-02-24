@@ -1,4 +1,5 @@
 import type { Stripe as StripeProps } from "@stripe/stripe-js";
+
 import { loadStripe } from "@stripe/stripe-js";
 
 import { env } from "@/env";

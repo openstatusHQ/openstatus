@@ -2,10 +2,12 @@
 
 import type { AppRouter } from "@openstatus/api";
 import type { QueryClient } from "@tanstack/react-query";
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createTRPCReact } from "@trpc/react-query";
 import { useState } from "react";
+
 import { makeQueryClient } from "./query-client";
 import { endingLink } from "./shared";
 
@@ -17,7 +19,6 @@ function getQueryClient() {
     return makeQueryClient();
   }
   // Browser: use singleton pattern to keep the same query client
-  // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
   return (clientQueryClientSingleton ??= makeQueryClient());
 }
 

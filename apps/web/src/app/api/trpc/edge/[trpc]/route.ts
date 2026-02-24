@@ -1,8 +1,8 @@
-import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 export const runtime = "edge";
 

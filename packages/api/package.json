@@ -2,6 +2,9 @@
   "name": "@openstatus/api",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "index.ts",
   "scripts": {
     "test": "bun test",
@@ -41,8 +44,5 @@
     "@types/react-dom": "19.2.2",
     "bun-types": "1.0.8",
     "typescript": "5.9.3"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

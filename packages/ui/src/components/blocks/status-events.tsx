@@ -1,3 +1,12 @@
+import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
+
+import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
+import {
+  formatDateRange,
+  incidentStatusLabels,
+  formatDate,
+  formatDateTime,
+} from "@openstatus/ui/components/blocks/status.utils";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import {
@@ -9,14 +18,6 @@ import {
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { Check } from "lucide-react";
-import {
-  formatDateRange,
-  incidentStatusLabels,
-  formatDate,
-  formatDateTime,
-} from "@openstatus/ui/components/blocks/status.utils";
-import type { StatusReportUpdateType } from "@openstatus/ui/components/blocks/status.types";
-import { StatusTimestamp } from "@openstatus/ui/components/blocks/status-timestamp";
 
 // ============================================================================
 // Container Components
@@ -130,7 +131,7 @@ export function StatusEventContent({
       data-hoverable={hoverable}
       className={cn(
         "group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2",
-        "data-[hoverable=true]:hover:cursor-pointer data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50",
+        "data-[hoverable=true]:hover:border-border/50 data-[hoverable=true]:hover:bg-muted/50 data-[hoverable=true]:hover:cursor-pointer",
         className,
       )}
       {...props}
@@ -195,7 +196,7 @@ export function StatusEventTitleCheck({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger aria-label="Report resolved">
-            <div className="rounded-full border border-success/20 bg-success/10 p-0.5 text-success">
+            <div className="border-success/20 bg-success/10 text-success rounded-full border p-0.5">
               <Check className="size-3 shrink-0" aria-hidden="true" />
             </div>
           </TooltipTrigger>
@@ -305,7 +306,7 @@ export function StatusEventDate({
       className={cn("flex gap-2 lg:flex-col", className)}
       {...props}
     >
-      <div className="font-medium text-foreground">
+      <div className="text-foreground font-medium">
         {formatDate(date, { month: "short" })}
       </div>{" "}
       <Badge
@@ -349,7 +350,7 @@ export function StatusEventAside({
   return (
     <div
       data-slot="status-event-aside"
-      className="lg:-left-32 border border-transparent lg:absolute lg:top-0 lg:h-full"
+      className="border border-transparent lg:absolute lg:top-0 lg:-left-32 lg:h-full"
     >
       <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
         {children}
@@ -425,7 +426,7 @@ export function StatusEventTimelineReport({
   withDot?: boolean;
   maxUpdates?: number;
 }) {
-  const sortedUpdates = [...updates].sort(
+  const sortedUpdates = [...updates].toSorted(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
   const displayedUpdates = maxUpdates
@@ -539,13 +540,13 @@ export function StatusEventTimelineReportUpdate({
             <StatusEventTimelineTitle>
               <span>{incidentStatusLabels[report.status]}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
+              <span className="text-muted-foreground font-mono text-xs">
                 <StatusTimestamp date={report.date} variant="rich" asChild>
                   <span>{formatDateTime(report.date)}</span>
                 </StatusTimestamp>
               </span>{" "}
               {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
+                <span className="text-muted-foreground/70 font-mono text-xs">
                   {duration}
                 </span>
               ) : null}
@@ -632,7 +633,7 @@ export function StatusEventTimelineMaintenance({
             <StatusEventTimelineTitle>
               <span>{maintenance.title}</span>{" "}
               <span className="text-muted-foreground/70">·</span>{" "}
-              <span className="font-mono text-muted-foreground text-xs">
+              <span className="text-muted-foreground font-mono text-xs">
                 <StatusTimestamp date={maintenance.from} variant="rich" asChild>
                   <span>{from}</span>
                 </StatusTimestamp>
@@ -642,7 +643,7 @@ export function StatusEventTimelineMaintenance({
                 </StatusTimestamp>
               </span>{" "}
               {duration ? (
-                <span className="font-mono text-muted-foreground/70 text-xs">
+                <span className="text-muted-foreground/70 font-mono text-xs">
                   (for {duration})
                 </span>
               ) : null}
@@ -682,7 +683,7 @@ export function StatusEventTimelineTitle({
   return (
     <div
       data-slot="status-event-timeline-title"
-      className={cn("font-medium text-foreground text-sm", className)}
+      className={cn("text-foreground text-sm font-medium", className)}
       {...props}
     >
       {children}
@@ -712,7 +713,7 @@ export function StatusEventTimelineMessage({
     <div
       data-slot="status-event-timeline-message"
       className={cn(
-        "py-1.5 font-mono text-muted-foreground text-sm",
+        "text-muted-foreground py-1.5 font-mono text-sm",
         className,
       )}
       {...props}
@@ -748,7 +749,7 @@ export function StatusEventTimelineDot({
     <div
       data-slot="status-event-timeline-dot"
       className={cn(
-        "size-2.5 shrink-0 rounded-full bg-muted",
+        "bg-muted size-2.5 shrink-0 rounded-full",
         "group-data-[variant=resolved]:bg-success",
         "group-data-[variant=monitoring]:bg-info",
         "group-data-[variant=identified]:bg-warning",

@@ -2,21 +2,39 @@
 // @generated from file openstatus/monitor/v1/http_monitor.proto (package openstatus.monitor.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import type {
+  BodyAssertion,
+  HeaderAssertion,
+  StatusCodeAssertion,
+} from "./assertions_pb.ts";
+import type { MonitorStatus, Periodicity, Region } from "./monitor_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenEnum,
+  GenFile,
+  GenMessage,
+} from "@bufbuild/protobuf/codegenv2";
+
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { BodyAssertion, HeaderAssertion, StatusCodeAssertion } from "./assertions_pb.ts";
 import { file_openstatus_monitor_v1_assertions } from "./assertions_pb.ts";
-import type { MonitorStatus, Periodicity, Region } from "./monitor_pb.ts";
 import { file_openstatus_monitor_v1_monitor } from "./monitor_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/monitor/v1/http_monitor.proto.
  */
-export const file_openstatus_monitor_v1_http_monitor: GenFile = /*@__PURE__*/
-  fileDesc("CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiWgoHSGVhZGVycxIoCgNrZXkYASABKAlCG7pHEToPEg1BdXRob3JpemF0aW9uukgEcgIQARIlCgV2YWx1ZRgCIAEoCUIWukcTOhESD0JlYXJlciB0b2tlbjEyMyJsChNPcGVuVGVsZW1ldHJ5Q29uZmlnEhoKCGVuZHBvaW50GAEgASgJQgi6SAVyAxiAEBI5CgdoZWFkZXJzGAIgAygLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYWRlcnNCCLpIBZIBAhAUIoEICgtIVFRQTW9uaXRvchIKCgJpZBgBIAEoCRI6CgRuYW1lGAIgASgJQiy6Rx86HRIbUHJvZHVjdGlvbiBBUEkgSGVhbHRoIENoZWNrukgHcgUQARiAAhI/CgN1cmwYAyABKAlCMrpHIjogEh5odHRwczovL2FwaS5leGFtcGxlLmNvbS9oZWFsdGi6SApyCBABGIAQiAEBEkEKC3BlcmlvZGljaXR5GAQgASgOMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLlBlcmlvZGljaXR5Qgi6SAWCAQIgABI7CgZtZXRob2QYBSABKA4yIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1ldGhvZEIIukgFggECIAASJQoEYm9keRgGIAEoCUIXukcUOhISEHsia2V5IjogInZhbHVlIn0SHAoHdGltZW91dBgHIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYCCABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYCSABKANCCbpIBiIEGAooABIdChBmb2xsb3dfcmVkaXJlY3RzGAogASgISAGIAQESOQoHaGVhZGVycxgLIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFBJUChZzdGF0dXNfY29kZV9hc3NlcnRpb25zGAwgAygLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLlN0YXR1c0NvZGVBc3NlcnRpb25CCLpIBZIBAhAKEkcKD2JvZHlfYXNzZXJ0aW9ucxgNIAMoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Cb2R5QXNzZXJ0aW9uQgi6SAWSAQIQChJLChFoZWFkZXJfYXNzZXJ0aW9ucxgOIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJBc3NlcnRpb25CCLpIBZIBAhAKEh0KC2Rlc2NyaXB0aW9uGA8gASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYECABKAgSDgoGcHVibGljGBEgASgIEj8KB3JlZ2lvbnMYEiADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYEyABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYFCABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1c0IOCgxfZGVncmFkZWRfYXRCEwoRX2ZvbGxvd19yZWRpcmVjdHMq9wEKCkhUVFBNZXRob2QSGwoXSFRUUF9NRVRIT0RfVU5TUEVDSUZJRUQQABITCg9IVFRQX01FVEhPRF9HRVQQARIUChBIVFRQX01FVEhPRF9QT1NUEAISFAoQSFRUUF9NRVRIT0RfSEVBRBADEhMKD0hUVFBfTUVUSE9EX1BVVBAEEhUKEUhUVFBfTUVUSE9EX1BBVENIEAUSFgoSSFRUUF9NRVRIT0RfREVMRVRFEAYSFQoRSFRUUF9NRVRIT0RfVFJBQ0UQBxIXChNIVFRQX01FVEhPRF9DT05ORUNUEAgSFwoTSFRUUF9NRVRIT0RfT1BUSU9OUxAJQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_monitor_v1_assertions, file_openstatus_monitor_v1_monitor]);
+export const file_openstatus_monitor_v1_http_monitor: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CihvcGVuc3RhdHVzL21vbml0b3IvdjEvaHR0cF9tb25pdG9yLnByb3RvEhVvcGVuc3RhdHVzLm1vbml0b3IudjEiWgoHSGVhZGVycxIoCgNrZXkYASABKAlCG7pHEToPEg1BdXRob3JpemF0aW9uukgEcgIQARIlCgV2YWx1ZRgCIAEoCUIWukcTOhESD0JlYXJlciB0b2tlbjEyMyJsChNPcGVuVGVsZW1ldHJ5Q29uZmlnEhoKCGVuZHBvaW50GAEgASgJQgi6SAVyAxiAEBI5CgdoZWFkZXJzGAIgAygLMh4ub3BlbnN0YXR1cy5tb25pdG9yLnYxLkhlYWRlcnNCCLpIBZIBAhAUIoEICgtIVFRQTW9uaXRvchIKCgJpZBgBIAEoCRI6CgRuYW1lGAIgASgJQiy6Rx86HRIbUHJvZHVjdGlvbiBBUEkgSGVhbHRoIENoZWNrukgHcgUQARiAAhI/CgN1cmwYAyABKAlCMrpHIjogEh5odHRwczovL2FwaS5leGFtcGxlLmNvbS9oZWFsdGi6SApyCBABGIAQiAEBEkEKC3BlcmlvZGljaXR5GAQgASgOMiIub3BlbnN0YXR1cy5tb25pdG9yLnYxLlBlcmlvZGljaXR5Qgi6SAWCAQIgABI7CgZtZXRob2QYBSABKA4yIS5vcGVuc3RhdHVzLm1vbml0b3IudjEuSFRUUE1ldGhvZEIIukgFggECIAASJQoEYm9keRgGIAEoCUIXukcUOhISEHsia2V5IjogInZhbHVlIn0SHAoHdGltZW91dBgHIAEoA0ILukgIIgYYwKkHKAASJQoLZGVncmFkZWRfYXQYCCABKANCC7pICCIGGMCpBygASACIAQESGAoFcmV0cnkYCSABKANCCbpIBiIEGAooABIdChBmb2xsb3dfcmVkaXJlY3RzGAogASgISAGIAQESOQoHaGVhZGVycxgLIAMoCzIeLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJzQgi6SAWSAQIQFBJUChZzdGF0dXNfY29kZV9hc3NlcnRpb25zGAwgAygLMioub3BlbnN0YXR1cy5tb25pdG9yLnYxLlN0YXR1c0NvZGVBc3NlcnRpb25CCLpIBZIBAhAKEkcKD2JvZHlfYXNzZXJ0aW9ucxgNIAMoCzIkLm9wZW5zdGF0dXMubW9uaXRvci52MS5Cb2R5QXNzZXJ0aW9uQgi6SAWSAQIQChJLChFoZWFkZXJfYXNzZXJ0aW9ucxgOIAMoCzImLm9wZW5zdGF0dXMubW9uaXRvci52MS5IZWFkZXJBc3NlcnRpb25CCLpIBZIBAhAKEh0KC2Rlc2NyaXB0aW9uGA8gASgJQgi6SAVyAxiACBIOCgZhY3RpdmUYECABKAgSDgoGcHVibGljGBEgASgIEj8KB3JlZ2lvbnMYEiADKA4yHS5vcGVuc3RhdHVzLm1vbml0b3IudjEuUmVnaW9uQg+6SAySAQkQHCIFggECIAASQgoOb3Blbl90ZWxlbWV0cnkYEyABKAsyKi5vcGVuc3RhdHVzLm1vbml0b3IudjEuT3BlblRlbGVtZXRyeUNvbmZpZxI0CgZzdGF0dXMYFCABKA4yJC5vcGVuc3RhdHVzLm1vbml0b3IudjEuTW9uaXRvclN0YXR1c0IOCgxfZGVncmFkZWRfYXRCEwoRX2ZvbGxvd19yZWRpcmVjdHMq9wEKCkhUVFBNZXRob2QSGwoXSFRUUF9NRVRIT0RfVU5TUEVDSUZJRUQQABITCg9IVFRQX01FVEhPRF9HRVQQARIUChBIVFRQX01FVEhPRF9QT1NUEAISFAoQSFRUUF9NRVRIT0RfSEVBRBADEhMKD0hUVFBfTUVUSE9EX1BVVBAEEhUKEUhUVFBfTUVUSE9EX1BBVENIEAUSFgoSSFRUUF9NRVRIT0RfREVMRVRFEAYSFQoRSFRUUF9NRVRIT0RfVFJBQ0UQBxIXChNIVFRQX01FVEhPRF9DT05ORUNUEAgSFwoTSFRUUF9NRVRIT0RfT1BUSU9OUxAJQlNaUWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tb25pdG9yL3YxO21vbml0b3J2MWIGcHJvdG8z",
+    [
+      file_buf_validate_validate,
+      file_gnostic_openapi_v3_annotations,
+      file_openstatus_monitor_v1_assertions,
+      file_openstatus_monitor_v1_monitor,
+    ],
+  );
 
 /**
  * Headers represents a key-value pair for HTTP headers.
@@ -43,35 +61,38 @@ export type Headers = Message<"openstatus.monitor.v1.Headers"> & {
  * Describes the message openstatus.monitor.v1.Headers.
  * Use `create(HeadersSchema)` to create a new message.
  */
-export const HeadersSchema: GenMessage<Headers> = /*@__PURE__*/
-  messageDesc(file_openstatus_monitor_v1_http_monitor, 0);
+export const HeadersSchema: GenMessage<Headers> /*@__PURE__*/ = messageDesc(
+  file_openstatus_monitor_v1_http_monitor,
+  0,
+);
 
 /**
  * OpenTelemetry configuration for exporting metrics.
  *
  * @generated from message openstatus.monitor.v1.OpenTelemetryConfig
  */
-export type OpenTelemetryConfig = Message<"openstatus.monitor.v1.OpenTelemetryConfig"> & {
-  /**
-   * OTEL endpoint URL.
-   *
-   * @generated from field: string endpoint = 1;
-   */
-  endpoint: string;
+export type OpenTelemetryConfig =
+  Message<"openstatus.monitor.v1.OpenTelemetryConfig"> & {
+    /**
+     * OTEL endpoint URL.
+     *
+     * @generated from field: string endpoint = 1;
+     */
+    endpoint: string;
 
-  /**
-   * Custom headers for OTEL requests.
-   *
-   * @generated from field: repeated openstatus.monitor.v1.Headers headers = 2;
-   */
-  headers: Headers[];
-};
+    /**
+     * Custom headers for OTEL requests.
+     *
+     * @generated from field: repeated openstatus.monitor.v1.Headers headers = 2;
+     */
+    headers: Headers[];
+  };
 
 /**
  * Describes the message openstatus.monitor.v1.OpenTelemetryConfig.
  * Use `create(OpenTelemetryConfigSchema)` to create a new message.
  */
-export const OpenTelemetryConfigSchema: GenMessage<OpenTelemetryConfig> = /*@__PURE__*/
+export const OpenTelemetryConfigSchema: GenMessage<OpenTelemetryConfig> /*@__PURE__*/ =
   messageDesc(file_openstatus_monitor_v1_http_monitor, 1);
 
 /**
@@ -225,7 +246,7 @@ export type HTTPMonitor = Message<"openstatus.monitor.v1.HTTPMonitor"> & {
  * Describes the message openstatus.monitor.v1.HTTPMonitor.
  * Use `create(HTTPMonitorSchema)` to create a new message.
  */
-export const HTTPMonitorSchema: GenMessage<HTTPMonitor> = /*@__PURE__*/
+export const HTTPMonitorSchema: GenMessage<HTTPMonitor> /*@__PURE__*/ =
   messageDesc(file_openstatus_monitor_v1_http_monitor, 2);
 
 /**
@@ -288,6 +309,7 @@ export enum HTTPMethod {
 /**
  * Describes the enum openstatus.monitor.v1.HTTPMethod.
  */
-export const HTTPMethodSchema: GenEnum<HTTPMethod> = /*@__PURE__*/
-  enumDesc(file_openstatus_monitor_v1_http_monitor, 0);
-
+export const HTTPMethodSchema: GenEnum<HTTPMethod> /*@__PURE__*/ = enumDesc(
+  file_openstatus_monitor_v1_http_monitor,
+  0,
+);

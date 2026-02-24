@@ -1,9 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { SidebarRight } from "@/components/nav/sidebar-right";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +10,11 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";
+
+import { Link } from "@/components/common/link";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { SidebarRight } from "@/components/nav/sidebar-right";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function Sidebar() {
   const { id } = useParams<{ id: string }>();
@@ -56,7 +57,7 @@ export function Sidebar() {
             {
               label: "Favicon",
               value: statusPage.icon ? (
-                <div className="size-4 overflow-hidden rounded border bg-muted">
+                <div className="bg-muted size-4 overflow-hidden rounded border">
                   <img src={statusPage.icon} alt="favicon" />
                 </div>
               ) : (

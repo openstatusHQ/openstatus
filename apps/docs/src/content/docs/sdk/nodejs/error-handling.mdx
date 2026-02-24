@@ -20,13 +20,13 @@ try {
 
 ## Common Error Codes
 
-| Code | Description |
-|------|-------------|
-| `unauthenticated` | Missing or invalid API key |
-| `not_found` | Resource does not exist |
-| `invalid_argument` | Validation failure (e.g., missing required field, value out of range) |
-| `permission_denied` | No access to this workspace or resource |
-| `already_exists` | Duplicate resource (e.g., slug already taken) |
+| Code                | Description                                                           |
+| ------------------- | --------------------------------------------------------------------- |
+| `unauthenticated`   | Missing or invalid API key                                            |
+| `not_found`         | Resource does not exist                                               |
+| `invalid_argument`  | Validation failure (e.g., missing required field, value out of range) |
+| `permission_denied` | No access to this workspace or resource                               |
+| `already_exists`    | Duplicate resource (e.g., slug already taken)                         |
 
 ## Retry Strategy
 
@@ -45,7 +45,9 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
         (error.code === "unavailable" || error.code === "deadline_exceeded") &&
         attempt < maxRetries
       ) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * 2 ** attempt),
+        );
         continue;
       }
       throw error;
@@ -55,6 +57,6 @@ async function withRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
 }
 
 const { httpMonitors } = await withRetry(() =>
-  client.monitor.v1.MonitorService.listMonitors({})
+  client.monitor.v1.MonitorService.listMonitors({}),
 );
 ```

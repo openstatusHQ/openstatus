@@ -1,5 +1,6 @@
-import { Link } from "@/content/link";
 import type { MDXData } from "@/content/utils";
+
+import { Link } from "@/content/link";
 
 export function ContentPagination({
   previousPost,

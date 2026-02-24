@@ -68,6 +68,7 @@ All services have been restored to normal operation. The deployment issue has be
 **Impact**: New deployments and builds failing
 
 **Communication approach**:
+
 - Clear about what was affected ("new deployments")
 - Specific about the problem ("elevated error rates")
 - Quick resolution time communicated
@@ -79,12 +80,14 @@ All services have been restored to normal operation. The deployment issue has be
 **Impact**: 18% error rate on average, spiking to 100%
 
 **What worked**:
+
 - Transparent about the cause ("configuration error")
 - Quantified impact (error rates)
 - Showed progression: investigation → rollback → recovery monitoring
 - Committed to improvement
 
 **Sample update progression**:
+
 1. "We're investigating reports of Copilot failures"
 2. "Configuration error identified during model update. Rolling back."
 3. "Rollback complete. Monitoring for full recovery."
@@ -95,12 +98,14 @@ All services have been restored to normal operation. The deployment issue has be
 ### During Rollback
 
 **Do**:
+
 - ✅ Announce the rollback immediately
 - ✅ Set expectations on timeline if known
 - ✅ Acknowledge the user impact
 - ✅ Monitor closely during rollback
 
 **Don't**:
+
 - ❌ Wait until rollback is complete to communicate
 - ❌ Over-promise on fix timing
 - ❌ Skip the post-incident analysis
@@ -108,6 +113,7 @@ All services have been restored to normal operation. The deployment issue has be
 ### After Resolution
 
 Always include:
+
 1. Confirmation that rollback succeeded
 2. Current system status
 3. Next steps (investigation, new deployment plan)

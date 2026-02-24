@@ -1,21 +1,15 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   type Region,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema/constants";
+import {
+  formatRegionCode,
+  groupByContinent,
+  regionDict,
+} from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
@@ -28,23 +22,29 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Slider } from "@openstatus/ui/components/ui/slider";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import { CircleX, Globe, Info } from "lucide-react";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { IconCloudProviderTooltip } from "@/components/common/icon-cloud-provider";
+import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { useTRPC } from "@/lib/trpc/client";
 import {
-  formatRegionCode,
-  groupByContinent,
-  regionDict,
-} from "@openstatus/regions";
-import { useQuery } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import { CircleX, Globe, Info } from "lucide-react";
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
@@ -151,7 +151,7 @@ export function FormSchedulingRegions({
                         )}
                       />
                       <span
-                        className="mt-3 flex w-full items-center justify-between gap-1 px-2.5 font-medium text-muted-foreground text-xs"
+                        className="text-muted-foreground mt-3 flex w-full items-center justify-between gap-1 px-2.5 text-xs font-medium"
                         aria-hidden="true"
                       >
                         {PERIODICITY.map((period) => (
@@ -160,7 +160,7 @@ export function FormSchedulingRegions({
                             className="flex w-0 flex-col items-center justify-center gap-2"
                           >
                             <span
-                              className={cn("h-1 w-px bg-muted-foreground/70")}
+                              className={cn("bg-muted-foreground/70 h-1 w-px")}
                             />
                             {period}
                           </span>
@@ -220,7 +220,7 @@ export function FormSchedulingRegions({
                               <div className="flex items-center justify-between">
                                 <FormLabel>
                                   {continent}{" "}
-                                  <span className="align-baseline font-mono font-normal text-muted-foreground/70 text-xs tabular-nums">
+                                  <span className="text-muted-foreground/70 align-baseline font-mono text-xs font-normal tabular-nums">
                                     ({selected}/{r.length})
                                   </span>
                                 </FormLabel>
@@ -307,13 +307,13 @@ export function FormSchedulingRegions({
                                             />
                                             <FormLabel
                                               htmlFor={region.code}
-                                              className="w-full truncate font-mono font-normal text-sm"
+                                              className="w-full truncate font-mono text-sm font-normal"
                                             >
                                               <span className="text-nowrap">
                                                 {formatRegionCode(region.code)}{" "}
                                                 {region.flag}
                                               </span>
-                                              <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                              <span className="text-muted-foreground truncate text-xs leading-[inherit] font-normal">
                                                 {region.location}
                                               </span>
                                               <IconCloudProviderTooltip
@@ -357,7 +357,7 @@ export function FormSchedulingRegions({
                     <div className="flex items-center justify-between">
                       <FormLabel>
                         Private Locations{" "}
-                        <span className="align-baseline font-mono font-normal text-muted-foreground/70 text-xs tabular-nums">
+                        <span className="text-muted-foreground/70 align-baseline font-mono text-xs font-normal tabular-nums">
                           ({watchPrivateLocations.length}/
                           {privateLocations.length})
                         </span>
@@ -419,7 +419,7 @@ export function FormSchedulingRegions({
                                     }}
                                   />
                                 </FormControl>
-                                <FormLabel className="w-full truncate font-mono font-normal text-sm">
+                                <FormLabel className="w-full truncate font-mono text-sm font-normal">
                                   {item.name}
                                   <Globe className="size-3" />
                                 </FormLabel>
@@ -438,9 +438,9 @@ export function FormSchedulingRegions({
           <FormCardFooter>
             <FormCardFooterInfo>
               Your plan allows you to run{" "}
-              <span className="font-medium text-foreground">{maxRegions}</span>{" "}
+              <span className="text-foreground font-medium">{maxRegions}</span>{" "}
               out of{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {allowedRegions.length}
               </span>{" "}
               regions. Learn more about{" "}

@@ -1,5 +1,6 @@
-import { regions } from "../regions/vercel";
 import type { ParserReturn, Region } from "../types";
+
+import { regions } from "../regions/vercel";
 
 export function parseXVercelId(header: string): ParserReturn<Region[]> {
   const regex = /([a-z]{3}[0-9])+:+/g;

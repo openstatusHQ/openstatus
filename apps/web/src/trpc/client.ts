@@ -1,6 +1,6 @@
-import { createTRPCClient, loggerLink } from "@trpc/client";
-
 import type { AppRouter } from "@openstatus/api";
+
+import { createTRPCClient, loggerLink } from "@trpc/client";
 
 import { endingLink } from "./shared";
 

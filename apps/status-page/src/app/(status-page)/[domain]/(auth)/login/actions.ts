@@ -1,10 +1,11 @@
 "use server";
 
-import { signIn } from "@/lib/auth";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { TRPCClientError } from "@trpc/client";
 import { AuthError } from "next-auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+
+import { signIn } from "@/lib/auth";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 export async function signInWithResendAction(formData: FormData) {
   try {

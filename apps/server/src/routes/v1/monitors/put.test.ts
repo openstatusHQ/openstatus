@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+
 import { MonitorSchema } from "./schema";
 
 test("update the monitor", async () => {

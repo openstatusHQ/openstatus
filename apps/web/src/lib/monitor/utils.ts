@@ -1,6 +1,6 @@
-import { endOfDay, startOfDay, startOfHour, subDays } from "date-fns";
-
 import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
+
+import { endOfDay, startOfDay, startOfHour, subDays } from "date-fns";
 
 export const periods = ["1d", "7d", "14d"] as const; // If neeeded (e.g. Pro plans), "7d", "30d"
 export const quantiles = ["p99", "p95", "p90", "p75", "p50"] as const;

@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
+
 import "./globals.css";
+import { cn } from "@openstatus/ui/lib/utils";
+import { SessionProvider } from "next-auth/react";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
+import LocalFont from "next/font/local";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/lib/auth";
 import { TRPCReactProvider } from "@/lib/trpc/client";
-import { Toaster } from "@openstatus/ui/components/ui/sonner";
-import { cn } from "@openstatus/ui/lib/utils";
-import { SessionProvider } from "next-auth/react";
-import LocalFont from "next/font/local";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
 
@@ -87,7 +91,7 @@ export default async function RootLayout({
           cal.variable,
           commitMono.variable,
           inter.variable,
-          "font-sans antialiased ",
+          "font-sans antialiased",
         )}
       >
         <SessionProvider session={session}>

@@ -8,6 +8,7 @@ description: Complete technical specification for DNS record monitoring
 A DNS Monitor is a component designed to verify the availability and correctness of DNS records. It performs periodic lookups for specified DNS record types against a target domain or subdomain from various geographical locations.
 
 **Use cases:**
+
 - Validating domain name resolution
 - Monitoring changes to critical DNS records (e.g., A, CNAME, MX)
 - Ensuring proper load balancing via DNS (when combined with multi-region checks)
@@ -23,6 +24,7 @@ A DNS Monitor is a component designed to verify the availability and correctness
 The fully qualified domain name or subdomain to be monitored.
 
 **Examples:**
+
 - `openstat.us`
 - `api.example.com`
 - `mail.example.org`
@@ -31,29 +33,29 @@ The fully qualified domain name or subdomain to be monitored.
 
 The monitor supports fetching and validating the following DNS record types:
 
--   `A` (Address Record): Maps a domain name to an IPv4 address.
--   `AAAA` (IPv6 Address Record): Maps a domain name to an IPv6 address.
--   `CNAME` (Canonical Name Record): Maps an alias domain name to another canonical domain name.
--   `MX` (Mail Exchange Record): Specifies the mail servers responsible for accepting email messages on behalf of a domain name.
--   `NS` (Name Server Record): Delegates a domain or subdomain to a set of authoritative name servers.
--   `TXT` (Text Record): Carries arbitrary human-readable text and is also used for various purposes like SPF, DKIM, DMARC, and site verification.
+- `A` (Address Record): Maps a domain name to an IPv4 address.
+- `AAAA` (IPv6 Address Record): Maps a domain name to an IPv6 address.
+- `CNAME` (Canonical Name Record): Maps an alias domain name to another canonical domain name.
+- `MX` (Mail Exchange Record): Specifies the mail servers responsible for accepting email messages on behalf of a domain name.
+- `NS` (Name Server Record): Delegates a domain or subdomain to a set of authoritative name servers.
+- `TXT` (Text Record): Carries arbitrary human-readable text and is also used for various purposes like SPF, DKIM, DMARC, and site verification.
 
 ### Regions
 
 The geographical locations from which the DNS monitoring checks are performed. This allows for verification of DNS propagation and performance across different networks.
 
-__Africa__
+**Africa**
 
 - Johannesburg, South Africa 🇿🇦 (free)
 
-__Asia__
+**Asia**
 
 - Hong Kong, Hong Kong 🇭🇰 (free)
 - Mumbai, India 🇮🇳
 - Singapore, Singapore 🇸🇬
 - Tokyo, Japan 🇯🇵
 
-__Europe__
+**Europe**
 
 - Amsterdam, Netherlands 🇳🇱 (free)
 - Bucharest, Romania 🇷🇴
@@ -64,7 +66,7 @@ __Europe__
 - Stockholm, Sweden 🇸🇪
 - Warsaw, Poland 🇵🇱
 
-__North America__
+**North America**
 
 - Ashburn, Virginia, USA 🇺🇸 (free)
 - Atlanta, Georgia, USA 🇺🇸
@@ -82,7 +84,7 @@ __North America__
 - San Jose, California, USA 🇺🇸
 - Toronto, Canada 🇨🇦
 
-__South America__
+**South America**
 
 - Bogota, Colombia 🇨🇴
 - Buenos Aires, Argentina 🇦🇷
@@ -90,13 +92,14 @@ __South America__
 - Sao Paulo, Brazil 🇧🇷 (free)
 - Santiago, Chile 🇨🇱
 
-__Oceania__
+**Oceania**
 
 - Sydney, Australia 🇦🇺 (free)
 
 ### Frequency
 
 The interval at which the DNS checks are performed. Supported frequencies:
+
 - 30 seconds
 - 1 minute
 - 5 minutes

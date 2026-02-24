@@ -1,9 +1,9 @@
-import { z } from "zod";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { continentDict, getRegionInfo, regionDict } from "@openstatus/regions";
 import { Redis } from "@upstash/redis";
+import { z } from "zod";
 
 // ============================================================================
 // Constants

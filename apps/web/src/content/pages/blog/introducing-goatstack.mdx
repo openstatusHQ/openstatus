@@ -18,18 +18,14 @@ We want the GoaT stack to have a great DX.
 **[SQLite](https://www.sqlite.org/)**: We have chosen SQLite as the database because we love it. It’s just a file.
 **[LiteStream](https://litestream.io/)**: To backup our database
 
-
 **[Protocol Buffer with ConnecTRPC](https://connectrpc.com/)**: For their http based protocol that works with Protocol Buffer.
 
 **[Chi](https://go-chi.io)**: For our Golang router\
 **[connectrpc.com/connect](https://connectrpc.com/connect)**: To handle http based request
 
-
 **[React](https://react.dev/)**: Our frontend framework of choice.\
 **[TanStack Query + Connect-Query](https://github.com/connectrpc/connect-query-es)**: to generate our typesafe query.\
 **[TanStack Router](https://tanstack.com/router/latest)**: The typed router is a joy to work with.
-
-
 
 ### API: Schema First Approach
 
@@ -55,40 +51,36 @@ message VoteResponse {
 
 ### Why not going full stack TypeScript
 
-
-<a href="https://bsky.app/profile/did:plc:eu6cezqsf5yocjsyc7mgkued/post/3lkeag64a2s2x"><Image
-  alt="New users per week"
-  src="/assets/posts/introducing-goatstack/bsky-post.png"
-  width={650}
-  height={575}
-/></a>
-
+<a href="https://bsky.app/profile/did:plc:eu6cezqsf5yocjsyc7mgkued/post/3lkeag64a2s2x">
+  <Image
+    alt="New users per week"
+    src="/assets/posts/introducing-goatstack/bsky-post.png"
+    width={650}
+    height={575}
+  />
+</a>
 
 We have worked in a large monorepo, we have often been frustrated by the number of times we had to restart our TypeScript LSP.
-
-
-
 
 We love Golang. We heavily rely on it for OpenStatus.
 
 ## How to get started with the Goat Stack
 
-
 ### Requirements
 
-To get started you need to have these  installed on your computer
+To get started you need to have these installed on your computer
 
 - [Just](https://just.systems)
 - [Golang](https://go.dev/)
 - [pnpm](https://pnpm.io)
 - [Node](https://nodejs.org/en)
 
-
-
 ### Get Started
+
 1. First clone our repository : [https://github.com/openstatusHQ/goat-stack](https://github.com/openstatusHQ/goat-stack)
 
 2. Run
+
 ```bash
 just init
 ```
@@ -96,7 +88,7 @@ just init
 It will download all the dependancies.
 
 3. Open your IDE and update `packages/proto/goat/v1/goat.proto`
-Add new procedure in the GoatService
+   Add new procedure in the GoatService
 
 ```proto
 service GoatService {
@@ -115,7 +107,7 @@ message GetVotesResponse {
 
 4. Run `just buf`
 
-5. Implement the handler in the server  `apps/server/internal/goat/handler.go`
+5. Implement the handler in the server `apps/server/internal/goat/handler.go`
 
 ```go
 func (h *goatHandler) Vote(ctx context.Context, req *connect.Request[goatv1.VoteRequest]) (*connect.Response[goatv1.VoteResponse], error) {
@@ -162,7 +154,7 @@ function App() {
   const { navigate } = useRouter();
   return (
     <div>
-      <div >
+      <div>
         <p>Is this the 🐐 stack?</p>
         <div>
           <Button
@@ -194,9 +186,7 @@ function App() {
     </div>
   );
 }
-
-````
-
+```
 
 ### How to deploy it.
 
@@ -214,7 +204,6 @@ dbs:
         access-key-id: ${CLOUDFLARE_R2_ACCESS_KEY_ID}
         secret-access-key: ${CLOUDFLARE_R2_SECRET_ACCESS_KEY}
 ```
-
 
 ### Conclusion
 

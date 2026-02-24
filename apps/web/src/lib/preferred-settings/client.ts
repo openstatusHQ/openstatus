@@ -1,7 +1,8 @@
+import type { PreferredSettings } from "./validation";
+
 import { useState } from "react";
 
 import { COOKIE_NAME } from "./shared";
-import type { PreferredSettings } from "./validation";
 import { preferencesSchema } from "./validation";
 
 function getPreferredSettingsCookie() {

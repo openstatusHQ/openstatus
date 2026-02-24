@@ -1,10 +1,10 @@
+import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
+import { httpPayloadSchema } from "@openstatus/utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
-
 import { checkRegion } from "@/lib/checker/utils";
-import { httpPayloadSchema } from "@openstatus/utils";
+
 import { isAnInvalidTestUrl } from "../../utils";
 
 export const runtime = "edge";

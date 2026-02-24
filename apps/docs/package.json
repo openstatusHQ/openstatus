@@ -1,7 +1,7 @@
 {
   "name": "@openstatus/docs",
-  "type": "module",
   "version": "0.0.1",
+  "type": "module",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",

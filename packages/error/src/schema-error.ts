@@ -1,7 +1,7 @@
+import type { ErrorCode } from "./error-code";
 import type { ZodError } from "zod";
 
 import { BaseError } from "./base-error";
-import type { ErrorCode } from "./error-code";
 import { parseZodErrorIssues } from "./utils";
 
 type Context = { raw: unknown };

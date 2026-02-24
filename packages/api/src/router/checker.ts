@@ -1,5 +1,3 @@
-import { TRPCError } from "@trpc/server";
-
 import { Events } from "@openstatus/analytics";
 import {
   deserialize,
@@ -18,7 +16,9 @@ import {
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

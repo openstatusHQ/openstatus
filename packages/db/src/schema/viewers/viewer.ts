@@ -1,3 +1,5 @@
+import type { AdapterAccountType } from "next-auth/adapters";
+
 import { sql } from "drizzle-orm";
 import {
   integer,
@@ -5,8 +7,6 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-
-import type { AdapterAccountType } from "next-auth/adapters";
 
 export const viewer = sqliteTable("viewer", {
   id: integer("id").primaryKey(),

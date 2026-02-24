@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+import { notFound } from "next/navigation";
+
 import { ContentPagination } from "@/app/(landing)/content-pagination";
 import { CustomMDX } from "@/content/mdx";
 import { getComparePages } from "@/content/utils";
@@ -11,8 +15,6 @@ import {
   getJsonLDOrganization,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -47,7 +49,7 @@ export default async function Blog({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const posts = getComparePages().sort(
+  const posts = getComparePages().toSorted(
     (a, b) =>
       b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
   );
@@ -78,7 +80,6 @@ export default async function Blog({
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}

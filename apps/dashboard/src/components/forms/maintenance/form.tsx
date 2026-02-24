@@ -1,16 +1,5 @@
 "use client";
 
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { ProcessMessage } from "@/components/content/process-message";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
@@ -45,6 +34,18 @@ import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import { ProcessMessage } from "@/components/content/process-message";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z
   .object({
@@ -241,7 +242,7 @@ export function FormMaintenance({
                               }
                             }}
                           />
-                          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                          <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
                             <ClockIcon size={16} aria-hidden="true" />
                           </div>
                         </div>
@@ -355,7 +356,7 @@ export function FormMaintenance({
                               }
                             }}
                           />
-                          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                          <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
                             <ClockIcon size={16} aria-hidden="true" />
                           </div>
                         </div>
@@ -405,7 +406,7 @@ export function FormMaintenance({
             <TabsContent value="tab-2">
               <div className="grid gap-2">
                 <Label>Preview</Label>
-                <div className="prose dark:prose-invert prose-sm rounded-md border px-3 py-2 text-foreground text-sm">
+                <div className="prose dark:prose-invert prose-sm text-foreground rounded-md border px-3 py-2 text-sm">
                   <ProcessMessage value={watchMessage} />
                 </div>
               </div>

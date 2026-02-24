@@ -1,5 +1,16 @@
 "use client";
 
+import type {
+  StatusBarData,
+  StatusEventType,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
+
+import {
+  statusColors,
+  formatDateRange,
+  requestStatusLabels,
+} from "@openstatus/ui/components/blocks/status.utils";
 import {
   HoverCard,
   HoverCardContent,
@@ -11,16 +22,6 @@ import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import { useCallback, useEffect, useRef, useState, forwardRef } from "react";
-import {
-  statusColors,
-  formatDateRange,
-  requestStatusLabels,
-} from "@openstatus/ui/components/blocks/status.utils";
-import type {
-  StatusBarData,
-  StatusEventType,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
 
 interface StatusBarProps {
   data: StatusBarData[];
@@ -498,7 +499,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
         <HoverCardTrigger asChild>
           <div
             ref={ref}
-            className="group relative flex h-full flex-1 cursor-pointer flex-col outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80 rounded-full"
+            className="group focus-visible:ring-ring/50 relative flex h-full flex-1 cursor-pointer flex-col rounded-full outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] data-[aria-pressed=true]:opacity-80"
             onClick={() => handlers.onClick(index)}
             onFocus={() => handlers.onFocus(index)}
             onBlur={handlers.onBlur}
@@ -643,9 +644,9 @@ function StatusBarCard({
       {isPinned && !isTouch && (
         <>
           <Separator />
-          <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
+          <div className="text-muted-foreground flex cursor-pointer items-center p-2 text-xs">
             <span>Click again to unpin</span>
-            <kbd className="ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded border border-input bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+            <kbd className="border-input bg-background text-muted-foreground ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded border px-1.5 font-mono text-[10px] font-medium">
               Esc
             </kbd>
           </div>
@@ -679,7 +680,7 @@ export function StatusBarSkeleton({
 }: React.ComponentProps<typeof Skeleton>) {
   return (
     <Skeleton
-      className={cn("h-[50px] w-full rounded-none bg-muted", className)}
+      className={cn("bg-muted h-[50px] w-full rounded-none", className)}
       {...props}
     />
   );
@@ -720,7 +721,7 @@ function StatusBarContent({
         />
         <div className="text-sm">{requestStatusLabels[status]}</div>
       </div>
-      <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
+      <div className="text-muted-foreground ml-auto font-mono text-xs tracking-tight">
         {value}
       </div>
     </div>
@@ -798,7 +799,7 @@ export function StatusBarEvent({
       {/* NOTE: this is to make the text truncate based on the width of the sibling element */}
       {/* REMINDER: height needs to be equal the text height */}
       <div className="h-4 w-full" />
-      <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
+      <div className="text-muted-foreground hover:text-foreground absolute inset-0">
         <div className="flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 shrink-0 rounded-sm"
@@ -809,9 +810,9 @@ export function StatusBarEvent({
           <div className="truncate">{name}</div>
         </div>
       </div>
-      <div className="mt-1 text-muted-foreground text-xs">
+      <div className="text-muted-foreground mt-1 text-xs">
         {formatDateRange(from, to ?? undefined)}{" "}
-        <span className="ml-1.5 font-mono text-muted-foreground/70">
+        <span className="text-muted-foreground/70 ml-1.5 font-mono">
           {formatDuration({ from, to, name, type })}
         </span>
       </div>

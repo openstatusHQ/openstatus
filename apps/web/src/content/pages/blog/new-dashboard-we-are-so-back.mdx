@@ -46,7 +46,6 @@ Let's **compare** right away: old (1) vs new (2) dashboard!
   <figcaption>New Dashboard with left sidebar navigation</figcaption>
 </figure>
 
-
 ### Different Layout
 
 The new design will look different to what you know from openstatus and might _look more familiar - maybe boring_. From day one, we used shadcn as our design system - back when it had just started as well. It's been in our DNA. We're keeping everything you already know, but with different color templates and the removal of the dotted background. We hope you won't miss it too much.
@@ -66,6 +65,7 @@ Instead, each incident now lives within its corresponding monitor’s subpage. W
 ### More Elements
 
 We have been collecting data that we never displayed. Sometimes you design something internally but realize users could benefit from it too. That was the case with our Tinybird `audit_logs` table (btw, proud of the implementation on [GitHub](https://github.com/openstatusHQ/openstatus/tree/main/packages/tinybird/src/audit-log)). We track:
+
 - From which region your monitor fails
 - When it’s degraded
 - When and to which channel we send notifications
@@ -91,13 +91,14 @@ Everybody's dashboard requires some high-level components for sections, forms, a
 For example is our `FormCardContent` using the following tailwind class:
 
 ```tsx
-const formCardContent = "px-4 group-has-data-[slot=card-upgrade]:opacity-50 group-has-data-[slot=card-upgrade]:pointer-events-none"
+const formCardContent =
+  "px-4 group-has-data-[slot=card-upgrade]:opacity-50 group-has-data-[slot=card-upgrade]:pointer-events-none";
 // you should still add <input disable={LOCKED} /> within the form
 ```
 
 That way, whenever we add the `FormCardUpgrade` component into the mix, it will automatically change the behavior of the content.
 
->Tailwind + shadcn is faster to design as dev than starting with Figma.
+> Tailwind + shadcn is faster to design as dev than starting with Figma.
 
 We are providing them to you via shadcn cli, like:
 
@@ -106,6 +107,7 @@ pnpm dlx shadcn@latest add https://template.openstatus.dev/r/form-card.json
 ```
 
 The following components are ready to be quick-installed:
+
 - `form-card` - inspired by Vercel’s settings cards with clear section separators
 - `metric-card` - inspired by Checkly's overview cards
 - `action-card`
@@ -140,10 +142,9 @@ Everything starts with some sketches: Reassemble all picked components from diff
   <figcaption>Excalidraw screenshot of the dashboard brainstorming.</figcaption>
 </figure>
 
-
 We started by only the frontend as full decoupled template, where we've added dummy data to not bother about the rest and fully embrace the UI/UX and iterate quicky on a lightweight nextjs project. It frees your mind from the overbloated (some call it design debt, which just naturally happens over time) vision and is much faster to run. The benefit for you? You have one more template to have fun with!
 
->"If your product evolves fast, you should be paying this design debt every 2-3 years." - [linear.app](https://linear.app/blog/a-design-reset)
+> "If your product evolves fast, you should be paying this design debt every 2-3 years." - [linear.app](https://linear.app/blog/a-design-reset)
 
 We didn’t wait to update the marketing page – time is limited and waiting until “everything” is finished means it will never ship.
 
@@ -157,7 +158,7 @@ As we had most of the dummy data structure similar to our DB schema, it was easy
 
 Big thanks to all early testers that provided incredible feedback and helped us shape the new dashboard. Starting from the template itself to once the dashboard was ready to be used. We really appreciate you.
 
->Ask! Don't be scared to ask - people in the OSS space and beyond are increadibly helpfull and will let you know how they see your product.
+> Ask! Don't be scared to ask - people in the OSS space and beyond are increadibly helpfull and will let you know how they see your product.
 
 ## Better CLI
 

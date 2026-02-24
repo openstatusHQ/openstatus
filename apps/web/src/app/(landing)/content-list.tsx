@@ -1,6 +1,7 @@
+import Link from "next/link";
+
 import { type MDXData, formatDate } from "@/content/utils";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
 
 export function ContentList({
   data,
@@ -14,7 +15,7 @@ export function ContentList({
   return (
     <ContentListContainer>
       {data
-        .sort((a, b) => {
+        .toSorted((a, b) => {
           if (
             new Date(a.metadata.publishedAt) > new Date(b.metadata.publishedAt)
           ) {
@@ -83,7 +84,7 @@ export function ContentListLink({
   return (
     <Link
       href={href}
-      className={cn("no-underline! flex flex-col hover:bg-muted", className)}
+      className={cn("hover:bg-muted flex flex-col no-underline!", className)}
       {...props}
     >
       {children}
@@ -98,7 +99,7 @@ export function ContentListItemTitle({
 }: React.ComponentProps<"span">) {
   return (
     <span
-      className={cn("truncate text-foreground tracking-tight", className)}
+      className={cn("text-foreground truncate tracking-tight", className)}
       {...props}
     >
       {children}
@@ -126,7 +127,7 @@ export function ContentListItemDate({
   return (
     <span
       className={cn(
-        "text-nowrap text-muted-foreground tabular-nums",
+        "text-muted-foreground text-nowrap tabular-nums",
         className,
       )}
       {...props}

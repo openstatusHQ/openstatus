@@ -1,5 +1,7 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Fragment } from "react";
@@ -52,9 +53,9 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
 
   // Find the first segment that matches a select item value, or fall back to last segment
   const value = selectItem
-    ? segments.find((segment) =>
+    ? (segments.find((segment) =>
         selectItem.items.some((item) => item.value === segment),
-      ) ?? segments[segments.length - 1]
+      ) ?? segments[segments.length - 1])
     : segments[segments.length - 1];
 
   // Find the index of the current value in segments to construct base path
@@ -90,7 +91,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
-                <BreadcrumbPage className=" hidden max-w-[120px] truncate font-commit-mono tracking-tight md:block lg:max-w-[200px] ">
+                <BreadcrumbPage className="font-commit-mono hidden max-w-[120px] truncate tracking-tight md:block lg:max-w-[200px]">
                   <span className="flex items-center gap-1.5">
                     {item.icon && (
                       <item.icon
@@ -113,7 +114,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 >
                   <SelectTrigger
                     id="select-option"
-                    className="font-commit-mono text-foreground tracking-tight [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
+                    className="font-commit-mono text-foreground [&>span_svg]:text-muted-foreground/80 tracking-tight [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0"
                     aria-label="Select option"
                   >
                     <SelectValue placeholder="Select option" />

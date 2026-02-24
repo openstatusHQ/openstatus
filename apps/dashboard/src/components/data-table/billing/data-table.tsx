@@ -1,8 +1,12 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { Fragment, useTransition } from "react";
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
 
+import {
+  getAddonPriceConfig,
+  getPriceConfig,
+} from "@openstatus/db/src/schema/plan/utils";
+import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Table,
@@ -13,19 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui/components/ui/table";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Check } from "lucide-react";
+import { Fragment, useTransition } from "react";
 
 import { config as featureGroups, plans } from "@/data/plans";
 import { getStripe } from "@/lib/stripe";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import {
-  getAddonPriceConfig,
-  getPriceConfig,
-} from "@openstatus/db/src/schema/plan/utils";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
-import { useMutation, useQuery } from "@tanstack/react-query";
 
 const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -72,14 +72,14 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
               <TableHead
                 key={id}
                 className={cn(
-                  "h-auto p-2 align-bottom text-foreground",
+                  "text-foreground h-auto p-2 align-bottom",
                   id === "starter" ? "bg-muted/30" : "",
                 )}
               >
                 <div className="flex h-full flex-col justify-between gap-1">
                   <div className="flex flex-1 flex-col gap-1">
                     <p className="font-cal text-lg">{plan.title}</p>
-                    <p className="text-wrap font-normal text-muted-foreground text-xs">
+                    <p className="text-muted-foreground text-xs font-normal text-wrap">
                       {plan.description}
                     </p>
                   </div>
@@ -187,7 +187,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                         }
                         if (typeof limitValue === "boolean") {
                           return limitValue ? (
-                            <Check className="h-4 w-4 text-foreground" />
+                            <Check className="text-foreground h-4 w-4" />
                           ) : (
                             <span className="text-muted-foreground/50">
                               &#8208;

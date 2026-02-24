@@ -10,8 +10,8 @@ jobs:
     name: 🗃️ Migrate DB
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
-      DATABASE_AUTH_TOKEN:  ${{ secrets.DATABASE_AUTH_TOKEN }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4

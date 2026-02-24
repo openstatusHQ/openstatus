@@ -1,11 +1,4 @@
-import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
-import { tb } from "@/libs/clients";
 import type { ServiceImpl } from "@connectrpc/connect";
-import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
-import { monitor, monitorRun } from "@openstatus/db/src/schema";
-import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
-import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import type {
   DNSMonitor,
   GetMonitorResponse,
@@ -16,7 +9,16 @@ import type {
   RegionStatus,
   TCPMonitor,
 } from "@openstatus/proto/monitor/v1";
+
+import { and, db, eq, gte, inArray, isNull, sql } from "@openstatus/db";
+import { monitor, monitorRun } from "@openstatus/db/src/schema";
+import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
+import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import { TimeRange } from "@openstatus/proto/monitor/v1";
+
+import { env } from "@/env";
+import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
+import { tb } from "@/libs/clients";
 
 import { getRpcContext } from "../../interceptors";
 import {

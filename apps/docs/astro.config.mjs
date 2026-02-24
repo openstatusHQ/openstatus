@@ -5,7 +5,6 @@ import { defineConfig, envField } from "astro/config";
 import starlightImageZoom from "starlight-image-zoom";
 import starlightLinksValidator from "starlight-links-validator";
 import starlightLlmsTxt from "starlight-llms-txt";
-
 import Icons from "unplugin-icons/vite";
 
 // https://astro.build/config

@@ -1,6 +1,9 @@
-import fs from "node:fs";
 import type { RegionMetricsChartTable } from "@/data/content";
+
+import fs from "node:fs";
+
 import { type Region, regionDict } from "@openstatus/regions";
+
 import { SimpleChart } from "./simple-chart";
 
 export interface LatencyChartTableProps {

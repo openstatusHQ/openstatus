@@ -1,3 +1,5 @@
+import type { MetadataRoute } from "next";
+
 import {
   getBlogPosts,
   getChangelogPosts,
@@ -8,7 +10,6 @@ import {
   getToolsPages,
   getUnrelatedPages,
 } from "@/content/utils";
-import type { MetadataRoute } from "next";
 
 const allPosts = getBlogPosts();
 const allChangelogs = getChangelogPosts();

@@ -1,8 +1,8 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
-
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
+
+import { AlertCircle, CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 
 export default function DomainStatusIcon({
   status,
@@ -13,7 +13,7 @@ export default function DomainStatusIcon({
 }) {
   return loading ? (
     <LoaderCircle
-      className="animate-spin text-muted-foreground"
+      className="text-muted-foreground animate-spin"
       stroke="currentColor"
     />
   ) : status === "Valid Configuration" ? (

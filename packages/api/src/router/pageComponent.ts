@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
 import {
   pageComponent,
@@ -10,9 +9,9 @@ import {
   selectPageComponentSchema,
   selectStatusReportSchema,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const pageComponentRouter = createTRPCRouter({

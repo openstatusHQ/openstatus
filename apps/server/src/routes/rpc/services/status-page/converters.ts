@@ -5,6 +5,7 @@ import type {
   StatusPage,
   StatusPageSummary,
 } from "@openstatus/proto/status_page/v1";
+
 import {
   OverallStatus,
   PageAccessType,

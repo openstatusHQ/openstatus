@@ -1,9 +1,10 @@
 export * from "./types";
+import type { Theme, ThemeDefinition, ThemeMap } from "./types";
+
 import { DRACULA_THEME } from "./dracula";
 import { GITHUB_HIGH_CONTRAST_THEME } from "./github";
 import { OPENSTATUS_ROUNDED_THEME, OPENSTATUS_THEME } from "./openstatus";
 import { SUPABASE_THEME } from "./supabase";
-import type { Theme, ThemeDefinition, ThemeMap } from "./types";
 import { assertUniqueThemeIds } from "./utils";
 // Please keep the themes ordered :)
 const THEMES_LIST = [

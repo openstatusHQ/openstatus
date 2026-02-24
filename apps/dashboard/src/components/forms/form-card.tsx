@@ -8,7 +8,6 @@ import {
 } from "@openstatus/ui/components/ui/card";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
-
 import { type VariantProps, cva } from "class-variance-authority";
 
 // py-0
@@ -205,7 +204,7 @@ export function FormCardEmpty({
     <div
       data-slot="card-empty"
       className={cn(
-        "pointer-events-none absolute inset-0 z-10 bg-background opacity-70 blur",
+        "bg-background pointer-events-none absolute inset-0 z-10 opacity-70 blur",
         className,
       )}
       {...props}

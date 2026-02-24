@@ -1,18 +1,19 @@
 "use client";
 
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { Bar, BarChart, XAxis } from "recharts";
-
-import { mapUptime } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
 import type { Region } from "@openstatus/db/src/schema/constants";
+
 import {
   type ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
+import { Bar, BarChart, XAxis } from "recharts";
+
+import { mapUptime } from "@/data/metrics.client";
+import { useTRPC } from "@/lib/trpc/client";
 // import { startOfDay, subDays } from "date-fns";
 
 const chartConfig = {
@@ -53,7 +54,7 @@ export function ChartBarUptimeLight({
   );
 
   if (isLoading) {
-    return <Skeleton className=" my-auto h-5 w-full" />;
+    return <Skeleton className="my-auto h-5 w-full" />;
   }
 
   const refinedUptime = uptime ? mapUptime(uptime) : [];

@@ -1,5 +1,3 @@
-import { Link } from "@/components/common/link";
-import { useTRPC } from "@/lib/trpc/client";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +9,10 @@ import {
 import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+
+import { Link } from "@/components/common/link";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { ContactForm, type FormValues } from "./form";
 
 export function FormDialogSupportContact({
