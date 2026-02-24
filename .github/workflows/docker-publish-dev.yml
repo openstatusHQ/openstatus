@@ -46,7 +46,7 @@ jobs:
             dockerfile: apps/workflows/Dockerfile
             port: 3000
           - service: private-location
-            context: .
+            context: apps/private-location
             dockerfile: apps/private-location/Dockerfile
             port: 8081
           - service: status-page
@@ -54,7 +54,7 @@ jobs:
             dockerfile: apps/status-page/Dockerfile
             port: 3003
           - service: checker
-            context: .
+            context: apps/checker
             dockerfile: apps/checker/Dockerfile
             port: 8082
 
