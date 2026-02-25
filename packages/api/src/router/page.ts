@@ -79,8 +79,7 @@ export const pageRouter = createTRPCRouter({
 
       // the user is not eligible for password protection
       if (
-        !
-        limit["password-protection"] &&
+        !limit["password-protection"] &&
         opts.input.passwordProtected === true
       ) {
         throw new TRPCError({
@@ -460,8 +459,7 @@ export const pageRouter = createTRPCRouter({
 
       // the user is not eligible for password protection
       if (
-        !
-        limit["password-protection"] &&
+        !limit["password-protection"] &&
         opts.input.accessType === "password"
       ) {
         throw new TRPCError({
@@ -472,8 +470,7 @@ export const pageRouter = createTRPCRouter({
       }
 
       if (
-        !
-        limit["email-domain-protection"] &&
+        !limit["email-domain-protection"] &&
         opts.input.accessType === "email-domain"
       ) {
         throw new TRPCError({

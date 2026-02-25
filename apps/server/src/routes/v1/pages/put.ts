@@ -69,11 +69,7 @@ export function registerPutPage(api: typeof pagesApi) {
       });
     }
 
-    if (
-      !
-      limits["password-protection"] &&
-      input?.passwordProtected === true
-    ) {
+    if (!limits["password-protection"] && input?.passwordProtected === true) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for password protection",
@@ -81,8 +77,7 @@ export function registerPutPage(api: typeof pagesApi) {
     }
 
     if (
-      !
-      limits["email-domain-protection"] &&
+      !limits["email-domain-protection"] &&
       (input?.accessType === "email-domain" || input?.authEmailDomains?.length)
     ) {
       throw new OpenStatusApiError({
@@ -92,8 +87,7 @@ export function registerPutPage(api: typeof pagesApi) {
     }
 
     if (
-      !
-      limits["password-protection"] &&
+      !limits["password-protection"] &&
       (input?.accessType === "password" || input?.password)
     ) {
       throw new OpenStatusApiError({

@@ -383,9 +383,7 @@ function ThemeValueSelector(props: {
     return (
       <label htmlFor={props.id} className="ml-auto flex items-center gap-2">
         <span className="text-muted-foreground font-mono text-xs">
-          {value ??
-            options.find((option) => ! option.label)?.value ??
-            ""}
+          {value ?? options.find((option) => !option.label)?.value ?? ""}
         </span>
         <Checkbox
           id={props.id}
@@ -398,10 +396,8 @@ function ThemeValueSelector(props: {
               [resolvedTheme as "light" | "dark"]: {
                 ...props.theme[resolvedTheme as "light" | "dark"],
                 [props.id]: checked
-                  ? (options.find((option) =>  option.label)?.value ??
-                    "")
-                  : (options.find((option) => ! option.label)?.value ??
-                    ""),
+                  ? (options.find((option) => option.label)?.value ?? "")
+                  : (options.find((option) => !option.label)?.value ?? ""),
               },
             })
           }

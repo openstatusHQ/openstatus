@@ -122,9 +122,7 @@ export const MonitorSchema = z
       )
       .superRefine((regions, ctx) => {
         const deprecatedRegions = regions.filter((r) => {
-          return !AVAILABLE_REGIONS.includes(
-            r,
-          );
+          return !AVAILABLE_REGIONS.includes(r);
         });
         if (deprecatedRegions.length > 0) {
           ctx.addIssue({
@@ -388,9 +386,7 @@ const baseRequest = z.object({
     )
     .superRefine((regions, ctx) => {
       const deprecatedRegions = regions.filter((r) => {
-        return !AVAILABLE_REGIONS.includes(
-          r,
-        );
+        return !AVAILABLE_REGIONS.includes(r);
       });
       if (deprecatedRegions.length > 0) {
         ctx.addIssue({

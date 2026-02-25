@@ -335,11 +335,7 @@ export const statusPageRouter = createTRPCRouter({
               groupId: group.groupId,
               groupName: group.groupName ?? "",
               components: sortedComponents,
-              status: getWorstVariant(
-                group.components.map(
-                  (c) => c.status,
-                ),
-              ),
+              status: getWorstVariant(group.components.map((c) => c.status)),
               order: group.minOrder,
             },
           ];
@@ -579,9 +575,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const statusDataByMonitorId = new Map<
         string,
-        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-         
-         
+        Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
       >();
 
       // Consolidate status data from all monitor types into the map
@@ -870,9 +864,7 @@ export const statusPageRouter = createTRPCRouter({
 
       const metricsDataByMonitorId = new Map<
         string,
-        | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-         
-         
+        Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
       >();
 
       if (metricsLatencyMultiHttp?.data) {

@@ -13,8 +13,7 @@ function composeEventHandlers<E>(
     originalEventHandler?.(event);
 
     if (
-      !
-      checkForDefaultPrevented ||
+      !checkForDefaultPrevented ||
       !(event as unknown as Event).defaultPrevented
     ) {
       return ourEventHandler?.(event);

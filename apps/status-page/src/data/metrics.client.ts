@@ -146,7 +146,7 @@ export function mapRegionMetrics(
     }
   >();
 
-  (timeline.data)
+  timeline.data
     .filter((row) => regions.includes(row.region as Region))
     .toSorted((a, b) => a.region.localeCompare(b.region))
     .forEach((row) => {

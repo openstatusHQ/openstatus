@@ -96,7 +96,7 @@ export function GlobalUptimeSection({
               value: v ?? "0",
               trend: hasTrend ? trend : null,
               raw: value ?? 0,
-            } as (typeof acc)[typeof k  ];
+            } as (typeof acc)[typeof k];
           } else {
             acc[k] = {
               label: metricsCards[k].label,
@@ -104,7 +104,7 @@ export function GlobalUptimeSection({
               value: v ?? "0",
               trend: 1,
               raw: value ?? 0,
-            } as (typeof acc)[typeof k  ];
+            } as (typeof acc)[typeof k];
           }
         });
         return acc;
@@ -131,8 +131,7 @@ export function GlobalUptimeSection({
     ] as const
   ).map((key) => {
     if (!key) return null;
-    const metric =
-      defineMetrics()?.[key];
+    const metric = defineMetrics()?.[key];
     return {
       label: metricsCards[key].label,
       value: metric?.value ?? "0",

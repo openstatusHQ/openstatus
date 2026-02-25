@@ -95,9 +95,7 @@ export function Client() {
 
             if (key in workspace.limits) {
               enabled =
-                workspace.limits[
-                  key as "opsgenie" | "sms"   | "whatsapp"
-                ];
+                workspace.limits[key as "opsgenie" | "sms" | "whatsapp"];
             }
 
             if (limitReached) {

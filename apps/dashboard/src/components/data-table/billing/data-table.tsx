@@ -147,8 +147,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
                       </div>
                     </TableCell>
                     {filteredPlans.map((plan) => {
-                      const limitValue =
-                        plan.limits[value];
+                      const limitValue = plan.limits[value];
                       const isAddon = value in plan.addons;
 
                       function renderContent() {
