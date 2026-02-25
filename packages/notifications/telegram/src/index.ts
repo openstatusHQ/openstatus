@@ -1,5 +1,6 @@
-import { telegramDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+
+import { telegramDataSchema } from "@openstatus/db/src/schema";
 
 export const sendAlert = async ({
   monitor,

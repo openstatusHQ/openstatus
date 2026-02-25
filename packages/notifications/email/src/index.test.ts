@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 const sendMonitorAlertMock = mock(async (_callArgs) => {});

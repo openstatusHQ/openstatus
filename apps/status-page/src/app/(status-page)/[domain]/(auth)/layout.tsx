@@ -1,6 +1,7 @@
+import { Suspense } from "react";
+
 import { Footer } from "@/components/nav/footer";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { Suspense } from "react";
 
 export default async function Layout({
   children,

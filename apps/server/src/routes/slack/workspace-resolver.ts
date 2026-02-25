@@ -1,10 +1,11 @@
+import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+
 import { and, db, eq } from "@openstatus/db";
 import {
   integration,
   selectWorkspaceSchema,
   workspace,
 } from "@openstatus/db/src/schema";
-import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
 
 export interface SlackWorkspace {
   workspace: Workspace;

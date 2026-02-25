@@ -1,7 +1,5 @@
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { formatDate } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
+
 import {
   Table,
   TableBody,
@@ -11,6 +9,10 @@ import {
   TableRow,
 } from "@openstatus/ui/components/ui/table";
 import { useMutation } from "@tanstack/react-query";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
 
 type ApiKey = RouterOutputs["apiKeyRouter"]["getAll"][number];
 
@@ -46,7 +48,7 @@ export function DataTable({
           {apiKeys.map((apiKey) => (
             <TableRow key={apiKey.id}>
               <TableCell className="font-medium">{apiKey.name}</TableCell>
-              <TableCell className="max-w-[200px] truncate text-muted-foreground">
+              <TableCell className="text-muted-foreground max-w-[200px] truncate">
                 {apiKey.description ?? "-"}
               </TableCell>
               <TableCell>

@@ -1,7 +1,6 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { notificationsApi } from "./index";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
@@ -11,7 +10,10 @@ import {
   notificationsToMonitors,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import type { notificationsApi } from "./index";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+
 import { NotificationSchema } from "./schema";
 
 const postRoute = createRoute({

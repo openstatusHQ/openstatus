@@ -8,9 +8,10 @@ description: Technical specification for the OpenStatus Terraform Provider.
 The OpenStatus Terraform provider enables you to manage your OpenStatus monitors and status pages programmatically using HashiCorp Terraform. This allows for Infrastructure as Code (IaC) practices, version control, and automated deployment of your monitoring configurations.
 
 **Key capabilities:**
--   Define and manage OpenStatus monitors as Terraform resources.
--   Automate the deployment and updates of monitoring configurations.
--   Integrate OpenStatus into your existing IaC workflows.
+
+- Define and manage OpenStatus monitors as Terraform resources.
+- Automate the deployment and updates of monitoring configurations.
+- Integrate OpenStatus into your existing IaC workflows.
 
 ## Installation
 
@@ -56,24 +57,24 @@ Manages an OpenStatus monitor. This resource allows you to define and control th
 
 **Arguments:**
 
-| Argument      | Type                  | Required | Default | Description                                                                                                                                     |
-| :------------ | :-------------------- | :------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `url`         | `string`              | Yes      |         | The URL or URI of the endpoint to be monitored. Format depends on the monitor type (e.g., full URL for HTTP, host:port for TCP).          |
-| `regions`     | `list(string)`        | Yes      |         | A list of region identifiers (e.g., `"iad"`, `"jnb"`) from where the monitor checks will be performed.                                        |
-| `periodicity` | `string`              | Yes      |         | The frequency at which the monitor will perform checks. Supported values: `"30s"`, `"1m"`, `"5m"`, `"10m"`, `"30m"`, `"1h"`. |
-| `name`        | `string`              | Yes      |         | A human-readable name for the monitor.                                                                                                          |
-| `active`      | `bool`                | Yes      |         | Specifies whether the monitor is active (`true`) or paused (`false`).                                                                           |
-| `description` | `string` (optional)   | No       | `""`    | A detailed description of the monitor's purpose or configuration.                                                                               |
-| `monitor_type` | `string`             | Yes      |         | The type of monitor to create. Supported values: `"HTTP"`, `"TCP"`, `"DNS"`                                                               |
-| `method`      | `string` (optional)   | No       | `"GET"` | (HTTP monitors only) The HTTP method to use for the request (e.g., `"GET"`, `"POST"`).                                                     |
-| `body`        | `string` (optional)   | No       | `""`    | (HTTP monitors only) The request body to send for `POST`, `PUT`, `PATCH` methods.                                                              |
-| `headers`     | `map(string)` (optional)| No       | `{}`    | (HTTP monitors only) A map of custom HTTP headers to include with the request.                                                                  |
-| `timeout`     | `string` (optional)   | No       | `"45s"` | The maximum duration to wait for a response. Format: duration string (e.g., `"30s"`, `"1m"`).                                              |
-| `degraded_after`| `string` (optional) | No       | `""`    | The duration after which a response is considered degraded. Format: duration string.                                                            |
-| `retries`     | `number` (optional)   | No       | `3`     | The number of times the monitor will retry a failed check.                                                                                      |
-| `public`      | `bool` (optional)     | No       | `false` | Controls whether monitor data is accessible on your public status page.                                                                         |
-| `otlp_endpoint`| `string` (optional)  | No       | `""`    | The OTLP (OpenTelemetry Protocol) endpoint URL for exporting metrics.                                                                           |
-| `otlp_headers`| `map(string)` (optional)| No       | `{}`    | Custom headers to include when exporting metrics to your OTLP endpoint.                                                                       |
+| Argument         | Type                     | Required | Default | Description                                                                                                                      |
+| :--------------- | :----------------------- | :------- | :------ | :------------------------------------------------------------------------------------------------------------------------------- |
+| `url`            | `string`                 | Yes      |         | The URL or URI of the endpoint to be monitored. Format depends on the monitor type (e.g., full URL for HTTP, host:port for TCP). |
+| `regions`        | `list(string)`           | Yes      |         | A list of region identifiers (e.g., `"iad"`, `"jnb"`) from where the monitor checks will be performed.                           |
+| `periodicity`    | `string`                 | Yes      |         | The frequency at which the monitor will perform checks. Supported values: `"30s"`, `"1m"`, `"5m"`, `"10m"`, `"30m"`, `"1h"`.     |
+| `name`           | `string`                 | Yes      |         | A human-readable name for the monitor.                                                                                           |
+| `active`         | `bool`                   | Yes      |         | Specifies whether the monitor is active (`true`) or paused (`false`).                                                            |
+| `description`    | `string` (optional)      | No       | `""`    | A detailed description of the monitor's purpose or configuration.                                                                |
+| `monitor_type`   | `string`                 | Yes      |         | The type of monitor to create. Supported values: `"HTTP"`, `"TCP"`, `"DNS"`                                                      |
+| `method`         | `string` (optional)      | No       | `"GET"` | (HTTP monitors only) The HTTP method to use for the request (e.g., `"GET"`, `"POST"`).                                           |
+| `body`           | `string` (optional)      | No       | `""`    | (HTTP monitors only) The request body to send for `POST`, `PUT`, `PATCH` methods.                                                |
+| `headers`        | `map(string)` (optional) | No       | `{}`    | (HTTP monitors only) A map of custom HTTP headers to include with the request.                                                   |
+| `timeout`        | `string` (optional)      | No       | `"45s"` | The maximum duration to wait for a response. Format: duration string (e.g., `"30s"`, `"1m"`).                                    |
+| `degraded_after` | `string` (optional)      | No       | `""`    | The duration after which a response is considered degraded. Format: duration string.                                             |
+| `retries`        | `number` (optional)      | No       | `3`     | The number of times the monitor will retry a failed check.                                                                       |
+| `public`         | `bool` (optional)        | No       | `false` | Controls whether monitor data is accessible on your public status page.                                                          |
+| `otlp_endpoint`  | `string` (optional)      | No       | `""`    | The OTLP (OpenTelemetry Protocol) endpoint URL for exporting metrics.                                                            |
+| `otlp_headers`   | `map(string)` (optional) | No       | `{}`    | Custom headers to include when exporting metrics to your OTLP endpoint.                                                          |
 
 **Example Usage:**
 

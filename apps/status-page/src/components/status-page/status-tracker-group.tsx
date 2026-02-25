@@ -1,5 +1,7 @@
 "use client";
 
+import type { VariantType } from "./floating-button";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -7,7 +9,7 @@ import {
 } from "@openstatus/ui/components/ui/collapsible";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useEffect, useState } from "react";
-import type { VariantType } from "./floating-button";
+
 import { StatusMonitorIcon, StatusMonitorStatus } from "./status-monitor";
 
 export function StatusTrackerGroup({
@@ -34,13 +36,13 @@ export function StatusTrackerGroup({
       defaultOpen={defaultOpen}
       className={cn(
         "-mx-3",
-        "rounded-lg border border-transparent bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50",
+        "bg-muted/50 hover:border-border/50 data-[state=open]:border-border/50 data-[state=open]:bg-muted/50 rounded-lg border border-transparent",
         className,
       )}
     >
       <CollapsibleTrigger
         className={cn(
-          "group/monitor flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium font-mono",
+          "group/monitor flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 font-mono font-medium",
           "cursor-pointer",
           className,
         )}
@@ -56,7 +58,7 @@ export function StatusTrackerGroup({
       <CollapsibleContent
         data-animate={mounted}
         className={cn(
-          "flex flex-col gap-3 border-border/50 border-t px-3 py-2",
+          "border-border/50 flex flex-col gap-3 border-t px-3 py-2",
           "overflow-hidden",
           // REMINDER: otherwise, if defaultOpen is true, the animation will be triggered and we have a layout shift
           "data-[animate=true]:data-[state=closed]:animate-collapsible-up data-[animate=true]:data-[state=open]:animate-collapsible-down",

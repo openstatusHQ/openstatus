@@ -1,9 +1,10 @@
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
+
 import { Code, ConnectError } from "@connectrpc/connect";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
-import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
 import { z } from "zod";
 
 import { periodicityToString, regionsToStrings } from "./converters";

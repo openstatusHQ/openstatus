@@ -1,10 +1,12 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { Row } from "@tanstack/react-table";
+
+import { useMutation, useQuery } from "@tanstack/react-query";
+
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 

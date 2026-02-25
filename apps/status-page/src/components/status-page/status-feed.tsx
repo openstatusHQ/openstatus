@@ -1,6 +1,8 @@
 "use client";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
 import Link from "next/link";
+
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+
 import {
   StatusBlankContainer,
   StatusBlankContent,
@@ -76,14 +78,14 @@ export function StatusFeed({
       startDate: maintenance.from,
       data: maintenance,
     })),
-  ].sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+  ].toSorted((a, b) => b.startDate.getTime() - a.startDate.getTime());
 
   if (unifiedEvents.length === 0) {
     return (
       <StatusBlankContainer>
         <div className="relative mt-8 flex w-full flex-col items-center justify-center">
-          <StatusBlankReport className="-top-16 absolute scale-60 opacity-50" />
-          <StatusBlankReport className="-top-8 absolute scale-80 opacity-80" />
+          <StatusBlankReport className="absolute -top-16 scale-60 opacity-50" />
+          <StatusBlankReport className="absolute -top-8 scale-80 opacity-80" />
           <StatusBlankReport />
         </div>
         <StatusBlankContent>

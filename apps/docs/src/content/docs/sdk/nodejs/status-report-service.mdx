@@ -17,8 +17,8 @@ const client = createOpenStatusClient({
   apiKey: process.env.OPENSTATUS_API_KEY,
 });
 
-const { statusReport } = await client.statusReport.v1.StatusReportService
-  .createStatusReport({
+const { statusReport } =
+  await client.statusReport.v1.StatusReportService.createStatusReport({
     title: "API Degradation",
     status: StatusReportStatus.INVESTIGATING,
     message: "We are investigating reports of increased latency.",
@@ -38,8 +38,8 @@ Add a new entry to a status report's timeline.
 ```typescript
 import { StatusReportStatus } from "@openstatus/sdk-node";
 
-const { statusReport } = await client.statusReport.v1.StatusReportService
-  .addStatusReportUpdate({
+const { statusReport } =
+  await client.statusReport.v1.StatusReportService.addStatusReportUpdate({
     statusReportId: "sr_123",
     status: StatusReportStatus.IDENTIFIED,
     message: "The issue has been identified as a database connection problem.",
@@ -55,8 +55,8 @@ List status reports with optional status filtering and pagination.
 ```typescript
 import { StatusReportStatus } from "@openstatus/sdk-node";
 
-const { statusReports, totalSize } = await client.statusReport.v1
-  .StatusReportService.listStatusReports({
+const { statusReports, totalSize } =
+  await client.statusReport.v1.StatusReportService.listStatusReports({
     limit: 10,
     offset: 0,
     statuses: [StatusReportStatus.INVESTIGATING, StatusReportStatus.IDENTIFIED],
@@ -74,22 +74,26 @@ Returns the full report including the updates timeline.
 ```typescript
 import { StatusReportStatus } from "@openstatus/sdk-node";
 
-const { statusReport } = await client.statusReport.v1.StatusReportService
-  .getStatusReport({ id: "sr_123" });
+const { statusReport } =
+  await client.statusReport.v1.StatusReportService.getStatusReport({
+    id: "sr_123",
+  });
 
 console.log(`Title: ${statusReport?.title}`);
 console.log(`Status: ${StatusReportStatus[statusReport?.status ?? 0]}`);
 
 for (const update of statusReport?.updates ?? []) {
-  console.log(`  ${update.date}: [${StatusReportStatus[update.status]}] ${update.message}`);
+  console.log(
+    `  ${update.date}: [${StatusReportStatus[update.status]}] ${update.message}`,
+  );
 }
 ```
 
 ### Update Status Report
 
 ```typescript
-const { statusReport } = await client.statusReport.v1.StatusReportService
-  .updateStatusReport({
+const { statusReport } =
+  await client.statusReport.v1.StatusReportService.updateStatusReport({
     id: "sr_123",
     title: "Updated Title",
     pageComponentIds: ["comp_456", "comp_789"],
@@ -99,6 +103,8 @@ const { statusReport } = await client.statusReport.v1.StatusReportService
 ### Delete Status Report
 
 ```typescript
-const { success } = await client.statusReport.v1.StatusReportService
-  .deleteStatusReport({ id: "sr_123" });
+const { success } =
+  await client.statusReport.v1.StatusReportService.deleteStatusReport({
+    id: "sr_123",
+  });
 ```

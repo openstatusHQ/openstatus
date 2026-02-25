@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
+
+import Link from "next/link";
+
 import { getChangelogPosts } from "@/content/utils";
 import { defaultMetadata, ogMetadata } from "@/lib/metadata/shared-metadata";
 import { twitterMetadata } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
-import Link from "next/link";
+
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 

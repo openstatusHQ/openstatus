@@ -8,7 +8,7 @@
     "build:registry": "turbo run registry:build --filter=@openstatus/ui",
     "build": "pnpm build:registry && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "oxlint .",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {

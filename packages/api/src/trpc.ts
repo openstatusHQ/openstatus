@@ -1,7 +1,4 @@
-import { TRPCError, initTRPC } from "@trpc/server";
-import { type NextRequest, after } from "next/server";
-import superjson from "superjson";
-import { ZodError, treeifyError } from "zod";
+import type { User, Workspace } from "@openstatus/db/src/schema";
 
 import {
   type EventProps,
@@ -10,7 +7,10 @@ import {
   setupAnalytics,
 } from "@openstatus/analytics";
 import { db, eq, schema } from "@openstatus/db";
-import type { User, Workspace } from "@openstatus/db/src/schema";
+import { TRPCError, initTRPC } from "@trpc/server";
+import { type NextRequest, after } from "next/server";
+import superjson from "superjson";
+import { ZodError, treeifyError } from "zod";
 
 // Generic session type that works with both User and Viewer
 type Session = {

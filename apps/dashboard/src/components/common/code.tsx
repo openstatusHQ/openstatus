@@ -16,7 +16,7 @@ export function Code({
     <div className="relative">
       <pre
         className={cn(
-          "overflow-x-auto rounded-md border bg-muted p-2 text-xs",
+          "bg-muted overflow-x-auto rounded-md border p-2 text-xs",
           className,
         )}
         {...props}

@@ -1,8 +1,20 @@
 "use client";
 
-import { useState } from "react";
-
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import { cn } from "@openstatus/ui/lib/utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
 import { MoreHorizontal, Plus } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
@@ -19,19 +31,6 @@ import {
 } from "@/components/ui/sidebar";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 export const STATUS = {
   degraded: "bg-warning border border-warning",
@@ -177,7 +176,7 @@ export function NavMonitors() {
                   <div className="relative flex items-center justify-center">
                     <div
                       className={cn(
-                        "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
+                        "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
                         STATUS[item.active ? item.status : "inactive"],
                       )}
                     >

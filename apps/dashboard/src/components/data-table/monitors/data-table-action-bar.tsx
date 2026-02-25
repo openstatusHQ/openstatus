@@ -1,27 +1,7 @@
 "use client";
 
-import { SelectTrigger } from "@radix-ui/react-select";
-import type { Table } from "@tanstack/react-table";
-import { Check, CheckCircle2, Copy, Trash2 } from "lucide-react";
-import * as React from "react";
-
-import {
-  DataTableActionBar,
-  DataTableActionBarAction,
-  DataTableActionBarSelection,
-} from "@/components/ui/data-table/data-table-action-bar";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@openstatus/ui/components/ui/select";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import { toast } from "sonner";
+import type { Table } from "@tanstack/react-table";
 
 import {
   AlertDialog,
@@ -36,7 +16,27 @@ import {
 } from "@openstatus/ui/components/ui/alert-dialog";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+} from "@openstatus/ui/components/ui/select";
+import { Separator } from "@openstatus/ui/components/ui/separator";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { SelectTrigger } from "@radix-ui/react-select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { isTRPCClientError } from "@trpc/client";
+import { Check, CheckCircle2, Copy, Trash2 } from "lucide-react";
+import * as React from "react";
+import { toast } from "sonner";
+
+import {
+  DataTableActionBar,
+  DataTableActionBarAction,
+  DataTableActionBarSelection,
+} from "@/components/ui/data-table/data-table-action-bar";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 
@@ -208,7 +208,7 @@ export function MonitorDataTableActionBar({
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
-                className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
+                className="bg-destructive hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 text-white shadow-xs"
                 disabled={value !== confirmationValue || isPending}
                 form="form-alert-dialog"
                 type="submit"

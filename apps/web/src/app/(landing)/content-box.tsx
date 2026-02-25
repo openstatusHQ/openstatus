@@ -1,6 +1,8 @@
-import { cn } from "@/lib/utils";
-import Link from "next/link";
 import type React from "react";
+
+import Link from "next/link";
+
+import { cn } from "@/lib/utils";
 
 export function ContentBoxLink({
   href,
@@ -18,7 +20,7 @@ export function ContentBoxLink({
       href={href}
       target={target ?? (isExternal ? "_blank" : undefined)}
       rel={rel ?? (isExternal ? "noopener noreferrer" : undefined)}
-      className={cn("group no-underline! hover:bg-muted", className)}
+      className={cn("group hover:bg-muted no-underline!", className)}
       {...props}
     >
       {children}
@@ -63,7 +65,7 @@ export function ContentBoxUrl({
   return (
     <div
       className={cn(
-        "underline decoration-2 decoration-muted-foreground/50 underline-offset-2 transition-all group-hover:decoration-muted-foreground",
+        "decoration-muted-foreground/50 group-hover:decoration-muted-foreground underline decoration-2 underline-offset-2 transition-all",
         className,
       )}
       {...props}

@@ -1,6 +1,7 @@
+import { Suspense } from "react";
+
 import { Footer } from "@/components/nav/footer";
 import { Header } from "@/components/nav/header";
-import { Suspense } from "react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

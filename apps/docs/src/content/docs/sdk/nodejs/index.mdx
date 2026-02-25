@@ -65,7 +65,7 @@ console.log(`Found ${totalSize} monitors`);
 ## Runtime Support
 
 | Runtime | Version | Module Format |
-|---------|---------|---------------|
+| ------- | ------- | ------------- |
 | Node.js | 18+     | ESM and CJS   |
 | Deno    | 2+      | ESM (native)  |
 | Bun     | Latest  | ESM           |
@@ -102,24 +102,24 @@ const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
 });
 
 // 3. Create a status page
-const { statusPage } = await client.statusPage.v1.StatusPageService
-  .createStatusPage({
+const { statusPage } =
+  await client.statusPage.v1.StatusPageService.createStatusPage({
     title: "Example Status",
     slug: "example-status",
     description: "Status page for Example services",
   });
 
 // 4. Add the monitor as a component
-const { component } = await client.statusPage.v1.StatusPageService
-  .addMonitorComponent({
+const { component } =
+  await client.statusPage.v1.StatusPageService.addMonitorComponent({
     pageId: statusPage!.id,
     monitorId: monitor!.id,
     name: "Production API",
   });
 
 // 5. Set up Slack notifications
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Slack Alerts",
     provider: NotificationProvider.SLACK,
     data: {
@@ -132,8 +132,8 @@ const { notification } = await client.notification.v1.NotificationService
   });
 
 // 6. Check overall status
-const { overallStatus } = await client.statusPage.v1.StatusPageService
-  .getOverallStatus({
+const { overallStatus } =
+  await client.statusPage.v1.StatusPageService.getOverallStatus({
     identifier: { case: "id", value: statusPage!.id },
   });
 

@@ -1,8 +1,7 @@
 "use client";
 
-import { FormSubscribeEmail } from "@/components/forms/form-subscribe-email";
-import { getBaseUrl } from "@/lib/base-url";
 import type { RouterOutputs } from "@openstatus/api";
+
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import {
@@ -21,6 +20,9 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Check, Copy, Inbox } from "lucide-react";
 import { useState } from "react";
+
+import { FormSubscribeEmail } from "@/components/forms/form-subscribe-email";
+import { getBaseUrl } from "@/lib/base-url";
 
 export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
@@ -201,7 +203,7 @@ function CopyInputButton({
             successMessage: "Link copied to clipboard",
           })
         }
-        className="-translate-y-1/2 absolute top-1/2 right-2 size-6"
+        className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
       >
         {isCopied ? <Check /> : <Copy />}
         <span className="sr-only">Copy Link</span>
@@ -237,7 +239,7 @@ function SuccessMessage() {
     <div className="flex flex-col items-center justify-center gap-1 p-3">
       <Inbox className="size-4 shrink-0" />
       <p className="text-center font-medium">Check your inbox!</p>
-      <p className="text-center text-muted-foreground text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         Validate your email to receive updates and you are all set.
       </p>
     </div>

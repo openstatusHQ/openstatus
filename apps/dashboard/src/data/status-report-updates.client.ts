@@ -1,4 +1,5 @@
 import type { StatusReportStatus } from "@openstatus/db/src/schema";
+
 import { Cog, Trash2 } from "lucide-react";
 
 export const actions = [
@@ -25,7 +26,7 @@ export const getActions = (
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,
-    onClick: props[action.id as keyof typeof props],
+    onClick: props[action.id],
   }));
 };
 

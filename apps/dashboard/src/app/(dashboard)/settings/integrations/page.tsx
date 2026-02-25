@@ -1,6 +1,14 @@
 "use client";
 
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@openstatus/ui/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+
+import {
   Section,
   SectionDescription,
   SectionGroup,
@@ -9,13 +17,7 @@ import {
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@openstatus/ui/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
+
 import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {

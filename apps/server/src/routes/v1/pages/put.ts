@@ -1,8 +1,6 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { pagesApi } from "./index";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
-import { notEmpty } from "@/utils/not-empty";
+import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
@@ -12,8 +10,12 @@ import {
   pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+import { notEmpty } from "@/utils/not-empty";
+
 import { isNumberArray } from "../utils";
-import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema, transformPageData } from "./schema";
 
 const putRoute = createRoute({
@@ -68,7 +70,8 @@ export function registerPutPage(api: typeof pagesApi) {
     }
 
     if (
-      limits["password-protection"] === false &&
+      !
+      limits["password-protection"] &&
       input?.passwordProtected === true
     ) {
       throw new OpenStatusApiError({
@@ -78,7 +81,8 @@ export function registerPutPage(api: typeof pagesApi) {
     }
 
     if (
-      limits["email-domain-protection"] === false &&
+      !
+      limits["email-domain-protection"] &&
       (input?.accessType === "email-domain" || input?.authEmailDomains?.length)
     ) {
       throw new OpenStatusApiError({
@@ -88,7 +92,8 @@ export function registerPutPage(api: typeof pagesApi) {
     }
 
     if (
-      limits["password-protection"] === false &&
+      !
+      limits["password-protection"] &&
       (input?.accessType === "password" || input?.password)
     ) {
       throw new OpenStatusApiError({

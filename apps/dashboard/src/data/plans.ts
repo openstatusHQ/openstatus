@@ -1,6 +1,7 @@
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type React from "react";
+
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 export const plans = allPlans;
 

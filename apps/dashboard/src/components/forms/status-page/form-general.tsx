@@ -1,7 +1,7 @@
 "use client";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import {
   FormControl,
   FormDescription,
@@ -10,19 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
@@ -34,6 +21,19 @@ import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+// FIXME: use input-group instead
+import { InputWithAddons } from "@/components/common/input-with-addons";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
 
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";
@@ -206,7 +206,7 @@ export function FormGeneral({
                     <div className="flex items-center space-x-2">
                       {watchIcon ? (
                         <>
-                          <div className="size-[36px] overflow-hidden rounded-md border bg-muted">
+                          <div className="bg-muted size-[36px] overflow-hidden rounded-md border">
                             <Image
                               src={watchIcon}
                               width={36}
@@ -237,7 +237,7 @@ export function FormGeneral({
                                 file: base64String,
                               });
                               if (blob?.url) {
-                                form.setValue("icon", blob.url as string);
+                                form.setValue("icon", blob.url);
                               }
                             } catch (err) {
                               console.error(err);

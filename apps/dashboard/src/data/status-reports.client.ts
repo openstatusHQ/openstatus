@@ -36,6 +36,6 @@ export const getActions = (
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,
-    onClick: props[action.id as keyof typeof props],
+    onClick: props[action.id],
   }));
 };

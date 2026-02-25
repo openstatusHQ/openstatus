@@ -1,12 +1,13 @@
 import type { DefaultSession } from "next-auth";
-import NextAuth, { AuthError } from "next-auth";
 
 import { db, eq } from "@openstatus/db";
 import { viewer } from "@openstatus/db/src/schema";
+import NextAuth, { AuthError } from "next-auth";
+import { headers } from "next/headers";
 
 import { getValidCustomDomain } from "@/lib/domain";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { headers } from "next/headers";
+
 import { adapter } from "./adapter";
 import { ResendProvider } from "./providers";
 

@@ -2,62 +2,81 @@
 // @generated from file openstatus/notification/v1/service.proto (package openstatus.notification.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Notification, NotificationSummary } from "./notification_pb.ts";
+import type { NotificationData, NotificationProvider } from "./providers_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv2";
+
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
+
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { Notification, NotificationSummary } from "./notification_pb.ts";
 import { file_openstatus_notification_v1_notification } from "./notification_pb.ts";
-import type { NotificationData, NotificationProvider } from "./providers_pb.ts";
 import { file_openstatus_notification_v1_providers } from "./providers_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/notification/v1/service.proto.
  */
-export const file_openstatus_notification_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CihvcGVuc3RhdHVzL25vdGlmaWNhdGlvbi92MS9zZXJ2aWNlLnByb3RvEhpvcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MSLzAQoZQ3JlYXRlTm90aWZpY2F0aW9uUmVxdWVzdBItCgRuYW1lGAEgASgJQh+6RxU6ExIRU2xhY2sgT3BzIENoYW5uZWy6SARyAhABEk4KCHByb3ZpZGVyGAIgASgOMjAub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uUHJvdmlkZXJCCrpIB4IBBBABIAASQgoEZGF0YRgDIAEoCzIsLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbkRhdGFCBrpIA8gBARITCgttb25pdG9yX2lkcxgEIAMoCSJcChpDcmVhdGVOb3RpZmljYXRpb25SZXNwb25zZRI+Cgxub3RpZmljYXRpb24YASABKAsyKC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb24iLQoWR2V0Tm90aWZpY2F0aW9uUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJZChdHZXROb3RpZmljYXRpb25SZXNwb25zZRI+Cgxub3RpZmljYXRpb24YASABKAsyKC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb24ibAoYTGlzdE5vdGlmaWNhdGlvbnNSZXF1ZXN0Eh0KBWxpbWl0GAEgASgFQgm6SAYaBBhkKAFIAIgBARIcCgZvZmZzZXQYAiABKAVCB7pIBBoCKABIAYgBAUIICgZfbGltaXRCCQoHX29mZnNldCJ3ChlMaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlEkYKDW5vdGlmaWNhdGlvbnMYASADKAsyLy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb25TdW1tYXJ5EhIKCnRvdGFsX3NpemUYAiABKAUiqwEKGVVwZGF0ZU5vdGlmaWNhdGlvblJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESEQoEbmFtZRgCIAEoCUgAiAEBEj8KBGRhdGEYAyABKAsyLC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb25EYXRhSAGIAQESEwoLbW9uaXRvcl9pZHMYBCADKAlCBwoFX25hbWVCBwoFX2RhdGEiXAoaVXBkYXRlTm90aWZpY2F0aW9uUmVzcG9uc2USPgoMbm90aWZpY2F0aW9uGAEgASgLMigub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uIjAKGURlbGV0ZU5vdGlmaWNhdGlvblJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiLQoaRGVsZXRlTm90aWZpY2F0aW9uUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCKxAQobU2VuZFRlc3ROb3RpZmljYXRpb25SZXF1ZXN0Ek4KCHByb3ZpZGVyGAEgASgOMjAub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uUHJvdmlkZXJCCrpIB4IBBBABIAASQgoEZGF0YRgCIAEoCzIsLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbkRhdGFCBrpIA8gBASJdChxTZW5kVGVzdE5vdGlmaWNhdGlvblJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSGgoNZXJyb3JfbWVzc2FnZRgCIAEoCUgAiAEBQhAKDl9lcnJvcl9tZXNzYWdlIh8KHUNoZWNrTm90aWZpY2F0aW9uTGltaXRSZXF1ZXN0ImEKHkNoZWNrTm90aWZpY2F0aW9uTGltaXRSZXNwb25zZRIVCg1saW1pdF9yZWFjaGVkGAEgASgIEhUKDWN1cnJlbnRfY291bnQYAiABKAUSEQoJbWF4X2NvdW50GAMgASgFMvEJChNOb3RpZmljYXRpb25TZXJ2aWNlEoMBChJDcmVhdGVOb3RpZmljYXRpb24SNS5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5DcmVhdGVOb3RpZmljYXRpb25SZXF1ZXN0GjYub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuQ3JlYXRlTm90aWZpY2F0aW9uUmVzcG9uc2USfwoPR2V0Tm90aWZpY2F0aW9uEjIub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuR2V0Tm90aWZpY2F0aW9uUmVxdWVzdBozLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLkdldE5vdGlmaWNhdGlvblJlc3BvbnNlIgOQAgEShQEKEUxpc3ROb3RpZmljYXRpb25zEjQub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTGlzdE5vdGlmaWNhdGlvbnNSZXF1ZXN0GjUub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZSIDkAIBEoMBChJVcGRhdGVOb3RpZmljYXRpb24SNS5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5VcGRhdGVOb3RpZmljYXRpb25SZXF1ZXN0GjYub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuVXBkYXRlTm90aWZpY2F0aW9uUmVzcG9uc2USgwEKEkRlbGV0ZU5vdGlmaWNhdGlvbhI1Lm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLkRlbGV0ZU5vdGlmaWNhdGlvblJlcXVlc3QaNi5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5EZWxldGVOb3RpZmljYXRpb25SZXNwb25zZRKnAwoUU2VuZFRlc3ROb3RpZmljYXRpb24SNy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5TZW5kVGVzdE5vdGlmaWNhdGlvblJlcXVlc3QaOC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5TZW5kVGVzdE5vdGlmaWNhdGlvblJlc3BvbnNlIpsCukeXAhqUAlNlbmRzIGEgdGVzdCBub3RpZmljYXRpb24gdG8gdGhlIHNwZWNpZmllZCBwcm92aWRlciB0byB2ZXJpZnkgdGhhdCB0aGUgY29uZmlndXJhdGlvbiBpcyBjb3JyZWN0LiBUaGlzIGRvZXMgbm90IHJlcXVpcmUgYW4gZXhpc3Rpbmcgbm90aWZpY2F0aW9uIGNoYW5uZWwgLSBqdXN0IHByb3ZpZGUgdGhlIHByb3ZpZGVyIHR5cGUgYW5kIGl0cyBjb25maWd1cmF0aW9uIGRhdGEuIFJldHVybnMgc3VjY2VzcyBzdGF0dXMgYW5kIGFuIGVycm9yIG1lc3NhZ2UgaWYgdGhlIHRlc3QgZmFpbGVkLhKUAQoWQ2hlY2tOb3RpZmljYXRpb25MaW1pdBI5Lm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLkNoZWNrTm90aWZpY2F0aW9uTGltaXRSZXF1ZXN0Gjoub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuQ2hlY2tOb3RpZmljYXRpb25MaW1pdFJlc3BvbnNlIgOQAgFCXVpbZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL25vdGlmaWNhdGlvbi92MTtub3RpZmljYXRpb252MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_notification_v1_notification, file_openstatus_notification_v1_providers]);
+export const file_openstatus_notification_v1_service: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CihvcGVuc3RhdHVzL25vdGlmaWNhdGlvbi92MS9zZXJ2aWNlLnByb3RvEhpvcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MSLzAQoZQ3JlYXRlTm90aWZpY2F0aW9uUmVxdWVzdBItCgRuYW1lGAEgASgJQh+6RxU6ExIRU2xhY2sgT3BzIENoYW5uZWy6SARyAhABEk4KCHByb3ZpZGVyGAIgASgOMjAub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uUHJvdmlkZXJCCrpIB4IBBBABIAASQgoEZGF0YRgDIAEoCzIsLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbkRhdGFCBrpIA8gBARITCgttb25pdG9yX2lkcxgEIAMoCSJcChpDcmVhdGVOb3RpZmljYXRpb25SZXNwb25zZRI+Cgxub3RpZmljYXRpb24YASABKAsyKC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb24iLQoWR2V0Tm90aWZpY2F0aW9uUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJZChdHZXROb3RpZmljYXRpb25SZXNwb25zZRI+Cgxub3RpZmljYXRpb24YASABKAsyKC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb24ibAoYTGlzdE5vdGlmaWNhdGlvbnNSZXF1ZXN0Eh0KBWxpbWl0GAEgASgFQgm6SAYaBBhkKAFIAIgBARIcCgZvZmZzZXQYAiABKAVCB7pIBBoCKABIAYgBAUIICgZfbGltaXRCCQoHX29mZnNldCJ3ChlMaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlEkYKDW5vdGlmaWNhdGlvbnMYASADKAsyLy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb25TdW1tYXJ5EhIKCnRvdGFsX3NpemUYAiABKAUiqwEKGVVwZGF0ZU5vdGlmaWNhdGlvblJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESEQoEbmFtZRgCIAEoCUgAiAEBEj8KBGRhdGEYAyABKAsyLC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Ob3RpZmljYXRpb25EYXRhSAGIAQESEwoLbW9uaXRvcl9pZHMYBCADKAlCBwoFX25hbWVCBwoFX2RhdGEiXAoaVXBkYXRlTm90aWZpY2F0aW9uUmVzcG9uc2USPgoMbm90aWZpY2F0aW9uGAEgASgLMigub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uIjAKGURlbGV0ZU5vdGlmaWNhdGlvblJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiLQoaRGVsZXRlTm90aWZpY2F0aW9uUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCKxAQobU2VuZFRlc3ROb3RpZmljYXRpb25SZXF1ZXN0Ek4KCHByb3ZpZGVyGAEgASgOMjAub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTm90aWZpY2F0aW9uUHJvdmlkZXJCCrpIB4IBBBABIAASQgoEZGF0YRgCIAEoCzIsLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLk5vdGlmaWNhdGlvbkRhdGFCBrpIA8gBASJdChxTZW5kVGVzdE5vdGlmaWNhdGlvblJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgSGgoNZXJyb3JfbWVzc2FnZRgCIAEoCUgAiAEBQhAKDl9lcnJvcl9tZXNzYWdlIh8KHUNoZWNrTm90aWZpY2F0aW9uTGltaXRSZXF1ZXN0ImEKHkNoZWNrTm90aWZpY2F0aW9uTGltaXRSZXNwb25zZRIVCg1saW1pdF9yZWFjaGVkGAEgASgIEhUKDWN1cnJlbnRfY291bnQYAiABKAUSEQoJbWF4X2NvdW50GAMgASgFMvEJChNOb3RpZmljYXRpb25TZXJ2aWNlEoMBChJDcmVhdGVOb3RpZmljYXRpb24SNS5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5DcmVhdGVOb3RpZmljYXRpb25SZXF1ZXN0GjYub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuQ3JlYXRlTm90aWZpY2F0aW9uUmVzcG9uc2USfwoPR2V0Tm90aWZpY2F0aW9uEjIub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuR2V0Tm90aWZpY2F0aW9uUmVxdWVzdBozLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLkdldE5vdGlmaWNhdGlvblJlc3BvbnNlIgOQAgEShQEKEUxpc3ROb3RpZmljYXRpb25zEjQub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTGlzdE5vdGlmaWNhdGlvbnNSZXF1ZXN0GjUub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZSIDkAIBEoMBChJVcGRhdGVOb3RpZmljYXRpb24SNS5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5VcGRhdGVOb3RpZmljYXRpb25SZXF1ZXN0GjYub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuVXBkYXRlTm90aWZpY2F0aW9uUmVzcG9uc2USgwEKEkRlbGV0ZU5vdGlmaWNhdGlvbhI1Lm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLkRlbGV0ZU5vdGlmaWNhdGlvblJlcXVlc3QaNi5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5EZWxldGVOb3RpZmljYXRpb25SZXNwb25zZRKnAwoUU2VuZFRlc3ROb3RpZmljYXRpb24SNy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5TZW5kVGVzdE5vdGlmaWNhdGlvblJlcXVlc3QaOC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5TZW5kVGVzdE5vdGlmaWNhdGlvblJlc3BvbnNlIpsCukeXAhqUAlNlbmRzIGEgdGVzdCBub3RpZmljYXRpb24gdG8gdGhlIHNwZWNpZmllZCBwcm92aWRlciB0byB2ZXJpZnkgdGhhdCB0aGUgY29uZmlndXJhdGlvbiBpcyBjb3JyZWN0LiBUaGlzIGRvZXMgbm90IHJlcXVpcmUgYW4gZXhpc3Rpbmcgbm90aWZpY2F0aW9uIGNoYW5uZWwgLSBqdXN0IHByb3ZpZGUgdGhlIHByb3ZpZGVyIHR5cGUgYW5kIGl0cyBjb25maWd1cmF0aW9uIGRhdGEuIFJldHVybnMgc3VjY2VzcyBzdGF0dXMgYW5kIGFuIGVycm9yIG1lc3NhZ2UgaWYgdGhlIHRlc3QgZmFpbGVkLhKUAQoWQ2hlY2tOb3RpZmljYXRpb25MaW1pdBI5Lm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLkNoZWNrTm90aWZpY2F0aW9uTGltaXRSZXF1ZXN0Gjoub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuQ2hlY2tOb3RpZmljYXRpb25MaW1pdFJlc3BvbnNlIgOQAgFCXVpbZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL25vdGlmaWNhdGlvbi92MTtub3RpZmljYXRpb252MWIGcHJvdG8z",
+    [
+      file_buf_validate_validate,
+      file_gnostic_openapi_v3_annotations,
+      file_openstatus_notification_v1_notification,
+      file_openstatus_notification_v1_providers,
+    ],
+  );
 
 /**
  * CreateNotificationRequest is the request to create a new notification channel.
  *
  * @generated from message openstatus.notification.v1.CreateNotificationRequest
  */
-export type CreateNotificationRequest = Message<"openstatus.notification.v1.CreateNotificationRequest"> & {
-  /**
-   * Display name for the notification channel.
-   *
-   * @generated from field: string name = 1;
-   */
-  name: string;
+export type CreateNotificationRequest =
+  Message<"openstatus.notification.v1.CreateNotificationRequest"> & {
+    /**
+     * Display name for the notification channel.
+     *
+     * @generated from field: string name = 1;
+     */
+    name: string;
 
-  /**
-   * Provider type.
-   *
-   * @generated from field: openstatus.notification.v1.NotificationProvider provider = 2;
-   */
-  provider: NotificationProvider;
+    /**
+     * Provider type.
+     *
+     * @generated from field: openstatus.notification.v1.NotificationProvider provider = 2;
+     */
+    provider: NotificationProvider;
 
-  /**
-   * Provider-specific configuration.
-   *
-   * @generated from field: openstatus.notification.v1.NotificationData data = 3;
-   */
-  data?: NotificationData;
+    /**
+     * Provider-specific configuration.
+     *
+     * @generated from field: openstatus.notification.v1.NotificationData data = 3;
+     */
+    data?: NotificationData;
 
-  /**
-   * IDs of monitors to associate with this notification.
-   *
-   * @generated from field: repeated string monitor_ids = 4;
-   */
-  monitorIds: string[];
-};
+    /**
+     * IDs of monitors to associate with this notification.
+     *
+     * @generated from field: repeated string monitor_ids = 4;
+     */
+    monitorIds: string[];
+  };
 
 /**
  * Describes the message openstatus.notification.v1.CreateNotificationRequest.
  * Use `create(CreateNotificationRequestSchema)` to create a new message.
  */
-export const CreateNotificationRequestSchema: GenMessage<CreateNotificationRequest> = /*@__PURE__*/
+export const CreateNotificationRequestSchema: GenMessage<CreateNotificationRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 0);
 
 /**
@@ -65,20 +84,21 @@ export const CreateNotificationRequestSchema: GenMessage<CreateNotificationReque
  *
  * @generated from message openstatus.notification.v1.CreateNotificationResponse
  */
-export type CreateNotificationResponse = Message<"openstatus.notification.v1.CreateNotificationResponse"> & {
-  /**
-   * The created notification channel.
-   *
-   * @generated from field: openstatus.notification.v1.Notification notification = 1;
-   */
-  notification?: Notification;
-};
+export type CreateNotificationResponse =
+  Message<"openstatus.notification.v1.CreateNotificationResponse"> & {
+    /**
+     * The created notification channel.
+     *
+     * @generated from field: openstatus.notification.v1.Notification notification = 1;
+     */
+    notification?: Notification;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.CreateNotificationResponse.
  * Use `create(CreateNotificationResponseSchema)` to create a new message.
  */
-export const CreateNotificationResponseSchema: GenMessage<CreateNotificationResponse> = /*@__PURE__*/
+export const CreateNotificationResponseSchema: GenMessage<CreateNotificationResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 1);
 
 /**
@@ -86,20 +106,21 @@ export const CreateNotificationResponseSchema: GenMessage<CreateNotificationResp
  *
  * @generated from message openstatus.notification.v1.GetNotificationRequest
  */
-export type GetNotificationRequest = Message<"openstatus.notification.v1.GetNotificationRequest"> & {
-  /**
-   * Notification ID to retrieve (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type GetNotificationRequest =
+  Message<"openstatus.notification.v1.GetNotificationRequest"> & {
+    /**
+     * Notification ID to retrieve (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.GetNotificationRequest.
  * Use `create(GetNotificationRequestSchema)` to create a new message.
  */
-export const GetNotificationRequestSchema: GenMessage<GetNotificationRequest> = /*@__PURE__*/
+export const GetNotificationRequestSchema: GenMessage<GetNotificationRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 2);
 
 /**
@@ -107,20 +128,21 @@ export const GetNotificationRequestSchema: GenMessage<GetNotificationRequest> = 
  *
  * @generated from message openstatus.notification.v1.GetNotificationResponse
  */
-export type GetNotificationResponse = Message<"openstatus.notification.v1.GetNotificationResponse"> & {
-  /**
-   * The notification channel.
-   *
-   * @generated from field: openstatus.notification.v1.Notification notification = 1;
-   */
-  notification?: Notification;
-};
+export type GetNotificationResponse =
+  Message<"openstatus.notification.v1.GetNotificationResponse"> & {
+    /**
+     * The notification channel.
+     *
+     * @generated from field: openstatus.notification.v1.Notification notification = 1;
+     */
+    notification?: Notification;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.GetNotificationResponse.
  * Use `create(GetNotificationResponseSchema)` to create a new message.
  */
-export const GetNotificationResponseSchema: GenMessage<GetNotificationResponse> = /*@__PURE__*/
+export const GetNotificationResponseSchema: GenMessage<GetNotificationResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 3);
 
 /**
@@ -128,27 +150,28 @@ export const GetNotificationResponseSchema: GenMessage<GetNotificationResponse> 
  *
  * @generated from message openstatus.notification.v1.ListNotificationsRequest
  */
-export type ListNotificationsRequest = Message<"openstatus.notification.v1.ListNotificationsRequest"> & {
-  /**
-   * Maximum number of notifications to return (1-100, defaults to 50).
-   *
-   * @generated from field: optional int32 limit = 1;
-   */
-  limit?: number;
+export type ListNotificationsRequest =
+  Message<"openstatus.notification.v1.ListNotificationsRequest"> & {
+    /**
+     * Maximum number of notifications to return (1-100, defaults to 50).
+     *
+     * @generated from field: optional int32 limit = 1;
+     */
+    limit?: number;
 
-  /**
-   * Number of notifications to skip for pagination (defaults to 0).
-   *
-   * @generated from field: optional int32 offset = 2;
-   */
-  offset?: number;
-};
+    /**
+     * Number of notifications to skip for pagination (defaults to 0).
+     *
+     * @generated from field: optional int32 offset = 2;
+     */
+    offset?: number;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.ListNotificationsRequest.
  * Use `create(ListNotificationsRequestSchema)` to create a new message.
  */
-export const ListNotificationsRequestSchema: GenMessage<ListNotificationsRequest> = /*@__PURE__*/
+export const ListNotificationsRequestSchema: GenMessage<ListNotificationsRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 4);
 
 /**
@@ -156,27 +179,28 @@ export const ListNotificationsRequestSchema: GenMessage<ListNotificationsRequest
  *
  * @generated from message openstatus.notification.v1.ListNotificationsResponse
  */
-export type ListNotificationsResponse = Message<"openstatus.notification.v1.ListNotificationsResponse"> & {
-  /**
-   * Notification channel summaries.
-   *
-   * @generated from field: repeated openstatus.notification.v1.NotificationSummary notifications = 1;
-   */
-  notifications: NotificationSummary[];
+export type ListNotificationsResponse =
+  Message<"openstatus.notification.v1.ListNotificationsResponse"> & {
+    /**
+     * Notification channel summaries.
+     *
+     * @generated from field: repeated openstatus.notification.v1.NotificationSummary notifications = 1;
+     */
+    notifications: NotificationSummary[];
 
-  /**
-   * Total number of notification channels.
-   *
-   * @generated from field: int32 total_size = 2;
-   */
-  totalSize: number;
-};
+    /**
+     * Total number of notification channels.
+     *
+     * @generated from field: int32 total_size = 2;
+     */
+    totalSize: number;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.ListNotificationsResponse.
  * Use `create(ListNotificationsResponseSchema)` to create a new message.
  */
-export const ListNotificationsResponseSchema: GenMessage<ListNotificationsResponse> = /*@__PURE__*/
+export const ListNotificationsResponseSchema: GenMessage<ListNotificationsResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 5);
 
 /**
@@ -184,41 +208,42 @@ export const ListNotificationsResponseSchema: GenMessage<ListNotificationsRespon
  *
  * @generated from message openstatus.notification.v1.UpdateNotificationRequest
  */
-export type UpdateNotificationRequest = Message<"openstatus.notification.v1.UpdateNotificationRequest"> & {
-  /**
-   * Notification ID to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateNotificationRequest =
+  Message<"openstatus.notification.v1.UpdateNotificationRequest"> & {
+    /**
+     * Notification ID to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * Updated display name.
-   *
-   * @generated from field: optional string name = 2;
-   */
-  name?: string;
+    /**
+     * Updated display name.
+     *
+     * @generated from field: optional string name = 2;
+     */
+    name?: string;
 
-  /**
-   * Updated provider-specific configuration.
-   *
-   * @generated from field: optional openstatus.notification.v1.NotificationData data = 3;
-   */
-  data?: NotificationData;
+    /**
+     * Updated provider-specific configuration.
+     *
+     * @generated from field: optional openstatus.notification.v1.NotificationData data = 3;
+     */
+    data?: NotificationData;
 
-  /**
-   * Updated monitor IDs to associate.
-   *
-   * @generated from field: repeated string monitor_ids = 4;
-   */
-  monitorIds: string[];
-};
+    /**
+     * Updated monitor IDs to associate.
+     *
+     * @generated from field: repeated string monitor_ids = 4;
+     */
+    monitorIds: string[];
+  };
 
 /**
  * Describes the message openstatus.notification.v1.UpdateNotificationRequest.
  * Use `create(UpdateNotificationRequestSchema)` to create a new message.
  */
-export const UpdateNotificationRequestSchema: GenMessage<UpdateNotificationRequest> = /*@__PURE__*/
+export const UpdateNotificationRequestSchema: GenMessage<UpdateNotificationRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 6);
 
 /**
@@ -226,20 +251,21 @@ export const UpdateNotificationRequestSchema: GenMessage<UpdateNotificationReque
  *
  * @generated from message openstatus.notification.v1.UpdateNotificationResponse
  */
-export type UpdateNotificationResponse = Message<"openstatus.notification.v1.UpdateNotificationResponse"> & {
-  /**
-   * The updated notification channel.
-   *
-   * @generated from field: openstatus.notification.v1.Notification notification = 1;
-   */
-  notification?: Notification;
-};
+export type UpdateNotificationResponse =
+  Message<"openstatus.notification.v1.UpdateNotificationResponse"> & {
+    /**
+     * The updated notification channel.
+     *
+     * @generated from field: openstatus.notification.v1.Notification notification = 1;
+     */
+    notification?: Notification;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.UpdateNotificationResponse.
  * Use `create(UpdateNotificationResponseSchema)` to create a new message.
  */
-export const UpdateNotificationResponseSchema: GenMessage<UpdateNotificationResponse> = /*@__PURE__*/
+export const UpdateNotificationResponseSchema: GenMessage<UpdateNotificationResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 7);
 
 /**
@@ -247,20 +273,21 @@ export const UpdateNotificationResponseSchema: GenMessage<UpdateNotificationResp
  *
  * @generated from message openstatus.notification.v1.DeleteNotificationRequest
  */
-export type DeleteNotificationRequest = Message<"openstatus.notification.v1.DeleteNotificationRequest"> & {
-  /**
-   * Notification ID to delete (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type DeleteNotificationRequest =
+  Message<"openstatus.notification.v1.DeleteNotificationRequest"> & {
+    /**
+     * Notification ID to delete (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.DeleteNotificationRequest.
  * Use `create(DeleteNotificationRequestSchema)` to create a new message.
  */
-export const DeleteNotificationRequestSchema: GenMessage<DeleteNotificationRequest> = /*@__PURE__*/
+export const DeleteNotificationRequestSchema: GenMessage<DeleteNotificationRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 8);
 
 /**
@@ -268,20 +295,21 @@ export const DeleteNotificationRequestSchema: GenMessage<DeleteNotificationReque
  *
  * @generated from message openstatus.notification.v1.DeleteNotificationResponse
  */
-export type DeleteNotificationResponse = Message<"openstatus.notification.v1.DeleteNotificationResponse"> & {
-  /**
-   * Whether the deletion was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type DeleteNotificationResponse =
+  Message<"openstatus.notification.v1.DeleteNotificationResponse"> & {
+    /**
+     * Whether the deletion was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.DeleteNotificationResponse.
  * Use `create(DeleteNotificationResponseSchema)` to create a new message.
  */
-export const DeleteNotificationResponseSchema: GenMessage<DeleteNotificationResponse> = /*@__PURE__*/
+export const DeleteNotificationResponseSchema: GenMessage<DeleteNotificationResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 9);
 
 /**
@@ -289,27 +317,28 @@ export const DeleteNotificationResponseSchema: GenMessage<DeleteNotificationResp
  *
  * @generated from message openstatus.notification.v1.SendTestNotificationRequest
  */
-export type SendTestNotificationRequest = Message<"openstatus.notification.v1.SendTestNotificationRequest"> & {
-  /**
-   * Provider type.
-   *
-   * @generated from field: openstatus.notification.v1.NotificationProvider provider = 1;
-   */
-  provider: NotificationProvider;
+export type SendTestNotificationRequest =
+  Message<"openstatus.notification.v1.SendTestNotificationRequest"> & {
+    /**
+     * Provider type.
+     *
+     * @generated from field: openstatus.notification.v1.NotificationProvider provider = 1;
+     */
+    provider: NotificationProvider;
 
-  /**
-   * Provider-specific configuration.
-   *
-   * @generated from field: openstatus.notification.v1.NotificationData data = 2;
-   */
-  data?: NotificationData;
-};
+    /**
+     * Provider-specific configuration.
+     *
+     * @generated from field: openstatus.notification.v1.NotificationData data = 2;
+     */
+    data?: NotificationData;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.SendTestNotificationRequest.
  * Use `create(SendTestNotificationRequestSchema)` to create a new message.
  */
-export const SendTestNotificationRequestSchema: GenMessage<SendTestNotificationRequest> = /*@__PURE__*/
+export const SendTestNotificationRequestSchema: GenMessage<SendTestNotificationRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 10);
 
 /**
@@ -317,27 +346,28 @@ export const SendTestNotificationRequestSchema: GenMessage<SendTestNotificationR
  *
  * @generated from message openstatus.notification.v1.SendTestNotificationResponse
  */
-export type SendTestNotificationResponse = Message<"openstatus.notification.v1.SendTestNotificationResponse"> & {
-  /**
-   * Whether the test was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
+export type SendTestNotificationResponse =
+  Message<"openstatus.notification.v1.SendTestNotificationResponse"> & {
+    /**
+     * Whether the test was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
 
-  /**
-   * Optional error message if the test failed.
-   *
-   * @generated from field: optional string error_message = 2;
-   */
-  errorMessage?: string;
-};
+    /**
+     * Optional error message if the test failed.
+     *
+     * @generated from field: optional string error_message = 2;
+     */
+    errorMessage?: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.SendTestNotificationResponse.
  * Use `create(SendTestNotificationResponseSchema)` to create a new message.
  */
-export const SendTestNotificationResponseSchema: GenMessage<SendTestNotificationResponse> = /*@__PURE__*/
+export const SendTestNotificationResponseSchema: GenMessage<SendTestNotificationResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 11);
 
 /**
@@ -345,14 +375,14 @@ export const SendTestNotificationResponseSchema: GenMessage<SendTestNotification
  *
  * @generated from message openstatus.notification.v1.CheckNotificationLimitRequest
  */
-export type CheckNotificationLimitRequest = Message<"openstatus.notification.v1.CheckNotificationLimitRequest"> & {
-};
+export type CheckNotificationLimitRequest =
+  Message<"openstatus.notification.v1.CheckNotificationLimitRequest"> & {};
 
 /**
  * Describes the message openstatus.notification.v1.CheckNotificationLimitRequest.
  * Use `create(CheckNotificationLimitRequestSchema)` to create a new message.
  */
-export const CheckNotificationLimitRequestSchema: GenMessage<CheckNotificationLimitRequest> = /*@__PURE__*/
+export const CheckNotificationLimitRequestSchema: GenMessage<CheckNotificationLimitRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 12);
 
 /**
@@ -360,34 +390,35 @@ export const CheckNotificationLimitRequestSchema: GenMessage<CheckNotificationLi
  *
  * @generated from message openstatus.notification.v1.CheckNotificationLimitResponse
  */
-export type CheckNotificationLimitResponse = Message<"openstatus.notification.v1.CheckNotificationLimitResponse"> & {
-  /**
-   * Whether the workspace has reached its notification limit.
-   *
-   * @generated from field: bool limit_reached = 1;
-   */
-  limitReached: boolean;
+export type CheckNotificationLimitResponse =
+  Message<"openstatus.notification.v1.CheckNotificationLimitResponse"> & {
+    /**
+     * Whether the workspace has reached its notification limit.
+     *
+     * @generated from field: bool limit_reached = 1;
+     */
+    limitReached: boolean;
 
-  /**
-   * Current number of notification channels.
-   *
-   * @generated from field: int32 current_count = 2;
-   */
-  currentCount: number;
+    /**
+     * Current number of notification channels.
+     *
+     * @generated from field: int32 current_count = 2;
+     */
+    currentCount: number;
 
-  /**
-   * Maximum allowed notification channels.
-   *
-   * @generated from field: int32 max_count = 3;
-   */
-  maxCount: number;
-};
+    /**
+     * Maximum allowed notification channels.
+     *
+     * @generated from field: int32 max_count = 3;
+     */
+    maxCount: number;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.CheckNotificationLimitResponse.
  * Use `create(CheckNotificationLimitResponseSchema)` to create a new message.
  */
-export const CheckNotificationLimitResponseSchema: GenMessage<CheckNotificationLimitResponse> = /*@__PURE__*/
+export const CheckNotificationLimitResponseSchema: GenMessage<CheckNotificationLimitResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_service, 13);
 
 /**
@@ -405,7 +436,7 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof CreateNotificationRequestSchema;
     output: typeof CreateNotificationResponseSchema;
-  },
+  };
   /**
    * GetNotification retrieves a notification channel by ID.
    *
@@ -415,7 +446,7 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof GetNotificationRequestSchema;
     output: typeof GetNotificationResponseSchema;
-  },
+  };
   /**
    * ListNotifications returns a list of notification channels.
    *
@@ -425,7 +456,7 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof ListNotificationsRequestSchema;
     output: typeof ListNotificationsResponseSchema;
-  },
+  };
   /**
    * UpdateNotification updates an existing notification channel.
    *
@@ -435,7 +466,7 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof UpdateNotificationRequestSchema;
     output: typeof UpdateNotificationResponseSchema;
-  },
+  };
   /**
    * DeleteNotification removes a notification channel.
    *
@@ -445,7 +476,7 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof DeleteNotificationRequestSchema;
     output: typeof DeleteNotificationResponseSchema;
-  },
+  };
   /**
    * SendTestNotification sends a test notification to verify the provider configuration without requiring an existing notification channel.
    *
@@ -455,7 +486,7 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof SendTestNotificationRequestSchema;
     output: typeof SendTestNotificationResponseSchema;
-  },
+  };
   /**
    * CheckNotificationLimit checks if the workspace has reached its notification limit.
    *
@@ -465,7 +496,5 @@ export const NotificationService: GenService<{
     methodKind: "unary";
     input: typeof CheckNotificationLimitRequestSchema;
     output: typeof CheckNotificationLimitResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_openstatus_notification_v1_service, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_openstatus_notification_v1_service, 0);

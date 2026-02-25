@@ -1,5 +1,6 @@
-import { generateListingForPath } from "./listing";
 import type { MDXData } from "./utils";
+
+import { generateListingForPath } from "./listing";
 import {
   getBlogPosts,
   getChangelogPosts,

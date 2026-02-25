@@ -1,22 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import { EmptyStateContainer } from "@/components/content/empty-state";
-import { DataTable } from "@/components/data-table/settings/api-key/data-table";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertDialog,
@@ -62,6 +45,24 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import { EmptyStateContainer } from "@/components/content/empty-state";
+import { DataTable } from "@/components/data-table/settings/api-key/data-table";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
 
 // we should prefetch the api key on the server (layout)
 

@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import { type SQL, and, eq, isNull } from "@openstatus/db";
 import {
@@ -8,6 +6,7 @@ import {
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
+import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

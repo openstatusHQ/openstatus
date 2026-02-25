@@ -88,7 +88,7 @@ export function fillStatusDataFor45Days(
   }
 
   // Sort by day (oldest first)
-  return result.sort(
+  return result.toSorted(
     (a, b) => new Date(a.day).getTime() - new Date(b.day).getTime(),
   );
 }
@@ -102,12 +102,12 @@ export function fillStatusDataFor45DaysNoop({
   degradedDays: number[];
   lookbackPeriod?: number;
 }): Array<StatusData> {
-  const issueDays = [...errorDays, ...degradedDays];
+  const issueDays = new Set([...errorDays, ...degradedDays]);
   const data: StatusData[] = Array.from({ length: 45 }, (_, i) => {
     return {
       day: new Date(new Date().setDate(new Date().getDate() - i)).toISOString(),
       count: 1,
-      ok: issueDays.includes(i) ? 0 : 1,
+      ok: issueDays.has(i) ? 0 : 1,
       degraded: degradedDays.includes(i) ? 1 : 0,
       error: errorDays.includes(i) ? 1 : 0,
       monitorId: "1",
@@ -218,7 +218,7 @@ export function getEvents({
       return true;
     })
     .map((report) => {
-      const updates = report.statusReportUpdates.sort(
+      const updates = report.statusReportUpdates.toSorted(
         (a, b) => a.date.getTime() - b.date.getTime(),
       );
       if (updates.length === 0) return;
@@ -603,7 +603,6 @@ export function setDataByType({
     if (status === "success") {
       // Calculate success duration as remaining time
       let totalEventMinutes = 0;
-      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       durationMap.forEach((minutes) => (totalEventMinutes += minutes));
 
       // Use adjusted total minutes accounting for maintenance
@@ -759,7 +758,7 @@ export function setDataByType({
                 success: [], // Success is calculated differently
               };
 
-              const events = eventMap[entry.status as keyof typeof eventMap];
+              const events = eventMap[entry.status];
               return createDurationCardEntry(
                 entry.status,
                 events,

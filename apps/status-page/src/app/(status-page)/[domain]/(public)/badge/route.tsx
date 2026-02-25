@@ -1,8 +1,8 @@
-import { ImageResponse } from "next/og";
+import type { Status } from "@openstatus/react";
 import type { NextRequest } from "next/server";
 
-import type { Status } from "@openstatus/react";
 import { getStatus } from "@openstatus/react";
+import { ImageResponse } from "next/og";
 
 // Keep the `label` size within a maximum of 'Operational' to stay within the `SIZE` restriction
 const statusDictionary: Record<Status, { label: string; color: string }> = {

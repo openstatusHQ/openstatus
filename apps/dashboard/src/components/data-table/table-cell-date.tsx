@@ -1,6 +1,7 @@
+import { format } from "date-fns";
+
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
 export function TableCellDate({
   value,

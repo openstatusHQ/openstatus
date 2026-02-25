@@ -1,12 +1,13 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import type { monitorsApi } from "./index";
 
+import { createRoute, z } from "@hono/zod-openapi";
+import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
-import { Events } from "@openstatus/analytics";
-import type { monitorsApi } from "./index";
+
 import { MonitorSchema, ParamsSchema, TCPMonitorSchema } from "./schema";
 
 const putRoute = createRoute({
@@ -125,7 +126,6 @@ export function registerPutTCPMonitor(api: typeof monitorsApi) {
             }),
           )
           .parse(JSON.parse(_newMonitor.otelHeaders))
-          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
           .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
       : undefined;
 

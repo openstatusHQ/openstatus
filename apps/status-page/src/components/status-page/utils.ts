@@ -1,4 +1,5 @@
 import type { ChartConfig } from "@openstatus/ui/components/ui/chart";
+
 import { VARIANT, type VariantType } from "./floating-button";
 
 export const chartData = Array.from({ length: 45 }, (_, i) => {
@@ -45,7 +46,7 @@ export const chartData = Array.from({ length: 45 }, (_, i) => {
     error,
     success,
   };
-}).reverse();
+}).toReversed();
 
 export type ChartData = (typeof chartData)[number];
 
@@ -83,7 +84,7 @@ export function getHighestPriorityStatus(item: ChartData) {
   const total = item.success + item.degraded + item.info + item.error;
   if (total === 0) return "empty";
   return (
-    VARIANT.filter((status) => item[status] > 0).sort(
+    VARIANT.filter((status) => item[status] > 0).toSorted(
       (a, b) => PRIORITY[b] - PRIORITY[a],
     )[0] || "empty"
   );

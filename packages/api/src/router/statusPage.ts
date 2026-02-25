@@ -1,5 +1,4 @@
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   maintenance,
@@ -16,10 +15,10 @@ import {
   selectWorkspaceSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { endOfDay, startOfDay, subDays } from "date-fns";
+import { z } from "zod";
+
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import {
   type StatusData,
@@ -237,7 +236,7 @@ export const statusPageRouter = createTRPCRouter({
           if (e.type === "report" && e.status !== "success") return true;
           return false;
         })
-        .sort((a, b) => a.from.getTime() - b.from.getTime());
+        .toSorted((a, b) => a.from.getTime() - b.from.getTime());
 
       const openEvents = pageEvents.filter((event) => {
         if (event.type === "incident" && barType !== "manual") {
@@ -327,7 +326,7 @@ export const statusPageRouter = createTRPCRouter({
             );
           }
           // Grouped components - return as single group tracker
-          const sortedComponents = group.components.sort(
+          const sortedComponents = group.components.toSorted(
             (a, b) => (a.groupOrder ?? 0) - (b.groupOrder ?? 0),
           );
           return [
@@ -338,18 +337,18 @@ export const statusPageRouter = createTRPCRouter({
               components: sortedComponents,
               status: getWorstVariant(
                 group.components.map(
-                  (c) => c.status as "success" | "degraded" | "error" | "info",
+                  (c) => c.status,
                 ),
               ),
               order: group.minOrder,
             },
           ];
         })
-        .sort((a, b) => a.order - b.order);
+        .toSorted((a, b) => a.order - b.order);
 
       const whiteLabel = ws.data?.limits["white-label"] ?? false;
 
-      const statusReports = _page.statusReports.sort((a, b) => {
+      const statusReports = _page.statusReports.toSorted((a, b) => {
         // Sort reports without updates to the beginning
         if (
           a.statusReportUpdates.length === 0 &&
@@ -366,7 +365,7 @@ export const statusPageRouter = createTRPCRouter({
         );
       });
 
-      const maintenances = _page.maintenances.sort(
+      const maintenances = _page.maintenances.toSorted(
         (a, b) => b.from.getTime() - a.from.getTime(),
       );
 
@@ -440,7 +439,7 @@ export const statusPageRouter = createTRPCRouter({
           ...c.monitor,
           name: c.monitor?.externalName ?? c.monitor?.name ?? "",
         }))
-        .sort((a, b) => {
+        .toSorted((a, b) => {
           const aComp = monitorComponents.find((m) => m.monitor?.id === a.id);
           const bComp = monitorComponents.find((m) => m.monitor?.id === b.id);
           return (aComp?.order ?? 0) - (bComp?.order ?? 0);
@@ -581,8 +580,8 @@ export const statusPageRouter = createTRPCRouter({
       const statusDataByMonitorId = new Map<
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
+         
+         
       >();
 
       // Consolidate status data from all monitor types into the map
@@ -657,17 +656,17 @@ export const statusPageRouter = createTRPCRouter({
           cardType: effectiveCardType,
         });
 
-        return {
-          id: c.id,
-          pageComponentId: c.id,
-          name: c.name,
-          description: c.description,
-          type: c.type,
-          // For monitor-type components, include monitor fields
-          ...(c.monitor ? { monitor: c.monitor } : {}),
-          data: processedData,
-          uptime,
-        };
+        return Object.assign(
+          {
+            id: c.id,
+            pageComponentId: c.id,
+            name: c.name,
+            description: c.description,
+            type: c.type,
+          },
+          c.monitor ? { monitor: c.monitor } : {},
+          { data: processedData, uptime },
+        );
       });
     }),
 
@@ -872,8 +871,8 @@ export const statusPageRouter = createTRPCRouter({
       const metricsDataByMonitorId = new Map<
         string,
         | Awaited<ReturnType<(typeof proceduresByType)["http"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["tcp"]>>["data"]
-        | Awaited<ReturnType<(typeof proceduresByType)["dns"]>>["data"]
+         
+         
       >();
 
       if (metricsLatencyMultiHttp?.data) {

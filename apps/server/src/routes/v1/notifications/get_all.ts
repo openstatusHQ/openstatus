@@ -1,12 +1,14 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { notificationsApi } from "./index";
 
-import { openApiErrorResponses } from "@/libs/errors";
+import { createRoute } from "@hono/zod-openapi";
 import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
-import type { notificationsApi } from "./index";
+
+import { openApiErrorResponses } from "@/libs/errors";
+
 import { NotificationSchema } from "./schema";
 
 const getAllRoute = createRoute({

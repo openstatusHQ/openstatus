@@ -1,4 +1,5 @@
 import type { ExternalToast } from "sonner";
+
 import { toast } from "sonner";
 
 type ToastType =

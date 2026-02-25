@@ -1,16 +1,3 @@
-import { useTransition } from "react";
-import { z } from "zod";
-
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -24,8 +11,21 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { isTRPCClientError } from "@trpc/client";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 
 const schema = z.object({
   homepageUrl: z.string().optional(),
@@ -112,7 +112,7 @@ export function FormLinks({
                   <FormMessage />
                   <FormDescription>
                     Enter the URL for your contact page. Or start with{" "}
-                    <code className="rounded-md bg-muted px-1 py-0.5">
+                    <code className="bg-muted rounded-md px-1 py-0.5">
                       mailto:
                     </code>{" "}
                     to open the email client. Leave empty to hide.

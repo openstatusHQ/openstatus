@@ -1,12 +1,15 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { ColumnDef } from "@tanstack/react-table";
+
+import { formatDistanceStrict } from "date-fns";
+
 import { ProcessMessage } from "@/components/content/process-message";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import type { RouterOutputs } from "@openstatus/api";
-import type { ColumnDef } from "@tanstack/react-table";
-import { formatDistanceStrict } from "date-fns";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
@@ -29,7 +32,7 @@ export const columns: ColumnDef<Maintenance>[] = [
     cell: ({ row }) => {
       const value = String(row.getValue("message"));
       return (
-        <div className="prose dark:prose-invert prose-sm line-clamp-3 max-w-[200px] truncate text-muted-foreground">
+        <div className="prose dark:prose-invert prose-sm text-muted-foreground line-clamp-3 max-w-[200px] truncate">
           <ProcessMessage value={value} />
         </div>
       );

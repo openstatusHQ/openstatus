@@ -1,8 +1,8 @@
 {
   "name": "@openstatus/notification-emails",
   "version": "0.0.0",
-  "main": "src/index.ts",
   "description": "Log drains Vercel integration.",
+  "main": "src/index.ts",
   "scripts": {
     "test": "bun test",
     "tsc": "tsc"

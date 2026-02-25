@@ -1,6 +1,5 @@
-import { env } from "@/env";
-import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import type { monitorsApi } from "..";
+
 import { createRoute, z } from "@hono/zod-openapi";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
@@ -10,7 +9,11 @@ import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_sta
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import { HTTPException } from "hono/http-exception";
-import type { monitorsApi } from "..";
+
+import { env } from "@/env";
+import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+
 import { ParamsSchema, TriggerSchema } from "./schema";
 
 const postRoute = createRoute({

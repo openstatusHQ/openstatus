@@ -34,6 +34,7 @@ tests:
 ```
 
 **Finding monitor IDs:**
+
 1. Go to your openstatus dashboard
 2. Click on a monitor
 3. The ID is in the URL: `https://www.openstatus.dev/app/[workspace]/monitors/[ID]`
@@ -66,10 +67,10 @@ Create `.github/workflows/openstatus.yml`:
 name: Run openstatus Synthetics CI
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch: # Manual trigger
   push:
-    branches: [ main ]  # Trigger on push to main
-  pull_request:        # Run on PRs (optional)
+    branches: [main] # Trigger on push to main
+  pull_request: # Run on PRs (optional)
 
 jobs:
   synthetic_ci:
@@ -78,7 +79,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Run openstatus Synthetics CI
         uses: openstatushq/openstatus-github-action@v1
         with:
@@ -98,6 +99,7 @@ The GitHub Action will run automatically on the next push to `main`.
 ## What you've accomplished
 
 Great work! You've successfully:
+
 - ✅ Integrated openstatus into your CI/CD pipeline
 - ✅ Automated synthetic testing on every deployment
 - ✅ Added a safety check before production releases
@@ -110,7 +112,7 @@ Great work! You've successfully:
 ```yaml
 on:
   push:
-    branches: [ main, staging, develop ]
+    branches: [main, staging, develop]
 ```
 
 ### Run on pull requests
@@ -126,7 +128,7 @@ on:
 ```yaml
 on:
   schedule:
-    - cron: '0 */4 * * *'  # Every 4 hours
+    - cron: "0 */4 * * *" # Every 4 hours
 ```
 
 ### Multiple configuration files
@@ -150,14 +152,17 @@ on:
 ## Troubleshooting
 
 **Action fails with authentication error:**
+
 - Verify `OPENSTATUS_API_KEY` secret is set correctly
 - Check that your API key hasn't expired
 
 **Monitors not found:**
+
 - Confirm monitor IDs are correct in `openstatus.config.yaml`
 - Ensure monitors are active in your openstatus dashboard
 
 **Tests timing out:**
+
 - Check that your endpoints are accessible from GitHub's runners
 - Consider increasing timeouts in monitor configuration
 

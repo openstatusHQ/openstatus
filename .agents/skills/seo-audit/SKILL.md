@@ -35,6 +35,7 @@ Before auditing, understand:
 ## Audit Framework
 
 ### Priority Order
+
 1. **Crawlability & Indexation** (can Google find and index it?)
 2. **Technical Foundations** (is the site fast and functional?)
 3. **On-Page Optimization** (is content optimized?)
@@ -48,11 +49,13 @@ Before auditing, understand:
 ### Crawlability
 
 **Robots.txt**
+
 - Check for unintentional blocks
 - Verify important pages allowed
 - Check sitemap reference
 
 **XML Sitemap**
+
 - Exists and accessible
 - Submitted to Search Console
 - Contains only canonical, indexable URLs
@@ -60,12 +63,14 @@ Before auditing, understand:
 - Proper formatting
 
 **Site Architecture**
+
 - Important pages within 3 clicks of homepage
 - Logical hierarchy
 - Internal linking structure
 - No orphan pages
 
 **Crawl Budget Issues** (for large sites)
+
 - Parameterized URLs under control
 - Faceted navigation handled properly
 - Infinite scroll with pagination fallback
@@ -74,11 +79,13 @@ Before auditing, understand:
 ### Indexation
 
 **Index Status**
+
 - site:domain.com check
 - Search Console coverage report
 - Compare indexed vs. expected
 
 **Indexation Issues**
+
 - Noindex tags on important pages
 - Canonicals pointing wrong direction
 - Redirect chains/loops
@@ -86,6 +93,7 @@ Before auditing, understand:
 - Duplicate content without canonicals
 
 **Canonicalization**
+
 - All pages have canonical tags
 - Self-referencing canonicals on unique pages
 - HTTP → HTTPS canonicals
@@ -95,11 +103,13 @@ Before auditing, understand:
 ### Site Speed & Core Web Vitals
 
 **Core Web Vitals**
+
 - LCP (Largest Contentful Paint): < 2.5s
 - INP (Interaction to Next Paint): < 200ms
 - CLS (Cumulative Layout Shift): < 0.1
 
 **Speed Factors**
+
 - Server response time (TTFB)
 - Image optimization
 - JavaScript execution
@@ -109,6 +119,7 @@ Before auditing, understand:
 - Font loading
 
 **Tools**
+
 - PageSpeed Insights
 - WebPageTest
 - Chrome DevTools
@@ -146,6 +157,7 @@ Before auditing, understand:
 ### Title Tags
 
 **Check for:**
+
 - Unique titles for each page
 - Primary keyword near beginning
 - 50-60 characters (visible in SERP)
@@ -153,6 +165,7 @@ Before auditing, understand:
 - Brand name placement (end, usually)
 
 **Common issues:**
+
 - Duplicate titles
 - Too long (truncated)
 - Too short (wasted opportunity)
@@ -162,6 +175,7 @@ Before auditing, understand:
 ### Meta Descriptions
 
 **Check for:**
+
 - Unique descriptions per page
 - 150-160 characters
 - Includes primary keyword
@@ -169,6 +183,7 @@ Before auditing, understand:
 - Call to action
 
 **Common issues:**
+
 - Duplicate descriptions
 - Auto-generated garbage
 - Too long/short
@@ -177,6 +192,7 @@ Before auditing, understand:
 ### Heading Structure
 
 **Check for:**
+
 - One H1 per page
 - H1 contains primary keyword
 - Logical hierarchy (H1 → H2 → H3)
@@ -184,6 +200,7 @@ Before auditing, understand:
 - Not just for styling
 
 **Common issues:**
+
 - Multiple H1s
 - Skip levels (H1 → H3)
 - Headings used for styling only
@@ -192,6 +209,7 @@ Before auditing, understand:
 ### Content Optimization
 
 **Primary Page Content**
+
 - Keyword in first 100 words
 - Related keywords naturally used
 - Sufficient depth/length for topic
@@ -199,6 +217,7 @@ Before auditing, understand:
 - Better than competitors
 
 **Thin Content Issues**
+
 - Pages with little unique content
 - Tag/category pages with no value
 - Doorway pages
@@ -207,6 +226,7 @@ Before auditing, understand:
 ### Image Optimization
 
 **Check for:**
+
 - Descriptive file names
 - Alt text on all images
 - Alt text describes image
@@ -218,6 +238,7 @@ Before auditing, understand:
 ### Internal Linking
 
 **Check for:**
+
 - Important pages well-linked
 - Descriptive anchor text
 - Logical link relationships
@@ -225,6 +246,7 @@ Before auditing, understand:
 - Reasonable link count per page
 
 **Common issues:**
+
 - Orphan pages (no internal links)
 - Over-optimized anchor text
 - Important pages buried
@@ -233,12 +255,14 @@ Before auditing, understand:
 ### Keyword Targeting
 
 **Per Page**
+
 - Clear primary keyword target
 - Title, H1, URL aligned
 - Content satisfies search intent
 - Not competing with other pages (cannibalization)
 
 **Site-Wide**
+
 - Keyword mapping document
 - No major gaps in coverage
 - No keyword cannibalization
@@ -251,21 +275,25 @@ Before auditing, understand:
 ### E-E-A-T Signals
 
 **Experience**
+
 - First-hand experience demonstrated
 - Original insights/data
 - Real examples and case studies
 
 **Expertise**
+
 - Author credentials visible
 - Accurate, detailed information
 - Properly sourced claims
 
 **Authoritativeness**
+
 - Recognized in the space
 - Cited by others
 - Industry credentials
 
 **Trustworthiness**
+
 - Accurate information
 - Transparent about business
 - Contact information available
@@ -291,6 +319,7 @@ Before auditing, understand:
 ## Common Issues by Site Type
 
 ### SaaS/Product Sites
+
 - Product pages lack content depth
 - Blog not integrated with product pages
 - Missing comparison/alternative pages
@@ -298,6 +327,7 @@ Before auditing, understand:
 - No glossary/educational content
 
 ### E-commerce
+
 - Thin category pages
 - Duplicate product descriptions
 - Missing product schema
@@ -305,6 +335,7 @@ Before auditing, understand:
 - Out-of-stock pages mishandled
 
 ### Content/Blog Sites
+
 - Outdated content not refreshed
 - Keyword cannibalization
 - No topical clustering
@@ -312,6 +343,7 @@ Before auditing, understand:
 - Missing author pages
 
 ### Local Business
+
 - Inconsistent NAP
 - Missing local schema
 - No Google Business Profile optimization
@@ -325,12 +357,14 @@ Before auditing, understand:
 ### Audit Report Structure
 
 **Executive Summary**
+
 - Overall health assessment
 - Top 3-5 priority issues
 - Quick wins identified
 
 **Technical SEO Findings**
 For each issue:
+
 - **Issue**: What's wrong
 - **Impact**: SEO impact (High/Medium/Low)
 - **Evidence**: How you found it
@@ -344,6 +378,7 @@ Same format as above
 Same format as above
 
 **Prioritized Action Plan**
+
 1. Critical fixes (blocking indexation/ranking)
 2. High-impact improvements
 3. Quick wins (easy, immediate benefit)
@@ -361,6 +396,7 @@ Same format as above
 ## Tools Referenced
 
 **Free Tools**
+
 - Google Search Console (essential)
 - Google PageSpeed Insights
 - Bing Webmaster Tools
@@ -369,6 +405,7 @@ Same format as above
 - Schema Validator
 
 **Paid Tools** (if available)
+
 - Screaming Frog
 - Ahrefs / Semrush
 - Sitebulb

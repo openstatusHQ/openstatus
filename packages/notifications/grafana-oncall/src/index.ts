@@ -1,4 +1,5 @@
 import type { NotificationContext } from "@openstatus/notification-base";
+
 import { GrafanaOncallPayload, GrafanaOncallSchema } from "./schema";
 
 export const sendAlert = async ({

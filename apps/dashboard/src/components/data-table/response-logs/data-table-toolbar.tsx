@@ -1,14 +1,14 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
 
 import { Button } from "@openstatus/ui/components/ui/button";
+import { X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { regions } from "@/data/regions";
 import { statusCodes } from "@/data/status-codes";
-import type { RouterOutputs } from "@openstatus/api";
 
 type ResponseLog = RouterOutputs["tinybird"]["list"]["data"][number];
 
@@ -23,7 +23,7 @@ export function ResponseLogsDataTableToolbar({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex flex-1 flex-warp flex-wrap items-center gap-2">
+      <div className="flex-warp flex flex-1 flex-wrap items-center gap-2">
         {table.getColumn("status") && (
           <DataTableFacetedFilter
             column={table.getColumn("status")}

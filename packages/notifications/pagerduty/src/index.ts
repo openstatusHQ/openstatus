@@ -1,5 +1,7 @@
-import { pagerdutyDataSchema } from "@openstatus/db/src/schema";
 import type { NotificationContext } from "@openstatus/notification-base";
+
+import { pagerdutyDataSchema } from "@openstatus/db/src/schema";
+
 import {
   PagerDutySchema,
   resolveEventPayloadSchema,

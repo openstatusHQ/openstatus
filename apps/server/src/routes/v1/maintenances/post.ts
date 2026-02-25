@@ -1,6 +1,5 @@
-import { env } from "@/env";
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import type { maintenancesApi } from "./index";
+
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
@@ -11,7 +10,11 @@ import {
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
 import { EmailClient } from "@openstatus/emails";
-import type { maintenancesApi } from "./index";
+
+import { env } from "@/env";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+
 import { MaintenanceSchema } from "./schema";
 
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });

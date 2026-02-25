@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
 import { getChangelogPosts } from "@/content/utils";
@@ -6,7 +8,6 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "Changelog Category";
 const DESCRIPTION = "All the latest changes and updates to openstatus.";

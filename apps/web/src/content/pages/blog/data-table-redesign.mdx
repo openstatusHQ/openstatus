@@ -17,15 +17,9 @@ We've reworked the design. Adding table borders improves clarity and structure. 
 
 A quick look of the before/after changes:
 
-<Image
-  src="/assets/posts/data-table-redesign/before.png"
-  alt="before"
-/>
+<Image src="/assets/posts/data-table-redesign/before.png" alt="before" />
 
-<Image
-  src="/assets/posts/data-table-redesign/after.png"
-  alt="after"
-/>
+<Image src="/assets/posts/data-table-redesign/after.png" alt="after" />
 
 We have been inspired by [Vercel](http://vercel.com/?ref=openstatus), [Datadog](http://datadoghq.com/?ref=openstatus) and [Axiom](http://axiom.co/?ref=openstatus) when it comes to design and features.
 
@@ -37,9 +31,9 @@ This time, we prioritized keyboard navigation to make table access and navigatio
 - "Tab" navigation (with potential Arrow key support coming) + "Enter" keypress on rows
 - Include filters in the details `<Sheet />`
 - Additional hotkeys to quickly:
-    - `⌘ Esc` reset focus (to the body, starting with "Skip to content")
-    - `⌘ .` reset filters
-    - `⌘ U` undo column states like order or visibility
+  - `⌘ Esc` reset focus (to the body, starting with "Skip to content")
+  - `⌘ .` reset filters
+  - `⌘ U` undo column states like order or visibility
 
 The W3 WAI (Web Accessibility Initiative) has two concise patterns for grids: The [Grid Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/grid/) and the [Treegrid Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/). The Grid Pattern focuses on cell navigation via arrows and the Treegrid Pattern focuses on hierarchical data with sub-rows, also using arrows to navigate. We might want to take an even closer look to the Web Standards to respect them.
 
@@ -102,7 +96,9 @@ interface ControlsContextType {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const ControlsContext = React.createContext<ControlsContextType | null>(null);
+export const ControlsContext = React.createContext<ControlsContextType | null>(
+  null,
+);
 
 export function ControlsProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(true);

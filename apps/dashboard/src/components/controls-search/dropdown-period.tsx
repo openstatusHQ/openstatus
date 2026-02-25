@@ -1,6 +1,5 @@
 "use client";
 
-import { PERIODS } from "@/data/metrics.client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +11,8 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { Check } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+
+import { PERIODS } from "@/data/metrics.client";
 
 // TODO: where to move it?
 export const PERIOD_VALUES = [
@@ -43,7 +44,7 @@ export function DropdownPeriod() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
             Period
           </DropdownMenuLabel>
           {PERIOD_VALUES.map(({ value, label }) => (

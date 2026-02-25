@@ -1,3 +1,6 @@
+import type { PendingAction } from "./confirmation-store";
+import type { Context } from "hono";
+
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -5,7 +8,7 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { WebClient } from "@slack/web-api";
-import type { Context } from "hono";
+
 import {
   getStatusReportById,
   sendStatusReportNotification,
@@ -13,7 +16,6 @@ import {
   validatePageComponentIds,
 } from "../rpc/services/status-report";
 import { consume, get } from "./confirmation-store";
-import type { PendingAction } from "./confirmation-store";
 import { resolveWorkspace } from "./workspace-resolver";
 
 interface SlackInteractionPayload {

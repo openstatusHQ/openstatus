@@ -1,4 +1,5 @@
 import type { NotificationContext } from "@openstatus/notification-base";
+
 import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema";
 
 export const sendAlert = async ({

@@ -1,7 +1,10 @@
 import { expect, test } from "bun:test";
-import { app } from "@/index";
+
 import { db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
+
+import { app } from "@/index";
+
 import { MaintenanceSchema } from "./schema";
 
 test("create a valid maintenance without monitorIds", async () => {

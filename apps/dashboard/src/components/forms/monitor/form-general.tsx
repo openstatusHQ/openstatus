@@ -1,16 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   dnsRecords,
@@ -70,6 +59,18 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 
 const TYPES = ["http", "tcp", "dns"] as const;
 const HTTP_ASSERTION_TYPES = ["status", "header", "textBody"] as const;
@@ -284,7 +285,7 @@ export function FormGeneral({
                             <TooltipTrigger asChild>
                               <FormItem
                                 className={cn(
-                                  "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+                                  "border-input has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]",
                                   defaultValues &&
                                     defaultValues.type !== type.value &&
                                     "pointer-events-none opacity-50",
@@ -298,11 +299,11 @@ export function FormGeneral({
                                   />
                                 </FormControl>
                                 <type.icon
-                                  className="shrink-0 text-muted-foreground"
+                                  className="text-muted-foreground shrink-0"
                                   size={16}
                                   aria-hidden="true"
                                 />
-                                <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                                <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
                                   {type.label}
                                 </FormLabel>
                               </FormItem>
@@ -315,7 +316,7 @@ export function FormGeneral({
                       })}
                       <div
                         className={cn(
-                          "col-span-1 self-end text-muted-foreground text-xs sm:place-self-end",
+                          "text-muted-foreground col-span-1 self-end text-xs sm:place-self-end",
                         )}
                       >
                         Missing a type?{" "}
@@ -697,24 +698,24 @@ export function FormGeneral({
                   </FormItem>
                 )}
               />
-              <div className="col-span-full text-muted-foreground text-sm">
+              <div className="text-muted-foreground col-span-full text-sm">
                 Examples:
                 <ul className="list-inside list-disc">
                   <li>
                     Domain:{" "}
-                    <span className="font-mono text-foreground">
+                    <span className="text-foreground font-mono">
                       openstatus.dev:443
                     </span>
                   </li>
                   <li>
                     IPv4:{" "}
-                    <span className="font-mono text-foreground">
+                    <span className="text-foreground font-mono">
                       192.168.1.1:443
                     </span>
                   </li>
                   <li>
                     IPv6:{" "}
-                    <span className="font-mono text-foreground">
+                    <span className="text-foreground font-mono">
                       [2001:db8:85a3:8d3:1319:8a2e:370:7348]:443
                     </span>
                   </li>
@@ -957,8 +958,8 @@ export function FormGeneral({
                 failed. Do you want to save the monitor anyway?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div className="max-h-48 overflow-auto whitespace-pre rounded-md border border-destructive/20 bg-destructive/10 p-2">
-              <p className="font-mono text-destructive text-sm">{error}</p>
+            <div className="border-destructive/20 bg-destructive/10 max-h-48 overflow-auto rounded-md border p-2 whitespace-pre">
+              <p className="text-destructive font-mono text-sm">{error}</p>
             </div>
             <AlertDialogFooter>
               <AlertDialogCancel type="button">Cancel</AlertDialogCancel>

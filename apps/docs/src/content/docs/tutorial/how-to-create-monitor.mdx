@@ -3,13 +3,13 @@ title: Create Your First Monitor
 description: "A step-by-step tutorial to create your first monitor with openstatus"
 ---
 
-import { Image } from 'astro:assets';
-import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
-import monitorOverview from '../../../assets/tutorial/create-monitor/monitor-overview.png';
-import createMonitor from '../../../assets/tutorial/create-monitor/create-monitor-1.png';
-import createMonitor2 from '../../../assets/tutorial/create-monitor/create-monitor-2.png';
+import { Image } from "astro:assets";
+import { Aside, CardGrid, LinkCard } from "@astrojs/starlight/components";
+import monitorOverview from "../../../assets/tutorial/create-monitor/monitor-overview.png";
+import createMonitor from "../../../assets/tutorial/create-monitor/create-monitor-1.png";
+import createMonitor2 from "../../../assets/tutorial/create-monitor/create-monitor-2.png";
 
-import { ShowcaseYouTube } from 'starlight-showcases'
+import { ShowcaseYouTube } from "starlight-showcases";
 
 ## What you'll learn
 
@@ -23,10 +23,10 @@ In this tutorial, you'll learn how to create your first monitor an automated wat
 ### What you'll build
 
 By the end of this tutorial, you'll have:
+
 - A working uptime monitor checking your endpoint every minute
 - Real-time metrics showing response time and status codes
 - Understanding of how to customize HTTP requests for different scenarios
-
 
 ## Get Started in 1 Minute
 
@@ -34,37 +34,30 @@ Let's get your first uptime check up and running.
 
 ### 1. Create the Monitor
 
-  <Image
-    src={createMonitor}
-    alt="Charts with status code and response time"
-  />
+<Image src={createMonitor} alt="Charts with status code and response time" />
 
 Navigate to the **Monitors** page from the sidebar and click the **Create Monitor** button. This will open a new configuration screen.
 
-
 ### 2. Configure the Basics
 
-  <Image
-    src={createMonitor2}
-    alt="Charts with status code and response time"
-  />
+<Image src={createMonitor2} alt="Charts with status code and response time" />
 
 To get your monitor started, you only need to provide two essential pieces of information:
+
 - **Name:** A clear, descriptive name for your monitor (e.g., "Production API Health Check" or "Homepage Uptime").
 - **URL:** The full URL of the endpoint you want to test (e.g., `https://openstat.us`).
 
 As soon as you enter the URL, our monitoring tool will automatically begin tracking key performance metrics for every check, including:
+
 - **Response Time:** The total time it takes for the request to complete.
 - **Status Code:** The HTTP status code returned by the server (e.g., 200, 404, 500).
 - **Response Headers:** A detailed view of the headers returned by the server.
 - **Detailed Timing Metrics:** A breakdown of the time spent on each phase of the request (DNS lookup, TCP connection, TLS handshake, etc.)
 
-
   <Image
     src={monitorOverview}
     alt="Charts with status code and response time"
   />
-
 
 ### 3. Customizing the HTTP Request
 
@@ -92,23 +85,28 @@ If you select the `POST` method, you can add a Request Body to your monitor's co
 You can add any number of custom HTTP headers to your request. This is particularly useful for:
 
 - **Authentication:**: Sending an Authorization token (e.g., a Bearer token) to test a protected endpoint.
-- **Content Type:**: Setting an `content-type` header  to specify a content type (e.g., `application/json`).
+- **Content Type:**: Setting an `content-type` header to specify a content type (e.g., `application/json`).
 - **Content Negotiation:** Setting an Accept header to request a specific content type from the server (e.g., `application/json`).
 - **Simulating Clients:** Adding a User-Agent header to simulate traffic from a specific browser or device.
 
-    Heads Up: We've got your User-Agent covered!
-    openstatus automatically includes the `"User-Agent": "openstatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
-
-
-
+  Heads Up: We've got your User-Agent covered!
+  openstatus automatically includes the `"User-Agent": "openstatus/1.0"` header in every request. This makes it easy to identify and filter out our monitoring traffic from your server logs or analytics.
 
 ## Important Considerations
+
 ### Monitoring Third-Party Endpoints
-<Aside>If you're monitoring a URL you don't own (like `google.com` or a partner API), your requests might be blocked by firewalls or rate limiters (e.g., Cloudflare). This is a security measure on their end to prevent scraping or denial-of-service attacks.</Aside>
+
+<Aside>
+  If you're monitoring a URL you don't own (like `google.com` or a partner API),
+  your requests might be blocked by firewalls or rate limiters (e.g.,
+  Cloudflare). This is a security measure on their end to prevent scraping or
+  denial-of-service attacks.
+</Aside>
 
 ## What you've accomplished
 
 Congratulations! You've successfully:
+
 - ✅ Created your first uptime monitor
 - ✅ Configured basic HTTP monitoring settings
 - ✅ Learned about customizing requests with methods, headers, and body
@@ -129,8 +127,6 @@ Now that you have a monitor running, you can:
 - **[Monitor Data Collected](/monitoring/monitor-data-collected)** - What metrics we track
 - **[HTTP Monitor Reference](/reference/http-monitor)** - Complete technical specifications
 
-
-
 ## Video Tutorial
 
 <ShowcaseYouTube
@@ -140,5 +136,5 @@ Now that you have a monitor running, you can:
       title: 'Create your first monitor',
     },
 
-  ]}
+]}
 />

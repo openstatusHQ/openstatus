@@ -1,6 +1,5 @@
 import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
-
 import { z } from "zod";
 
 export const httpPayloadSchema = z.object({

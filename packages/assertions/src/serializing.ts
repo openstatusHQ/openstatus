@@ -1,6 +1,7 @@
+import type { Assertion } from "./types";
+
 import { z } from "zod";
 
-import type { Assertion } from "./types";
 import {
   DnsRecordAssertion,
   HeaderAssertion,

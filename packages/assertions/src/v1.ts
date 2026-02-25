@@ -1,8 +1,9 @@
+import type { Assertion, AssertionRequest, AssertionResult } from "./types";
+
 import { JSONPath } from "jsonpath-plus";
 import { z } from "zod";
 
 import { isDnsAssertionRequest, isHttpAssertionRequest } from "./type-guards";
-import type { Assertion, AssertionRequest, AssertionResult } from "./types";
 
 export const stringCompare = z.enum([
   "contains",

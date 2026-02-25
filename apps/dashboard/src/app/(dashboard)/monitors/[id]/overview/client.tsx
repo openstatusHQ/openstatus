@@ -1,5 +1,20 @@
 "use client";
 
+import type { RegionMetric } from "@/data/region-metrics";
+
+import { monitorRegions } from "@openstatus/db/src/schema/constants";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { endOfDay } from "date-fns";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import React, { useMemo } from "react";
+
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
 import { ChartAreaTimingPhases } from "@/components/chart/chart-area-timing-phases";
 import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
@@ -25,20 +40,8 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { mapRegionMetrics } from "@/data/metrics.client";
 import { periodToFromDate } from "@/data/metrics.client";
-import type { RegionMetric } from "@/data/region-metrics";
 import { useTRPC } from "@/lib/trpc/client";
-import { monitorRegions } from "@openstatus/db/src/schema/constants";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
-import { endOfDay } from "date-fns";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import React, { useMemo } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 const TIMELINE_INTERVAL = 30; // in days
@@ -77,7 +80,7 @@ export function Client() {
       // NOTE: while loading, we show the selected regions with empty data,
       // once the data is loaded, we show all the regions that we get from TB
       isLoading
-        ? monitor?.regions ?? []
+        ? (monitor?.regions ?? [])
         : [
             ...monitorRegions,
             ...(monitor?.privateLocations?.map((location) =>

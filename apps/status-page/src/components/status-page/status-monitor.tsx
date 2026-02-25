@@ -1,6 +1,8 @@
 "use client";
 
+import type { VariantType } from "./floating-button";
 import type { RouterOutputs } from "@openstatus/api";
+
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
@@ -19,7 +21,7 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { useState } from "react";
-import type { VariantType } from "./floating-button";
+
 import { StatusTracker, StatusTrackerSkeleton } from "./status-tracker";
 
 // TODO: use status instead of variant
@@ -92,7 +94,7 @@ export function StatusMonitorTitle({
   return (
     <div
       className={cn(
-        "truncate font-medium font-mono text-base text-foreground leading-5",
+        "text-foreground truncate font-mono text-base leading-5 font-medium",
         className,
       )}
       {...props}
@@ -123,7 +125,7 @@ export function StatusMonitorDescription({
           className="rounded-full"
           {...props}
         >
-          <InfoIcon className="size-4 text-muted-foreground" />
+          <InfoIcon className="text-muted-foreground size-4" />
         </TooltipTrigger>
         <TooltipContent>
           <p>{children}</p>
@@ -140,7 +142,7 @@ export function StatusMonitorIcon({
   return (
     <div
       className={cn(
-        "flex size-[12.5px] items-center justify-center rounded-full bg-muted text-background [&>svg]:size-[9px]",
+        "bg-muted text-background flex size-[12.5px] items-center justify-center rounded-full [&>svg]:size-[9px]",
         "group-data-[variant=success]/monitor:bg-success",
         "group-data-[variant=degraded]/monitor:bg-warning",
         "group-data-[variant=error]/monitor:bg-destructive",
@@ -165,7 +167,7 @@ export function StatusMonitorFooter({
   isLoading?: boolean;
 }) {
   return (
-    <div className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none">
+    <div className="text-muted-foreground flex flex-row items-center justify-between font-mono text-xs leading-none">
       <div>
         {isLoading ? (
           <Skeleton className="h-3 w-18" />
@@ -192,7 +194,7 @@ export function StatusMonitorUptime({
     <div
       {...props}
       className={cn(
-        "font-mono text-foreground/80 text-sm leading-none",
+        "text-foreground/80 font-mono text-sm leading-none",
         className,
       )}
     >

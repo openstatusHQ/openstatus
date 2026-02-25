@@ -5,6 +5,7 @@ import {
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+
 import { Breadcrumb } from "./breadcrumb";
 import { NavActions } from "./nav-actions";
 

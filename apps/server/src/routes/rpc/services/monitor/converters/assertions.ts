@@ -1,3 +1,10 @@
+import type {
+  BodyAssertion,
+  HeaderAssertion,
+  RecordAssertion,
+  StatusCodeAssertion,
+} from "@openstatus/proto/monitor/v1";
+
 import { getLogger } from "@logtape/logtape";
 import {
   type Assertion,
@@ -7,12 +14,6 @@ import {
   statusAssertion,
   textBodyAssertion,
 } from "@openstatus/assertions";
-import type {
-  BodyAssertion,
-  HeaderAssertion,
-  RecordAssertion,
-  StatusCodeAssertion,
-} from "@openstatus/proto/monitor/v1";
 
 import {
   compareToNumberComparator,

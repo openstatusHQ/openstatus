@@ -1,4 +1,5 @@
 import type { ServiceImpl } from "@connectrpc/connect";
+
 import { and, count, db, desc, eq, inArray, sql } from "@openstatus/db";
 import {
   monitor,

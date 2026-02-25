@@ -1,11 +1,12 @@
+import type { assertion, assertionsSchema } from "./schema";
 import type { Assertion } from "@openstatus/assertions";
+import type { z } from "zod";
+
 import {
   HeaderAssertion,
   StatusAssertion,
   TextBodyAssertion,
 } from "@openstatus/assertions";
-import type { z } from "zod";
-import type { assertion, assertionsSchema } from "./schema";
 
 export const getAssertions = (
   assertions: z.infer<typeof assertion>[],

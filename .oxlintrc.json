@@ -1,4 +1,42 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/*.test.ts", "**/*_pb.ts"]
+  "plugins": [
+    "react",
+    "typescript",
+    "unicorn",
+    "jsx-a11y",
+    "oxc",
+    "nextjs",
+    "import"
+  ],
+  "categories": {
+    "correctness": "warn",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    "eslint/no-unused-vars": "warn",
+    "eslint/no-case-declarations": "off",
+    "react/no-array-index-key": "off",
+    "unicorn/no-array-for-each": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "oxc/no-accumulating-spread": "warn",
+    "react/react-in-jsx-scope": "off"
+  },
+  "ignorePatterns": [
+    "node_modules",
+    ".next",
+    "dist",
+    ".wrangler",
+    ".react-email",
+    ".content-collections",
+    "*.astro",
+    ".astro",
+    "packages/ui/src/components/*.tsx",
+    "packages/ui/src/components/*.ts",
+    "apps/dashboard/src/scripts/*.ts",
+    "packages/proto/gen",
+    ".devbox",
+    "**/*_pb.ts"
+  ]
 }

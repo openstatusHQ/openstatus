@@ -7,27 +7,26 @@ app = 'ssh-server-status'
 primary_region = 'cdg'
 
 [build]
-  dockerfile = './Dockerfile'
-
+dockerfile = './Dockerfile'
 
 
 [[services]]
-    internal_port = 2222
-    protocol = "tcp"
-    auto_stop_machines = true
-    auto_start_machines = true
-    [[services.ports]]
-      port = 22
+internal_port = 2222
+protocol = "tcp"
+auto_stop_machines = true
+auto_start_machines = true
+[[services.ports]]
+port = 22
 
 
 [env]
-    PORT = "2222"
+PORT = "2222"
 
 [mounts]
-    source = "ssh_key"
-    destination = "/data"
+source = "ssh_key"
+destination = "/data"
 
 
 [[vm]]
-  size = 'shared-cpu-1x'
-  memory = '256MB'
+size = 'shared-cpu-1x'
+memory = '256MB'

@@ -1,5 +1,5 @@
-import { DatePicker } from "@/components/date-picker";
-import { formatDateRange } from "@/lib/formatter";
+import type { DateRange } from "react-day-picker";
+
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Popover,
@@ -9,7 +9,9 @@ import {
 import { endOfDay, startOfDay, subDays, subHours } from "date-fns";
 import { parseAsIsoDateTime, useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DateRange } from "react-day-picker";
+
+import { DatePicker } from "@/components/date-picker";
+import { formatDateRange } from "@/lib/formatter";
 
 export function PopoverDate() {
   const [open, setOpen] = useState(false);
@@ -24,7 +26,6 @@ export function PopoverDate() {
   );
   const [range, setRange] = useState<DateRange>({ from, to });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const presets = useMemo(
     () => [
       {
@@ -102,7 +103,6 @@ export function PopoverDate() {
     );
   });
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!open) {
       setFrom(range.from ?? null);

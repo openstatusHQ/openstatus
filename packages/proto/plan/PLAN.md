@@ -18,28 +18,31 @@ packages/proto/api/openstatus/status_report/
 From `packages/db/src/schema/status_reports/status_reports.ts`:
 
 ### StatusReport Table
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | integer | primary key |
-| status | enum | "investigating", "identified", "monitoring", "resolved" |
-| title | text(256) | not null |
-| workspaceId | integer | foreign key |
-| pageId | integer | foreign key (cascade delete) |
-| createdAt | timestamp | default now |
-| updatedAt | timestamp | default now |
+
+| Field       | Type      | Constraints                                             |
+| ----------- | --------- | ------------------------------------------------------- |
+| id          | integer   | primary key                                             |
+| status      | enum      | "investigating", "identified", "monitoring", "resolved" |
+| title       | text(256) | not null                                                |
+| workspaceId | integer   | foreign key                                             |
+| pageId      | integer   | foreign key (cascade delete)                            |
+| createdAt   | timestamp | default now                                             |
+| updatedAt   | timestamp | default now                                             |
 
 ### StatusReportUpdate Table
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | integer | primary key |
-| status | enum | same as above |
-| date | timestamp | not null |
-| message | text | not null |
-| statusReportId | integer | foreign key, not null (cascade delete) |
-| createdAt | timestamp | default now |
-| updatedAt | timestamp | default now |
+
+| Field          | Type      | Constraints                            |
+| -------------- | --------- | -------------------------------------- |
+| id             | integer   | primary key                            |
+| status         | enum      | same as above                          |
+| date           | timestamp | not null                               |
+| message        | text      | not null                               |
+| statusReportId | integer   | foreign key, not null (cascade delete) |
+| createdAt      | timestamp | default now                            |
+| updatedAt      | timestamp | default now                            |
 
 ### Relationships
+
 - StatusReport has many StatusReportUpdates
 - StatusReport belongs to Workspace
 - StatusReport can be linked to multiple PageComponents (via `statusReportsToPageComponents` junction table)

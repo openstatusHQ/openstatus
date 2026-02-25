@@ -1,4 +1,5 @@
 # @openstatus/notification-ntfy
+
 To install dependencies:
 
 ```bash

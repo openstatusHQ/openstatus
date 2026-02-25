@@ -1,5 +1,6 @@
-import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
+
+import { CloudTasksClient } from "@google-cloud/tasks";
 import {
   and,
   db,
@@ -20,6 +21,7 @@ import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
+
 import { env } from "../env";
 
 const redis = Redis.fromEnv();

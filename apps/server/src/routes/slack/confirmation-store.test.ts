@@ -1,4 +1,7 @@
+import type { PendingAction } from "./confirmation-store";
+
 import { beforeEach, describe, expect, test } from "bun:test";
+
 import {
   consume,
   findByThread,
@@ -6,7 +9,6 @@ import {
   replace,
   store,
 } from "./confirmation-store";
-import type { PendingAction } from "./confirmation-store";
 
 const redisStore = (globalThis as Record<string, unknown>)
   .__testRedisStore as Map<string, string>;

@@ -1,6 +1,5 @@
 "use client";
 
-import { INTERVALS } from "@/data/metrics.client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -12,6 +11,8 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { Check } from "lucide-react";
 import { parseAsNumberLiteral, useQueryState } from "nuqs";
+
+import { INTERVALS } from "@/data/metrics.client";
 
 const MAPPING = {
   5: "5 minutes",
@@ -38,7 +39,7 @@ export function DropdownInterval() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="font-medium text-muted-foreground text-xs">
+          <DropdownMenuLabel className="text-muted-foreground text-xs font-medium">
             Resolution
           </DropdownMenuLabel>
           {INTERVALS.map((item) => (

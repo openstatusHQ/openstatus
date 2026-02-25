@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentPropsWithoutRef } from "react";
+
 import { UTCDate } from "@date-fns/utc";
 import {
   HoverCard,
@@ -10,7 +12,6 @@ import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { Copy } from "lucide-react";
 import { Check } from "lucide-react";
-import type { ComponentPropsWithoutRef } from "react";
 
 // TODO: move to TableCellDate?
 

@@ -2,7 +2,11 @@
   "name": "@openstatus/analytics",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.ts",
+  "scripts": {},
   "dependencies": {
     "@openpanel/sdk": "1.0.3",
     "@t3-oss/env-core": "0.13.10",
@@ -12,9 +16,5 @@
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "22.10.2",
     "typescript": "5.9.3"
-  },
-  "scripts": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

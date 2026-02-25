@@ -28,6 +28,6 @@ export const getActions = (
 ): (IncidentAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,
-    onClick: props[action.id as keyof typeof props],
+    onClick: props[action.id],
   }));
 };

@@ -1,18 +1,5 @@
 "use client";
 
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -33,6 +20,20 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -202,7 +203,7 @@ export function FormStatusPages({
                                   }}
                                 />
                               </FormControl>
-                              <FormLabel className="font-normal text-sm">
+                              <FormLabel className="text-sm font-normal">
                                 {item.title}{" "}
                                 <Badge
                                   variant="secondary"

@@ -1,3 +1,6 @@
+import sanitizeHtml from "sanitize-html";
+import { z } from "zod";
+
 import { slugify } from "@/content/mdx";
 import {
   type MDXData,
@@ -5,8 +8,6 @@ import {
   getHomePage,
   getPages,
 } from "@/content/utils";
-import sanitizeHtml from "sanitize-html";
-import { z } from "zod";
 
 const SearchSchema = z.object({
   p: z.enum(PAGE_TYPES).nullish(),
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
     });
   }
 
-  const results = search(params.data).sort((a, b) => {
+  const results = search(params.data).toSorted((a, b) => {
     return b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime();
   });
 

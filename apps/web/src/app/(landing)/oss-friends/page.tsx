@@ -1,11 +1,14 @@
+import type { Metadata } from "next";
+
+import { z } from "zod";
+
 import { components } from "@/content/mdx";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
-import { z } from "zod";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,

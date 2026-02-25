@@ -7,6 +7,7 @@ This script exports monitor metrics data from OpenStatus for use in blog posts a
 The script fetches monitor data directly from the database and Tinybird analytics, then exports it to a JSON file that can be used for visualizations in blog posts.
 
 **Features:**
+
 - Fetches metrics from both regular regions and private locations
 - Automatically combines public regions with private location data
 - Supports both HTTP and TCP monitors
@@ -16,10 +17,10 @@ The script fetches monitor data directly from the database and Tinybird analytic
 Edit the constants at the top of `export-blog-post-metrics.ts`:
 
 ```typescript
-const MONITOR_ID = "1";        // The ID of the monitor to export
-const PERIOD = "7d";           // Time period: "1d", "7d", or "14d"
-const INTERVAL = 60;           // Interval in minutes for data points
-const TYPE = "http";           // Fallback monitor type: "http" or "tcp" (auto-detected from monitor)
+const MONITOR_ID = "1"; // The ID of the monitor to export
+const PERIOD = "7d"; // Time period: "1d", "7d", or "14d"
+const INTERVAL = 60; // Interval in minutes for data points
+const TYPE = "http"; // Fallback monitor type: "http" or "tcp" (auto-detected from monitor)
 const OUTPUT_FILE = "blog-post-metrics.json"; // Output filename
 ```
 
@@ -103,13 +104,15 @@ cp blog-post-metrics.json ../web/public/assets/posts/your-blog-post/data.json
 ## Troubleshooting
 
 **Error: "TINY_BIRD_API_KEY environment variable is required"**
+
 - Make sure you have the `TINY_BIRD_API_KEY` set in your `.env` file
 
 **Error: "Monitor with ID X not found"**
+
 - Verify the monitor ID exists in your database
 - Check that you're connected to the correct database
 
 **No data returned**
+
 - Ensure the monitor has been running and collecting data for the specified period
 - Try a different time period (e.g., "7d" instead of "1d")
-

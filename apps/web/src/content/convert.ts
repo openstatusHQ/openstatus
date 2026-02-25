@@ -1,4 +1,5 @@
 import type { MDXData } from "./utils";
+
 import { formatDate } from "./utils";
 
 /**

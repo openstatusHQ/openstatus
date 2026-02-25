@@ -1,5 +1,7 @@
-import { describe, expect, test } from "bun:test";
 import type { Workspace } from "@openstatus/db/src/schema/workspaces/validation";
+
+import { describe, expect, test } from "bun:test";
+
 import { createAddStatusReportUpdateTool } from "./add-status-report-update";
 import { createCreateStatusReportTool } from "./create-status-report";
 import { createTools } from "./index";
@@ -16,7 +18,7 @@ const mockWorkspace = {
 describe("createTools", () => {
   test("returns all expected tool keys", () => {
     const tools = createTools(mockWorkspace);
-    expect(Object.keys(tools).sort()).toEqual([
+    expect(Object.keys(tools).toSorted()).toEqual([
       "addStatusReportUpdate",
       "createStatusReport",
       "listStatusPages",

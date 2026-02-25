@@ -1,10 +1,11 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { statusReportUpdatesApi } from "./index";
 
+import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import type { statusReportUpdatesApi } from "./index";
+
 import { ParamsSchema, StatusReportUpdateSchema } from "./schema";
 
 const getRoute = createRoute({

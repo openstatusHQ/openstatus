@@ -17,8 +17,8 @@ const client = createOpenStatusClient({
   apiKey: process.env.OPENSTATUS_API_KEY,
 });
 
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Slack Alerts",
     provider: NotificationProvider.SLACK,
     data: {
@@ -42,8 +42,8 @@ Each provider shown as a complete `createNotification` call.
 ### Slack
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Slack Alerts",
     provider: NotificationProvider.SLACK,
     data: {
@@ -59,8 +59,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Discord
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Discord Alerts",
     provider: NotificationProvider.DISCORD,
     data: {
@@ -76,8 +76,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Email
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Email Alerts",
     provider: NotificationProvider.EMAIL,
     data: {
@@ -93,8 +93,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### PagerDuty
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "PagerDuty Alerts",
     provider: NotificationProvider.PAGERDUTY,
     data: {
@@ -112,8 +112,8 @@ const { notification } = await client.notification.v1.NotificationService
 ```typescript
 import { NotificationProvider, OpsgenieRegion } from "@openstatus/sdk-node";
 
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Opsgenie Alerts",
     provider: NotificationProvider.OPSGENIE,
     data: {
@@ -129,8 +129,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Telegram
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Telegram Alerts",
     provider: NotificationProvider.TELEGRAM,
     data: {
@@ -146,8 +146,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Google Chat
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Google Chat Alerts",
     provider: NotificationProvider.GOOGLE_CHAT,
     data: {
@@ -163,8 +163,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Grafana OnCall
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Grafana OnCall",
     provider: NotificationProvider.GRAFANA_ONCALL,
     data: {
@@ -180,8 +180,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Ntfy
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Ntfy Alerts",
     provider: NotificationProvider.NTFY,
     data: {
@@ -201,8 +201,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### SMS
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "SMS Alerts",
     provider: NotificationProvider.SMS,
     data: {
@@ -218,8 +218,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### WhatsApp
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "WhatsApp Alerts",
     provider: NotificationProvider.WHATSAPP,
     data: {
@@ -235,8 +235,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Custom Webhook
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.createNotification({
     name: "Custom Webhook",
     provider: NotificationProvider.WEBHOOK,
     data: {
@@ -262,8 +262,8 @@ Verify a notification configuration without creating a channel.
 ```typescript
 import { NotificationProvider } from "@openstatus/sdk-node";
 
-const { success, errorMessage } = await client.notification.v1
-  .NotificationService.sendTestNotification({
+const { success, errorMessage } =
+  await client.notification.v1.NotificationService.sendTestNotification({
     provider: NotificationProvider.SLACK,
     data: {
       data: {
@@ -285,8 +285,8 @@ if (success) {
 Check if the workspace has reached its notification channel limit.
 
 ```typescript
-const { limitReached, currentCount, maxCount } = await client.notification.v1
-  .NotificationService.checkNotificationLimit({});
+const { limitReached, currentCount, maxCount } =
+  await client.notification.v1.NotificationService.checkNotificationLimit({});
 
 console.log(`${currentCount}/${maxCount} notification channels used`);
 if (limitReached) {
@@ -299,8 +299,11 @@ if (limitReached) {
 ### List Notifications
 
 ```typescript
-const { notifications, totalSize } = await client.notification.v1
-  .NotificationService.listNotifications({ limit: 10, offset: 0 });
+const { notifications, totalSize } =
+  await client.notification.v1.NotificationService.listNotifications({
+    limit: 10,
+    offset: 0,
+  });
 
 console.log(`Found ${totalSize} notification channels`);
 ```
@@ -310,8 +313,10 @@ console.log(`Found ${totalSize} notification channels`);
 ```typescript
 import { NotificationProvider } from "@openstatus/sdk-node";
 
-const { notification } = await client.notification.v1.NotificationService
-  .getNotification({ id: "notif_123" });
+const { notification } =
+  await client.notification.v1.NotificationService.getNotification({
+    id: "notif_123",
+  });
 
 console.log(`Name: ${notification?.name}`);
 console.log(`Provider: ${NotificationProvider[notification?.provider ?? 0]}`);
@@ -320,8 +325,8 @@ console.log(`Provider: ${NotificationProvider[notification?.provider ?? 0]}`);
 ### Update Notification
 
 ```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .updateNotification({
+const { notification } =
+  await client.notification.v1.NotificationService.updateNotification({
     id: "notif_123",
     name: "Updated Slack Alerts",
     monitorIds: ["mon_123", "mon_456", "mon_789"],
@@ -331,6 +336,8 @@ const { notification } = await client.notification.v1.NotificationService
 ### Delete Notification
 
 ```typescript
-const { success } = await client.notification.v1.NotificationService
-  .deleteNotification({ id: "notif_123" });
+const { success } =
+  await client.notification.v1.NotificationService.deleteNotification({
+    id: "notif_123",
+  });
 ```

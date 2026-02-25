@@ -53,11 +53,13 @@ We have identified the cause of the [Feature Name] degradation. Our team is impl
 **Impact**: Users could read/edit but not duplicate or move content
 
 **What worked**:
+
 - Specific about which operations were affected
 - Clear that core functionality (reading, editing) still worked
 - Precise timestamps in user's timezone (PST)
 
 **Sample progression**:
+
 ```
 12:10pm PST - Investigating
 "We are experiencing an incident that affects operations such as
@@ -77,6 +79,7 @@ operations continue to work normally."
 **Approach**: Clear about single feature impact
 
 **Why it worked**:
+
 - Users knew exactly what was broken
 - Clear that it wasn't a full outage
 - No operational downtime reported for core features
@@ -88,6 +91,7 @@ operations continue to work normally."
 **Impact**: Claude Opus 4.5 and GPT-5.2 inaccessible; other models worked
 
 **Communication breakdown**:
+
 ```
 Investigating:
 "Some users unable to access premium AI models in GitHub Copilot"
@@ -102,6 +106,7 @@ validated across all regions."
 ```
 
 **Why it worked**:
+
 - Specific model names (users could check if they were affected)
 - Clear that other models still worked
 - Technical but not overly complex
@@ -111,12 +116,14 @@ validated across all regions."
 ### ✅ Good Examples
 
 **Specific and clear**:
+
 ```
 The file upload feature is currently unavailable. All other features,
 including viewing, editing, and sharing, are working normally.
 ```
 
 **With workaround**:
+
 ```
 Export functionality is temporarily degraded. Exports may take 2-3x
 longer than usual. Viewing and editing are unaffected.
@@ -126,6 +133,7 @@ individually.
 ```
 
 **With context**:
+
 ```
 Search is experiencing elevated latency (5-10 seconds vs normal <1s).
 We're working on a fix. All other features operating normally.
@@ -145,6 +153,7 @@ We're working on a fix. All other features operating normally.
 Help users quickly understand what works and what doesn't:
 
 ### Example 1: Export Feature Down
+
 ```
 Current Status:
 
@@ -164,6 +173,7 @@ We're working to restore export functionality.
 ```
 
 ### Example 2: Upload Feature Degraded
+
 ```
 Current Status:
 
@@ -237,18 +247,21 @@ and we can prioritize it.
 ## User Action Guidance
 
 ### No Action Needed
+
 ```
 The issue is on our end. No action is required from you. We'll
 update this status when resolved.
 ```
 
 ### Retry Recommended
+
 ```
 If you encounter an error, please wait 30 seconds and try again.
 Most operations succeed on the second attempt.
 ```
 
 ### Workaround Available
+
 ```
 While we work on a fix, you can use this workaround:
 1. Go to Settings > Export
@@ -259,6 +272,7 @@ We'll notify you when the standard export is restored.
 ```
 
 ### Avoid Feature Temporarily
+
 ```
 We recommend avoiding [feature] until this is resolved to prevent
 data sync issues. We'll send an all-clear when it's safe to use again.
@@ -284,30 +298,35 @@ treating this as high priority and have additional engineers engaged.
 ## Progressive Updates
 
 ### Initial (Minute 0)
+
 ```
 We're investigating reports of [feature] not working correctly.
 Some users may experience errors. Core functionality unaffected.
 ```
 
 ### Update 1 (Minute 15)
+
 ```
 We've confirmed [feature] is experiencing issues. Approximately
 20% of requests are failing. We're investigating the cause.
 ```
 
 ### Update 2 (Minute 30)
+
 ```
 Root cause identified: database connection timeout on [specific service].
 Implementing a fix now. Estimated resolution: 15 minutes.
 ```
 
 ### Update 3 (Minute 45)
+
 ```
 Fix deployed. [Feature] error rate has dropped from 20% to 2%.
 Monitoring for full recovery.
 ```
 
 ### Final (Minute 60)
+
 ```
 [Feature] is fully restored. Error rates back to normal (< 0.1%).
 No user action required. Thank you for your patience.
@@ -316,6 +335,7 @@ No user action required. Thank you for your patience.
 ## Partial vs. Complete Degradation
 
 ### Partial (50% working)
+
 ```
 [Feature] is partially degraded. About half of requests are succeeding.
 If you receive an error, try again in a few seconds - you'll likely
@@ -323,6 +343,7 @@ succeed on the second or third attempt.
 ```
 
 ### Severe (90% failing)
+
 ```
 [Feature] is severely degraded with most requests failing. We recommend
 waiting until this is resolved rather than retrying repeatedly.
@@ -331,6 +352,7 @@ ETA for fix: 30 minutes
 ```
 
 ### Complete (100% down)
+
 ```
 [Feature] is currently unavailable. We've identified the issue and
 are working on a fix.

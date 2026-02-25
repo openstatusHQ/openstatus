@@ -1,7 +1,7 @@
-import { drizzle } from "drizzle-orm/libsql";
-
 import { createClient } from "@libsql/client";
 import { schema } from "@openstatus/db";
+import { drizzle } from "drizzle-orm/libsql";
+
 import { env } from "../env";
 
 const file =

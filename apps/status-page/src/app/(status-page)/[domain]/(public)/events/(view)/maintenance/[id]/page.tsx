@@ -1,7 +1,7 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
@@ -16,7 +16,7 @@ import {
   StatusEventTimelineMaintenance,
   StatusEventTitle,
 } from "@/components/status-page/status-events";
-import { useParams } from "next/navigation";
+import { useTRPC } from "@/lib/trpc/client";
 
 export default function MaintenancePage() {
   const trpc = useTRPC();

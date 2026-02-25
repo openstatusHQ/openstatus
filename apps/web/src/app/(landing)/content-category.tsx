@@ -1,4 +1,5 @@
 import type { MDXData } from "@/content/utils";
+
 import Link from "next/link";
 import { Fragment } from "react";
 

@@ -5,37 +5,37 @@
   description: "Our website \U0001F310"
   frequency: 10m
   kind: http
-  name: 'OpenStatus '
+  name: "OpenStatus "
   public: true
   regions:
-  - ams
-  - iad
-  - jnb
-  - gru
-  - syd
-  - cdg
-  - bom
-  - sin
-  - fra
-  - lhr
-  - arn
-  - den
-  - dfw
-  - ord
-  - lax
-  - sjc
-  - ewr
-  - yyz
-  - koyeb_fra
-  - koyeb_par
-  - koyeb_sfo
-  - koyeb_sin
-  - koyeb_tyo
-  - koyeb_was
-  - railway_asia-southeast1-eqsg3a
-  - railway_europe-west4-drams3a
-  - railway_us-east4-eqdc4a
-  - railway_us-west2
+    - ams
+    - iad
+    - jnb
+    - gru
+    - syd
+    - cdg
+    - bom
+    - sin
+    - fra
+    - lhr
+    - arn
+    - den
+    - dfw
+    - ord
+    - lax
+    - sjc
+    - ewr
+    - yyz
+    - koyeb_fra
+    - koyeb_par
+    - koyeb_sfo
+    - koyeb_sin
+    - koyeb_tyo
+    - koyeb_was
+    - railway_asia-southeast1-eqsg3a
+    - railway_europe-west4-drams3a
+    - railway_us-east4-eqdc4a
+    - railway_us-west2
   request:
     method: GET
     url: https://www.openstatus.dev
@@ -48,34 +48,34 @@
   name: OpenStatus  Status Page
   public: true
   regions:
-  - ams
-  - iad
-  - jnb
-  - gru
-  - syd
-  - bom
-  - sin
-  - fra
-  - lhr
-  - cdg
-  - arn
-  - den
-  - dfw
-  - ord
-  - lax
-  - sjc
-  - ewr
-  - yyz
-  - koyeb_fra
-  - koyeb_par
-  - koyeb_sfo
-  - koyeb_sin
-  - koyeb_tyo
-  - koyeb_was
-  - railway_asia-southeast1-eqsg3a
-  - railway_europe-west4-drams3a
-  - railway_us-east4-eqdc4a
-  - railway_us-west2
+    - ams
+    - iad
+    - jnb
+    - gru
+    - syd
+    - bom
+    - sin
+    - fra
+    - lhr
+    - cdg
+    - arn
+    - den
+    - dfw
+    - ord
+    - lax
+    - sjc
+    - ewr
+    - yyz
+    - koyeb_fra
+    - koyeb_par
+    - koyeb_sfo
+    - koyeb_sin
+    - koyeb_tyo
+    - koyeb_was
+    - railway_asia-southeast1-eqsg3a
+    - railway_europe-west4-drams3a
+    - railway_us-east4-eqdc4a
+    - railway_us-west2
 
   request:
     method: GET
@@ -89,34 +89,34 @@
   name: OpenStatus API
   public: true
   regions:
-  - ams
-  - iad
-  - jnb
-  - gru
-  - syd
-  - bom
-  - sin
-  - fra
-  - lhr
-  - cdg
-  - arn
-  - den
-  - dfw
-  - ord
-  - lax
-  - sjc
-  - ewr
-  - yyz
-  - koyeb_fra
-  - koyeb_par
-  - koyeb_sfo
-  - koyeb_sin
-  - koyeb_tyo
-  - koyeb_was
-  - railway_asia-southeast1-eqsg3a
-  - railway_europe-west4-drams3a
-  - railway_us-east4-eqdc4a
-  - railway_us-west2
+    - ams
+    - iad
+    - jnb
+    - gru
+    - syd
+    - bom
+    - sin
+    - fra
+    - lhr
+    - cdg
+    - arn
+    - den
+    - dfw
+    - ord
+    - lax
+    - sjc
+    - ewr
+    - yyz
+    - koyeb_fra
+    - koyeb_par
+    - koyeb_sfo
+    - koyeb_sin
+    - koyeb_tyo
+    - koyeb_was
+    - railway_asia-southeast1-eqsg3a
+    - railway_europe-west4-drams3a
+    - railway_us-east4-eqdc4a
+    - railway_us-west2
   request:
     method: GET
     url: https://api.openstatus.dev/ping
@@ -128,11 +128,11 @@
   name: openstat.us
   public: true
   regions:
-  - ams
-  - iad
-  - syd
-  - gru
-  - sin
+    - ams
+    - iad
+    - syd
+    - gru
+    - sin
   request:
     method: GET
     url: https://openstat.us
@@ -144,12 +144,12 @@
   name: OpenStatus Astro Status Page
   public: true
   regions:
-  - ams
-  - iad
-  - sin
-  - jnb
-  - syd
-  - gru
+    - ams
+    - iad
+    - sin
+    - jnb
+    - syd
+    - gru
   request:
     method: GET
     url: https://astro.openstat.us/
@@ -158,36 +158,36 @@
   active: true
   frequency: 1m
   kind: tcp
-  name: 'OpenStatus TCP'
+  name: "OpenStatus TCP"
   regions:
-  - ams
-  - iad
-  - jnb
-  - gru
-  - syd
-  - bom
-  - sin
-  - fra
-  - lhr
-  - cdg
-  - arn
-  - den
-  - dfw
-  - ord
-  - lax
-  - sjc
-  - ewr
-  - yyz
-  - koyeb_fra
-  - koyeb_par
-  - koyeb_sfo
-  - koyeb_sin
-  - koyeb_tyo
-  - koyeb_was
-  - railway_asia-southeast1-eqsg3a
-  - railway_europe-west4-drams3a
-  - railway_us-east4-eqdc4a
-  - railway_us-west2
+    - ams
+    - iad
+    - jnb
+    - gru
+    - syd
+    - bom
+    - sin
+    - fra
+    - lhr
+    - cdg
+    - arn
+    - den
+    - dfw
+    - ord
+    - lax
+    - sjc
+    - ewr
+    - yyz
+    - koyeb_fra
+    - koyeb_par
+    - koyeb_sfo
+    - koyeb_sin
+    - koyeb_tyo
+    - koyeb_was
+    - railway_asia-southeast1-eqsg3a
+    - railway_europe-west4-drams3a
+    - railway_us-east4-eqdc4a
+    - railway_us-west2
   request:
     host: openstatus.dev
     port: 443

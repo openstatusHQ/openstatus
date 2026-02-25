@@ -1,7 +1,6 @@
+import * as assertions from "@openstatus/assertions";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-
-import * as assertions from "@openstatus/assertions";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
@@ -12,7 +11,6 @@ export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 
 // TODO: shared function
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 function stringToArrayProcess<T>(_string: T) {}
 
 const regionsToArraySchema = z.preprocess((val) => {

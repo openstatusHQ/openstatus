@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,

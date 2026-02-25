@@ -3,8 +3,8 @@ title: Get Started with openstatus CLI
 description: "Step-by-step tutorial to install and use the openstatus CLI for monitoring as code"
 ---
 
-import { Image } from 'astro:assets';
-import CLI from '../../../assets/tutorial/get-started-with-openstatus-cli/CLI.png';
+import { Image } from "astro:assets";
+import CLI from "../../../assets/tutorial/get-started-with-openstatus-cli/CLI.png";
 
 ## What you'll learn
 
@@ -19,15 +19,13 @@ In this tutorial, you'll learn how to use the openstatus CLI to manage your moni
 ### What you'll build
 
 By the end of this tutorial, you'll have:
+
 - openstatus CLI installed on your system
 - Monitors exported to a YAML configuration file
 - Understanding of monitoring as code workflows
 - Ability to manage monitors programmatically
 
-<Image
-  src={CLI}
-  alt="openstatus CLI in action showing monitor management"
-/>
+<Image src={CLI} alt="openstatus CLI in action showing monitor management" />
 
 ## Installation
 
@@ -36,11 +34,13 @@ Install the openstatus CLI to manage your monitors directly from code.
 ### macOS
 
 Using Homebrew (recommended):
+
 ```bash
 brew install openstatusHQ/cli/openstatus --cask
 ```
 
 Or using the install script:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/openstatusHQ/cli/refs/heads/main/install.sh | bash
 ```
@@ -90,6 +90,7 @@ The CLI will show you a diff of changes before applying them, ensuring you're aw
 ## What you've accomplished
 
 Excellent work! You've successfully:
+
 - ✅ Installed the openstatus CLI
 - ✅ Configured API authentication
 - ✅ Imported monitors to a YAML file
@@ -107,6 +108,7 @@ Now that you have the CLI set up, you can:
 ### Advanced workflows
 
 With the CLI, you can:
+
 - Version control your monitoring configuration with Git
 - Review monitoring changes in pull requests
 - Automate monitor creation for new services

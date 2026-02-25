@@ -1,5 +1,12 @@
 "use client";
 
+import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+
+import { useQuery } from "@tanstack/react-query";
+import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
+import { useQueryStates } from "nuqs";
+import { useEffect, useState } from "react";
+
 import {
   Section,
   SectionDescription,
@@ -22,11 +29,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getMonitorListMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
-import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
-import { useQueryStates } from "nuqs";
-import { useEffect, useState } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 const icons = {
@@ -78,7 +81,6 @@ export function Client() {
   });
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (searchParams.status) {
       setColumnFilters([{ id: "status", value: [searchParams.status] }]);
@@ -170,12 +172,12 @@ export function Client() {
               isLoadingHttp || isLoadingTcp
                 ? undefined
                 : monitor.jobType === "http"
-                  ? globalHttpMetrics?.data?.find(
+                  ? (globalHttpMetrics?.data?.find(
                       (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false
-                  : globalTcpMetrics?.data?.find(
+                    ) ?? false)
+                  : (globalTcpMetrics?.data?.find(
                       (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false,
+                    ) ?? false),
           }))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={(props) => (

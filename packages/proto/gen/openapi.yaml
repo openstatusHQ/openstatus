@@ -47,17 +47,17 @@ components:
         details:
           type: array
           items:
-            $ref: '#/components/schemas/connect.error_details.Any'
+            $ref: "#/components/schemas/connect.error_details.Any"
           description: A list of messages that carry the error details. There is no limit on the number of messages.
       title: Connect Error
       additionalProperties: true
-      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+      description: "Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation"
     connect.error_details.Any:
       type: object
       properties:
         type:
           type: string
-          description: 'A URL that acts as a globally unique identifier for the type of the serialized message. For example: `type.googleapis.com/google.rpc.ErrorInfo`. This is used to determine the schema of the data in the `value` field and is the discriminator for the `debug` field.'
+          description: "A URL that acts as a globally unique identifier for the type of the serialized message. For example: `type.googleapis.com/google.rpc.ErrorInfo`. This is used to determine the schema of the data in the `value` field and is the discriminator for the `debug` field."
         value:
           type: string
           format: binary
@@ -90,7 +90,7 @@ components:
         status:
           title: status
           description: The serving status of the service.
-          $ref: '#/components/schemas/openstatus.health.v1.CheckResponse.ServingStatus'
+          $ref: "#/components/schemas/openstatus.health.v1.CheckResponse.ServingStatus"
       title: CheckResponse
       additionalProperties: false
       description: CheckResponse is the response message for health checks.
@@ -158,7 +158,7 @@ components:
         maintenance:
           title: maintenance
           description: The created maintenance.
-          $ref: '#/components/schemas/openstatus.maintenance.v1.Maintenance'
+          $ref: "#/components/schemas/openstatus.maintenance.v1.Maintenance"
       title: CreateMaintenanceResponse
       additionalProperties: false
       description: CreateMaintenanceResponse is the response after creating a maintenance window.
@@ -200,7 +200,7 @@ components:
         maintenance:
           title: maintenance
           description: The requested maintenance.
-          $ref: '#/components/schemas/openstatus.maintenance.v1.Maintenance'
+          $ref: "#/components/schemas/openstatus.maintenance.v1.Maintenance"
       title: GetMaintenanceResponse
       additionalProperties: false
       description: GetMaintenanceResponse is the response containing the maintenance window.
@@ -239,7 +239,7 @@ components:
         maintenances:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+            $ref: "#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary"
           title: maintenances
           description: List of maintenances.
         totalSize:
@@ -395,7 +395,7 @@ components:
         maintenance:
           title: maintenance
           description: The updated maintenance.
-          $ref: '#/components/schemas/openstatus.maintenance.v1.Maintenance'
+          $ref: "#/components/schemas/openstatus.maintenance.v1.Maintenance"
       title: UpdateMaintenanceResponse
       additionalProperties: false
       description: UpdateMaintenanceResponse is the response after updating a maintenance window.
@@ -412,7 +412,7 @@ components:
               - STRING_COMPARATOR_UNSPECIFIED
           title: comparator
           description: Comparison operation (required, must not be UNSPECIFIED).
-          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+          $ref: "#/components/schemas/openstatus.monitor.v1.StringComparator"
       title: BodyAssertion
       additionalProperties: false
       description: BodyAssertion defines an assertion for response body content.
@@ -422,7 +422,7 @@ components:
         monitor:
           title: monitor
           description: Monitor configuration (required).
-          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.DNSMonitor"
       title: CreateDNSMonitorRequest
       required:
         - monitor
@@ -434,7 +434,7 @@ components:
         monitor:
           title: monitor
           description: The created monitor with assigned ID.
-          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.DNSMonitor"
       title: CreateDNSMonitorResponse
       additionalProperties: false
       description: CreateDNSMonitorResponse is the response after creating a DNS monitor.
@@ -444,7 +444,7 @@ components:
         monitor:
           title: monitor
           description: Monitor configuration (required).
-          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMonitor"
       title: CreateHTTPMonitorRequest
       required:
         - monitor
@@ -456,7 +456,7 @@ components:
         monitor:
           title: monitor
           description: The created monitor with assigned ID.
-          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMonitor"
       title: CreateHTTPMonitorResponse
       additionalProperties: false
       description: CreateHTTPMonitorResponse is the response after creating an HTTP monitor.
@@ -466,7 +466,7 @@ components:
         monitor:
           title: monitor
           description: Monitor configuration (required).
-          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.TCPMonitor"
       title: CreateTCPMonitorRequest
       required:
         - monitor
@@ -478,7 +478,7 @@ components:
         monitor:
           title: monitor
           description: The created monitor with assigned ID.
-          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.TCPMonitor"
       title: CreateTCPMonitorResponse
       additionalProperties: false
       description: CreateTCPMonitorResponse is the response after creating a TCP monitor.
@@ -511,7 +511,7 @@ components:
               - PERIODICITY_UNSPECIFIED
           title: periodicity
           description: Check periodicity (required).
-          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+          $ref: "#/components/schemas/openstatus.monitor.v1.Periodicity"
         timeout:
           type:
             - integer
@@ -543,7 +543,7 @@ components:
         recordAssertions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.RecordAssertion'
+            $ref: "#/components/schemas/openstatus.monitor.v1.RecordAssertion"
           title: record_assertions
           maxItems: 10
           description: DNS record assertions for validation.
@@ -563,18 +563,18 @@ components:
         regions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Region"
           title: regions
           maxItems: 28
           description: Geographic regions to run checks from.
         openTelemetry:
           title: open_telemetry
           description: OpenTelemetry configuration for exporting metrics.
-          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+          $ref: "#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig"
         status:
           title: status
           description: Current operational status of the monitor.
-          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+          $ref: "#/components/schemas/openstatus.monitor.v1.MonitorStatus"
       title: DNSMonitor
       additionalProperties: false
       description: DNSMonitor defines the configuration for a DNS monitor.
@@ -616,7 +616,7 @@ components:
         monitor:
           title: monitor
           description: The monitor configuration (one of HTTP, TCP, or DNS).
-          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorConfig'
+          $ref: "#/components/schemas/openstatus.monitor.v1.MonitorConfig"
       title: GetMonitorResponse
       additionalProperties: false
       description: GetMonitorResponse is the response containing the monitor.
@@ -641,7 +641,7 @@ components:
         regions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.RegionStatus'
+            $ref: "#/components/schemas/openstatus.monitor.v1.RegionStatus"
           title: regions
           description: Status for each region.
       title: GetMonitorStatusResponse
@@ -658,11 +658,11 @@ components:
         timeRange:
           title: time_range
           description: Time range for metrics aggregation (defaults to 1 day if unspecified).
-          $ref: '#/components/schemas/openstatus.monitor.v1.TimeRange'
+          $ref: "#/components/schemas/openstatus.monitor.v1.TimeRange"
         regions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Region"
           title: regions
           maxItems: 28
           description: Optional filter by regions. If empty, returns metrics for all regions.
@@ -739,11 +739,11 @@ components:
         timeRange:
           title: time_range
           description: Time range used for the metrics.
-          $ref: '#/components/schemas/openstatus.monitor.v1.TimeRange'
+          $ref: "#/components/schemas/openstatus.monitor.v1.TimeRange"
         regions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Region"
           title: regions
           description: Regions included in the metrics.
       title: GetMonitorSummaryResponse
@@ -794,14 +794,14 @@ components:
               - PERIODICITY_UNSPECIFIED
           title: periodicity
           description: Check periodicity (required).
-          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+          $ref: "#/components/schemas/openstatus.monitor.v1.Periodicity"
         method:
           not:
             enum:
               - HTTP_METHOD_UNSPECIFIED
           title: method
           description: HTTP method to use (defaults to GET).
-          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMethod'
+          $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMethod"
         body:
           type: string
           examples:
@@ -845,28 +845,28 @@ components:
         headers:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Headers"
           title: headers
           maxItems: 20
           description: Custom headers for the request.
         statusCodeAssertions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.StatusCodeAssertion'
+            $ref: "#/components/schemas/openstatus.monitor.v1.StatusCodeAssertion"
           title: status_code_assertions
           maxItems: 10
           description: Status code assertions for the response.
         bodyAssertions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.BodyAssertion'
+            $ref: "#/components/schemas/openstatus.monitor.v1.BodyAssertion"
           title: body_assertions
           maxItems: 10
           description: Body content assertions for the response.
         headerAssertions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.HeaderAssertion'
+            $ref: "#/components/schemas/openstatus.monitor.v1.HeaderAssertion"
           title: header_assertions
           maxItems: 10
           description: Header assertions for the response.
@@ -886,18 +886,18 @@ components:
         regions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Region"
           title: regions
           maxItems: 28
           description: Geographic regions to run checks from.
         openTelemetry:
           title: open_telemetry
           description: OpenTelemetry configuration for exporting metrics.
-          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+          $ref: "#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig"
         status:
           title: status
           description: Current operational status of the monitor.
-          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+          $ref: "#/components/schemas/openstatus.monitor.v1.MonitorStatus"
       title: HTTPMonitor
       additionalProperties: false
       description: HTTPMonitor defines the configuration for an HTTP monitor.
@@ -914,7 +914,7 @@ components:
               - STRING_COMPARATOR_UNSPECIFIED
           title: comparator
           description: Comparison operation (required, must not be UNSPECIFIED).
-          $ref: '#/components/schemas/openstatus.monitor.v1.StringComparator'
+          $ref: "#/components/schemas/openstatus.monitor.v1.StringComparator"
         key:
           type: string
           title: key
@@ -971,19 +971,19 @@ components:
         httpMonitors:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+            $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMonitor"
           title: http_monitors
           description: HTTP monitors in the workspace.
         tcpMonitors:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+            $ref: "#/components/schemas/openstatus.monitor.v1.TCPMonitor"
           title: tcp_monitors
           description: TCP monitors in the workspace.
         dnsMonitors:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+            $ref: "#/components/schemas/openstatus.monitor.v1.DNSMonitor"
           title: dns_monitors
           description: DNS monitors in the workspace.
         totalSize:
@@ -1001,7 +1001,7 @@ components:
             dns:
               title: dns
               description: DNS monitor configuration.
-              $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+              $ref: "#/components/schemas/openstatus.monitor.v1.DNSMonitor"
           title: dns
           required:
             - dns
@@ -1009,7 +1009,7 @@ components:
             http:
               title: http
               description: HTTP monitor configuration.
-              $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+              $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMonitor"
           title: http
           required:
             - http
@@ -1017,7 +1017,7 @@ components:
             tcp:
               title: tcp
               description: TCP monitor configuration.
-              $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+              $ref: "#/components/schemas/openstatus.monitor.v1.TCPMonitor"
           title: tcp
           required:
             - tcp
@@ -1056,7 +1056,7 @@ components:
         headers:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Headers'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Headers"
           title: headers
           maxItems: 20
           description: Custom headers for OTEL requests.
@@ -1094,7 +1094,7 @@ components:
               - RECORD_COMPARATOR_UNSPECIFIED
           title: comparator
           description: Comparison operation (required, must not be UNSPECIFIED).
-          $ref: '#/components/schemas/openstatus.monitor.v1.RecordComparator'
+          $ref: "#/components/schemas/openstatus.monitor.v1.RecordComparator"
         target:
           type: string
           title: target
@@ -1152,11 +1152,11 @@ components:
         region:
           title: region
           description: The region identifier.
-          $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+          $ref: "#/components/schemas/openstatus.monitor.v1.Region"
         status:
           title: status
           description: The status of the monitor in this region.
-          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+          $ref: "#/components/schemas/openstatus.monitor.v1.MonitorStatus"
       title: RegionStatus
       additionalProperties: false
       description: RegionStatus represents the status of a monitor in a specific region.
@@ -1178,7 +1178,7 @@ components:
               - NUMBER_COMPARATOR_UNSPECIFIED
           title: comparator
           description: Comparison operation (required, must not be UNSPECIFIED).
-          $ref: '#/components/schemas/openstatus.monitor.v1.NumberComparator'
+          $ref: "#/components/schemas/openstatus.monitor.v1.NumberComparator"
       title: StatusCodeAssertion
       additionalProperties: false
       description: StatusCodeAssertion defines an assertion for HTTP status codes.
@@ -1227,7 +1227,7 @@ components:
               - PERIODICITY_UNSPECIFIED
           title: periodicity
           description: Check periodicity (required).
-          $ref: '#/components/schemas/openstatus.monitor.v1.Periodicity'
+          $ref: "#/components/schemas/openstatus.monitor.v1.Periodicity"
         timeout:
           type:
             - integer
@@ -1272,18 +1272,18 @@ components:
         regions:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.monitor.v1.Region'
+            $ref: "#/components/schemas/openstatus.monitor.v1.Region"
           title: regions
           maxItems: 28
           description: Geographic regions to run checks from.
         openTelemetry:
           title: open_telemetry
           description: OpenTelemetry configuration for exporting metrics.
-          $ref: '#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig'
+          $ref: "#/components/schemas/openstatus.monitor.v1.OpenTelemetryConfig"
         status:
           title: status
           description: Current operational status of the monitor.
-          $ref: '#/components/schemas/openstatus.monitor.v1.MonitorStatus'
+          $ref: "#/components/schemas/openstatus.monitor.v1.MonitorStatus"
       title: TCPMonitor
       additionalProperties: false
       description: TCPMonitor defines the configuration for a TCP monitor.
@@ -1327,7 +1327,7 @@ components:
           description: Monitor ID to update (required).
         monitor:
           oneOf:
-            - $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+            - $ref: "#/components/schemas/openstatus.monitor.v1.DNSMonitor"
             - type: "null"
           title: monitor
           description: Updated monitor configuration (all fields optional for partial updates).
@@ -1340,7 +1340,7 @@ components:
         monitor:
           title: monitor
           description: The updated monitor.
-          $ref: '#/components/schemas/openstatus.monitor.v1.DNSMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.DNSMonitor"
       title: UpdateDNSMonitorResponse
       additionalProperties: false
       description: UpdateDNSMonitorResponse is the response after updating a DNS monitor.
@@ -1354,7 +1354,7 @@ components:
           description: Monitor ID to update (required).
         monitor:
           oneOf:
-            - $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+            - $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMonitor"
             - type: "null"
           title: monitor
           description: Updated monitor configuration (all fields optional for partial updates).
@@ -1367,7 +1367,7 @@ components:
         monitor:
           title: monitor
           description: The updated monitor.
-          $ref: '#/components/schemas/openstatus.monitor.v1.HTTPMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.HTTPMonitor"
       title: UpdateHTTPMonitorResponse
       additionalProperties: false
       description: UpdateHTTPMonitorResponse is the response after updating an HTTP monitor.
@@ -1381,7 +1381,7 @@ components:
           description: Monitor ID to update (required).
         monitor:
           oneOf:
-            - $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+            - $ref: "#/components/schemas/openstatus.monitor.v1.TCPMonitor"
             - type: "null"
           title: monitor
           description: Updated monitor configuration (all fields optional for partial updates).
@@ -1394,7 +1394,7 @@ components:
         monitor:
           title: monitor
           description: The updated monitor.
-          $ref: '#/components/schemas/openstatus.monitor.v1.TCPMonitor'
+          $ref: "#/components/schemas/openstatus.monitor.v1.TCPMonitor"
       title: UpdateTCPMonitorResponse
       additionalProperties: false
       description: UpdateTCPMonitorResponse is the response after updating a TCP monitor.
@@ -1439,11 +1439,11 @@ components:
               - NOTIFICATION_PROVIDER_UNSPECIFIED
           title: provider
           description: Provider type.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationProvider"
         data:
           title: data
           description: Provider-specific configuration.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationData"
         monitorIds:
           type: array
           items:
@@ -1461,7 +1461,7 @@ components:
         notification:
           title: notification
           description: The created notification channel.
-          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+          $ref: "#/components/schemas/openstatus.notification.v1.Notification"
       title: CreateNotificationResponse
       additionalProperties: false
       description: CreateNotificationResponse is the response after creating a notification channel.
@@ -1529,7 +1529,7 @@ components:
         notification:
           title: notification
           description: The notification channel.
-          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+          $ref: "#/components/schemas/openstatus.notification.v1.Notification"
       title: GetNotificationResponse
       additionalProperties: false
       description: GetNotificationResponse is the response containing the notification channel.
@@ -1584,7 +1584,7 @@ components:
         notifications:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.notification.v1.NotificationSummary'
+            $ref: "#/components/schemas/openstatus.notification.v1.NotificationSummary"
           title: notifications
           description: Notification channel summaries.
         totalSize:
@@ -1609,11 +1609,11 @@ components:
         provider:
           title: provider
           description: Provider type.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationProvider"
         data:
           title: data
           description: Provider-specific configuration.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationData"
         monitorIds:
           type: array
           items:
@@ -1638,7 +1638,7 @@ components:
             discord:
               title: discord
               description: Discord configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.DiscordData'
+              $ref: "#/components/schemas/openstatus.notification.v1.DiscordData"
           title: discord
           required:
             - discord
@@ -1646,7 +1646,7 @@ components:
             email:
               title: email
               description: Email configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.EmailData'
+              $ref: "#/components/schemas/openstatus.notification.v1.EmailData"
           title: email
           required:
             - email
@@ -1654,7 +1654,7 @@ components:
             googleChat:
               title: google_chat
               description: Google Chat configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.GoogleChatData'
+              $ref: "#/components/schemas/openstatus.notification.v1.GoogleChatData"
           title: google_chat
           required:
             - googleChat
@@ -1662,7 +1662,7 @@ components:
             grafanaOncall:
               title: grafana_oncall
               description: Grafana OnCall configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.GrafanaOncallData'
+              $ref: "#/components/schemas/openstatus.notification.v1.GrafanaOncallData"
           title: grafana_oncall
           required:
             - grafanaOncall
@@ -1670,7 +1670,7 @@ components:
             ntfy:
               title: ntfy
               description: Ntfy configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.NtfyData'
+              $ref: "#/components/schemas/openstatus.notification.v1.NtfyData"
           title: ntfy
           required:
             - ntfy
@@ -1678,7 +1678,7 @@ components:
             opsgenie:
               title: opsgenie
               description: Opsgenie configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieData'
+              $ref: "#/components/schemas/openstatus.notification.v1.OpsgenieData"
           title: opsgenie
           required:
             - opsgenie
@@ -1686,7 +1686,7 @@ components:
             pagerduty:
               title: pagerduty
               description: PagerDuty configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.PagerDutyData'
+              $ref: "#/components/schemas/openstatus.notification.v1.PagerDutyData"
           title: pagerduty
           required:
             - pagerduty
@@ -1694,7 +1694,7 @@ components:
             slack:
               title: slack
               description: Slack configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.SlackData'
+              $ref: "#/components/schemas/openstatus.notification.v1.SlackData"
           title: slack
           required:
             - slack
@@ -1702,7 +1702,7 @@ components:
             sms:
               title: sms
               description: SMS configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.SmsData'
+              $ref: "#/components/schemas/openstatus.notification.v1.SmsData"
           title: sms
           required:
             - sms
@@ -1710,7 +1710,7 @@ components:
             telegram:
               title: telegram
               description: Telegram configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.TelegramData'
+              $ref: "#/components/schemas/openstatus.notification.v1.TelegramData"
           title: telegram
           required:
             - telegram
@@ -1718,7 +1718,7 @@ components:
             webhook:
               title: webhook
               description: Webhook configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.WebhookData'
+              $ref: "#/components/schemas/openstatus.notification.v1.WebhookData"
           title: webhook
           required:
             - webhook
@@ -1726,7 +1726,7 @@ components:
             whatsapp:
               title: whatsapp
               description: WhatsApp configuration.
-              $ref: '#/components/schemas/openstatus.notification.v1.WhatsappData'
+              $ref: "#/components/schemas/openstatus.notification.v1.WhatsappData"
           title: whatsapp
           required:
             - whatsapp
@@ -1765,7 +1765,7 @@ components:
         provider:
           title: provider
           description: Provider type.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationProvider"
         monitorCount:
           type: integer
           title: monitor_count
@@ -1816,7 +1816,7 @@ components:
         region:
           title: region
           description: Opsgenie region.
-          $ref: '#/components/schemas/openstatus.notification.v1.OpsgenieRegion'
+          $ref: "#/components/schemas/openstatus.notification.v1.OpsgenieRegion"
       title: OpsgenieData
       additionalProperties: false
       description: OpsgenieData contains configuration for Opsgenie notifications.
@@ -1850,11 +1850,11 @@ components:
               - NOTIFICATION_PROVIDER_UNSPECIFIED
           title: provider
           description: Provider type.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationProvider'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationProvider"
         data:
           title: data
           description: Provider-specific configuration.
-          $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+          $ref: "#/components/schemas/openstatus.notification.v1.NotificationData"
       title: SendTestNotificationRequest
       required:
         - data
@@ -1931,7 +1931,7 @@ components:
           description: Updated display name.
         data:
           oneOf:
-            - $ref: '#/components/schemas/openstatus.notification.v1.NotificationData'
+            - $ref: "#/components/schemas/openstatus.notification.v1.NotificationData"
             - type: "null"
           title: data
           description: Updated provider-specific configuration.
@@ -1950,7 +1950,7 @@ components:
         notification:
           title: notification
           description: The updated notification channel.
-          $ref: '#/components/schemas/openstatus.notification.v1.Notification'
+          $ref: "#/components/schemas/openstatus.notification.v1.Notification"
       title: UpdateNotificationResponse
       additionalProperties: false
       description: UpdateNotificationResponse is the response after updating a notification channel.
@@ -1967,7 +1967,7 @@ components:
         headers:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.notification.v1.WebhookHeader'
+            $ref: "#/components/schemas/openstatus.notification.v1.WebhookHeader"
           title: headers
           description: Optional custom headers.
       title: WebhookData
@@ -2048,7 +2048,7 @@ components:
         component:
           title: component
           description: The created component.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageComponent"
       title: AddMonitorComponentResponse
       additionalProperties: false
       description: AddMonitorComponentResponse is the response after adding a monitor component.
@@ -2095,7 +2095,7 @@ components:
         component:
           title: component
           description: The created component.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageComponent"
       title: AddStaticComponentResponse
       additionalProperties: false
       description: AddStaticComponentResponse is the response after adding a static component.
@@ -2109,7 +2109,7 @@ components:
         status:
           title: status
           description: Current status of the component.
-          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+          $ref: "#/components/schemas/openstatus.status_page.v1.OverallStatus"
       title: ComponentStatus
       additionalProperties: false
       description: ComponentStatus represents the status of a single component.
@@ -2136,7 +2136,7 @@ components:
         group:
           title: group
           description: The created component group.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageComponentGroup"
       title: CreateComponentGroupResponse
       additionalProperties: false
       description: CreateComponentGroupResponse is the response after creating a component group.
@@ -2190,7 +2190,7 @@ components:
         statusPage:
           title: status_page
           description: The created status page.
-          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+          $ref: "#/components/schemas/openstatus.status_page.v1.StatusPage"
       title: CreateStatusPageResponse
       additionalProperties: false
       description: CreateStatusPageResponse is the response after creating a status page.
@@ -2264,11 +2264,11 @@ components:
         overallStatus:
           title: overall_status
           description: Aggregated status across all components.
-          $ref: '#/components/schemas/openstatus.status_page.v1.OverallStatus'
+          $ref: "#/components/schemas/openstatus.status_page.v1.OverallStatus"
         componentStatuses:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_page.v1.ComponentStatus'
+            $ref: "#/components/schemas/openstatus.status_page.v1.ComponentStatus"
           title: component_statuses
           description: Status of individual components.
       title: GetOverallStatusResponse
@@ -2302,29 +2302,29 @@ components:
         statusPage:
           title: status_page
           description: The status page details.
-          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+          $ref: "#/components/schemas/openstatus.status_page.v1.StatusPage"
         components:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+            $ref: "#/components/schemas/openstatus.status_page.v1.PageComponent"
           title: components
           description: Components on the status page.
         groups:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+            $ref: "#/components/schemas/openstatus.status_page.v1.PageComponentGroup"
           title: groups
           description: Component groups on the status page.
         statusReports:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+            $ref: "#/components/schemas/openstatus.status_report.v1.StatusReport"
           title: status_reports
           description: Active and recent status reports.
         maintenances:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary'
+            $ref: "#/components/schemas/openstatus.maintenance.v1.MaintenanceSummary"
           title: maintenances
           description: Scheduled maintenances.
       title: GetStatusPageContentResponse
@@ -2347,7 +2347,7 @@ components:
         statusPage:
           title: status_page
           description: The requested status page.
-          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+          $ref: "#/components/schemas/openstatus.status_page.v1.StatusPage"
       title: GetStatusPageResponse
       additionalProperties: false
       description: GetStatusPageResponse is the response containing the status page.
@@ -2380,7 +2380,7 @@ components:
         statusPages:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_page.v1.StatusPageSummary'
+            $ref: "#/components/schemas/openstatus.status_page.v1.StatusPageSummary"
           title: status_pages
           description: List of status pages (metadata only).
         totalSize:
@@ -2431,7 +2431,7 @@ components:
         subscribers:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+            $ref: "#/components/schemas/openstatus.status_page.v1.PageSubscriber"
           title: subscribers
           description: List of subscribers.
         totalSize:
@@ -2485,7 +2485,7 @@ components:
         type:
           title: type
           description: Type of the component (monitor or static).
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentType'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageComponentType"
         monitorId:
           type: string
           title: monitor_id
@@ -2647,11 +2647,11 @@ components:
         accessType:
           title: access_type
           description: Access type for the status page.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageAccessType'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageAccessType"
         theme:
           title: theme
           description: Visual theme for the status page.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageTheme'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageTheme"
         homepageUrl:
           type: string
           title: homepage_url
@@ -2733,7 +2733,7 @@ components:
         subscriber:
           title: subscriber
           description: The created subscriber.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageSubscriber'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageSubscriber"
       title: SubscribeToPageResponse
       additionalProperties: false
       description: SubscribeToPageResponse is the response after subscribing to a status page.
@@ -2801,7 +2801,7 @@ components:
         group:
           title: group
           description: The updated component group.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponentGroup'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageComponentGroup"
       title: UpdateComponentGroupResponse
       additionalProperties: false
       description: UpdateComponentGroupResponse is the response after updating a component group.
@@ -2856,7 +2856,7 @@ components:
         component:
           title: component
           description: The updated component.
-          $ref: '#/components/schemas/openstatus.status_page.v1.PageComponent'
+          $ref: "#/components/schemas/openstatus.status_page.v1.PageComponent"
       title: UpdateComponentResponse
       additionalProperties: false
       description: UpdateComponentResponse is the response after updating a component.
@@ -2913,7 +2913,7 @@ components:
         statusPage:
           title: status_page
           description: The updated status page.
-          $ref: '#/components/schemas/openstatus.status_page.v1.StatusPage'
+          $ref: "#/components/schemas/openstatus.status_page.v1.StatusPage"
       title: UpdateStatusPageResponse
       additionalProperties: false
       description: UpdateStatusPageResponse is the response after updating a status page.
@@ -2928,7 +2928,7 @@ components:
         status:
           title: status
           description: New status for the report (required).
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
         message:
           type: string
           title: message
@@ -2956,7 +2956,7 @@ components:
         statusReport:
           title: status_report
           description: The updated status report with the new update included.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReport"
       title: AddStatusReportUpdateResponse
       additionalProperties: false
       description: AddStatusReportUpdateResponse is the response after adding an update to a status report.
@@ -2973,7 +2973,7 @@ components:
         status:
           title: status
           description: Initial status (required).
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
         message:
           type: string
           examples:
@@ -3014,7 +3014,7 @@ components:
         statusReport:
           title: status_report
           description: The created status report.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReport"
       title: CreateStatusReportResponse
       additionalProperties: false
       description: CreateStatusReportResponse is the response after creating a status report.
@@ -3056,7 +3056,7 @@ components:
         statusReport:
           title: status_report
           description: The requested status report.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReport"
       title: GetStatusReportResponse
       additionalProperties: false
       description: GetStatusReportResponse is the response containing the status report with its full update timeline.
@@ -3083,7 +3083,7 @@ components:
         statuses:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+            $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
           title: statuses
           description: Filter by status (optional). If empty, returns all statuses.
       title: ListStatusReportsRequest
@@ -3095,7 +3095,7 @@ components:
         statusReports:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportSummary'
+            $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportSummary"
           title: status_reports
           description: List of status reports (metadata only, use GetStatusReport for full details).
         totalSize:
@@ -3116,7 +3116,7 @@ components:
         status:
           title: status
           description: Current status of the report.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
         title:
           type: string
           title: title
@@ -3130,7 +3130,7 @@ components:
         updates:
           type: array
           items:
-            $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportUpdate'
+            $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportUpdate"
           title: updates
           description: Timeline of updates for this report (only included in GetStatusReport).
         createdAt:
@@ -3164,7 +3164,7 @@ components:
         status:
           title: status
           description: Current status of the report.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
         title:
           type: string
           title: title
@@ -3196,7 +3196,7 @@ components:
         status:
           title: status
           description: Status at the time of this update.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReportStatus'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReportStatus"
         date:
           type: string
           title: date
@@ -3241,7 +3241,7 @@ components:
         statusReport:
           title: status_report
           description: The updated status report.
-          $ref: '#/components/schemas/openstatus.status_report.v1.StatusReport'
+          $ref: "#/components/schemas/openstatus.status_report.v1.StatusReport"
       title: UpdateStatusReportResponse
       additionalProperties: false
       description: UpdateStatusReportResponse is the response after updating a status report.
@@ -3284,20 +3284,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
+                $ref: "#/components/schemas/openstatus.health.v1.CheckRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+                $ref: "#/components/schemas/openstatus.health.v1.CheckResponse"
     post:
       tags:
         - HealthService
@@ -3308,7 +3308,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.health.v1.CheckRequest'
+              $ref: "#/components/schemas/openstatus.health.v1.CheckRequest"
         required: true
       responses:
         default:
@@ -3316,13 +3316,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.health.v1.CheckResponse'
+                $ref: "#/components/schemas/openstatus.health.v1.CheckResponse"
   /rpc/openstatus.maintenance.v1.MaintenanceService/CreateMaintenance:
     post:
       tags:
@@ -3334,7 +3334,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceRequest'
+              $ref: "#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceRequest"
         required: true
       responses:
         default:
@@ -3342,13 +3342,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.CreateMaintenanceResponse"
   /rpc/openstatus.maintenance.v1.MaintenanceService/DeleteMaintenance:
     post:
       tags:
@@ -3360,7 +3360,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceRequest'
+              $ref: "#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceRequest"
         required: true
       responses:
         default:
@@ -3368,13 +3368,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.DeleteMaintenanceResponse"
   /rpc/openstatus.maintenance.v1.MaintenanceService/GetMaintenance:
     get:
       tags:
@@ -3388,20 +3388,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.GetMaintenanceResponse"
     post:
       tags:
         - MaintenanceService
@@ -3412,7 +3412,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest'
+              $ref: "#/components/schemas/openstatus.maintenance.v1.GetMaintenanceRequest"
         required: true
       responses:
         default:
@@ -3420,13 +3420,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.GetMaintenanceResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.GetMaintenanceResponse"
   /rpc/openstatus.maintenance.v1.MaintenanceService/ListMaintenances:
     get:
       tags:
@@ -3440,20 +3440,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.ListMaintenancesResponse"
     post:
       tags:
         - MaintenanceService
@@ -3464,7 +3464,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest'
+              $ref: "#/components/schemas/openstatus.maintenance.v1.ListMaintenancesRequest"
         required: true
       responses:
         default:
@@ -3472,13 +3472,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.ListMaintenancesResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.ListMaintenancesResponse"
   /rpc/openstatus.maintenance.v1.MaintenanceService/UpdateMaintenance:
     post:
       tags:
@@ -3490,7 +3490,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceRequest'
+              $ref: "#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceRequest"
         required: true
       responses:
         default:
@@ -3498,13 +3498,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceResponse'
+                $ref: "#/components/schemas/openstatus.maintenance.v1.UpdateMaintenanceResponse"
   /rpc/openstatus.monitor.v1.MonitorService/CreateDNSMonitor:
     post:
       tags:
@@ -3516,7 +3516,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorRequest"
         required: true
       responses:
         default:
@@ -3524,13 +3524,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.CreateDNSMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/CreateHTTPMonitor:
     post:
       tags:
@@ -3542,7 +3542,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorRequest"
         required: true
       responses:
         default:
@@ -3550,13 +3550,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.CreateHTTPMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/CreateTCPMonitor:
     post:
       tags:
@@ -3568,7 +3568,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorRequest"
         required: true
       responses:
         default:
@@ -3576,13 +3576,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.CreateTCPMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/DeleteMonitor:
     post:
       tags:
@@ -3594,7 +3594,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.DeleteMonitorRequest"
         required: true
       responses:
         default:
@@ -3602,13 +3602,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.DeleteMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.DeleteMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/GetMonitor:
     get:
       tags:
@@ -3624,20 +3624,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorResponse"
     post:
       tags:
         - MonitorService
@@ -3650,7 +3650,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorRequest"
         required: true
       responses:
         default:
@@ -3658,13 +3658,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/GetMonitorStatus:
     get:
       tags:
@@ -3678,20 +3678,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse"
     post:
       tags:
         - MonitorService
@@ -3702,7 +3702,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorStatusRequest"
         required: true
       responses:
         default:
@@ -3710,13 +3710,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorStatusResponse"
   /rpc/openstatus.monitor.v1.MonitorService/GetMonitorSummary:
     get:
       tags:
@@ -3730,20 +3730,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse"
     post:
       tags:
         - MonitorService
@@ -3754,7 +3754,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryRequest"
         required: true
       responses:
         default:
@@ -3762,13 +3762,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.GetMonitorSummaryResponse"
   /rpc/openstatus.monitor.v1.MonitorService/ListMonitors:
     get:
       tags:
@@ -3782,20 +3782,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
+                $ref: "#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse"
     post:
       tags:
         - MonitorService
@@ -3806,7 +3806,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.ListMonitorsRequest"
         required: true
       responses:
         default:
@@ -3814,13 +3814,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.ListMonitorsResponse"
   /rpc/openstatus.monitor.v1.MonitorService/TriggerMonitor:
     post:
       tags:
@@ -3832,7 +3832,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.TriggerMonitorRequest"
         required: true
       responses:
         default:
@@ -3840,13 +3840,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.TriggerMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.TriggerMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/UpdateDNSMonitor:
     post:
       tags:
@@ -3858,7 +3858,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorRequest"
         required: true
       responses:
         default:
@@ -3866,13 +3866,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.UpdateDNSMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/UpdateHTTPMonitor:
     post:
       tags:
@@ -3884,7 +3884,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorRequest"
         required: true
       responses:
         default:
@@ -3892,13 +3892,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.UpdateHTTPMonitorResponse"
   /rpc/openstatus.monitor.v1.MonitorService/UpdateTCPMonitor:
     post:
       tags:
@@ -3910,7 +3910,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorRequest'
+              $ref: "#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorRequest"
         required: true
       responses:
         default:
@@ -3918,13 +3918,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorResponse'
+                $ref: "#/components/schemas/openstatus.monitor.v1.UpdateTCPMonitorResponse"
   /rpc/openstatus.notification.v1.NotificationService/CheckNotificationLimit:
     get:
       tags:
@@ -3938,20 +3938,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
+                $ref: "#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse"
     post:
       tags:
         - NotificationService
@@ -3962,7 +3962,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.CheckNotificationLimitRequest"
         required: true
       responses:
         default:
@@ -3970,13 +3970,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.CheckNotificationLimitResponse"
   /rpc/openstatus.notification.v1.NotificationService/CreateNotification:
     post:
       tags:
@@ -3988,7 +3988,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.CreateNotificationRequest"
         required: true
       responses:
         default:
@@ -3996,13 +3996,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.CreateNotificationResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.CreateNotificationResponse"
   /rpc/openstatus.notification.v1.NotificationService/DeleteNotification:
     post:
       tags:
@@ -4014,7 +4014,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.DeleteNotificationRequest"
         required: true
       responses:
         default:
@@ -4022,13 +4022,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.DeleteNotificationResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.DeleteNotificationResponse"
   /rpc/openstatus.notification.v1.NotificationService/GetNotification:
     get:
       tags:
@@ -4042,20 +4042,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
+                $ref: "#/components/schemas/openstatus.notification.v1.GetNotificationRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.GetNotificationResponse"
     post:
       tags:
         - NotificationService
@@ -4066,7 +4066,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.GetNotificationRequest"
         required: true
       responses:
         default:
@@ -4074,13 +4074,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.GetNotificationResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.GetNotificationResponse"
   /rpc/openstatus.notification.v1.NotificationService/ListNotifications:
     get:
       tags:
@@ -4094,20 +4094,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
+                $ref: "#/components/schemas/openstatus.notification.v1.ListNotificationsRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.ListNotificationsResponse"
     post:
       tags:
         - NotificationService
@@ -4118,7 +4118,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.ListNotificationsRequest"
         required: true
       responses:
         default:
@@ -4126,13 +4126,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.ListNotificationsResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.ListNotificationsResponse"
   /rpc/openstatus.notification.v1.NotificationService/SendTestNotification:
     post:
       tags:
@@ -4144,7 +4144,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.SendTestNotificationRequest"
         required: true
       responses:
         default:
@@ -4152,13 +4152,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.SendTestNotificationResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.SendTestNotificationResponse"
   /rpc/openstatus.notification.v1.NotificationService/UpdateNotification:
     post:
       tags:
@@ -4170,7 +4170,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationRequest'
+              $ref: "#/components/schemas/openstatus.notification.v1.UpdateNotificationRequest"
         required: true
       responses:
         default:
@@ -4178,13 +4178,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+                $ref: "#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/AddMonitorComponent:
     post:
       tags:
@@ -4196,7 +4196,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.AddMonitorComponentRequest"
         required: true
       responses:
         default:
@@ -4204,13 +4204,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.AddMonitorComponentResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.AddMonitorComponentResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/AddStaticComponent:
     post:
       tags:
@@ -4222,7 +4222,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.AddStaticComponentRequest"
         required: true
       responses:
         default:
@@ -4230,13 +4230,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.AddStaticComponentResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.AddStaticComponentResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/CreateComponentGroup:
     post:
       tags:
@@ -4248,7 +4248,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.CreateComponentGroupRequest"
         required: true
       responses:
         default:
@@ -4256,13 +4256,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.CreateComponentGroupResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.CreateComponentGroupResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/CreateStatusPage:
     post:
       tags:
@@ -4274,7 +4274,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.CreateStatusPageRequest"
         required: true
       responses:
         default:
@@ -4282,13 +4282,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.CreateStatusPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.CreateStatusPageResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/DeleteComponentGroup:
     post:
       tags:
@@ -4300,7 +4300,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupRequest"
         required: true
       responses:
         default:
@@ -4308,13 +4308,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.DeleteComponentGroupResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/DeleteStatusPage:
     post:
       tags:
@@ -4326,7 +4326,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.DeleteStatusPageRequest"
         required: true
       responses:
         default:
@@ -4334,19 +4334,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.DeleteStatusPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.DeleteStatusPageResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/GetOverallStatus:
     get:
       tags:
         - StatusPageService
       summary: GetOverallStatus
-      description: 'Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational.'
+      description: "Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational."
       operationId: StatusPageService_GetOverallStatus.get
       parameters:
         - name: message
@@ -4354,31 +4354,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse"
     post:
       tags:
         - StatusPageService
       summary: GetOverallStatus
-      description: 'Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational.'
+      description: "Returns the overall status of a status page along with individual component statuses. The overall status is computed from active status reports and maintenances with the following priority: degraded (from active status reports) > maintenance (from active maintenance windows) > operational."
       operationId: StatusPageService_GetOverallStatus
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.GetOverallStatusRequest"
         required: true
       responses:
         default:
@@ -4386,13 +4386,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetOverallStatusResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPage:
     get:
       tags:
@@ -4406,20 +4406,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse"
     post:
       tags:
         - StatusPageService
@@ -4430,7 +4430,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageRequest"
         required: true
       responses:
         default:
@@ -4438,19 +4438,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/GetStatusPageContent:
     get:
       tags:
         - StatusPageService
       summary: GetStatusPageContent
-      description: 'Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      description: "Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC)."
       operationId: StatusPageService_GetStatusPageContent.get
       parameters:
         - name: message
@@ -4458,31 +4458,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse"
     post:
       tags:
         - StatusPageService
       summary: GetStatusPageContent
-      description: 'Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC).'
+      description: "Returns the full content of a status page including its components, component groups, active status reports, and scheduled maintenances. Supports two access paths: by ID (requires authentication, workspace-scoped) or by slug (public access, requires the page to be published with access_type=PUBLIC)."
       operationId: StatusPageService_GetStatusPageContent
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageContentRequest"
         required: true
       responses:
         default:
@@ -4490,13 +4490,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.GetStatusPageContentResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/ListStatusPages:
     get:
       tags:
@@ -4510,20 +4510,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
+                $ref: "#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse"
     post:
       tags:
         - StatusPageService
@@ -4534,7 +4534,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.ListStatusPagesRequest"
         required: true
       responses:
         default:
@@ -4542,13 +4542,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.ListStatusPagesResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/ListSubscribers:
     get:
       tags:
@@ -4562,20 +4562,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
+                $ref: "#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse"
     post:
       tags:
         - StatusPageService
@@ -4586,7 +4586,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.ListSubscribersRequest"
         required: true
       responses:
         default:
@@ -4594,13 +4594,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.ListSubscribersResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/RemoveComponent:
     post:
       tags:
@@ -4612,7 +4612,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.RemoveComponentRequest"
         required: true
       responses:
         default:
@@ -4620,13 +4620,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.RemoveComponentResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.RemoveComponentResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/SubscribeToPage:
     post:
       tags:
@@ -4638,7 +4638,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.SubscribeToPageRequest"
         required: true
       responses:
         default:
@@ -4646,13 +4646,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.SubscribeToPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.SubscribeToPageResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/UnsubscribeFromPage:
     post:
       tags:
@@ -4664,7 +4664,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageRequest"
         required: true
       responses:
         default:
@@ -4672,13 +4672,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.UnsubscribeFromPageResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/UpdateComponent:
     post:
       tags:
@@ -4690,7 +4690,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.UpdateComponentRequest"
         required: true
       responses:
         default:
@@ -4698,13 +4698,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.UpdateComponentResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/UpdateComponentGroup:
     post:
       tags:
@@ -4716,7 +4716,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupRequest"
         required: true
       responses:
         default:
@@ -4724,13 +4724,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.UpdateComponentGroupResponse"
   /rpc/openstatus.status_page.v1.StatusPageService/UpdateStatusPage:
     post:
       tags:
@@ -4742,7 +4742,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageRequest'
+              $ref: "#/components/schemas/openstatus.status_page.v1.UpdateStatusPageRequest"
         required: true
       responses:
         default:
@@ -4750,25 +4750,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_page.v1.UpdateStatusPageResponse'
+                $ref: "#/components/schemas/openstatus.status_page.v1.UpdateStatusPageResponse"
   /rpc/openstatus.status_report.v1.StatusReportService/AddStatusReportUpdate:
     post:
       tags:
         - StatusReportService
       summary: AddStatusReportUpdate
-      description: 'Adds a new update entry to an existing status report and transitions the report to the specified status. Status reports follow a lifecycle: investigating -> identified -> monitoring -> resolved. If notify is true, subscribers of the associated page are notified by email about the update.'
+      description: "Adds a new update entry to an existing status report and transitions the report to the specified status. Status reports follow a lifecycle: investigating -> identified -> monitoring -> resolved. If notify is true, subscribers of the associated page are notified by email about the update."
       operationId: StatusReportService_AddStatusReportUpdate
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateRequest'
+              $ref: "#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateRequest"
         required: true
       responses:
         default:
@@ -4776,13 +4776,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.AddStatusReportUpdateResponse"
   /rpc/openstatus.status_report.v1.StatusReportService/CreateStatusReport:
     post:
       tags:
@@ -4794,7 +4794,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_report.v1.CreateStatusReportRequest'
+              $ref: "#/components/schemas/openstatus.status_report.v1.CreateStatusReportRequest"
         required: true
       responses:
         default:
@@ -4802,13 +4802,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.CreateStatusReportResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.CreateStatusReportResponse"
   /rpc/openstatus.status_report.v1.StatusReportService/DeleteStatusReport:
     post:
       tags:
@@ -4820,7 +4820,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportRequest'
+              $ref: "#/components/schemas/openstatus.status_report.v1.DeleteStatusReportRequest"
         required: true
       responses:
         default:
@@ -4828,13 +4828,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.DeleteStatusReportResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.DeleteStatusReportResponse"
   /rpc/openstatus.status_report.v1.StatusReportService/GetStatusReport:
     get:
       tags:
@@ -4848,20 +4848,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest'
+                $ref: "#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.GetStatusReportResponse"
     post:
       tags:
         - StatusReportService
@@ -4872,7 +4872,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest'
+              $ref: "#/components/schemas/openstatus.status_report.v1.GetStatusReportRequest"
         required: true
       responses:
         default:
@@ -4880,13 +4880,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.GetStatusReportResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.GetStatusReportResponse"
   /rpc/openstatus.status_report.v1.StatusReportService/ListStatusReports:
     get:
       tags:
@@ -4900,20 +4900,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest'
+                $ref: "#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest"
       responses:
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.ListStatusReportsResponse"
     post:
       tags:
         - StatusReportService
@@ -4924,7 +4924,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest'
+              $ref: "#/components/schemas/openstatus.status_report.v1.ListStatusReportsRequest"
         required: true
       responses:
         default:
@@ -4932,13 +4932,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.ListStatusReportsResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.ListStatusReportsResponse"
   /rpc/openstatus.status_report.v1.StatusReportService/UpdateStatusReport:
     post:
       tags:
@@ -4950,7 +4950,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportRequest'
+              $ref: "#/components/schemas/openstatus.status_report.v1.UpdateStatusReportRequest"
         required: true
       responses:
         default:
@@ -4958,10 +4958,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/connect.error'
+                $ref: "#/components/schemas/connect.error"
         "200":
           description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/openstatus.status_report.v1.UpdateStatusReportResponse'
+                $ref: "#/components/schemas/openstatus.status_report.v1.UpdateStatusReportResponse"

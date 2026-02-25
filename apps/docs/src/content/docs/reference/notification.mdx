@@ -16,8 +16,9 @@ Each notification channel requires specific configuration parameters to enable a
 Integrates with Slack to send alerts to a designated channel.
 
 **Configuration:**
--   **Incoming Webhook URL:** (Required) A [Slack incoming webhook URL](https://api.slack.com/incoming-webhooks) where notifications will be posted.
-    **Example**: `https://hooks.slack.com/services/XXX/YYY/ZZZ`
+
+- **Incoming Webhook URL:** (Required) A [Slack incoming webhook URL](https://api.slack.com/incoming-webhooks) where notifications will be posted.
+  **Example**: `https://hooks.slack.com/services/XXX/YYY/ZZZ`
 
 You can [download the openstatus logo](https://www.openstatus.dev/assets/logos/openstatus.jpeg) to add a custom logo.
 
@@ -26,39 +27,43 @@ You can [download the openstatus logo](https://www.openstatus.dev/assets/logos/o
 Sends alerts directly to a specified email address.
 
 **Configuration:**
--   **Email Address:** (Required) The recipient's email address.
+
+- **Email Address:** (Required) The recipient's email address.
 
 ### Discord
 
 Delivers alerts to a Discord channel via a webhook.
 
 **Configuration:**
--   **Webhook URL:** (Required) A [Discord webhook URL](https://support.discord.com/hc/en-us/articles/228383668) for the target channel.
-    **Example:** `https://discordapp.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz1234567890`
+
+- **Webhook URL:** (Required) A [Discord webhook URL](https://support.discord.com/hc/en-us/articles/228383668) for the target channel.
+  **Example:** `https://discordapp.com/api/webhooks/123456789012345678/abcdefghijklmnopqrstuvwxyz1234567890`
 
 You can [download the openstatus logo](https://www.openstatus.dev/assets/logos/openstatus.jpeg) to add a custom logo.
 
-### Grafana OnCall IRM 
+### Grafana OnCall IRM
 
 Sends notifications to a Grafana OnCall IRM.
 
 **Configuration:**
--   **Webhook URL:** (Required) A [Grafana OnCall IRM webhook URL](https://grafana.com/docs/grafana-cloud/alerting-and-irm/irm/configure/integrations/webhooks/incoming-webhooks/oncall-webhooks/).
 
+- **Webhook URL:** (Required) A [Grafana OnCall IRM webhook URL](https://grafana.com/docs/grafana-cloud/alerting-and-irm/irm/configure/integrations/webhooks/incoming-webhooks/oncall-webhooks/).
 
 ### Google Chat
 
 Sends notifications to a Google Chat space.
 
 **Configuration:**
--   **Webhook URL:** (Required) A [Google Chat webhook URL](https://developers.google.com/workspace/chat/quickstart/webhooks) for the target space.
+
+- **Webhook URL:** (Required) A [Google Chat webhook URL](https://developers.google.com/workspace/chat/quickstart/webhooks) for the target space.
 
 ### SMS
 
 Sends alerts as SMS messages to a mobile phone number.
 
 **Configuration:**
--   **Phone Number:** (Required) The recipient's phone number in international format (e.g., `+14155552671`).
+
+- **Phone Number:** (Required) The recipient's phone number in international format (e.g., `+14155552671`).
 
 **Note:** SMS delivery can vary by country due to provider routing. Contact support if delivery issues are encountered. WhatsApp notifications may be an alternative.
 
@@ -67,14 +72,16 @@ Sends alerts as SMS messages to a mobile phone number.
 Sends alerts as WhatsApp messages to a mobile phone number.
 
 **Configuration:**
--   **Phone Number:** (Required) The recipient's phone number in international format (e.g., `+14155552671`).
+
+- **Phone Number:** (Required) The recipient's phone number in international format (e.g., `+14155552671`).
 
 ### Telegram
 
 Delivers alerts to a specified Telegram chat.
 
 **Configuration:**
--   **Chat ID:** (Required) The unique identifier for the Telegram chat. This typically requires manual retrieval; users can ask `@raw_info_bot` for their chat ID.
+
+- **Chat ID:** (Required) The unique identifier for the Telegram chat. This typically requires manual retrieval; users can ask `@raw_info_bot` for their chat ID.
 
 **Bot ID:** The official OpenStatus Telegram bot ID is `@openstatushq_bot`.
 
@@ -83,8 +90,9 @@ Delivers alerts to a specified Telegram chat.
 Sends HTTP POST requests to a custom endpoint with a JSON payload.
 
 **Configuration:**
--   **URL:** (Required) The endpoint URL to which the webhook payload will be sent.
--   **Headers:** (Optional) Custom HTTP headers to include with the webhook request (key-value pairs).
+
+- **URL:** (Required) The endpoint URL to which the webhook payload will be sent.
+- **Headers:** (Optional) Custom HTTP headers to include with the webhook request (key-value pairs).
 
 #### Notification Payloads
 
@@ -110,15 +118,15 @@ Sent when a monitor recovers from a `degraded` or `error` state.
 
 **Payload Fields:**
 
-| Field         | Type     | Description                                                          |
-| :------------ | :------- | :------------------------------------------------------------------- |
-| `monitor.id`  | `number` | Unique identifier of the monitor.                                    |
-| `monitor.name`| `string` | Name of the monitor.                                                 |
-| `monitor.url` | `string` | The URL or URI being monitored.                                      |
-| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.        |
-| `status`      | `string` | Indicates the monitor status: `"recovered"`.                        |
-| `statusCode`  | `number` | (Optional) HTTP status code returned by the monitored service.        |
-| `latency`     | `number` | (Optional) Time taken to complete the check in milliseconds.         |
+| Field           | Type     | Description                                                    |
+| :-------------- | :------- | :------------------------------------------------------------- |
+| `monitor.id`    | `number` | Unique identifier of the monitor.                              |
+| `monitor.name`  | `string` | Name of the monitor.                                           |
+| `monitor.url`   | `string` | The URL or URI being monitored.                                |
+| `cronTimestamp` | `number` | Timestamp of the check execution in milliseconds since epoch.  |
+| `status`        | `string` | Indicates the monitor status: `"recovered"`.                   |
+| `statusCode`    | `number` | (Optional) HTTP status code returned by the monitored service. |
+| `latency`       | `number` | (Optional) Time taken to complete the check in milliseconds.   |
 
 ##### Monitor Failure Payload
 
@@ -139,14 +147,14 @@ Sent when a monitor enters an `error` or `degraded` state.
 
 **Payload Fields:**
 
-| Field         | Type     | Description                                                          |
-| :------------ | :------- | :------------------------------------------------------------------- |
-| `monitor.id`  | `number` | Unique identifier of the monitor.                                    |
-| `monitor.name`| `string` | Name of the monitor.                                                 |
-| `monitor.url` | `string` | The URL or URI being monitored.                                      |
-| `cronTimestamp`| `number` | Timestamp of the check execution in milliseconds since epoch.        |
-| `status`      | `string` | Indicates the monitor status: `"degraded"` or `"error"`.         |
-| `errorMessage`| `string` | (Optional) A description of the error encountered during the check.  |
+| Field           | Type     | Description                                                         |
+| :-------------- | :------- | :------------------------------------------------------------------ |
+| `monitor.id`    | `number` | Unique identifier of the monitor.                                   |
+| `monitor.name`  | `string` | Name of the monitor.                                                |
+| `monitor.url`   | `string` | The URL or URI being monitored.                                     |
+| `cronTimestamp` | `number` | Timestamp of the check execution in milliseconds since epoch.       |
+| `status`        | `string` | Indicates the monitor status: `"degraded"` or `"error"`.            |
+| `errorMessage`  | `string` | (Optional) A description of the error encountered during the check. |
 
 #### Zod Schema
 
@@ -174,23 +182,26 @@ export const PayloadSchema = z.object({
 Integrates with OpsGenie for incident management.
 
 **Configuration:**
--   **API Key:** (Required) An API key obtained from your OpsGenie account.
+
+- **API Key:** (Required) An API key obtained from your OpsGenie account.
 
 ### PagerDuty
 
 Integrates with PagerDuty for incident alerting.
 
 **Configuration:**
--   **Integration Steps:** (Required) Follow the specific integration steps provided within the PagerDuty workflow to set up this channel.
+
+- **Integration Steps:** (Required) Follow the specific integration steps provided within the PagerDuty workflow to set up this channel.
 
 ### Ntfy
 
 Sends notifications to an Ntfy topic.
 
 **Configuration:**
--   **Ntfy Topic:** (Required) The topic name to which notifications will be published.
--   **Custom Server URL:** (Optional) The URL of a custom Ntfy server if not using the default.
--   **Bearer Token:** (Optional) An authentication token for accessing the Ntfy server.
+
+- **Ntfy Topic:** (Required) The topic name to which notifications will be published.
+- **Custom Server URL:** (Optional) The URL of a custom Ntfy server if not using the default.
+- **Bearer Token:** (Optional) An authentication token for accessing the Ntfy server.
 
 ## Related resources
 

@@ -2,6 +2,9 @@
   "name": "@openstatus/tracker",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "src/index.ts",
   "scripts": {},
   "dependencies": {
@@ -12,8 +15,5 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.9.3"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  }
 }

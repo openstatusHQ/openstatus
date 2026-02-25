@@ -1,6 +1,5 @@
 "use client";
 
-import { Note } from "@/components/common/note";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -22,6 +21,8 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Note } from "@/components/common/note";
 
 const wantFrom = [
   {

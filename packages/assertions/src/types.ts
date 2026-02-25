@@ -1,6 +1,5 @@
-import type { z } from "zod";
-
 import type { assertion } from "./v1";
+import type { z } from "zod";
 
 export type HttpAssertionRequest = {
   body: string;

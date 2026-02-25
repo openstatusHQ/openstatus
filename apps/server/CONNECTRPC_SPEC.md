@@ -7,17 +7,20 @@ This document specifies the implementation of a ConnectRPC API for OpenStatus se
 ## Architecture Decisions
 
 ### Transport & Protocol
+
 - **Protocol**: Connect protocol only (HTTP/1.1 compatible)
 - **Streaming**: Unary calls only (request-response, no streaming)
 - **Mounting**: Same port as REST, mounted at `/rpc/*` path prefix on the existing Hono app
 
 ### Schema Management
+
 - **Approach**: Schema-first with `.proto` files
 - **Tooling**: Buf (buf.yaml, buf.gen.yaml)
 - **Location**: `packages/proto` (shared package for monorepo consumption)
 - **Package naming**: `openstatus.<domain>.v1` (e.g., `openstatus.monitor.v1`)
 
 ### Code Generation Targets
+
 - TypeScript (`@bufbuild/protobuf` + `@connectrpc/connect`)
 - Go (for potential backend service consumers)
 
@@ -26,6 +29,7 @@ This document specifies the implementation of a ConnectRPC API for OpenStatus se
 ## Authentication & Authorization
 
 ### Supported Methods
+
 Both authentication methods resolve to the same workspace context:
 
 1. **API Key** (existing system)
@@ -33,8 +37,8 @@ Both authentication methods resolve to the same workspace context:
    - Formats: `os_[32-char-hex]` (custom) or Unkey keys
    - Super admin: `sa_` prefix
 
-
 ### Workspace Context
+
 - Workspace ID inferred from authenticated credentials
 - **Super-admin override**: Tokens with `sa_` prefix can specify target workspace via `x-workspace-id` metadata header
 
@@ -43,6 +47,7 @@ Both authentication methods resolve to the same workspace context:
 ## Error Handling
 
 ### Error Model
+
 Use ConnectRPC error codes with Google ErrorInfo for structured details:
 
 ```protobuf
@@ -56,6 +61,7 @@ Use ConnectRPC error codes with Google ErrorInfo for structured details:
 ```
 
 ### Mapping to Existing Errors
+
 Reuse `OpenStatusApiError` codes, map to ConnectRPC equivalents in interceptor.
 
 ---
@@ -179,6 +185,7 @@ message ListMonitorsResponse {
 ## Validation
 
 ### Approach
+
 Use **protovalidate** (Buf ecosystem) for request validation:
 
 - Validation rules defined in proto annotations
@@ -186,6 +193,7 @@ Use **protovalidate** (Buf ecosystem) for request validation:
 - Returns `INVALID_ARGUMENT` with field-level details on failure
 
 ### Example Annotations
+
 ```protobuf
 message CreateMonitorRequest {
   string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 256}];
@@ -261,6 +269,7 @@ export default (router: ConnectRouter) =>
 ## Interceptors
 
 ### Authentication Interceptor
+
 ```typescript
 // Extracts and validates auth from headers
 // Sets workspace context for downstream handlers
@@ -268,12 +277,14 @@ export default (router: ConnectRouter) =>
 ```
 
 ### Logging Interceptor
+
 ```typescript
 // Integrates with existing LogTape setup
 // Logs: method, duration, status, workspace, requestId
 ```
 
 ### Error Interceptor
+
 ```typescript
 // Maps internal errors to ConnectRPC codes
 // Attaches ErrorInfo details
@@ -285,10 +296,12 @@ export default (router: ConnectRouter) =>
 ## Observability
 
 ### Logging
+
 - Integrate with existing LogTape JSON logging
 - Log fields: `rpc.method`, `rpc.status_code`, `duration_ms`, `workspace_id`, `request_id`
 
 ### Error Tracking
+
 - Sentry integration via interceptor
 - Filter client errors (INVALID_ARGUMENT, NOT_FOUND, etc.)
 - Include request context in error reports
@@ -298,6 +311,7 @@ export default (router: ConnectRouter) =>
 ## Rate Limiting
 
 Use existing infrastructure:
+
 - Hono middleware / upstream proxy handles rate limiting
 - No RPC-specific rate limiting interceptors needed
 
@@ -306,16 +320,19 @@ Use existing infrastructure:
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test handlers directly with mocked service layer
 - Test interceptors in isolation
 - Test proto validation rules
 
 ### Integration Tests
+
 - Spin up real server instance
 - Use generated TypeScript client to make RPC calls
 - Test full request lifecycle including auth
 
 ### Test File Structure
+
 ```
 apps/server/src/rpc/
 ├── __tests__/
@@ -332,6 +349,7 @@ apps/server/src/rpc/
 ## Additional Considerations
 
 ### Health Check Endpoint
+
 Add a simple `Health` service for load balancer probes at `/rpc`:
 
 ```protobuf
@@ -352,16 +370,19 @@ message HealthCheckResponse {
 ```
 
 ### Request ID Propagation
+
 - Generate `x-request-id` in logging interceptor if not present in request headers
 - Propagate request ID to all downstream services and log entries
 - Include request ID in error responses for debugging
 
 ### Go Code Generation
+
 - Defer Go codegen until there are concrete Go service consumers
 - Reduces maintenance burden and build complexity initially
 - Can be enabled later by adding Go target to `buf.gen.yaml`
 
 ### Proto Dependency Pinning
+
 - Use `buf.lock` to pin versions of:
   - `buf.build/bufbuild/protovalidate`
   - `buf.build/googleapis/googleapis` (if using google.protobuf types)
@@ -372,17 +393,21 @@ message HealthCheckResponse {
 ## Configuration Details
 
 ### CORS Handling
+
 - `/rpc` endpoint should inherit existing CORS configuration from Hono app
 - If different CORS rules needed, configure via Hono middleware before mounting RPC routes
 - Connect protocol uses standard HTTP methods (POST), no special CORS requirements
 
 ### Content-Type Support
+
 Enable both JSON and binary formats for flexibility:
+
 - `application/json` - Human-readable, easier debugging, slightly larger payloads
 - `application/proto` - Binary format, smaller payloads, better performance
 - Connect clients auto-negotiate based on `Content-Type` header
 
 ### Deadline/Timeout Propagation
+
 - Client-specified timeouts via `connect-timeout-ms` header
 - Server interceptor should:
   - Read timeout from request metadata
@@ -395,6 +420,7 @@ Enable both JSON and binary formats for flexibility:
 ## Dependencies
 
 ### New Packages (packages/proto)
+
 ```json
 {
   "devDependencies": {
@@ -410,6 +436,7 @@ Enable both JSON and binary formats for flexibility:
 ```
 
 ### Server App Additions
+
 ```json
 {
   "dependencies": {
@@ -426,24 +453,28 @@ Enable both JSON and binary formats for flexibility:
 ## Migration & Rollout
 
 ### Phase 1: Foundation
+
 1. Create `packages/proto` with Buf setup
 2. Define monitor service proto
 3. Generate TypeScript and Go clients
 4. Add protovalidate annotations
 
 ### Phase 2: Server Integration
+
 1. Add ConnectRPC dependencies to server
 2. Implement interceptors (auth, logging, error)
 3. Mount RPC routes at `/rpc` on Hono app
 4. Extract shared service layer from REST handlers
 
 ### Phase 3: Handler Implementation
+
 1. Implement MonitorService handlers
 2. Write unit tests
 3. Write integration tests
 4. Internal testing
 
 ### Phase 4: Release
+
 1. Documentation
 2. Client SDK examples
 3. Gradual rollout via feature flag (optional)
@@ -452,32 +483,32 @@ Enable both JSON and binary formats for flexibility:
 
 ## Open Questions (Resolved)
 
-| Question | Decision |
-|----------|----------|
-| REST replacement or parallel? | New features only |
-| Transport protocol | Connect protocol only |
-| Streaming | Unary only |
-| Schema approach | Schema-first (.proto) |
-| Auth mechanism | Both API key + JWT |
-| Proto location | Shared package |
-| Tooling | Buf |
-| Error details | With ErrorInfo |
-| Code sharing | Shared service layer |
-| Client targets | TypeScript + Go |
-| Validation | protovalidate |
-| Type modeling | Separate messages |
-| Port strategy | Same port, /rpc prefix |
-| Pagination | Offset-based |
-| Rate limiting | Existing infrastructure |
-| Operations style | Separate methods |
-| Observability | Sentry + LogTape |
-| Testing | Unit + Integration |
-| Health check | Yes, HealthService |
-| Request ID | Generated + propagated |
-| Go codegen | Deferred |
-| CORS | Inherit from Hono |
-| Content-Type | JSON + Binary |
-| Timeouts | connect-timeout-ms header |
+| Question                      | Decision                  |
+| ----------------------------- | ------------------------- |
+| REST replacement or parallel? | New features only         |
+| Transport protocol            | Connect protocol only     |
+| Streaming                     | Unary only                |
+| Schema approach               | Schema-first (.proto)     |
+| Auth mechanism                | Both API key + JWT        |
+| Proto location                | Shared package            |
+| Tooling                       | Buf                       |
+| Error details                 | With ErrorInfo            |
+| Code sharing                  | Shared service layer      |
+| Client targets                | TypeScript + Go           |
+| Validation                    | protovalidate             |
+| Type modeling                 | Separate messages         |
+| Port strategy                 | Same port, /rpc prefix    |
+| Pagination                    | Offset-based              |
+| Rate limiting                 | Existing infrastructure   |
+| Operations style              | Separate methods          |
+| Observability                 | Sentry + LogTape          |
+| Testing                       | Unit + Integration        |
+| Health check                  | Yes, HealthService        |
+| Request ID                    | Generated + propagated    |
+| Go codegen                    | Deferred                  |
+| CORS                          | Inherit from Hono         |
+| Content-Type                  | JSON + Binary             |
+| Timeouts                      | connect-timeout-ms header |
 
 ---
 
@@ -490,15 +521,13 @@ Enable both JSON and binary formats for flexibility:
 
 ## Future work
 
-
-- Implement additional services and procedure: 
+- Implement additional services and procedure:
 
   // PauseMonitor suspends monitoring.
   rpc PauseMonitor(PauseMonitorRequest) returns (PauseMonitorResponse);
 
   // ResumeMonitor resumes a paused monitor.
   rpc ResumeMonitor(ResumeMonitorRequest) returns (ResumeMonitorResponse);
-
 
   // UpdateMonitor modifies an existing monitor.
   rpc UpdateMonitor(UpdateMonitorRequest) returns (UpdateMonitorResponse);

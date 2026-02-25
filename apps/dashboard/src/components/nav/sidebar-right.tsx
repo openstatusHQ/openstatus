@@ -1,5 +1,16 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
+import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
+import { cn } from "@openstatus/ui/lib/utils";
+import { PanelRight } from "lucide-react";
 import * as React from "react";
 
 import {
@@ -14,17 +25,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@openstatus/ui/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
-import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
-import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
-import { cn } from "@openstatus/ui/lib/utils";
-import { PanelRight } from "lucide-react";
+
 import { Kbd } from "../common/kbd";
 import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
 
@@ -67,9 +68,9 @@ export function SidebarRight({
         className="top-14 flex h-[calc(100svh_-_56px)]"
         {...props}
       >
-        <SidebarHeader className="relative border-sidebar-border border-b">
+        <SidebarHeader className="border-sidebar-border relative border-b">
           {header}
-          <div className="-left-9 absolute inset-y-0 z-10 flex items-center justify-center">
+          <div className="absolute inset-y-0 -left-9 z-10 flex items-center justify-center">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -78,10 +79,10 @@ export function SidebarRight({
                 <TooltipContent side="left">
                   <p className="mr-px inline-flex items-center">
                     Toggle Sidebar{" "}
-                    <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+                    <Kbd className="border-muted-foreground bg-primary text-background font-mono">
                       ⌘
                     </Kbd>
-                    <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+                    <Kbd className="border-muted-foreground bg-primary text-background font-mono">
                       {SIDEBAR_KEYBOARD_SHORTCUT}
                     </Kbd>
                   </p>

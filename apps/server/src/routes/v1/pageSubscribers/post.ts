@@ -1,13 +1,15 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { pageSubscribersApi } from "./index";
 
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
+import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, eq, isNotNull } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
-import type { pageSubscribersApi } from "./index";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+
 import { PageSubscriberSchema, ParamsSchema } from "./schema";
 
 const postRouteSubscriber = createRoute({

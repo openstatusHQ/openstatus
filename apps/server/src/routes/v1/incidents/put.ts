@@ -1,12 +1,13 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { incidentsApi } from "./index";
 
+import { createRoute } from "@hono/zod-openapi";
+import { Events } from "@openstatus/analytics";
 import { and, db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
-import { Events } from "@openstatus/analytics";
-import type { incidentsApi } from "./index";
+
 import { IncidentSchema, ParamsSchema } from "./schema";
 
 const putRoute = createRoute({

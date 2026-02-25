@@ -1,7 +1,9 @@
 import { expect, test } from "bun:test";
+
 import { z } from "@hono/zod-openapi";
 
 import { app } from "@/index";
+
 import { SummarySchema } from "./schema";
 
 test.todo("return the summary of the monitor", async () => {

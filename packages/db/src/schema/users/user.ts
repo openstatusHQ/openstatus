@@ -1,3 +1,5 @@
+import type { AdapterAccount } from "next-auth/adapters";
+
 import { relations, sql } from "drizzle-orm";
 import {
   integer,
@@ -5,7 +7,6 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-import type { AdapterAccount } from "next-auth/adapters";
 
 import { workspace, workspaceRole } from "../workspaces";
 

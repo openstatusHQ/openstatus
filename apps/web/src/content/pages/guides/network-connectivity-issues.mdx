@@ -52,6 +52,7 @@ The connectivity issues have been fully resolved. All users should now have norm
 **Approach**: Geographic specificity
 
 **What they did well**:
+
 - Named the specific region affected
 - Used technical but clear naming ("network instability")
 - Focused on infrastructure layer vs vague "connectivity problems"
@@ -64,6 +65,7 @@ The connectivity issues have been fully resolved. All users should now have norm
 **Approach**: Service-by-service breakdown
 
 **Sample structure**:
+
 ```
 We're experiencing connectivity issues affecting:
 - Issues and Pull Requests: 10% error rate
@@ -80,11 +82,13 @@ Other services operating normally.
 ### Be Specific About Location
 
 ✅ Good:
+
 - "Users in Europe experiencing connectivity issues"
 - "Network problems in AWS us-east-1 region"
 - "CDN degradation affecting Asia-Pacific"
 
 ❌ Vague:
+
 - "Some users having problems"
 - "Network issues"
 - "Connectivity degraded"
@@ -92,12 +96,14 @@ Other services operating normally.
 ### Example: Regional Communication
 
 **For global outage**:
+
 ```
 We're experiencing network connectivity issues affecting users globally.
 Our network provider is investigating. We'll provide updates every 30 minutes.
 ```
 
 **For regional outage**:
+
 ```
 We're aware of connectivity issues affecting users in the EU region.
 This appears to be related to our CDN provider. US and Asia-Pacific
@@ -105,6 +111,7 @@ regions are operating normally.
 ```
 
 **For ISP-specific**:
+
 ```
 We're receiving reports of connectivity issues from users on [ISP Name].
 We're working with the ISP to resolve. Users on other networks should
@@ -116,6 +123,7 @@ not be affected.
 When CDN issues affect your service:
 
 ### During Investigation
+
 ```
 We're experiencing degraded performance due to issues with our CDN provider.
 Users may see slower load times or intermittent connectivity. We're working
@@ -123,12 +131,14 @@ with [CDN Provider] to resolve this quickly.
 ```
 
 ### When Switching to Backup
+
 ```
 We've temporarily switched traffic to our backup CDN to restore performance.
 You may experience brief disruptions during this transition.
 ```
 
 ### After Resolution
+
 ```
 CDN performance has been fully restored. All traffic has been returned to
 our primary provider, and we're monitoring closely for any recurring issues.
@@ -137,6 +147,7 @@ our primary provider, and we're monitoring closely for any recurring issues.
 ## DNS Issues Communication
 
 ### Initial Report
+
 ```
 We're aware of DNS resolution failures affecting access to [service].
 Some users may receive "site cannot be reached" errors. We're working
@@ -147,6 +158,7 @@ still access via direct IP.
 ```
 
 ### Resolution
+
 ```
 DNS resolution has been restored. Changes may take 5-15 minutes to
 propagate globally due to DNS caching. If you still can't access
@@ -158,18 +170,21 @@ the service, try clearing your DNS cache or waiting a few minutes.
 Always include workarounds when possible:
 
 ### Example 1: CDN Issues
+
 ```
 While we work on the connectivity issue, you can access the service
 directly via: https://direct.yourservice.com (bypasses CDN)
 ```
 
 ### Example 2: Regional Issues
+
 ```
 Users in affected regions can temporarily use our US endpoint:
 https://us.yourservice.com
 ```
 
 ### Example 3: API Connectivity
+
 ```
 If experiencing timeouts, try reducing request rate or adding retry
 logic with exponential backoff. We'll send an all-clear when issues
@@ -179,6 +194,7 @@ are fully resolved.
 ## DDoS Mitigation Communication
 
 ### During Active Mitigation
+
 ```
 We're currently mitigating a distributed denial-of-service (DDoS) attack.
 Some users may experience:
@@ -190,6 +206,7 @@ These are protective measures. Your data and account remain secure.
 ```
 
 ### Post-Mitigation
+
 ```
 The DDoS attack has been successfully mitigated. All protective measures
 remain in place. Service performance has returned to normal.
@@ -234,6 +251,7 @@ We're prioritizing restoration of EU-West and monitoring other regions closely.
 When the issue is with a third-party:
 
 ✅ **Be transparent but professional**:
+
 ```
 We're experiencing connectivity issues due to problems with our CDN
 provider, Cloudflare. They are working on a fix. We're monitoring
@@ -241,6 +259,7 @@ their status page and will update you as we learn more.
 ```
 
 ❌ **Don't blame or criticize**:
+
 ```
 Cloudflare is down again! Not our fault! 🤷
 ```
@@ -248,12 +267,14 @@ Cloudflare is down again! Not our fault! 🤷
 ## Follow-Up After Resolution
 
 ### Short-Term (Same Day)
+
 ```
 Connectivity has been fully restored across all regions. We're continuing
 to monitor for any recurring issues.
 ```
 
 ### Medium-Term (Next Day)
+
 ```
 Yesterday's connectivity issues were caused by [root cause]. We're working
 with our network provider to implement additional safeguards to prevent

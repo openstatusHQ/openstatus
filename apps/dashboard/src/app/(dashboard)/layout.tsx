@@ -1,7 +1,8 @@
+import { cookies } from "next/headers";
+
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
-import { cookies } from "next/headers";
 
 export default async function Layout({
   children,

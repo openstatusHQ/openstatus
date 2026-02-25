@@ -1,6 +1,9 @@
-import fs from "node:fs";
 import type { RegionMetricsChartTable } from "@/data/content";
+
+import fs from "node:fs";
+
 import { type Region, regionDict } from "@openstatus/regions";
+
 import { SimpleChart } from "./simple-chart";
 
 export interface LatencyChartTableProps {
@@ -43,7 +46,7 @@ export function LatencyChartTable({
           {regions
             .filter((region) => regions.includes(region))
             .map((region) => {
-              const regionConfig = regionDict[region as Region];
+              const regionConfig = regionDict[region];
               const flag = regionConfig.flag;
               const code = regionConfig.code;
               const metrics = metricsByRegion.find((m) => m.region === region);

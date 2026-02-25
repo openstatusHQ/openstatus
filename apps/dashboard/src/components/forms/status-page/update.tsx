@@ -1,10 +1,12 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Info } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+
 import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
@@ -109,7 +111,7 @@ export function FormStatusPageUpdate() {
         }}
       />
       <FormCustomDomain
-        locked={workspace.limits["custom-domain"] === false}
+        locked={!workspace.limits["custom-domain"]}
         defaultValues={{
           domain: statusPage.customDomain ?? undefined,
         }}
@@ -152,10 +154,11 @@ export function FormStatusPageUpdate() {
         lockedMap={
           new Map([
             ["public", false],
-            ["password", workspace.limits["password-protection"] === false],
+            ["password", ! workspace.limits["password-protection"]],
             [
               "email-domain",
-              workspace.limits["email-domain-protection"] === false,
+              !
+              workspace.limits["email-domain-protection"],
             ],
           ])
         }

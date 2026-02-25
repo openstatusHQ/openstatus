@@ -1,14 +1,13 @@
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { type SQL, and, asc, desc, eq, gte, schema } from "@openstatus/db";
 import {
   incidentTable,
   selectIncidentSchema,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { getPeriodDate, periods } from "./utils";
 

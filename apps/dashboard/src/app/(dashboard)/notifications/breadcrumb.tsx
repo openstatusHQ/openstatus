@@ -1,7 +1,8 @@
 "use client";
 
-import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 import { Bell } from "lucide-react";
+
+import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
 
 export function Breadcrumb() {
   return (

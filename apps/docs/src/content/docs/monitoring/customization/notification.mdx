@@ -2,16 +2,13 @@
 title: Notifications
 description: "How to set up notifications for your synthetic checks in openstatus"
 ---
-import { Image } from 'astro:assets';
-import { Aside} from '@astrojs/starlight/components';
 
-import Notification from '../../../../assets/monitor/notifications.png';
+import { Image } from "astro:assets";
+import { Aside } from "@astrojs/starlight/components";
 
-  <Image
-    src={Notification}
-    alt="Monitor notifications"
-  />
+import Notification from "../../../../assets/monitor/notifications.png";
 
+<Image src={Notification} alt="Monitor notifications" />
 
 If you want to receive notifications when your monitor fails, you can connect it to a notification channel.
 
@@ -22,5 +19,6 @@ You will have the list of available notification channels. You can connect your 
 You need to create a notification channel before connecting your monitor to it.
 
 <Aside>
-By default your monitor won't send any notification on failure. You can enable notifications for your monitor by connecting it to a notification channel.
+  By default your monitor won't send any notification on failure. You can enable
+  notifications for your monitor by connecting it to a notification channel.
 </Aside>

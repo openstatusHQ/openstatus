@@ -4,10 +4,10 @@ description: A step-by-step guide to deploying an openstatus private monitoring 
 sidebar:
   label: Deploy private probes on Cloudflare Containers
 ---
-import { Image } from 'astro:assets';
-import log from '../../../assets/guides/how-to-deploy-probes-cf-containters/cloudflare-log.png';
-import os from '../../../assets/guides/how-to-deploy-probes-cf-containters/private-location.jpg';
 
+import { Image } from "astro:assets";
+import log from "../../../assets/guides/how-to-deploy-probes-cf-containters/cloudflare-log.png";
+import os from "../../../assets/guides/how-to-deploy-probes-cf-containters/private-location.jpg";
 
 ## Problem
 
@@ -20,6 +20,7 @@ Deploy the openstatus private location probe as a serverless container using Clo
 The code for the Cloudflare Worker template is available on [GitHub](https://github.com/openstatusHQ/private-location-cloudflare-container).
 
 ## Prerequisites
+
 - A Cloudflare account
 - An [openstatus account](https://www.openstatus.dev)
 - `pnpm` and `docker` installed on your local machine
@@ -89,6 +90,7 @@ Update the worker script (`index.ts`) to start the container with the correct en
     sleepAfter = "150s";
     ```
 2.  Update the `scheduled` function to pass your openstatus key to the container.
+
     ```typescript
     async scheduled(_controller: any, env: Env) {
       try {
@@ -101,7 +103,7 @@ Update the worker script (`index.ts`) to start the container with the correct en
       } catch (e) {
         console.error("Error in scheduled task:", e);
       }
-    
+
       return new Response("ok");
     },
     ```
@@ -130,13 +132,13 @@ Your private location probe is now running on Cloudflare Containers and will sta
 You can check the logs of your Cloudflare Worker to see the probe in action. In your openstatus dashboard, the private location should now show as connected.
 
 <Image
-    src={log}
-    alt="Cloudflare Workers Logs showing openstatus Private Location running"
-    caption="Cloudflare Workers logs showing the private probe running."
-  />
+  src={log}
+  alt="Cloudflare Workers Logs showing openstatus Private Location running"
+  caption="Cloudflare Workers logs showing the private probe running."
+/>
 
 <Image
-    src={os}
-    alt="openstatus Private Location connected"
-    caption="The private location showing as 'Connected' in the openstatus dashboard."
-  />
+  src={os}
+  alt="openstatus Private Location connected"
+  caption="The private location showing as 'Connected' in the openstatus dashboard."
+/>

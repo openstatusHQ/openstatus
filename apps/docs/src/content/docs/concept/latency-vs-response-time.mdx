@@ -8,6 +8,7 @@ description: "Deep dive into the difference between latency and response time, a
 Latency and response time are often used interchangeably, but they measure different things. Understanding the distinction is crucial for effective monitoring and performance optimization.
 
 **The key difference:**
+
 - **Latency** measures network travel time
 - **Response time** measures total time including server processing
 
@@ -55,7 +56,6 @@ To measure latency, you can monitor endpoints like `/ping` or `/healthcheck` wit
  Response Time = T2 - T1
 ```
 
-
 Response time is the total time from the moment a user's request is sent until the moment the first byte of the server's response is received. It includes both the network latency and the server's processing time.
 
 Response time = Network Latency + Server Processing Time
@@ -68,8 +68,7 @@ The server processing time is the duration the server spends on tasks like:
 
 A high response time often indicates a problem with the server-side application itself. For example, slow database queries or inefficient can dramatically increase the response time, even if the network latency is low.
 
-
-##  Why the distinction matters for uptime monitoring
+## Why the distinction matters for uptime monitoring
 
 Understanding the difference between these two metrics is crucial for diagnosing performance issues.
 
@@ -99,20 +98,24 @@ By monitoring both metrics, you can quickly pinpoint whether a performance slowd
 ### Common scenarios
 
 **Scenario 1: Consistent latency, variable response time**
+
 - Indicates server-side performance issues
 - Look at: Database queries, API calls, resource utilization
 
 **Scenario 2: High latency from specific regions**
+
 - Indicates geographic network issues
 - Solution: Add regional monitoring points or CDN
 
 **Scenario 3: Both metrics degrading**
+
 - Could be network saturation or DDoS attack
 - Check: Network bandwidth, traffic patterns, security
 
 ## What openstatus tracks
 
 openstatus monitors and displays:
+
 - **Total response time**: The complete user experience
 - **Detailed timing breakdown**: DNS, TCP, TLS, request, response
 - **Regional differences**: Compare performance across locations

@@ -1,4 +1,5 @@
 import type { WorkspacePlan } from "../workspaces/validation";
+
 import { allPlans } from "./config";
 import { type Addons, type Limits, limitsSchema } from "./schema";
 

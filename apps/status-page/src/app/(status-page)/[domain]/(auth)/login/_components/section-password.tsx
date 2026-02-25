@@ -1,5 +1,10 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
+import { useMutation } from "@tanstack/react-query";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+
 import {
   Section,
   SectionDescription,
@@ -9,10 +14,6 @@ import {
 import { FormPassword } from "@/components/forms/form-password";
 import { createProtectedCookieKey } from "@/lib/protected";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
-import { useMutation } from "@tanstack/react-query";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 export function SectionPassword() {
   const { domain } = useParams<{ domain: string }>();
@@ -25,7 +26,7 @@ export function SectionPassword() {
   );
 
   return (
-    <Section className="m-auto w-full max-w-lg rounded-lg border bg-card p-4">
+    <Section className="bg-card m-auto w-full max-w-lg rounded-lg border p-4">
       <SectionHeader>
         <SectionTitle>Protected Page</SectionTitle>
         <SectionDescription>

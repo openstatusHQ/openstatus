@@ -13,10 +13,10 @@ on:
       - "packages/proto/**"
 
 env:
-    FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-    # Set these to your Fly.io organization and preferred region.
-    FLY_REGION: ams
-    FLY_ORG: openstatus
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  # Set these to your Fly.io organization and preferred region.
+  FLY_REGION: ams
+  FLY_ORG: openstatus
 
 jobs:
   review_app:
@@ -31,7 +31,7 @@ jobs:
     # Deploying apps with this "review" environment allows the URL for the app to be displayed in the PR UI.
     # Feel free to change the name of this environment.
     environment:
-      name: pr-${{ github.event.number }}      # The script in the `deploy` sets the URL output for each review app.
+      name: pr-${{ github.event.number }} # The script in the `deploy` sets the URL output for each review app.
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Get code

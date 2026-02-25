@@ -68,12 +68,13 @@ Components use `data-variant` or `data-status` attributes to establish status co
 Child components use CSS selectors to respond:
 
 ```css
-.group-data-[variant=degraded]/component:text-warning
+.group-data-[variant=degraded]/component: text-warning;
 ```
 
 ### Composition Pattern
 
 Rather than:
+
 ```tsx
 <Monitor
   name="API"
@@ -85,6 +86,7 @@ Rather than:
 ```
 
 We compose:
+
 ```tsx
 <StatusComponent variant="success">
   <StatusComponentHeader>
@@ -107,6 +109,7 @@ We compose:
 Primary containers that establish page structure and status context.
 
 #### Status Components
+
 - **Status**: Root container for status pages
 - **StatusHeader**: Header with brand and title
 - **StatusTitle**: Page title
@@ -116,6 +119,7 @@ Primary containers that establish page structure and status context.
 - **StatusIcon**: Status indicator icon
 
 #### Monitor Components
+
 - **StatusComponent**: Individual monitor/service container
 - **StatusComponentHeader**: Monitor header layout
 - **StatusComponentHeaderLeft**: Left-aligned header content
@@ -162,21 +166,25 @@ Interactive uptime timeline with hover cards.
 Components for displaying incident reports and maintenance.
 
 #### Container Components
+
 - **StatusEventGroup**: Feed container
 - **StatusEvent**: Individual event container
 - **StatusEventContent**: Event content wrapper
 
 #### Content Components
+
 - **StatusEventTitle**: Event title
 - **StatusEventTitleCheck**: Resolved indicator
 - **StatusEventAffected**: Affected services container
 - **StatusEventAffectedBadge**: Single service badge
 
 #### Date/Time Components
+
 - **StatusEventDate**: Date with relative time
 - **StatusEventAside**: Sidebar date (desktop)
 
 #### Timeline Components
+
 - **StatusEventTimelineReport**: Incident updates timeline
 - **StatusEventTimelineReportUpdate**: Single update entry
 - **StatusEventTimelineMaintenance**: Maintenance entry
@@ -285,23 +293,23 @@ Specialized functionality components.
         {
           status: "resolved",
           message: "All services have been restored",
-          date: new Date("2024-01-15T12:00:00Z")
+          date: new Date("2024-01-15T12:00:00Z"),
         },
         {
           status: "monitoring",
           message: "Fix deployed, monitoring recovery",
-          date: new Date("2024-01-15T11:45:00Z")
+          date: new Date("2024-01-15T11:45:00Z"),
         },
         {
           status: "identified",
           message: "Root cause identified in load balancer",
-          date: new Date("2024-01-15T11:15:00Z")
+          date: new Date("2024-01-15T11:15:00Z"),
         },
         {
           status: "investigating",
           message: "Investigating API timeouts",
-          date: new Date("2024-01-15T11:00:00Z")
-        }
+          date: new Date("2024-01-15T11:00:00Z"),
+        },
       ]}
     />
   </StatusEventContent>
@@ -321,10 +329,10 @@ Specialized functionality components.
         {
           status: "resolved",
           message: "Issue resolved",
-          date: new Date()
-        }
-      ]
-    }
+          date: new Date(),
+        },
+      ],
+    },
   ]}
   maintenances={[
     {
@@ -333,8 +341,8 @@ Specialized functionality components.
       message: "Upgrading to PostgreSQL 15",
       affected: ["Database"],
       from: new Date("2024-01-20T02:00:00Z"),
-      to: new Date("2024-01-20T04:00:00Z")
-    }
+      to: new Date("2024-01-20T04:00:00Z"),
+    },
   ]}
 />
 ```
@@ -391,11 +399,8 @@ Specialized functionality components.
 Components use CSS variables for status colors:
 
 ```css
---success: /* Green */
---warning: /* Yellow */
---destructive: /* Red */
---info: /* Blue */
---muted: /* Gray */
+--success: /* Green */ --warning: /* Yellow */ --destructive: /* Red */
+  --info: /* Blue */ --muted: /* Gray */;
 ```
 
 ### Dark Mode

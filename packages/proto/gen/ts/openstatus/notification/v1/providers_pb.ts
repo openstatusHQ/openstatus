@@ -2,17 +2,26 @@
 // @generated from file openstatus/notification/v1/providers.proto (package openstatus.notification.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenEnum,
+  GenFile,
+  GenMessage,
+} from "@bufbuild/protobuf/codegenv2";
+
 import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/notification/v1/providers.proto.
  */
-export const file_openstatus_notification_v1_providers: GenFile = /*@__PURE__*/
-  fileDesc("CipvcGVuc3RhdHVzL25vdGlmaWNhdGlvbi92MS9wcm92aWRlcnMucHJvdG8SGm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxIlsKC0Rpc2NvcmREYXRhEkwKC3dlYmhvb2tfdXJsGAEgASgJQje6Ryw6KhIoaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTIzL2FiY7pIBXIDiAEBIj4KCUVtYWlsRGF0YRIxCgVlbWFpbBgBIAEoCUIiukcYOhYSFG9wcy10ZWFtQGV4YW1wbGUuY29tukgEcgJgASIvCg5Hb29nbGVDaGF0RGF0YRIdCgt3ZWJob29rX3VybBgBIAEoCUIIukgFcgOIAQEiMgoRR3JhZmFuYU9uY2FsbERhdGESHQoLd2ViaG9va191cmwYASABKAlCCLpIBXIDiAEBImwKCE50ZnlEYXRhEi4KBXRvcGljGAEgASgJQh+6RxU6ExIRb3BlbnN0YXR1cy1hbGVydHO6SARyAhABEhIKCnNlcnZlcl91cmwYAiABKAkSEgoFdG9rZW4YAyABKAlIAIgBAUIICgZfdG9rZW4iTAoNUGFnZXJEdXR5RGF0YRI7Cg9pbnRlZ3JhdGlvbl9rZXkYASABKAlCIrpHGDoWEhRhMWIyYzNkNGU1ZjZnN2g4aTlqMLpIBHICEAEibgoMT3BzZ2VuaWVEYXRhEhgKB2FwaV9rZXkYASABKAlCB7pIBHICEAESRAoGcmVnaW9uGAIgASgOMioub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuT3BzZ2VuaWVSZWdpb25CCLpIBYIBAhABIl0KCVNsYWNrRGF0YRJQCgt3ZWJob29rX3VybBgBIAEoCUI7ukcwOi4SLGh0dHBzOi8vaG9va3Muc2xhY2suY29tL3NlcnZpY2VzL1QwMC9CMDAveHh4ukgFcgOIAQEiOwoHU21zRGF0YRIwCgxwaG9uZV9udW1iZXIYASABKAlCGrpHEDoOEgwrMTQxNTU1NTEyMzS6SARyAhABIj0KDFRlbGVncmFtRGF0YRItCgdjaGF0X2lkGAEgASgJQhy6RxI6EBIOLTEwMDEyMzQ1Njc4OTC6SARyAhABIjQKDVdlYmhvb2tIZWFkZXISFAoDa2V5GAEgASgJQge6SARyAhABEg0KBXZhbHVlGAIgASgJIpcBCgtXZWJob29rRGF0YRJMCghlbmRwb2ludBgBIAEoCUI6ukcvOi0SK2h0dHBzOi8vYXBpLmV4YW1wbGUuY29tL3dlYmhvb2tzL29wZW5zdGF0dXO6SAVyA4gBARI6CgdoZWFkZXJzGAIgAygLMikub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuV2ViaG9va0hlYWRlciItCgxXaGF0c2FwcERhdGESHQoMcGhvbmVfbnVtYmVyGAEgASgJQge6SARyAhABIvIFChBOb3RpZmljYXRpb25EYXRhEjoKB2Rpc2NvcmQYASABKAsyJy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5EaXNjb3JkRGF0YUgAEjYKBWVtYWlsGAIgASgLMiUub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuRW1haWxEYXRhSAASQQoLZ29vZ2xlX2NoYXQYAyABKAsyKi5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Hb29nbGVDaGF0RGF0YUgAEkcKDmdyYWZhbmFfb25jYWxsGAQgASgLMi0ub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuR3JhZmFuYU9uY2FsbERhdGFIABI0CgRudGZ5GAUgASgLMiQub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTnRmeURhdGFIABI+CglwYWdlcmR1dHkYBiABKAsyKS5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5QYWdlckR1dHlEYXRhSAASPAoIb3BzZ2VuaWUYByABKAsyKC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5PcHNnZW5pZURhdGFIABI2CgVzbGFjaxgIIAEoCzIlLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLlNsYWNrRGF0YUgAEjIKA3NtcxgJIAEoCzIjLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLlNtc0RhdGFIABI8Cgh0ZWxlZ3JhbRgKIAEoCzIoLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLlRlbGVncmFtRGF0YUgAEjoKB3dlYmhvb2sYCyABKAsyJy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5XZWJob29rRGF0YUgAEjwKCHdoYXRzYXBwGAwgASgLMigub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuV2hhdHNhcHBEYXRhSABCBgoEZGF0YSrmAwoUTm90aWZpY2F0aW9uUHJvdmlkZXISJQohTk9USUZJQ0FUSU9OX1BST1ZJREVSX1VOU1BFQ0lGSUVEEAASIQodTk9USUZJQ0FUSU9OX1BST1ZJREVSX0RJU0NPUkQQARIfChtOT1RJRklDQVRJT05fUFJPVklERVJfRU1BSUwQAhIlCiFOT1RJRklDQVRJT05fUFJPVklERVJfR09PR0xFX0NIQVQQAxIoCiROT1RJRklDQVRJT05fUFJPVklERVJfR1JBRkFOQV9PTkNBTEwQBBIeChpOT1RJRklDQVRJT05fUFJPVklERVJfTlRGWRAFEiMKH05PVElGSUNBVElPTl9QUk9WSURFUl9QQUdFUkRVVFkQBhIiCh5OT1RJRklDQVRJT05fUFJPVklERVJfT1BTR0VOSUUQBxIfChtOT1RJRklDQVRJT05fUFJPVklERVJfU0xBQ0sQCBIdChlOT1RJRklDQVRJT05fUFJPVklERVJfU01TEAkSIgoeTk9USUZJQ0FUSU9OX1BST1ZJREVSX1RFTEVHUkFNEAoSIQodTk9USUZJQ0FUSU9OX1BST1ZJREVSX1dFQkhPT0sQCxIiCh5OT1RJRklDQVRJT05fUFJPVklERVJfV0hBVFNBUFAQDCphCg5PcHNnZW5pZVJlZ2lvbhIfChtPUFNHRU5JRV9SRUdJT05fVU5TUEVDSUZJRUQQABIWChJPUFNHRU5JRV9SRUdJT05fVVMQARIWChJPUFNHRU5JRV9SRUdJT05fRVUQAkJdWltnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbm90aWZpY2F0aW9uL3YxO25vdGlmaWNhdGlvbnYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations]);
+export const file_openstatus_notification_v1_providers: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CipvcGVuc3RhdHVzL25vdGlmaWNhdGlvbi92MS9wcm92aWRlcnMucHJvdG8SGm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxIlsKC0Rpc2NvcmREYXRhEkwKC3dlYmhvb2tfdXJsGAEgASgJQje6Ryw6KhIoaHR0cHM6Ly9kaXNjb3JkLmNvbS9hcGkvd2ViaG9va3MvMTIzL2FiY7pIBXIDiAEBIj4KCUVtYWlsRGF0YRIxCgVlbWFpbBgBIAEoCUIiukcYOhYSFG9wcy10ZWFtQGV4YW1wbGUuY29tukgEcgJgASIvCg5Hb29nbGVDaGF0RGF0YRIdCgt3ZWJob29rX3VybBgBIAEoCUIIukgFcgOIAQEiMgoRR3JhZmFuYU9uY2FsbERhdGESHQoLd2ViaG9va191cmwYASABKAlCCLpIBXIDiAEBImwKCE50ZnlEYXRhEi4KBXRvcGljGAEgASgJQh+6RxU6ExIRb3BlbnN0YXR1cy1hbGVydHO6SARyAhABEhIKCnNlcnZlcl91cmwYAiABKAkSEgoFdG9rZW4YAyABKAlIAIgBAUIICgZfdG9rZW4iTAoNUGFnZXJEdXR5RGF0YRI7Cg9pbnRlZ3JhdGlvbl9rZXkYASABKAlCIrpHGDoWEhRhMWIyYzNkNGU1ZjZnN2g4aTlqMLpIBHICEAEibgoMT3BzZ2VuaWVEYXRhEhgKB2FwaV9rZXkYASABKAlCB7pIBHICEAESRAoGcmVnaW9uGAIgASgOMioub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuT3BzZ2VuaWVSZWdpb25CCLpIBYIBAhABIl0KCVNsYWNrRGF0YRJQCgt3ZWJob29rX3VybBgBIAEoCUI7ukcwOi4SLGh0dHBzOi8vaG9va3Muc2xhY2suY29tL3NlcnZpY2VzL1QwMC9CMDAveHh4ukgFcgOIAQEiOwoHU21zRGF0YRIwCgxwaG9uZV9udW1iZXIYASABKAlCGrpHEDoOEgwrMTQxNTU1NTEyMzS6SARyAhABIj0KDFRlbGVncmFtRGF0YRItCgdjaGF0X2lkGAEgASgJQhy6RxI6EBIOLTEwMDEyMzQ1Njc4OTC6SARyAhABIjQKDVdlYmhvb2tIZWFkZXISFAoDa2V5GAEgASgJQge6SARyAhABEg0KBXZhbHVlGAIgASgJIpcBCgtXZWJob29rRGF0YRJMCghlbmRwb2ludBgBIAEoCUI6ukcvOi0SK2h0dHBzOi8vYXBpLmV4YW1wbGUuY29tL3dlYmhvb2tzL29wZW5zdGF0dXO6SAVyA4gBARI6CgdoZWFkZXJzGAIgAygLMikub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuV2ViaG9va0hlYWRlciItCgxXaGF0c2FwcERhdGESHQoMcGhvbmVfbnVtYmVyGAEgASgJQge6SARyAhABIvIFChBOb3RpZmljYXRpb25EYXRhEjoKB2Rpc2NvcmQYASABKAsyJy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5EaXNjb3JkRGF0YUgAEjYKBWVtYWlsGAIgASgLMiUub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuRW1haWxEYXRhSAASQQoLZ29vZ2xlX2NoYXQYAyABKAsyKi5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5Hb29nbGVDaGF0RGF0YUgAEkcKDmdyYWZhbmFfb25jYWxsGAQgASgLMi0ub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuR3JhZmFuYU9uY2FsbERhdGFIABI0CgRudGZ5GAUgASgLMiQub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuTnRmeURhdGFIABI+CglwYWdlcmR1dHkYBiABKAsyKS5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5QYWdlckR1dHlEYXRhSAASPAoIb3BzZ2VuaWUYByABKAsyKC5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5PcHNnZW5pZURhdGFIABI2CgVzbGFjaxgIIAEoCzIlLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLlNsYWNrRGF0YUgAEjIKA3NtcxgJIAEoCzIjLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLlNtc0RhdGFIABI8Cgh0ZWxlZ3JhbRgKIAEoCzIoLm9wZW5zdGF0dXMubm90aWZpY2F0aW9uLnYxLlRlbGVncmFtRGF0YUgAEjoKB3dlYmhvb2sYCyABKAsyJy5vcGVuc3RhdHVzLm5vdGlmaWNhdGlvbi52MS5XZWJob29rRGF0YUgAEjwKCHdoYXRzYXBwGAwgASgLMigub3BlbnN0YXR1cy5ub3RpZmljYXRpb24udjEuV2hhdHNhcHBEYXRhSABCBgoEZGF0YSrmAwoUTm90aWZpY2F0aW9uUHJvdmlkZXISJQohTk9USUZJQ0FUSU9OX1BST1ZJREVSX1VOU1BFQ0lGSUVEEAASIQodTk9USUZJQ0FUSU9OX1BST1ZJREVSX0RJU0NPUkQQARIfChtOT1RJRklDQVRJT05fUFJPVklERVJfRU1BSUwQAhIlCiFOT1RJRklDQVRJT05fUFJPVklERVJfR09PR0xFX0NIQVQQAxIoCiROT1RJRklDQVRJT05fUFJPVklERVJfR1JBRkFOQV9PTkNBTEwQBBIeChpOT1RJRklDQVRJT05fUFJPVklERVJfTlRGWRAFEiMKH05PVElGSUNBVElPTl9QUk9WSURFUl9QQUdFUkRVVFkQBhIiCh5OT1RJRklDQVRJT05fUFJPVklERVJfT1BTR0VOSUUQBxIfChtOT1RJRklDQVRJT05fUFJPVklERVJfU0xBQ0sQCBIdChlOT1RJRklDQVRJT05fUFJPVklERVJfU01TEAkSIgoeTk9USUZJQ0FUSU9OX1BST1ZJREVSX1RFTEVHUkFNEAoSIQodTk9USUZJQ0FUSU9OX1BST1ZJREVSX1dFQkhPT0sQCxIiCh5OT1RJRklDQVRJT05fUFJPVklERVJfV0hBVFNBUFAQDCphCg5PcHNnZW5pZVJlZ2lvbhIfChtPUFNHRU5JRV9SRUdJT05fVU5TUEVDSUZJRUQQABIWChJPUFNHRU5JRV9SRUdJT05fVVMQARIWChJPUFNHRU5JRV9SRUdJT05fRVUQAkJdWltnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvbm90aWZpY2F0aW9uL3YxO25vdGlmaWNhdGlvbnYxYgZwcm90bzM",
+    [file_buf_validate_validate, file_gnostic_openapi_v3_annotations],
+  );
 
 /**
  * DiscordData contains configuration for Discord notifications.
@@ -32,7 +41,7 @@ export type DiscordData = Message<"openstatus.notification.v1.DiscordData"> & {
  * Describes the message openstatus.notification.v1.DiscordData.
  * Use `create(DiscordDataSchema)` to create a new message.
  */
-export const DiscordDataSchema: GenMessage<DiscordData> = /*@__PURE__*/
+export const DiscordDataSchema: GenMessage<DiscordData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 0);
 
 /**
@@ -53,28 +62,31 @@ export type EmailData = Message<"openstatus.notification.v1.EmailData"> & {
  * Describes the message openstatus.notification.v1.EmailData.
  * Use `create(EmailDataSchema)` to create a new message.
  */
-export const EmailDataSchema: GenMessage<EmailData> = /*@__PURE__*/
-  messageDesc(file_openstatus_notification_v1_providers, 1);
+export const EmailDataSchema: GenMessage<EmailData> /*@__PURE__*/ = messageDesc(
+  file_openstatus_notification_v1_providers,
+  1,
+);
 
 /**
  * GoogleChatData contains configuration for Google Chat notifications.
  *
  * @generated from message openstatus.notification.v1.GoogleChatData
  */
-export type GoogleChatData = Message<"openstatus.notification.v1.GoogleChatData"> & {
-  /**
-   * Google Chat webhook URL.
-   *
-   * @generated from field: string webhook_url = 1;
-   */
-  webhookUrl: string;
-};
+export type GoogleChatData =
+  Message<"openstatus.notification.v1.GoogleChatData"> & {
+    /**
+     * Google Chat webhook URL.
+     *
+     * @generated from field: string webhook_url = 1;
+     */
+    webhookUrl: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.GoogleChatData.
  * Use `create(GoogleChatDataSchema)` to create a new message.
  */
-export const GoogleChatDataSchema: GenMessage<GoogleChatData> = /*@__PURE__*/
+export const GoogleChatDataSchema: GenMessage<GoogleChatData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 2);
 
 /**
@@ -82,20 +94,21 @@ export const GoogleChatDataSchema: GenMessage<GoogleChatData> = /*@__PURE__*/
  *
  * @generated from message openstatus.notification.v1.GrafanaOncallData
  */
-export type GrafanaOncallData = Message<"openstatus.notification.v1.GrafanaOncallData"> & {
-  /**
-   * Grafana OnCall webhook URL.
-   *
-   * @generated from field: string webhook_url = 1;
-   */
-  webhookUrl: string;
-};
+export type GrafanaOncallData =
+  Message<"openstatus.notification.v1.GrafanaOncallData"> & {
+    /**
+     * Grafana OnCall webhook URL.
+     *
+     * @generated from field: string webhook_url = 1;
+     */
+    webhookUrl: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.GrafanaOncallData.
  * Use `create(GrafanaOncallDataSchema)` to create a new message.
  */
-export const GrafanaOncallDataSchema: GenMessage<GrafanaOncallData> = /*@__PURE__*/
+export const GrafanaOncallDataSchema: GenMessage<GrafanaOncallData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 3);
 
 /**
@@ -130,28 +143,31 @@ export type NtfyData = Message<"openstatus.notification.v1.NtfyData"> & {
  * Describes the message openstatus.notification.v1.NtfyData.
  * Use `create(NtfyDataSchema)` to create a new message.
  */
-export const NtfyDataSchema: GenMessage<NtfyData> = /*@__PURE__*/
-  messageDesc(file_openstatus_notification_v1_providers, 4);
+export const NtfyDataSchema: GenMessage<NtfyData> /*@__PURE__*/ = messageDesc(
+  file_openstatus_notification_v1_providers,
+  4,
+);
 
 /**
  * PagerDutyData contains configuration for PagerDuty notifications.
  *
  * @generated from message openstatus.notification.v1.PagerDutyData
  */
-export type PagerDutyData = Message<"openstatus.notification.v1.PagerDutyData"> & {
-  /**
-   * PagerDuty integration key.
-   *
-   * @generated from field: string integration_key = 1;
-   */
-  integrationKey: string;
-};
+export type PagerDutyData =
+  Message<"openstatus.notification.v1.PagerDutyData"> & {
+    /**
+     * PagerDuty integration key.
+     *
+     * @generated from field: string integration_key = 1;
+     */
+    integrationKey: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.PagerDutyData.
  * Use `create(PagerDutyDataSchema)` to create a new message.
  */
-export const PagerDutyDataSchema: GenMessage<PagerDutyData> = /*@__PURE__*/
+export const PagerDutyDataSchema: GenMessage<PagerDutyData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 5);
 
 /**
@@ -159,27 +175,28 @@ export const PagerDutyDataSchema: GenMessage<PagerDutyData> = /*@__PURE__*/
  *
  * @generated from message openstatus.notification.v1.OpsgenieData
  */
-export type OpsgenieData = Message<"openstatus.notification.v1.OpsgenieData"> & {
-  /**
-   * Opsgenie API key.
-   *
-   * @generated from field: string api_key = 1;
-   */
-  apiKey: string;
+export type OpsgenieData =
+  Message<"openstatus.notification.v1.OpsgenieData"> & {
+    /**
+     * Opsgenie API key.
+     *
+     * @generated from field: string api_key = 1;
+     */
+    apiKey: string;
 
-  /**
-   * Opsgenie region.
-   *
-   * @generated from field: openstatus.notification.v1.OpsgenieRegion region = 2;
-   */
-  region: OpsgenieRegion;
-};
+    /**
+     * Opsgenie region.
+     *
+     * @generated from field: openstatus.notification.v1.OpsgenieRegion region = 2;
+     */
+    region: OpsgenieRegion;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.OpsgenieData.
  * Use `create(OpsgenieDataSchema)` to create a new message.
  */
-export const OpsgenieDataSchema: GenMessage<OpsgenieData> = /*@__PURE__*/
+export const OpsgenieDataSchema: GenMessage<OpsgenieData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 6);
 
 /**
@@ -200,8 +217,10 @@ export type SlackData = Message<"openstatus.notification.v1.SlackData"> & {
  * Describes the message openstatus.notification.v1.SlackData.
  * Use `create(SlackDataSchema)` to create a new message.
  */
-export const SlackDataSchema: GenMessage<SlackData> = /*@__PURE__*/
-  messageDesc(file_openstatus_notification_v1_providers, 7);
+export const SlackDataSchema: GenMessage<SlackData> /*@__PURE__*/ = messageDesc(
+  file_openstatus_notification_v1_providers,
+  7,
+);
 
 /**
  * SmsData contains configuration for SMS notifications.
@@ -221,28 +240,31 @@ export type SmsData = Message<"openstatus.notification.v1.SmsData"> & {
  * Describes the message openstatus.notification.v1.SmsData.
  * Use `create(SmsDataSchema)` to create a new message.
  */
-export const SmsDataSchema: GenMessage<SmsData> = /*@__PURE__*/
-  messageDesc(file_openstatus_notification_v1_providers, 8);
+export const SmsDataSchema: GenMessage<SmsData> /*@__PURE__*/ = messageDesc(
+  file_openstatus_notification_v1_providers,
+  8,
+);
 
 /**
  * TelegramData contains configuration for Telegram notifications.
  *
  * @generated from message openstatus.notification.v1.TelegramData
  */
-export type TelegramData = Message<"openstatus.notification.v1.TelegramData"> & {
-  /**
-   * Telegram chat ID.
-   *
-   * @generated from field: string chat_id = 1;
-   */
-  chatId: string;
-};
+export type TelegramData =
+  Message<"openstatus.notification.v1.TelegramData"> & {
+    /**
+     * Telegram chat ID.
+     *
+     * @generated from field: string chat_id = 1;
+     */
+    chatId: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.TelegramData.
  * Use `create(TelegramDataSchema)` to create a new message.
  */
-export const TelegramDataSchema: GenMessage<TelegramData> = /*@__PURE__*/
+export const TelegramDataSchema: GenMessage<TelegramData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 9);
 
 /**
@@ -250,27 +272,28 @@ export const TelegramDataSchema: GenMessage<TelegramData> = /*@__PURE__*/
  *
  * @generated from message openstatus.notification.v1.WebhookHeader
  */
-export type WebhookHeader = Message<"openstatus.notification.v1.WebhookHeader"> & {
-  /**
-   * Header name.
-   *
-   * @generated from field: string key = 1;
-   */
-  key: string;
+export type WebhookHeader =
+  Message<"openstatus.notification.v1.WebhookHeader"> & {
+    /**
+     * Header name.
+     *
+     * @generated from field: string key = 1;
+     */
+    key: string;
 
-  /**
-   * Header value.
-   *
-   * @generated from field: string value = 2;
-   */
-  value: string;
-};
+    /**
+     * Header value.
+     *
+     * @generated from field: string value = 2;
+     */
+    value: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.WebhookHeader.
  * Use `create(WebhookHeaderSchema)` to create a new message.
  */
-export const WebhookHeaderSchema: GenMessage<WebhookHeader> = /*@__PURE__*/
+export const WebhookHeaderSchema: GenMessage<WebhookHeader> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 10);
 
 /**
@@ -298,7 +321,7 @@ export type WebhookData = Message<"openstatus.notification.v1.WebhookData"> & {
  * Describes the message openstatus.notification.v1.WebhookData.
  * Use `create(WebhookDataSchema)` to create a new message.
  */
-export const WebhookDataSchema: GenMessage<WebhookData> = /*@__PURE__*/
+export const WebhookDataSchema: GenMessage<WebhookData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 11);
 
 /**
@@ -306,20 +329,21 @@ export const WebhookDataSchema: GenMessage<WebhookData> = /*@__PURE__*/
  *
  * @generated from message openstatus.notification.v1.WhatsappData
  */
-export type WhatsappData = Message<"openstatus.notification.v1.WhatsappData"> & {
-  /**
-   * Phone number to send WhatsApp messages to.
-   *
-   * @generated from field: string phone_number = 1;
-   */
-  phoneNumber: string;
-};
+export type WhatsappData =
+  Message<"openstatus.notification.v1.WhatsappData"> & {
+    /**
+     * Phone number to send WhatsApp messages to.
+     *
+     * @generated from field: string phone_number = 1;
+     */
+    phoneNumber: string;
+  };
 
 /**
  * Describes the message openstatus.notification.v1.WhatsappData.
  * Use `create(WhatsappDataSchema)` to create a new message.
  */
-export const WhatsappDataSchema: GenMessage<WhatsappData> = /*@__PURE__*/
+export const WhatsappDataSchema: GenMessage<WhatsappData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 12);
 
 /**
@@ -327,114 +351,128 @@ export const WhatsappDataSchema: GenMessage<WhatsappData> = /*@__PURE__*/
  *
  * @generated from message openstatus.notification.v1.NotificationData
  */
-export type NotificationData = Message<"openstatus.notification.v1.NotificationData"> & {
-  /**
-   * @generated from oneof openstatus.notification.v1.NotificationData.data
-   */
-  data: {
+export type NotificationData =
+  Message<"openstatus.notification.v1.NotificationData"> & {
     /**
-     * Discord configuration.
-     *
-     * @generated from field: openstatus.notification.v1.DiscordData discord = 1;
+     * @generated from oneof openstatus.notification.v1.NotificationData.data
      */
-    value: DiscordData;
-    case: "discord";
-  } | {
-    /**
-     * Email configuration.
-     *
-     * @generated from field: openstatus.notification.v1.EmailData email = 2;
-     */
-    value: EmailData;
-    case: "email";
-  } | {
-    /**
-     * Google Chat configuration.
-     *
-     * @generated from field: openstatus.notification.v1.GoogleChatData google_chat = 3;
-     */
-    value: GoogleChatData;
-    case: "googleChat";
-  } | {
-    /**
-     * Grafana OnCall configuration.
-     *
-     * @generated from field: openstatus.notification.v1.GrafanaOncallData grafana_oncall = 4;
-     */
-    value: GrafanaOncallData;
-    case: "grafanaOncall";
-  } | {
-    /**
-     * Ntfy configuration.
-     *
-     * @generated from field: openstatus.notification.v1.NtfyData ntfy = 5;
-     */
-    value: NtfyData;
-    case: "ntfy";
-  } | {
-    /**
-     * PagerDuty configuration.
-     *
-     * @generated from field: openstatus.notification.v1.PagerDutyData pagerduty = 6;
-     */
-    value: PagerDutyData;
-    case: "pagerduty";
-  } | {
-    /**
-     * Opsgenie configuration.
-     *
-     * @generated from field: openstatus.notification.v1.OpsgenieData opsgenie = 7;
-     */
-    value: OpsgenieData;
-    case: "opsgenie";
-  } | {
-    /**
-     * Slack configuration.
-     *
-     * @generated from field: openstatus.notification.v1.SlackData slack = 8;
-     */
-    value: SlackData;
-    case: "slack";
-  } | {
-    /**
-     * SMS configuration.
-     *
-     * @generated from field: openstatus.notification.v1.SmsData sms = 9;
-     */
-    value: SmsData;
-    case: "sms";
-  } | {
-    /**
-     * Telegram configuration.
-     *
-     * @generated from field: openstatus.notification.v1.TelegramData telegram = 10;
-     */
-    value: TelegramData;
-    case: "telegram";
-  } | {
-    /**
-     * Webhook configuration.
-     *
-     * @generated from field: openstatus.notification.v1.WebhookData webhook = 11;
-     */
-    value: WebhookData;
-    case: "webhook";
-  } | {
-    /**
-     * WhatsApp configuration.
-     *
-     * @generated from field: openstatus.notification.v1.WhatsappData whatsapp = 12;
-     */
-    value: WhatsappData;
-    case: "whatsapp";
-  } | { case: undefined; value?: undefined };
-};
+    data:
+      | {
+          /**
+           * Discord configuration.
+           *
+           * @generated from field: openstatus.notification.v1.DiscordData discord = 1;
+           */
+          value: DiscordData;
+          case: "discord";
+        }
+      | {
+          /**
+           * Email configuration.
+           *
+           * @generated from field: openstatus.notification.v1.EmailData email = 2;
+           */
+          value: EmailData;
+          case: "email";
+        }
+      | {
+          /**
+           * Google Chat configuration.
+           *
+           * @generated from field: openstatus.notification.v1.GoogleChatData google_chat = 3;
+           */
+          value: GoogleChatData;
+          case: "googleChat";
+        }
+      | {
+          /**
+           * Grafana OnCall configuration.
+           *
+           * @generated from field: openstatus.notification.v1.GrafanaOncallData grafana_oncall = 4;
+           */
+          value: GrafanaOncallData;
+          case: "grafanaOncall";
+        }
+      | {
+          /**
+           * Ntfy configuration.
+           *
+           * @generated from field: openstatus.notification.v1.NtfyData ntfy = 5;
+           */
+          value: NtfyData;
+          case: "ntfy";
+        }
+      | {
+          /**
+           * PagerDuty configuration.
+           *
+           * @generated from field: openstatus.notification.v1.PagerDutyData pagerduty = 6;
+           */
+          value: PagerDutyData;
+          case: "pagerduty";
+        }
+      | {
+          /**
+           * Opsgenie configuration.
+           *
+           * @generated from field: openstatus.notification.v1.OpsgenieData opsgenie = 7;
+           */
+          value: OpsgenieData;
+          case: "opsgenie";
+        }
+      | {
+          /**
+           * Slack configuration.
+           *
+           * @generated from field: openstatus.notification.v1.SlackData slack = 8;
+           */
+          value: SlackData;
+          case: "slack";
+        }
+      | {
+          /**
+           * SMS configuration.
+           *
+           * @generated from field: openstatus.notification.v1.SmsData sms = 9;
+           */
+          value: SmsData;
+          case: "sms";
+        }
+      | {
+          /**
+           * Telegram configuration.
+           *
+           * @generated from field: openstatus.notification.v1.TelegramData telegram = 10;
+           */
+          value: TelegramData;
+          case: "telegram";
+        }
+      | {
+          /**
+           * Webhook configuration.
+           *
+           * @generated from field: openstatus.notification.v1.WebhookData webhook = 11;
+           */
+          value: WebhookData;
+          case: "webhook";
+        }
+      | {
+          /**
+           * WhatsApp configuration.
+           *
+           * @generated from field: openstatus.notification.v1.WhatsappData whatsapp = 12;
+           */
+          value: WhatsappData;
+          case: "whatsapp";
+        }
+      | { case: undefined; value?: undefined };
+  };
 
 /**
  * Describes the message openstatus.notification.v1.NotificationData.
  * Use `create(NotificationDataSchema)` to create a new message.
  */
-export const NotificationDataSchema: GenMessage<NotificationData> = /*@__PURE__*/
+export const NotificationDataSchema: GenMessage<NotificationData> /*@__PURE__*/ =
   messageDesc(file_openstatus_notification_v1_providers, 13);
 
 /**
@@ -538,7 +576,7 @@ export enum NotificationProvider {
 /**
  * Describes the enum openstatus.notification.v1.NotificationProvider.
  */
-export const NotificationProviderSchema: GenEnum<NotificationProvider> = /*@__PURE__*/
+export const NotificationProviderSchema: GenEnum<NotificationProvider> /*@__PURE__*/ =
   enumDesc(file_openstatus_notification_v1_providers, 0);
 
 /**
@@ -572,6 +610,5 @@ export enum OpsgenieRegion {
 /**
  * Describes the enum openstatus.notification.v1.OpsgenieRegion.
  */
-export const OpsgenieRegionSchema: GenEnum<OpsgenieRegion> = /*@__PURE__*/
+export const OpsgenieRegionSchema: GenEnum<OpsgenieRegion> /*@__PURE__*/ =
   enumDesc(file_openstatus_notification_v1_providers, 1);
-

@@ -8,13 +8,13 @@ export function TableCellNumber({
 }: React.ComponentProps<"div"> & { value: unknown; unit?: string }) {
   const _value = Number(value);
   if (Number.isNaN(_value)) {
-    return <div className="font-mono text-muted-foreground">N/A</div>;
+    return <div className="text-muted-foreground font-mono">N/A</div>;
   }
 
   return (
-    <div className={cn("font-mono text-foreground", className)} {...props}>
+    <div className={cn("text-foreground font-mono", className)} {...props}>
       {_value}
-      {unit && <span className="p-0.5 text-muted-foreground">{unit}</span>}
+      {unit && <span className="text-muted-foreground p-0.5">{unit}</span>}
     </div>
   );
 }

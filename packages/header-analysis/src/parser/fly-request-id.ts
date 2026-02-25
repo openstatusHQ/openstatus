@@ -1,5 +1,6 @@
-import { regions } from "../regions/fly";
 import type { ParserReturn, Region } from "../types";
+
+import { regions } from "../regions/fly";
 
 export function parseFlyRequestId(header: string): ParserReturn<Region> {
   const regex = /\b([a-z]{3})\b/g;

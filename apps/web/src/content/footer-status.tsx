@@ -1,9 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { StatusResponse } from "@openstatus/react";
+
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+
+import { cn } from "@/lib/utils";
 
 export function FooterStatus() {
   const { data } = useQuery({
@@ -25,7 +27,7 @@ export function FooterStatus() {
     <Link
       href="https://status.openstatus.dev"
       className={cn(
-        "flex w-full items-center gap-2 p-4 hover:bg-muted",
+        "hover:bg-muted flex w-full items-center gap-2 p-4",
         STATUS[status].color,
       )}
     >

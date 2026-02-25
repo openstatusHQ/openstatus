@@ -1,8 +1,9 @@
+import type { Hono } from "hono";
+
 import {
   universalServerRequestFromFetch,
   universalServerResponseToFetch,
 } from "@connectrpc/connect/protocol";
-import type { Hono } from "hono";
 
 import { routes } from "./router";
 

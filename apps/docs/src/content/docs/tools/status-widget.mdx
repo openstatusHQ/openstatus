@@ -3,10 +3,10 @@ title: Public Status Widget
 description: "How to add a public status widget to your website."
 ---
 
-import { Aside } from '@astrojs/starlight/components';
-import { Image } from 'astro:assets';
+import { Aside } from "@astrojs/starlight/components";
+import { Image } from "astro:assets";
 
-import StatusWidget from '../../../assets/status-widget/widget-example.png';
+import StatusWidget from "../../../assets/status-widget/widget-example.png";
 
 We have added a public endpoint where you can access the status of your status
 page. To access it, you only need the unique `:slug` you have chosen for your
@@ -81,7 +81,6 @@ want to update the `bg-muted` and `text-foreground` classes to your needs.
 <br />
 
 <Image src={StatusWidget} alt="Status Widget" />
-
 
 <br />
 
@@ -172,6 +171,7 @@ export async function StatusWidget({ slug }: { slug: string }) {
 ```
 
 Then, import your `StatusWidget.tsx` component to your layout as well as the slug prop to your specific monitor. Ideally, relative imports would be setup in your `tsconfig.json`.
+
 ```jsx
 import StatusWidget from '../../components/StatusWidget.tsx
 
@@ -180,6 +180,7 @@ import StatusWidget from '../../components/StatusWidget.tsx
 ```
 
 ### Astro Widget
+
 ```astro
 ---
 import * as z from "zod"
@@ -281,6 +282,7 @@ const { label, color } = dictionary[key]
 ```
 
 Then, import your `StatusWidget.astro` component as well as the slug from your specific monitor to your layout, most likely your footer. It would be better to have relative imports setup in your tsconfig.json.
+
 ```astro
 ---
 import StatusWidget from '../../components/StatusWidget.astro'

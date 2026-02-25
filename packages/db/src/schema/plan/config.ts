@@ -1,6 +1,7 @@
-import { AVAILABLE_REGIONS, FREE_FLY_REGIONS } from "@openstatus/regions";
 import type { WorkspacePlan } from "../workspaces/validation";
 import type { Addons, PlanLimits, Price } from "./schema";
+
+import { AVAILABLE_REGIONS, FREE_FLY_REGIONS } from "@openstatus/regions";
 
 type PlanConfig = {
   title: "Hobby" | "Starter" | "Pro";

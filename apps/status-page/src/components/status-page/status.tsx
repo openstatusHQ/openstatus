@@ -41,7 +41,6 @@ export function StatusBrand({
   ...props
 }: React.ComponentProps<"img">) {
   return (
-    // biome-ignore lint/a11y/useAltText: <explanation>
     <img src={src} alt={alt} className={cn("size-8", className)} {...props} />
   );
 }
@@ -70,7 +69,7 @@ export function StatusTitle({
   return (
     <div
       className={cn(
-        "font-semibold text-foreground text-lg leading-none",
+        "text-foreground text-lg leading-none font-semibold",
         className,
       )}
       {...props}
@@ -103,7 +102,7 @@ export function StatusIcon({
   return (
     <div
       className={cn(
-        "flex size-7 items-center justify-center rounded-full bg-muted text-background [&>svg]:size-4",
+        "bg-muted text-background flex size-7 items-center justify-center rounded-full [&>svg]:size-4",
         "group-data-[variant=success]:bg-success",
         "group-data-[variant=degraded]:bg-warning",
         "group-data-[variant=error]:bg-destructive",
@@ -130,7 +129,7 @@ export function StatusTimestamp({
       <Tooltip>
         <TooltipTrigger
           className={cn(
-            "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
+            "text-muted-foreground decoration-muted-foreground/30 font-mono underline decoration-dashed underline-offset-4",
             className,
           )}
           {...props}
@@ -153,7 +152,7 @@ export function StatusEmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed bg-muted/30 px-3 py-2 text-center sm:px-8 sm:py-6",
+        "bg-muted/30 flex flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed px-3 py-2 text-center sm:px-8 sm:py-6",
         className,
       )}
       {...props}
@@ -182,7 +181,7 @@ export function StatusEmptyStateDescription({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("font-mono text-muted-foreground text-sm", className)}
+      className={cn("text-muted-foreground font-mono text-sm", className)}
       {...props}
     >
       {children}

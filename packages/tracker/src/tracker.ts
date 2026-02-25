@@ -1,3 +1,4 @@
+import type { StatusDetails, StatusVariant } from "./types";
 import type {
   Incident,
   Maintenance,
@@ -7,7 +8,6 @@ import type {
 
 import { isInBlacklist } from "./blacklist";
 import { classNames, statusDetails } from "./config";
-import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 import { endOfDay, isSameDay, startOfDay } from "./utils";
 
@@ -81,9 +81,9 @@ export class Tracker {
   }
 
   private isOngoingReport() {
-    const resolved: StatusReport["status"][] = ["monitoring", "resolved"];
+    const resolved: StatusReport["status"][] = new Set(["monitoring", "resolved"]);
     return this.statusReports.some(
-      (report) => !resolved.includes(report.status),
+      (report) => !resolved.has(report.status),
     );
   }
 
@@ -154,7 +154,7 @@ export class Tracker {
   // HACK: this is a temporary solution to get the status reports
   private getStatusReportsByDay(props: Monitor): StatusReports {
     const statusReports = this.statusReports?.filter((report) => {
-      const firstStatusReportUpdate = report?.statusReportUpdates?.sort(
+      const firstStatusReportUpdate = report?.statusReportUpdates?.toSorted(
         (a, b) => a.date.getTime() - b.date.getTime(),
       )?.[0];
 
