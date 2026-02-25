@@ -1,9 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
-import {
-  monitorTag,
-  monitorTagsToMonitors,
-} from "@openstatus/db/src/schema";
+import { monitorTag, monitorTagsToMonitors } from "@openstatus/db/src/schema";
 import { TRPCError } from "@trpc/server";
 
 import { edgeRouter } from "../edge";
