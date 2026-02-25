@@ -154,8 +154,11 @@ export function FormStatusPageUpdate() {
         lockedMap={
           new Map([
             ["public", false],
-            ["password", !workspace.limits["password-protection"]],
-            ["email-domain", !workspace.limits["email-domain-protection"]],
+            ["password", workspace.limits["password-protection"] === false],
+            [
+              "email-domain",
+              workspace.limits["email-domain-protection"] === false,
+            ],
           ])
         }
         defaultValues={{

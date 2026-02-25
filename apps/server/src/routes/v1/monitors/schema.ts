@@ -386,7 +386,9 @@ const baseRequest = z.object({
     )
     .superRefine((regions, ctx) => {
       const deprecatedRegions = regions.filter((r) => {
-        return !AVAILABLE_REGIONS.includes(r);
+        return !AVAILABLE_REGIONS.includes(
+          r as (typeof AVAILABLE_REGIONS)[number],
+        );
       });
       if (deprecatedRegions.length > 0) {
         ctx.addIssue({
