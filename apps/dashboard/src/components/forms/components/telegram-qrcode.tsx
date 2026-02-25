@@ -24,11 +24,11 @@ export default function TelegramQRCode({
       : `https://t.me/${telegramBotUserName}?start=${token}`;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4">
+    <div className="flex flex-col items-center justify-center gap-2">
       {isLoading ? (
         <Skeleton className="h-[200px] w-[200px]" />
       ) : token ? (
-        <QRCode data={qrURL} />
+        <QRCode data={qrURL} className="overflow-hidden rounded-md" />
       ) : null}
       <div className="flex items-center gap-2 text-muted-foreground text-sm">
         {isLoading ? (

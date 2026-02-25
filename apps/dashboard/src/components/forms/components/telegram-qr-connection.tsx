@@ -16,6 +16,7 @@ interface TelegramQRConnectionProps {
   userName?: string | null;
   groupTitle?: string | null;
   onReset?: () => void;
+  onConfirmPrivateChat?: () => void;
 }
 
 export function TelegramQRConnection({
@@ -28,16 +29,21 @@ export function TelegramQRConnection({
   userName,
   groupTitle,
   onReset,
+  onConfirmPrivateChat,
 }: TelegramQRConnectionProps) {
   const chatId = form.watch("data.chatId");
+  const isGroup = !!groupTitle;
 
-  // When we have a group chat ID, show the manual input with group name
+  // When we have a chat ID (group or private), show the manual input with connection info
   if (chatId) {
+    const successMsg = isGroup
+      ? `Connected to ${groupTitle}`
+      : `Connected to ${userName || "Unknown"}'s private chat`;
     return (
       <div className="flex flex-col gap-2">
         <TelegramManualInput
           form={form}
-          successMsg={`Connected to ${groupTitle}`}
+          successMsg={successMsg}
           showDescription={false}
         />
         <Button
@@ -47,7 +53,7 @@ export function TelegramQRConnection({
           onClick={onReset}
           className="w-full"
         >
-          Reset Group ID
+          {isGroup ? "Reset Group ID" : "Add Group"}
         </Button>
       </div>
     );
@@ -56,7 +62,7 @@ export function TelegramQRConnection({
   // When we have a private chat ID, show read-only info with second QR code
   if (privateChatId && flowStep === "group") {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         {/* Show read-only private chat info */}
         <div className="space-y-2">
           <Label>Private Chat ID</Label>
@@ -69,7 +75,7 @@ export function TelegramQRConnection({
         </div>
 
         {/* Show second QR code for group connection */}
-        <div className="mb-2 text-muted-foreground text-sm">
+        <div className="text-muted-foreground text-sm">
           Step 2 of 2: Add bot to your group
         </div>
         <TelegramQRCode
@@ -78,14 +84,23 @@ export function TelegramQRConnection({
           isLoading={isLoading}
           isPolling={isPolling}
         />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onConfirmPrivateChat}
+          className="w-full"
+        >
+          Use private chat only
+        </Button>
       </div>
     );
   }
 
   // Initial state: show first QR code for private chat connection
   return (
-    <>
-      <div className="mb-2 text-muted-foreground text-sm">
+    <div className="flex flex-col gap-2">
+      <div className="text-muted-foreground text-sm">
         Step 1 of 2: Connect your Telegram account
       </div>
       <TelegramQRCode
@@ -94,6 +109,6 @@ export function TelegramQRConnection({
         isLoading={isLoading}
         isPolling={isPolling}
       />
-    </>
+    </div>
   );
 }

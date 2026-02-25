@@ -167,10 +167,22 @@ export function useTelegramConnection({
   }, [updates, form, state.flowStep]);
 
   const resetConnection = React.useCallback(() => {
-    // Only reset the group chat ID, keep privateChatId
     form.setValue("data.chatId", "", { shouldDirty: true });
     dispatch({ type: "RESET_GROUP_CONNECTION" });
   }, [form]);
+
+  const confirmPrivateChat = React.useCallback(() => {
+    if (state.privateChatId) {
+      startTransition(() => {
+        form.setValue("data.chatId", state.privateChatId ?? "", {
+          shouldDirty: true,
+        });
+        toast.success(
+          `Connected to ${state.userName || "Unknown"}'s private chat`,
+        );
+      });
+    }
+  }, [form, state.privateChatId, state.userName]);
 
   return {
     tokenData,
@@ -182,6 +194,7 @@ export function useTelegramConnection({
     isPolling:
       !!tokenData?.token && !form.watch("data.chatId") && mode === "qr",
     resetConnection,
+    confirmPrivateChat,
     isPending,
   };
 }

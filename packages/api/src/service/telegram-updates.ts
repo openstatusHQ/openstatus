@@ -133,14 +133,43 @@ function extractGroupBotAddition(
   chatTitle?: string;
   user: { id: number; first_name: string; username?: string };
 } | null {
+  // Modern Telegram Bot API (v5.0+): bot additions come as my_chat_member updates
+  if (update.my_chat_member) {
+    const { my_chat_member } = update;
+
+    const isInvalidGroupAddition =
+      (my_chat_member.chat.type !== "group" &&
+        my_chat_member.chat.type !== "supergroup") ||
+      String(my_chat_member.from.id) !== privateChatId ||
+      my_chat_member.new_chat_member.user.username !== botUsername ||
+      (my_chat_member.new_chat_member.status !== "member" &&
+        my_chat_member.new_chat_member.status !== "administrator");
+
+    if (isInvalidGroupAddition) {
+      return null;
+    }
+
+    return {
+      chatId: String(my_chat_member.chat.id),
+      chatTitle: my_chat_member.chat.title,
+      user: {
+        id: my_chat_member.from.id,
+        first_name: my_chat_member.from.first_name,
+        username: my_chat_member.from.username,
+      },
+    };
+  }
+
+  // Legacy fallback: service message with new_chat_member fields
   const { message } = update;
 
-  if (
+  const isInvalidGroupAddition =
     !message ||
     (message.chat.type !== "group" && message.chat.type !== "supergroup") ||
     !message.from ||
-    String(message.from.id) !== privateChatId
-  ) {
+    String(message.from.id) !== privateChatId;
+
+  if (isInvalidGroupAddition) {
     return null;
   }
 
@@ -185,7 +214,11 @@ export async function processTelegramUpdates(args: {
 
   // 1. Pre-filter by timestamp
   const recentUpdates = since
-    ? updates.filter((u) => u.message && u.message.date >= since)
+    ? updates.filter((u) => {
+        if (u.message) return u.message.date >= since;
+        if (u.my_chat_member) return u.my_chat_member.date >= since;
+        return false;
+      })
     : updates;
 
   // 2. Phase 1: private /start (no privateChatId filter)
