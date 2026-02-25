@@ -81,11 +81,11 @@ export class Tracker {
   }
 
   private isOngoingReport() {
-    const resolved: StatusReport["status"][] = new Set([
+    const resolved: StatusReport["status"][] = [
       "monitoring",
       "resolved",
-    ]);
-    return this.statusReports.some((report) => !resolved.has(report.status));
+    ];
+    return this.statusReports.some((report) => !resolved.includes(report.status));
   }
 
   private isOngoingMaintenance() {
@@ -155,7 +155,7 @@ export class Tracker {
   // HACK: this is a temporary solution to get the status reports
   private getStatusReportsByDay(props: Monitor): StatusReports {
     const statusReports = this.statusReports?.filter((report) => {
-      const firstStatusReportUpdate = report?.statusReportUpdates?.toSorted(
+      const firstStatusReportUpdate = report?.statusReportUpdates?.sort(
         (a, b) => a.date.getTime() - b.date.getTime(),
       )?.[0];
 

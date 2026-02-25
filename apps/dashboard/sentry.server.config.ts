@@ -6,11 +6,11 @@ import * as Sentry from "@sentry/nextjs";
 import { TRPCError } from "@trpc/server";
 
 // tRPC error codes that should not be reported to Sentry (expected client errors)
-const IGNORED_TRPC_CODES: TRPCError["code"][] = new Set([
+const IGNORED_TRPC_CODES: TRPCError["code"][] = [
   "UNAUTHORIZED",
   "NOT_FOUND",
   "BAD_REQUEST",
-]);
+];
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -25,7 +25,7 @@ Sentry.init({
   beforeSend(event, hint) {
     if (
       hint.originalException instanceof TRPCError &&
-      IGNORED_TRPC_CODES.has(hint.originalException.code)
+      IGNORED_TRPC_CODES.includes(hint.originalException.code)
     ) {
       return null;
     }
