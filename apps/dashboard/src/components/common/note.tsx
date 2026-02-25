@@ -3,7 +3,7 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { type VariantProps, cva } from "class-variance-authority";
 
 const noteVariants = cva(
-  "flex items-center gap-2 rounded-xl border px-3 py-2 [&>svg]:size-4 [&>svg]:text-current [&>svg]:shrink-0",
+  "flex items-center gap-2 rounded-xl border [&>svg]:text-current [&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -17,10 +17,15 @@ const noteVariants = cva(
         success: "text-success border-success/50 bg-success/5",
         info: "text-info border-info/50 bg-info/5",
       },
+      size: {
+        default: "px-3 py-2 text-base [&>svg]:size-4",
+        sm: "px-2.5 py-1.5 text-sm [&>svg]:size-3.5",
+      },
     },
     defaultVariants: {
       variant: "default",
       color: "default",
+      size: "default",
     },
   },
 );
@@ -30,12 +35,13 @@ export function Note({
   className,
   variant = "default",
   color = "default",
+  size = "default",
   ...props
 }: React.ComponentProps<"div"> & VariantProps<typeof noteVariants>) {
   return (
     <div
       data-variant={variant}
-      className={cn(noteVariants({ variant, color, className }))}
+      className={cn(noteVariants({ variant, color, size, className }))}
       {...props}
     >
       {children}

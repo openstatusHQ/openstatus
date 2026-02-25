@@ -60,6 +60,10 @@ export const config: Record<
         label: "Maintenance status",
       },
       {
+        value: "slack-agent",
+        label: "Slack Agent",
+      },
+      {
         value: "monitor-values-visibility",
         label: "Toggle numbers visibility",
       },

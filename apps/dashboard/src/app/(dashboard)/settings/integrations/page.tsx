@@ -9,12 +9,6 @@ import {
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@openstatus/ui/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { SlackIntegrationCard } from "./slack-card";
 
@@ -41,31 +35,20 @@ export default function Page() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          {workspace?.limits["slack-agent"] ? (
-            <SlackIntegrationCard
-              integration={
-                slackIntegration
-                  ? {
-                      id: slackIntegration.id,
-                      externalId: slackIntegration.externalId,
-                      data: slackIntegration.data as {
-                        teamName?: string;
-                      },
-                    }
-                  : null
-              }
-            />
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>No integrations available</CardTitle>
-              </CardHeader>
-              <CardContent>
-                Upgrade to a paid plan to access integrations and connect your
-                workspace to slack.
-              </CardContent>
-            </Card>
-          )}
+          <SlackIntegrationCard
+            locked={!workspace?.limits["slack-agent"]}
+            integration={
+              slackIntegration
+                ? {
+                    id: slackIntegration.id,
+                    externalId: slackIntegration.externalId,
+                    data: slackIntegration.data as {
+                      teamName?: string;
+                    },
+                  }
+                : null
+            }
+          />
         </FormCardGroup>
       </Section>
     </SectionGroup>

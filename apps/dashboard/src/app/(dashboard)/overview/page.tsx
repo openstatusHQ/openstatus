@@ -27,8 +27,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNowStrict } from "date-fns";
-import { List, Search } from "lucide-react";
-import { Terminal } from "lucide-react";
+import { Bot, List, Search } from "lucide-react";
 import Link from "next/link";
 import { DataTableStatusReports } from "./data-table-status-reports";
 
@@ -132,10 +131,10 @@ export default function Page() {
   return (
     <SectionGroup>
       <Note>
-        <Terminal />
-        Use Monitoring as Code to manage your monitors with our CLI.
+        <Bot />
+        Use our Slack agent to manage your status pages and incidents.
         <NoteButton variant="default" asChild>
-          <Link href="/cli">Learn more</Link>
+          <Link href="/agents">Learn more</Link>
         </NoteButton>
       </Note>
       <Section>

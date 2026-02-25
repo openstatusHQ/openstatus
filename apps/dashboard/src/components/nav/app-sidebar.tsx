@@ -3,6 +3,7 @@
 import {
   Activity,
   Bell,
+  Bot,
   Cog,
   Globe,
   LayoutGrid,
@@ -74,6 +75,11 @@ const data = {
       name: "Private Locations",
       url: "/private-locations",
       icon: Globe,
+    },
+    {
+      name: "Agents",
+      url: "/agents",
+      icon: Bot,
     },
     {
       name: "CLI",
