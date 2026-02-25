@@ -15,6 +15,12 @@ faq:
     answer: "Users can subscribe to receive updates when you post status reports or maintenance notices. We support email notifications, RSS/Atom feeds for feed readers, and JSON feeds for programmatic consumption. Subscribers are automatically notified when you publish updates."
   - question: "Can I customize the appearance of my status page?"
     answer: "Yes, use the Theme Store to apply community themes or create your own. Themes control colors, fonts, and layout. For private custom themes, contact us. You can also define which data to share (uptime percentages, response times, or manual reports only)."
+  - question: "What is the Slack agent and what can it do?"
+    answer: "The Slack agent lets you manage your status page directly from Slack using natural language. @mention @openstatus in any channel or thread to create incidents, post updates, and resolve reports — without leaving Slack. No slash commands required."
+  - question: "Does the Slack agent publish status reports automatically?"
+    answer: "No. The agent always shows a confirmation card before publishing anything. You can review the drafted title, status, and message, then choose to Approve, Approve & Notify (sends notifications to all subscribers), or Cancel. Nothing goes public without your explicit approval."
+  - question: "Which plan includes the Slack agent?"
+    answer: "The Slack agent is available on paid plans. Install it from your dashboard under Settings > Integrations."
 ---
 
 ## Why do you need a status page?
@@ -81,3 +87,14 @@ We support following communication channels:
 ### Audience
 
 By default, your status page is public. For internal or client-specific pages, you can protect access using **password protection** or **magic link** authentication to control who can view your updates.
+
+
+### Slack Agent
+
+Manage incidents without leaving Slack. Install the **@openstatus** Slack agent and @mention it in any channel or thread to create, update, and resolve status reports using plain language - no slash commands, no tab switching.
+
+> **@openstatus** our API is returning 500 errors for about 10% of requests. Can you create an incident on the status page?
+
+The agent reads the conversation, looks up your status pages and components, and drafts a status report. Before anything goes public it posts a confirmation card so you can review the title, status, and message. Choose to **Approve**, **Approve & Notify** (sends notifications to all subscribers), or **Cancel**.
+
+The agent is **thread-aware**: when you follow up in the same thread (_"we found the root cause"_ or _"it's fixed"_), it picks up the context and drafts the next update automatically. The entire incident lifecycle - from creation to resolution - can happen in a single Slack thread.
