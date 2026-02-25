@@ -7,6 +7,8 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorTag,
+  monitorTagsToMonitors,
   notification,
   notificationsToMonitors,
   page,
@@ -163,6 +165,24 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
+  await db
+    .insert(user)
+    .values({
+      id: 2,
+      tenantId: "2",
+      firstName: "Test",
+      lastName: "User",
+      email: "test@openstatus.dev",
+      photoUrl: "",
+    })
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(usersToWorkspaces)
+    .values({ workspaceId: 2, userId: 2 })
+    .onConflictDoNothing()
+    .run();
+
   // Page Components - representing monitors on the status page
   await db
     .insert(pageComponent)
@@ -206,6 +226,50 @@ async function main() {
   await db
     .insert(notificationsToMonitors)
     .values({ monitorId: 1, notificationId: 1 })
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(notification)
+    .values({
+      id: 2,
+      provider: "email",
+      name: "workspace 2 notification",
+      data: '{"email":"test@openstatus.dev"}',
+      workspaceId: 2,
+    })
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(page)
+    .values({
+      id: 2,
+      workspaceId: 2,
+      title: "Test Workspace 2 Page",
+      description: "Page for workspace 2.",
+      icon: "",
+      slug: "status-ws2",
+      customDomain: "",
+      published: true,
+    })
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(monitorTag)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      name: "production",
+      color: "#ff0000",
+    })
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(monitorTagsToMonitors)
+    .values({ monitorId: 1, monitorTagId: 1 })
     .onConflictDoNothing()
     .run();
 

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type SQL, and, asc, desc, eq, gte } from "@openstatus/db";
 import {
   insertStatusReportUpdateSchema,
+  page,
   selectPageComponentSchema,
   selectPageSchema,
   selectStatusReportSchema,
@@ -196,6 +197,20 @@ export const statusReportRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      const existingPage = await opts.ctx.db.query.page.findFirst({
+        where: and(
+          eq(page.id, opts.input.pageId),
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!existingPage) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Page not found.",
+        });
+      }
+
       return opts.ctx.db.transaction(async (tx) => {
         const newStatusReport = await tx
           .insert(statusReport)

@@ -488,6 +488,20 @@ export const monitorRouter = createTRPCRouter({
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), tags: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
+      const existingMonitor = await ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, input.id),
+          eq(monitor.workspaceId, ctx.workspace.id),
+        ),
+      });
+
+      if (!existingMonitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
       const allTags = await ctx.db.query.monitorTag.findMany({
         where: and(
           eq(monitorTag.workspaceId, ctx.workspace.id),
@@ -615,6 +629,20 @@ export const monitorRouter = createTRPCRouter({
     .meta({ track: Events.UpdateMonitor })
     .input(z.object({ id: z.number(), notifiers: z.array(z.number()) }))
     .mutation(async ({ ctx, input }) => {
+      const existingMonitor = await ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, input.id),
+          eq(monitor.workspaceId, ctx.workspace.id),
+        ),
+      });
+
+      if (!existingMonitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
       const allNotifiers = await ctx.db.query.notification.findMany({
         where: and(
           eq(notification.workspaceId, ctx.workspace.id),
