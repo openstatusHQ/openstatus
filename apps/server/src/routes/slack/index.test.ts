@@ -6,6 +6,7 @@ const SIGNING_SECRET = "test-signing-secret";
 
 process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
 process.env.AI_GATEWAY_API_KEY = "test-key";
+process.env.SLACK_CLIENT_ID = "test-client-id";
 
 function signRequest(body: string, timestamp: number): string {
   const basestring = `v0:${timestamp}:${body}`;
