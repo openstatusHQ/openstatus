@@ -179,31 +179,6 @@ export const pageRouter = createTRPCRouter({
       return !(result?.length > 0);
     }),
 
-  addCustomDomain: protectedProcedure
-    .input(
-      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
-    )
-    .mutation(async (opts) => {
-      if (opts.input.customDomain.toLowerCase().includes("openstatus")) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Domain cannot contain 'openstatus'",
-        });
-      }
-
-      await opts.ctx.db
-        .update(page)
-        .set({ customDomain: opts.input.customDomain, updatedAt: new Date() })
-        .where(
-          and(
-            eq(page.id, opts.input.pageId),
-            eq(page.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .returning()
-        .get();
-    }),
-
   list: protectedProcedure
     .input(
       z

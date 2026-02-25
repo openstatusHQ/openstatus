@@ -73,48 +73,6 @@ export function getMetricsProcedure(period: Period, type: Type) {
   }
 }
 
-export function getMetricsByRegionProcedure(period: Period, type: Type) {
-  switch (period) {
-    case "1d":
-      return type === "http"
-        ? tb.httpMetricsByRegionDaily
-        : tb.tcpMetricsByRegionDaily;
-    case "7d":
-      return type === "http"
-        ? tb.httpMetricsByRegionWeekly
-        : tb.tcpMetricsByRegionWeekly;
-    case "14d":
-      return type === "http"
-        ? tb.httpMetricsByRegionBiweekly
-        : tb.tcpMetricsByRegionBiweekly;
-    default:
-      return type === "http"
-        ? tb.httpMetricsByRegionDaily
-        : tb.tcpMetricsByRegionDaily;
-  }
-}
-
-export function getMetricsByIntervalProcedure(period: Period, type: Type) {
-  switch (period) {
-    case "1d":
-      return type === "http"
-        ? tb.httpMetricsByIntervalDaily
-        : tb.tcpMetricsByIntervalDaily;
-    case "7d":
-      return type === "http"
-        ? tb.httpMetricsByIntervalWeekly
-        : tb.tcpMetricsByIntervalWeekly;
-    case "14d":
-      return type === "http"
-        ? tb.httpMetricsByIntervalBiweekly
-        : tb.tcpMetricsByIntervalBiweekly;
-    default:
-      return type === "http"
-        ? tb.httpMetricsByIntervalDaily
-        : tb.tcpMetricsByIntervalDaily;
-  }
-}
-
 // FIXME: tb pipes are deprecated, we need new ones
 export function getMetricsRegionsProcedure(period: Period, type: Type) {
   switch (period) {
@@ -220,20 +178,6 @@ export function getTimingPhasesProcedure(type: Type) {
 }
 
 export const tinybirdRouter = createTRPCRouter({
-  // Legacy procedure for backward compatibility
-  httpGetMonthly: protectedProcedure
-    .input(
-      z.object({
-        monitorId: z.string(),
-        region: z.enum(monitorRegions).or(z.string()).optional(),
-        cronTimestamp: z.int().optional(),
-      }),
-    )
-    .query(async (opts) => {
-      return await tb.httpGetMonthly(opts.input);
-    }),
-
-  // Simplified procedures that handle period/type logic on server
   list: protectedProcedure
     .input(
       z.object({
@@ -372,74 +316,6 @@ export const tinybirdRouter = createTRPCRouter({
       return await procedure(opts.input);
     }),
 
-  metricsByRegion: protectedProcedure
-    .input(
-      z.object({
-        monitorId: z.string(),
-        period: z.enum(periods),
-        type: z.enum(types).prefault("http"),
-        region: z.enum(monitorRegions).or(z.string()).optional(),
-        cronTimestamp: z.int().optional(),
-      }),
-    )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
-
-      const procedure = getMetricsByRegionProcedure(
-        opts.input.period,
-        opts.input.type,
-      );
-      return await procedure(opts.input);
-    }),
-
-  metricsByInterval: protectedProcedure
-    .input(
-      z.object({
-        monitorId: z.string(),
-        period: z.enum(periods),
-        type: z.enum(types).prefault("http"),
-        region: z.enum(monitorRegions).or(z.string()).optional(),
-        cronTimestamp: z.int().optional(),
-      }),
-    )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitor = await db.query.monitor.findFirst({
-        where: and(...whereConditions),
-      });
-
-      if (!_monitor) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Monitor not found",
-        });
-      }
-
-      const procedure = getMetricsByIntervalProcedure(
-        opts.input.period,
-        opts.input.type,
-      );
-      return await procedure(opts.input);
-    }),
-
   metricsRegions: protectedProcedure
     .input(
       z.object({
@@ -479,37 +355,6 @@ export const tinybirdRouter = createTRPCRouter({
         opts.input.period,
         opts.input.type,
       );
-      return await procedure(opts.input);
-    }),
-
-  status: protectedProcedure
-    .input(
-      z.object({
-        monitorIds: z.string().array(),
-        period: z.enum(["45d"]),
-        type: z.enum(types).prefault("http"),
-        region: z.enum(monitorRegions).or(z.string()).optional(),
-        cronTimestamp: z.int().optional(),
-      }),
-    )
-    .query(async (opts) => {
-      const whereConditions: SQL[] = [
-        inArray(monitor.id, opts.input.monitorIds.map(Number)),
-        eq(monitor.workspaceId, opts.ctx.workspace.id),
-      ];
-
-      const _monitors = await db.query.monitor.findMany({
-        where: and(...whereConditions),
-      });
-
-      if (_monitors.length !== opts.input.monitorIds.length) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Some monitors not found",
-        });
-      }
-
-      const procedure = getStatusProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),
 
@@ -620,22 +465,6 @@ export const tinybirdRouter = createTRPCRouter({
         });
       }
 
-      return await procedure(opts.input);
-    }),
-
-  metricsLatencyMulti: protectedProcedure
-    .input(
-      z.object({
-        monitorIds: z.string().array(),
-        period: z.enum(["1d"]).prefault("1d"),
-        type: z.enum(types).prefault("http"),
-      }),
-    )
-    .query(async (opts) => {
-      const procedure = getMetricsLatencyMultiProcedure(
-        opts.input.period,
-        opts.input.type,
-      );
       return await procedure(opts.input);
     }),
 

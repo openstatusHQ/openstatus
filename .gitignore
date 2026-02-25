@@ -78,3 +78,5 @@ research.md
 plan.md
 
 .zed
+
+*.tsbuildinfo
