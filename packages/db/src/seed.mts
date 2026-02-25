@@ -7,8 +7,6 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
-  monitorTag,
-  monitorTagsToMonitors,
   notification,
   notificationsToMonitors,
   page,
@@ -24,7 +22,9 @@ import {
 } from "./schema";
 
 async function main() {
-  const db = drizzle(createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }));
+  const db = drizzle(
+    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
+  );
   console.log("Seeding database ");
   await db
     .insert(workspace)
@@ -211,9 +211,15 @@ async function main() {
 
   // Status Report 1 - Resolved incident from 7 days ago
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const sevenDaysAgoPlus30Min = new Date(sevenDaysAgo.getTime() + 30 * 60 * 1000);
-  const sevenDaysAgoPlus90Min = new Date(sevenDaysAgo.getTime() + 90 * 60 * 1000);
-  const sevenDaysAgoPlus120Min = new Date(sevenDaysAgo.getTime() + 120 * 60 * 1000);
+  const sevenDaysAgoPlus30Min = new Date(
+    sevenDaysAgo.getTime() + 30 * 60 * 1000,
+  );
+  const sevenDaysAgoPlus90Min = new Date(
+    sevenDaysAgo.getTime() + 90 * 60 * 1000,
+  );
+  const sevenDaysAgoPlus120Min = new Date(
+    sevenDaysAgo.getTime() + 120 * 60 * 1000,
+  );
 
   await db
     .insert(statusReport)
@@ -259,7 +265,8 @@ async function main() {
         id: 4,
         statusReportId: 1,
         status: "resolved",
-        message: "All systems are operating normally. The issue has been fully resolved.",
+        message:
+          "All systems are operating normally. The issue has been fully resolved.",
         date: sevenDaysAgoPlus120Min,
       },
     ])
@@ -307,7 +314,8 @@ async function main() {
         id: 7,
         statusReportId: 2,
         status: "resolved",
-        message: "Everything is under control, we continue to monitor the situation.",
+        message:
+          "Everything is under control, we continue to monitor the situation.",
         date: twentyMinutesAgo,
       },
     ])
@@ -316,10 +324,14 @@ async function main() {
 
   // Maintenance windows spread across 30 days
   const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
-  const twentyDaysAgoPlus2Hours = new Date(twentyDaysAgo.getTime() + 2 * 60 * 60 * 1000);
+  const twentyDaysAgoPlus2Hours = new Date(
+    twentyDaysAgo.getTime() + 2 * 60 * 60 * 1000,
+  );
 
   const fiveDaysFromNow = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-  const fiveDaysFromNowPlus4Hours = new Date(fiveDaysFromNow.getTime() + 4 * 60 * 60 * 1000);
+  const fiveDaysFromNowPlus4Hours = new Date(
+    fiveDaysFromNow.getTime() + 4 * 60 * 60 * 1000,
+  );
 
   await db
     .insert(maintenance)
@@ -378,10 +390,14 @@ async function main() {
 
   // Incidents - realistic past incidents that were resolved
   const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
-  const fifteenDaysAgoPlus2Hours = new Date(fifteenDaysAgo.getTime() + 2 * 60 * 60 * 1000);
+  const fifteenDaysAgoPlus2Hours = new Date(
+    fifteenDaysAgo.getTime() + 2 * 60 * 60 * 1000,
+  );
 
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-  const threeDaysAgoPlus20Min = new Date(threeDaysAgo.getTime() + 20 * 60 * 1000);
+  const threeDaysAgoPlus20Min = new Date(
+    threeDaysAgo.getTime() + 20 * 60 * 1000,
+  );
 
   await db
     .insert(incidentTable)
