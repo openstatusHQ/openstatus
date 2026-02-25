@@ -10,14 +10,14 @@ This guide explains how to deploy OpenStatus using Coolify with pre-built Docker
 
 ## Available Docker Images
 
-All images are published to `ghcr.io/aggmoulik/openstatus-*`:
+All images are published to `ghcr.io/openstatusHQ/openstatus-*`:
 
-- `ghcr.io/aggmoulik/openstatus-openstatus-server:latest` - Main API server
-- `ghcr.io/aggmoulik/openstatus-openstatus-dashboard:latest` - Web dashboard
-- `ghcr.io/aggmoulik/openstatus-openstatus-workflows:latest` - Workflow engine
-- `ghcr.io/aggmoulik/openstatus-openstatus-private-location:latest` - Private monitoring agent
-- `ghcr.io/aggmoulik/openstatus-openstatus-status-page:latest` - Public status page
-- `ghcr.io/aggmoulik/openstatus-openstatus-checker:latest` - Monitoring checker service
+- `ghcr.io/openstatusHQ/openstatus-server:latest` - Main API server
+- `ghcr.io/openstatusHQ/openstatus-dashboard:latest` - Web dashboard
+- `ghcr.io/openstatusHQ/openstatus-workflows:latest` - Workflow engine
+- `ghcr.io/openstatusHQ/openstatus-private-location:latest` - Private monitoring agent
+- `ghcr.io/openstatusHQ/openstatus-status-page:latest` - Public status page
+- `ghcr.io/openstatusHQ/openstatus-checker:latest` - Monitoring checker service
 
 ## Coolify Setup
 
@@ -30,7 +30,7 @@ All images are published to `ghcr.io/aggmoulik/openstatus-*`:
 ### 2. Configure Each Service
 
 #### Server Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-server:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-server:latest`
 - **Port**: 3000
 - **Environment Variables**:
   ```yaml
@@ -40,7 +40,7 @@ All images are published to `ghcr.io/aggmoulik/openstatus-*`:
   ```
 
 #### Dashboard Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-dashboard:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-dashboard:latest`
 - **Port**: 3000
 - **Environment Variables**:
   ```yaml
@@ -51,7 +51,7 @@ All images are published to `ghcr.io/aggmoulik/openstatus-*`:
   ```
 
 #### Workflows Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-workflows:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-workflows:latest`
 - **Port**: 3000
 - **Environment Variables**:
   ```yaml
@@ -60,7 +60,7 @@ All images are published to `ghcr.io/aggmoulik/openstatus-*`:
   ```
 
 #### Private Location Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-private-location:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-private-location:latest`
 - **Port**: 8080
 - **Environment Variables**:
   ```yaml
@@ -71,7 +71,7 @@ All images are published to `ghcr.io/aggmoulik/openstatus-*`:
   ```
 
 #### Checker Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-checker:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-checker:latest`
 - **Port**: 8080
 - **Environment Variables**:
   ```yaml
@@ -80,7 +80,7 @@ All images are published to `ghcr.io/aggmoulik/openstatus-*`:
   ```
 
 #### Status Page Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-status-page:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-status-page:latest`
 - **Port**: 3000
 - **Environment Variables**:
   ```yaml

@@ -91,12 +91,12 @@ We provide pre-built Docker images for easy deployment with Coolify:
 
 ```bash
 # Example Coolify configuration
-ghcr.io/aggmoulik/openstatus-openstatus-server:latest
-ghcr.io/aggmoulik/openstatus-openstatus-dashboard:latest
-ghcr.io/aggmoulik/openstatus-openstatus-workflows:latest
-ghcr.io/aggmoulik/openstatus-openstatus-private-location:latest
-ghcr.io/aggmoulik/openstatus-openstatus-status-page:latest
-ghcr.io/aggmoulik/openstatus-openstatus-checker:latest
+ghcr.io/openstatusHQ/openstatus-server:latest
+ghcr.io/openstatusHQ/openstatus-dashboard:latest
+ghcr.io/openstatusHQ/openstatus-workflows:latest
+ghcr.io/openstatusHQ/openstatus-private-location:latest
+ghcr.io/openstatusHQ/openstatus-status-page:latest
+ghcr.io/openstatusHQ/openstatus-checker:latest
 ```
 
 📖 **[Complete Coolify Deployment Guide](./COOLIFY_DEPLOYMENT.md)**

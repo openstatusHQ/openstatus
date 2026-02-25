@@ -9,7 +9,7 @@ This guide provides step-by-step instructions for deploying OpenStatus on Coolif
 1. In Coolify dashboard, click **"New Service"** → **"Docker Compose"**
 2. Choose **"Import from URL"** and enter:
    ```
-   https://raw.githubusercontent.com/aggmoulik/openstatus/main/coolify-deployment.yaml
+   https://raw.githubusercontent.com/openstatusHQ/openstatus/main/coolify-deployment.yaml
    ```
 3. Configure your environment variables
 4. Click **"Deploy"**
@@ -19,7 +19,7 @@ This guide provides step-by-step instructions for deploying OpenStatus on Coolif
 1. In Coolify dashboard, click **"New Service"** → **"Docker Compose"**
 2. Choose **"Import from URL"** and enter:
    ```
-   https://raw.githubusercontent.com/aggmoulik/openstatus/main/docker-compose.env-check.yaml
+   https://raw.githubusercontent.com/openstatusHQ/openstatus/main/docker-compose.env-check.yaml
    ```
 3. This version includes environment validation
 4. Configure your environment variables
@@ -92,7 +92,7 @@ The `docker-compose.env-check.yaml` file includes:
 ### 2. Core Services
 
 #### Workflows Engine
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-workflows:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-workflows:latest`
 - **Name**: `openstatus-workflows`
 - **Port**: `3000`
 - **Environment Variables**:
@@ -105,7 +105,7 @@ The `docker-compose.env-check.yaml` file includes:
 - **Depends On**: `openstatus-libsql`
 
 #### API Server
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-server:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-server:latest`
 - **Name**: `openstatus-server`
 - **Port**: `3001`
 - **Environment Variables**:
@@ -117,7 +117,7 @@ The `docker-compose.env-check.yaml` file includes:
 - **Depends On**: `openstatus-workflows`, `openstatus-libsql`
 
 #### Private Location Agent
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-private-location:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-private-location:latest`
 - **Name**: `openstatus-private-location`
 - **Port**: `8081`
 - **Environment Variables**:
@@ -131,7 +131,7 @@ The `docker-compose.env-check.yaml` file includes:
 - **Depends On**: `openstatus-server`
 
 #### Checker Service
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-checker:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-checker:latest`
 - **Name**: `openstatus-checker`
 - **Port**: `8082`
 - **Environment Variables**:
@@ -143,7 +143,7 @@ The `docker-compose.env-check.yaml` file includes:
 - **Depends On**: `openstatus-server`
 
 #### Web Dashboard
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-dashboard:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-dashboard:latest`
 - **Name**: `openstatus-dashboard`
 - **Port**: `3002`
 - **Environment Variables**:
@@ -157,7 +157,7 @@ The `docker-compose.env-check.yaml` file includes:
 - **Depends On**: `openstatus-workflows`, `openstatus-libsql`, `openstatus-server`
 
 #### Status Page
-- **Image**: `ghcr.io/aggmoulik/openstatus-openstatus-status-page:latest`
+- **Image**: `ghcr.io/openstatusHQ/openstatus-status-page:latest`
 - **Name**: `openstatus-status-page`
 - **Port**: `3003`
 - **Environment Variables**:

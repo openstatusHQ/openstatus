@@ -11,7 +11,7 @@
 # 📚 Full Guide: See COOLIFY_ENVIRONMENT_GUIDE.md
 # 
 # 🚀 Quick Import URL: 
-# https://raw.githubusercontent.com/aggmoulik/openstatus/main/coolify-deployment.yaml
+# https://raw.githubusercontent.com/openstatusHQ/openstatus/main/coolify-deployment.yaml
 
 version: "3.8"
 
@@ -160,7 +160,7 @@ services:
 
   # Core OpenStatus Services
   workflows:
-    image: ghcr.io/aggmoulik/openstatus-workflows:dev-latest-workflows
+    image: ghcr.io/openstatusHQ/openstatus-workflows:dev-latest-workflows
     container_name: openstatus-workflows
     networks:
       - openstatus
@@ -190,7 +190,7 @@ services:
           memory: 256M
 
   server:
-    image: ghcr.io/aggmoulik/openstatus-server:dev-latest-server
+    image: ghcr.io/openstatusHQ/openstatus-server:dev-latest-server
     container_name: openstatus-server
     networks:
       - openstatus
@@ -218,7 +218,7 @@ services:
           memory: 256M
 
   private-location:
-    image: ghcr.io/aggmoulik/openstatus-private-location:dev-latest-private-location
+    image: ghcr.io/openstatusHQ/openstatus-private-location:dev-latest-private-location
     container_name: openstatus-private-location
     networks:
       - openstatus
@@ -247,7 +247,7 @@ services:
           memory: 128M
 
   checker:
-    image: ghcr.io/aggmoulik/openstatus-checker:dev-latest-checker
+    image: ghcr.io/openstatusHQ/openstatus-checker:dev-latest-checker
     container_name: openstatus-checker
     networks:
       - openstatus
@@ -275,7 +275,7 @@ services:
           memory: 128M
 
   dashboard:
-    image: ghcr.io/aggmoulik/openstatus-dashboard:dev-latest-dashboard
+    image: ghcr.io/openstatusHQ/openstatus-dashboard:dev-latest-dashboard
     container_name: openstatus-dashboard
     networks:
       - openstatus
@@ -307,7 +307,7 @@ services:
           memory: 256M
 
   status-page:
-    image: ghcr.io/aggmoulik/openstatus-status-page:dev-latest-status-page
+    image: ghcr.io/openstatusHQ/openstatus-status-page:dev-latest-status-page
     container_name: openstatus-status-page
     networks:
       - openstatus

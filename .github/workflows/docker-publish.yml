@@ -88,6 +88,7 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}},suffix=-${{ matrix.service }}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
