@@ -24,9 +24,7 @@ import {
 } from "./schema";
 
 async function main() {
-  const db = drizzle(
-    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
-  );
+  const db = drizzle(createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }));
   console.log("Seeding database ");
   await db
     .insert(workspace)
@@ -165,24 +163,6 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
-  await db
-    .insert(user)
-    .values({
-      id: 2,
-      tenantId: "2",
-      firstName: "Test",
-      lastName: "User",
-      email: "test@openstatus.dev",
-      photoUrl: "",
-    })
-    .onConflictDoNothing()
-    .run();
-  await db
-    .insert(usersToWorkspaces)
-    .values({ workspaceId: 2, userId: 2 })
-    .onConflictDoNothing()
-    .run();
-
   // Page Components - representing monitors on the status page
   await db
     .insert(pageComponent)
@@ -229,61 +209,11 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
-  await db
-    .insert(notification)
-    .values({
-      id: 2,
-      provider: "email",
-      name: "workspace 2 notification",
-      data: '{"email":"test@openstatus.dev"}',
-      workspaceId: 2,
-    })
-    .onConflictDoNothing()
-    .run();
-
-  await db
-    .insert(page)
-    .values({
-      id: 2,
-      workspaceId: 2,
-      title: "Test Workspace 2 Page",
-      description: "Page for workspace 2.",
-      icon: "",
-      slug: "status-ws2",
-      customDomain: "",
-      published: true,
-    })
-    .onConflictDoNothing()
-    .run();
-
-  await db
-    .insert(monitorTag)
-    .values({
-      id: 1,
-      workspaceId: 1,
-      name: "production",
-      color: "#ff0000",
-    })
-    .onConflictDoNothing()
-    .run();
-
-  await db
-    .insert(monitorTagsToMonitors)
-    .values({ monitorId: 1, monitorTagId: 1 })
-    .onConflictDoNothing()
-    .run();
-
   // Status Report 1 - Resolved incident from 7 days ago
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const sevenDaysAgoPlus30Min = new Date(
-    sevenDaysAgo.getTime() + 30 * 60 * 1000,
-  );
-  const sevenDaysAgoPlus90Min = new Date(
-    sevenDaysAgo.getTime() + 90 * 60 * 1000,
-  );
-  const sevenDaysAgoPlus120Min = new Date(
-    sevenDaysAgo.getTime() + 120 * 60 * 1000,
-  );
+  const sevenDaysAgoPlus30Min = new Date(sevenDaysAgo.getTime() + 30 * 60 * 1000);
+  const sevenDaysAgoPlus90Min = new Date(sevenDaysAgo.getTime() + 90 * 60 * 1000);
+  const sevenDaysAgoPlus120Min = new Date(sevenDaysAgo.getTime() + 120 * 60 * 1000);
 
   await db
     .insert(statusReport)
@@ -329,8 +259,7 @@ async function main() {
         id: 4,
         statusReportId: 1,
         status: "resolved",
-        message:
-          "All systems are operating normally. The issue has been fully resolved.",
+        message: "All systems are operating normally. The issue has been fully resolved.",
         date: sevenDaysAgoPlus120Min,
       },
     ])
@@ -378,8 +307,7 @@ async function main() {
         id: 7,
         statusReportId: 2,
         status: "resolved",
-        message:
-          "Everything is under control, we continue to monitor the situation.",
+        message: "Everything is under control, we continue to monitor the situation.",
         date: twentyMinutesAgo,
       },
     ])
@@ -388,14 +316,10 @@ async function main() {
 
   // Maintenance windows spread across 30 days
   const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
-  const twentyDaysAgoPlus2Hours = new Date(
-    twentyDaysAgo.getTime() + 2 * 60 * 60 * 1000,
-  );
+  const twentyDaysAgoPlus2Hours = new Date(twentyDaysAgo.getTime() + 2 * 60 * 60 * 1000);
 
   const fiveDaysFromNow = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-  const fiveDaysFromNowPlus4Hours = new Date(
-    fiveDaysFromNow.getTime() + 4 * 60 * 60 * 1000,
-  );
+  const fiveDaysFromNowPlus4Hours = new Date(fiveDaysFromNow.getTime() + 4 * 60 * 60 * 1000);
 
   await db
     .insert(maintenance)
@@ -454,14 +378,10 @@ async function main() {
 
   // Incidents - realistic past incidents that were resolved
   const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
-  const fifteenDaysAgoPlus2Hours = new Date(
-    fifteenDaysAgo.getTime() + 2 * 60 * 60 * 1000,
-  );
+  const fifteenDaysAgoPlus2Hours = new Date(fifteenDaysAgo.getTime() + 2 * 60 * 60 * 1000);
 
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-  const threeDaysAgoPlus20Min = new Date(
-    threeDaysAgo.getTime() + 20 * 60 * 1000,
-  );
+  const threeDaysAgoPlus20Min = new Date(threeDaysAgo.getTime() + 20 * 60 * 1000);
 
   await db
     .insert(incidentTable)
