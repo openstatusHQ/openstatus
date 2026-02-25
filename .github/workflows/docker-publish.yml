@@ -51,7 +51,7 @@ jobs:
             port: 3000
           - service: private-location
             context: apps/private-location
-            dockerfile: Dockerfile
+            dockerfile: apps/private-location/Dockerfile
             port: 8081
           - service: status-page
             context: .
@@ -59,7 +59,7 @@ jobs:
             port: 3003
           - service: checker
             context: apps/checker
-            dockerfile: Dockerfile
+            dockerfile: apps/checker/Dockerfile
             port: 8082
 
     steps:
