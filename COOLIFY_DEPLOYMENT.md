@@ -141,7 +141,6 @@ All images include built-in health checks:
 ## Version Management
 
 - `latest` tag points to the latest main branch build
-- Development builds use `dev-latest` tag
 - Specific commits are tagged with their SHA
 - Use specific tags for production deployments
 
@@ -166,7 +165,6 @@ Ensure Coolify has access to GitHub Container Registry:
 Images are automatically built and pushed when:
 - Code is pushed to the main branch
 - Manual workflow dispatch is triggered
-- Weekly maintenance runs (Sundays 2 AM UTC)
 
 To update in Coolify:
 1. Pull new images

@@ -14,34 +14,13 @@ This guide provides step-by-step instructions for deploying OpenStatus on Coolif
 3. Configure your environment variables
 4. Click **"Deploy"**
 
-### Option 2: Import with Environment Validation
-
-1. In Coolify dashboard, click **"New Service"** → **"Docker Compose"**
-2. Choose **"Import from URL"** and enter:
-   ```
-   https://raw.githubusercontent.com/openstatusHQ/openstatus/main/docker-compose.env-check.yaml
-   ```
-3. This version includes environment validation
-4. Configure your environment variables
-5. Click **"Deploy"**
-
-### Option 3: Manual Service Setup
+### Option 2: Manual Service Setup
 
 Create each service individually using the configurations below.
 
 ## Environment Setup
 
-### Automatic Setup
-
-1. **Clone the repository** to your local machine
-2. **Run the setup script**:
-   ```bash
-   ./setup-env.sh
-   ```
-3. **Follow the prompts** to configure required variables
-4. **Upload .env.docker** to Coolify secrets
-
-### Manual Setup
+### Setup
 
 1. **Copy the example file**:
    ```bash
@@ -56,14 +35,6 @@ Create each service individually using the configurations below.
    - `AUTH_SECRET=your-32-char-secret`
    - `RESEND_API_KEY=your-resend-key`
    - `NEXT_PUBLIC_URL=http://your-domain:3002`
-
-### Environment Validation
-
-The `docker-compose.env-check.yaml` file includes:
-- **Pre-start validation** of .env.docker existence
-- **Required variable checks** before service startup
-- **Clear error messages** for missing configuration
-- **Dependency management** with validation service
 
 ## Service Configurations
 

@@ -1,44 +1,43 @@
 # Coolify Deployment Configuration
 # This file uses environment variables that can be configured directly in Coolify
-# 
+#
 # 🔧 REQUIRED: Set these environment variables in Coolify:
 # DATABASE_URL=http://libsql:8080
 # DATABASE_AUTH_TOKEN= (leave empty for local libsql)
 # AUTH_SECRET=your-32-character-secret
 # NEXT_PUBLIC_URL=https://your-domain.com
 # RESEND_API_KEY=your-resend-api-key
-# 
+#
 # 📚 Full Guide: See COOLIFY_ENVIRONMENT_GUIDE.md
-# 
-# 🚀 Quick Import URL: 
+#
+# 🚀 Quick Import URL:
 # https://raw.githubusercontent.com/openstatusHQ/openstatus/main/coolify-deployment.yaml
 
 version: "3.8"
 
 # Environment variable definitions with defaults
-x-common-variables: &common-env
-  # Database Configuration
+x-common-variables: &common-env # Database Configuration
   DATABASE_URL: ${DATABASE_URL:-http://libsql:8080}
   DATABASE_AUTH_TOKEN: ${DATABASE_AUTH_TOKEN:-}
-  
+
   # Authentication
   AUTH_SECRET: ${AUTH_SECRET:-default-secret-change-me}
   NEXT_PUBLIC_URL: ${NEXT_PUBLIC_URL:-http://localhost:3002}
   SELF_HOST: ${SELF_HOST:-true}
-  
+
   # OAuth Providers (Optional)
   AUTH_GITHUB_ID: ${AUTH_GITHUB_ID:-}
   AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET:-}
   AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-}
   AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-}
-  
+
   # Email Service
   RESEND_API_KEY: ${RESEND_API_KEY:-}
-  
+
   # Analytics (Optional)
   TINY_BIRD_API_KEY: ${TINY_BIRD_API_KEY:-}
   TINYBIRD_URL: ${TINYBIRD_URL:-}
-  
+
   # Redis/Queue (Optional)
   UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL:-http://localhost:6379}
   UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-}
@@ -46,31 +45,31 @@ x-common-variables: &common-env
   QSTASH_NEXT_SIGNING_KEY: ${QSTASH_NEXT_SIGNING_KEY:-}
   QSTASH_TOKEN: ${QSTASH_TOKEN:-}
   QSTASH_URL: ${QSTASH_URL:-https://qstash.upstash.io/v1/publish/}
-  
+
   # Google Cloud (Optional)
   GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
   GCP_LOCATION: ${GCP_LOCATION:-}
   GCP_CLIENT_EMAIL: ${GCP_CLIENT_EMAIL:-}
   GCP_PRIVATE_KEY: ${GCP_PRIVATE_KEY:-}
   CRON_SECRET: ${CRON_SECRET:-}
-  
+
   # API Keys (Optional)
   UNKEY_API_ID: ${UNKEY_API_ID:-}
   UNKEY_TOKEN: ${UNKEY_TOKEN:-}
   SUPER_ADMIN_TOKEN: ${SUPER_ADMIN_TOKEN:-}
   FLY_REGION: ${FLY_REGION:-self-hosted}
-  
+
   # Stripe (Optional)
   STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
   STRIPE_WEBHOOK_SECRET_KEY: ${STRIPE_WEBHOOK_SECRET_KEY:-}
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
-  
+
   # Vercel (Optional)
   PROJECT_ID_VERCEL: ${PROJECT_ID_VERCEL:-}
   TEAM_ID_VERCEL: ${TEAM_ID_VERCEL:-}
   VERCEL_AUTH_BEARER_TOKEN: ${VERCEL_AUTH_BEARER_TOKEN:-}
   BLOB_READ_WRITE_TOKEN: ${BLOB_READ_WRITE_TOKEN:-}
-  
+
   # Observability (Optional)
   NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
   SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN:-}
@@ -79,17 +78,17 @@ x-common-variables: &common-env
   PAGERDUTY_APP_ID: ${PAGERDUTY_APP_ID:-}
   SLACK_SUPPORT_WEBHOOK_URL: ${SLACK_SUPPORT_WEBHOOK_URL:-}
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-  
+
   # External Services
   OPENSTATUS_INGEST_URL: ${OPENSTATUS_INGEST_URL:-https://openstatus-private-location.fly.dev}
   SCREENSHOT_SERVICE_URL: ${SCREENSHOT_SERVICE_URL:-}
-  
+
   # Development & Testing
   TURBO_ENV_MODE: ${TURBO_ENV_MODE:-loose}
   PLAYGROUND_UNKEY_API_KEY: ${PLAYGROUND_UNKEY_API_KEY:-}
   WORKSPACES_LOOKBACK_30: ${WORKSPACES_LOOKBACK_30:-}
   WORKSPACES_HIDE_URL: ${WORKSPACES_HIDE_URL:-}
-  
+
   # Common Settings
   NODE_ENV: ${NODE_ENV:-production}
   ENCRYPTION_KEY: ${ENCRYPTION_KEY:-default-encryption-key}
@@ -122,7 +121,13 @@ services:
     environment:
       - SQLD_NODE=primary
     healthcheck:
-      test: ["CMD", "sh", "-c", "perl -e 'use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>\"127.0.0.1:8080\",Timeout=>1) ? 0 : 1);'"]
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          'perl -e ''use IO::Socket::INET; exit(IO::Socket::INET->new(PeerAddr=>"127.0.0.1:8080",Timeout=>1) ? 0 : 1);''',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -160,7 +165,7 @@ services:
 
   # Core OpenStatus Services
   workflows:
-    image: ghcr.io/openstatushq/openstatus-workflows:dev-latest-workflows
+    image: ghcr.io/openstatushq/openstatus-workflows:latest
     container_name: openstatus-workflows
     networks:
       - openstatus
@@ -190,7 +195,7 @@ services:
           memory: 256M
 
   server:
-    image: ghcr.io/openstatusHQ/openstatus-server:dev-latest-server
+    image: ghcr.io/openstatushq/openstatus-server:latest
     container_name: openstatus-server
     networks:
       - openstatus
@@ -201,6 +206,8 @@ services:
       - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
       - PORT=${SERVER_PORT:-3000}
     depends_on:
+      workflows:
+        condition: service_healthy
       libsql:
         condition: service_healthy
     healthcheck:
@@ -218,7 +225,7 @@ services:
           memory: 256M
 
   private-location:
-    image: ghcr.io/openstatusHQ/openstatus-private-location:dev-latest-private-location
+    image: ghcr.io/openstatushq/openstatus-private-location:latest
     container_name: openstatus-private-location
     networks:
       - openstatus
@@ -247,7 +254,7 @@ services:
           memory: 128M
 
   checker:
-    image: ghcr.io/openstatusHQ/openstatus-checker:dev-latest-checker
+    image: ghcr.io/openstatushq/openstatus-checker:latest
     container_name: openstatus-checker
     networks:
       - openstatus
@@ -275,7 +282,7 @@ services:
           memory: 128M
 
   dashboard:
-    image: ghcr.io/openstatusHQ/openstatus-dashboard:dev-latest-dashboard
+    image: ghcr.io/openstatushq/openstatus-dashboard:latest
     container_name: openstatus-dashboard
     networks:
       - openstatus
@@ -288,6 +295,8 @@ services:
       - HOSTNAME=${DASHBOARD_HOSTNAME:-0.0.0.0}
       - AUTH_TRUST_HOST=${DASHBOARD_AUTH_TRUST_HOST:-true}
     depends_on:
+      workflows:
+        condition: service_healthy
       libsql:
         condition: service_healthy
       server:
@@ -307,7 +316,7 @@ services:
           memory: 256M
 
   status-page:
-    image: ghcr.io/openstatusHQ/openstatus-status-page:dev-latest-status-page
+    image: ghcr.io/openstatushq/openstatus-status-page:latest
     container_name: openstatus-status-page
     networks:
       - openstatus
@@ -320,6 +329,8 @@ services:
       - HOSTNAME=${STATUS_PAGE_HOSTNAME:-0.0.0.0}
       - AUTH_TRUST_HOST=${STATUS_PAGE_AUTH_TRUST_HOST:-true}
     depends_on:
+      workflows:
+        condition: service_healthy
       libsql:
         condition: service_healthy
       server:

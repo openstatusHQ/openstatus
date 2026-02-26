@@ -8,7 +8,7 @@ This guide explains how to configure environment variables for OpenStatus deploy
 1. In Coolify dashboard, click **"New Service"** → **"Docker Compose"**
 2. Choose **"Import from URL"** and enter:
    ```
-   https://raw.githubusercontent.com/aggmoulik/openstatus/main/coolify-deployment.yaml
+   https://raw.githubusercontent.com/openstatusHQ/openstatus/main/coolify-deployment.yaml
    ```
 3. Click **"Deploy"**
 
