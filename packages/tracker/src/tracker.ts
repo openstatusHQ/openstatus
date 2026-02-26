@@ -81,7 +81,7 @@ export class Tracker {
   }
 
   private isOngoingReport() {
-    const resolved: StatusReport["status"][] = new Set([
+    const resolved = new Set<StatusReport["status"]>([
       "monitoring",
       "resolved",
     ]);
