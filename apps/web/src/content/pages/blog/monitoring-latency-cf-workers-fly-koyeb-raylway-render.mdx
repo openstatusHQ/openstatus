@@ -1,10 +1,19 @@
 ---
 title: "Monitoring latency: Cloudflare Workers vs Fly vs Koyeb vs Railway vs Render"
-description: ""
+description: "We benchmarked latency across 5 cloud providers from 6 global locations over 2 weeks. Cloudflare Workers averaged 182ms, Fly.io 61ms (warm), Railway 381ms, Koyeb 539ms, and Render 451ms. Full timing breakdowns included."
 author: "Thibault Le Ouay Ducasse"
 publishedAt: "2024-02-19"
 image: "/assets/posts/monitoring-latency/all-hosting-providers.png"
 category: "education"
+faq:
+  - question: "Which cloud provider has the lowest latency?"
+    answer: "In our benchmark, Cloudflare Workers had the lowest average latency at 182ms across 6 global regions, with a P75 of 138ms. Fly.io in production (with min_machines_running=1) averaged just 61ms, but with cold starts it averaged 1,471ms."
+  - question: "Does Fly.io have cold start issues?"
+    answer: "Yes. With auto_stop_machines enabled and min_machines_running=0, Fly.io averaged 1,471ms due to cold starts (~1.5s machine boot time). Setting min_machines_running=1 eliminates cold starts and brings the average down to 61ms."
+  - question: "How does Cloudflare Workers latency compare to Railway and Render?"
+    answer: "Cloudflare Workers averaged 182ms with 100% uptime. Railway averaged 381ms with 99.991% uptime (1 failure). Render averaged 451ms with 99.89% uptime (12 failures). Cloudflare Workers deploy globally to 275+ locations, while Railway and Render run from a single region."
+  - question: "Which cloud provider had the most downtime in the benchmark?"
+    answer: "Render had the most failures with 12 failed checks and 99.89% uptime over 2 weeks. Railway had 1 failure (99.991% uptime). Cloudflare Workers, Fly.io, and Koyeb all had 0 failures and 100% uptime."
 ---
 
 > ⚠️ We are using the default settings for each provider and conducting

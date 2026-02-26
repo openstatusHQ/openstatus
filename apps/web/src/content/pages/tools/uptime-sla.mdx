@@ -1,14 +1,20 @@
 ---
-title: "Uptime SLA Calculator"
+title: "Uptime SLA Calculator - Convert Uptime % to Downtime"
 publishedAt: "2025-11-10"
 author: "Thibault Le Ouay Ducasse"
-description: "Calculate allowed downtime from uptime percentages or determine uptime percentages from actual downtime. Supports multiple reporting periods and SLA tiers."
+description: "Free uptime SLA calculator. See how much downtime 99.9%, 99.99%, or 99.999% uptime allows per day, week, month, and year. Convert any uptime percentage to downtime instantly."
 category: "Product"
 faq:
-  - question: "What is Uptime SLA?"
-    answer: "Service Level Agreements (SLAs) define the expected performance and availability of your services. Understanding uptime percentages and their corresponding downtime allowances is crucial for maintaining customer trust and meeting compliance requirements."
+  - question: "What is an Uptime SLA?"
+    answer: "An Uptime SLA (Service Level Agreement) is a commitment between a service provider and a customer that guarantees a specific percentage of uptime over a given period. For example, a 99.9% SLA means the service can be down for no more than 8 hours and 45 minutes per year."
   - question: "What are common SLA tiers?"
-    answer: "Common SLA tiers include 99.9% (three nines), 99.99% (four nines), and 99.999% (five nines). For example, 99.9% uptime allows for 8.77 hours of downtime per year, while 99.99% allows only 52.6 minutes annually. All calculations assume continuous 24/7 availability requirements."
+    answer: "Common SLA tiers include 99.9% (three nines) allowing 8h 45m downtime/year, 99.99% (four nines) allowing 52m 35s/year, and 99.999% (five nines) allowing only 5m 15s/year. Most cloud providers offer between 99.9% and 99.99% uptime SLAs."
+  - question: "How much downtime does 99.9% uptime allow?"
+    answer: "99.9% uptime (three nines) allows approximately 8 hours and 45 minutes of downtime per year, 43 minutes per month, 10 minutes per week, or 1 minute and 26 seconds per day."
+  - question: "What is the difference between 99.9% and 99.99% uptime?"
+    answer: "The difference is significant: 99.9% uptime allows about 8 hours 45 minutes of downtime per year, while 99.99% allows only about 52 minutes per year. That extra 9 reduces your allowed downtime by roughly 10x and typically requires redundant infrastructure and automated failover."
+  - question: "How do I calculate uptime from downtime?"
+    answer: "To calculate uptime percentage from downtime, use this formula: Uptime % = ((Total time - Downtime) / Total time) × 100. For example, if your service was down for 1 hour in a 30-day month (720 hours), your uptime is ((720 - 1) / 720) × 100 = 99.86%."
 ---
 
 _All calculations assume continuous 24/7 availability requirements._

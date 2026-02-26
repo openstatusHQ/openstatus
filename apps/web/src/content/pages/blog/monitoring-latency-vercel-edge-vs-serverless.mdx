@@ -1,10 +1,19 @@
 ---
 title: "Monitoring latency: Vercel Serverless Function vs Vercel Edge Function"
-description: ""
+description: "We benchmarked Vercel Edge vs Serverless functions from 6 global regions. Edge averaged 106ms (P50), Serverless warm 246ms, and Serverless cold 859ms. Edge is 9x faster on cold starts and 2x faster when warm."
 author: "Thibault Le Ouay Ducasse"
 publishedAt: "2024-03-14"
 image: "/assets/posts/monitoring-vercel/serverless-vs-edge.png"
 category: "education"
+faq:
+  - question: "Is Vercel Edge faster than Vercel Serverless?"
+    answer: "Yes. In our benchmark from 6 global regions, Edge functions averaged 106ms (P50) vs 246ms for warm Serverless and 859ms for cold Serverless. Edge is about 9x faster during cold starts and 2x faster when warm."
+  - question: "What is the cold start latency of Vercel Serverless functions?"
+    answer: "In our test, Vercel Serverless cold starts averaged 859ms (P50), with P95 at 1,046ms and P99 at 1,156ms. Functions were pinged every 30 minutes to ensure they scaled down between requests."
+  - question: "Do Vercel Edge functions have cold starts?"
+    answer: "Vercel Edge functions have negligible cold starts. In our benchmark, Edge functions maintained a consistent P50 of 106ms and P99 of 328ms regardless of request frequency, compared to Serverless which jumped from 246ms (warm) to 859ms (cold)."
+  - question: "Where are Vercel Serverless functions deployed?"
+    answer: "Vercel Serverless functions are deployed in a single region (iad1 — Washington, D.C. by default). All requests are routed through a nearby data center before being forwarded to the function's region. Edge functions are deployed globally and execute in the datacenter closest to the user."
 ---
 
 In our previous

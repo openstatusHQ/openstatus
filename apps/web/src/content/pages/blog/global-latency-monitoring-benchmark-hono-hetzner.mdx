@@ -1,20 +1,29 @@
 ---
-title: "Global Latency Monitoring: Benchmarking a Hono App on Hetzner with OpenStatus"
-description: "Benchmarking network latency from global locations across Fly, Koyeb, and Railway to analyze the impact of distance and provider networks."
+title: "Global Latency Monitoring: Benchmarking a Hono App on Hetzner with openstatus"
+description: "We monitored a Hono app on Hetzner Finland from 17 global probes across Fly, Koyeb, and Railway for 7 days. Result: providers differ by less than 10% — geographic distance is what matters most."
 author: "Thibault Le Ouay Ducasse"
 publishedAt: "2025-10-23"
 image: "/assets/posts/global-latency-monitoring-benchmark-hono-hetzner/global.png"
 category: "engineering"
+faq:
+  - question: "Does the cloud provider affect latency to Hetzner?"
+    answer: "Barely. In our 7-day benchmark from 17 probes across Fly, Koyeb, and Railway, providers in the same region reported less than 10% latency difference. For example, Fly and Koyeb probes in Frankfurt both showed ~80ms P95 to Hetzner Finland. Geographic distance is the dominant factor."
+  - question: "What is the latency from different regions to Hetzner Finland?"
+    answer: "Frankfurt probes averaged ~80ms P95. US East probes were higher due to transatlantic routing. Singapore probes from Fly, Koyeb, and Railway all reported similar latencies with less than 10% difference between providers, confirming distance is the primary factor."
+  - question: "Should I pick Fly, Koyeb, or Railway based on network performance?"
+    answer: "Network performance alone should not drive your decision. Our benchmark showed minimal latency differences between Fly, Koyeb, and Railway when monitoring the same target from the same region. Pick the PaaS that fits your workflow, pricing, and deployment needs — the network differences are negligible."
+  - question: "How do you benchmark global latency with openstatus?"
+    answer: "Deploy your app on any provider, then configure openstatus to monitor it from multiple regions across Fly, Koyeb, and Railway simultaneously. openstatus checks all selected regions in parallel every minute, giving you a true multi-provider, multi-region latency baseline without internal network bias."
 ---
 
-At OpenStatus, we offer **global monitoring** to give you an unbiased, external view of your service's performance. To truly test our monitoring capabilities and gather real-world latency data, we decided to benchmark a simple application deployed outside our internal network.
+At openstatus, we offer **global monitoring** to give you an unbiased, external view of your service's performance. To truly test our monitoring capabilities and gather real-world latency data, we decided to benchmark a simple application deployed outside our internal network.
 
 
 As a software developer, I know that **latency** is critical for user experience. When building an application, understanding how your app performs from different locations around the world is essential.
 
 ## The Benchmark Setup
 
-To prevent internal networking biases from skewing the results, I deployed a minimal test application a [**Hono server**](https://github.com/openstatusHQ/status-code/) on third-party cloud providers, independent from OpenStatus's infrastructure.
+To prevent internal networking biases from skewing the results, I deployed a minimal test application a [**Hono server**](https://github.com/openstatusHQ/status-code/) on third-party cloud providers, independent from openstatus's infrastructure.
 
 ### Why Hetzner?
 
@@ -33,11 +42,11 @@ The test app is a single instance deployed in their **Finland datacenter**.
 />
 
 
-##  Monitoring Strategy with OpenStatus
+##  Monitoring Strategy with openstatus
 
 The core of this experiment is to see how different cloud providers' network paths affect the latency to our Finland-based Hetzner app.
 
-We've set up OpenStatus probes across multiple continents and providers, specifically leveraging monitoring locations from:
+We've set up openstatus probes across multiple continents and providers, specifically leveraging monitoring locations from:
 
 - **Fly.io**
 - **Koyeb**
@@ -46,7 +55,7 @@ We've set up OpenStatus probes across multiple continents and providers, specifi
 The goal is to monitor latency from similar geographic regions across these different providers to observe any network path variations.
 
 
-### OpenStatus Probe Configuration
+### openstatus Probe Configuration
 
 Our monitoring strategy is focused on diverse, yet regionally comparable, deployment regions:
 
