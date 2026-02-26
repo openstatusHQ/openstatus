@@ -28,7 +28,7 @@ export const columns: ColumnDef<Notifier>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      const provider = row.getValue("provider");
+      const provider = row.getValue<NotifierProvider>("provider");
       const Icon = config[provider].icon;
       return (
         <Badge variant="secondary" className="px-1.5 font-mono text-[10px]">
