@@ -21,50 +21,93 @@ on:
         default: 'server,dashboard,workflows,private-location,status-page,checker'
         type: string
 
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: openstatus
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.set-services.outputs.services }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Determine services to build
+        id: set-services
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Convert comma-separated input to JSON array
+            SERVICES=$(echo "${{ inputs.services }}" | tr ',' '\n' | jq -R . | jq -sc .)
+          else
+            # Detect changed files
+            CHANGED=$(git diff --name-only HEAD~1 HEAD)
+            SERVICES_LIST=()
+
+            # packages/** changes affect all services
+            if echo "$CHANGED" | grep -q '^packages/'; then
+              SERVICES_LIST=("server" "dashboard" "workflows" "private-location" "status-page" "checker")
+            else
+              for svc in server dashboard workflows private-location status-page checker; do
+                if echo "$CHANGED" | grep -q "^apps/$svc/"; then
+                  SERVICES_LIST+=("$svc")
+                fi
+              done
+            fi
+
+            SERVICES=$(printf '%s\n' "${SERVICES_LIST[@]}" | jq -R . | jq -sc .)
+          fi
+
+          echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
+          echo "Building services: $SERVICES"
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: [prepare]
+    if: needs.prepare.outputs.services != '[]'
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
       packages: write
-    
+
     strategy:
+      fail-fast: false
       matrix:
-        service: [server, dashboard, workflows, private-location, status-page, checker]
+        service: ${{ fromJson(needs.prepare.outputs.services) }}
         include:
           - service: server
             context: .
             dockerfile: apps/server/Dockerfile
-            port: 3001
           - service: dashboard
             context: .
             dockerfile: apps/dashboard/Dockerfile
-            port: 3002
           - service: workflows
             context: .
             dockerfile: apps/workflows/Dockerfile
-            port: 3000
           - service: private-location
             context: apps/private-location
             dockerfile: apps/private-location/Dockerfile
-            port: 8081
           - service: status-page
             context: .
             dockerfile: apps/status-page/Dockerfile
-            port: 3003
           - service: checker
             context: apps/checker
             dockerfile: apps/checker/Dockerfile
-            port: 8082
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -80,16 +123,16 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          images: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
           tags: |
-            type=ref,event=branch,suffix=-${{ matrix.service }}
-            type=ref,event=pr,suffix=-${{ matrix.service }}
-            type=sha,prefix={{branch}}-,suffix=-${{ matrix.service }}
-            type=raw,value=latest,enable={{is_default_branch}},suffix=-${{ matrix.service }}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
@@ -104,7 +147,7 @@ jobs:
       - name: Generate SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}@${{ steps.build.outputs.digest }}
+          image: ${{ env.REGISTRY }}/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}@${{ steps.build.outputs.digest }}
           format: spdx-json
           output-file: sbom-${{ matrix.service }}.spdx.json
 
