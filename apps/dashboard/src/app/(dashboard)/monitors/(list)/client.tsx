@@ -130,18 +130,18 @@ export function Client() {
                 onClick={() => {
                   if (metric.key === "p95") {
                     if (sorting.length === 0 || !isActive) {
-                      setSearchParams({ sort: { id: "p95", desc: true } });
+                      void setSearchParams({ sort: { id: "p95", desc: true } });
                       setSorting([{ id: "p95", desc: true }]);
                     } else {
-                      setSearchParams({ sort: null });
+                      void setSearchParams({ sort: null });
                       setSorting([]);
                     }
                   } else {
                     if (columnFilters.length === 0 || !isActive) {
-                      setSearchParams({ status: metric.key });
+                      void setSearchParams({ status: metric.key });
                       setColumnFilters([{ id: "status", value: [metric.key] }]);
                     } else {
-                      setSearchParams({ status: null });
+                      void setSearchParams({ status: null });
                       setColumnFilters([]);
                     }
                   }
@@ -166,19 +166,7 @@ export function Client() {
       <Section>
         <DataTable
           columns={columns}
-          data={monitors.map((monitor) => ({
-            ...monitor,
-            globalMetrics:
-              isLoadingHttp || isLoadingTcp
-                ? undefined
-                : monitor.jobType === "http"
-                  ? (globalHttpMetrics?.data?.find(
-                      (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false)
-                  : (globalTcpMetrics?.data?.find(
-                      (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false),
-          }))}
+          data={monitors.map((monitor) => (Object.assign(monitor, {globalMetrics:isLoadingHttp||isLoadingTcp?undefined:monitor.jobType===`http`?globalHttpMetrics?.data?.find(m=>m.monitorId===monitor.id.toString())??false:globalTcpMetrics?.data?.find(m=>m.monitorId===monitor.id.toString())??false})))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={(props) => (
             <MonitorDataTableToolbar {...props} tags={tags ?? []} />

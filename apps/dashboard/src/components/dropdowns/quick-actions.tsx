@@ -122,7 +122,7 @@ export function QuickActions({
                   disabled={!item.onClick}
                   onClick={(e) => {
                     e.stopPropagation();
-                    item.onClick?.();
+                    void item.onClick?.();
                   }}
                 >
                   <item.icon className="text-muted-foreground" />
@@ -198,7 +198,7 @@ export function QuickActions({
             type="submit"
             onClick={(e) => {
               e.preventDefault();
-              handleDelete();
+              void handleDelete();
             }}
           >
             {isPending ? "Deleting..." : "Delete"}

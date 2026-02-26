@@ -111,7 +111,7 @@ async function processEvent(body: SlackEvent) {
     channel: event.channel,
     thread_ts: threadTs,
     text: ":hourglass_flowing_sand: Thinking...",
-  });
+  }, self.location.origin);
   const thinkingTs = thinkingMsg.ts;
 
   if (!thinkingTs) {

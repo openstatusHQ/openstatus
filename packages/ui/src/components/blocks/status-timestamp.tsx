@@ -325,7 +325,7 @@ function StatusTimestampRow({
       className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
-        copy(value, { withToast: true });
+        void copy(value, { withToast: true });
       }}
     >
       <dt className="text-muted-foreground">{label}</dt>

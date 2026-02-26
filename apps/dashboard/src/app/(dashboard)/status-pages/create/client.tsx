@@ -27,9 +27,9 @@ export function Client() {
   const createStatusPageMutation = useMutation(
     trpc.page.new.mutationOptions({
       onSuccess: (data) => {
-        refetch();
+        void refetch();
         // NOTE: invalidate workspace to update the usage
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
         startTransition(() => {

@@ -77,16 +77,7 @@ export default function Page() {
 
     return monitor.data.latency.data
       .toSorted((a, b) => a.timestamp - b.timestamp)
-      .map((item) => ({
-        ...item,
-        timestamp: new Date(item.timestamp).toLocaleString("default", {
-          day: "numeric",
-          month: "short",
-          hour: "numeric",
-          minute: "numeric",
-          timeZoneName: "short",
-        }),
-      }));
+      .map((item) => (Object.assign(item, {timestamp:new Date(item.timestamp).toLocaleString(`default`,{day:`numeric`,month:`short`,hour:`numeric`,minute:`numeric`,timeZoneName:`short`})})));
   }, [monitor?.data.latency?.data]);
 
   const regionLatencyData = useMemo(() => {

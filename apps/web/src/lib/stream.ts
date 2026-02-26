@@ -1,7 +1,7 @@
 export async function* yieldMany(promises: Promise<unknown>[]) {
   // Attach .then() handlers to the promises to remove them as soon as they resolve
   promises.forEach((p) => {
-    p.then((value) => {
+    void p.then((value) => {
       promises.splice(promises.indexOf(p), 1);
       return value;
     });

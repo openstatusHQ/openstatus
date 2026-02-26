@@ -8,7 +8,7 @@ const SIGNING_SECRET = "test-signing-secret";
 process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
 process.env.AI_GATEWAY_API_KEY = "test-key";
 
-mock.module("./workspace-resolver", () => ({
+void mock.module("./workspace-resolver", () => ({
   resolveWorkspace: (teamId: string) => {
     if (teamId === "T_KNOWN") {
       return Promise.resolve({
@@ -29,7 +29,7 @@ mock.module("./workspace-resolver", () => ({
 
 let slackMessages: Array<{ method: string; args: unknown }> = [];
 
-mock.module("@slack/web-api", () => ({
+void mock.module("@slack/web-api", () => ({
   WebClient: class {
     chat = {
       postMessage: (args: unknown) => {
@@ -50,7 +50,7 @@ mock.module("@slack/web-api", () => ({
   },
 }));
 
-mock.module("./agent", () => ({
+void mock.module("./agent", () => ({
   runAgent: () =>
     Promise.resolve({
       text: "Here is my response",

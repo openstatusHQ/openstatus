@@ -174,7 +174,7 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   useEffect(() => {
     if (b) {
       setOpen(true);
-      setSearchParams({ b: null });
+      void setSearchParams({ b: null });
     }
   }, [b, setOpen, setSearchParams]);
 

@@ -34,8 +34,5 @@ export const getActions = (
     Record<StatusReportUpdateAction["id"], () => Promise<void> | void>
   >,
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
-  return actions.map((action) => ({
-    ...action,
-    onClick: props[action.id],
-  }));
+  return actions.map((action) => (Object.assign(action, {onClick:props[action.id]})));
 };

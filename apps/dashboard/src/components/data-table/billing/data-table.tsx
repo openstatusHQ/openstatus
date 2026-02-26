@@ -44,7 +44,7 @@ export function DataTable({ restrictTo }: { restrictTo?: WorkspacePlan[] }) {
         if (!data) return;
 
         const stripe = await getStripe();
-        stripe?.redirectToCheckout({ sessionId: data.id });
+        void stripe?.redirectToCheckout({ sessionId: data.id });
       },
     }),
   );

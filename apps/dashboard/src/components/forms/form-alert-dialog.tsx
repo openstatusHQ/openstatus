@@ -101,7 +101,7 @@ export function FormAlertDialog({
             type="submit"
             onClick={(e) => {
               e.preventDefault();
-              handleDelete();
+              void handleDelete();
             }}
           >
             {isPending ? "Deleting..." : "Delete"}

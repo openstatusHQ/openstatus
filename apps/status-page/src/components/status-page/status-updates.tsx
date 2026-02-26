@@ -187,7 +187,7 @@ function CopyInputButton({
         placeholder={value}
         readOnly
         onClick={(e) => {
-          copy(value, {
+          void copy(value, {
             successMessage: "Link copied to clipboard",
             withToast: true,
           });
@@ -224,7 +224,7 @@ function CopyButton({
     <Button
       size="sm"
       onClick={(e) => {
-        copy(value, { withToast: true });
+        void copy(value, { withToast: true });
         onClick?.(e);
       }}
       {...props}

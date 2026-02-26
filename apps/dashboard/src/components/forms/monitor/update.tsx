@@ -77,10 +77,10 @@ export function FormMonitorUpdate() {
     trpc.monitor.updateGeneral.mutationOptions({
       onSuccess: () => {
         // NOTE: invalidate the list query to update the monitor in the list (especially the name)
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        refetch();
+        void refetch();
       },
       onError: (err) => {
         // TODO: open dialog
@@ -98,7 +98,7 @@ export function FormMonitorUpdate() {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         router.push("/monitors");

@@ -37,7 +37,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const deletePrivateLocationMutation = useMutation(
     trpc.privateLocation.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.privateLocation.list.queryKey(),
         });
       },

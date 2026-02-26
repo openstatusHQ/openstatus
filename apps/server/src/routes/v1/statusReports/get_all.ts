@@ -41,13 +41,7 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
     });
 
     const data = z.array(StatusReportSchema).parse(
-      _statusReports.map((r) => ({
-        ...r,
-        statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
-        monitorIds: r.statusReportsToPageComponents
-          .map((sr) => sr.pageComponent.monitorId)
-          .filter(notEmpty),
-      })),
+      _statusReports.map((r) => (Object.assign(r, {statusReportUpdateIds:r.statusReportUpdates.map(u=>u.id),monitorIds:r.statusReportsToPageComponents.map(sr=>sr.pageComponent.monitorId).filter(notEmpty)}))),
     );
 
     return c.json(data, 200);

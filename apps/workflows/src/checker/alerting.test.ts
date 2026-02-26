@@ -8,7 +8,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 // Mock audit log to avoid calling Tinybird
-mock.module("../utils/audit-log", () => ({
+void mock.module("../utils/audit-log", () => ({
   checkerAudit: {
     publishAuditLog: mock(() => Promise.resolve()),
   },
@@ -25,7 +25,7 @@ const mockDiscordSendAlert = mock(() => Promise.resolve());
 const mockDiscordSendRecovery = mock(() => Promise.resolve());
 const mockDiscordSendDegraded = mock(() => Promise.resolve());
 
-mock.module("./utils", () => ({
+void mock.module("./utils", () => ({
   providerToFunction: {
     email: {
       sendAlert: mockEmailSendAlert,

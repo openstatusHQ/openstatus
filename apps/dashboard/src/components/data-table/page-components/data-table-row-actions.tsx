@@ -23,7 +23,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deletePageComponentMutation = useMutation(
     trpc.pageComponent.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.pageComponent.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),

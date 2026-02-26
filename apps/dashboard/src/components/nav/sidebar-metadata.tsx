@@ -124,7 +124,7 @@ function SidebarMetadataTableCell({
 
   const handleClick = () => {
     if (typeof props.children === "string") {
-      copy(props.children, { withToast: false, timeout: 1000 });
+      void copy(props.children, { withToast: false, timeout: 1000 });
     }
   };
 

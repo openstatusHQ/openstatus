@@ -45,7 +45,7 @@ export function Sheet({
             variant="outline"
             onClick={() => {
               if (typeof window !== "undefined") {
-                copy(window.location.href, {
+                void copy(window.location.href, {
                   withToast: false,
                 });
               }

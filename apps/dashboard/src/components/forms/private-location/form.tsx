@@ -140,7 +140,7 @@ export function FormPrivateLocation({
                         title="Copy"
                         size="icon-xs"
                         onClick={() => {
-                          copy(field.value, {
+                          void copy(field.value, {
                             successMessage: "Token copied to clipboard",
                           });
                         }}

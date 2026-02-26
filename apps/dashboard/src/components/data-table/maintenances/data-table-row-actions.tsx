@@ -31,12 +31,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateMaintenanceMutation = useMutation(
     trpc.maintenance.update.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.maintenance.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.maintenance.list.queryKey({
             period: "7d",
           }),
@@ -48,12 +48,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteMaintenanceMutation = useMutation(
     trpc.maintenance.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.maintenance.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.maintenance.list.queryKey({
             period: "7d",
           }),

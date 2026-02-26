@@ -52,8 +52,8 @@ export function NavStatusPages() {
   const deleteStatusPage = useMutation(
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
       },

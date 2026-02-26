@@ -25,7 +25,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(trpc.monitor.list.queryOptions());
+        void queryClient.invalidateQueries(trpc.monitor.list.queryOptions());
       },
     }),
   );
@@ -33,7 +33,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const actions = getActions({
     edit: () => router.push(`/monitors/${row.original.id}/edit`),
     "copy-id": () => {
-      navigator.clipboard.writeText(row.original.id.toString());
+      void navigator.clipboard.writeText(row.original.id.toString());
       toast.success("Monitor ID copied to clipboard");
     },
     // export: () => setOpenDialog(true),

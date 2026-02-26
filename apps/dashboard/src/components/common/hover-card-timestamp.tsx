@@ -68,7 +68,7 @@ function Row({ value, label }: { value: string; label: string }) {
       className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
-        copy(value, {});
+        void copy(value, {});
       }}
     >
       <dt className="text-muted-foreground">{label}</dt>

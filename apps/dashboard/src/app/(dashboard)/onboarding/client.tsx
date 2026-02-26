@@ -108,8 +108,8 @@ export function Client() {
         if (data.active) {
           triggerCheckMutation.mutate({ id: data.id });
         }
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
@@ -119,8 +119,8 @@ export function Client() {
     trpc.page.create.mutationOptions({
       onSuccess: async () => {
         await setSearchParams({ step: "next" });
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },

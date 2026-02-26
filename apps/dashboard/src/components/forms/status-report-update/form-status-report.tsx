@@ -140,7 +140,7 @@ export function FormStatusReportUpdateCard({
   const deleteStatusReportUpdateMutation = useMutation(
     trpc.statusReport.deleteUpdate.mutationOptions({
       onSuccess: () => {
-        refetch();
+        void refetch();
       },
     }),
   );

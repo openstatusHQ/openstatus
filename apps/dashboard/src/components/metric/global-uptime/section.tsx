@@ -96,7 +96,7 @@ export function GlobalUptimeSection({
               value: v ?? "0",
               trend: hasTrend ? trend : null,
               raw: value ?? 0,
-            } as (typeof acc)[typeof k  ];
+            } as (typeof acc)[typeof k];
           } else {
             acc[k] = {
               label: metricsCards[k].label,

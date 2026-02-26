@@ -24,8 +24,8 @@ export function FormComponentsUpdate() {
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
       onSuccess: () => {
-        refetch();
-        refetchComponents();
+        void refetch();
+        void refetchComponents();
       },
     }),
   );

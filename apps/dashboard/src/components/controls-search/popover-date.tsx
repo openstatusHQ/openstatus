@@ -105,8 +105,8 @@ export function PopoverDate() {
 
   useEffect(() => {
     if (!open) {
-      setFrom(range.from ?? null);
-      setTo(range.to ?? null);
+      void setFrom(range.from ?? null);
+      void setTo(range.to ?? null);
     }
   }, [open]);
 
@@ -116,8 +116,8 @@ export function PopoverDate() {
 
       presets.map((preset) => {
         if (preset.shortcut === e.key) {
-          setFrom(preset.values.from);
-          setTo(preset.values.to);
+          void setFrom(preset.values.from);
+          void setTo(preset.values.to);
           setRange({ from: preset.values.from, to: preset.values.to });
         }
       });

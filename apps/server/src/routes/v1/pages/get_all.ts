@@ -44,10 +44,7 @@ export function registerGetAllPages(api: typeof pagesApi) {
           const monitorIds = p.pageComponents
             .map((pc) => pc.monitorId)
             .filter(notEmpty);
-          return {
-            ...p,
-            monitors: monitorIds.length > 0 ? monitorIds : undefined,
-          };
+          return Object.assign(p, {monitors:monitorIds.length>0?monitorIds:undefined});
         }),
       )
       .map((page) => transformPageData(page));

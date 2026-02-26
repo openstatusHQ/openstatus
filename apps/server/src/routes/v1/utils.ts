@@ -7,7 +7,7 @@ export const isoDate = z.preprocess((val) => {
       return new Date(String(val)).toISOString();
     }
     return new Date().toISOString();
-  } catch (_e) {
+  } catch  {
     throw new ZodError([
       {
         code: "invalid_type",

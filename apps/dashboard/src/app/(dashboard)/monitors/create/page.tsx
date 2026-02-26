@@ -29,7 +29,7 @@ export default function Page() {
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: (data) => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         if (data.active) {

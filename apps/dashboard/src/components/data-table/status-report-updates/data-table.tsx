@@ -52,18 +52,18 @@ export function DataTable({
       onSuccess: (update) => {
         // TODO: move to server
         if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          void sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
         }
         //
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: Number.parseInt(id),
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),

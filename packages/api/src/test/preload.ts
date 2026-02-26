@@ -1,6 +1,6 @@
 import { mock } from "bun:test";
 
-mock.module("@openstatus/upstash", () => ({
+void mock.module("@openstatus/upstash", () => ({
   Redis: {
     fromEnv() {
       return {

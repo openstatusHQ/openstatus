@@ -18,7 +18,7 @@ export function NavActions() {
   const createPrivateLocationMutation = useMutation(
     trpc.privateLocation.new.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.privateLocation.list.queryKey(),
         });
       },

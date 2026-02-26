@@ -52,15 +52,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),
@@ -73,18 +73,18 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       onSuccess: (update) => {
         // TODO: move to server
         if (update) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          void sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
         }
         //
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),
@@ -95,15 +95,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteStatusReportMutation = useMutation(
     trpc.statusReport.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),

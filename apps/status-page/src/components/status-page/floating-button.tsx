@@ -165,7 +165,7 @@ export function FloatingButton({
       setDisplay(true);
     }
 
-    if (configToken) setConfigToken(null);
+    if (configToken) void setConfigToken(null);
   }, [token]);
 
   if (!display) return null;

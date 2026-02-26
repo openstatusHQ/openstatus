@@ -86,10 +86,7 @@ export const apiKeyRouter = createTRPCRouter({
           .where(eq(user.id, key.createdById))
           .get();
 
-        return {
-          ...key,
-          createdBy: creator,
-        };
+        return Object.assign(key, {createdBy:creator});
       }),
     );
 

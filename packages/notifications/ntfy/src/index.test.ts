@@ -246,7 +246,7 @@ describe("Ntfy Notifications", () => {
     );
 
     // Should not throw - function catches errors internally
-    await expect(
+     expect(
       sendAlert({
         // @ts-expect-error
         monitor,

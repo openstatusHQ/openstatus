@@ -52,13 +52,7 @@ export function registerGetAllNotifications(app: typeof notificationsApi) {
       .all();
 
     const data = NotificationSchema.array().parse(
-      _notifications.map((n) => ({
-        ...n,
-        payload: JSON.parse(n.data || "{}"),
-        monitors: _monitors
-          .filter((m) => m.notificationId === n.id)
-          .map((m) => m.monitorId),
-      })),
+      _notifications.map((n) => (Object.assign(n, {payload:JSON.parse(n.data||`{}`),monitors:_monitors.filter(m=>m.notificationId===n.id).map(m=>m.monitorId)}))),
     );
 
     return c.json(data, 200);

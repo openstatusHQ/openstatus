@@ -54,7 +54,7 @@ export function CommandTags() {
                   value={tag.name}
                   keywords={[tag.name]}
                   onSelect={() => {
-                    setSelectedTags((prev) =>
+                    void setSelectedTags((prev) =>
                       prev.includes(tag.name)
                         ? prev.filter((r) => r !== tag.name)
                         : [...prev, tag.name],

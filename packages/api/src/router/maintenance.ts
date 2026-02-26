@@ -73,12 +73,7 @@ export const maintenanceRouter = createTRPCRouter({
         })
         .array()
         .parse(
-          result.map((m) => ({
-            ...m,
-            pageComponents: m.maintenancesToPageComponents.map(
-              ({ pageComponent }) => pageComponent,
-            ),
-          })),
+          result.map((m) => (Object.assign(m, {pageComponents:m.maintenancesToPageComponents.map(({pageComponent})=>pageComponent)}))),
         );
     }),
 

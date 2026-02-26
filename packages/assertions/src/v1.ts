@@ -372,7 +372,7 @@ export class JsonBodyAssertion implements Assertion {
         return { success };
       }
       return { success, message: `Body: ${message}` };
-    } catch (_e) {
+    } catch  {
       console.error("Unable to parse json");
       return { success: false, message: "Unable to parse json" };
     }

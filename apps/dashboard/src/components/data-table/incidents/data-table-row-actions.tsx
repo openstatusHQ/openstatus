@@ -35,7 +35,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const acknowledgeIncidentMutation = useMutation(
     trpc.incident.acknowledge.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.incident.list.queryKey({
             monitorId: row.original.monitorId,
           }),
@@ -46,7 +46,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const resolveIncidentMutation = useMutation(
     trpc.incident.resolve.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.incident.list.queryKey({
             monitorId: row.original.monitorId,
           }),
@@ -57,7 +57,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteIncidentMutation = useMutation(
     trpc.incident.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.incident.list.queryKey({
             monitorId: row.original.monitorId,
           }),
@@ -138,7 +138,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
-                handleConfirm();
+                void handleConfirm();
               }}
               disabled={isPending}
             >

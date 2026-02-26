@@ -69,17 +69,7 @@ export const pageComponentRouter = createTRPCRouter({
         })
         .array()
         .parse(
-          result.map((component) => ({
-            ...component,
-            statusReports:
-              component.statusReportsToPageComponents?.map(
-                (sr) => sr.statusReport,
-              ) ?? [],
-            maintenances:
-              component.maintenancesToPageComponents?.map(
-                (m) => m.maintenance,
-              ) ?? [],
-          })),
+          result.map((component) => (Object.assign(component, {statusReports:component.statusReportsToPageComponents?.map(sr=>sr.statusReport)??[],maintenances:component.maintenancesToPageComponents?.map(m=>m.maintenance)??[]}))),
         );
     }),
 

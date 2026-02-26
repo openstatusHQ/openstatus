@@ -105,9 +105,9 @@ async function main() {
   // all other workspaces, we need to 'reverse' the deletion here to NOT include those workspaces
   const rest = [...starters, ...teams];
 
-  deleteLogs(lastTwoWeeks, rest, true);
-  deleteLogs(lastThreeMonths, starters);
-  deleteLogs(lastYear, teams);
+  void deleteLogs(lastTwoWeeks, rest, true);
+  void deleteLogs(lastThreeMonths, starters);
+  void deleteLogs(lastYear, teams);
   // deleteLogs(lastYear, pros);
 }
 

@@ -56,8 +56,8 @@ export function NavMonitors() {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
       },
@@ -66,8 +66,8 @@ export function NavMonitors() {
   const cloneMonitorMutation = useMutation(
     trpc.monitor.clone.mutationOptions({
       onSuccess: (newMonitor) => {
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
         router.push(`/monitors/${newMonitor.id}`);
@@ -131,7 +131,7 @@ export function NavMonitors() {
             const actions = getActions({
               edit: () => router.push(`/monitors/${item.id}/edit`),
               "copy-id": () => {
-                navigator.clipboard.writeText(item.id.toString());
+                void navigator.clipboard.writeText(item.id.toString());
                 toast.success("Monitor ID copied to clipboard");
               },
               clone: () => {

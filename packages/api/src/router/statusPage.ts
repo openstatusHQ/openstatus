@@ -335,11 +335,7 @@ export const statusPageRouter = createTRPCRouter({
               groupId: group.groupId,
               groupName: group.groupName ?? "",
               components: sortedComponents,
-              status: getWorstVariant(
-                group.components.map(
-                  (c) => c.status,
-                ),
-              ),
+              status: getWorstVariant(group.components.map((c) => c.status)),
               order: group.minOrder,
             },
           ];
@@ -909,10 +905,7 @@ export const statusPageRouter = createTRPCRouter({
         const monitorId = c.monitor.id.toString();
         const data = metricsDataByMonitorId.get(monitorId) || [];
 
-        return {
-          ...selectPublicMonitorSchema.parse(c.monitor),
-          data,
-        };
+        return Object.assign(selectPublicMonitorSchema.parse(c.monitor), {data});
       });
     }),
 
@@ -973,17 +966,17 @@ export const statusPageRouter = createTRPCRouter({
       const toDate = endOfDay(new Date()).toISOString();
 
       const [latency, regions, uptime] = await Promise.all([
-        await proceduresByType[type].latency({
+        proceduresByType[type].latency({
           monitorId: _monitor.id.toString(),
           fromDate,
           toDate,
         }),
-        await proceduresByType[type].regions({
+        proceduresByType[type].regions({
           monitorId: _monitor.id.toString(),
           fromDate,
           toDate,
         }),
-        await proceduresByType[type].uptime({
+        proceduresByType[type].uptime({
           monitorId: _monitor.id.toString(),
           interval: 240,
           fromDate,

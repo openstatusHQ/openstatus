@@ -16,7 +16,7 @@ export function PasswordWrapper({ children }: { children?: React.ReactNode }) {
       document.cookie = `${key}=${password}; path=/; expires=${new Date(
         Date.now() + 1000 * 60 * 60 * 24 * 30,
       ).toUTCString()}`;
-      setPassword(null);
+      void setPassword(null);
     }
   }, [password, domain, setPassword]);
 

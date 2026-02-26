@@ -27,9 +27,9 @@ export function FormStatusPageUpdate() {
   const updateStatusPageMutation = useMutation(
     trpc.page.updateGeneral.mutationOptions({
       onSuccess: () => {
-        refetch();
+        void refetch();
         // NOTE: invalidate status page list to update name
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
@@ -59,11 +59,11 @@ export function FormStatusPageUpdate() {
       onSuccess: () => {
         router.push("/status-pages");
         // NOTE: invalidate workspace to update the usage
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
         // NOTE: invalidate status page list to update the usage
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },

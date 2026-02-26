@@ -54,10 +54,7 @@ export function Table({ data }: TableProps) {
     .filter((check) => check.state === "success" && check.timing)
     .map((check) => {
       const timing = getTimingPhases(check.timing);
-      return {
-        ...check,
-        timingPhases: timing,
-      };
+      return Object.assign(check, {timingPhases:timing});
     });
 
   const filteredAndSorted = checks

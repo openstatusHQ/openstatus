@@ -42,7 +42,7 @@ export function NavActions() {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         if (pathname.includes(`/monitors/${id}`)) {
@@ -55,7 +55,7 @@ export function NavActions() {
   const cloneMonitorMutation = useMutation(
     trpc.monitor.clone.mutationOptions({
       onSuccess: (newMonitor) => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         router.push(`/monitors/${newMonitor.id}`);

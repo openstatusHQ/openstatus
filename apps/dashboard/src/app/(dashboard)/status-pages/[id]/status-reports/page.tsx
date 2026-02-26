@@ -43,8 +43,8 @@ export default function Page() {
           });
         }
         //
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },

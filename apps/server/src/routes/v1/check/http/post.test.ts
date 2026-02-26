@@ -6,7 +6,7 @@ import { app } from "@/index";
 const mockFetch = mock();
 
 global.fetch = mockFetch as unknown as typeof fetch;
-mock.module("node-fetch", () => mockFetch);
+void mock.module("node-fetch", () => mockFetch);
 
 afterEach(() => {
   mockFetch.mockReset();

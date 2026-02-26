@@ -103,7 +103,7 @@ export function FormApiKey() {
     trpc.apiKeyRouter.create.mutationOptions({
       onSuccess: (data) => {
         if (data) {
-          refetch();
+          void refetch();
           setResult({ token: data.token, key: data.key.name });
           setCreateDialogOpen(false);
           form.reset();
@@ -313,7 +313,7 @@ export function FormApiKey() {
               variant="outline"
               size="sm"
               onClick={() => {
-                copy(result?.token || "", {
+                void copy(result?.token || "", {
                   successMessage: "Copied API key to clipboard",
                 });
               }}

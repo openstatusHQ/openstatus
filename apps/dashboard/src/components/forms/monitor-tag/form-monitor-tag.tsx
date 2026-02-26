@@ -96,7 +96,7 @@ export function FormMonitorTag({
           // and stop the propagation to avoid double submission
           e.preventDefault();
           e.stopPropagation();
-          form.handleSubmit(submitAction)(e);
+          void form.handleSubmit(submitAction)(e);
         }}
         {...props}
       >

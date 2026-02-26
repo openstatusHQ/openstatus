@@ -42,10 +42,7 @@ export const notificationRouter = createTRPCRouter({
       })
       .array()
       .parse(
-        notifications.map((notification) => ({
-          ...notification,
-          monitors: notification.monitor.map(({ monitor }) => monitor),
-        })),
+        notifications.map((notification) => (Object.assign(notification, {monitors:notification.monitor.map(({monitor})=>monitor)}))),
       );
   }),
 

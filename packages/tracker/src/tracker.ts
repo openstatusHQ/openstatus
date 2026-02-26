@@ -81,10 +81,11 @@ export class Tracker {
   }
 
   private isOngoingReport() {
-    const resolved: StatusReport["status"][] = new Set(["monitoring", "resolved"]);
-    return this.statusReports.some(
-      (report) => !resolved.has(report.status),
-    );
+    const resolved: StatusReport["status"][] = new Set([
+      "monitoring",
+      "resolved",
+    ]);
+    return this.statusReports.some((report) => !resolved.has(report.status));
   }
 
   private isOngoingMaintenance() {

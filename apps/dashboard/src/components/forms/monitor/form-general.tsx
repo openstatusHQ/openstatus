@@ -968,7 +968,7 @@ export function FormGeneral({
                 onClick={async (e) => {
                   e.preventDefault();
                   form.setValue("skipCheck", true);
-                  form.handleSubmit(submitAction)();
+                  void form.handleSubmit(submitAction)();
                   form.setValue("skipCheck", false);
                   setError(null);
                 }}

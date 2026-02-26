@@ -68,7 +68,7 @@ export function Client() {
       const next = typeof p === "function" ? p({ pageIndex, pageSize }) : p;
 
       if (next.pageIndex !== pageIndex || next.pageSize !== pageSize) {
-        setSearchParams({
+        void setSearchParams({
           pageIndex: next.pageIndex,
           pageSize: next.pageSize,
         });
@@ -121,7 +121,7 @@ export function Client() {
             columns={columns}
             onRowClick={(row) => {
               if (!row.original.id) return;
-              setSearchParams({ selected: row.original.id });
+              void setSearchParams({ selected: row.original.id });
             }}
             columnFilters={[
               { id: "trigger", value: trigger },

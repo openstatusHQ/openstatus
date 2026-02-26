@@ -59,10 +59,7 @@ export type NotifierAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>,
 ): (NotifierAction & { onClick?: () => Promise<void> | void })[] => {
-  return actions.map((action) => ({
-    ...action,
-    onClick: props[action.id],
-  }));
+  return actions.map((action) => (Object.assign(action, {onClick:props[action.id]})));
 };
 
 // List of the notifiers

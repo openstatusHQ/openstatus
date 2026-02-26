@@ -56,7 +56,7 @@ export function BillingAddons({
   const checkoutSessionMutation = useMutation(
     trpc.stripeRouter.addAddon.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
       },

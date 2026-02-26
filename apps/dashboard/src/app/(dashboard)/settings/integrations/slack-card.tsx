@@ -39,7 +39,7 @@ export function SlackIntegrationCard({
   const deleteIntegration = useMutation(
     trpc.integrationRouter.deleteIntegration.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.integrationRouter.list.queryKey(),
         });
         router.refresh();

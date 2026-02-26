@@ -28,7 +28,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const updateNotifierMutation = useMutation(
     trpc.notification.updateNotifier.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.notification.list.queryKey(),
         });
       },
@@ -37,7 +37,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const deleteNotifierMutation = useMutation(
     trpc.notification.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.notification.list.queryKey(),
         });
       },

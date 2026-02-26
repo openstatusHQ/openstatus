@@ -26,15 +26,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateStatusReportUpdateMutation = useMutation(
     trpc.statusReport.updateStatusReportUpdate.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: Number.parseInt(id),
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),
@@ -45,12 +45,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteStatusReportUpdateMutation = useMutation(
     trpc.statusReport.deleteUpdate.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: Number.parseInt(id),
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),

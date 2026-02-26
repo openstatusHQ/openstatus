@@ -31,7 +31,7 @@ export function NavActions() {
   const deleteStatusPageMutation = useMutation(
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
         if (pathname.includes(`/status-pages/${id}`)) {

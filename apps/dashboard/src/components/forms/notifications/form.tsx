@@ -76,7 +76,7 @@ export function NotifierForm({
           error: "Failed to save",
         });
         await promise;
-        onSubmit?.(values);
+        void onSubmit?.(values);
       } catch (error) {
         console.error(error);
       }

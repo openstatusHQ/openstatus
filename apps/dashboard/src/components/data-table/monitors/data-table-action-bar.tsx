@@ -62,10 +62,10 @@ export function MonitorDataTableActionBar({
   const deleteMonitorsMutation = useMutation(
     trpc.monitor.deleteMonitors.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
         // Clear selection once deletion succeeds
@@ -77,7 +77,7 @@ export function MonitorDataTableActionBar({
   const updateMonitorsMutation = useMutation(
     trpc.monitor.updateMonitors.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
@@ -214,7 +214,7 @@ export function MonitorDataTableActionBar({
                 type="submit"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleDelete();
+                  void handleDelete();
                 }}
               >
                 {isPending ? "Deleting..." : "Delete"}

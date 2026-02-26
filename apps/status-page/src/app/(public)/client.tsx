@@ -116,9 +116,9 @@ export function Client() {
             value={q ?? ""}
             onChange={(e) => {
               if (e.target.value.length === 0) {
-                setSearchParams({ q: null });
+                void setSearchParams({ q: null });
               }
-              setSearchParams({ q: e.target.value.trim().toLowerCase() });
+              void setSearchParams({ q: e.target.value.trim().toLowerCase() });
             }}
           />
           <ThemePalettePicker />
@@ -150,7 +150,7 @@ export function Client() {
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
-                      setSearchParams({ t: k });
+                      void setSearchParams({ t: k });
                     }
                   }}
                 >

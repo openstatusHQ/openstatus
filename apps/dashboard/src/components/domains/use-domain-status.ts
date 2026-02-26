@@ -32,9 +32,9 @@ export function useDomainStatus(domain?: string) {
   );
 
   const refreshAll = useCallback(() => {
-    refetchDomain();
-    refetchConfig();
-    refetchVerification();
+    void refetchDomain();
+    void refetchConfig();
+    void refetchVerification();
   }, [refetchDomain, refetchConfig, refetchVerification]);
 
   let status: DomainVerificationStatusProps = "Valid Configuration";
