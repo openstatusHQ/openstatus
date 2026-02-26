@@ -182,12 +182,21 @@ export const maintenanceRouter = createTRPCRouter({
         }
       }
 
-      await opts.ctx.db.transaction(async (tx) => {
-        const whereConditions: SQL[] = [
+      const existing = await opts.ctx.db.query.maintenance.findFirst({
+        where: and(
           eq(maintenance.id, opts.input.id),
           eq(maintenance.workspaceId, opts.ctx.workspace.id),
-        ];
+        ),
+      });
 
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Maintenance not found",
+        });
+      }
+
+      await opts.ctx.db.transaction(async (tx) => {
         // Update the maintenance
         const _maintenance = await tx
           .update(maintenance)
@@ -199,7 +208,12 @@ export const maintenanceRouter = createTRPCRouter({
             workspaceId: opts.ctx.workspace.id,
             updatedAt: new Date(),
           })
-          .where(and(...whereConditions))
+          .where(
+            and(
+              eq(maintenance.id, opts.input.id),
+              eq(maintenance.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
           .returning()
           .get();
 

@@ -431,6 +431,17 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
+      const existingMonitor = await ctx.db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!existingMonitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
       await ctx.db.transaction(async (tx) => {
         await tx
           .update(monitor)

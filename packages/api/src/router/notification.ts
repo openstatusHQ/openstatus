@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { type SQL, and, count, eq, inArray } from "@openstatus/db";
+import { and, count, eq, inArray } from "@openstatus/db";
 import {
   NotificationDataSchema,
   googleChatDataSchema,
@@ -72,10 +72,19 @@ export const notificationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const whereCondition: SQL[] = [
-        eq(notification.id, opts.input.id),
-        eq(notification.workspaceId, opts.ctx.workspace.id),
-      ];
+      const existing = await opts.ctx.db.query.notification.findFirst({
+        where: and(
+          eq(notification.id, opts.input.id),
+          eq(notification.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Notification not found",
+        });
+      }
 
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
@@ -108,7 +117,12 @@ export const notificationRouter = createTRPCRouter({
             data: JSON.stringify(opts.input.data),
             updatedAt: new Date(),
           })
-          .where(and(...whereCondition));
+          .where(
+            and(
+              eq(notification.id, opts.input.id),
+              eq(notification.workspaceId, opts.ctx.workspace.id),
+            ),
+          );
 
         await tx
           .delete(notificationsToMonitors)

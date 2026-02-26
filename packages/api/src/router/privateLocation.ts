@@ -3,6 +3,7 @@ import {
   privateLocation,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -67,6 +68,20 @@ export const privateLocationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      const existing = await opts.ctx.db.query.privateLocation.findFirst({
+        where: and(
+          eq(privateLocation.id, opts.input.id),
+          eq(privateLocation.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Private location not found",
+        });
+      }
+
       return await opts.ctx.db.transaction(async (tx) => {
         const _privateLocation = await tx
           .update(privateLocation)
