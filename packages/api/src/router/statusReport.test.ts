@@ -49,10 +49,7 @@ afterAll(async () => {
   await db
     .delete(statusReportsToPageComponents)
     .where(
-      eq(
-        statusReportsToPageComponents.statusReportId,
-        otherWorkspaceReportId,
-      ),
+      eq(statusReportsToPageComponents.statusReportId, otherWorkspaceReportId),
     );
   await db
     .delete(statusReport)
@@ -132,13 +129,12 @@ test("statusReport.updateStatus rejects report from another workspace", async ()
   }
 
   // Verify page component associations were NOT deleted
-  const associations =
-    await db.query.statusReportsToPageComponents.findMany({
-      where: eq(
-        statusReportsToPageComponents.statusReportId,
-        otherWorkspaceReportId,
-      ),
-    });
+  const associations = await db.query.statusReportsToPageComponents.findMany({
+    where: eq(
+      statusReportsToPageComponents.statusReportId,
+      otherWorkspaceReportId,
+    ),
+  });
   expect(associations.length).toBe(1);
 });
 

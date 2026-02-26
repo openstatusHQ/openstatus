@@ -35,9 +35,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await db
     .delete(notificationsToMonitors)
-    .where(
-      eq(notificationsToMonitors.notificationId, otherWorkspaceNotifId),
-    );
+    .where(eq(notificationsToMonitors.notificationId, otherWorkspaceNotifId));
   await db
     .delete(notification)
     .where(eq(notification.id, otherWorkspaceNotifId));
@@ -113,10 +111,7 @@ test("notification.updateNotifier rejects notification from another workspace", 
 
   // Verify monitor associations were NOT deleted
   const associations = await db.query.notificationsToMonitors.findMany({
-    where: eq(
-      notificationsToMonitors.notificationId,
-      otherWorkspaceNotifId,
-    ),
+    where: eq(notificationsToMonitors.notificationId, otherWorkspaceNotifId),
   });
   expect(associations.length).toBe(1);
 });

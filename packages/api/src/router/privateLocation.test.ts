@@ -48,10 +48,7 @@ afterAll(async () => {
   await db
     .delete(privateLocationToMonitors)
     .where(
-      eq(
-        privateLocationToMonitors.privateLocationId,
-        otherWorkspaceLocationId,
-      ),
+      eq(privateLocationToMonitors.privateLocationId, otherWorkspaceLocationId),
     );
   await db
     .delete(privateLocation)
@@ -59,10 +56,7 @@ afterAll(async () => {
   await db
     .delete(privateLocationToMonitors)
     .where(
-      eq(
-        privateLocationToMonitors.privateLocationId,
-        ownWorkspaceLocationId,
-      ),
+      eq(privateLocationToMonitors.privateLocationId, ownWorkspaceLocationId),
     );
   await db
     .delete(privateLocation)
@@ -91,13 +85,12 @@ test("privateLocation.update rejects location from another workspace", async () 
   }
 
   // Verify monitor associations were NOT deleted
-  const associations =
-    await db.query.privateLocationToMonitors.findMany({
-      where: eq(
-        privateLocationToMonitors.privateLocationId,
-        otherWorkspaceLocationId,
-      ),
-    });
+  const associations = await db.query.privateLocationToMonitors.findMany({
+    where: eq(
+      privateLocationToMonitors.privateLocationId,
+      otherWorkspaceLocationId,
+    ),
+  });
   expect(associations.length).toBe(1);
 });
 

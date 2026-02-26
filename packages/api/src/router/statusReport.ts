@@ -87,42 +87,44 @@ export const statusReportRouter = createTRPCRouter({
       return selectStatusReportUpdateSchema.parse(currentStatusReportUpdate);
     }),
 
-  get: protectedProcedure.input(z.object({ id: z.number() })).query(async (opts) => {
-    const result = await opts.ctx.db.query.statusReport.findFirst({
-      where: and(
-        eq(statusReport.id, opts.input.id),
-        eq(statusReport.workspaceId, opts.ctx.workspace.id),
-      ),
-      with: {
-        statusReportUpdates: true,
-        statusReportsToPageComponents: { with: { pageComponent: true } },
-        page: { with: { pageComponents: true } },
-      },
-    });
-
-    if (!result) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Status report not found",
-      });
-    }
-
-    return selectStatusReportSchema
-      .extend({
-        updates: z.array(selectStatusReportUpdateSchema).prefault([]),
-        pageComponents: z.array(selectPageComponentSchema).prefault([]),
-        page: selectPageSchema.extend({
-          pageComponents: z.array(selectPageComponentSchema).prefault([]),
-        }),
-      })
-      .parse({
-        ...result,
-        updates: result.statusReportUpdates,
-        pageComponents: result.statusReportsToPageComponents.map(
-          ({ pageComponent }) => pageComponent,
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db.query.statusReport.findFirst({
+        where: and(
+          eq(statusReport.id, opts.input.id),
+          eq(statusReport.workspaceId, opts.ctx.workspace.id),
         ),
+        with: {
+          statusReportUpdates: true,
+          statusReportsToPageComponents: { with: { pageComponent: true } },
+          page: { with: { pageComponents: true } },
+        },
       });
-  }),
+
+      if (!result) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Status report not found",
+        });
+      }
+
+      return selectStatusReportSchema
+        .extend({
+          updates: z.array(selectStatusReportUpdateSchema).prefault([]),
+          pageComponents: z.array(selectPageComponentSchema).prefault([]),
+          page: selectPageSchema.extend({
+            pageComponents: z.array(selectPageComponentSchema).prefault([]),
+          }),
+        })
+        .parse({
+          ...result,
+          updates: result.statusReportUpdates,
+          pageComponents: result.statusReportsToPageComponents.map(
+            ({ pageComponent }) => pageComponent,
+          ),
+        });
+    }),
 
   list: protectedProcedure
     .input(
@@ -133,10 +135,14 @@ export const statusReportRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
-      const whereConditions: SQL[] = [eq(statusReport.workspaceId, opts.ctx.workspace.id)];
+      const whereConditions: SQL[] = [
+        eq(statusReport.workspaceId, opts.ctx.workspace.id),
+      ];
 
       if (opts.input?.period) {
-        whereConditions.push(gte(statusReport.createdAt, getPeriodDate(opts.input.period)));
+        whereConditions.push(
+          gte(statusReport.createdAt, getPeriodDate(opts.input.period)),
+        );
       }
 
       if (opts.input?.pageId) {
@@ -151,7 +157,9 @@ export const statusReportRouter = createTRPCRouter({
           page: { with: { pageComponents: true } },
         },
         orderBy: (statusReport) => [
-          opts.input.order === "asc" ? asc(statusReport.createdAt) : desc(statusReport.createdAt),
+          opts.input.order === "asc"
+            ? asc(statusReport.createdAt)
+            : desc(statusReport.createdAt),
         ],
       });
 
@@ -190,7 +198,10 @@ export const statusReportRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       const existingPage = await opts.ctx.db.query.page.findFirst({
-        where: and(eq(page.id, opts.input.pageId), eq(page.workspaceId, opts.ctx.workspace.id)),
+        where: and(
+          eq(page.id, opts.input.pageId),
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
       });
 
       if (!existingPage) {
@@ -285,7 +296,9 @@ export const statusReportRouter = createTRPCRouter({
 
         await tx
           .delete(statusReportsToPageComponents)
-          .where(eq(statusReportsToPageComponents.statusReportId, opts.input.id))
+          .where(
+            eq(statusReportsToPageComponents.statusReportId, opts.input.id),
+          )
           .run();
 
         if (opts.input.pageComponents.length > 0) {
@@ -338,7 +351,10 @@ export const statusReportRouter = createTRPCRouter({
           });
         }
 
-        await tx.delete(statusReportUpdate).where(eq(statusReportUpdate.id, opts.input.id)).run();
+        await tx
+          .delete(statusReportUpdate)
+          .where(eq(statusReportUpdate.id, opts.input.id))
+          .run();
       });
     }),
 });

@@ -76,13 +76,12 @@ test("maintenance.update rejects maintenance from another workspace", async () =
   }
 
   // Verify page component associations were NOT deleted
-  const associations =
-    await db.query.maintenancesToPageComponents.findMany({
-      where: eq(
-        maintenancesToPageComponents.maintenanceId,
-        otherWorkspaceMaintenanceId,
-      ),
-    });
+  const associations = await db.query.maintenancesToPageComponents.findMany({
+    where: eq(
+      maintenancesToPageComponents.maintenanceId,
+      otherWorkspaceMaintenanceId,
+    ),
+  });
   expect(associations.length).toBe(1);
 });
 
