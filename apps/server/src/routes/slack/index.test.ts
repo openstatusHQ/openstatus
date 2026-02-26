@@ -1,12 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import crypto from "node:crypto";
 import { Hono } from "hono";
 
 const SIGNING_SECRET = "test-signing-secret";
-
-process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
-process.env.AI_GATEWAY_API_KEY = "test-key";
-process.env.SLACK_CLIENT_ID = "test-client-id";
 
 function signRequest(body: string, timestamp: number): string {
   const basestring = `v0:${timestamp}:${body}`;
@@ -27,18 +23,20 @@ function makeInstallToken(workspaceId: number): string {
 }
 
 describe("slack route middleware", () => {
+  beforeEach(() => {
+    process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
+    process.env.AI_GATEWAY_API_KEY = "test-key";
+    process.env.SLACK_CLIENT_ID = "test-client-id";
+  });
+
   test("returns 503 when SLACK_SIGNING_SECRET is missing", async () => {
-    const originalSecret = process.env.SLACK_SIGNING_SECRET;
     process.env.SLACK_SIGNING_SECRET = "";
 
-    // Import a fresh route since env is read at request time
     const { slackRoute } = await import("./index");
     const app = new Hono();
     app.route("/slack", slackRoute);
 
     const res = await app.request("/slack/install?token=invalid");
-    // Restore
-    process.env.SLACK_SIGNING_SECRET = originalSecret;
 
     expect(res.status).toBe(503);
     const json = (await res.json()) as { error: string };
@@ -46,7 +44,6 @@ describe("slack route middleware", () => {
   });
 
   test("returns 503 when AI_GATEWAY_API_KEY is missing", async () => {
-    const originalKey = process.env.AI_GATEWAY_API_KEY;
     process.env.AI_GATEWAY_API_KEY = "";
 
     const { slackRoute } = await import("./index");
@@ -54,7 +51,6 @@ describe("slack route middleware", () => {
     app.route("/slack", slackRoute);
 
     const res = await app.request("/slack/install?token=invalid");
-    process.env.AI_GATEWAY_API_KEY = originalKey;
 
     expect(res.status).toBe(503);
   });
