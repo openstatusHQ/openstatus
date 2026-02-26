@@ -1,5 +1,9 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
 import {
   ChartAreaPercentiles,
   ChartAreaPercentilesSkeleton,
@@ -15,9 +19,6 @@ import { StatusBlankMonitors } from "@/components/status-page/status-blank";
 import { StatusMonitorTitle } from "@/components/status-page/status-monitor";
 import { StatusMonitorDescription } from "@/components/status-page/status-monitor";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { domain } = useParams<{ domain: string }>();
@@ -45,20 +46,7 @@ export default function Page() {
             const data =
               monitors
                 ?.find((item) => item.id === monitor.id)
-                ?.data?.map((item) => ({
-                  ...item,
-                  // TODO: create formatter
-                  timestamp: new Date(item.timestamp).toLocaleString(
-                    "default",
-                    {
-                      day: "numeric",
-                      month: "short",
-                      hour: "numeric",
-                      minute: "numeric",
-                      timeZoneName: "short",
-                    },
-                  ),
-                })) ?? [];
+                ?.data?.map((item) => (Object.assign(item, {timestamp:new Date(item.timestamp).toLocaleString(`default`,{day:`numeric`,month:`short`,hour:`numeric`,minute:`numeric`,timeZoneName:`short`})}))) ?? [];
 
             return (
               <Link
@@ -66,7 +54,7 @@ export default function Page() {
                 href={`./monitors/${monitor.id}`}
                 className="rounded-lg"
               >
-                <div className="group -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2 hover:border-border/50 hover:bg-muted/50">
+                <div className="group hover:border-border/50 hover:bg-muted/50 -mx-3 -my-2 flex flex-col gap-2 rounded-lg border border-transparent px-3 py-2">
                   <div className="flex flex-row items-center justify-start gap-2">
                     <StatusMonitorTitle>{monitor.name}</StatusMonitorTitle>
                     <StatusMonitorDescription>

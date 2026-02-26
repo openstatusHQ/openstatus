@@ -1,10 +1,12 @@
 "use client";
 
-import { FormCardGroup } from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
 import { deserialize } from "@openstatus/assertions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+
+import { FormCardGroup } from "@/components/forms/form-card";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { FormDangerZone } from "./form-danger-zone";
 import {
   FOLLOW_REDIRECTS_DEFAULT,
@@ -75,10 +77,10 @@ export function FormMonitorUpdate() {
     trpc.monitor.updateGeneral.mutationOptions({
       onSuccess: () => {
         // NOTE: invalidate the list query to update the monitor in the list (especially the name)
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        refetch();
+        void refetch();
       },
       onError: (err) => {
         // TODO: open dialog
@@ -96,7 +98,7 @@ export function FormMonitorUpdate() {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         router.push("/monitors");
@@ -222,7 +224,7 @@ export function FormMonitorUpdate() {
         }
       />
       <FormOtel
-        locked={workspace.limits.otel === false}
+        locked={!workspace.limits.otel}
         defaultValues={{
           endpoint: monitor.otelEndpoint ?? "",
           headers: monitor.otelHeaders ?? [],

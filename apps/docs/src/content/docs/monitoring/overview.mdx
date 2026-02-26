@@ -3,27 +3,25 @@ title: Monitoring Overview
 description: "Introduction to synthetic monitoring with openstatus"
 ---
 
-import { CardGrid, LinkCard } from '@astrojs/starlight/components';
-import { Image } from 'astro:assets';
-import overview from '../../../assets/monitor/overview/dashboard.png';
+import { CardGrid, LinkCard } from "@astrojs/starlight/components";
+import { Image } from "astro:assets";
+import overview from "../../../assets/monitor/overview/dashboard.png";
 
 ## What is synthetic monitoring?
 
 With openstatus, you can simulate user requests to check the availability and performance of your website, API, or server from different locations around the globe. This proactive approach helps you find issues before your users do.
 
 Synthetic monitoring complements real user monitoring (RUM) by providing:
+
 - **Consistent baseline**: Predictable checks at regular intervals
 - **Early warning system**: Detect issues before they affect many users
 - **Global perspective**: Monitor from multiple regions simultaneously
 - **24/7 coverage**: Continuous monitoring, even when you have no traffic
 
 <Image
-    src={overview}
-    alt="openstatus dashboard showing status codes and response time charts"
+  src={overview}
+  alt="openstatus dashboard showing status codes and response time charts"
 />
-
-
-
 
 ## How it works
 
@@ -47,16 +45,16 @@ You can create a new monitor in one of four ways:
 We support different types of monitors for various use cases:
 
 <CardGrid>
-    <LinkCard
-        title="HTTP Monitor"
-        href="/monitoring/type/http"
-        description="Monitor HTTP/HTTPS endpoints including APIs and websites"
-    />
-    <LinkCard
-        title="TCP Monitor"
-        href="/monitoring/type/tcp"
-        description="Monitor TCP port availability for databases and services"
-    />
+  <LinkCard
+    title="HTTP Monitor"
+    href="/monitoring/type/http"
+    description="Monitor HTTP/HTTPS endpoints including APIs and websites"
+  />
+  <LinkCard
+    title="TCP Monitor"
+    href="/monitoring/type/tcp"
+    description="Monitor TCP port availability for databases and services"
+  />
 </CardGrid>
 
 ## Getting started

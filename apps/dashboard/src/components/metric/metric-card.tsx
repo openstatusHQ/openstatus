@@ -1,12 +1,11 @@
 import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import type React from "react";
 
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-
 import { cn } from "@openstatus/ui/lib/utils";
-import type React from "react";
+import { cva } from "class-variance-authority";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const metricCardVariants = cva(
   "flex flex-col gap-1 border rounded-lg px-3 py-2 text-card-foreground",
@@ -51,7 +50,7 @@ export function MetricCardTitle({
   return (
     <p
       className={cn(
-        "font-commit-mono font-medium text-sm tracking-tight ",
+        "font-commit-mono text-sm font-medium tracking-tight",
         className,
       )}
       {...props}
@@ -88,7 +87,7 @@ export function MetricCardValue({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("font-medium text-foreground", className)} {...props}>
+    <p className={cn("text-foreground font-medium", className)} {...props}>
       {children}
     </p>
   );

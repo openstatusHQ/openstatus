@@ -1,7 +1,5 @@
 "use client";
 
-import { searchParamsParsers } from "@/app/(public)/search-params";
-import { recomputeStyles } from "@/components/status-page/floating-button";
 import {
   THEMES,
   type Theme,
@@ -58,6 +56,9 @@ import {
 import { useTheme } from "next-themes";
 import { useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
+
+import { searchParamsParsers } from "@/app/(public)/search-params";
+import { recomputeStyles } from "@/components/status-page/floating-button";
 
 type ThemeBuilderColor = {
   label: string;
@@ -143,7 +144,6 @@ const THEME_STYLE_BUILDER = {
 } satisfies Record<string, ThemeBuilderColor | ThemeBuilderCheckbox>;
 
 // Helper function to get nested property value from an object
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 function getNestedValue(obj: any, path: string): string | undefined {
   const keys = path.split(".");
   let value = obj;
@@ -174,7 +174,7 @@ export function ThemeSidebar(props: React.ComponentProps<typeof Sidebar>) {
   useEffect(() => {
     if (b) {
       setOpen(true);
-      setSearchParams({ b: null });
+      void setSearchParams({ b: null });
     }
   }, [b, setOpen, setSearchParams]);
 
@@ -345,14 +345,14 @@ function ThemeValueSelector(props: {
   const { resolvedTheme } = useTheme();
 
   if (!props.isMounted || !resolvedTheme)
-    return <Skeleton className="ml-auto size-4 border border-foreground/70" />;
+    return <Skeleton className="border-foreground/70 ml-auto size-4 border" />;
 
   const value = props.theme[resolvedTheme as "light" | "dark"][props.id];
 
   if (props.config.type === "color") {
     return (
       <label
-        className="ml-auto size-4 rounded-full border border-foreground/70"
+        className="border-foreground/70 ml-auto size-4 rounded-full border"
         style={{ backgroundColor: value }}
         htmlFor={props.id}
       >
@@ -382,25 +382,22 @@ function ThemeValueSelector(props: {
       options.find((option) => option.value === value)?.label ?? false;
     return (
       <label htmlFor={props.id} className="ml-auto flex items-center gap-2">
-        <span className="font-mono text-muted-foreground text-xs">
-          {value ??
-            options.find((option) => option.label === false)?.value ??
-            ""}
+        <span className="text-muted-foreground font-mono text-xs">
+          {value ?? options.find((option) => !option.label)?.value ?? ""}
         </span>
         <Checkbox
           id={props.id}
           name={props.id}
           checked={checked}
-          className="size-4 bg-background"
+          className="bg-background size-4"
           onCheckedChange={(checked) =>
             props.setTheme({
               ...props.theme,
               [resolvedTheme as "light" | "dark"]: {
                 ...props.theme[resolvedTheme as "light" | "dark"],
                 [props.id]: checked
-                  ? options.find((option) => option.label === true)?.value ?? ""
-                  : options.find((option) => option.label === false)?.value ??
-                    "",
+                  ? (options.find((option) => option.label)?.value ?? "")
+                  : (options.find((option) => !option.label)?.value ?? ""),
               },
             })
           }
@@ -410,7 +407,7 @@ function ThemeValueSelector(props: {
   }
 
   return (
-    <span className="ml-auto font-mono text-muted-foreground text-xs">
+    <span className="text-muted-foreground ml-auto font-mono text-xs">
       {value}
     </span>
   );

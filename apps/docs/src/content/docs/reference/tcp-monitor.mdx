@@ -8,10 +8,11 @@ description: Complete technical specification for TCP service monitoring.
 A TCP Monitor is a component that establishes a connection to a specified TCP endpoint (IP address and port) to verify its reachability and responsiveness. This is fundamental for monitoring the availability of services that communicate over TCP, such as databases, mail servers, and custom network services.
 
 **Use cases:**
--   Database server availability checks (e.g., PostgreSQL, MySQL).
--   Mail server (SMTP, IMAP, POP3) reachability.
--   Custom application service port monitoring.
--   Validating network connectivity to specific endpoints.
+
+- Database server availability checks (e.g., PostgreSQL, MySQL).
+- Mail server (SMTP, IMAP, POP3) reachability.
+- Custom application service port monitoring.
+- Validating network connectivity to specific endpoints.
 
 ## Configuration
 
@@ -23,6 +24,7 @@ A TCP Monitor is a component that establishes a connection to a specified TCP en
 The endpoint of the TCP service you want to monitor. This includes the hostname or IP address and the port number.
 
 **Examples:**
+
 - `openstat.us:443`
 - `db.internal:5432`
 - `10.0.0.5:3306`
@@ -34,18 +36,18 @@ The endpoint of the TCP service you want to monitor. This includes the hostname 
 
 The geographical regions from which the TCP connection attempt will be initiated. This allows for verification of service availability and network latency across different global locations.
 
-__Africa__
+**Africa**
 
 - Johannesburg, South Africa 🇿🇦 (free)
 
-__Asia__
+**Asia**
 
 - Hong Kong, Hong Kong 🇭🇰 (free)
 - Mumbai, India 🇮🇳
 - Singapore, Singapore 🇸🇬
 - Tokyo, Japan 🇯🇵
 
-__Europe__
+**Europe**
 
 - Amsterdam, Netherlands 🇳🇱 (free)
 - Bucharest, Romania 🇷🇴
@@ -56,7 +58,7 @@ __Europe__
 - Stockholm, Sweden 🇸🇪
 - Warsaw, Poland 🇵🇱
 
-__North America__
+**North America**
 
 - Ashburn, Virginia, USA 🇺🇸 (free)
 - Atlanta, Georgia, USA 🇺🇸
@@ -74,7 +76,7 @@ __North America__
 - San Jose, California, USA 🇺🇸
 - Toronto, Canada 🇨🇦
 
-__South America__
+**South America**
 
 - Bogota, Colombia 🇨🇴
 - Buenos Aires, Argentina 🇦🇷
@@ -82,7 +84,7 @@ __South America__
 - Sao Paulo, Brazil 🇧🇷 (free)
 - Santiago, Chile 🇨🇱
 
-__Oceania__
+**Oceania**
 
 - Sydney, Australia 🇦🇺 (free)
 
@@ -92,6 +94,7 @@ __Oceania__
 **Format:** Duration string (e.g., `30s`, `1m`, `1h`)
 
 The interval at which the TCP monitor will attempt to connect to the target URI. Supported frequencies:
+
 - `30 seconds`
 - `1 minute`
 - `5 minutes`
@@ -139,6 +142,7 @@ The OTLP (OpenTelemetry Protocol) endpoint URL where collected metrics should be
 Custom headers to include when sending metrics to your OTLP endpoint. Commonly used for authentication or tenant identification.
 
 **Common example:**
+
 ```
 Authorization: Bearer <your_token>
 ```

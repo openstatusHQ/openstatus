@@ -1,17 +1,16 @@
+import type { ErrorCode } from "@openstatus/error";
 // Props to Unkey: https://github.com/unkeyed/unkey/blob/main/apps/api/src/pkg/errors/http.ts
 import type { Context } from "hono";
-import { HTTPException } from "hono/http-exception";
 
-import type { ErrorCode } from "@openstatus/error";
+import { z } from "@hono/zod-openapi";
+import { getLogger } from "@logtape/logtape";
 import {
   ErrorCodes,
   SchemaError,
   codeToStatus,
   statusToCode,
 } from "@openstatus/error";
-
-import { z } from "@hono/zod-openapi";
-import { getLogger } from "@logtape/logtape";
+import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";
 
 const logger = getLogger("api-server");

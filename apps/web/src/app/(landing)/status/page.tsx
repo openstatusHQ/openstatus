@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { components } from "@/content/mdx";
 import { env } from "@/env";
 import {
@@ -5,7 +7,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
+
 import {
   ContentBoxDescription,
   ContentBoxLink,

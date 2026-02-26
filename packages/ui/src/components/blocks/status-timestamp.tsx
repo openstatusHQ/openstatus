@@ -1,12 +1,8 @@
 "use client";
 
-import { UTCDate } from "@date-fns/utc";
-import { format, formatDistanceToNowStrict } from "date-fns";
-import { Check, Copy } from "lucide-react";
-import { useEffect, useState } from "react";
-
 import type { HoverCardContentProps } from "@radix-ui/react-hover-card";
 
+import { UTCDate } from "@date-fns/utc";
 import {
   HoverCard,
   HoverCardContent,
@@ -21,6 +17,9 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
+import { format, formatDistanceToNowStrict } from "date-fns";
+import { Check, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
 
 type BaseProps = {
   date: Date;
@@ -187,7 +186,7 @@ function SimpleTimestamp({
       <Tooltip>
         <TooltipTrigger
           className={cn(
-            "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
+            "text-muted-foreground decoration-muted-foreground/30 font-mono underline decoration-dashed underline-offset-4",
             className,
           )}
           {...props}
@@ -326,7 +325,7 @@ function StatusTimestampRow({
       className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
-        copy(value, { withToast: true });
+        void copy(value, { withToast: true });
       }}
     >
       <dt className="text-muted-foreground">{label}</dt>

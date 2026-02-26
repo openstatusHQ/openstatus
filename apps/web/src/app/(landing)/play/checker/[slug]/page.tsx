@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+import { redirect } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { mockCheckAllRegions } from "@/lib/checker/mock";
@@ -12,8 +16,7 @@ import {
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+
 import { Table } from "./client";
 
 function formatDate(date: Date) {
@@ -44,7 +47,7 @@ export async function generateMetadata({
 
   if (!data) return metadata;
 
-  const regions = data.checks.sort((a, b) => a.latency - b.latency);
+  const regions = data.checks.toSorted((a, b) => a.latency - b.latency);
   const fastestRegion = regions[0];
   const slowestRegion = regions[regions.length - 1];
 
@@ -108,7 +111,6 @@ export default async function Page({
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}

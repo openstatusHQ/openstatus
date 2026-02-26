@@ -1,7 +1,9 @@
+import type { monitorRegionSchema } from "../src/schema/constants";
+
 import { z } from "zod";
+
 import { db, eq, schema } from "../src";
 import { selectMonitorSchema } from "../src/schema";
-import type { monitorRegionSchema } from "../src/schema/constants";
 
 const rawMonitors = await db.select().from(schema.monitor);
 

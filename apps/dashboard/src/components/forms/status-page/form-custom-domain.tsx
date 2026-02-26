@@ -1,5 +1,28 @@
 "use client";
 
+import type React from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@openstatus/ui/components/ui/form";
+import { Label } from "@openstatus/ui/components/ui/label";
+import { isTRPCClientError } from "@trpc/client";
+import { Lock } from "lucide-react";
+import { useEffect, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+
+// FIXME: use input-group instead
+import { InputWithAddons } from "@/components/common/input-with-addons";
+import { Link } from "@/components/common/link";
+import DomainConfiguration from "@/components/domains/domain-configuration";
+import { useDomainStatus } from "@/components/domains/use-domain-status";
 import {
   FormCard,
   FormCardContent,
@@ -11,30 +34,6 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
-
-import { Label } from "@openstatus/ui/components/ui/label";
-
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Lock } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
-import { Link } from "@/components/common/link";
-import DomainConfiguration from "@/components/domains/domain-configuration";
-import { useDomainStatus } from "@/components/domains/use-domain-status";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@openstatus/ui/components/ui/form";
-import { isTRPCClientError } from "@trpc/client";
-import type React from "react";
-import { useEffect, useTransition } from "react";
-import { toast } from "sonner";
 
 const schema = z.object({
   domain: z.string(),

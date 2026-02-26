@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import { page, pageSubscriber, workspace } from "@openstatus/db/src/schema";
 

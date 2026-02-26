@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendTest } from "./index";
 
 describe("OpsGenie Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {

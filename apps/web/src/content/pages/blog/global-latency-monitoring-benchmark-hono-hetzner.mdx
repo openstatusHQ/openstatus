@@ -9,7 +9,6 @@ category: "engineering"
 
 At OpenStatus, we offer **global monitoring** to give you an unbiased, external view of your service's performance. To truly test our monitoring capabilities and gather real-world latency data, we decided to benchmark a simple application deployed outside our internal network.
 
-
 As a software developer, I know that **latency** is critical for user experience. When building an application, understanding how your app performs from different locations around the world is essential.
 
 ## The Benchmark Setup
@@ -24,7 +23,6 @@ The test app is a single instance deployed in their **Finland datacenter**.
 
 > ⚠️ **A Note on Deployment Experience:** The initial setup experience with Hetzner involved some friction, including KYC verification, which felt a bit dated. To manage the deployment, I opted to use **Coolify Cloud**, which helped bridge the gap, but the inner developer in me definitely missed the simplicity of a managed **PaaS** during the process.
 
-
 <Image
   alt="hetzner kyc"
   src="/assets/posts/global-latency-monitoring-benchmark-hono-hetzner/hetzner.jpg"
@@ -32,8 +30,7 @@ The test app is a single instance deployed in their **Finland datacenter**.
   height={800}
 />
 
-
-##  Monitoring Strategy with OpenStatus
+## Monitoring Strategy with OpenStatus
 
 The core of this experiment is to see how different cloud providers' network paths affect the latency to our Finland-based Hetzner app.
 
@@ -44,7 +41,6 @@ We've set up OpenStatus probes across multiple continents and providers, specifi
 - **Railway**
 
 The goal is to monitor latency from similar geographic regions across these different providers to observe any network path variations.
-
 
 ### OpenStatus Probe Configuration
 
@@ -60,40 +56,38 @@ Our monitoring strategy is focused on diverse, yet regionally comparable, deploy
 | Singapore         | Koyeb, Fly, Railway |
 | Tokyo             | Koyeb, Fly          |
 
-
 I have defined our monitor with the openstatus cli, and this is the exact configuration used for it :
-
 
 ```yaml
 "hetzner-monitoring":
   active: true
   assertions:
-  - compare: eq
-    kind: statusCode
-    target: 200
+    - compare: eq
+      kind: statusCode
+      target: 200
   frequency: 1m
   kind: http
   name: Hetzner Monitoring
   openTelemetry: {}
   public: true
   regions:
-  - koyeb_fra
-  - cdg
-  - ams
-  - railway_europe-west4-drams3a
-  - fra
-  - koyeb_par
-  - koyeb_sfo
-  - railway_us-west2
-  - lax
-  - iad
-  - koyeb_was
-  - railway_us-east4-eqdc4a
-  - koyeb_sin
-  - railway_asia-southeast1-eqsg3a
-  - koyeb_tyo
-  - sin
-  - nrt
+    - koyeb_fra
+    - cdg
+    - ams
+    - railway_europe-west4-drams3a
+    - fra
+    - koyeb_par
+    - koyeb_sfo
+    - railway_us-west2
+    - lax
+    - iad
+    - koyeb_was
+    - railway_us-east4-eqdc4a
+    - koyeb_sin
+    - railway_asia-southeast1-eqsg3a
+    - koyeb_tyo
+    - sin
+    - nrt
   request:
     method: GET
     url: https://hetzner.openstat.us/
@@ -130,7 +124,6 @@ The most significant finding reinforces a basic network principle: **the further
 Even across vast distances, the latency differences between providers remained small.
 
 In **Singapore**, for example, the probes from **Fly**, **Koyeb**, and **Railway** all reported very similar latencies, often with **less than a 10% difference** between their average results. This suggests that while all are far, none of the providers offer a vastly superior or inferior route for transcontinental communication in this case.
-
 
 ## Conclusion
 

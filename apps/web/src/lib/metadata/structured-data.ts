@@ -1,5 +1,4 @@
 import type { MDXData } from "@/content/utils";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type {
   BlogPosting,
   BreadcrumbList,
@@ -14,6 +13,9 @@ import type {
   WebPage,
   WithContext,
 } from "schema-dts";
+
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+
 import { BASE_URL } from "./shared-metadata";
 
 export const getJsonLDWebPage = (page: MDXData): WithContext<WebPage> => {

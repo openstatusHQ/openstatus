@@ -28,21 +28,22 @@ From day one, we’ve built with [shadcn/ui](https://ui.shadcn.com), and we’re
 We’ve now extended those variables with custom ones for states like _maintenance_, _success_, and _degraded_, among others.
 
 We’re starting with four themes:
+
 - our new default openstatus (Squared) theme,
 - a legacy rounded theme close to the current one,
 - a [Supabase](https://supabase.com) theme, and
 - a GitHub high-contrast theme.
 
-And here’s the fun part: **you can contribute your own themes**. 
+And here’s the fun part: **you can contribute your own themes**.
 
 Go to [themes.openstatus.dev](https://themes.openstatus.dev), open the **Theme Builder** by toggling the sidebar (e.g. `cmd + b`) and play around with different styles.
 
 Once you’re happy with your setup:
+
 - Copy the configuration to your clipboard.
 - Create a new theme file with that config.
 - Append its ID to the `THEMES_LIST`.
 - Open a PR to contribute it!
-
 
 We have a comprehensive [README](https://github.com/openstatusHQ/openstatus/tree/main/packages/theme-store) with more context.
 
@@ -56,7 +57,7 @@ To try the new experience on your own status page, **opt in to the redesign (bet
 
 ### Shared Values Configuration
 
-There’s more configuration. 
+There’s more configuration.
 
 We’ve heard from teams who wanted to **manually update their status page without connecting any synthetic monitors**. While we still believe _monitoring + transparency go hand in hand_, we don’t want to exclude users who just want to share updates directly.
 

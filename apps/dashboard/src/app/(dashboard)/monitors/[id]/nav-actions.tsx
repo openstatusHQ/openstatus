@@ -1,11 +1,7 @@
 "use client";
 
-import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { NavFeedback } from "@/components/nav/nav-feedback";
-import { getActions } from "@/data/monitors.client";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
+
 import { deserialize } from "@openstatus/assertions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -20,6 +16,12 @@ import { Zap } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { DataTableSheetTest } from "@/components/data-table/response-logs/data-table-sheet-test";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { NavFeedback } from "@/components/nav/nav-feedback";
+import { getActions } from "@/data/monitors.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 type TestTCP = RouterOutputs["checker"]["testTcp"];
 type TestHTTP = RouterOutputs["checker"]["testHttp"];
@@ -40,7 +42,7 @@ export function NavActions() {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         if (pathname.includes(`/monitors/${id}`)) {
@@ -53,7 +55,7 @@ export function NavActions() {
   const cloneMonitorMutation = useMutation(
     trpc.monitor.clone.mutationOptions({
       onSuccess: (newMonitor) => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
         router.push(`/monitors/${newMonitor.id}`);
@@ -156,23 +158,23 @@ export function NavActions() {
   return (
     <div className="flex items-center gap-2 text-sm">
       <NavFeedback />
-      <div className="hidden font-medium text-muted-foreground lg:inline-block">
+      <div className="text-muted-foreground hidden font-medium lg:inline-block">
         {!monitor.active ? (
           <span className="relative ml-1.5 inline-flex">
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-muted-foreground/70" />
+            <span className="bg-muted-foreground/70 relative inline-flex h-2.5 w-2.5 rounded-full" />
           </span>
         ) : monitor.status === "active" ? (
           <span className="relative ml-1.5 inline-flex">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/80 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
+            <span className="bg-success/80 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
+            <span className="bg-success relative inline-flex h-2.5 w-2.5 rounded-full" />
           </span>
         ) : monitor.status === "error" ? (
           <span className="relative ml-1.5 inline-flex">
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-destructive" />
+            <span className="bg-destructive relative inline-flex h-2.5 w-2.5 rounded-full" />
           </span>
         ) : (
           <span className="relative ml-1.5 inline-flex">
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
+            <span className="bg-warning relative inline-flex h-2.5 w-2.5 rounded-full" />
           </span>
         )}
       </div>

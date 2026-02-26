@@ -19,16 +19,16 @@ In this post, we'll take a deep dive into our infrastructure architecture, explo
 Our platform consists of several interconnected applications, each designed for a specific purpose:
 
 1. **Frontend Ecosystem**:
-    - A NextJS application that powers our marketing site, user dashboard, and status page hosted on [Vercel](https://vercel.com/).
-    - An Astro + Starlight-powered documentation application hosted on [Cloudflare Pages](https://pages.cloudflare.com/).
+   - A NextJS application that powers our marketing site, user dashboard, and status page hosted on [Vercel](https://vercel.com/).
+   - An Astro + Starlight-powered documentation application hosted on [Cloudflare Pages](https://pages.cloudflare.com/).
 
 We chose Vercel for the Next.js application because it performs exceptionally well there, the DX is great. And we selected Cloudflare Pages for the documentation since it is a static site and it's super cheap.
 
 2. **Backend Infrastructure** All our backend services are hosted on Fly.io.
-    - API server: Our public API and our alerting engine
-    - Probes/Checker: a golang app deployed globally to monitor your service
-    - Screenshot app: a service that takes screenshot of your website when we detect an downtime (Playwright)
-    - Workflow engine: a server that handles the workflow of alerting,  and our internal workflows (email automation).
+   - API server: Our public API and our alerting engine
+   - Probes/Checker: a golang app deployed globally to monitor your service
+   - Screenshot app: a service that takes screenshot of your website when we detect an downtime (Playwright)
+   - Workflow engine: a server that handles the workflow of alerting, and our internal workflows (email automation).
 
 We chose Fly.io for our backend services because it's a great platform for deploying globally distributed services. It's also very easy to deploy and manage.
 We are planning to add more providers (e.g. Koyeb) to our probes to have a more resilient system.
@@ -40,17 +40,15 @@ We are planning to add more providers (e.g. Koyeb) to our probes to have a more 
   height={575}
 />
 
-
 ## Managed Services
 
 We also rely heavily on managed services to avoid handling it ourselves. Here are the services we use:
 
 ### Scheduling
 
-Recognizing the critical nature of monitoring, we've heavily rely on CRON  to ensure timely checks:
+Recognizing the critical nature of monitoring, we've heavily rely on CRON to ensure timely checks:
 
 - **Cron Jobs**: Currently using Vercel Cron, with plans to migrate to Google Cron for an enhanced user experience (better UI e.g. we can see when the cron ran, retry policy).
-
 
 ### Queue Architecture
 
@@ -62,14 +60,12 @@ Every check is pushed to a queue and processed by our probes. If the probe fails
 
 We've implemented a granular queue system to ensure efficient task processing, each queue is dedicated to a specific check frequency (e.g. every minute, every 10 minutes).
 
-
 <Image
   alt="Queue providers"
   src="/assets/posts/infra-openstatus/queue.png"
   width={650}
   height={575}
 />
-
 
 ### Data Infrastructure
 
@@ -87,19 +83,16 @@ Our infrastructure design is driven by several key principles:
 - **Cost-Efficiency**: Leveraging managed services and cloud credits
 - **Performance**: Optimizing each component for maximum efficiency.
 
-
 ## How much does it cost us?
 
 Our current monthly cost is around $328. This includes:
 
 - Vercel: $40, we are two members in the team, so we had to upgrade to the team plan.
-- Fly.io: $154   36*4 (all our probes at $4 average, not all regions cost the same) + $10 (for the api server)
+- Fly.io: $154 36\*4 (all our probes at $4 average, not all regions cost the same) + $10 (for the api server)
 - Google Cloud Platform: $0 (We are still using the free credits, but we expect to pay around $50 for the queue)
 - Tinybird: $100
 - Turso: $29
 - Cloudfare: $5
-
-
 
 # Conclusion
 
@@ -107,4 +100,4 @@ Building a resilient synthetic monitoring platform is hard. It's not just a $5 V
 
 The drawback of this approach is the complexity of providing an easy self hostable services. Which is annoying because we are an open-source project and we want to provide a self-hostable version of OpenStatus. But we are working on community edition that will be easier to deploy.
 
-*Want to start monitoring your services with OpenStatus? [Sign up for free](/app/login?ref=blogpost-infra) and get started today!*
+_Want to start monitoring your services with OpenStatus? [Sign up for free](/app/login?ref=blogpost-infra) and get started today!_

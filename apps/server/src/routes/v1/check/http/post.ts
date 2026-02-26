@@ -1,12 +1,13 @@
+import type { checkApi } from "../index";
+
 import { createRoute, type z } from "@hono/zod-openapi";
 import { getLogger } from "@logtape/logtape";
-
-import { env } from "@/env";
-import { openApiErrorResponses } from "@/libs/errors";
 import { db } from "@openstatus/db";
 import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
-import type { checkApi } from "../index";
+
+import { env } from "@/env";
+import { openApiErrorResponses } from "@/libs/errors";
 
 const logger = getLogger("api-server");
 import {
@@ -85,7 +86,6 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
               if (!key) return acc; // key === "" is an invalid header
 
               return {
-                // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
                 ...acc,
                 [key]: value,
               };
@@ -103,7 +103,7 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
     const fulfilledRequest: z.infer<typeof ResponseSchema>[] = [];
 
     const filteredResult = result.filter((r) => r.status === "fulfilled");
-    for await (const r of filteredResult) {
+    for  (const r of filteredResult) {
       if (r.status !== "fulfilled") throw new Error("No value");
 
       const json = await r.value.json();

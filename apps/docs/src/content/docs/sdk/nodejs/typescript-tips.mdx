@@ -20,9 +20,9 @@ const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
     url: "https://example.com",
     periodicity: Periodicity.PERIODICITY_1M,
     active: true,
-    timeout: BigInt(30000),       // 30 seconds
-    retry: BigInt(5),             // 5 retries
-    degradedAt: BigInt(3000),     // degraded after 3s
+    timeout: BigInt(30000), // 30 seconds
+    retry: BigInt(5), // 5 retries
+    degradedAt: BigInt(3000), // degraded after 3s
     statusCodeAssertions: [
       { comparator: NumberComparator.EQUAL, target: BigInt(200) },
     ],
@@ -41,7 +41,9 @@ const summary = await client.monitor.v1.MonitorService.getMonitorSummary({
 
 // bigint values — use Number() for display if values are safe
 console.log(`P95 latency: ${summary.p95}ms`);
-console.log(`Total checks: ${summary.totalSuccessful + summary.totalDegraded + summary.totalFailed}`);
+console.log(
+  `Total checks: ${summary.totalSuccessful + summary.totalDegraded + summary.totalFailed}`,
+);
 ```
 
 ## Handling oneof Types
@@ -121,13 +123,21 @@ import { openstatus } from "@openstatus/sdk-node";
 
 const headers = { "x-openstatus-key": process.env.OPENSTATUS_API_KEY };
 
-const { httpMonitors } = await openstatus.monitor.v1.MonitorService
-  .listMonitors({}, { headers });
+const { httpMonitors } =
+  await openstatus.monitor.v1.MonitorService.listMonitors({}, { headers });
 
-const { monitor } = await openstatus.monitor.v1.MonitorService
-  .createHTTPMonitor({
-    monitor: { name: "API", url: "https://example.com", periodicity: 2, active: true },
-  }, { headers });
+const { monitor } =
+  await openstatus.monitor.v1.MonitorService.createHTTPMonitor(
+    {
+      monitor: {
+        name: "API",
+        url: "https://example.com",
+        periodicity: 2,
+        active: true,
+      },
+    },
+    { headers },
+  );
 ```
 
 **After** — configure once, use everywhere:
@@ -139,16 +149,16 @@ const client = createOpenStatusClient({
   apiKey: process.env.OPENSTATUS_API_KEY,
 });
 
-const { httpMonitors } = await client.monitor.v1.MonitorService
-  .listMonitors({});
+const { httpMonitors } = await client.monitor.v1.MonitorService.listMonitors(
+  {},
+);
 
-const { monitor } = await client.monitor.v1.MonitorService
-  .createHTTPMonitor({
-    monitor: {
-      name: "API",
-      url: "https://example.com",
-      periodicity: Periodicity.PERIODICITY_1M,
-      active: true,
-    },
-  });
+const { monitor } = await client.monitor.v1.MonitorService.createHTTPMonitor({
+  monitor: {
+    name: "API",
+    url: "https://example.com",
+    periodicity: Periodicity.PERIODICITY_1M,
+    active: true,
+  },
+});
 ```

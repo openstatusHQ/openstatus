@@ -1,11 +1,13 @@
-import Link from "next/link";
+import type { SearchParams } from "nuqs/server";
 
-import { signIn } from "@/lib/auth";
 import { GitHubIcon } from "@openstatus/icons";
 import { GoogleIcon } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Separator } from "@openstatus/ui/components/ui/separator";
-import type { SearchParams } from "nuqs/server";
+import Link from "next/link";
+
+import { signIn } from "@/lib/auth";
+
 import MagicLinkForm from "./_components/magic-link-form";
 import { searchParamsCache } from "./search-params";
 
@@ -18,7 +20,7 @@ export default async function Page(props: {
   return (
     <div className="my-4 grid w-full max-w-lg gap-6">
       <div className="flex flex-col gap-1 text-center">
-        <h1 className="font-semibold text-3xl tracking-tight">Sign In</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Sign In</h1>
         <p className="text-muted-foreground text-sm">
           Get started now. No credit card required.
         </p>
@@ -54,18 +56,18 @@ export default async function Page(props: {
           </Button>
         </form>
       </div>
-      <p className="px-8 text-center text-muted-foreground text-sm">
+      <p className="text-muted-foreground px-8 text-center text-sm">
         By clicking continue, you agree to our{" "}
         <Link
           href="https://openstatus.dev/legal/terms"
-          className="underline underline-offset-4 hover:text-primary hover:no-underline"
+          className="hover:text-primary underline underline-offset-4 hover:no-underline"
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           href="https://openstatus.dev/legal/privacy"
-          className="underline underline-offset-4 hover:text-primary hover:no-underline"
+          className="hover:text-primary underline underline-offset-4 hover:no-underline"
         >
           Privacy Policy
         </Link>

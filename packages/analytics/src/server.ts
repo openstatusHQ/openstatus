@@ -1,6 +1,8 @@
-import { OpenPanel, type PostEventPayload } from "@openpanel/sdk";
-import { env } from "../env";
 import type { EventProps } from "./events";
+
+import { OpenPanel, type PostEventPayload } from "@openpanel/sdk";
+
+import { env } from "../env";
 
 const op = new OpenPanel({
   clientId: env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,

@@ -1,9 +1,5 @@
 "use client";
 
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { NavFeedback } from "@/components/nav/nav-feedback";
-import { getActions } from "@/data/status-pages.client";
-import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -15,6 +11,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { NavFeedback } from "@/components/nav/nav-feedback";
+import { getActions } from "@/data/status-pages.client";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
@@ -30,7 +31,7 @@ export function NavActions() {
   const deleteStatusPageMutation = useMutation(
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
         if (pathname.includes(`/status-pages/${id}`)) {
@@ -64,7 +65,7 @@ export function NavActions() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Globe className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                <Globe className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>
           </TooltipTrigger>

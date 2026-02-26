@@ -1,9 +1,7 @@
 "use client";
 
-import { Kbd } from "@/components/common/kbd";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { formatDateRange } from "@/lib/formatter";
 import type { RouterOutputs } from "@openstatus/api";
+
 import {
   HoverCard,
   HoverCardContent,
@@ -16,6 +14,11 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceStrict } from "date-fns";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+
+import { Kbd } from "@/components/common/kbd";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { formatDateRange } from "@/lib/formatter";
+
 import { requests } from "./messages";
 import { chartConfig } from "./utils";
 
@@ -231,7 +234,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
             <HoverCardTrigger asChild>
               <div
                 className={cn(
-                  "group relative mx-px flex h-full w-full cursor-pointer flex-col rounded-full outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] focus-visible:ring-ring/50 data-[aria-pressed=true]:opacity-80",
+                  "group focus-visible:ring-ring/50 relative mx-px flex h-full w-full cursor-pointer flex-col rounded-full outline-none first:ml-0 last:mr-0 hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] data-[aria-pressed=true]:opacity-80",
                   "overflow-hidden rounded-full",
                 )}
                 onClick={() => handleBarClick(index)}
@@ -270,7 +273,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
               side="top"
               align="center"
               // NOTE: remove animation and transition to avoid flickering
-              className="![animation-duration:0ms] ![transition-duration:0ms] w-auto min-w-40 p-0"
+              className="w-auto min-w-40 p-0 ![transition-duration:0ms] ![animation-duration:0ms]"
               onMouseEnter={handleHoverCardMouseEnter}
               onMouseLeave={handleHoverCardMouseLeave}
             >
@@ -341,7 +344,7 @@ export function StatusTracker({ data }: { data: UptimeData }) {
                 {isPinned && !isTouch && (
                   <>
                     <Separator />
-                    <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
+                    <div className="text-muted-foreground flex cursor-pointer items-center p-2 text-xs">
                       <span>Click again to unpin</span>
                       <Kbd>Esc</Kbd>
                     </div>
@@ -362,7 +365,7 @@ export function StatusTrackerSkeleton({
 }: React.ComponentProps<typeof Skeleton>) {
   return (
     <Skeleton
-      className={cn("h-[50px] w-full rounded-none bg-muted", className)}
+      className={cn("bg-muted h-[50px] w-full rounded-none", className)}
       {...props}
     />
   );
@@ -386,7 +389,7 @@ function StatusTrackerContent({
         />
         <div className="text-sm">{requests[status]}</div>
       </div>
-      <div className="ml-auto font-mono text-muted-foreground text-xs tracking-tight">
+      <div className="text-muted-foreground ml-auto font-mono text-xs tracking-tight">
         {value}
       </div>
     </div>
@@ -411,7 +414,7 @@ function StatusTrackerEvent({
       {/* NOTE: this is to make the text truncate based on the with of the sibling element */}
       {/* REMINDER: height needs to be equal the text height */}
       <div className="h-4 w-full" />
-      <div className="absolute inset-0 text-muted-foreground hover:text-foreground">
+      <div className="text-muted-foreground hover:text-foreground absolute inset-0">
         <div className="flex items-center gap-2">
           <div
             className="h-2.5 w-2.5 shrink-0 rounded-sm"
@@ -422,9 +425,9 @@ function StatusTrackerEvent({
           <div className="truncate">{name}</div>
         </div>
       </div>
-      <div className="mt-1 text-muted-foreground text-xs">
+      <div className="text-muted-foreground mt-1 text-xs">
         {formatDateRange(from, to ?? undefined)}{" "}
-        <span className="ml-1.5 font-mono text-muted-foreground/70">
+        <span className="text-muted-foreground/70 ml-1.5 font-mono">
           {formatDuration({ from, to, name, status })}
         </span>
       </div>

@@ -1,7 +1,8 @@
-import { redis } from "@/libs/clients";
 import { limitsSchema } from "@openstatus/db/src/schema/plan/schema";
 import { nanoid } from "nanoid";
 import { z } from "zod";
+
+import { redis } from "@/libs/clients";
 
 const statusEnum = z.enum([
   "investigating",

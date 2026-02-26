@@ -1,6 +1,5 @@
-import { env } from "@/env";
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { notEmpty } from "@/utils/not-empty";
+import type { statusReportsApi } from "../index";
+
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
@@ -9,8 +8,12 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { EmailClient } from "@openstatus/emails/src/client";
+
+import { env } from "@/env";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
+
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
-import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
 
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });

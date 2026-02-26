@@ -29,54 +29,63 @@ Header names are case-insensitive; values are not.
 
 **`Accept`**
 Which content types the client can handle. The `q` parameter sets preference weight.
+
 ```
 Accept: application/json, text/html;q=0.9
 ```
 
 **`Accept-Encoding`**
 Compression algorithms the client supports. Servers compress responses accordingly.
+
 ```
 Accept-Encoding: gzip, br, deflate
 ```
 
 **`Accept-Language`**
 The client's preferred language for response content.
+
 ```
 Accept-Language: en-US,en;q=0.9
 ```
 
 **`Authorization`**
 Credentials for accessing protected resources. Common schemes: `Bearer`, `Basic`, `ApiKey`.
+
 ```
 Authorization: Bearer <token>
 ```
 
 **`Content-Type`**
 The format of the request body. Required for `POST`/`PUT` requests with a body.
+
 ```
 Content-Type: application/json
 ```
 
 **`Cookie`**
 Previously stored cookies sent back to the server for session or user identification.
+
 ```
 Cookie: sessionId=abc123; theme=dark
 ```
 
 **`If-Modified-Since`**
 Conditional request—returns the resource only if it changed after the given date. Used with `Last-Modified` for cache revalidation.
+
 ```
 If-Modified-Since: Wed, 21 Oct 2023 07:28:00 GMT
 ```
 
 **`Referer`**
 The URL of the page that linked to the current resource. Note the historical misspelling.
+
 ```
 Referer: https://example.com/previous-page
 ```
 
 **`User-Agent`**
 Identifies the client—browser, SDK, or monitoring tool.
+
 ```
 User-Agent: OpenStatus-Monitor/1.0
 ```
@@ -87,6 +96,7 @@ User-Agent: OpenStatus-Monitor/1.0
 
 **`Cache-Control`**
 How and how long responses can be cached. Key directives:
+
 - `max-age=3600` — cache for 1 hour
 - `s-maxage=60` — CDN-specific override
 - `no-cache` — revalidate before serving cached content
@@ -100,18 +110,21 @@ A fingerprint for a specific version of a resource. Clients echo it back in `If-
 
 **`Location`**
 Target URL for redirect responses (`3xx`).
+
 ```
 Location: https://api.example.com/users/123
 ```
 
 **`Server`**
 The server software that generated the response. Often worth stripping in production to reduce information exposure.
+
 ```
 Server: nginx/1.21.0
 ```
 
 **`Set-Cookie`**
 Instructs the client to store a cookie with given attributes.
+
 ```
 Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict
 ```
@@ -122,24 +135,28 @@ Set-Cookie: sessionId=abc123; HttpOnly; Secure; SameSite=Strict
 
 **`Content-Security-Policy`**
 Controls which resources the browser can load. Primary defense against XSS.
+
 ```
 Content-Security-Policy: default-src 'self'; script-src 'self'
 ```
 
 **`Strict-Transport-Security`**
 Forces HTTPS for future requests. `includeSubDomains` extends coverage.
+
 ```
 Strict-Transport-Security: max-age=31536000; includeSubDomains
 ```
 
 **`X-Content-Type-Options`**
 Prevents browsers from MIME-sniffing the declared content type.
+
 ```
 X-Content-Type-Options: nosniff
 ```
 
 **`X-Frame-Options`**
 Protects against clickjacking by controlling iframe embedding.
+
 ```
 X-Frame-Options: DENY
 ```
@@ -150,16 +167,16 @@ X-Frame-Options: DENY
 
 Set by reverse proxies, load balancers, and CDNs—not your origin server.
 
-| Header | Purpose |
-|---|---|
-| `X-Forwarded-For` | Chain of IPs through each proxy |
-| `X-Forwarded-Host` | Original `Host` before proxy rewrites |
-| `X-Forwarded-Proto` | Original protocol (`http` or `https`) |
-| `X-Real-IP` | Original client IP, set by the first proxy |
-| `X-Request-ID` | Unique identifier for tracing a request across services |
-| `X-RateLimit-Limit` | Maximum requests allowed in a window |
-| `X-RateLimit-Remaining` | Requests remaining in the current window |
-| `X-RateLimit-Reset` | Unix timestamp when the rate limit resets |
+| Header                  | Purpose                                                 |
+| ----------------------- | ------------------------------------------------------- |
+| `X-Forwarded-For`       | Chain of IPs through each proxy                         |
+| `X-Forwarded-Host`      | Original `Host` before proxy rewrites                   |
+| `X-Forwarded-Proto`     | Original protocol (`http` or `https`)                   |
+| `X-Real-IP`             | Original client IP, set by the first proxy              |
+| `X-Request-ID`          | Unique identifier for tracing a request across services |
+| `X-RateLimit-Limit`     | Maximum requests allowed in a window                    |
+| `X-RateLimit-Remaining` | Requests remaining in the current window                |
+| `X-RateLimit-Reset`     | Unix timestamp when the rate limit resets               |
 
 ---
 
@@ -169,26 +186,26 @@ Each provider injects its own headers. Recognizing them tells you which layer ha
 
 ### Cloudflare
 
-| Header | Purpose |
-|---|---|
-| `CF-Ray` | Unique request ID—always include this in Cloudflare support tickets |
-| `CF-Cache-Status` | `HIT`, `MISS`, `EXPIRED`, or `BYPASS` |
+| Header             | Purpose                                                                 |
+| ------------------ | ----------------------------------------------------------------------- |
+| `CF-Ray`           | Unique request ID—always include this in Cloudflare support tickets     |
+| `CF-Cache-Status`  | `HIT`, `MISS`, `EXPIRED`, or `BYPASS`                                   |
 | `CF-Connecting-IP` | Original client IP—prefer this over `X-Forwarded-For` behind Cloudflare |
-| `CF-IPCountry` | Two-letter country code of the client |
+| `CF-IPCountry`     | Two-letter country code of the client                                   |
 
 ### Vercel
 
-| Header | Purpose |
-|---|---|
-| `X-Vercel-Id` | Unique request ID, includes region prefix (e.g. `cdg1::`) |
-| `X-Vercel-Cache` | `HIT`, `MISS`, or `STALE` from Vercel's edge cache |
+| Header           | Purpose                                                   |
+| ---------------- | --------------------------------------------------------- |
+| `X-Vercel-Id`    | Unique request ID, includes region prefix (e.g. `cdg1::`) |
+| `X-Vercel-Cache` | `HIT`, `MISS`, or `STALE` from Vercel's edge cache        |
 
 ### Fly.io
 
-| Header | Purpose |
-|---|---|
-| `Fly-Request-Id` | Unique request ID for tracing |
-| `Fly-Region` | The region that handled the request (e.g. `ams`, `lax`) |
+| Header           | Purpose                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `Fly-Request-Id` | Unique request ID for tracing                           |
+| `Fly-Region`     | The region that handled the request (e.g. `ams`, `lax`) |
 
 ### Railway / Koyeb
 
@@ -207,6 +224,8 @@ Response headers reveal more than status codes alone:
 
 ---
 
-<ButtonLink href="https://app.openstatus.dev">Start monitoring your API responses</ButtonLink>
+<ButtonLink href="https://app.openstatus.dev">
+  Start monitoring your API responses
+</ButtonLink>
 
 ---

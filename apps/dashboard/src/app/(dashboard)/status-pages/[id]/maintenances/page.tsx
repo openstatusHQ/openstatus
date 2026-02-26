@@ -1,5 +1,10 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+
 import { Link } from "@/components/common/link";
 import {
   Section,
@@ -13,10 +18,6 @@ import { columns } from "@/components/data-table/maintenances/columns";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -37,10 +38,10 @@ export default function Page() {
       onSuccess: (maintenance) => {
         // TODO: move to server
         if (maintenance.notifySubscribers) {
-          sendMaintenanceUpdateMutation.mutateAsync({ id: maintenance.id });
+          void sendMaintenanceUpdateMutation.mutateAsync({ id: maintenance.id });
         }
         //
-        refetch();
+        void refetch();
       },
     }),
   );

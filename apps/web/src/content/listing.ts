@@ -49,7 +49,7 @@ export function generateListingForPath(pathname: string): string | null {
  * Generate a markdown list from posts
  */
 function generatePostsList(posts: MDXData[], title: string): string {
-  const sorted = posts.sort(
+  const sorted = posts.toSorted(
     (a, b) =>
       b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
   );
@@ -107,7 +107,7 @@ function generateRootListing(): string {
   const content = sections
     .map((section) => {
       const count = section.posts.length;
-      const sortedPosts = section.posts.sort(
+      const sortedPosts = section.posts.toSorted(
         (a, b) =>
           b.metadata.publishedAt.getTime() - a.metadata.publishedAt.getTime(),
       );

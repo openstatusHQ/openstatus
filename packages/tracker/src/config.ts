@@ -1,4 +1,5 @@
 import type { StatusDetails, StatusVariant } from "./types";
+
 import { Status } from "./types";
 
 export const statusDetails: Record<Status, StatusDetails> = {

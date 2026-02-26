@@ -1,8 +1,9 @@
+import { Feed } from "feed";
+import { notFound, unauthorized } from "next/navigation";
+
 import { auth } from "@/lib/auth";
 import { getBaseUrl } from "@/lib/base-url";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
-import { Feed } from "feed";
-import { notFound, unauthorized } from "next/navigation";
 
 const STATUS_LABELS = {
   investigating: "Investigating",

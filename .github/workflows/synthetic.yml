@@ -2,15 +2,15 @@ name: Run OpenStatus Synthetics CI
 
 on:
   workflow_run:
-      workflows: ['Fly Deploy']
-      types: [completed]
-      branches:
-        - main
+    workflows: ["Fly Deploy"]
+    types: [completed]
+    branches:
+      - main
   repository_dispatch:
-      types:
-        - 'vercel.deployment.success'
-      branches:
-        - main
+    types:
+      - "vercel.deployment.success"
+    branches:
+      - main
 
 jobs:
   synthetic_ci:

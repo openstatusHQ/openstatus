@@ -1,13 +1,15 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { Row } from "@tanstack/react-table";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
+
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { useRef } from "react";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
 
@@ -26,7 +28,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const updateNotifierMutation = useMutation(
     trpc.notification.updateNotifier.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.notification.list.queryKey(),
         });
       },
@@ -35,7 +37,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const deleteNotifierMutation = useMutation(
     trpc.notification.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.notification.list.queryKey(),
         });
       },

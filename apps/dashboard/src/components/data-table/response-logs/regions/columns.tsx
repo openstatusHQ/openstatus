@@ -1,12 +1,9 @@
 "use client";
 
-import { ChartLineRegion } from "@/components/chart/chart-line-region";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RegionMetric } from "@/data/region-metrics";
-import { getActions } from "@/data/region-metrics.client";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+import type { ColumnDef } from "@tanstack/react-table";
+
 import { formatRegionCode, getRegionInfo } from "@openstatus/regions";
 import {
   Tooltip,
@@ -14,9 +11,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import type { ColumnDef } from "@tanstack/react-table";
 // import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+
+import { ChartLineRegion } from "@/components/chart/chart-line-region";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { getActions } from "@/data/region-metrics.client";
 
 function TrendCell({ trend }: { trend: RegionMetric["trend"] }) {
   return <ChartLineRegion className="h-[50px]" data={trend} />;

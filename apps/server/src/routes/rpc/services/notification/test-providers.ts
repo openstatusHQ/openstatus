@@ -13,6 +13,7 @@ import {
   NotificationProvider,
   OpsgenieRegion,
 } from "@openstatus/proto/notification/v1";
+
 import {
   invalidNotificationDataError,
   providerNotSupportedError,

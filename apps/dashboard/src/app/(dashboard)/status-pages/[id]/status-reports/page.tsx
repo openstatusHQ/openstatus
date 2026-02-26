@@ -1,5 +1,10 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+
 import { Link } from "@/components/common/link";
 import {
   Section,
@@ -14,10 +19,6 @@ import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
@@ -42,8 +43,8 @@ export default function Page() {
           });
         }
         //
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },

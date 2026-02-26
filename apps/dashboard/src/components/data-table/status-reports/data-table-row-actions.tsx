@@ -1,15 +1,17 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { Row } from "@tanstack/react-table";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
+
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { getNextStatus } from "@/data/status-report-updates.client";
 import { getActions } from "@/data/status-reports.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { useRef } from "react";
 
 type StatusReport = RouterOutputs["statusReport"]["list"][number];
 
@@ -50,15 +52,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),
@@ -71,18 +73,18 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       onSuccess: (update) => {
         // TODO: move to server
         if (update) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          void sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
         }
         //
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),
@@ -93,15 +95,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteStatusReportMutation = useMutation(
     trpc.statusReport.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),

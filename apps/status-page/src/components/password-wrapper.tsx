@@ -1,9 +1,10 @@
 "use client";
 
-import { createProtectedCookieKey } from "@/lib/protected";
 import { useParams } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect } from "react";
+
+import { createProtectedCookieKey } from "@/lib/protected";
 
 export function PasswordWrapper({ children }: { children?: React.ReactNode }) {
   const [password, setPassword] = useQueryState("pw", parseAsString);
@@ -15,7 +16,7 @@ export function PasswordWrapper({ children }: { children?: React.ReactNode }) {
       document.cookie = `${key}=${password}; path=/; expires=${new Date(
         Date.now() + 1000 * 60 * 60 * 24 * 30,
       ).toUTCString()}`;
-      setPassword(null);
+      void setPassword(null);
     }
   }, [password, domain, setPassword]);
 

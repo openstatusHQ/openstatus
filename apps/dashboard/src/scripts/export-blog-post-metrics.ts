@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+
 import { db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
@@ -61,7 +62,7 @@ async function main() {
   console.log(`  Created: ${monitorData.createdAt}`);
   console.log(`  Regular regions: ${monitorData.regions.join(", ")}`);
   console.log(
-    `  Private locations: ${privateLocationNames.join(", ") || "None"}`
+    `  Private locations: ${privateLocationNames.join(", ") || "None"}`,
   );
   console.log(`  Total regions: ${allRegions.length}`);
   console.log(`\nQuery Parameters:`);
@@ -84,40 +85,40 @@ async function main() {
             interval: INTERVAL,
           })
       : PERIOD === "7d"
-      ? await tb.tcpMetricsByIntervalWeekly({
-          monitorId: MONITOR_ID,
-          interval: INTERVAL,
-        })
-      : await tb.tcpMetricsByIntervalDaily({
-          monitorId: MONITOR_ID,
-          interval: INTERVAL,
-        });
+        ? await tb.tcpMetricsByIntervalWeekly({
+            monitorId: MONITOR_ID,
+            interval: INTERVAL,
+          })
+        : await tb.tcpMetricsByIntervalDaily({
+            monitorId: MONITOR_ID,
+            interval: INTERVAL,
+          });
 
   console.log(
-    `\nFetched ${metricsRegionsResult.data.length} metrics regions data points`
+    `\nFetched ${metricsRegionsResult.data.length} metrics regions data points`,
   );
   if (metricsRegionsResult.data.length > 0) {
     console.log(
       `  First data point:`,
-      JSON.stringify(metricsRegionsResult.data[0], null, 2)
+      JSON.stringify(metricsRegionsResult.data[0], null, 2),
     );
     console.log(
       `  Last data point:`,
       JSON.stringify(
         metricsRegionsResult.data[metricsRegionsResult.data.length - 1],
         null,
-        2
-      )
+        2,
+      ),
     );
   } else {
     console.log(`  ⚠️  No data returned. This could mean:`);
     console.log(`     - The monitor hasn't collected any data yet`);
     console.log(`     - The monitor is inactive or was just created`);
     console.log(
-      `     - There's no data in the selected time period (${PERIOD})`
+      `     - There's no data in the selected time period (${PERIOD})`,
     );
     console.log(
-      `\n  💡 Tip: Try querying without the interval parameter or using PERIOD="1d"`
+      `\n  💡 Tip: Try querying without the interval parameter or using PERIOD="1d"`,
     );
 
     // Try without interval to see if that helps
@@ -132,18 +133,18 @@ async function main() {
               monitorId: MONITOR_ID,
             })
         : PERIOD === "7d"
-        ? await tb.tcpMetricsByIntervalWeekly({
-            monitorId: MONITOR_ID,
-          })
-        : await tb.tcpMetricsByIntervalDaily({
-            monitorId: MONITOR_ID,
-          });
+          ? await tb.tcpMetricsByIntervalWeekly({
+              monitorId: MONITOR_ID,
+            })
+          : await tb.tcpMetricsByIntervalDaily({
+              monitorId: MONITOR_ID,
+            });
     console.log(`  Retry returned ${retryResult.data.length} data points`);
     if (retryResult.data.length > 0) {
       console.log(`  ✅ Success! The interval parameter might be the issue.`);
       console.log(
         `     First data point:`,
-        JSON.stringify(retryResult.data[0], null, 2)
+        JSON.stringify(retryResult.data[0], null, 2),
       );
     }
   }
@@ -155,20 +156,20 @@ async function main() {
         ? tb.httpMetricsByRegionWeekly
         : tb.httpMetricsByRegionDaily
       : PERIOD === "7d"
-      ? tb.tcpMetricsByRegionWeekly
-      : tb.tcpMetricsByRegionDaily;
+        ? tb.tcpMetricsByRegionWeekly
+        : tb.tcpMetricsByRegionDaily;
 
   const metricsByRegionsResult = await metricsByRegionProcedure({
     monitorId: MONITOR_ID,
   });
 
   console.log(
-    `\nFetched ${metricsByRegionsResult.data.length} metrics by region data points`
+    `\nFetched ${metricsByRegionsResult.data.length} metrics by region data points`,
   );
   if (metricsByRegionsResult.data.length > 0) {
     console.log(
       `  Sample:`,
-      JSON.stringify(metricsByRegionsResult.data.slice(0, 3), null, 2)
+      JSON.stringify(metricsByRegionsResult.data.slice(0, 3), null, 2),
     );
   }
 
@@ -215,7 +216,7 @@ async function main() {
   console.log(`\n✅ Data exported successfully to: ${outputPath}`);
   console.log(`Total timeline entries: ${timelineData.length}`);
   console.log(
-    `Total regions (including private locations): ${allRegions.length}`
+    `Total regions (including private locations): ${allRegions.length}`,
   );
 }
 

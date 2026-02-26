@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { TRPCReactProvider } from "@/lib/trpc/client";
+
 import { cn } from "@openstatus/ui/lib/utils";
+
+import "./globals.css";
+import { Geist, Geist_Mono } from "next/font/google";
 import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+
+import { TailwindIndicator } from "@/components/tailwind-indicator";
+import { TRPCReactProvider } from "@/lib/trpc/client";
+
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
 

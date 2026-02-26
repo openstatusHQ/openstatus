@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+
 import {
   Status,
   StatusContent,
@@ -8,8 +11,6 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 
 export default function UnsubscribeLayout({
   children,

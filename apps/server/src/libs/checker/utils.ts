@@ -1,11 +1,13 @@
-import { OpenStatusApiError } from "@/libs/errors";
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
+
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+
+import { OpenStatusApiError } from "@/libs/errors";
 
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,

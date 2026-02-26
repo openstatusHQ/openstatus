@@ -1,9 +1,12 @@
-import { openApiErrorResponses } from "@/libs/errors";
-import { notEmpty } from "@/utils/not-empty";
+import type { maintenancesApi } from "./index";
+
 import { createRoute } from "@hono/zod-openapi";
 import { db, desc, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema/maintenances";
-import type { maintenancesApi } from "./index";
+
+import { openApiErrorResponses } from "@/libs/errors";
+import { notEmpty } from "@/utils/not-empty";
+
 import { MaintenanceSchema } from "./schema";
 
 const getAllRoute = createRoute({
@@ -38,12 +41,7 @@ export function registerGetAllMaintenances(api: typeof maintenancesApi) {
     });
 
     const data = MaintenanceSchema.array().parse(
-      _maintenances.map((m) => ({
-        ...m,
-        monitorIds: m.maintenancesToPageComponents
-          .map((mtm) => mtm.pageComponent.monitorId)
-          .filter(notEmpty),
-      })),
+      _maintenances.map((m) => (Object.assign(m, {monitorIds:m.maintenancesToPageComponents.map(mtm=>mtm.pageComponent.monitorId).filter(notEmpty)}))),
     );
 
     return c.json(data, 200);

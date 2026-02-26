@@ -1,5 +1,12 @@
 "use client";
 
+import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
+
+import { useQuery } from "@tanstack/react-query";
+import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
+import { useQueryStates } from "nuqs";
+import { useEffect, useState } from "react";
+
 import {
   Section,
   SectionDescription,
@@ -22,11 +29,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { getMonitorListMetrics } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import type { ColumnFiltersState, SortingState } from "@tanstack/react-table";
-import { ArrowDown, CheckCircle, ListFilter } from "lucide-react";
-import { useQueryStates } from "nuqs";
-import { useEffect, useState } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 const icons = {
@@ -78,7 +81,6 @@ export function Client() {
   });
 
   // TODO: ideally we read from the searchParamsCache and there is no layout shift
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (searchParams.status) {
       setColumnFilters([{ id: "status", value: [searchParams.status] }]);
@@ -128,18 +130,18 @@ export function Client() {
                 onClick={() => {
                   if (metric.key === "p95") {
                     if (sorting.length === 0 || !isActive) {
-                      setSearchParams({ sort: { id: "p95", desc: true } });
+                      void setSearchParams({ sort: { id: "p95", desc: true } });
                       setSorting([{ id: "p95", desc: true }]);
                     } else {
-                      setSearchParams({ sort: null });
+                      void setSearchParams({ sort: null });
                       setSorting([]);
                     }
                   } else {
                     if (columnFilters.length === 0 || !isActive) {
-                      setSearchParams({ status: metric.key });
+                      void setSearchParams({ status: metric.key });
                       setColumnFilters([{ id: "status", value: [metric.key] }]);
                     } else {
-                      setSearchParams({ status: null });
+                      void setSearchParams({ status: null });
                       setColumnFilters([]);
                     }
                   }
@@ -164,19 +166,7 @@ export function Client() {
       <Section>
         <DataTable
           columns={columns}
-          data={monitors.map((monitor) => ({
-            ...monitor,
-            globalMetrics:
-              isLoadingHttp || isLoadingTcp
-                ? undefined
-                : monitor.jobType === "http"
-                  ? globalHttpMetrics?.data?.find(
-                      (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false
-                  : globalTcpMetrics?.data?.find(
-                      (m) => m.monitorId === monitor.id.toString(),
-                    ) ?? false,
-          }))}
+          data={monitors.map((monitor) => (Object.assign(monitor, {globalMetrics:isLoadingHttp||isLoadingTcp?undefined:monitor.jobType===`http`?globalHttpMetrics?.data?.find(m=>m.monitorId===monitor.id.toString())??false:globalTcpMetrics?.data?.find(m=>m.monitorId===monitor.id.toString())??false})))}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={(props) => (
             <MonitorDataTableToolbar {...props} tags={tags ?? []} />

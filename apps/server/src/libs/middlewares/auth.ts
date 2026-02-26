@@ -1,10 +1,6 @@
-import { UnkeyCore } from "@unkey/api/core";
-import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
+import type { Variables } from "@/types";
 import type { Context, Next } from "hono";
 
-import { env } from "@/env";
-import { OpenStatusApiError } from "@/libs/errors";
-import type { Variables } from "@/types";
 import { getLogger } from "@logtape/logtape";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
@@ -13,6 +9,11 @@ import {
   shouldUpdateLastUsed,
   verifyApiKeyHash,
 } from "@openstatus/db/src/utils/api-key";
+import { UnkeyCore } from "@unkey/api/core";
+import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
+
+import { env } from "@/env";
+import { OpenStatusApiError } from "@/libs/errors";
 
 const logger = getLogger("api-server");
 

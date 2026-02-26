@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import '@openstatus/ui/globals';
+@import "tailwindcss";
+@import "@openstatus/ui/globals";
 
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/container-queries';
@@ -19,8 +19,8 @@
   --color-sh-entity: var(--sh-entity);
 
   --font-sans:
-    var(--font-sans), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-cal: var(--font-calsans);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
@@ -93,19 +93,19 @@
     --sh-string: #0fa295;
   }
 
-  .dark [data-theme='dark'] {
+  .dark [data-theme="dark"] {
     display: block;
   }
 
-  [data-theme='dark'] {
+  [data-theme="dark"] {
     display: none;
   }
 
-  [data-theme='light'] {
+  [data-theme="light"] {
     display: block;
   }
 
-  .dark [data-theme='light'] {
+  .dark [data-theme="light"] {
     display: none;
   }
 }
@@ -150,7 +150,7 @@
 
 .prose .anchor:after {
   @apply text-muted-foreground;
-  content: '#';
+  content: "#";
 }
 
 .prose *:hover > .anchor {
@@ -187,7 +187,6 @@
 .prose h1 {
   @apply text-3xl text-foreground font-medium tracking-tight my-4 relative;
 }
-
 
 .prose h2 {
   @apply text-2xl text-foreground font-medium tracking-tight my-4 relative;
@@ -315,8 +314,8 @@ pre {
 }
 
 /* Remove Safari input shadow on mobile */
-input[type='text'],
-input[type='email'] {
+input[type="text"],
+input[type="email"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;

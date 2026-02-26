@@ -1,15 +1,17 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { Row } from "@tanstack/react-table";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/monitors.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
 
 type Monitor = RouterOutputs["monitor"]["list"][number];
 interface DataTableRowActionsProps {
@@ -23,7 +25,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(trpc.monitor.list.queryOptions());
+        void queryClient.invalidateQueries(trpc.monitor.list.queryOptions());
       },
     }),
   );
@@ -31,7 +33,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const actions = getActions({
     edit: () => router.push(`/monitors/${row.original.id}/edit`),
     "copy-id": () => {
-      navigator.clipboard.writeText(row.original.id.toString());
+      void navigator.clipboard.writeText(row.original.id.toString());
       toast.success("Monitor ID copied to clipboard");
     },
     // export: () => setOpenDialog(true),

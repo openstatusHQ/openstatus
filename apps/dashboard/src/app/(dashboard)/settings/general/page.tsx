@@ -1,5 +1,7 @@
 "use client";
 
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import {
   Section,
   SectionDescription,
@@ -13,7 +15,6 @@ import { FormMembers } from "@/components/forms/settings/form-members";
 import { FormSlug } from "@/components/forms/settings/form-slug";
 import { FormWorkspace } from "@/components/forms/settings/form-workspace";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 const BASE_URL = "https://app.openstatus.dev/invite";
 
@@ -24,10 +25,10 @@ export default function Page() {
   const updateWorkspaceNameMutation = useMutation(
     trpc.workspace.updateName.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
       },
@@ -40,7 +41,7 @@ export default function Page() {
     trpc.invitation.create.mutationOptions({
       onSuccess: (data) => {
         sendInvitationMutation.mutate({ id: data.id, baseUrl: BASE_URL });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.invitation.list.queryKey(),
         });
       },

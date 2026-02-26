@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useState } from "react";
+
 import {
   FormCard,
   FormCardContent,
@@ -18,8 +21,6 @@ import {
   FormMonitorTag,
   type FormValues,
 } from "@/components/forms/monitor-tag/form-monitor-tag";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useState } from "react";
 
 export function FormSheetMonitorTag({
   children,

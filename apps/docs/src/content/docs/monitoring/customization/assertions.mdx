@@ -3,17 +3,11 @@ title: Assertions
 description: "How to set up assertions for your synthetic checks in openstatus"
 ---
 
+import { Image } from "astro:assets";
 
-import { Image } from 'astro:assets';
+import Assertions from "../../../../assets/monitor/assertions.png";
 
-import Assertions from '../../../../assets/monitor/assertions.png';
-
-  <Image
-    src={Assertions}
-    alt="Monitor assertions"
-  />
-
-
+<Image src={Assertions} alt="Monitor assertions" />
 
 By default we expect the endpoint to return a `200` status code. If you want to check for a different status code you can go to to the `Assertions` tab and add a new assertion.
 

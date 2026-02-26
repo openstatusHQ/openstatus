@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CustomMDX } from "@/content/mdx";
 import { getToolsPage } from "@/content/utils";
 import { mockCheckAllRegions } from "@/lib/checker/mock";
@@ -8,7 +10,7 @@ import {
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
+
 import {
   CheckerProvider,
   DetailsButtonLink,
@@ -52,7 +54,6 @@ export default async function Page(props: {
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}
@@ -60,7 +61,7 @@ export default async function Page(props: {
       <h1>{page.metadata.title}</h1>
       <p className="text-lg">{page.metadata.description}</p>
       <CheckerProvider
-        defaultValues={data?.checks.sort((a, b) => a.latency - b.latency)}
+        defaultValues={data?.checks.toSorted((a, b) => a.latency - b.latency)}
       >
         <Form defaultMethod={data?.method} defaultUrl={data?.url} />
         <ResponseStatus />

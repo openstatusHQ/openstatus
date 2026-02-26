@@ -1,5 +1,6 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { statusReportUpdatesApi } from "./index";
 
+import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull, isNull } from "@openstatus/db";
 import {
   page,
@@ -7,11 +8,11 @@ import {
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { EmailClient } from "@openstatus/emails";
 
 import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { EmailClient } from "@openstatus/emails";
-import type { statusReportUpdatesApi } from "./index";
+
 import { StatusReportUpdateSchema } from "./schema";
 
 const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });

@@ -1,13 +1,5 @@
 "use client";
 
-import { IconCloudProvider } from "@/components/icon-cloud-provider";
-import {
-  type CachedRegionChecker,
-  getTimingPhases,
-  regionFormatter,
-  timestampFormatter,
-} from "@/lib/checker/utils";
-import { cn } from "@/lib/utils";
 import { type Region, regionDict } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -26,6 +18,16 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { useState } from "react";
+
+import { IconCloudProvider } from "@/components/icon-cloud-provider";
+import {
+  type CachedRegionChecker,
+  getTimingPhases,
+  regionFormatter,
+  timestampFormatter,
+} from "@/lib/checker/utils";
+import { cn } from "@/lib/utils";
+
 import { handleExportCSV } from "../utils";
 
 const STATUS_CODES = {
@@ -52,15 +54,12 @@ export function Table({ data }: TableProps) {
     .filter((check) => check.state === "success" && check.timing)
     .map((check) => {
       const timing = getTimingPhases(check.timing);
-      return {
-        ...check,
-        timingPhases: timing,
-      };
+      return Object.assign(check, {timingPhases:timing});
     });
 
   const filteredAndSorted = checks
     .filter((check) => {
-      const regionInfo = regionDict[check.region as Region];
+      const regionInfo = regionDict[check.region];
       if (!regionInfo) return false;
       return [
         regionInfo.code,
@@ -70,7 +69,7 @@ export function Table({ data }: TableProps) {
         regionInfo.provider,
       ].some((value) => value?.toLowerCase().includes(input.toLowerCase()));
     })
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       if (sort.value === "status") {
         return sort.desc ? b.status - a.status : a.status - b.status;
       }
@@ -133,14 +132,14 @@ export function Table({ data }: TableProps) {
               <tr>
                 <td
                   colSpan={8}
-                  className="border border-border border-dashed text-center"
+                  className="border-border border border-dashed text-center"
                 >
                   No data available
                 </td>
               </tr>
             ) : (
               filteredAndSorted.map((check) => {
-                const regionInfo = regionDict[check.region as Region];
+                const regionInfo = regionDict[check.region];
                 if (!regionInfo) return null;
 
                 const { dns, connection, tls, ttfb } = check.timingPhases;
@@ -271,14 +270,14 @@ function InfoDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-none! font-mono sm:max-w-5xl">
+      <DialogContent className="max-h-[90vh] overflow-x-hidden overflow-y-auto rounded-none! font-mono sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Response Details</DialogTitle>
           <DialogDescription>
             Basic informations like header and latency about the response.
           </DialogDescription>
         </DialogHeader>
-        <div className="prose dark:prose-invert min-w-0 max-w-none">
+        <div className="prose dark:prose-invert max-w-none min-w-0">
           <table>
             <tbody>
               <tr>
@@ -345,7 +344,7 @@ function InfoDialog({
                   <tbody>
                     {Object.entries(headers).map(([key, value]) => (
                       <tr key={key}>
-                        <td className="whitespace-nowrap font-medium">{key}</td>
+                        <td className="font-medium whitespace-nowrap">{key}</td>
                         <td className="max-w-md break-words">{value}</td>
                       </tr>
                     ))}
@@ -355,7 +354,7 @@ function InfoDialog({
             </TabsContent>
             <TabsContent value="raw" className="min-w-0 overflow-x-auto">
               {/* NOTE: we can make it a readOnly textarea*/}
-              <pre className="my-0! whitespace-pre-wrap break-words">
+              <pre className="my-0! break-words whitespace-pre-wrap">
                 {Object.entries(headers).map(([key, value]) => (
                   <code key={key} className="block break-words">
                     {key}: {value}

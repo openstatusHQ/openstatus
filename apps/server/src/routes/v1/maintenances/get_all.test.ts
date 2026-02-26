@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
+
 import { app } from "@/index";
+
 import { MaintenanceSchema } from "./schema";
 
 test("return all maintenances", async () => {

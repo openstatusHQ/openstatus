@@ -8,10 +8,11 @@ description: Technical specification for configuring and utilizing private monit
 A private location in OpenStatus enables users to deploy monitoring probes within their own infrastructure or private networks. This capability is essential for monitoring internal services, APIs, or systems that are not publicly accessible from the internet, such as those behind firewalls or within a Virtual Private Cloud (VPC).
 
 **Key benefits:**
--   **Internal Monitoring:** Monitor services running on private networks.
--   **Security:** Keep sensitive internal endpoints protected from public exposure.
--   **Compliance:** Meet specific regulatory or security compliance requirements by controlling data paths.
--   **Reduced Latency:** Conduct checks closer to your services for more accurate performance metrics.
+
+- **Internal Monitoring:** Monitor services running on private networks.
+- **Security:** Keep sensitive internal endpoints protected from public exposure.
+- **Compliance:** Meet specific regulatory or security compliance requirements by controlling data paths.
+- **Reduced Latency:** Conduct checks closer to your services for more accurate performance metrics.
 
 ## How it Works
 
@@ -32,9 +33,10 @@ Detailed steps for setting up a private location involve:
 4.  **Network Access:** Ensuring the deployed probe has network access to the internal services it needs to monitor, as well as outbound access to the OpenStatus platform.
 
 **Example Use Cases:**
--   Monitoring an internal REST API that is only accessible from within your corporate network.
--   Checking the health of a database server running on a private subnet.
--   Performing synthetic transactions on an internal web application before it's exposed publicly.
+
+- Monitoring an internal REST API that is only accessible from within your corporate network.
+- Checking the health of a database server running on a private subnet.
+- Performing synthetic transactions on an internal web application before it's exposed publicly.
 
 ## Related resources
 

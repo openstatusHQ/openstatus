@@ -1,4 +1,5 @@
 import type { ServiceImpl } from "@connectrpc/connect";
+
 import {
   and,
   db,
@@ -13,6 +14,9 @@ import {
 // Type that works with both db instance and transaction
 type DB = typeof db;
 type Transaction = Parameters<Parameters<DB["transaction"]>[0]>[0];
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { StatusReportService } from "@openstatus/proto/status_report/v1";
+
 import {
   page,
   pageComponent,
@@ -21,12 +25,11 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { EmailClient } from "@openstatus/emails";
-import type { StatusReportService } from "@openstatus/proto/status_report/v1";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 
 import { env } from "@/env";
+
 import { getRpcContext } from "../../interceptors";
 import {
   dbReportToProto,

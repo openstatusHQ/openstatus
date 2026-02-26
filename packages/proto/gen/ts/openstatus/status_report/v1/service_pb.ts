@@ -2,81 +2,103 @@
 // @generated from file openstatus/status_report/v1/service.proto (package openstatus.status_report.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type {
+  StatusReport,
+  StatusReportStatus,
+  StatusReportSummary,
+} from "./status_report_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv2";
+
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
+
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { StatusReport, StatusReportStatus, StatusReportSummary } from "./status_report_pb.ts";
 import { file_openstatus_status_report_v1_status_report } from "./status_report_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/status_report/v1/service.proto.
  */
-export const file_openstatus_status_report_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CilvcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjEvc2VydmljZS5wcm90bxIbb3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxIsUDChlDcmVhdGVTdGF0dXNSZXBvcnRSZXF1ZXN0EjoKBXRpdGxlGAEgASgJQiu6RyE6HxIdQVBJIERlZ3JhZGF0aW9uIEludmVzdGlnYXRpb266SARyAhABEkkKBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXNCCLpIBYIBAhABElUKB21lc3NhZ2UYAyABKAlCRLpHOjo4EjZXZSBhcmUgaW52ZXN0aWdhdGluZyByZXBvcnRzIG9mIGluY3JlYXNlZCBBUEkgbGF0ZW5jeS66SARyAhABEnQKBGRhdGUYBCABKAlCZrpHGDoWEhQyMDI0LTAzLTE1VDEwOjMwOjAwWrpISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJBIYCgdwYWdlX2lkGAUgASgJQge6SARyAhABEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgGIAMoCRITCgZub3RpZnkYByABKAhIAIgBAUIJCgdfbm90aWZ5Il4KGkNyZWF0ZVN0YXR1c1JlcG9ydFJlc3BvbnNlEkAKDXN0YXR1c19yZXBvcnQYASABKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0Ii0KFkdldFN0YXR1c1JlcG9ydFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiWwoXR2V0U3RhdHVzUmVwb3J0UmVzcG9uc2USQAoNc3RhdHVzX3JlcG9ydBgBIAEoCzIpLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnQirwEKGExpc3RTdGF0dXNSZXBvcnRzUmVxdWVzdBIdCgVsaW1pdBgBIAEoBUIJukgGGgQYZCgBSACIAQESHAoGb2Zmc2V0GAIgASgFQge6SAQaAigASAGIAQESQQoIc3RhdHVzZXMYAyADKA4yLy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3RhdHVzQggKBl9saW1pdEIJCgdfb2Zmc2V0InkKGUxpc3RTdGF0dXNSZXBvcnRzUmVzcG9uc2USSAoOc3RhdHVzX3JlcG9ydHMYASADKAsyMC5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3VtbWFyeRISCgp0b3RhbF9zaXplGAIgASgFImoKGVVwZGF0ZVN0YXR1c1JlcG9ydFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESEgoFdGl0bGUYAiABKAlIAIgBARIaChJwYWdlX2NvbXBvbmVudF9pZHMYAyADKAlCCAoGX3RpdGxlIl4KGlVwZGF0ZVN0YXR1c1JlcG9ydFJlc3BvbnNlEkAKDXN0YXR1c19yZXBvcnQYASABKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0IjAKGURlbGV0ZVN0YXR1c1JlcG9ydFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiLQoaRGVsZXRlU3RhdHVzUmVwb3J0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCKvAgocQWRkU3RhdHVzUmVwb3J0VXBkYXRlUmVxdWVzdBIhChBzdGF0dXNfcmVwb3J0X2lkGAEgASgJQge6SARyAhABEkkKBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXNCCLpIBYIBAhABEhgKB21lc3NhZ2UYAyABKAlCB7pIBHICEAESXgoEZGF0ZRgEIAEoCUJLukhIckYyRF5cZHs0fS1cZHsyfS1cZHsyfVRcZHsyfTpcZHsyfTpcZHsyfShcLlxkezEsOX0pPyhafFsrLV1cZHsyfTpcZHsyfSkkSACIAQESEwoGbm90aWZ5GAUgASgISAGIAQFCBwoFX2RhdGVCCQoHX25vdGlmeSJhCh1BZGRTdGF0dXNSZXBvcnRVcGRhdGVSZXNwb25zZRJACg1zdGF0dXNfcmVwb3J0GAEgASgLMikub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLlN0YXR1c1JlcG9ydDK/CwoTU3RhdHVzUmVwb3J0U2VydmljZRLOAwoSQ3JlYXRlU3RhdHVzUmVwb3J0EjYub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkNyZWF0ZVN0YXR1c1JlcG9ydFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuQ3JlYXRlU3RhdHVzUmVwb3J0UmVzcG9uc2UixgK6R8ICGr8CQ3JlYXRlcyBhIG5ldyBzdGF0dXMgcmVwb3J0IHdpdGggYW4gaW5pdGlhbCB1cGRhdGUgZW50cnkuIFRoZSByZXBvcnQgaXMgYXNzb2NpYXRlZCB3aXRoIGEgc3RhdHVzIHBhZ2UgYW5kIG9wdGlvbmFsbHkgc3BlY2lmaWMgcGFnZSBjb21wb25lbnRzLiBBbiBpbml0aWFsIFN0YXR1c1JlcG9ydFVwZGF0ZSBpcyBjcmVhdGVkIGF1dG9tYXRpY2FsbHkgd2l0aCB0aGUgcHJvdmlkZWQgc3RhdHVzLCBtZXNzYWdlLCBhbmQgZGF0ZS4gSWYgbm90aWZ5IGlzIHRydWUsIHN1YnNjcmliZXJzIG9mIHRoZSBhc3NvY2lhdGVkIHBhZ2UgYXJlIG5vdGlmaWVkIGJ5IGVtYWlsLhKBAQoPR2V0U3RhdHVzUmVwb3J0EjMub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkdldFN0YXR1c1JlcG9ydFJlcXVlc3QaNC5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuR2V0U3RhdHVzUmVwb3J0UmVzcG9uc2UiA5ACARKHAQoRTGlzdFN0YXR1c1JlcG9ydHMSNS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuTGlzdFN0YXR1c1JlcG9ydHNSZXF1ZXN0GjYub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkxpc3RTdGF0dXNSZXBvcnRzUmVzcG9uc2UiA5ACARKFAQoSVXBkYXRlU3RhdHVzUmVwb3J0EjYub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLlVwZGF0ZVN0YXR1c1JlcG9ydFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuVXBkYXRlU3RhdHVzUmVwb3J0UmVzcG9uc2UShQEKEkRlbGV0ZVN0YXR1c1JlcG9ydBI2Lm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5EZWxldGVTdGF0dXNSZXBvcnRSZXF1ZXN0Gjcub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkRlbGV0ZVN0YXR1c1JlcG9ydFJlc3BvbnNlErgDChVBZGRTdGF0dXNSZXBvcnRVcGRhdGUSOS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuQWRkU3RhdHVzUmVwb3J0VXBkYXRlUmVxdWVzdBo6Lm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5BZGRTdGF0dXNSZXBvcnRVcGRhdGVSZXNwb25zZSKnArpHowIaoAJBZGRzIGEgbmV3IHVwZGF0ZSBlbnRyeSB0byBhbiBleGlzdGluZyBzdGF0dXMgcmVwb3J0IGFuZCB0cmFuc2l0aW9ucyB0aGUgcmVwb3J0IHRvIHRoZSBzcGVjaWZpZWQgc3RhdHVzLiBTdGF0dXMgcmVwb3J0cyBmb2xsb3cgYSBsaWZlY3ljbGU6IGludmVzdGlnYXRpbmcgLT4gaWRlbnRpZmllZCAtPiBtb25pdG9yaW5nIC0+IHJlc29sdmVkLiBJZiBub3RpZnkgaXMgdHJ1ZSwgc3Vic2NyaWJlcnMgb2YgdGhlIGFzc29jaWF0ZWQgcGFnZSBhcmUgbm90aWZpZWQgYnkgZW1haWwgYWJvdXQgdGhlIHVwZGF0ZS5CXlpcZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjE7c3RhdHVzcmVwb3J0djFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_status_report_v1_status_report]);
+export const file_openstatus_status_report_v1_service: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CilvcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjEvc2VydmljZS5wcm90bxIbb3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxIsUDChlDcmVhdGVTdGF0dXNSZXBvcnRSZXF1ZXN0EjoKBXRpdGxlGAEgASgJQiu6RyE6HxIdQVBJIERlZ3JhZGF0aW9uIEludmVzdGlnYXRpb266SARyAhABEkkKBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXNCCLpIBYIBAhABElUKB21lc3NhZ2UYAyABKAlCRLpHOjo4EjZXZSBhcmUgaW52ZXN0aWdhdGluZyByZXBvcnRzIG9mIGluY3JlYXNlZCBBUEkgbGF0ZW5jeS66SARyAhABEnQKBGRhdGUYBCABKAlCZrpHGDoWEhQyMDI0LTAzLTE1VDEwOjMwOjAwWrpISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJBIYCgdwYWdlX2lkGAUgASgJQge6SARyAhABEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgGIAMoCRITCgZub3RpZnkYByABKAhIAIgBAUIJCgdfbm90aWZ5Il4KGkNyZWF0ZVN0YXR1c1JlcG9ydFJlc3BvbnNlEkAKDXN0YXR1c19yZXBvcnQYASABKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0Ii0KFkdldFN0YXR1c1JlcG9ydFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiWwoXR2V0U3RhdHVzUmVwb3J0UmVzcG9uc2USQAoNc3RhdHVzX3JlcG9ydBgBIAEoCzIpLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnQirwEKGExpc3RTdGF0dXNSZXBvcnRzUmVxdWVzdBIdCgVsaW1pdBgBIAEoBUIJukgGGgQYZCgBSACIAQESHAoGb2Zmc2V0GAIgASgFQge6SAQaAigASAGIAQESQQoIc3RhdHVzZXMYAyADKA4yLy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3RhdHVzQggKBl9saW1pdEIJCgdfb2Zmc2V0InkKGUxpc3RTdGF0dXNSZXBvcnRzUmVzcG9uc2USSAoOc3RhdHVzX3JlcG9ydHMYASADKAsyMC5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0U3VtbWFyeRISCgp0b3RhbF9zaXplGAIgASgFImoKGVVwZGF0ZVN0YXR1c1JlcG9ydFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESEgoFdGl0bGUYAiABKAlIAIgBARIaChJwYWdlX2NvbXBvbmVudF9pZHMYAyADKAlCCAoGX3RpdGxlIl4KGlVwZGF0ZVN0YXR1c1JlcG9ydFJlc3BvbnNlEkAKDXN0YXR1c19yZXBvcnQYASABKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0IjAKGURlbGV0ZVN0YXR1c1JlcG9ydFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiLQoaRGVsZXRlU3RhdHVzUmVwb3J0UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCKvAgocQWRkU3RhdHVzUmVwb3J0VXBkYXRlUmVxdWVzdBIhChBzdGF0dXNfcmVwb3J0X2lkGAEgASgJQge6SARyAhABEkkKBnN0YXR1cxgCIAEoDjIvLm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5TdGF0dXNSZXBvcnRTdGF0dXNCCLpIBYIBAhABEhgKB21lc3NhZ2UYAyABKAlCB7pIBHICEAESXgoEZGF0ZRgEIAEoCUJLukhIckYyRF5cZHs0fS1cZHsyfS1cZHsyfVRcZHsyfTpcZHsyfTpcZHsyfShcLlxkezEsOX0pPyhafFsrLV1cZHsyfTpcZHsyfSkkSACIAQESEwoGbm90aWZ5GAUgASgISAGIAQFCBwoFX2RhdGVCCQoHX25vdGlmeSJhCh1BZGRTdGF0dXNSZXBvcnRVcGRhdGVSZXNwb25zZRJACg1zdGF0dXNfcmVwb3J0GAEgASgLMikub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLlN0YXR1c1JlcG9ydDK/CwoTU3RhdHVzUmVwb3J0U2VydmljZRLOAwoSQ3JlYXRlU3RhdHVzUmVwb3J0EjYub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkNyZWF0ZVN0YXR1c1JlcG9ydFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuQ3JlYXRlU3RhdHVzUmVwb3J0UmVzcG9uc2UixgK6R8ICGr8CQ3JlYXRlcyBhIG5ldyBzdGF0dXMgcmVwb3J0IHdpdGggYW4gaW5pdGlhbCB1cGRhdGUgZW50cnkuIFRoZSByZXBvcnQgaXMgYXNzb2NpYXRlZCB3aXRoIGEgc3RhdHVzIHBhZ2UgYW5kIG9wdGlvbmFsbHkgc3BlY2lmaWMgcGFnZSBjb21wb25lbnRzLiBBbiBpbml0aWFsIFN0YXR1c1JlcG9ydFVwZGF0ZSBpcyBjcmVhdGVkIGF1dG9tYXRpY2FsbHkgd2l0aCB0aGUgcHJvdmlkZWQgc3RhdHVzLCBtZXNzYWdlLCBhbmQgZGF0ZS4gSWYgbm90aWZ5IGlzIHRydWUsIHN1YnNjcmliZXJzIG9mIHRoZSBhc3NvY2lhdGVkIHBhZ2UgYXJlIG5vdGlmaWVkIGJ5IGVtYWlsLhKBAQoPR2V0U3RhdHVzUmVwb3J0EjMub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkdldFN0YXR1c1JlcG9ydFJlcXVlc3QaNC5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuR2V0U3RhdHVzUmVwb3J0UmVzcG9uc2UiA5ACARKHAQoRTGlzdFN0YXR1c1JlcG9ydHMSNS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuTGlzdFN0YXR1c1JlcG9ydHNSZXF1ZXN0GjYub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkxpc3RTdGF0dXNSZXBvcnRzUmVzcG9uc2UiA5ACARKFAQoSVXBkYXRlU3RhdHVzUmVwb3J0EjYub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLlVwZGF0ZVN0YXR1c1JlcG9ydFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuVXBkYXRlU3RhdHVzUmVwb3J0UmVzcG9uc2UShQEKEkRlbGV0ZVN0YXR1c1JlcG9ydBI2Lm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5EZWxldGVTdGF0dXNSZXBvcnRSZXF1ZXN0Gjcub3BlbnN0YXR1cy5zdGF0dXNfcmVwb3J0LnYxLkRlbGV0ZVN0YXR1c1JlcG9ydFJlc3BvbnNlErgDChVBZGRTdGF0dXNSZXBvcnRVcGRhdGUSOS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuQWRkU3RhdHVzUmVwb3J0VXBkYXRlUmVxdWVzdBo6Lm9wZW5zdGF0dXMuc3RhdHVzX3JlcG9ydC52MS5BZGRTdGF0dXNSZXBvcnRVcGRhdGVSZXNwb25zZSKnArpHowIaoAJBZGRzIGEgbmV3IHVwZGF0ZSBlbnRyeSB0byBhbiBleGlzdGluZyBzdGF0dXMgcmVwb3J0IGFuZCB0cmFuc2l0aW9ucyB0aGUgcmVwb3J0IHRvIHRoZSBzcGVjaWZpZWQgc3RhdHVzLiBTdGF0dXMgcmVwb3J0cyBmb2xsb3cgYSBsaWZlY3ljbGU6IGludmVzdGlnYXRpbmcgLT4gaWRlbnRpZmllZCAtPiBtb25pdG9yaW5nIC0+IHJlc29sdmVkLiBJZiBub3RpZnkgaXMgdHJ1ZSwgc3Vic2NyaWJlcnMgb2YgdGhlIGFzc29jaWF0ZWQgcGFnZSBhcmUgbm90aWZpZWQgYnkgZW1haWwgYWJvdXQgdGhlIHVwZGF0ZS5CXlpcZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3N0YXR1c19yZXBvcnQvdjE7c3RhdHVzcmVwb3J0djFiBnByb3RvMw",
+    [
+      file_buf_validate_validate,
+      file_gnostic_openapi_v3_annotations,
+      file_openstatus_status_report_v1_status_report,
+    ],
+  );
 
 /**
  * CreateStatusReportRequest is the request to create a new status report.
  *
  * @generated from message openstatus.status_report.v1.CreateStatusReportRequest
  */
-export type CreateStatusReportRequest = Message<"openstatus.status_report.v1.CreateStatusReportRequest"> & {
-  /**
-   * Title of the status report (required).
-   *
-   * @generated from field: string title = 1;
-   */
-  title: string;
+export type CreateStatusReportRequest =
+  Message<"openstatus.status_report.v1.CreateStatusReportRequest"> & {
+    /**
+     * Title of the status report (required).
+     *
+     * @generated from field: string title = 1;
+     */
+    title: string;
 
-  /**
-   * Initial status (required).
-   *
-   * @generated from field: openstatus.status_report.v1.StatusReportStatus status = 2;
-   */
-  status: StatusReportStatus;
+    /**
+     * Initial status (required).
+     *
+     * @generated from field: openstatus.status_report.v1.StatusReportStatus status = 2;
+     */
+    status: StatusReportStatus;
 
-  /**
-   * Initial message describing the incident (required).
-   *
-   * @generated from field: string message = 3;
-   */
-  message: string;
+    /**
+     * Initial message describing the incident (required).
+     *
+     * @generated from field: string message = 3;
+     */
+    message: string;
 
-  /**
-   * Date when the event occurred (RFC 3339 format, required).
-   *
-   * @generated from field: string date = 4;
-   */
-  date: string;
+    /**
+     * Date when the event occurred (RFC 3339 format, required).
+     *
+     * @generated from field: string date = 4;
+     */
+    date: string;
 
-  /**
-   * Page ID to associate with this report (required).
-   *
-   * @generated from field: string page_id = 5;
-   */
-  pageId: string;
+    /**
+     * Page ID to associate with this report (required).
+     *
+     * @generated from field: string page_id = 5;
+     */
+    pageId: string;
 
-  /**
-   * Page component IDs to associate with this report (optional).
-   *
-   * @generated from field: repeated string page_component_ids = 6;
-   */
-  pageComponentIds: string[];
+    /**
+     * Page component IDs to associate with this report (optional).
+     *
+     * @generated from field: repeated string page_component_ids = 6;
+     */
+    pageComponentIds: string[];
 
-  /**
-   * Whether to notify subscribers about this status report (optional, defaults to false).
-   *
-   * @generated from field: optional bool notify = 7;
-   */
-  notify?: boolean;
-};
+    /**
+     * Whether to notify subscribers about this status report (optional, defaults to false).
+     *
+     * @generated from field: optional bool notify = 7;
+     */
+    notify?: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.CreateStatusReportRequest.
  * Use `create(CreateStatusReportRequestSchema)` to create a new message.
  */
-export const CreateStatusReportRequestSchema: GenMessage<CreateStatusReportRequest> = /*@__PURE__*/
+export const CreateStatusReportRequestSchema: GenMessage<CreateStatusReportRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 0);
 
 /**
@@ -84,20 +106,21 @@ export const CreateStatusReportRequestSchema: GenMessage<CreateStatusReportReque
  *
  * @generated from message openstatus.status_report.v1.CreateStatusReportResponse
  */
-export type CreateStatusReportResponse = Message<"openstatus.status_report.v1.CreateStatusReportResponse"> & {
-  /**
-   * The created status report.
-   *
-   * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
-   */
-  statusReport?: StatusReport;
-};
+export type CreateStatusReportResponse =
+  Message<"openstatus.status_report.v1.CreateStatusReportResponse"> & {
+    /**
+     * The created status report.
+     *
+     * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
+     */
+    statusReport?: StatusReport;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.CreateStatusReportResponse.
  * Use `create(CreateStatusReportResponseSchema)` to create a new message.
  */
-export const CreateStatusReportResponseSchema: GenMessage<CreateStatusReportResponse> = /*@__PURE__*/
+export const CreateStatusReportResponseSchema: GenMessage<CreateStatusReportResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 1);
 
 /**
@@ -105,20 +128,21 @@ export const CreateStatusReportResponseSchema: GenMessage<CreateStatusReportResp
  *
  * @generated from message openstatus.status_report.v1.GetStatusReportRequest
  */
-export type GetStatusReportRequest = Message<"openstatus.status_report.v1.GetStatusReportRequest"> & {
-  /**
-   * ID of the status report to retrieve (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type GetStatusReportRequest =
+  Message<"openstatus.status_report.v1.GetStatusReportRequest"> & {
+    /**
+     * ID of the status report to retrieve (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.GetStatusReportRequest.
  * Use `create(GetStatusReportRequestSchema)` to create a new message.
  */
-export const GetStatusReportRequestSchema: GenMessage<GetStatusReportRequest> = /*@__PURE__*/
+export const GetStatusReportRequestSchema: GenMessage<GetStatusReportRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 2);
 
 /**
@@ -126,20 +150,21 @@ export const GetStatusReportRequestSchema: GenMessage<GetStatusReportRequest> = 
  *
  * @generated from message openstatus.status_report.v1.GetStatusReportResponse
  */
-export type GetStatusReportResponse = Message<"openstatus.status_report.v1.GetStatusReportResponse"> & {
-  /**
-   * The requested status report.
-   *
-   * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
-   */
-  statusReport?: StatusReport;
-};
+export type GetStatusReportResponse =
+  Message<"openstatus.status_report.v1.GetStatusReportResponse"> & {
+    /**
+     * The requested status report.
+     *
+     * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
+     */
+    statusReport?: StatusReport;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.GetStatusReportResponse.
  * Use `create(GetStatusReportResponseSchema)` to create a new message.
  */
-export const GetStatusReportResponseSchema: GenMessage<GetStatusReportResponse> = /*@__PURE__*/
+export const GetStatusReportResponseSchema: GenMessage<GetStatusReportResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 3);
 
 /**
@@ -147,34 +172,35 @@ export const GetStatusReportResponseSchema: GenMessage<GetStatusReportResponse> 
  *
  * @generated from message openstatus.status_report.v1.ListStatusReportsRequest
  */
-export type ListStatusReportsRequest = Message<"openstatus.status_report.v1.ListStatusReportsRequest"> & {
-  /**
-   * Maximum number of reports to return (1-100, defaults to 50).
-   *
-   * @generated from field: optional int32 limit = 1;
-   */
-  limit?: number;
+export type ListStatusReportsRequest =
+  Message<"openstatus.status_report.v1.ListStatusReportsRequest"> & {
+    /**
+     * Maximum number of reports to return (1-100, defaults to 50).
+     *
+     * @generated from field: optional int32 limit = 1;
+     */
+    limit?: number;
 
-  /**
-   * Number of reports to skip for pagination (defaults to 0).
-   *
-   * @generated from field: optional int32 offset = 2;
-   */
-  offset?: number;
+    /**
+     * Number of reports to skip for pagination (defaults to 0).
+     *
+     * @generated from field: optional int32 offset = 2;
+     */
+    offset?: number;
 
-  /**
-   * Filter by status (optional). If empty, returns all statuses.
-   *
-   * @generated from field: repeated openstatus.status_report.v1.StatusReportStatus statuses = 3;
-   */
-  statuses: StatusReportStatus[];
-};
+    /**
+     * Filter by status (optional). If empty, returns all statuses.
+     *
+     * @generated from field: repeated openstatus.status_report.v1.StatusReportStatus statuses = 3;
+     */
+    statuses: StatusReportStatus[];
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.ListStatusReportsRequest.
  * Use `create(ListStatusReportsRequestSchema)` to create a new message.
  */
-export const ListStatusReportsRequestSchema: GenMessage<ListStatusReportsRequest> = /*@__PURE__*/
+export const ListStatusReportsRequestSchema: GenMessage<ListStatusReportsRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 4);
 
 /**
@@ -182,27 +208,28 @@ export const ListStatusReportsRequestSchema: GenMessage<ListStatusReportsRequest
  *
  * @generated from message openstatus.status_report.v1.ListStatusReportsResponse
  */
-export type ListStatusReportsResponse = Message<"openstatus.status_report.v1.ListStatusReportsResponse"> & {
-  /**
-   * List of status reports (metadata only, use GetStatusReport for full details).
-   *
-   * @generated from field: repeated openstatus.status_report.v1.StatusReportSummary status_reports = 1;
-   */
-  statusReports: StatusReportSummary[];
+export type ListStatusReportsResponse =
+  Message<"openstatus.status_report.v1.ListStatusReportsResponse"> & {
+    /**
+     * List of status reports (metadata only, use GetStatusReport for full details).
+     *
+     * @generated from field: repeated openstatus.status_report.v1.StatusReportSummary status_reports = 1;
+     */
+    statusReports: StatusReportSummary[];
 
-  /**
-   * Total number of reports matching the filter.
-   *
-   * @generated from field: int32 total_size = 2;
-   */
-  totalSize: number;
-};
+    /**
+     * Total number of reports matching the filter.
+     *
+     * @generated from field: int32 total_size = 2;
+     */
+    totalSize: number;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.ListStatusReportsResponse.
  * Use `create(ListStatusReportsResponseSchema)` to create a new message.
  */
-export const ListStatusReportsResponseSchema: GenMessage<ListStatusReportsResponse> = /*@__PURE__*/
+export const ListStatusReportsResponseSchema: GenMessage<ListStatusReportsResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 5);
 
 /**
@@ -210,34 +237,35 @@ export const ListStatusReportsResponseSchema: GenMessage<ListStatusReportsRespon
  *
  * @generated from message openstatus.status_report.v1.UpdateStatusReportRequest
  */
-export type UpdateStatusReportRequest = Message<"openstatus.status_report.v1.UpdateStatusReportRequest"> & {
-  /**
-   * ID of the status report to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateStatusReportRequest =
+  Message<"openstatus.status_report.v1.UpdateStatusReportRequest"> & {
+    /**
+     * ID of the status report to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * New title for the report (optional).
-   *
-   * @generated from field: optional string title = 2;
-   */
-  title?: string;
+    /**
+     * New title for the report (optional).
+     *
+     * @generated from field: optional string title = 2;
+     */
+    title?: string;
 
-  /**
-   * New list of page component IDs (optional, replaces existing list).
-   *
-   * @generated from field: repeated string page_component_ids = 3;
-   */
-  pageComponentIds: string[];
-};
+    /**
+     * New list of page component IDs (optional, replaces existing list).
+     *
+     * @generated from field: repeated string page_component_ids = 3;
+     */
+    pageComponentIds: string[];
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.UpdateStatusReportRequest.
  * Use `create(UpdateStatusReportRequestSchema)` to create a new message.
  */
-export const UpdateStatusReportRequestSchema: GenMessage<UpdateStatusReportRequest> = /*@__PURE__*/
+export const UpdateStatusReportRequestSchema: GenMessage<UpdateStatusReportRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 6);
 
 /**
@@ -245,20 +273,21 @@ export const UpdateStatusReportRequestSchema: GenMessage<UpdateStatusReportReque
  *
  * @generated from message openstatus.status_report.v1.UpdateStatusReportResponse
  */
-export type UpdateStatusReportResponse = Message<"openstatus.status_report.v1.UpdateStatusReportResponse"> & {
-  /**
-   * The updated status report.
-   *
-   * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
-   */
-  statusReport?: StatusReport;
-};
+export type UpdateStatusReportResponse =
+  Message<"openstatus.status_report.v1.UpdateStatusReportResponse"> & {
+    /**
+     * The updated status report.
+     *
+     * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
+     */
+    statusReport?: StatusReport;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.UpdateStatusReportResponse.
  * Use `create(UpdateStatusReportResponseSchema)` to create a new message.
  */
-export const UpdateStatusReportResponseSchema: GenMessage<UpdateStatusReportResponse> = /*@__PURE__*/
+export const UpdateStatusReportResponseSchema: GenMessage<UpdateStatusReportResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 7);
 
 /**
@@ -266,20 +295,21 @@ export const UpdateStatusReportResponseSchema: GenMessage<UpdateStatusReportResp
  *
  * @generated from message openstatus.status_report.v1.DeleteStatusReportRequest
  */
-export type DeleteStatusReportRequest = Message<"openstatus.status_report.v1.DeleteStatusReportRequest"> & {
-  /**
-   * ID of the status report to delete (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type DeleteStatusReportRequest =
+  Message<"openstatus.status_report.v1.DeleteStatusReportRequest"> & {
+    /**
+     * ID of the status report to delete (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.DeleteStatusReportRequest.
  * Use `create(DeleteStatusReportRequestSchema)` to create a new message.
  */
-export const DeleteStatusReportRequestSchema: GenMessage<DeleteStatusReportRequest> = /*@__PURE__*/
+export const DeleteStatusReportRequestSchema: GenMessage<DeleteStatusReportRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 8);
 
 /**
@@ -287,20 +317,21 @@ export const DeleteStatusReportRequestSchema: GenMessage<DeleteStatusReportReque
  *
  * @generated from message openstatus.status_report.v1.DeleteStatusReportResponse
  */
-export type DeleteStatusReportResponse = Message<"openstatus.status_report.v1.DeleteStatusReportResponse"> & {
-  /**
-   * Whether the deletion was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type DeleteStatusReportResponse =
+  Message<"openstatus.status_report.v1.DeleteStatusReportResponse"> & {
+    /**
+     * Whether the deletion was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.DeleteStatusReportResponse.
  * Use `create(DeleteStatusReportResponseSchema)` to create a new message.
  */
-export const DeleteStatusReportResponseSchema: GenMessage<DeleteStatusReportResponse> = /*@__PURE__*/
+export const DeleteStatusReportResponseSchema: GenMessage<DeleteStatusReportResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 9);
 
 /**
@@ -308,48 +339,49 @@ export const DeleteStatusReportResponseSchema: GenMessage<DeleteStatusReportResp
  *
  * @generated from message openstatus.status_report.v1.AddStatusReportUpdateRequest
  */
-export type AddStatusReportUpdateRequest = Message<"openstatus.status_report.v1.AddStatusReportUpdateRequest"> & {
-  /**
-   * ID of the status report to update (required).
-   *
-   * @generated from field: string status_report_id = 1;
-   */
-  statusReportId: string;
+export type AddStatusReportUpdateRequest =
+  Message<"openstatus.status_report.v1.AddStatusReportUpdateRequest"> & {
+    /**
+     * ID of the status report to update (required).
+     *
+     * @generated from field: string status_report_id = 1;
+     */
+    statusReportId: string;
 
-  /**
-   * New status for the report (required).
-   *
-   * @generated from field: openstatus.status_report.v1.StatusReportStatus status = 2;
-   */
-  status: StatusReportStatus;
+    /**
+     * New status for the report (required).
+     *
+     * @generated from field: openstatus.status_report.v1.StatusReportStatus status = 2;
+     */
+    status: StatusReportStatus;
 
-  /**
-   * Message describing what changed (required).
-   *
-   * @generated from field: string message = 3;
-   */
-  message: string;
+    /**
+     * Message describing what changed (required).
+     *
+     * @generated from field: string message = 3;
+     */
+    message: string;
 
-  /**
-   * Optional date for the update (RFC 3339 format). Defaults to current time if not provided.
-   *
-   * @generated from field: optional string date = 4;
-   */
-  date?: string;
+    /**
+     * Optional date for the update (RFC 3339 format). Defaults to current time if not provided.
+     *
+     * @generated from field: optional string date = 4;
+     */
+    date?: string;
 
-  /**
-   * Whether to notify subscribers about this update (optional, defaults to false).
-   *
-   * @generated from field: optional bool notify = 5;
-   */
-  notify?: boolean;
-};
+    /**
+     * Whether to notify subscribers about this update (optional, defaults to false).
+     *
+     * @generated from field: optional bool notify = 5;
+     */
+    notify?: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.AddStatusReportUpdateRequest.
  * Use `create(AddStatusReportUpdateRequestSchema)` to create a new message.
  */
-export const AddStatusReportUpdateRequestSchema: GenMessage<AddStatusReportUpdateRequest> = /*@__PURE__*/
+export const AddStatusReportUpdateRequestSchema: GenMessage<AddStatusReportUpdateRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 10);
 
 /**
@@ -357,20 +389,21 @@ export const AddStatusReportUpdateRequestSchema: GenMessage<AddStatusReportUpdat
  *
  * @generated from message openstatus.status_report.v1.AddStatusReportUpdateResponse
  */
-export type AddStatusReportUpdateResponse = Message<"openstatus.status_report.v1.AddStatusReportUpdateResponse"> & {
-  /**
-   * The updated status report with the new update included.
-   *
-   * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
-   */
-  statusReport?: StatusReport;
-};
+export type AddStatusReportUpdateResponse =
+  Message<"openstatus.status_report.v1.AddStatusReportUpdateResponse"> & {
+    /**
+     * The updated status report with the new update included.
+     *
+     * @generated from field: openstatus.status_report.v1.StatusReport status_report = 1;
+     */
+    statusReport?: StatusReport;
+  };
 
 /**
  * Describes the message openstatus.status_report.v1.AddStatusReportUpdateResponse.
  * Use `create(AddStatusReportUpdateResponseSchema)` to create a new message.
  */
-export const AddStatusReportUpdateResponseSchema: GenMessage<AddStatusReportUpdateResponse> = /*@__PURE__*/
+export const AddStatusReportUpdateResponseSchema: GenMessage<AddStatusReportUpdateResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_report_v1_service, 11);
 
 /**
@@ -388,7 +421,7 @@ export const StatusReportService: GenService<{
     methodKind: "unary";
     input: typeof CreateStatusReportRequestSchema;
     output: typeof CreateStatusReportResponseSchema;
-  },
+  };
   /**
    * GetStatusReport retrieves a specific status report by ID (includes full update timeline).
    *
@@ -398,7 +431,7 @@ export const StatusReportService: GenService<{
     methodKind: "unary";
     input: typeof GetStatusReportRequestSchema;
     output: typeof GetStatusReportResponseSchema;
-  },
+  };
   /**
    * ListStatusReports returns all status reports for the workspace (metadata only).
    *
@@ -408,7 +441,7 @@ export const StatusReportService: GenService<{
     methodKind: "unary";
     input: typeof ListStatusReportsRequestSchema;
     output: typeof ListStatusReportsResponseSchema;
-  },
+  };
   /**
    * UpdateStatusReport updates the metadata of a status report (title, page components).
    *
@@ -418,7 +451,7 @@ export const StatusReportService: GenService<{
     methodKind: "unary";
     input: typeof UpdateStatusReportRequestSchema;
     output: typeof UpdateStatusReportResponseSchema;
-  },
+  };
   /**
    * DeleteStatusReport removes a status report and all its updates.
    *
@@ -428,7 +461,7 @@ export const StatusReportService: GenService<{
     methodKind: "unary";
     input: typeof DeleteStatusReportRequestSchema;
     output: typeof DeleteStatusReportResponseSchema;
-  },
+  };
   /**
    * AddStatusReportUpdate adds a new update to an existing status report timeline and transitions the report status.
    *
@@ -438,7 +471,5 @@ export const StatusReportService: GenService<{
     methodKind: "unary";
     input: typeof AddStatusReportUpdateRequestSchema;
     output: typeof AddStatusReportUpdateResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_openstatus_status_report_v1_service, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_openstatus_status_report_v1_service, 0);

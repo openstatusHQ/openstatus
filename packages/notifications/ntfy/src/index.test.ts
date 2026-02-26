@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery, sendTest } from "./index";
 
 describe("Ntfy Notifications", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {
@@ -245,7 +246,7 @@ describe("Ntfy Notifications", () => {
     );
 
     // Should not throw - function catches errors internally
-    await expect(
+     expect(
       sendAlert({
         // @ts-expect-error
         monitor,

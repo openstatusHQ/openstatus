@@ -1,14 +1,7 @@
 "use client";
 
-import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
-import { Link } from "@/components/common/link";
-import {
-  BillingOverlay,
-  BillingOverlayButton,
-  BillingOverlayDescription,
-} from "@/components/content/billing-overlay";
 import type { REGIONS } from "@/data/metrics.client";
-import { useTRPC } from "@/lib/trpc/client";
+
 import { formatRegionCode, groupByContinent } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -29,6 +22,15 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Globe, Lock } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
+
+import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
+import { Link } from "@/components/common/link";
+import {
+  BillingOverlay,
+  BillingOverlayButton,
+  BillingOverlayDescription,
+} from "@/components/content/billing-overlay";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function CommandRegion({
   regions,
@@ -81,9 +83,9 @@ export function CommandRegion({
                   });
 
                   if (codes.length === selectedRegions.length) {
-                    setSelectedRegions([]);
+                    void setSelectedRegions([]);
                   } else {
-                    setSelectedRegions(codes);
+                    void setSelectedRegions(codes);
                   }
                 }}
                 value="select-all"
@@ -116,7 +118,7 @@ export function CommandRegion({
                           region.flag,
                         ]}
                         onSelect={() => {
-                          setSelectedRegions((prev) =>
+                          void setSelectedRegions((prev) =>
                             prev.includes(region.code)
                               ? prev.filter((r) => r !== region.code)
                               : [...prev, region.code],
@@ -131,7 +133,7 @@ export function CommandRegion({
                         <span className="font-mono">
                           {formatRegionCode(region.code)}
                         </span>
-                        <span className="truncate text-muted-foreground text-xs">
+                        <span className="text-muted-foreground truncate text-xs">
                           {region.location}
                         </span>
                         <Check
@@ -156,7 +158,7 @@ export function CommandRegion({
                     keywords={[location.name]}
                     value={location.id.toString()}
                     onSelect={() => {
-                      setSelectedRegions((prev) =>
+                      void setSelectedRegions((prev) =>
                         prev.includes(location.id.toString())
                           ? prev.filter((r) => r !== location.id.toString())
                           : [...prev, location.id.toString()],

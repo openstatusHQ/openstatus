@@ -1,6 +1,7 @@
+import type { ParserReturn, Region } from "../types";
+
 // List of all Cloudflare data center taken by https://www.feitsui.com/en/article/26
 import { regions } from "../regions/cloudflare";
-import type { ParserReturn, Region } from "../types";
 
 export function parseCfRay(header: string): ParserReturn<Region> {
   const regex = /\b([A-Z]{3})\b/g;

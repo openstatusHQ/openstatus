@@ -79,15 +79,13 @@ import type { User } from "@openstatus/auth";
 type Context = { user?: User };
 type Meta = { track?: EventProps };
 
-export const t = initTRPC
-  .context<Context>()
-  .meta<Meta>()
-  .create({ /* ... */ });
+export const t = initTRPC.context<Context>().meta<Meta>().create({
+  /* ... */
+});
 
-
-const trackEvent = t.middleware(async opts => {
+const trackEvent = t.middleware(async (opts) => {
   const result = await opts.next(opts.ctx);
-  
+
   if (!result.ok) return result;
 
   if (opts.meta.track) {
@@ -95,12 +93,12 @@ const trackEvent = t.middleware(async opts => {
       const identify = opts.ctx.user ? { userId: opts.ctx.user.id } : {};
       const analytics = await setupAnalytics(identify);
       await analytics.track(opts.meta.track);
-    })
+    });
   }
   return result;
 });
 
-const enforceUserSession = t.middleware(async opts => { 
+const enforceUserSession = t.middleware(async (opts) => {
   // ... set user to ctx
 });
 
@@ -117,7 +115,7 @@ How will we use it in a procedure? Adding a `meta` property will allow us to tra
 
 ```ts {8}
 // packages/trpc/src/router/page.ts
-import { Events } from '@openstatus/analytics';
+import { Events } from "@openstatus/analytics";
 import { insertPageSchema } from "@openstatus/db";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -125,7 +123,9 @@ export const pageRouter = createTRPCRouter({
   create: protectedProcedure
     .meta({ track: Events.CreatePage })
     .input(insertPageSchema)
-    .mutation(async (opts) => { /* ... */ })
+    .mutation(async (opts) => {
+      /* ... */
+    }),
 });
 ```
 
@@ -133,7 +133,7 @@ Voilà! Each time you want to add tracking to a new procedure, you only need to 
 
 ---
 
-Now, how do we track the events within our API? Let's start by adding the `trackMiddleware` function and only track the event if the response has been finalized. 
+Now, how do we track the events within our API? Let's start by adding the `trackMiddleware` function and only track the event if the response has been finalized.
 
 ```ts /trackMiddleware/
 // app/server/src/middleware.ts
@@ -142,9 +142,12 @@ import type { Context, Next } from "hono";
 import type { User } from "@openstatus/auth";
 
 export function trackMiddleware(event: EventProps) {
-  return async (c: Context<{ Variables: { user?: User } }, "/*">, next: Next) => {
+  return async (
+    c: Context<{ Variables: { user?: User } }, "/*">,
+    next: Next,
+  ) => {
     await next();
-    
+
     const isValid = c.res.status.toString().startsWith("2") && !c.error;
 
     if (isValid) {
@@ -177,8 +180,12 @@ const postRoute = createRoute({
   description: "Create a new Page",
   path: "/",
   middleware: [trackMiddleware(Events.CreatePage)],
-  request: { /* ... */ },
-  responses: { /* ... */},
+  request: {
+    /* ... */
+  },
+  responses: {
+    /* ... */
+  },
 });
 
 // ...

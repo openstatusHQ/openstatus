@@ -1,10 +1,11 @@
+import type { Workspace } from "@openstatus/db/src/schema";
+
 import {
   Code,
   ConnectError,
   type Interceptor,
   createContextKey,
 } from "@connectrpc/connect";
-import type { Workspace } from "@openstatus/db/src/schema";
 import { nanoid } from "nanoid";
 
 import { lookupWorkspace, validateKey } from "@/libs/middlewares/auth";

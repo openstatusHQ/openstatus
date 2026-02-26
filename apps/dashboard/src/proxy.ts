@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
-
-import { auth } from "@/lib/auth";
-
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { getCurrency } from "@openstatus/db/src/schema/plan/utils";
+import { NextResponse } from "next/server";
+
+import { auth } from "@/lib/auth";
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();

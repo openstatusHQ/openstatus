@@ -7,153 +7,153 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 
 ### Periodicity
 
-| Value | Description |
-|-------|-------------|
+| Value             | Description      |
+| ----------------- | ---------------- |
 | `PERIODICITY_30S` | Every 30 seconds |
-| `PERIODICITY_1M` | Every 1 minute |
-| `PERIODICITY_5M` | Every 5 minutes |
+| `PERIODICITY_1M`  | Every 1 minute   |
+| `PERIODICITY_5M`  | Every 5 minutes  |
 | `PERIODICITY_10M` | Every 10 minutes |
 | `PERIODICITY_30M` | Every 30 minutes |
-| `PERIODICITY_1H` | Every 1 hour |
+| `PERIODICITY_1H`  | Every 1 hour     |
 
 ### HTTPMethod
 
-| Value | Description |
-|-------|-------------|
-| `HTTP_METHOD_GET` | GET |
-| `HTTP_METHOD_POST` | POST |
-| `HTTP_METHOD_HEAD` | HEAD |
-| `HTTP_METHOD_PUT` | PUT |
-| `HTTP_METHOD_PATCH` | PATCH |
-| `HTTP_METHOD_DELETE` | DELETE |
-| `HTTP_METHOD_TRACE` | TRACE |
-| `HTTP_METHOD_CONNECT` | CONNECT |
-| `HTTP_METHOD_OPTIONS` | OPTIONS |
+| Value                 | Description |
+| --------------------- | ----------- |
+| `HTTP_METHOD_GET`     | GET         |
+| `HTTP_METHOD_POST`    | POST        |
+| `HTTP_METHOD_HEAD`    | HEAD        |
+| `HTTP_METHOD_PUT`     | PUT         |
+| `HTTP_METHOD_PATCH`   | PATCH       |
+| `HTTP_METHOD_DELETE`  | DELETE      |
+| `HTTP_METHOD_TRACE`   | TRACE       |
+| `HTTP_METHOD_CONNECT` | CONNECT     |
+| `HTTP_METHOD_OPTIONS` | OPTIONS     |
 
 ### MonitorStatus
 
-| Value | Description |
-|-------|-------------|
-| `ACTIVE` | Monitor is healthy |
+| Value      | Description                |
+| ---------- | -------------------------- |
+| `ACTIVE`   | Monitor is healthy         |
 | `DEGRADED` | Latency threshold exceeded |
-| `ERROR` | Monitor is failing |
+| `ERROR`    | Monitor is failing         |
 
 ### TimeRange
 
-| Value | Description |
-|-------|-------------|
-| `TIME_RANGE_1D` | Last 24 hours |
-| `TIME_RANGE_7D` | Last 7 days |
-| `TIME_RANGE_14D` | Last 14 days |
+| Value            | Description   |
+| ---------------- | ------------- |
+| `TIME_RANGE_1D`  | Last 24 hours |
+| `TIME_RANGE_7D`  | Last 7 days   |
+| `TIME_RANGE_14D` | Last 14 days  |
 
 ### StatusReportStatus
 
-| Value | Description |
-|-------|-------------|
+| Value           | Description                      |
+| --------------- | -------------------------------- |
 | `INVESTIGATING` | Actively investigating the issue |
-| `IDENTIFIED` | Root cause has been identified |
-| `MONITORING` | Fix deployed, monitoring |
-| `RESOLVED` | Issue fully resolved |
+| `IDENTIFIED`    | Root cause has been identified   |
+| `MONITORING`    | Fix deployed, monitoring         |
+| `RESOLVED`      | Issue fully resolved             |
 
 ### OverallStatus
 
-| Value | Description |
-|-------|-------------|
-| `OPERATIONAL` | All systems operational |
-| `DEGRADED` | Performance is degraded |
-| `PARTIAL_OUTAGE` | Some systems are down |
-| `MAJOR_OUTAGE` | Major systems are down |
-| `MAINTENANCE` | Scheduled maintenance |
-| `UNKNOWN` | Status cannot be determined |
+| Value            | Description                 |
+| ---------------- | --------------------------- |
+| `OPERATIONAL`    | All systems operational     |
+| `DEGRADED`       | Performance is degraded     |
+| `PARTIAL_OUTAGE` | Some systems are down       |
+| `MAJOR_OUTAGE`   | Major systems are down      |
+| `MAINTENANCE`    | Scheduled maintenance       |
+| `UNKNOWN`        | Status cannot be determined |
 
 ### NotificationProvider
 
-| Value | Description |
-|-------|-------------|
-| `DISCORD` | Discord webhook |
-| `EMAIL` | Email notification |
-| `GOOGLE_CHAT` | Google Chat webhook |
-| `GRAFANA_ONCALL` | Grafana OnCall |
-| `NTFY` | Ntfy push service |
-| `PAGERDUTY` | PagerDuty |
-| `OPSGENIE` | Opsgenie |
-| `SLACK` | Slack webhook |
-| `SMS` | SMS notification |
-| `TELEGRAM` | Telegram bot |
-| `WEBHOOK` | Custom webhook |
-| `WHATSAPP` | WhatsApp |
+| Value            | Description         |
+| ---------------- | ------------------- |
+| `DISCORD`        | Discord webhook     |
+| `EMAIL`          | Email notification  |
+| `GOOGLE_CHAT`    | Google Chat webhook |
+| `GRAFANA_ONCALL` | Grafana OnCall      |
+| `NTFY`           | Ntfy push service   |
+| `PAGERDUTY`      | PagerDuty           |
+| `OPSGENIE`       | Opsgenie            |
+| `SLACK`          | Slack webhook       |
+| `SMS`            | SMS notification    |
+| `TELEGRAM`       | Telegram bot        |
+| `WEBHOOK`        | Custom webhook      |
+| `WHATSAPP`       | WhatsApp            |
 
 ### OpsgenieRegion
 
 | Value | Description |
-|-------|-------------|
-| `US` | US region |
-| `EU` | EU region |
+| ----- | ----------- |
+| `US`  | US region   |
+| `EU`  | EU region   |
 
 ### PageAccessType
 
-| Value | Description |
-|-------|-------------|
-| `PUBLIC` | Publicly accessible |
-| `PASSWORD_PROTECTED` | Requires password |
-| `AUTHENTICATED` | Requires authentication |
+| Value                | Description             |
+| -------------------- | ----------------------- |
+| `PUBLIC`             | Publicly accessible     |
+| `PASSWORD_PROTECTED` | Requires password       |
+| `AUTHENTICATED`      | Requires authentication |
 
 ### PageTheme
 
-| Value | Description |
-|-------|-------------|
+| Value    | Description         |
+| -------- | ------------------- |
 | `SYSTEM` | Follow system theme |
-| `LIGHT` | Light theme |
-| `DARK` | Dark theme |
+| `LIGHT`  | Light theme         |
+| `DARK`   | Dark theme          |
 
 ### PageComponentType
 
-| Value | Description |
-|-------|-------------|
-| `MONITOR` | Linked to a monitor |
-| `STATIC` | Static component (manual) |
+| Value     | Description               |
+| --------- | ------------------------- |
+| `MONITOR` | Linked to a monitor       |
+| `STATIC`  | Static component (manual) |
 
 ### NumberComparator
 
-| Value | Description |
-|-------|-------------|
-| `EQUAL` | Equal to target |
-| `NOT_EQUAL` | Not equal to target |
-| `GREATER_THAN` | Greater than target |
+| Value                   | Description           |
+| ----------------------- | --------------------- |
+| `EQUAL`                 | Equal to target       |
+| `NOT_EQUAL`             | Not equal to target   |
+| `GREATER_THAN`          | Greater than target   |
 | `GREATER_THAN_OR_EQUAL` | Greater than or equal |
-| `LESS_THAN` | Less than target |
-| `LESS_THAN_OR_EQUAL` | Less than or equal |
+| `LESS_THAN`             | Less than target      |
+| `LESS_THAN_OR_EQUAL`    | Less than or equal    |
 
 ### StringComparator
 
-| Value | Description |
-|-------|-------------|
-| `CONTAINS` | Contains target string |
-| `NOT_CONTAINS` | Does not contain target |
-| `EQUAL` | Equal to target |
-| `NOT_EQUAL` | Not equal to target |
-| `EMPTY` | Value is empty |
-| `NOT_EMPTY` | Value is not empty |
-| `GREATER_THAN` | Lexicographically greater |
+| Value                   | Description                                       |
+| ----------------------- | ------------------------------------------------- |
+| `CONTAINS`              | Contains target string                            |
+| `NOT_CONTAINS`          | Does not contain target                           |
+| `EQUAL`                 | Equal to target                                   |
+| `NOT_EQUAL`             | Not equal to target                               |
+| `EMPTY`                 | Value is empty                                    |
+| `NOT_EMPTY`             | Value is not empty                                |
+| `GREATER_THAN`          | Lexicographically greater                         |
 | `GREATER_THAN_OR_EQUAL` | Lexicographically greater than or equal to target |
-| `LESS_THAN` | Lexicographically less |
-| `LESS_THAN_OR_EQUAL` | Lexicographically less than or equal to target |
+| `LESS_THAN`             | Lexicographically less                            |
+| `LESS_THAN_OR_EQUAL`    | Lexicographically less than or equal to target    |
 
 ### RecordComparator
 
-| Value | Description |
-|-------|-------------|
-| `EQUAL` | Equal to target |
-| `NOT_EQUAL` | Not equal to target |
-| `CONTAINS` | Contains target string |
+| Value          | Description             |
+| -------------- | ----------------------- |
+| `EQUAL`        | Equal to target         |
+| `NOT_EQUAL`    | Not equal to target     |
+| `CONTAINS`     | Contains target string  |
 | `NOT_CONTAINS` | Does not contain target |
 
 ### ServingStatus
 
-| Value | Description |
-|-------|-------------|
-| `SERVING` | Service is healthy and serving |
-| `NOT_SERVING` | Service is not healthy |
+| Value         | Description                    |
+| ------------- | ------------------------------ |
+| `SERVING`     | Service is healthy and serving |
+| `NOT_SERVING` | Service is not healthy         |
 
 ## Regions
 
@@ -167,45 +167,45 @@ regions: [Region.FLY_AMS, Region.FLY_IAD, Region.KOYEB_FRA];
 
 ### Fly.io Regions (18)
 
-| Enum Value | Location |
-|------------|----------|
-| `FLY_AMS` | Amsterdam |
-| `FLY_ARN` | Stockholm |
-| `FLY_BOM` | Mumbai |
-| `FLY_CDG` | Paris |
-| `FLY_DFW` | Dallas |
-| `FLY_EWR` | Newark |
-| `FLY_FRA` | Frankfurt |
-| `FLY_GRU` | São Paulo |
-| `FLY_IAD` | Washington D.C. |
-| `FLY_JNB` | Johannesburg |
-| `FLY_LAX` | Los Angeles |
-| `FLY_LHR` | London |
-| `FLY_NRT` | Tokyo |
-| `FLY_ORD` | Chicago |
-| `FLY_SJC` | San Jose |
-| `FLY_SIN` | Singapore |
-| `FLY_SYD` | Sydney |
-| `FLY_YYZ` | Toronto |
+| Enum Value | Location        |
+| ---------- | --------------- |
+| `FLY_AMS`  | Amsterdam       |
+| `FLY_ARN`  | Stockholm       |
+| `FLY_BOM`  | Mumbai          |
+| `FLY_CDG`  | Paris           |
+| `FLY_DFW`  | Dallas          |
+| `FLY_EWR`  | Newark          |
+| `FLY_FRA`  | Frankfurt       |
+| `FLY_GRU`  | São Paulo       |
+| `FLY_IAD`  | Washington D.C. |
+| `FLY_JNB`  | Johannesburg    |
+| `FLY_LAX`  | Los Angeles     |
+| `FLY_LHR`  | London          |
+| `FLY_NRT`  | Tokyo           |
+| `FLY_ORD`  | Chicago         |
+| `FLY_SJC`  | San Jose        |
+| `FLY_SIN`  | Singapore       |
+| `FLY_SYD`  | Sydney          |
+| `FLY_YYZ`  | Toronto         |
 
 ### Koyeb Regions (6)
 
-| Enum Value | Location |
-|------------|----------|
-| `KOYEB_FRA` | Frankfurt |
-| `KOYEB_PAR` | Paris |
+| Enum Value  | Location      |
+| ----------- | ------------- |
+| `KOYEB_FRA` | Frankfurt     |
+| `KOYEB_PAR` | Paris         |
 | `KOYEB_SFO` | San Francisco |
-| `KOYEB_SIN` | Singapore |
-| `KOYEB_TYO` | Tokyo |
-| `KOYEB_WAS` | Washington |
+| `KOYEB_SIN` | Singapore     |
+| `KOYEB_TYO` | Tokyo         |
+| `KOYEB_WAS` | Washington    |
 
 ### Railway Regions (4)
 
-| Enum Value | Location |
-|------------|----------|
-| `RAILWAY_US_WEST2` | US West |
-| `RAILWAY_US_EAST4` | US East |
-| `RAILWAY_EUROPE_WEST4` | Europe West |
+| Enum Value                | Location       |
+| ------------------------- | -------------- |
+| `RAILWAY_US_WEST2`        | US West        |
+| `RAILWAY_US_EAST4`        | US East        |
+| `RAILWAY_EUROPE_WEST4`    | Europe West    |
 | `RAILWAY_ASIA_SOUTHEAST1` | Asia Southeast |
 
 ## Assertions

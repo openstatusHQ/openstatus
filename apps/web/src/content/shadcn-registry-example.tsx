@@ -14,6 +14,13 @@
  * - StatusFeed (incidents and maintenance timeline)
  */
 
+import type {
+  Maintenance,
+  StatusBarData,
+  StatusReport,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
+
 import { StatusBanner } from "@openstatus/ui/components/blocks/status-banner";
 import { StatusBar } from "@openstatus/ui/components/blocks/status-bar";
 import {
@@ -36,12 +43,6 @@ import {
   StatusHeader,
   StatusTitle,
 } from "@openstatus/ui/components/blocks/status-layout";
-import type {
-  Maintenance,
-  StatusBarData,
-  StatusReport,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 
 /**
@@ -429,7 +430,7 @@ export function StatusPageExample() {
         </StatusComponentGroup>
         <Separator className="my-6" />
         <div className="space-y-4">
-          <h2 className="font-semibold text-lg">Recent Events</h2>
+          <h2 className="text-lg font-semibold">Recent Events</h2>
           <StatusFeed
             statusReports={statusReports}
             maintenances={maintenances}

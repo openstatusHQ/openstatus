@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, expect, mock, test } from "bun:test";
+
 import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,
@@ -7,7 +8,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 // Mock audit log to avoid calling Tinybird
-mock.module("../utils/audit-log", () => ({
+void mock.module("../utils/audit-log", () => ({
   checkerAudit: {
     publishAuditLog: mock(() => Promise.resolve()),
   },
@@ -24,7 +25,7 @@ const mockDiscordSendAlert = mock(() => Promise.resolve());
 const mockDiscordSendRecovery = mock(() => Promise.resolve());
 const mockDiscordSendDegraded = mock(() => Promise.resolve());
 
-mock.module("./utils", () => ({
+void mock.module("./utils", () => ({
   providerToFunction: {
     email: {
       sendAlert: mockEmailSendAlert,
@@ -306,7 +307,7 @@ describe("triggerNotifications with multiple providers", () => {
     expect(mockDiscordSendRecovery).toHaveBeenCalledTimes(1);
 
     expect(result).toHaveLength(2);
-    const providers = result.map((r) => r.provider).sort();
+    const providers = result.map((r) => r.provider).toSorted();
     expect(providers).toEqual(["discord", "slack"]);
   });
 });

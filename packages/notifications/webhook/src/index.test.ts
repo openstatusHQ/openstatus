@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+
 import { sendTest } from "./index";
 
 describe("Webhook sendTest", () => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   let fetchMock: any = undefined;
 
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe("Webhook sendTest", () => {
     const url = "https://example.com/webhook";
     fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
 
-    await expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+     expect(sendTest({ url })).rejects.toThrow("Failed to send test");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -86,7 +86,7 @@ describe("Webhook sendTest", () => {
     const networkError = new Error("Network error");
     fetchMock.mockRejectedValue(networkError);
 
-    await expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+     expect(sendTest({ url })).rejects.toThrow("Failed to send test");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -108,7 +108,7 @@ describe("Webhook sendTest", () => {
     const url = "https://example.com/webhook";
     fetchMock.mockResolvedValue(new Response(null, { status: 500 }));
 
-    await expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+     expect(sendTest({ url })).rejects.toThrow("Failed to send test");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

@@ -1,18 +1,20 @@
 "use client";
 
-import { TableCellLink } from "@/components/data-table/table-cell-link";
+import type { RouterOutputs } from "@openstatus/api";
+import type { ColumnDef } from "@tanstack/react-table";
+
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTableRowActions } from "./data-table-row-actions";
-
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import type { RouterOutputs } from "@openstatus/api";
 import { formatDistanceToNow } from "date-fns";
+
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+
 import { TableCellSkeleton } from "../dable-cell-skeleton";
 import { TableCellDate } from "../table-cell-date";
 import { TableCellNumber } from "../table-cell-number";
 import { TableCellUnavailable } from "../table-cell-unavailable";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
   globalMetrics?:
@@ -94,13 +96,13 @@ export const columns: ColumnDef<Monitor>[] = [
 
       switch (value) {
         case "active":
-          return <div className="font-mono text-success">{value}</div>;
+          return <div className="text-success font-mono">{value}</div>;
         case "degraded":
-          return <div className="font-mono text-warning">{value}</div>;
+          return <div className="text-warning font-mono">{value}</div>;
         case "error":
-          return <div className="font-mono text-destructive">{value}</div>;
+          return <div className="text-destructive font-mono">{value}</div>;
         default:
-          return <div className="font-mono text-muted-foreground">{value}</div>;
+          return <div className="text-muted-foreground font-mono">{value}</div>;
       }
     },
     filterFn: (row, _, value) => {
@@ -134,12 +136,12 @@ export const columns: ColumnDef<Monitor>[] = [
         return <div className="text-muted-foreground">-</div>;
       }
       return (
-        <div className="group/badges -space-x-2 flex flex-wrap">
+        <div className="group/badges flex flex-wrap -space-x-2">
           {value.map((tag) => (
             <Badge
               key={tag.id}
               variant="outline"
-              className="relative flex translate-x-0 items-center gap-1.5 rounded-full bg-background transition-transform hover:z-10 hover:translate-x-1"
+              className="bg-background relative flex translate-x-0 items-center gap-1.5 rounded-full transition-transform hover:z-10 hover:translate-x-1"
             >
               <div
                 className="size-2.5 rounded-full"
@@ -152,11 +154,11 @@ export const columns: ColumnDef<Monitor>[] = [
       );
     },
     filterFn: (row, _, value) => {
-      const tagIds = row.original.tags.map((tag) => tag.id);
+      const tagIds = new Set(row.original.tags.map((tag) => tag.id));
       if (Array.isArray(value)) {
-        return value.some((v) => tagIds.includes(v));
+        return value.some((v) => tagIds.has(v));
       }
-      return tagIds.includes(value);
+      return tagIds.has(value);
     },
     getUniqueValues: (row) => row.tags.map((tag) => tag.id),
     enableSorting: false,

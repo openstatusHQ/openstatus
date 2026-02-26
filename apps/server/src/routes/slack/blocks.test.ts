@@ -1,6 +1,8 @@
-import { describe, expect, test } from "bun:test";
-import { buildConfirmationBlocks } from "./blocks";
 import type { PendingAction } from "./confirmation-store";
+
+import { describe, expect, test } from "bun:test";
+
+import { buildConfirmationBlocks } from "./blocks";
 
 describe("buildConfirmationBlocks", () => {
   test("createStatusReport includes 3 buttons", () => {

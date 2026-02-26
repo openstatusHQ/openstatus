@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
@@ -330,15 +331,15 @@ describe("MonitorService.ListMonitors", () => {
         ...(data1.tcpMonitors || []).map((m: { id: string }) => m.id),
         ...(data1.dnsMonitors || []).map((m: { id: string }) => m.id),
       ];
-      const secondPageIds = [
+      const secondPageIds = new Set([
         ...(data2.httpMonitors || []).map((m: { id: string }) => m.id),
         ...(data2.tcpMonitors || []).map((m: { id: string }) => m.id),
         ...(data2.dnsMonitors || []).map((m: { id: string }) => m.id),
-      ];
+      ]);
 
       // Should have no overlap
       const overlap = firstPageIds.filter((id: string) =>
-        secondPageIds.includes(id),
+        secondPageIds.has(id),
       );
       expect(overlap.length).toBe(0);
     }

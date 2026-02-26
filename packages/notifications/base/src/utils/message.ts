@@ -1,6 +1,8 @@
-import type { Incident } from "@openstatus/db/src/schema";
-import { getRegionInfo } from "@openstatus/regions";
 import type { FormattedMessageData, NotificationContext } from "../types";
+import type { Incident } from "@openstatus/db/src/schema";
+
+import { getRegionInfo } from "@openstatus/regions";
+
 import { getIncidentDuration } from "./incident";
 import { formatTimestamp } from "./timestamp";
 

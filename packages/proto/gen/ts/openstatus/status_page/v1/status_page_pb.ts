@@ -2,16 +2,25 @@
 // @generated from file openstatus/status_page/v1/status_page.proto (package openstatus.status_page.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
-import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenEnum,
+  GenFile,
+  GenMessage,
+} from "@bufbuild/protobuf/codegenv2";
+
+import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+
+import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
 
 /**
  * Describes the file openstatus/status_page/v1/status_page.proto.
  */
-export const file_openstatus_status_page_v1_status_page: GenFile = /*@__PURE__*/
-  fileDesc("CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIrEDCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWiJ3ChFTdGF0dXNQYWdlU3VtbWFyeRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIMCgRzbHVnGAMgASgJEhEKCXB1Ymxpc2hlZBgEIAEoCBISCgpjcmVhdGVkX2F0GAUgASgJEhIKCnVwZGF0ZWRfYXQYBiABKAkqnAEKDlBhZ2VBY2Nlc3NUeXBlEiAKHFBBR0VfQUNDRVNTX1RZUEVfVU5TUEVDSUZJRUQQABIbChdQQUdFX0FDQ0VTU19UWVBFX1BVQkxJQxABEicKI1BBR0VfQUNDRVNTX1RZUEVfUEFTU1dPUkRfUFJPVEVDVEVEEAISIgoeUEFHRV9BQ0NFU1NfVFlQRV9BVVRIRU5USUNBVEVEEAMqaQoJUGFnZVRoZW1lEhoKFlBBR0VfVEhFTUVfVU5TUEVDSUZJRUQQABIVChFQQUdFX1RIRU1FX1NZU1RFTRABEhQKEFBBR0VfVEhFTUVfTElHSFQQAhITCg9QQUdFX1RIRU1FX0RBUksQAyrsAQoNT3ZlcmFsbFN0YXR1cxIeChpPVkVSQUxMX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGk9WRVJBTExfU1RBVFVTX09QRVJBVElPTkFMEAESGwoXT1ZFUkFMTF9TVEFUVVNfREVHUkFERUQQAhIhCh1PVkVSQUxMX1NUQVRVU19QQVJUSUFMX09VVEFHRRADEh8KG09WRVJBTExfU1RBVFVTX01BSk9SX09VVEFHRRAEEh4KGk9WRVJBTExfU1RBVFVTX01BSU5URU5BTkNFEAUSGgoWT1ZFUkFMTF9TVEFUVVNfVU5LTk9XThAGQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw", [file_gnostic_openapi_v3_annotations]);
+export const file_openstatus_status_page_v1_status_page: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CitvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3N0YXR1c19wYWdlLnByb3RvEhlvcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxIrEDCgpTdGF0dXNQYWdlEgoKAmlkGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEh4KBHNsdWcYBCABKAlCELpHDToLEglhY21lLWNvcnASMAoNY3VzdG9tX2RvbWFpbhgFIAEoCUIZukcWOhQSEnN0YXR1cy5leGFtcGxlLmNvbRIRCglwdWJsaXNoZWQYBiABKAgSPgoLYWNjZXNzX3R5cGUYByABKA4yKS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VBY2Nlc3NUeXBlEjMKBXRoZW1lGAggASgOMiQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlVGhlbWUSFAoMaG9tZXBhZ2VfdXJsGAkgASgJEhMKC2NvbnRhY3RfdXJsGAogASgJEgwKBGljb24YCyABKAkSLwoKY3JlYXRlZF9hdBgMIAEoCUIbukcYOhYSFDIwMjQtMDEtMTVUMDk6MDA6MDBaEi8KCnVwZGF0ZWRfYXQYDSABKAlCG7pHGDoWEhQyMDI0LTA2LTIwVDE0OjMwOjAwWiJ3ChFTdGF0dXNQYWdlU3VtbWFyeRIKCgJpZBgBIAEoCRINCgV0aXRsZRgCIAEoCRIMCgRzbHVnGAMgASgJEhEKCXB1Ymxpc2hlZBgEIAEoCBISCgpjcmVhdGVkX2F0GAUgASgJEhIKCnVwZGF0ZWRfYXQYBiABKAkqnAEKDlBhZ2VBY2Nlc3NUeXBlEiAKHFBBR0VfQUNDRVNTX1RZUEVfVU5TUEVDSUZJRUQQABIbChdQQUdFX0FDQ0VTU19UWVBFX1BVQkxJQxABEicKI1BBR0VfQUNDRVNTX1RZUEVfUEFTU1dPUkRfUFJPVEVDVEVEEAISIgoeUEFHRV9BQ0NFU1NfVFlQRV9BVVRIRU5USUNBVEVEEAMqaQoJUGFnZVRoZW1lEhoKFlBBR0VfVEhFTUVfVU5TUEVDSUZJRUQQABIVChFQQUdFX1RIRU1FX1NZU1RFTRABEhQKEFBBR0VfVEhFTUVfTElHSFQQAhITCg9QQUdFX1RIRU1FX0RBUksQAyrsAQoNT3ZlcmFsbFN0YXR1cxIeChpPVkVSQUxMX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGk9WRVJBTExfU1RBVFVTX09QRVJBVElPTkFMEAESGwoXT1ZFUkFMTF9TVEFUVVNfREVHUkFERUQQAhIhCh1PVkVSQUxMX1NUQVRVU19QQVJUSUFMX09VVEFHRRADEh8KG09WRVJBTExfU1RBVFVTX01BSk9SX09VVEFHRRAEEh4KGk9WRVJBTExfU1RBVFVTX01BSU5URU5BTkNFEAUSGgoWT1ZFUkFMTF9TVEFUVVNfVU5LTk9XThAGQlpaWGdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9zdGF0dXNfcGFnZS92MTtzdGF0dXNwYWdldjFiBnByb3RvMw",
+    [file_gnostic_openapi_v3_annotations],
+  );
 
 /**
  * StatusPage represents a full status page with all details.
@@ -115,7 +124,7 @@ export type StatusPage = Message<"openstatus.status_page.v1.StatusPage"> & {
  * Describes the message openstatus.status_page.v1.StatusPage.
  * Use `create(StatusPageSchema)` to create a new message.
  */
-export const StatusPageSchema: GenMessage<StatusPage> = /*@__PURE__*/
+export const StatusPageSchema: GenMessage<StatusPage> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_status_page, 0);
 
 /**
@@ -123,55 +132,56 @@ export const StatusPageSchema: GenMessage<StatusPage> = /*@__PURE__*/
  *
  * @generated from message openstatus.status_page.v1.StatusPageSummary
  */
-export type StatusPageSummary = Message<"openstatus.status_page.v1.StatusPageSummary"> & {
-  /**
-   * Unique identifier for the status page.
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type StatusPageSummary =
+  Message<"openstatus.status_page.v1.StatusPageSummary"> & {
+    /**
+     * Unique identifier for the status page.
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * Title of the status page.
-   *
-   * @generated from field: string title = 2;
-   */
-  title: string;
+    /**
+     * Title of the status page.
+     *
+     * @generated from field: string title = 2;
+     */
+    title: string;
 
-  /**
-   * URL-friendly slug for the status page.
-   *
-   * @generated from field: string slug = 3;
-   */
-  slug: string;
+    /**
+     * URL-friendly slug for the status page.
+     *
+     * @generated from field: string slug = 3;
+     */
+    slug: string;
 
-  /**
-   * Whether the status page is published and visible.
-   *
-   * @generated from field: bool published = 4;
-   */
-  published: boolean;
+    /**
+     * Whether the status page is published and visible.
+     *
+     * @generated from field: bool published = 4;
+     */
+    published: boolean;
 
-  /**
-   * Timestamp when the page was created (RFC 3339 format).
-   *
-   * @generated from field: string created_at = 5;
-   */
-  createdAt: string;
+    /**
+     * Timestamp when the page was created (RFC 3339 format).
+     *
+     * @generated from field: string created_at = 5;
+     */
+    createdAt: string;
 
-  /**
-   * Timestamp when the page was last updated (RFC 3339 format).
-   *
-   * @generated from field: string updated_at = 6;
-   */
-  updatedAt: string;
-};
+    /**
+     * Timestamp when the page was last updated (RFC 3339 format).
+     *
+     * @generated from field: string updated_at = 6;
+     */
+    updatedAt: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.StatusPageSummary.
  * Use `create(StatusPageSummarySchema)` to create a new message.
  */
-export const StatusPageSummarySchema: GenMessage<StatusPageSummary> = /*@__PURE__*/
+export const StatusPageSummarySchema: GenMessage<StatusPageSummary> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_status_page, 1);
 
 /**
@@ -204,7 +214,7 @@ export enum PageAccessType {
 /**
  * Describes the enum openstatus.status_page.v1.PageAccessType.
  */
-export const PageAccessTypeSchema: GenEnum<PageAccessType> = /*@__PURE__*/
+export const PageAccessTypeSchema: GenEnum<PageAccessType> /*@__PURE__*/ =
   enumDesc(file_openstatus_status_page_v1_status_page, 0);
 
 /**
@@ -237,8 +247,10 @@ export enum PageTheme {
 /**
  * Describes the enum openstatus.status_page.v1.PageTheme.
  */
-export const PageThemeSchema: GenEnum<PageTheme> = /*@__PURE__*/
-  enumDesc(file_openstatus_status_page_v1_status_page, 1);
+export const PageThemeSchema: GenEnum<PageTheme> /*@__PURE__*/ = enumDesc(
+  file_openstatus_status_page_v1_status_page,
+  1,
+);
 
 /**
  * OverallStatus represents the aggregated status of all components on a page.
@@ -285,6 +297,5 @@ export enum OverallStatus {
 /**
  * Describes the enum openstatus.status_page.v1.OverallStatus.
  */
-export const OverallStatusSchema: GenEnum<OverallStatus> = /*@__PURE__*/
+export const OverallStatusSchema: GenEnum<OverallStatus> /*@__PURE__*/ =
   enumDesc(file_openstatus_status_page_v1_status_page, 2);
-

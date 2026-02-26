@@ -1,10 +1,11 @@
-import { create } from "@bufbuild/protobuf";
 import type { NotificationProvider as DBNotificationProvider } from "@openstatus/db/src/schema";
 import type {
   Notification,
   NotificationData,
   NotificationSummary,
 } from "@openstatus/proto/notification/v1";
+
+import { create } from "@bufbuild/protobuf";
 import {
   NotificationDataSchema,
   NotificationProvider,

@@ -1,20 +1,8 @@
 "use client";
 
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
-import { config } from "@/data/notifications.client";
-import { zodResolver } from "@hookform/resolvers/zod";
 import type { NotificationProvider } from "@openstatus/db/src/schema";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -32,6 +20,20 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
+import { config } from "@/data/notifications.client";
 
 const schema = z.object({
   notifiers: z.array(z.number()),
@@ -160,7 +162,7 @@ export function FormNotifiers({
                                   }}
                                 />
                               </FormControl>
-                              <FormLabel className="font-normal text-sm">
+                              <FormLabel className="text-sm font-normal">
                                 {item.name}{" "}
                                 <Badge
                                   variant="secondary"

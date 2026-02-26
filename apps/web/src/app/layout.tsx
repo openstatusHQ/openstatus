@@ -1,9 +1,12 @@
 import "@/styles/globals.css";
+import type { Metadata } from "next";
 
 import { OpenPanelComponent } from "@openpanel/nextjs";
-import type { Metadata } from "next";
+import { Toaster } from "@openstatus/ui/components/ui/sonner";
+import PlausibleProvider from "next-plausible";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { env } from "@/env";
@@ -13,9 +16,6 @@ import {
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
 import { TRPCReactQueryProvider } from "@/trpc/rq-client";
-import { Toaster } from "@openstatus/ui/components/ui/sonner";
-import PlausibleProvider from "next-plausible";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -41,12 +41,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${
-          inter.className
-          // biome-ignore lint/nursery/useSortedClasses: <explanation>
-        } ${calSans.variable}`}
-      >
+      <body className={`${inter.className} ${calSans.variable}`}>
         <PlausibleProvider domain="openstatus.dev">
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
             <NuqsAdapter>

@@ -2,81 +2,99 @@
 // @generated from file openstatus/maintenance/v1/service.proto (package openstatus.maintenance.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Maintenance, MaintenanceSummary } from "./maintenance_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv2";
+
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
+
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { Maintenance, MaintenanceSummary } from "./maintenance_pb.ts";
 import { file_openstatus_maintenance_v1_maintenance } from "./maintenance_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/maintenance/v1/service.proto.
  */
-export const file_openstatus_maintenance_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL21haW50ZW5hbmNlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEiqAMKGENyZWF0ZU1haW50ZW5hbmNlUmVxdWVzdBIyCgV0aXRsZRgBIAEoCUIjukcWOhQSEkRhdGFiYXNlIE1pZ3JhdGlvbrpIB3IFEAEYgAISGAoHbWVzc2FnZRgCIAEoCUIHukgEcgIQARJ0CgRmcm9tGAMgASgJQma6Rxg6FhIUMjAyNC0wMy0wMVQwMjowMDowMFq6SEhyRjJEXlxkezR9LVxkezJ9LVxkezJ9VFxkezJ9OlxkezJ9OlxkezJ9KFwuXGR7MSw5fSk/KFp8WystXVxkezJ9OlxkezJ9KSQScgoCdG8YBCABKAlCZrpHGDoWEhQyMDI0LTAzLTAxVDA2OjAwOjAwWrpISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJBIYCgdwYWdlX2lkGAUgASgJQge6SARyAhABEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgGIAMoCRITCgZub3RpZnkYByABKAhIAIgBAUIJCgdfbm90aWZ5IlgKGUNyZWF0ZU1haW50ZW5hbmNlUmVzcG9uc2USOwoLbWFpbnRlbmFuY2UYASABKAsyJi5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLk1haW50ZW5hbmNlIiwKFUdldE1haW50ZW5hbmNlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJVChZHZXRNYWludGVuYW5jZVJlc3BvbnNlEjsKC21haW50ZW5hbmNlGAEgASgLMiYub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5NYWludGVuYW5jZSKNAQoXTGlzdE1haW50ZW5hbmNlc1JlcXVlc3QSHQoFbGltaXQYASABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgCIAEoBUIHukgEGgIoAEgBiAEBEhQKB3BhZ2VfaWQYAyABKAlIAogBAUIICgZfbGltaXRCCQoHX29mZnNldEIKCghfcGFnZV9pZCJzChhMaXN0TWFpbnRlbmFuY2VzUmVzcG9uc2USQwoMbWFpbnRlbmFuY2VzGAEgAygLMi0ub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5NYWludGVuYW5jZVN1bW1hcnkSEgoKdG90YWxfc2l6ZRgCIAEoBSKHAwoYVXBkYXRlTWFpbnRlbmFuY2VSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEh4KBXRpdGxlGAIgASgJQgq6SAdyBRABGIACSACIAQESFAoHbWVzc2FnZRgDIAEoCUgBiAEBEl4KBGZyb20YBCABKAlCS7pISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJEgCiAEBElwKAnRvGAUgASgJQku6SEhyRjJEXlxkezR9LVxkezJ9LVxkezJ9VFxkezJ9OlxkezJ9OlxkezJ9KFwuXGR7MSw5fSk/KFp8WystXVxkezJ9OlxkezJ9KSRIA4gBARIUCgdwYWdlX2lkGAYgASgJSASIAQESGgoScGFnZV9jb21wb25lbnRfaWRzGAcgAygJQggKBl90aXRsZUIKCghfbWVzc2FnZUIHCgVfZnJvbUIFCgNfdG9CCgoIX3BhZ2VfaWQiWAoZVXBkYXRlTWFpbnRlbmFuY2VSZXNwb25zZRI7CgttYWludGVuYW5jZRgBIAEoCzImLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2UiLwoYRGVsZXRlTWFpbnRlbmFuY2VSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIiwKGURlbGV0ZU1haW50ZW5hbmNlUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCDKTBQoSTWFpbnRlbmFuY2VTZXJ2aWNlEn4KEUNyZWF0ZU1haW50ZW5hbmNlEjMub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5DcmVhdGVNYWludGVuYW5jZVJlcXVlc3QaNC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkNyZWF0ZU1haW50ZW5hbmNlUmVzcG9uc2USegoOR2V0TWFpbnRlbmFuY2USMC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkdldE1haW50ZW5hbmNlUmVxdWVzdBoxLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuR2V0TWFpbnRlbmFuY2VSZXNwb25zZSIDkAIBEoABChBMaXN0TWFpbnRlbmFuY2VzEjIub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5MaXN0TWFpbnRlbmFuY2VzUmVxdWVzdBozLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTGlzdE1haW50ZW5hbmNlc1Jlc3BvbnNlIgOQAgESfgoRVXBkYXRlTWFpbnRlbmFuY2USMy5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLlVwZGF0ZU1haW50ZW5hbmNlUmVxdWVzdBo0Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuVXBkYXRlTWFpbnRlbmFuY2VSZXNwb25zZRJ+ChFEZWxldGVNYWludGVuYW5jZRIzLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuRGVsZXRlTWFpbnRlbmFuY2VSZXF1ZXN0GjQub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5EZWxldGVNYWludGVuYW5jZVJlc3BvbnNlQltaWWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tYWludGVuYW5jZS92MTttYWludGVuYW5jZXYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_maintenance_v1_maintenance]);
+export const file_openstatus_maintenance_v1_service: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CidvcGVuc3RhdHVzL21haW50ZW5hbmNlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEiqAMKGENyZWF0ZU1haW50ZW5hbmNlUmVxdWVzdBIyCgV0aXRsZRgBIAEoCUIjukcWOhQSEkRhdGFiYXNlIE1pZ3JhdGlvbrpIB3IFEAEYgAISGAoHbWVzc2FnZRgCIAEoCUIHukgEcgIQARJ0CgRmcm9tGAMgASgJQma6Rxg6FhIUMjAyNC0wMy0wMVQwMjowMDowMFq6SEhyRjJEXlxkezR9LVxkezJ9LVxkezJ9VFxkezJ9OlxkezJ9OlxkezJ9KFwuXGR7MSw5fSk/KFp8WystXVxkezJ9OlxkezJ9KSQScgoCdG8YBCABKAlCZrpHGDoWEhQyMDI0LTAzLTAxVDA2OjAwOjAwWrpISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJBIYCgdwYWdlX2lkGAUgASgJQge6SARyAhABEhoKEnBhZ2VfY29tcG9uZW50X2lkcxgGIAMoCRITCgZub3RpZnkYByABKAhIAIgBAUIJCgdfbm90aWZ5IlgKGUNyZWF0ZU1haW50ZW5hbmNlUmVzcG9uc2USOwoLbWFpbnRlbmFuY2UYASABKAsyJi5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLk1haW50ZW5hbmNlIiwKFUdldE1haW50ZW5hbmNlUmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQASJVChZHZXRNYWludGVuYW5jZVJlc3BvbnNlEjsKC21haW50ZW5hbmNlGAEgASgLMiYub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5NYWludGVuYW5jZSKNAQoXTGlzdE1haW50ZW5hbmNlc1JlcXVlc3QSHQoFbGltaXQYASABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgCIAEoBUIHukgEGgIoAEgBiAEBEhQKB3BhZ2VfaWQYAyABKAlIAogBAUIICgZfbGltaXRCCQoHX29mZnNldEIKCghfcGFnZV9pZCJzChhMaXN0TWFpbnRlbmFuY2VzUmVzcG9uc2USQwoMbWFpbnRlbmFuY2VzGAEgAygLMi0ub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5NYWludGVuYW5jZVN1bW1hcnkSEgoKdG90YWxfc2l6ZRgCIAEoBSKHAwoYVXBkYXRlTWFpbnRlbmFuY2VSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABEh4KBXRpdGxlGAIgASgJQgq6SAdyBRABGIACSACIAQESFAoHbWVzc2FnZRgDIAEoCUgBiAEBEl4KBGZyb20YBCABKAlCS7pISHJGMkReXGR7NH0tXGR7Mn0tXGR7Mn1UXGR7Mn06XGR7Mn06XGR7Mn0oXC5cZHsxLDl9KT8oWnxbKy1dXGR7Mn06XGR7Mn0pJEgCiAEBElwKAnRvGAUgASgJQku6SEhyRjJEXlxkezR9LVxkezJ9LVxkezJ9VFxkezJ9OlxkezJ9OlxkezJ9KFwuXGR7MSw5fSk/KFp8WystXVxkezJ9OlxkezJ9KSRIA4gBARIUCgdwYWdlX2lkGAYgASgJSASIAQESGgoScGFnZV9jb21wb25lbnRfaWRzGAcgAygJQggKBl90aXRsZUIKCghfbWVzc2FnZUIHCgVfZnJvbUIFCgNfdG9CCgoIX3BhZ2VfaWQiWAoZVXBkYXRlTWFpbnRlbmFuY2VSZXNwb25zZRI7CgttYWludGVuYW5jZRgBIAEoCzImLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2UiLwoYRGVsZXRlTWFpbnRlbmFuY2VSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIiwKGURlbGV0ZU1haW50ZW5hbmNlUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCDKTBQoSTWFpbnRlbmFuY2VTZXJ2aWNlEn4KEUNyZWF0ZU1haW50ZW5hbmNlEjMub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5DcmVhdGVNYWludGVuYW5jZVJlcXVlc3QaNC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkNyZWF0ZU1haW50ZW5hbmNlUmVzcG9uc2USegoOR2V0TWFpbnRlbmFuY2USMC5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLkdldE1haW50ZW5hbmNlUmVxdWVzdBoxLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuR2V0TWFpbnRlbmFuY2VSZXNwb25zZSIDkAIBEoABChBMaXN0TWFpbnRlbmFuY2VzEjIub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5MaXN0TWFpbnRlbmFuY2VzUmVxdWVzdBozLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTGlzdE1haW50ZW5hbmNlc1Jlc3BvbnNlIgOQAgESfgoRVXBkYXRlTWFpbnRlbmFuY2USMy5vcGVuc3RhdHVzLm1haW50ZW5hbmNlLnYxLlVwZGF0ZU1haW50ZW5hbmNlUmVxdWVzdBo0Lm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuVXBkYXRlTWFpbnRlbmFuY2VSZXNwb25zZRJ+ChFEZWxldGVNYWludGVuYW5jZRIzLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuRGVsZXRlTWFpbnRlbmFuY2VSZXF1ZXN0GjQub3BlbnN0YXR1cy5tYWludGVuYW5jZS52MS5EZWxldGVNYWludGVuYW5jZVJlc3BvbnNlQltaWWdpdGh1Yi5jb20vb3BlbnN0YXR1c2hxL29wZW5zdGF0dXMvcGFja2FnZXMvcHJvdG8vb3BlbnN0YXR1cy9tYWludGVuYW5jZS92MTttYWludGVuYW5jZXYxYgZwcm90bzM",
+    [
+      file_buf_validate_validate,
+      file_gnostic_openapi_v3_annotations,
+      file_openstatus_maintenance_v1_maintenance,
+    ],
+  );
 
 /**
  * CreateMaintenanceRequest is the request to create a new maintenance window.
  *
  * @generated from message openstatus.maintenance.v1.CreateMaintenanceRequest
  */
-export type CreateMaintenanceRequest = Message<"openstatus.maintenance.v1.CreateMaintenanceRequest"> & {
-  /**
-   * Title of the maintenance (required, 1-256 characters).
-   *
-   * @generated from field: string title = 1;
-   */
-  title: string;
+export type CreateMaintenanceRequest =
+  Message<"openstatus.maintenance.v1.CreateMaintenanceRequest"> & {
+    /**
+     * Title of the maintenance (required, 1-256 characters).
+     *
+     * @generated from field: string title = 1;
+     */
+    title: string;
 
-  /**
-   * Message describing the maintenance (required).
-   *
-   * @generated from field: string message = 2;
-   */
-  message: string;
+    /**
+     * Message describing the maintenance (required).
+     *
+     * @generated from field: string message = 2;
+     */
+    message: string;
 
-  /**
-   * Start time of the maintenance window (RFC 3339 format, required).
-   *
-   * @generated from field: string from = 3;
-   */
-  from: string;
+    /**
+     * Start time of the maintenance window (RFC 3339 format, required).
+     *
+     * @generated from field: string from = 3;
+     */
+    from: string;
 
-  /**
-   * End time of the maintenance window (RFC 3339 format, required).
-   *
-   * @generated from field: string to = 4;
-   */
-  to: string;
+    /**
+     * End time of the maintenance window (RFC 3339 format, required).
+     *
+     * @generated from field: string to = 4;
+     */
+    to: string;
 
-  /**
-   * Page ID to associate with this maintenance (required).
-   *
-   * @generated from field: string page_id = 5;
-   */
-  pageId: string;
+    /**
+     * Page ID to associate with this maintenance (required).
+     *
+     * @generated from field: string page_id = 5;
+     */
+    pageId: string;
 
-  /**
-   * Page component IDs to associate with this maintenance (optional).
-   *
-   * @generated from field: repeated string page_component_ids = 6;
-   */
-  pageComponentIds: string[];
+    /**
+     * Page component IDs to associate with this maintenance (optional).
+     *
+     * @generated from field: repeated string page_component_ids = 6;
+     */
+    pageComponentIds: string[];
 
-  /**
-   * Whether to notify subscribers about this maintenance (optional, defaults to false).
-   *
-   * @generated from field: optional bool notify = 7;
-   */
-  notify?: boolean;
-};
+    /**
+     * Whether to notify subscribers about this maintenance (optional, defaults to false).
+     *
+     * @generated from field: optional bool notify = 7;
+     */
+    notify?: boolean;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.CreateMaintenanceRequest.
  * Use `create(CreateMaintenanceRequestSchema)` to create a new message.
  */
-export const CreateMaintenanceRequestSchema: GenMessage<CreateMaintenanceRequest> = /*@__PURE__*/
+export const CreateMaintenanceRequestSchema: GenMessage<CreateMaintenanceRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 0);
 
 /**
@@ -84,20 +102,21 @@ export const CreateMaintenanceRequestSchema: GenMessage<CreateMaintenanceRequest
  *
  * @generated from message openstatus.maintenance.v1.CreateMaintenanceResponse
  */
-export type CreateMaintenanceResponse = Message<"openstatus.maintenance.v1.CreateMaintenanceResponse"> & {
-  /**
-   * The created maintenance.
-   *
-   * @generated from field: openstatus.maintenance.v1.Maintenance maintenance = 1;
-   */
-  maintenance?: Maintenance;
-};
+export type CreateMaintenanceResponse =
+  Message<"openstatus.maintenance.v1.CreateMaintenanceResponse"> & {
+    /**
+     * The created maintenance.
+     *
+     * @generated from field: openstatus.maintenance.v1.Maintenance maintenance = 1;
+     */
+    maintenance?: Maintenance;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.CreateMaintenanceResponse.
  * Use `create(CreateMaintenanceResponseSchema)` to create a new message.
  */
-export const CreateMaintenanceResponseSchema: GenMessage<CreateMaintenanceResponse> = /*@__PURE__*/
+export const CreateMaintenanceResponseSchema: GenMessage<CreateMaintenanceResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 1);
 
 /**
@@ -105,20 +124,21 @@ export const CreateMaintenanceResponseSchema: GenMessage<CreateMaintenanceRespon
  *
  * @generated from message openstatus.maintenance.v1.GetMaintenanceRequest
  */
-export type GetMaintenanceRequest = Message<"openstatus.maintenance.v1.GetMaintenanceRequest"> & {
-  /**
-   * ID of the maintenance to retrieve (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type GetMaintenanceRequest =
+  Message<"openstatus.maintenance.v1.GetMaintenanceRequest"> & {
+    /**
+     * ID of the maintenance to retrieve (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.GetMaintenanceRequest.
  * Use `create(GetMaintenanceRequestSchema)` to create a new message.
  */
-export const GetMaintenanceRequestSchema: GenMessage<GetMaintenanceRequest> = /*@__PURE__*/
+export const GetMaintenanceRequestSchema: GenMessage<GetMaintenanceRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 2);
 
 /**
@@ -126,20 +146,21 @@ export const GetMaintenanceRequestSchema: GenMessage<GetMaintenanceRequest> = /*
  *
  * @generated from message openstatus.maintenance.v1.GetMaintenanceResponse
  */
-export type GetMaintenanceResponse = Message<"openstatus.maintenance.v1.GetMaintenanceResponse"> & {
-  /**
-   * The requested maintenance.
-   *
-   * @generated from field: openstatus.maintenance.v1.Maintenance maintenance = 1;
-   */
-  maintenance?: Maintenance;
-};
+export type GetMaintenanceResponse =
+  Message<"openstatus.maintenance.v1.GetMaintenanceResponse"> & {
+    /**
+     * The requested maintenance.
+     *
+     * @generated from field: openstatus.maintenance.v1.Maintenance maintenance = 1;
+     */
+    maintenance?: Maintenance;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.GetMaintenanceResponse.
  * Use `create(GetMaintenanceResponseSchema)` to create a new message.
  */
-export const GetMaintenanceResponseSchema: GenMessage<GetMaintenanceResponse> = /*@__PURE__*/
+export const GetMaintenanceResponseSchema: GenMessage<GetMaintenanceResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 3);
 
 /**
@@ -147,34 +168,35 @@ export const GetMaintenanceResponseSchema: GenMessage<GetMaintenanceResponse> = 
  *
  * @generated from message openstatus.maintenance.v1.ListMaintenancesRequest
  */
-export type ListMaintenancesRequest = Message<"openstatus.maintenance.v1.ListMaintenancesRequest"> & {
-  /**
-   * Maximum number of maintenances to return (1-100, defaults to 50).
-   *
-   * @generated from field: optional int32 limit = 1;
-   */
-  limit?: number;
+export type ListMaintenancesRequest =
+  Message<"openstatus.maintenance.v1.ListMaintenancesRequest"> & {
+    /**
+     * Maximum number of maintenances to return (1-100, defaults to 50).
+     *
+     * @generated from field: optional int32 limit = 1;
+     */
+    limit?: number;
 
-  /**
-   * Number of maintenances to skip for pagination (defaults to 0).
-   *
-   * @generated from field: optional int32 offset = 2;
-   */
-  offset?: number;
+    /**
+     * Number of maintenances to skip for pagination (defaults to 0).
+     *
+     * @generated from field: optional int32 offset = 2;
+     */
+    offset?: number;
 
-  /**
-   * Filter by page ID (optional).
-   *
-   * @generated from field: optional string page_id = 3;
-   */
-  pageId?: string;
-};
+    /**
+     * Filter by page ID (optional).
+     *
+     * @generated from field: optional string page_id = 3;
+     */
+    pageId?: string;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.ListMaintenancesRequest.
  * Use `create(ListMaintenancesRequestSchema)` to create a new message.
  */
-export const ListMaintenancesRequestSchema: GenMessage<ListMaintenancesRequest> = /*@__PURE__*/
+export const ListMaintenancesRequestSchema: GenMessage<ListMaintenancesRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 4);
 
 /**
@@ -182,27 +204,28 @@ export const ListMaintenancesRequestSchema: GenMessage<ListMaintenancesRequest> 
  *
  * @generated from message openstatus.maintenance.v1.ListMaintenancesResponse
  */
-export type ListMaintenancesResponse = Message<"openstatus.maintenance.v1.ListMaintenancesResponse"> & {
-  /**
-   * List of maintenances.
-   *
-   * @generated from field: repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 1;
-   */
-  maintenances: MaintenanceSummary[];
+export type ListMaintenancesResponse =
+  Message<"openstatus.maintenance.v1.ListMaintenancesResponse"> & {
+    /**
+     * List of maintenances.
+     *
+     * @generated from field: repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 1;
+     */
+    maintenances: MaintenanceSummary[];
 
-  /**
-   * Total number of maintenances matching the filter.
-   *
-   * @generated from field: int32 total_size = 2;
-   */
-  totalSize: number;
-};
+    /**
+     * Total number of maintenances matching the filter.
+     *
+     * @generated from field: int32 total_size = 2;
+     */
+    totalSize: number;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.ListMaintenancesResponse.
  * Use `create(ListMaintenancesResponseSchema)` to create a new message.
  */
-export const ListMaintenancesResponseSchema: GenMessage<ListMaintenancesResponse> = /*@__PURE__*/
+export const ListMaintenancesResponseSchema: GenMessage<ListMaintenancesResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 5);
 
 /**
@@ -210,62 +233,63 @@ export const ListMaintenancesResponseSchema: GenMessage<ListMaintenancesResponse
  *
  * @generated from message openstatus.maintenance.v1.UpdateMaintenanceRequest
  */
-export type UpdateMaintenanceRequest = Message<"openstatus.maintenance.v1.UpdateMaintenanceRequest"> & {
-  /**
-   * ID of the maintenance to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateMaintenanceRequest =
+  Message<"openstatus.maintenance.v1.UpdateMaintenanceRequest"> & {
+    /**
+     * ID of the maintenance to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * New title for the maintenance (optional).
-   *
-   * @generated from field: optional string title = 2;
-   */
-  title?: string;
+    /**
+     * New title for the maintenance (optional).
+     *
+     * @generated from field: optional string title = 2;
+     */
+    title?: string;
 
-  /**
-   * New message for the maintenance (optional).
-   *
-   * @generated from field: optional string message = 3;
-   */
-  message?: string;
+    /**
+     * New message for the maintenance (optional).
+     *
+     * @generated from field: optional string message = 3;
+     */
+    message?: string;
 
-  /**
-   * New start time (RFC 3339 format, optional).
-   *
-   * @generated from field: optional string from = 4;
-   */
-  from?: string;
+    /**
+     * New start time (RFC 3339 format, optional).
+     *
+     * @generated from field: optional string from = 4;
+     */
+    from?: string;
 
-  /**
-   * New end time (RFC 3339 format, optional).
-   *
-   * @generated from field: optional string to = 5;
-   */
-  to?: string;
+    /**
+     * New end time (RFC 3339 format, optional).
+     *
+     * @generated from field: optional string to = 5;
+     */
+    to?: string;
 
-  /**
-   * New page ID (optional).
-   *
-   * @generated from field: optional string page_id = 6;
-   */
-  pageId?: string;
+    /**
+     * New page ID (optional).
+     *
+     * @generated from field: optional string page_id = 6;
+     */
+    pageId?: string;
 
-  /**
-   * New list of page component IDs (optional, replaces existing list).
-   *
-   * @generated from field: repeated string page_component_ids = 7;
-   */
-  pageComponentIds: string[];
-};
+    /**
+     * New list of page component IDs (optional, replaces existing list).
+     *
+     * @generated from field: repeated string page_component_ids = 7;
+     */
+    pageComponentIds: string[];
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.UpdateMaintenanceRequest.
  * Use `create(UpdateMaintenanceRequestSchema)` to create a new message.
  */
-export const UpdateMaintenanceRequestSchema: GenMessage<UpdateMaintenanceRequest> = /*@__PURE__*/
+export const UpdateMaintenanceRequestSchema: GenMessage<UpdateMaintenanceRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 6);
 
 /**
@@ -273,20 +297,21 @@ export const UpdateMaintenanceRequestSchema: GenMessage<UpdateMaintenanceRequest
  *
  * @generated from message openstatus.maintenance.v1.UpdateMaintenanceResponse
  */
-export type UpdateMaintenanceResponse = Message<"openstatus.maintenance.v1.UpdateMaintenanceResponse"> & {
-  /**
-   * The updated maintenance.
-   *
-   * @generated from field: openstatus.maintenance.v1.Maintenance maintenance = 1;
-   */
-  maintenance?: Maintenance;
-};
+export type UpdateMaintenanceResponse =
+  Message<"openstatus.maintenance.v1.UpdateMaintenanceResponse"> & {
+    /**
+     * The updated maintenance.
+     *
+     * @generated from field: openstatus.maintenance.v1.Maintenance maintenance = 1;
+     */
+    maintenance?: Maintenance;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.UpdateMaintenanceResponse.
  * Use `create(UpdateMaintenanceResponseSchema)` to create a new message.
  */
-export const UpdateMaintenanceResponseSchema: GenMessage<UpdateMaintenanceResponse> = /*@__PURE__*/
+export const UpdateMaintenanceResponseSchema: GenMessage<UpdateMaintenanceResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 7);
 
 /**
@@ -294,20 +319,21 @@ export const UpdateMaintenanceResponseSchema: GenMessage<UpdateMaintenanceRespon
  *
  * @generated from message openstatus.maintenance.v1.DeleteMaintenanceRequest
  */
-export type DeleteMaintenanceRequest = Message<"openstatus.maintenance.v1.DeleteMaintenanceRequest"> & {
-  /**
-   * ID of the maintenance to delete (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type DeleteMaintenanceRequest =
+  Message<"openstatus.maintenance.v1.DeleteMaintenanceRequest"> & {
+    /**
+     * ID of the maintenance to delete (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.DeleteMaintenanceRequest.
  * Use `create(DeleteMaintenanceRequestSchema)` to create a new message.
  */
-export const DeleteMaintenanceRequestSchema: GenMessage<DeleteMaintenanceRequest> = /*@__PURE__*/
+export const DeleteMaintenanceRequestSchema: GenMessage<DeleteMaintenanceRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 8);
 
 /**
@@ -315,20 +341,21 @@ export const DeleteMaintenanceRequestSchema: GenMessage<DeleteMaintenanceRequest
  *
  * @generated from message openstatus.maintenance.v1.DeleteMaintenanceResponse
  */
-export type DeleteMaintenanceResponse = Message<"openstatus.maintenance.v1.DeleteMaintenanceResponse"> & {
-  /**
-   * Whether the deletion was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type DeleteMaintenanceResponse =
+  Message<"openstatus.maintenance.v1.DeleteMaintenanceResponse"> & {
+    /**
+     * Whether the deletion was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.maintenance.v1.DeleteMaintenanceResponse.
  * Use `create(DeleteMaintenanceResponseSchema)` to create a new message.
  */
-export const DeleteMaintenanceResponseSchema: GenMessage<DeleteMaintenanceResponse> = /*@__PURE__*/
+export const DeleteMaintenanceResponseSchema: GenMessage<DeleteMaintenanceResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_maintenance_v1_service, 9);
 
 /**
@@ -346,7 +373,7 @@ export const MaintenanceService: GenService<{
     methodKind: "unary";
     input: typeof CreateMaintenanceRequestSchema;
     output: typeof CreateMaintenanceResponseSchema;
-  },
+  };
   /**
    * GetMaintenance retrieves a specific maintenance window by ID.
    *
@@ -356,7 +383,7 @@ export const MaintenanceService: GenService<{
     methodKind: "unary";
     input: typeof GetMaintenanceRequestSchema;
     output: typeof GetMaintenanceResponseSchema;
-  },
+  };
   /**
    * ListMaintenances returns all maintenance windows for the workspace.
    *
@@ -366,7 +393,7 @@ export const MaintenanceService: GenService<{
     methodKind: "unary";
     input: typeof ListMaintenancesRequestSchema;
     output: typeof ListMaintenancesResponseSchema;
-  },
+  };
   /**
    * UpdateMaintenance updates a maintenance window.
    *
@@ -376,7 +403,7 @@ export const MaintenanceService: GenService<{
     methodKind: "unary";
     input: typeof UpdateMaintenanceRequestSchema;
     output: typeof UpdateMaintenanceResponseSchema;
-  },
+  };
   /**
    * DeleteMaintenance removes a maintenance window.
    *
@@ -386,7 +413,5 @@ export const MaintenanceService: GenService<{
     methodKind: "unary";
     input: typeof DeleteMaintenanceRequestSchema;
     output: typeof DeleteMaintenanceResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_openstatus_maintenance_v1_service, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_openstatus_maintenance_v1_service, 0);

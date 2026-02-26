@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import crypto from "node:crypto";
+
 import { Hono } from "hono";
 
 const SIGNING_SECRET = "test-signing-secret";
@@ -31,7 +32,7 @@ const pendingData = {
   },
 };
 
-mock.module("./workspace-resolver", () => ({
+void mock.module("./workspace-resolver", () => ({
   resolveWorkspace: (teamId: string) => {
     if (teamId === "T_KNOWN") {
       return Promise.resolve({ botToken: "xoxb-fallback" });
@@ -42,7 +43,7 @@ mock.module("./workspace-resolver", () => ({
 
 let slackCalls: Array<{ method: string; args: Record<string, unknown> }> = [];
 
-mock.module("@slack/web-api", () => ({
+void mock.module("@slack/web-api", () => ({
   WebClient: class {
     chat = {
       update: (args: Record<string, unknown>) => {

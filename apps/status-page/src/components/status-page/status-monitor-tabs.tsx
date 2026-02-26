@@ -33,7 +33,7 @@ export function StatusMonitorTabsTrigger({
   return (
     <TabsTrigger
       className={cn(
-        "min-w-0 flex-1 flex-col items-start gap-0.5 text-foreground dark:text-foreground",
+        "text-foreground dark:text-foreground min-w-0 flex-1 flex-col items-start gap-0.5",
         className,
       )}
       {...props}
@@ -57,7 +57,7 @@ export function StatusMonitorTabsTriggerValue({
   return (
     <div
       className={cn(
-        "flex min-h-5 flex-row flex-wrap items-center gap-1 text-left text-muted-foreground text-xs",
+        "text-muted-foreground flex min-h-5 flex-row flex-wrap items-center gap-1 text-left text-xs",
         className,
       )}
       {...props}
@@ -79,7 +79,7 @@ export function StatusMonitorTabsContent({
   return (
     <TabsContent
       className={cn(
-        "flex flex-col gap-2 rounded-lg focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+        "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-col gap-2 rounded-lg focus-visible:ring-[3px]",
         className,
       )}
       {...props}

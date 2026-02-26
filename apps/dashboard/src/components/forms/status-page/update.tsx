@@ -1,10 +1,12 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Info } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+
 import { Link } from "@/components/common/link";
 import { Note, NoteButton } from "@/components/common/note";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+
 import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
 import { FormDangerZone } from "./form-danger-zone";
@@ -25,9 +27,9 @@ export function FormStatusPageUpdate() {
   const updateStatusPageMutation = useMutation(
     trpc.page.updateGeneral.mutationOptions({
       onSuccess: () => {
-        refetch();
+        void refetch();
         // NOTE: invalidate status page list to update name
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
@@ -57,11 +59,11 @@ export function FormStatusPageUpdate() {
       onSuccess: () => {
         router.push("/status-pages");
         // NOTE: invalidate workspace to update the usage
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
         // NOTE: invalidate status page list to update the usage
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
@@ -109,7 +111,7 @@ export function FormStatusPageUpdate() {
         }}
       />
       <FormCustomDomain
-        locked={workspace.limits["custom-domain"] === false}
+        locked={!workspace.limits["custom-domain"]}
         defaultValues={{
           domain: statusPage.customDomain ?? undefined,
         }}

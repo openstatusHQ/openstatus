@@ -68,7 +68,7 @@ builders:
     fromImage: oven/bun:1.3.6
     workdir: /app/apps/workflows
     copy:
-     - . /app/
+      - . /app/
     run: bun run src/build-docker.ts
 
   libsql:

@@ -3,7 +3,7 @@ import { mock } from "bun:test";
 const testRedisStore = new Map<string, string>();
 (globalThis as Record<string, unknown>).__testRedisStore = testRedisStore;
 
-mock.module("@openstatus/upstash", () => ({
+void mock.module("@openstatus/upstash", () => ({
   Redis: {
     fromEnv() {
       return {
@@ -30,7 +30,7 @@ mock.module("@openstatus/upstash", () => ({
   },
 }));
 
-mock.module("@openstatus/tinybird", () => ({
+void mock.module("@openstatus/tinybird", () => ({
   OSTinybird: class {
     get legacy_httpStatus45d() {
       return () => Promise.resolve({ data: [] });

@@ -2,75 +2,101 @@
 // @generated from file openstatus/status_page/v1/service.proto (package openstatus.status_page.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { MaintenanceSummary } from "../../maintenance/v1/maintenance_pb.ts";
+import type { StatusReport } from "../../status_report/v1/status_report_pb.ts";
+import type { PageComponent, PageComponentGroup } from "./page_component_pb.ts";
+import type { PageSubscriber } from "./page_subscriber_pb.ts";
+import type {
+  OverallStatus,
+  StatusPage,
+  StatusPageSummary,
+} from "./status_page_pb.ts";
+import type { Message } from "@bufbuild/protobuf";
+import type {
+  GenFile,
+  GenMessage,
+  GenService,
+} from "@bufbuild/protobuf/codegenv2";
+
+import {
+  fileDesc,
+  messageDesc,
+  serviceDesc,
+} from "@bufbuild/protobuf/codegenv2";
+
 import { file_buf_validate_validate } from "../../../buf/validate/validate_pb.ts";
 import { file_gnostic_openapi_v3_annotations } from "../../../gnostic/openapi/v3/annotations_pb.ts";
-import type { MaintenanceSummary } from "../../maintenance/v1/maintenance_pb.ts";
 import { file_openstatus_maintenance_v1_maintenance } from "../../maintenance/v1/maintenance_pb.ts";
-import type { PageComponent, PageComponentGroup } from "./page_component_pb.ts";
-import { file_openstatus_status_page_v1_page_component } from "./page_component_pb.ts";
-import type { PageSubscriber } from "./page_subscriber_pb.ts";
-import { file_openstatus_status_page_v1_page_subscriber } from "./page_subscriber_pb.ts";
-import type { OverallStatus, StatusPage, StatusPageSummary } from "./status_page_pb.ts";
-import { file_openstatus_status_page_v1_status_page } from "./status_page_pb.ts";
-import type { StatusReport } from "../../status_report/v1/status_report_pb.ts";
 import { file_openstatus_status_report_v1_status_report } from "../../status_report/v1/status_report_pb.ts";
-import type { Message } from "@bufbuild/protobuf";
+import { file_openstatus_status_page_v1_page_component } from "./page_component_pb.ts";
+import { file_openstatus_status_page_v1_page_subscriber } from "./page_subscriber_pb.ts";
+import { file_openstatus_status_page_v1_status_page } from "./status_page_pb.ts";
 
 /**
  * Describes the file openstatus/status_page/v1/service.proto.
  */
-export const file_openstatus_status_page_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CidvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEiwAIKF0NyZWF0ZVN0YXR1c1BhZ2VSZXF1ZXN0EjAKBXRpdGxlGAEgASgJQiG6RxQ6EhIQQWNtZSBDb3JwIFN0YXR1c7pIB3IFEAEYgAISIgoLZGVzY3JpcHRpb24YAiABKAlCCLpIBXIDGIAISACIAQESSQoEc2x1ZxgDIAEoCUI7ukcSOhASDm15LXN0YXR1cy1wYWdlukgjciEQARiAAjIaXlthLXowLTldKyg/Oi1bYS16MC05XSspKiQSOQoMaG9tZXBhZ2VfdXJsGAQgASgJQh66Rxs6GRIXaHR0cHM6Ly93d3cuZXhhbXBsZS5jb21IAYgBARIYCgtjb250YWN0X3VybBgFIAEoCUgCiAEBQg4KDF9kZXNjcmlwdGlvbkIPCg1faG9tZXBhZ2VfdXJsQg4KDF9jb250YWN0X3VybCJWChhDcmVhdGVTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiKwoUR2V0U3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiUwoVR2V0U3RhdHVzUGFnZVJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlImoKFkxpc3RTdGF0dXNQYWdlc1JlcXVlc3QSHQoFbGltaXQYASABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgCIAEoBUIHukgEGgIoAEgBiAEBQggKBl9saW1pdEIJCgdfb2Zmc2V0InEKF0xpc3RTdGF0dXNQYWdlc1Jlc3BvbnNlEkIKDHN0YXR1c19wYWdlcxgBIAMoCzIsLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3RhdHVzUGFnZVN1bW1hcnkSEgoKdG90YWxfc2l6ZRgCIAEoBSKmAgoXVXBkYXRlU3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESHgoFdGl0bGUYAiABKAlCCrpIB3IFEAEYgAJIAIgBARIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAYgBARI5CgRzbHVnGAQgASgJQia6SCNyIRABGIACMhpeW2EtejAtOV0rKD86LVthLXowLTldKykqJEgCiAEBEhkKDGhvbWVwYWdlX3VybBgFIAEoCUgDiAEBEhgKC2NvbnRhY3RfdXJsGAYgASgJSASIAQFCCAoGX3RpdGxlQg4KDF9kZXNjcmlwdGlvbkIHCgVfc2x1Z0IPCg1faG9tZXBhZ2VfdXJsQg4KDF9jb250YWN0X3VybCJWChhVcGRhdGVTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiLgoXRGVsZXRlU3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKwoYRGVsZXRlU3RhdHVzUGFnZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgi7wEKGkFkZE1vbml0b3JDb21wb25lbnRSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGwoKbW9uaXRvcl9pZBgCIAEoCUIHukgEcgIQARIbCgRuYW1lGAMgASgJQgi6SAVyAxiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAQgASgJQgi6SAVyAxiACEgBiAEBEhIKBW9yZGVyGAUgASgFSAKIAQESFQoIZ3JvdXBfaWQYBiABKAlIA4gBAUIHCgVfbmFtZUIOCgxfZGVzY3JpcHRpb25CCAoGX29yZGVyQgsKCV9ncm91cF9pZCJaChtBZGRNb25pdG9yQ29tcG9uZW50UmVzcG9uc2USOwoJY29tcG9uZW50GAEgASgLMigub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50IsUBChlBZGRTdGF0aWNDb21wb25lbnRSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAhIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAIgBARISCgVvcmRlchgEIAEoBUgBiAEBEhUKCGdyb3VwX2lkGAUgASgJSAKIAQFCDgoMX2Rlc2NyaXB0aW9uQggKBl9vcmRlckILCglfZ3JvdXBfaWQiWQoaQWRkU3RhdGljQ29tcG9uZW50UmVzcG9uc2USOwoJY29tcG9uZW50GAEgASgLMigub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50Ii0KFlJlbW92ZUNvbXBvbmVudFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKgoXUmVtb3ZlQ29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCLzAQoWVXBkYXRlQ29tcG9uZW50UmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIbCgRuYW1lGAIgASgJQgi6SAVyAxiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAMgASgJQgi6SAVyAxiACEgBiAEBEhIKBW9yZGVyGAQgASgFSAKIAQESFQoIZ3JvdXBfaWQYBSABKAlIA4gBARIYCgtncm91cF9vcmRlchgGIAEoBUgEiAEBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbkIICgZfb3JkZXJCCwoJX2dyb3VwX2lkQg4KDF9ncm91cF9vcmRlciJWChdVcGRhdGVDb21wb25lbnRSZXNwb25zZRI7Cgljb21wb25lbnQYASABKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQiUQobQ3JlYXRlQ29tcG9uZW50R3JvdXBSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAiJcChxDcmVhdGVDb21wb25lbnRHcm91cFJlc3BvbnNlEjwKBWdyb3VwGAEgASgLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXAiMgobRGVsZXRlQ29tcG9uZW50R3JvdXBSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIi8KHERlbGV0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJaChtVcGRhdGVDb21wb25lbnRHcm91cFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESHQoEbmFtZRgCIAEoCUIKukgHcgUQARiAAkgAiAEBQgcKBV9uYW1lIlwKHFVwZGF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USPAoFZ3JvdXAYASABKAsyLS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnRHcm91cCJhChZTdWJzY3JpYmVUb1BhZ2VSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESLQoFZW1haWwYAiABKAlCHrpHFDoSEhB1c2VyQGV4YW1wbGUuY29tukgEcgJgASJYChdTdWJzY3JpYmVUb1BhZ2VSZXNwb25zZRI9CgpzdWJzY3JpYmVyGAEgASgLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlciJjChpVbnN1YnNjcmliZUZyb21QYWdlUmVxdWVzdBIYCgdwYWdlX2lkGAEgASgJQge6SARyAhABEg8KBWVtYWlsGAIgASgJSAASDAoCaWQYAyABKAlIAEIMCgppZGVudGlmaWVyIi4KG1Vuc3Vic2NyaWJlRnJvbVBhZ2VSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIsABChZMaXN0U3Vic2NyaWJlcnNSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESHQoFbGltaXQYAiABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgDIAEoBUIHukgEGgIoAEgBiAEBEiEKFGluY2x1ZGVfdW5zdWJzY3JpYmVkGAQgASgISAKIAQFCCAoGX2xpbWl0QgkKB19vZmZzZXRCFwoVX2luY2x1ZGVfdW5zdWJzY3JpYmVkIm0KF0xpc3RTdWJzY3JpYmVyc1Jlc3BvbnNlEj4KC3N1YnNjcmliZXJzGAEgAygLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlchISCgp0b3RhbF9zaXplGAIgASgFIkkKG0dldFN0YXR1c1BhZ2VDb250ZW50UmVxdWVzdBIMCgJpZBgBIAEoCUgAEg4KBHNsdWcYAiABKAlIAEIMCgppZGVudGlmaWVyIt8CChxHZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlEjwKCmNvbXBvbmVudHMYAiADKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQSPQoGZ3JvdXBzGAMgAygLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXASQQoOc3RhdHVzX3JlcG9ydHMYBCADKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0EkMKDG1haW50ZW5hbmNlcxgFIAMoCzItLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2VTdW1tYXJ5IkUKF0dldE92ZXJhbGxTdGF0dXNSZXF1ZXN0EgwKAmlkGAEgASgJSAASDgoEc2x1ZxgCIAEoCUgAQgwKCmlkZW50aWZpZXIiYQoPQ29tcG9uZW50U3RhdHVzEhQKDGNvbXBvbmVudF9pZBgBIAEoCRI4CgZzdGF0dXMYAiABKA4yKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLk92ZXJhbGxTdGF0dXMipAEKGEdldE92ZXJhbGxTdGF0dXNSZXNwb25zZRJACg5vdmVyYWxsX3N0YXR1cxgBIAEoDjIoLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuT3ZlcmFsbFN0YXR1cxJGChJjb21wb25lbnRfc3RhdHVzZXMYAiADKAsyKi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNvbXBvbmVudFN0YXR1czLNFwoRU3RhdHVzUGFnZVNlcnZpY2USewoQQ3JlYXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3JlYXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZVN0YXR1c1BhZ2VSZXNwb25zZRJ3Cg1HZXRTdGF0dXNQYWdlEi8ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlUmVxdWVzdBowLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZVJlc3BvbnNlIgOQAgESfQoPTGlzdFN0YXR1c1BhZ2VzEjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3RhdHVzUGFnZXNSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3RhdHVzUGFnZXNSZXNwb25zZSIDkAIBEnsKEFVwZGF0ZVN0YXR1c1BhZ2USMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZVN0YXR1c1BhZ2VSZXF1ZXN0GjMub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVTdGF0dXNQYWdlUmVzcG9uc2USewoQRGVsZXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuRGVsZXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZVN0YXR1c1BhZ2VSZXNwb25zZRKEAQoTQWRkTW9uaXRvckNvbXBvbmVudBI1Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQWRkTW9uaXRvckNvbXBvbmVudFJlcXVlc3QaNi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkFkZE1vbml0b3JDb21wb25lbnRSZXNwb25zZRKBAQoSQWRkU3RhdGljQ29tcG9uZW50EjQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRTdGF0aWNDb21wb25lbnRSZXF1ZXN0GjUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRTdGF0aWNDb21wb25lbnRSZXNwb25zZRJ4Cg9SZW1vdmVDb21wb25lbnQSMS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlJlbW92ZUNvbXBvbmVudFJlcXVlc3QaMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlJlbW92ZUNvbXBvbmVudFJlc3BvbnNlEngKD1VwZGF0ZUNvbXBvbmVudBIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50UmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50UmVzcG9uc2UShwEKFENyZWF0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DcmVhdGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UShwEKFERlbGV0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5EZWxldGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UShwEKFFVwZGF0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UStQIKD1N1YnNjcmliZVRvUGFnZRIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlVG9QYWdlUmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlVG9QYWdlUmVzcG9uc2UiugG6R7YBGrMBU3Vic2NyaWJlcyBhbiBlbWFpbCBhZGRyZXNzIHRvIHJlY2VpdmUgbm90aWZpY2F0aW9ucyBmcm9tIGEgc3RhdHVzIHBhZ2UuIElmIHRoZSBlbWFpbCB3YXMgcHJldmlvdXNseSB1bnN1YnNjcmliZWQsIHRoZSBzdWJzY3JpcHRpb24gaXMgcmVhY3RpdmF0ZWQgaW5zdGVhZCBvZiBjcmVhdGluZyBhIGR1cGxpY2F0ZS4ShAEKE1Vuc3Vic2NyaWJlRnJvbVBhZ2USNS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVuc3Vic2NyaWJlRnJvbVBhZ2VSZXF1ZXN0GjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VbnN1YnNjcmliZUZyb21QYWdlUmVzcG9uc2USfQoPTGlzdFN1YnNjcmliZXJzEjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3Vic2NyaWJlcnNSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3Vic2NyaWJlcnNSZXNwb25zZSIDkAIBEsADChRHZXRTdGF0dXNQYWdlQ29udGVudBI2Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZUNvbnRlbnRSZXF1ZXN0Gjcub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlIrYCkAIBukevAhqsAlJldHVybnMgdGhlIGZ1bGwgY29udGVudCBvZiBhIHN0YXR1cyBwYWdlIGluY2x1ZGluZyBpdHMgY29tcG9uZW50cywgY29tcG9uZW50IGdyb3VwcywgYWN0aXZlIHN0YXR1cyByZXBvcnRzLCBhbmQgc2NoZWR1bGVkIG1haW50ZW5hbmNlcy4gU3VwcG9ydHMgdHdvIGFjY2VzcyBwYXRoczogYnkgSUQgKHJlcXVpcmVzIGF1dGhlbnRpY2F0aW9uLCB3b3Jrc3BhY2Utc2NvcGVkKSBvciBieSBzbHVnIChwdWJsaWMgYWNjZXNzLCByZXF1aXJlcyB0aGUgcGFnZSB0byBiZSBwdWJsaXNoZWQgd2l0aCBhY2Nlc3NfdHlwZT1QVUJMSUMpLhKqAwoQR2V0T3ZlcmFsbFN0YXR1cxIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0T3ZlcmFsbFN0YXR1c1JlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkdldE92ZXJhbGxTdGF0dXNSZXNwb25zZSKsApACAbpHpQIaogJSZXR1cm5zIHRoZSBvdmVyYWxsIHN0YXR1cyBvZiBhIHN0YXR1cyBwYWdlIGFsb25nIHdpdGggaW5kaXZpZHVhbCBjb21wb25lbnQgc3RhdHVzZXMuIFRoZSBvdmVyYWxsIHN0YXR1cyBpcyBjb21wdXRlZCBmcm9tIGFjdGl2ZSBzdGF0dXMgcmVwb3J0cyBhbmQgbWFpbnRlbmFuY2VzIHdpdGggdGhlIGZvbGxvd2luZyBwcmlvcml0eTogZGVncmFkZWQgKGZyb20gYWN0aXZlIHN0YXR1cyByZXBvcnRzKSA+IG1haW50ZW5hbmNlIChmcm9tIGFjdGl2ZSBtYWludGVuYW5jZSB3aW5kb3dzKSA+IG9wZXJhdGlvbmFsLkJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_maintenance_v1_maintenance, file_openstatus_status_page_v1_page_component, file_openstatus_status_page_v1_page_subscriber, file_openstatus_status_page_v1_status_page, file_openstatus_status_report_v1_status_report]);
+export const file_openstatus_status_page_v1_service: GenFile /*@__PURE__*/ =
+  fileDesc(
+    "CidvcGVuc3RhdHVzL3N0YXR1c19wYWdlL3YxL3NlcnZpY2UucHJvdG8SGW9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEiwAIKF0NyZWF0ZVN0YXR1c1BhZ2VSZXF1ZXN0EjAKBXRpdGxlGAEgASgJQiG6RxQ6EhIQQWNtZSBDb3JwIFN0YXR1c7pIB3IFEAEYgAISIgoLZGVzY3JpcHRpb24YAiABKAlCCLpIBXIDGIAISACIAQESSQoEc2x1ZxgDIAEoCUI7ukcSOhASDm15LXN0YXR1cy1wYWdlukgjciEQARiAAjIaXlthLXowLTldKyg/Oi1bYS16MC05XSspKiQSOQoMaG9tZXBhZ2VfdXJsGAQgASgJQh66Rxs6GRIXaHR0cHM6Ly93d3cuZXhhbXBsZS5jb21IAYgBARIYCgtjb250YWN0X3VybBgFIAEoCUgCiAEBQg4KDF9kZXNjcmlwdGlvbkIPCg1faG9tZXBhZ2VfdXJsQg4KDF9jb250YWN0X3VybCJWChhDcmVhdGVTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiKwoUR2V0U3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiUwoVR2V0U3RhdHVzUGFnZVJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlImoKFkxpc3RTdGF0dXNQYWdlc1JlcXVlc3QSHQoFbGltaXQYASABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgCIAEoBUIHukgEGgIoAEgBiAEBQggKBl9saW1pdEIJCgdfb2Zmc2V0InEKF0xpc3RTdGF0dXNQYWdlc1Jlc3BvbnNlEkIKDHN0YXR1c19wYWdlcxgBIAMoCzIsLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3RhdHVzUGFnZVN1bW1hcnkSEgoKdG90YWxfc2l6ZRgCIAEoBSKmAgoXVXBkYXRlU3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESHgoFdGl0bGUYAiABKAlCCrpIB3IFEAEYgAJIAIgBARIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAYgBARI5CgRzbHVnGAQgASgJQia6SCNyIRABGIACMhpeW2EtejAtOV0rKD86LVthLXowLTldKykqJEgCiAEBEhkKDGhvbWVwYWdlX3VybBgFIAEoCUgDiAEBEhgKC2NvbnRhY3RfdXJsGAYgASgJSASIAQFCCAoGX3RpdGxlQg4KDF9kZXNjcmlwdGlvbkIHCgVfc2x1Z0IPCg1faG9tZXBhZ2VfdXJsQg4KDF9jb250YWN0X3VybCJWChhVcGRhdGVTdGF0dXNQYWdlUmVzcG9uc2USOgoLc3RhdHVzX3BhZ2UYASABKAsyJS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlN0YXR1c1BhZ2UiLgoXRGVsZXRlU3RhdHVzUGFnZVJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKwoYRGVsZXRlU3RhdHVzUGFnZVJlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgi7wEKGkFkZE1vbml0b3JDb21wb25lbnRSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGwoKbW9uaXRvcl9pZBgCIAEoCUIHukgEcgIQARIbCgRuYW1lGAMgASgJQgi6SAVyAxiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAQgASgJQgi6SAVyAxiACEgBiAEBEhIKBW9yZGVyGAUgASgFSAKIAQESFQoIZ3JvdXBfaWQYBiABKAlIA4gBAUIHCgVfbmFtZUIOCgxfZGVzY3JpcHRpb25CCAoGX29yZGVyQgsKCV9ncm91cF9pZCJaChtBZGRNb25pdG9yQ29tcG9uZW50UmVzcG9uc2USOwoJY29tcG9uZW50GAEgASgLMigub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50IsUBChlBZGRTdGF0aWNDb21wb25lbnRSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAhIiCgtkZXNjcmlwdGlvbhgDIAEoCUIIukgFcgMYgAhIAIgBARISCgVvcmRlchgEIAEoBUgBiAEBEhUKCGdyb3VwX2lkGAUgASgJSAKIAQFCDgoMX2Rlc2NyaXB0aW9uQggKBl9vcmRlckILCglfZ3JvdXBfaWQiWQoaQWRkU3RhdGljQ29tcG9uZW50UmVzcG9uc2USOwoJY29tcG9uZW50GAEgASgLMigub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50Ii0KFlJlbW92ZUNvbXBvbmVudFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAEiKgoXUmVtb3ZlQ29tcG9uZW50UmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCLzAQoWVXBkYXRlQ29tcG9uZW50UmVxdWVzdBITCgJpZBgBIAEoCUIHukgEcgIQARIbCgRuYW1lGAIgASgJQgi6SAVyAxiAAkgAiAEBEiIKC2Rlc2NyaXB0aW9uGAMgASgJQgi6SAVyAxiACEgBiAEBEhIKBW9yZGVyGAQgASgFSAKIAQESFQoIZ3JvdXBfaWQYBSABKAlIA4gBARIYCgtncm91cF9vcmRlchgGIAEoBUgEiAEBQgcKBV9uYW1lQg4KDF9kZXNjcmlwdGlvbkIICgZfb3JkZXJCCwoJX2dyb3VwX2lkQg4KDF9ncm91cF9vcmRlciJWChdVcGRhdGVDb21wb25lbnRSZXNwb25zZRI7Cgljb21wb25lbnQYASABKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQiUQobQ3JlYXRlQ29tcG9uZW50R3JvdXBSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESGAoEbmFtZRgCIAEoCUIKukgHcgUQARiAAiJcChxDcmVhdGVDb21wb25lbnRHcm91cFJlc3BvbnNlEjwKBWdyb3VwGAEgASgLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXAiMgobRGVsZXRlQ29tcG9uZW50R3JvdXBSZXF1ZXN0EhMKAmlkGAEgASgJQge6SARyAhABIi8KHERlbGV0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USDwoHc3VjY2VzcxgBIAEoCCJaChtVcGRhdGVDb21wb25lbnRHcm91cFJlcXVlc3QSEwoCaWQYASABKAlCB7pIBHICEAESHQoEbmFtZRgCIAEoCUIKukgHcgUQARiAAkgAiAEBQgcKBV9uYW1lIlwKHFVwZGF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2USPAoFZ3JvdXAYASABKAsyLS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnRHcm91cCJhChZTdWJzY3JpYmVUb1BhZ2VSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESLQoFZW1haWwYAiABKAlCHrpHFDoSEhB1c2VyQGV4YW1wbGUuY29tukgEcgJgASJYChdTdWJzY3JpYmVUb1BhZ2VSZXNwb25zZRI9CgpzdWJzY3JpYmVyGAEgASgLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlciJjChpVbnN1YnNjcmliZUZyb21QYWdlUmVxdWVzdBIYCgdwYWdlX2lkGAEgASgJQge6SARyAhABEg8KBWVtYWlsGAIgASgJSAASDAoCaWQYAyABKAlIAEIMCgppZGVudGlmaWVyIi4KG1Vuc3Vic2NyaWJlRnJvbVBhZ2VSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIIsABChZMaXN0U3Vic2NyaWJlcnNSZXF1ZXN0EhgKB3BhZ2VfaWQYASABKAlCB7pIBHICEAESHQoFbGltaXQYAiABKAVCCbpIBhoEGGQoAUgAiAEBEhwKBm9mZnNldBgDIAEoBUIHukgEGgIoAEgBiAEBEiEKFGluY2x1ZGVfdW5zdWJzY3JpYmVkGAQgASgISAKIAQFCCAoGX2xpbWl0QgkKB19vZmZzZXRCFwoVX2luY2x1ZGVfdW5zdWJzY3JpYmVkIm0KF0xpc3RTdWJzY3JpYmVyc1Jlc3BvbnNlEj4KC3N1YnNjcmliZXJzGAEgAygLMikub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlU3Vic2NyaWJlchISCgp0b3RhbF9zaXplGAIgASgFIkkKG0dldFN0YXR1c1BhZ2VDb250ZW50UmVxdWVzdBIMCgJpZBgBIAEoCUgAEg4KBHNsdWcYAiABKAlIAEIMCgppZGVudGlmaWVyIt8CChxHZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlEjoKC3N0YXR1c19wYWdlGAEgASgLMiUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5TdGF0dXNQYWdlEjwKCmNvbXBvbmVudHMYAiADKAsyKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlBhZ2VDb21wb25lbnQSPQoGZ3JvdXBzGAMgAygLMi0ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5QYWdlQ29tcG9uZW50R3JvdXASQQoOc3RhdHVzX3JlcG9ydHMYBCADKAsyKS5vcGVuc3RhdHVzLnN0YXR1c19yZXBvcnQudjEuU3RhdHVzUmVwb3J0EkMKDG1haW50ZW5hbmNlcxgFIAMoCzItLm9wZW5zdGF0dXMubWFpbnRlbmFuY2UudjEuTWFpbnRlbmFuY2VTdW1tYXJ5IkUKF0dldE92ZXJhbGxTdGF0dXNSZXF1ZXN0EgwKAmlkGAEgASgJSAASDgoEc2x1ZxgCIAEoCUgAQgwKCmlkZW50aWZpZXIiYQoPQ29tcG9uZW50U3RhdHVzEhQKDGNvbXBvbmVudF9pZBgBIAEoCRI4CgZzdGF0dXMYAiABKA4yKC5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLk92ZXJhbGxTdGF0dXMipAEKGEdldE92ZXJhbGxTdGF0dXNSZXNwb25zZRJACg5vdmVyYWxsX3N0YXR1cxgBIAEoDjIoLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuT3ZlcmFsbFN0YXR1cxJGChJjb21wb25lbnRfc3RhdHVzZXMYAiADKAsyKi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNvbXBvbmVudFN0YXR1czLNFwoRU3RhdHVzUGFnZVNlcnZpY2USewoQQ3JlYXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQ3JlYXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZVN0YXR1c1BhZ2VSZXNwb25zZRJ3Cg1HZXRTdGF0dXNQYWdlEi8ub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlUmVxdWVzdBowLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZVJlc3BvbnNlIgOQAgESfQoPTGlzdFN0YXR1c1BhZ2VzEjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3RhdHVzUGFnZXNSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3RhdHVzUGFnZXNSZXNwb25zZSIDkAIBEnsKEFVwZGF0ZVN0YXR1c1BhZ2USMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZVN0YXR1c1BhZ2VSZXF1ZXN0GjMub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVTdGF0dXNQYWdlUmVzcG9uc2USewoQRGVsZXRlU3RhdHVzUGFnZRIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuRGVsZXRlU3RhdHVzUGFnZVJlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZVN0YXR1c1BhZ2VSZXNwb25zZRKEAQoTQWRkTW9uaXRvckNvbXBvbmVudBI1Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuQWRkTW9uaXRvckNvbXBvbmVudFJlcXVlc3QaNi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkFkZE1vbml0b3JDb21wb25lbnRSZXNwb25zZRKBAQoSQWRkU3RhdGljQ29tcG9uZW50EjQub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRTdGF0aWNDb21wb25lbnRSZXF1ZXN0GjUub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5BZGRTdGF0aWNDb21wb25lbnRSZXNwb25zZRJ4Cg9SZW1vdmVDb21wb25lbnQSMS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlJlbW92ZUNvbXBvbmVudFJlcXVlc3QaMi5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlJlbW92ZUNvbXBvbmVudFJlc3BvbnNlEngKD1VwZGF0ZUNvbXBvbmVudBIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50UmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuVXBkYXRlQ29tcG9uZW50UmVzcG9uc2UShwEKFENyZWF0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5DcmVhdGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkNyZWF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UShwEKFERlbGV0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5EZWxldGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkRlbGV0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UShwEKFFVwZGF0ZUNvbXBvbmVudEdyb3VwEjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VcGRhdGVDb21wb25lbnRHcm91cFJlcXVlc3QaNy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVwZGF0ZUNvbXBvbmVudEdyb3VwUmVzcG9uc2UStQIKD1N1YnNjcmliZVRvUGFnZRIxLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlVG9QYWdlUmVxdWVzdBoyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuU3Vic2NyaWJlVG9QYWdlUmVzcG9uc2UiugG6R7YBGrMBU3Vic2NyaWJlcyBhbiBlbWFpbCBhZGRyZXNzIHRvIHJlY2VpdmUgbm90aWZpY2F0aW9ucyBmcm9tIGEgc3RhdHVzIHBhZ2UuIElmIHRoZSBlbWFpbCB3YXMgcHJldmlvdXNseSB1bnN1YnNjcmliZWQsIHRoZSBzdWJzY3JpcHRpb24gaXMgcmVhY3RpdmF0ZWQgaW5zdGVhZCBvZiBjcmVhdGluZyBhIGR1cGxpY2F0ZS4ShAEKE1Vuc3Vic2NyaWJlRnJvbVBhZ2USNS5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLlVuc3Vic2NyaWJlRnJvbVBhZ2VSZXF1ZXN0GjYub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5VbnN1YnNjcmliZUZyb21QYWdlUmVzcG9uc2USfQoPTGlzdFN1YnNjcmliZXJzEjEub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3Vic2NyaWJlcnNSZXF1ZXN0GjIub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5MaXN0U3Vic2NyaWJlcnNSZXNwb25zZSIDkAIBEsADChRHZXRTdGF0dXNQYWdlQ29udGVudBI2Lm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0U3RhdHVzUGFnZUNvbnRlbnRSZXF1ZXN0Gjcub3BlbnN0YXR1cy5zdGF0dXNfcGFnZS52MS5HZXRTdGF0dXNQYWdlQ29udGVudFJlc3BvbnNlIrYCkAIBukevAhqsAlJldHVybnMgdGhlIGZ1bGwgY29udGVudCBvZiBhIHN0YXR1cyBwYWdlIGluY2x1ZGluZyBpdHMgY29tcG9uZW50cywgY29tcG9uZW50IGdyb3VwcywgYWN0aXZlIHN0YXR1cyByZXBvcnRzLCBhbmQgc2NoZWR1bGVkIG1haW50ZW5hbmNlcy4gU3VwcG9ydHMgdHdvIGFjY2VzcyBwYXRoczogYnkgSUQgKHJlcXVpcmVzIGF1dGhlbnRpY2F0aW9uLCB3b3Jrc3BhY2Utc2NvcGVkKSBvciBieSBzbHVnIChwdWJsaWMgYWNjZXNzLCByZXF1aXJlcyB0aGUgcGFnZSB0byBiZSBwdWJsaXNoZWQgd2l0aCBhY2Nlc3NfdHlwZT1QVUJMSUMpLhKqAwoQR2V0T3ZlcmFsbFN0YXR1cxIyLm9wZW5zdGF0dXMuc3RhdHVzX3BhZ2UudjEuR2V0T3ZlcmFsbFN0YXR1c1JlcXVlc3QaMy5vcGVuc3RhdHVzLnN0YXR1c19wYWdlLnYxLkdldE92ZXJhbGxTdGF0dXNSZXNwb25zZSKsApACAbpHpQIaogJSZXR1cm5zIHRoZSBvdmVyYWxsIHN0YXR1cyBvZiBhIHN0YXR1cyBwYWdlIGFsb25nIHdpdGggaW5kaXZpZHVhbCBjb21wb25lbnQgc3RhdHVzZXMuIFRoZSBvdmVyYWxsIHN0YXR1cyBpcyBjb21wdXRlZCBmcm9tIGFjdGl2ZSBzdGF0dXMgcmVwb3J0cyBhbmQgbWFpbnRlbmFuY2VzIHdpdGggdGhlIGZvbGxvd2luZyBwcmlvcml0eTogZGVncmFkZWQgKGZyb20gYWN0aXZlIHN0YXR1cyByZXBvcnRzKSA+IG1haW50ZW5hbmNlIChmcm9tIGFjdGl2ZSBtYWludGVuYW5jZSB3aW5kb3dzKSA+IG9wZXJhdGlvbmFsLkJaWlhnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvc3RhdHVzX3BhZ2UvdjE7c3RhdHVzcGFnZXYxYgZwcm90bzM",
+    [
+      file_buf_validate_validate,
+      file_gnostic_openapi_v3_annotations,
+      file_openstatus_maintenance_v1_maintenance,
+      file_openstatus_status_page_v1_page_component,
+      file_openstatus_status_page_v1_page_subscriber,
+      file_openstatus_status_page_v1_status_page,
+      file_openstatus_status_report_v1_status_report,
+    ],
+  );
 
 /**
  * CreateStatusPageRequest is the request to create a new status page.
  *
  * @generated from message openstatus.status_page.v1.CreateStatusPageRequest
  */
-export type CreateStatusPageRequest = Message<"openstatus.status_page.v1.CreateStatusPageRequest"> & {
-  /**
-   * Title of the status page (required).
-   *
-   * @generated from field: string title = 1;
-   */
-  title: string;
+export type CreateStatusPageRequest =
+  Message<"openstatus.status_page.v1.CreateStatusPageRequest"> & {
+    /**
+     * Title of the status page (required).
+     *
+     * @generated from field: string title = 1;
+     */
+    title: string;
 
-  /**
-   * Description of the status page (optional).
-   *
-   * @generated from field: optional string description = 2;
-   */
-  description?: string;
+    /**
+     * Description of the status page (optional).
+     *
+     * @generated from field: optional string description = 2;
+     */
+    description?: string;
 
-  /**
-   * URL-friendly slug for the status page (required). Must be lowercase alphanumeric with hyphens.
-   *
-   * @generated from field: string slug = 3;
-   */
-  slug: string;
+    /**
+     * URL-friendly slug for the status page (required). Must be lowercase alphanumeric with hyphens.
+     *
+     * @generated from field: string slug = 3;
+     */
+    slug: string;
 
-  /**
-   * URL to the homepage (optional).
-   *
-   * @generated from field: optional string homepage_url = 4;
-   */
-  homepageUrl?: string;
+    /**
+     * URL to the homepage (optional).
+     *
+     * @generated from field: optional string homepage_url = 4;
+     */
+    homepageUrl?: string;
 
-  /**
-   * URL to the contact page (optional).
-   *
-   * @generated from field: optional string contact_url = 5;
-   */
-  contactUrl?: string;
-};
+    /**
+     * URL to the contact page (optional).
+     *
+     * @generated from field: optional string contact_url = 5;
+     */
+    contactUrl?: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.CreateStatusPageRequest.
  * Use `create(CreateStatusPageRequestSchema)` to create a new message.
  */
-export const CreateStatusPageRequestSchema: GenMessage<CreateStatusPageRequest> = /*@__PURE__*/
+export const CreateStatusPageRequestSchema: GenMessage<CreateStatusPageRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 0);
 
 /**
@@ -78,20 +104,21 @@ export const CreateStatusPageRequestSchema: GenMessage<CreateStatusPageRequest> 
  *
  * @generated from message openstatus.status_page.v1.CreateStatusPageResponse
  */
-export type CreateStatusPageResponse = Message<"openstatus.status_page.v1.CreateStatusPageResponse"> & {
-  /**
-   * The created status page.
-   *
-   * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
-   */
-  statusPage?: StatusPage;
-};
+export type CreateStatusPageResponse =
+  Message<"openstatus.status_page.v1.CreateStatusPageResponse"> & {
+    /**
+     * The created status page.
+     *
+     * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
+     */
+    statusPage?: StatusPage;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.CreateStatusPageResponse.
  * Use `create(CreateStatusPageResponseSchema)` to create a new message.
  */
-export const CreateStatusPageResponseSchema: GenMessage<CreateStatusPageResponse> = /*@__PURE__*/
+export const CreateStatusPageResponseSchema: GenMessage<CreateStatusPageResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 1);
 
 /**
@@ -99,20 +126,21 @@ export const CreateStatusPageResponseSchema: GenMessage<CreateStatusPageResponse
  *
  * @generated from message openstatus.status_page.v1.GetStatusPageRequest
  */
-export type GetStatusPageRequest = Message<"openstatus.status_page.v1.GetStatusPageRequest"> & {
-  /**
-   * ID of the status page to retrieve (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type GetStatusPageRequest =
+  Message<"openstatus.status_page.v1.GetStatusPageRequest"> & {
+    /**
+     * ID of the status page to retrieve (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.GetStatusPageRequest.
  * Use `create(GetStatusPageRequestSchema)` to create a new message.
  */
-export const GetStatusPageRequestSchema: GenMessage<GetStatusPageRequest> = /*@__PURE__*/
+export const GetStatusPageRequestSchema: GenMessage<GetStatusPageRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 2);
 
 /**
@@ -120,20 +148,21 @@ export const GetStatusPageRequestSchema: GenMessage<GetStatusPageRequest> = /*@_
  *
  * @generated from message openstatus.status_page.v1.GetStatusPageResponse
  */
-export type GetStatusPageResponse = Message<"openstatus.status_page.v1.GetStatusPageResponse"> & {
-  /**
-   * The requested status page.
-   *
-   * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
-   */
-  statusPage?: StatusPage;
-};
+export type GetStatusPageResponse =
+  Message<"openstatus.status_page.v1.GetStatusPageResponse"> & {
+    /**
+     * The requested status page.
+     *
+     * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
+     */
+    statusPage?: StatusPage;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.GetStatusPageResponse.
  * Use `create(GetStatusPageResponseSchema)` to create a new message.
  */
-export const GetStatusPageResponseSchema: GenMessage<GetStatusPageResponse> = /*@__PURE__*/
+export const GetStatusPageResponseSchema: GenMessage<GetStatusPageResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 3);
 
 /**
@@ -141,27 +170,28 @@ export const GetStatusPageResponseSchema: GenMessage<GetStatusPageResponse> = /*
  *
  * @generated from message openstatus.status_page.v1.ListStatusPagesRequest
  */
-export type ListStatusPagesRequest = Message<"openstatus.status_page.v1.ListStatusPagesRequest"> & {
-  /**
-   * Maximum number of pages to return (1-100, defaults to 50).
-   *
-   * @generated from field: optional int32 limit = 1;
-   */
-  limit?: number;
+export type ListStatusPagesRequest =
+  Message<"openstatus.status_page.v1.ListStatusPagesRequest"> & {
+    /**
+     * Maximum number of pages to return (1-100, defaults to 50).
+     *
+     * @generated from field: optional int32 limit = 1;
+     */
+    limit?: number;
 
-  /**
-   * Number of pages to skip for pagination (defaults to 0).
-   *
-   * @generated from field: optional int32 offset = 2;
-   */
-  offset?: number;
-};
+    /**
+     * Number of pages to skip for pagination (defaults to 0).
+     *
+     * @generated from field: optional int32 offset = 2;
+     */
+    offset?: number;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.ListStatusPagesRequest.
  * Use `create(ListStatusPagesRequestSchema)` to create a new message.
  */
-export const ListStatusPagesRequestSchema: GenMessage<ListStatusPagesRequest> = /*@__PURE__*/
+export const ListStatusPagesRequestSchema: GenMessage<ListStatusPagesRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 4);
 
 /**
@@ -169,27 +199,28 @@ export const ListStatusPagesRequestSchema: GenMessage<ListStatusPagesRequest> = 
  *
  * @generated from message openstatus.status_page.v1.ListStatusPagesResponse
  */
-export type ListStatusPagesResponse = Message<"openstatus.status_page.v1.ListStatusPagesResponse"> & {
-  /**
-   * List of status pages (metadata only).
-   *
-   * @generated from field: repeated openstatus.status_page.v1.StatusPageSummary status_pages = 1;
-   */
-  statusPages: StatusPageSummary[];
+export type ListStatusPagesResponse =
+  Message<"openstatus.status_page.v1.ListStatusPagesResponse"> & {
+    /**
+     * List of status pages (metadata only).
+     *
+     * @generated from field: repeated openstatus.status_page.v1.StatusPageSummary status_pages = 1;
+     */
+    statusPages: StatusPageSummary[];
 
-  /**
-   * Total number of status pages.
-   *
-   * @generated from field: int32 total_size = 2;
-   */
-  totalSize: number;
-};
+    /**
+     * Total number of status pages.
+     *
+     * @generated from field: int32 total_size = 2;
+     */
+    totalSize: number;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.ListStatusPagesResponse.
  * Use `create(ListStatusPagesResponseSchema)` to create a new message.
  */
-export const ListStatusPagesResponseSchema: GenMessage<ListStatusPagesResponse> = /*@__PURE__*/
+export const ListStatusPagesResponseSchema: GenMessage<ListStatusPagesResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 5);
 
 /**
@@ -197,55 +228,56 @@ export const ListStatusPagesResponseSchema: GenMessage<ListStatusPagesResponse> 
  *
  * @generated from message openstatus.status_page.v1.UpdateStatusPageRequest
  */
-export type UpdateStatusPageRequest = Message<"openstatus.status_page.v1.UpdateStatusPageRequest"> & {
-  /**
-   * ID of the status page to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateStatusPageRequest =
+  Message<"openstatus.status_page.v1.UpdateStatusPageRequest"> & {
+    /**
+     * ID of the status page to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * New title for the status page (optional).
-   *
-   * @generated from field: optional string title = 2;
-   */
-  title?: string;
+    /**
+     * New title for the status page (optional).
+     *
+     * @generated from field: optional string title = 2;
+     */
+    title?: string;
 
-  /**
-   * New description for the status page (optional).
-   *
-   * @generated from field: optional string description = 3;
-   */
-  description?: string;
+    /**
+     * New description for the status page (optional).
+     *
+     * @generated from field: optional string description = 3;
+     */
+    description?: string;
 
-  /**
-   * New slug for the status page (optional).
-   *
-   * @generated from field: optional string slug = 4;
-   */
-  slug?: string;
+    /**
+     * New slug for the status page (optional).
+     *
+     * @generated from field: optional string slug = 4;
+     */
+    slug?: string;
 
-  /**
-   * New homepage URL (optional).
-   *
-   * @generated from field: optional string homepage_url = 5;
-   */
-  homepageUrl?: string;
+    /**
+     * New homepage URL (optional).
+     *
+     * @generated from field: optional string homepage_url = 5;
+     */
+    homepageUrl?: string;
 
-  /**
-   * New contact URL (optional).
-   *
-   * @generated from field: optional string contact_url = 6;
-   */
-  contactUrl?: string;
-};
+    /**
+     * New contact URL (optional).
+     *
+     * @generated from field: optional string contact_url = 6;
+     */
+    contactUrl?: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UpdateStatusPageRequest.
  * Use `create(UpdateStatusPageRequestSchema)` to create a new message.
  */
-export const UpdateStatusPageRequestSchema: GenMessage<UpdateStatusPageRequest> = /*@__PURE__*/
+export const UpdateStatusPageRequestSchema: GenMessage<UpdateStatusPageRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 6);
 
 /**
@@ -253,20 +285,21 @@ export const UpdateStatusPageRequestSchema: GenMessage<UpdateStatusPageRequest> 
  *
  * @generated from message openstatus.status_page.v1.UpdateStatusPageResponse
  */
-export type UpdateStatusPageResponse = Message<"openstatus.status_page.v1.UpdateStatusPageResponse"> & {
-  /**
-   * The updated status page.
-   *
-   * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
-   */
-  statusPage?: StatusPage;
-};
+export type UpdateStatusPageResponse =
+  Message<"openstatus.status_page.v1.UpdateStatusPageResponse"> & {
+    /**
+     * The updated status page.
+     *
+     * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
+     */
+    statusPage?: StatusPage;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UpdateStatusPageResponse.
  * Use `create(UpdateStatusPageResponseSchema)` to create a new message.
  */
-export const UpdateStatusPageResponseSchema: GenMessage<UpdateStatusPageResponse> = /*@__PURE__*/
+export const UpdateStatusPageResponseSchema: GenMessage<UpdateStatusPageResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 7);
 
 /**
@@ -274,20 +307,21 @@ export const UpdateStatusPageResponseSchema: GenMessage<UpdateStatusPageResponse
  *
  * @generated from message openstatus.status_page.v1.DeleteStatusPageRequest
  */
-export type DeleteStatusPageRequest = Message<"openstatus.status_page.v1.DeleteStatusPageRequest"> & {
-  /**
-   * ID of the status page to delete (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type DeleteStatusPageRequest =
+  Message<"openstatus.status_page.v1.DeleteStatusPageRequest"> & {
+    /**
+     * ID of the status page to delete (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.DeleteStatusPageRequest.
  * Use `create(DeleteStatusPageRequestSchema)` to create a new message.
  */
-export const DeleteStatusPageRequestSchema: GenMessage<DeleteStatusPageRequest> = /*@__PURE__*/
+export const DeleteStatusPageRequestSchema: GenMessage<DeleteStatusPageRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 8);
 
 /**
@@ -295,20 +329,21 @@ export const DeleteStatusPageRequestSchema: GenMessage<DeleteStatusPageRequest> 
  *
  * @generated from message openstatus.status_page.v1.DeleteStatusPageResponse
  */
-export type DeleteStatusPageResponse = Message<"openstatus.status_page.v1.DeleteStatusPageResponse"> & {
-  /**
-   * Whether the deletion was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type DeleteStatusPageResponse =
+  Message<"openstatus.status_page.v1.DeleteStatusPageResponse"> & {
+    /**
+     * Whether the deletion was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.DeleteStatusPageResponse.
  * Use `create(DeleteStatusPageResponseSchema)` to create a new message.
  */
-export const DeleteStatusPageResponseSchema: GenMessage<DeleteStatusPageResponse> = /*@__PURE__*/
+export const DeleteStatusPageResponseSchema: GenMessage<DeleteStatusPageResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 9);
 
 /**
@@ -316,55 +351,56 @@ export const DeleteStatusPageResponseSchema: GenMessage<DeleteStatusPageResponse
  *
  * @generated from message openstatus.status_page.v1.AddMonitorComponentRequest
  */
-export type AddMonitorComponentRequest = Message<"openstatus.status_page.v1.AddMonitorComponentRequest"> & {
-  /**
-   * ID of the status page to add the component to (required).
-   *
-   * @generated from field: string page_id = 1;
-   */
-  pageId: string;
+export type AddMonitorComponentRequest =
+  Message<"openstatus.status_page.v1.AddMonitorComponentRequest"> & {
+    /**
+     * ID of the status page to add the component to (required).
+     *
+     * @generated from field: string page_id = 1;
+     */
+    pageId: string;
 
-  /**
-   * ID of the monitor to associate with this component (required).
-   *
-   * @generated from field: string monitor_id = 2;
-   */
-  monitorId: string;
+    /**
+     * ID of the monitor to associate with this component (required).
+     *
+     * @generated from field: string monitor_id = 2;
+     */
+    monitorId: string;
 
-  /**
-   * Display name for the component (optional, defaults to monitor name).
-   *
-   * @generated from field: optional string name = 3;
-   */
-  name?: string;
+    /**
+     * Display name for the component (optional, defaults to monitor name).
+     *
+     * @generated from field: optional string name = 3;
+     */
+    name?: string;
 
-  /**
-   * Description of the component (optional).
-   *
-   * @generated from field: optional string description = 4;
-   */
-  description?: string;
+    /**
+     * Description of the component (optional).
+     *
+     * @generated from field: optional string description = 4;
+     */
+    description?: string;
 
-  /**
-   * Display order of the component (optional).
-   *
-   * @generated from field: optional int32 order = 5;
-   */
-  order?: number;
+    /**
+     * Display order of the component (optional).
+     *
+     * @generated from field: optional int32 order = 5;
+     */
+    order?: number;
 
-  /**
-   * ID of the group to add this component to (optional).
-   *
-   * @generated from field: optional string group_id = 6;
-   */
-  groupId?: string;
-};
+    /**
+     * ID of the group to add this component to (optional).
+     *
+     * @generated from field: optional string group_id = 6;
+     */
+    groupId?: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.AddMonitorComponentRequest.
  * Use `create(AddMonitorComponentRequestSchema)` to create a new message.
  */
-export const AddMonitorComponentRequestSchema: GenMessage<AddMonitorComponentRequest> = /*@__PURE__*/
+export const AddMonitorComponentRequestSchema: GenMessage<AddMonitorComponentRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 10);
 
 /**
@@ -372,20 +408,21 @@ export const AddMonitorComponentRequestSchema: GenMessage<AddMonitorComponentReq
  *
  * @generated from message openstatus.status_page.v1.AddMonitorComponentResponse
  */
-export type AddMonitorComponentResponse = Message<"openstatus.status_page.v1.AddMonitorComponentResponse"> & {
-  /**
-   * The created component.
-   *
-   * @generated from field: openstatus.status_page.v1.PageComponent component = 1;
-   */
-  component?: PageComponent;
-};
+export type AddMonitorComponentResponse =
+  Message<"openstatus.status_page.v1.AddMonitorComponentResponse"> & {
+    /**
+     * The created component.
+     *
+     * @generated from field: openstatus.status_page.v1.PageComponent component = 1;
+     */
+    component?: PageComponent;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.AddMonitorComponentResponse.
  * Use `create(AddMonitorComponentResponseSchema)` to create a new message.
  */
-export const AddMonitorComponentResponseSchema: GenMessage<AddMonitorComponentResponse> = /*@__PURE__*/
+export const AddMonitorComponentResponseSchema: GenMessage<AddMonitorComponentResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 11);
 
 /**
@@ -393,48 +430,49 @@ export const AddMonitorComponentResponseSchema: GenMessage<AddMonitorComponentRe
  *
  * @generated from message openstatus.status_page.v1.AddStaticComponentRequest
  */
-export type AddStaticComponentRequest = Message<"openstatus.status_page.v1.AddStaticComponentRequest"> & {
-  /**
-   * ID of the status page to add the component to (required).
-   *
-   * @generated from field: string page_id = 1;
-   */
-  pageId: string;
+export type AddStaticComponentRequest =
+  Message<"openstatus.status_page.v1.AddStaticComponentRequest"> & {
+    /**
+     * ID of the status page to add the component to (required).
+     *
+     * @generated from field: string page_id = 1;
+     */
+    pageId: string;
 
-  /**
-   * Display name for the component (required).
-   *
-   * @generated from field: string name = 2;
-   */
-  name: string;
+    /**
+     * Display name for the component (required).
+     *
+     * @generated from field: string name = 2;
+     */
+    name: string;
 
-  /**
-   * Description of the component (optional).
-   *
-   * @generated from field: optional string description = 3;
-   */
-  description?: string;
+    /**
+     * Description of the component (optional).
+     *
+     * @generated from field: optional string description = 3;
+     */
+    description?: string;
 
-  /**
-   * Display order of the component (optional).
-   *
-   * @generated from field: optional int32 order = 4;
-   */
-  order?: number;
+    /**
+     * Display order of the component (optional).
+     *
+     * @generated from field: optional int32 order = 4;
+     */
+    order?: number;
 
-  /**
-   * ID of the group to add this component to (optional).
-   *
-   * @generated from field: optional string group_id = 5;
-   */
-  groupId?: string;
-};
+    /**
+     * ID of the group to add this component to (optional).
+     *
+     * @generated from field: optional string group_id = 5;
+     */
+    groupId?: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.AddStaticComponentRequest.
  * Use `create(AddStaticComponentRequestSchema)` to create a new message.
  */
-export const AddStaticComponentRequestSchema: GenMessage<AddStaticComponentRequest> = /*@__PURE__*/
+export const AddStaticComponentRequestSchema: GenMessage<AddStaticComponentRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 12);
 
 /**
@@ -442,20 +480,21 @@ export const AddStaticComponentRequestSchema: GenMessage<AddStaticComponentReque
  *
  * @generated from message openstatus.status_page.v1.AddStaticComponentResponse
  */
-export type AddStaticComponentResponse = Message<"openstatus.status_page.v1.AddStaticComponentResponse"> & {
-  /**
-   * The created component.
-   *
-   * @generated from field: openstatus.status_page.v1.PageComponent component = 1;
-   */
-  component?: PageComponent;
-};
+export type AddStaticComponentResponse =
+  Message<"openstatus.status_page.v1.AddStaticComponentResponse"> & {
+    /**
+     * The created component.
+     *
+     * @generated from field: openstatus.status_page.v1.PageComponent component = 1;
+     */
+    component?: PageComponent;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.AddStaticComponentResponse.
  * Use `create(AddStaticComponentResponseSchema)` to create a new message.
  */
-export const AddStaticComponentResponseSchema: GenMessage<AddStaticComponentResponse> = /*@__PURE__*/
+export const AddStaticComponentResponseSchema: GenMessage<AddStaticComponentResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 13);
 
 /**
@@ -463,20 +502,21 @@ export const AddStaticComponentResponseSchema: GenMessage<AddStaticComponentResp
  *
  * @generated from message openstatus.status_page.v1.RemoveComponentRequest
  */
-export type RemoveComponentRequest = Message<"openstatus.status_page.v1.RemoveComponentRequest"> & {
-  /**
-   * ID of the component to remove (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type RemoveComponentRequest =
+  Message<"openstatus.status_page.v1.RemoveComponentRequest"> & {
+    /**
+     * ID of the component to remove (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.RemoveComponentRequest.
  * Use `create(RemoveComponentRequestSchema)` to create a new message.
  */
-export const RemoveComponentRequestSchema: GenMessage<RemoveComponentRequest> = /*@__PURE__*/
+export const RemoveComponentRequestSchema: GenMessage<RemoveComponentRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 14);
 
 /**
@@ -484,20 +524,21 @@ export const RemoveComponentRequestSchema: GenMessage<RemoveComponentRequest> = 
  *
  * @generated from message openstatus.status_page.v1.RemoveComponentResponse
  */
-export type RemoveComponentResponse = Message<"openstatus.status_page.v1.RemoveComponentResponse"> & {
-  /**
-   * Whether the removal was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type RemoveComponentResponse =
+  Message<"openstatus.status_page.v1.RemoveComponentResponse"> & {
+    /**
+     * Whether the removal was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.RemoveComponentResponse.
  * Use `create(RemoveComponentResponseSchema)` to create a new message.
  */
-export const RemoveComponentResponseSchema: GenMessage<RemoveComponentResponse> = /*@__PURE__*/
+export const RemoveComponentResponseSchema: GenMessage<RemoveComponentResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 15);
 
 /**
@@ -505,55 +546,56 @@ export const RemoveComponentResponseSchema: GenMessage<RemoveComponentResponse> 
  *
  * @generated from message openstatus.status_page.v1.UpdateComponentRequest
  */
-export type UpdateComponentRequest = Message<"openstatus.status_page.v1.UpdateComponentRequest"> & {
-  /**
-   * ID of the component to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateComponentRequest =
+  Message<"openstatus.status_page.v1.UpdateComponentRequest"> & {
+    /**
+     * ID of the component to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * New display name for the component (optional).
-   *
-   * @generated from field: optional string name = 2;
-   */
-  name?: string;
+    /**
+     * New display name for the component (optional).
+     *
+     * @generated from field: optional string name = 2;
+     */
+    name?: string;
 
-  /**
-   * New description for the component (optional).
-   *
-   * @generated from field: optional string description = 3;
-   */
-  description?: string;
+    /**
+     * New description for the component (optional).
+     *
+     * @generated from field: optional string description = 3;
+     */
+    description?: string;
 
-  /**
-   * New display order (optional).
-   *
-   * @generated from field: optional int32 order = 4;
-   */
-  order?: number;
+    /**
+     * New display order (optional).
+     *
+     * @generated from field: optional int32 order = 4;
+     */
+    order?: number;
 
-  /**
-   * New group ID (optional, set to empty string to remove from group).
-   *
-   * @generated from field: optional string group_id = 5;
-   */
-  groupId?: string;
+    /**
+     * New group ID (optional, set to empty string to remove from group).
+     *
+     * @generated from field: optional string group_id = 5;
+     */
+    groupId?: string;
 
-  /**
-   * New order within the group (optional).
-   *
-   * @generated from field: optional int32 group_order = 6;
-   */
-  groupOrder?: number;
-};
+    /**
+     * New order within the group (optional).
+     *
+     * @generated from field: optional int32 group_order = 6;
+     */
+    groupOrder?: number;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UpdateComponentRequest.
  * Use `create(UpdateComponentRequestSchema)` to create a new message.
  */
-export const UpdateComponentRequestSchema: GenMessage<UpdateComponentRequest> = /*@__PURE__*/
+export const UpdateComponentRequestSchema: GenMessage<UpdateComponentRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 16);
 
 /**
@@ -561,20 +603,21 @@ export const UpdateComponentRequestSchema: GenMessage<UpdateComponentRequest> = 
  *
  * @generated from message openstatus.status_page.v1.UpdateComponentResponse
  */
-export type UpdateComponentResponse = Message<"openstatus.status_page.v1.UpdateComponentResponse"> & {
-  /**
-   * The updated component.
-   *
-   * @generated from field: openstatus.status_page.v1.PageComponent component = 1;
-   */
-  component?: PageComponent;
-};
+export type UpdateComponentResponse =
+  Message<"openstatus.status_page.v1.UpdateComponentResponse"> & {
+    /**
+     * The updated component.
+     *
+     * @generated from field: openstatus.status_page.v1.PageComponent component = 1;
+     */
+    component?: PageComponent;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UpdateComponentResponse.
  * Use `create(UpdateComponentResponseSchema)` to create a new message.
  */
-export const UpdateComponentResponseSchema: GenMessage<UpdateComponentResponse> = /*@__PURE__*/
+export const UpdateComponentResponseSchema: GenMessage<UpdateComponentResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 17);
 
 /**
@@ -582,27 +625,28 @@ export const UpdateComponentResponseSchema: GenMessage<UpdateComponentResponse> 
  *
  * @generated from message openstatus.status_page.v1.CreateComponentGroupRequest
  */
-export type CreateComponentGroupRequest = Message<"openstatus.status_page.v1.CreateComponentGroupRequest"> & {
-  /**
-   * ID of the status page to create the group in (required).
-   *
-   * @generated from field: string page_id = 1;
-   */
-  pageId: string;
+export type CreateComponentGroupRequest =
+  Message<"openstatus.status_page.v1.CreateComponentGroupRequest"> & {
+    /**
+     * ID of the status page to create the group in (required).
+     *
+     * @generated from field: string page_id = 1;
+     */
+    pageId: string;
 
-  /**
-   * Display name for the group (required).
-   *
-   * @generated from field: string name = 2;
-   */
-  name: string;
-};
+    /**
+     * Display name for the group (required).
+     *
+     * @generated from field: string name = 2;
+     */
+    name: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.CreateComponentGroupRequest.
  * Use `create(CreateComponentGroupRequestSchema)` to create a new message.
  */
-export const CreateComponentGroupRequestSchema: GenMessage<CreateComponentGroupRequest> = /*@__PURE__*/
+export const CreateComponentGroupRequestSchema: GenMessage<CreateComponentGroupRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 18);
 
 /**
@@ -610,20 +654,21 @@ export const CreateComponentGroupRequestSchema: GenMessage<CreateComponentGroupR
  *
  * @generated from message openstatus.status_page.v1.CreateComponentGroupResponse
  */
-export type CreateComponentGroupResponse = Message<"openstatus.status_page.v1.CreateComponentGroupResponse"> & {
-  /**
-   * The created component group.
-   *
-   * @generated from field: openstatus.status_page.v1.PageComponentGroup group = 1;
-   */
-  group?: PageComponentGroup;
-};
+export type CreateComponentGroupResponse =
+  Message<"openstatus.status_page.v1.CreateComponentGroupResponse"> & {
+    /**
+     * The created component group.
+     *
+     * @generated from field: openstatus.status_page.v1.PageComponentGroup group = 1;
+     */
+    group?: PageComponentGroup;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.CreateComponentGroupResponse.
  * Use `create(CreateComponentGroupResponseSchema)` to create a new message.
  */
-export const CreateComponentGroupResponseSchema: GenMessage<CreateComponentGroupResponse> = /*@__PURE__*/
+export const CreateComponentGroupResponseSchema: GenMessage<CreateComponentGroupResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 19);
 
 /**
@@ -631,20 +676,21 @@ export const CreateComponentGroupResponseSchema: GenMessage<CreateComponentGroup
  *
  * @generated from message openstatus.status_page.v1.DeleteComponentGroupRequest
  */
-export type DeleteComponentGroupRequest = Message<"openstatus.status_page.v1.DeleteComponentGroupRequest"> & {
-  /**
-   * ID of the component group to delete (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
-};
+export type DeleteComponentGroupRequest =
+  Message<"openstatus.status_page.v1.DeleteComponentGroupRequest"> & {
+    /**
+     * ID of the component group to delete (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.DeleteComponentGroupRequest.
  * Use `create(DeleteComponentGroupRequestSchema)` to create a new message.
  */
-export const DeleteComponentGroupRequestSchema: GenMessage<DeleteComponentGroupRequest> = /*@__PURE__*/
+export const DeleteComponentGroupRequestSchema: GenMessage<DeleteComponentGroupRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 20);
 
 /**
@@ -652,20 +698,21 @@ export const DeleteComponentGroupRequestSchema: GenMessage<DeleteComponentGroupR
  *
  * @generated from message openstatus.status_page.v1.DeleteComponentGroupResponse
  */
-export type DeleteComponentGroupResponse = Message<"openstatus.status_page.v1.DeleteComponentGroupResponse"> & {
-  /**
-   * Whether the deletion was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type DeleteComponentGroupResponse =
+  Message<"openstatus.status_page.v1.DeleteComponentGroupResponse"> & {
+    /**
+     * Whether the deletion was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.DeleteComponentGroupResponse.
  * Use `create(DeleteComponentGroupResponseSchema)` to create a new message.
  */
-export const DeleteComponentGroupResponseSchema: GenMessage<DeleteComponentGroupResponse> = /*@__PURE__*/
+export const DeleteComponentGroupResponseSchema: GenMessage<DeleteComponentGroupResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 21);
 
 /**
@@ -673,27 +720,28 @@ export const DeleteComponentGroupResponseSchema: GenMessage<DeleteComponentGroup
  *
  * @generated from message openstatus.status_page.v1.UpdateComponentGroupRequest
  */
-export type UpdateComponentGroupRequest = Message<"openstatus.status_page.v1.UpdateComponentGroupRequest"> & {
-  /**
-   * ID of the component group to update (required).
-   *
-   * @generated from field: string id = 1;
-   */
-  id: string;
+export type UpdateComponentGroupRequest =
+  Message<"openstatus.status_page.v1.UpdateComponentGroupRequest"> & {
+    /**
+     * ID of the component group to update (required).
+     *
+     * @generated from field: string id = 1;
+     */
+    id: string;
 
-  /**
-   * New display name for the group (optional).
-   *
-   * @generated from field: optional string name = 2;
-   */
-  name?: string;
-};
+    /**
+     * New display name for the group (optional).
+     *
+     * @generated from field: optional string name = 2;
+     */
+    name?: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UpdateComponentGroupRequest.
  * Use `create(UpdateComponentGroupRequestSchema)` to create a new message.
  */
-export const UpdateComponentGroupRequestSchema: GenMessage<UpdateComponentGroupRequest> = /*@__PURE__*/
+export const UpdateComponentGroupRequestSchema: GenMessage<UpdateComponentGroupRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 22);
 
 /**
@@ -701,20 +749,21 @@ export const UpdateComponentGroupRequestSchema: GenMessage<UpdateComponentGroupR
  *
  * @generated from message openstatus.status_page.v1.UpdateComponentGroupResponse
  */
-export type UpdateComponentGroupResponse = Message<"openstatus.status_page.v1.UpdateComponentGroupResponse"> & {
-  /**
-   * The updated component group.
-   *
-   * @generated from field: openstatus.status_page.v1.PageComponentGroup group = 1;
-   */
-  group?: PageComponentGroup;
-};
+export type UpdateComponentGroupResponse =
+  Message<"openstatus.status_page.v1.UpdateComponentGroupResponse"> & {
+    /**
+     * The updated component group.
+     *
+     * @generated from field: openstatus.status_page.v1.PageComponentGroup group = 1;
+     */
+    group?: PageComponentGroup;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UpdateComponentGroupResponse.
  * Use `create(UpdateComponentGroupResponseSchema)` to create a new message.
  */
-export const UpdateComponentGroupResponseSchema: GenMessage<UpdateComponentGroupResponse> = /*@__PURE__*/
+export const UpdateComponentGroupResponseSchema: GenMessage<UpdateComponentGroupResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 23);
 
 /**
@@ -722,27 +771,28 @@ export const UpdateComponentGroupResponseSchema: GenMessage<UpdateComponentGroup
  *
  * @generated from message openstatus.status_page.v1.SubscribeToPageRequest
  */
-export type SubscribeToPageRequest = Message<"openstatus.status_page.v1.SubscribeToPageRequest"> & {
-  /**
-   * ID of the status page to subscribe to (required).
-   *
-   * @generated from field: string page_id = 1;
-   */
-  pageId: string;
+export type SubscribeToPageRequest =
+  Message<"openstatus.status_page.v1.SubscribeToPageRequest"> & {
+    /**
+     * ID of the status page to subscribe to (required).
+     *
+     * @generated from field: string page_id = 1;
+     */
+    pageId: string;
 
-  /**
-   * Email address to subscribe (required).
-   *
-   * @generated from field: string email = 2;
-   */
-  email: string;
-};
+    /**
+     * Email address to subscribe (required).
+     *
+     * @generated from field: string email = 2;
+     */
+    email: string;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.SubscribeToPageRequest.
  * Use `create(SubscribeToPageRequestSchema)` to create a new message.
  */
-export const SubscribeToPageRequestSchema: GenMessage<SubscribeToPageRequest> = /*@__PURE__*/
+export const SubscribeToPageRequestSchema: GenMessage<SubscribeToPageRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 24);
 
 /**
@@ -750,20 +800,21 @@ export const SubscribeToPageRequestSchema: GenMessage<SubscribeToPageRequest> = 
  *
  * @generated from message openstatus.status_page.v1.SubscribeToPageResponse
  */
-export type SubscribeToPageResponse = Message<"openstatus.status_page.v1.SubscribeToPageResponse"> & {
-  /**
-   * The created subscriber.
-   *
-   * @generated from field: openstatus.status_page.v1.PageSubscriber subscriber = 1;
-   */
-  subscriber?: PageSubscriber;
-};
+export type SubscribeToPageResponse =
+  Message<"openstatus.status_page.v1.SubscribeToPageResponse"> & {
+    /**
+     * The created subscriber.
+     *
+     * @generated from field: openstatus.status_page.v1.PageSubscriber subscriber = 1;
+     */
+    subscriber?: PageSubscriber;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.SubscribeToPageResponse.
  * Use `create(SubscribeToPageResponseSchema)` to create a new message.
  */
-export const SubscribeToPageResponseSchema: GenMessage<SubscribeToPageResponse> = /*@__PURE__*/
+export const SubscribeToPageResponseSchema: GenMessage<SubscribeToPageResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 25);
 
 /**
@@ -771,43 +822,47 @@ export const SubscribeToPageResponseSchema: GenMessage<SubscribeToPageResponse> 
  *
  * @generated from message openstatus.status_page.v1.UnsubscribeFromPageRequest
  */
-export type UnsubscribeFromPageRequest = Message<"openstatus.status_page.v1.UnsubscribeFromPageRequest"> & {
-  /**
-   * ID of the status page to unsubscribe from (required).
-   *
-   * @generated from field: string page_id = 1;
-   */
-  pageId: string;
+export type UnsubscribeFromPageRequest =
+  Message<"openstatus.status_page.v1.UnsubscribeFromPageRequest"> & {
+    /**
+     * ID of the status page to unsubscribe from (required).
+     *
+     * @generated from field: string page_id = 1;
+     */
+    pageId: string;
 
-  /**
-   * Identifier for the subscription (either email or id).
-   *
-   * @generated from oneof openstatus.status_page.v1.UnsubscribeFromPageRequest.identifier
-   */
-  identifier: {
     /**
-     * Email address to unsubscribe.
+     * Identifier for the subscription (either email or id).
      *
-     * @generated from field: string email = 2;
+     * @generated from oneof openstatus.status_page.v1.UnsubscribeFromPageRequest.identifier
      */
-    value: string;
-    case: "email";
-  } | {
-    /**
-     * Subscriber ID.
-     *
-     * @generated from field: string id = 3;
-     */
-    value: string;
-    case: "id";
-  } | { case: undefined; value?: undefined };
-};
+    identifier:
+      | {
+          /**
+           * Email address to unsubscribe.
+           *
+           * @generated from field: string email = 2;
+           */
+          value: string;
+          case: "email";
+        }
+      | {
+          /**
+           * Subscriber ID.
+           *
+           * @generated from field: string id = 3;
+           */
+          value: string;
+          case: "id";
+        }
+      | { case: undefined; value?: undefined };
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UnsubscribeFromPageRequest.
  * Use `create(UnsubscribeFromPageRequestSchema)` to create a new message.
  */
-export const UnsubscribeFromPageRequestSchema: GenMessage<UnsubscribeFromPageRequest> = /*@__PURE__*/
+export const UnsubscribeFromPageRequestSchema: GenMessage<UnsubscribeFromPageRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 26);
 
 /**
@@ -815,20 +870,21 @@ export const UnsubscribeFromPageRequestSchema: GenMessage<UnsubscribeFromPageReq
  *
  * @generated from message openstatus.status_page.v1.UnsubscribeFromPageResponse
  */
-export type UnsubscribeFromPageResponse = Message<"openstatus.status_page.v1.UnsubscribeFromPageResponse"> & {
-  /**
-   * Whether the unsubscription was successful.
-   *
-   * @generated from field: bool success = 1;
-   */
-  success: boolean;
-};
+export type UnsubscribeFromPageResponse =
+  Message<"openstatus.status_page.v1.UnsubscribeFromPageResponse"> & {
+    /**
+     * Whether the unsubscription was successful.
+     *
+     * @generated from field: bool success = 1;
+     */
+    success: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.UnsubscribeFromPageResponse.
  * Use `create(UnsubscribeFromPageResponseSchema)` to create a new message.
  */
-export const UnsubscribeFromPageResponseSchema: GenMessage<UnsubscribeFromPageResponse> = /*@__PURE__*/
+export const UnsubscribeFromPageResponseSchema: GenMessage<UnsubscribeFromPageResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 27);
 
 /**
@@ -836,41 +892,42 @@ export const UnsubscribeFromPageResponseSchema: GenMessage<UnsubscribeFromPageRe
  *
  * @generated from message openstatus.status_page.v1.ListSubscribersRequest
  */
-export type ListSubscribersRequest = Message<"openstatus.status_page.v1.ListSubscribersRequest"> & {
-  /**
-   * ID of the status page to list subscribers for (required).
-   *
-   * @generated from field: string page_id = 1;
-   */
-  pageId: string;
+export type ListSubscribersRequest =
+  Message<"openstatus.status_page.v1.ListSubscribersRequest"> & {
+    /**
+     * ID of the status page to list subscribers for (required).
+     *
+     * @generated from field: string page_id = 1;
+     */
+    pageId: string;
 
-  /**
-   * Maximum number of subscribers to return (1-100, defaults to 50).
-   *
-   * @generated from field: optional int32 limit = 2;
-   */
-  limit?: number;
+    /**
+     * Maximum number of subscribers to return (1-100, defaults to 50).
+     *
+     * @generated from field: optional int32 limit = 2;
+     */
+    limit?: number;
 
-  /**
-   * Number of subscribers to skip for pagination (defaults to 0).
-   *
-   * @generated from field: optional int32 offset = 3;
-   */
-  offset?: number;
+    /**
+     * Number of subscribers to skip for pagination (defaults to 0).
+     *
+     * @generated from field: optional int32 offset = 3;
+     */
+    offset?: number;
 
-  /**
-   * Whether to include unsubscribed users (defaults to false).
-   *
-   * @generated from field: optional bool include_unsubscribed = 4;
-   */
-  includeUnsubscribed?: boolean;
-};
+    /**
+     * Whether to include unsubscribed users (defaults to false).
+     *
+     * @generated from field: optional bool include_unsubscribed = 4;
+     */
+    includeUnsubscribed?: boolean;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.ListSubscribersRequest.
  * Use `create(ListSubscribersRequestSchema)` to create a new message.
  */
-export const ListSubscribersRequestSchema: GenMessage<ListSubscribersRequest> = /*@__PURE__*/
+export const ListSubscribersRequestSchema: GenMessage<ListSubscribersRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 28);
 
 /**
@@ -878,27 +935,28 @@ export const ListSubscribersRequestSchema: GenMessage<ListSubscribersRequest> = 
  *
  * @generated from message openstatus.status_page.v1.ListSubscribersResponse
  */
-export type ListSubscribersResponse = Message<"openstatus.status_page.v1.ListSubscribersResponse"> & {
-  /**
-   * List of subscribers.
-   *
-   * @generated from field: repeated openstatus.status_page.v1.PageSubscriber subscribers = 1;
-   */
-  subscribers: PageSubscriber[];
+export type ListSubscribersResponse =
+  Message<"openstatus.status_page.v1.ListSubscribersResponse"> & {
+    /**
+     * List of subscribers.
+     *
+     * @generated from field: repeated openstatus.status_page.v1.PageSubscriber subscribers = 1;
+     */
+    subscribers: PageSubscriber[];
 
-  /**
-   * Total number of subscribers matching the filter.
-   *
-   * @generated from field: int32 total_size = 2;
-   */
-  totalSize: number;
-};
+    /**
+     * Total number of subscribers matching the filter.
+     *
+     * @generated from field: int32 total_size = 2;
+     */
+    totalSize: number;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.ListSubscribersResponse.
  * Use `create(ListSubscribersResponseSchema)` to create a new message.
  */
-export const ListSubscribersResponseSchema: GenMessage<ListSubscribersResponse> = /*@__PURE__*/
+export const ListSubscribersResponseSchema: GenMessage<ListSubscribersResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 29);
 
 /**
@@ -906,36 +964,40 @@ export const ListSubscribersResponseSchema: GenMessage<ListSubscribersResponse> 
  *
  * @generated from message openstatus.status_page.v1.GetStatusPageContentRequest
  */
-export type GetStatusPageContentRequest = Message<"openstatus.status_page.v1.GetStatusPageContentRequest"> & {
-  /**
-   * Identifier for the status page (either id or slug).
-   *
-   * @generated from oneof openstatus.status_page.v1.GetStatusPageContentRequest.identifier
-   */
-  identifier: {
+export type GetStatusPageContentRequest =
+  Message<"openstatus.status_page.v1.GetStatusPageContentRequest"> & {
     /**
-     * ID of the status page.
+     * Identifier for the status page (either id or slug).
      *
-     * @generated from field: string id = 1;
+     * @generated from oneof openstatus.status_page.v1.GetStatusPageContentRequest.identifier
      */
-    value: string;
-    case: "id";
-  } | {
-    /**
-     * Slug of the status page.
-     *
-     * @generated from field: string slug = 2;
-     */
-    value: string;
-    case: "slug";
-  } | { case: undefined; value?: undefined };
-};
+    identifier:
+      | {
+          /**
+           * ID of the status page.
+           *
+           * @generated from field: string id = 1;
+           */
+          value: string;
+          case: "id";
+        }
+      | {
+          /**
+           * Slug of the status page.
+           *
+           * @generated from field: string slug = 2;
+           */
+          value: string;
+          case: "slug";
+        }
+      | { case: undefined; value?: undefined };
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.GetStatusPageContentRequest.
  * Use `create(GetStatusPageContentRequestSchema)` to create a new message.
  */
-export const GetStatusPageContentRequestSchema: GenMessage<GetStatusPageContentRequest> = /*@__PURE__*/
+export const GetStatusPageContentRequestSchema: GenMessage<GetStatusPageContentRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 30);
 
 /**
@@ -943,48 +1005,49 @@ export const GetStatusPageContentRequestSchema: GenMessage<GetStatusPageContentR
  *
  * @generated from message openstatus.status_page.v1.GetStatusPageContentResponse
  */
-export type GetStatusPageContentResponse = Message<"openstatus.status_page.v1.GetStatusPageContentResponse"> & {
-  /**
-   * The status page details.
-   *
-   * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
-   */
-  statusPage?: StatusPage;
+export type GetStatusPageContentResponse =
+  Message<"openstatus.status_page.v1.GetStatusPageContentResponse"> & {
+    /**
+     * The status page details.
+     *
+     * @generated from field: openstatus.status_page.v1.StatusPage status_page = 1;
+     */
+    statusPage?: StatusPage;
 
-  /**
-   * Components on the status page.
-   *
-   * @generated from field: repeated openstatus.status_page.v1.PageComponent components = 2;
-   */
-  components: PageComponent[];
+    /**
+     * Components on the status page.
+     *
+     * @generated from field: repeated openstatus.status_page.v1.PageComponent components = 2;
+     */
+    components: PageComponent[];
 
-  /**
-   * Component groups on the status page.
-   *
-   * @generated from field: repeated openstatus.status_page.v1.PageComponentGroup groups = 3;
-   */
-  groups: PageComponentGroup[];
+    /**
+     * Component groups on the status page.
+     *
+     * @generated from field: repeated openstatus.status_page.v1.PageComponentGroup groups = 3;
+     */
+    groups: PageComponentGroup[];
 
-  /**
-   * Active and recent status reports.
-   *
-   * @generated from field: repeated openstatus.status_report.v1.StatusReport status_reports = 4;
-   */
-  statusReports: StatusReport[];
+    /**
+     * Active and recent status reports.
+     *
+     * @generated from field: repeated openstatus.status_report.v1.StatusReport status_reports = 4;
+     */
+    statusReports: StatusReport[];
 
-  /**
-   * Scheduled maintenances.
-   *
-   * @generated from field: repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 5;
-   */
-  maintenances: MaintenanceSummary[];
-};
+    /**
+     * Scheduled maintenances.
+     *
+     * @generated from field: repeated openstatus.maintenance.v1.MaintenanceSummary maintenances = 5;
+     */
+    maintenances: MaintenanceSummary[];
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.GetStatusPageContentResponse.
  * Use `create(GetStatusPageContentResponseSchema)` to create a new message.
  */
-export const GetStatusPageContentResponseSchema: GenMessage<GetStatusPageContentResponse> = /*@__PURE__*/
+export const GetStatusPageContentResponseSchema: GenMessage<GetStatusPageContentResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 31);
 
 /**
@@ -992,36 +1055,40 @@ export const GetStatusPageContentResponseSchema: GenMessage<GetStatusPageContent
  *
  * @generated from message openstatus.status_page.v1.GetOverallStatusRequest
  */
-export type GetOverallStatusRequest = Message<"openstatus.status_page.v1.GetOverallStatusRequest"> & {
-  /**
-   * Identifier for the status page (either id or slug).
-   *
-   * @generated from oneof openstatus.status_page.v1.GetOverallStatusRequest.identifier
-   */
-  identifier: {
+export type GetOverallStatusRequest =
+  Message<"openstatus.status_page.v1.GetOverallStatusRequest"> & {
     /**
-     * ID of the status page.
+     * Identifier for the status page (either id or slug).
      *
-     * @generated from field: string id = 1;
+     * @generated from oneof openstatus.status_page.v1.GetOverallStatusRequest.identifier
      */
-    value: string;
-    case: "id";
-  } | {
-    /**
-     * Slug of the status page.
-     *
-     * @generated from field: string slug = 2;
-     */
-    value: string;
-    case: "slug";
-  } | { case: undefined; value?: undefined };
-};
+    identifier:
+      | {
+          /**
+           * ID of the status page.
+           *
+           * @generated from field: string id = 1;
+           */
+          value: string;
+          case: "id";
+        }
+      | {
+          /**
+           * Slug of the status page.
+           *
+           * @generated from field: string slug = 2;
+           */
+          value: string;
+          case: "slug";
+        }
+      | { case: undefined; value?: undefined };
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.GetOverallStatusRequest.
  * Use `create(GetOverallStatusRequestSchema)` to create a new message.
  */
-export const GetOverallStatusRequestSchema: GenMessage<GetOverallStatusRequest> = /*@__PURE__*/
+export const GetOverallStatusRequestSchema: GenMessage<GetOverallStatusRequest> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 32);
 
 /**
@@ -1029,27 +1096,28 @@ export const GetOverallStatusRequestSchema: GenMessage<GetOverallStatusRequest> 
  *
  * @generated from message openstatus.status_page.v1.ComponentStatus
  */
-export type ComponentStatus = Message<"openstatus.status_page.v1.ComponentStatus"> & {
-  /**
-   * ID of the component.
-   *
-   * @generated from field: string component_id = 1;
-   */
-  componentId: string;
+export type ComponentStatus =
+  Message<"openstatus.status_page.v1.ComponentStatus"> & {
+    /**
+     * ID of the component.
+     *
+     * @generated from field: string component_id = 1;
+     */
+    componentId: string;
 
-  /**
-   * Current status of the component.
-   *
-   * @generated from field: openstatus.status_page.v1.OverallStatus status = 2;
-   */
-  status: OverallStatus;
-};
+    /**
+     * Current status of the component.
+     *
+     * @generated from field: openstatus.status_page.v1.OverallStatus status = 2;
+     */
+    status: OverallStatus;
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.ComponentStatus.
  * Use `create(ComponentStatusSchema)` to create a new message.
  */
-export const ComponentStatusSchema: GenMessage<ComponentStatus> = /*@__PURE__*/
+export const ComponentStatusSchema: GenMessage<ComponentStatus> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 33);
 
 /**
@@ -1057,27 +1125,28 @@ export const ComponentStatusSchema: GenMessage<ComponentStatus> = /*@__PURE__*/
  *
  * @generated from message openstatus.status_page.v1.GetOverallStatusResponse
  */
-export type GetOverallStatusResponse = Message<"openstatus.status_page.v1.GetOverallStatusResponse"> & {
-  /**
-   * Aggregated status across all components.
-   *
-   * @generated from field: openstatus.status_page.v1.OverallStatus overall_status = 1;
-   */
-  overallStatus: OverallStatus;
+export type GetOverallStatusResponse =
+  Message<"openstatus.status_page.v1.GetOverallStatusResponse"> & {
+    /**
+     * Aggregated status across all components.
+     *
+     * @generated from field: openstatus.status_page.v1.OverallStatus overall_status = 1;
+     */
+    overallStatus: OverallStatus;
 
-  /**
-   * Status of individual components.
-   *
-   * @generated from field: repeated openstatus.status_page.v1.ComponentStatus component_statuses = 2;
-   */
-  componentStatuses: ComponentStatus[];
-};
+    /**
+     * Status of individual components.
+     *
+     * @generated from field: repeated openstatus.status_page.v1.ComponentStatus component_statuses = 2;
+     */
+    componentStatuses: ComponentStatus[];
+  };
 
 /**
  * Describes the message openstatus.status_page.v1.GetOverallStatusResponse.
  * Use `create(GetOverallStatusResponseSchema)` to create a new message.
  */
-export const GetOverallStatusResponseSchema: GenMessage<GetOverallStatusResponse> = /*@__PURE__*/
+export const GetOverallStatusResponseSchema: GenMessage<GetOverallStatusResponse> /*@__PURE__*/ =
   messageDesc(file_openstatus_status_page_v1_service, 34);
 
 /**
@@ -1096,7 +1165,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof CreateStatusPageRequestSchema;
     output: typeof CreateStatusPageResponseSchema;
-  },
+  };
   /**
    * GetStatusPage retrieves a specific status page by ID.
    *
@@ -1106,7 +1175,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof GetStatusPageRequestSchema;
     output: typeof GetStatusPageResponseSchema;
-  },
+  };
   /**
    * ListStatusPages returns all status pages for the workspace.
    *
@@ -1116,7 +1185,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof ListStatusPagesRequestSchema;
     output: typeof ListStatusPagesResponseSchema;
-  },
+  };
   /**
    * UpdateStatusPage updates an existing status page.
    *
@@ -1126,7 +1195,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof UpdateStatusPageRequestSchema;
     output: typeof UpdateStatusPageResponseSchema;
-  },
+  };
   /**
    * DeleteStatusPage removes a status page.
    *
@@ -1136,7 +1205,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof DeleteStatusPageRequestSchema;
     output: typeof DeleteStatusPageResponseSchema;
-  },
+  };
   /**
    * AddMonitorComponent adds a monitor-based component to a status page.
    *
@@ -1146,7 +1215,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof AddMonitorComponentRequestSchema;
     output: typeof AddMonitorComponentResponseSchema;
-  },
+  };
   /**
    * AddStaticComponent adds a static component to a status page.
    *
@@ -1156,7 +1225,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof AddStaticComponentRequestSchema;
     output: typeof AddStaticComponentResponseSchema;
-  },
+  };
   /**
    * RemoveComponent removes a component from a status page.
    *
@@ -1166,7 +1235,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof RemoveComponentRequestSchema;
     output: typeof RemoveComponentResponseSchema;
-  },
+  };
   /**
    * UpdateComponent updates an existing component.
    *
@@ -1176,7 +1245,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof UpdateComponentRequestSchema;
     output: typeof UpdateComponentResponseSchema;
-  },
+  };
   /**
    * CreateComponentGroup creates a new component group.
    *
@@ -1186,7 +1255,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof CreateComponentGroupRequestSchema;
     output: typeof CreateComponentGroupResponseSchema;
-  },
+  };
   /**
    * DeleteComponentGroup removes a component group.
    *
@@ -1196,7 +1265,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof DeleteComponentGroupRequestSchema;
     output: typeof DeleteComponentGroupResponseSchema;
-  },
+  };
   /**
    * UpdateComponentGroup updates an existing component group.
    *
@@ -1206,7 +1275,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof UpdateComponentGroupRequestSchema;
     output: typeof UpdateComponentGroupResponseSchema;
-  },
+  };
   /**
    * SubscribeToPage subscribes an email to a status page. If the email was previously unsubscribed, the subscription is reactivated.
    *
@@ -1216,7 +1285,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof SubscribeToPageRequestSchema;
     output: typeof SubscribeToPageResponseSchema;
-  },
+  };
   /**
    * UnsubscribeFromPage removes a subscription from a status page.
    *
@@ -1226,7 +1295,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof UnsubscribeFromPageRequestSchema;
     output: typeof UnsubscribeFromPageResponseSchema;
-  },
+  };
   /**
    * ListSubscribers returns all subscribers for a status page.
    *
@@ -1236,7 +1305,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof ListSubscribersRequestSchema;
     output: typeof ListSubscribersResponseSchema;
-  },
+  };
   /**
    * GetStatusPageContent retrieves the full content of a status page including components, groups, active reports, and maintenances.
    *
@@ -1246,7 +1315,7 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof GetStatusPageContentRequestSchema;
     output: typeof GetStatusPageContentResponseSchema;
-  },
+  };
   /**
    * GetOverallStatus returns the aggregated status of a status page and its individual components.
    *
@@ -1256,7 +1325,5 @@ export const StatusPageService: GenService<{
     methodKind: "unary";
     input: typeof GetOverallStatusRequestSchema;
     output: typeof GetOverallStatusResponseSchema;
-  },
-}> = /*@__PURE__*/
-  serviceDesc(file_openstatus_status_page_v1_service, 0);
-
+  };
+}> /*@__PURE__*/ = serviceDesc(file_openstatus_status_page_v1_service, 0);

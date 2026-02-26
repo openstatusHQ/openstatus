@@ -1,9 +1,11 @@
 "use client";
 
-import { FormComponents } from "@/components/forms/components/form-components";
-import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+
+import { FormComponents } from "@/components/forms/components/form-components";
+import { useTRPC } from "@/lib/trpc/client";
+
 import { FormCardGroup } from "../form-card";
 import { FormConfiguration } from "../status-page/form-configuration";
 
@@ -22,8 +24,8 @@ export function FormComponentsUpdate() {
   const updateComponentsMutation = useMutation(
     trpc.pageComponent.updateOrder.mutationOptions({
       onSuccess: () => {
-        refetch();
-        refetchComponents();
+        void refetch();
+        void refetchComponents();
       },
     }),
   );

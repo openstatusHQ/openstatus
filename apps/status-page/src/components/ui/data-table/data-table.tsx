@@ -1,5 +1,17 @@
 "use client";
 
+import type { DataTableActionBarProps } from "./data-table-action-bar";
+import type { DataTablePaginationProps } from "./data-table-pagination";
+import type { DataTableToolbarProps } from "./data-table-toobar";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@openstatus/ui/components/ui/table";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -18,19 +30,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui/components/ui/table";
 import { Fragment } from "react";
-import type { DataTableActionBarProps } from "./data-table-action-bar";
-import type { DataTablePaginationProps } from "./data-table-pagination";
-import type { DataTableToolbarProps } from "./data-table-toobar";
 
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -75,7 +75,6 @@ export function DataTable<TData, TValue>({
   pagination,
   setPagination,
 }: DataTableProps<TData, TValue>) {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   const [globalFilter, setGlobalFilter] = React.useState<any>();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =

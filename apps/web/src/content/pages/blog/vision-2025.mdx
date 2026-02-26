@@ -25,25 +25,25 @@ Let’s explore these pillars and uncover our key drivers for 2025.
 
 ### 1. Synthetic Monitoring
 
-This is where our heart lies.  
+This is where our heart lies.
 
-We are committed to providing the best tools to monitor your APIs, websites and server globally. So far, we’ve built a highly performant checker that you can deploy as your own probe. 
+We are committed to providing the best tools to monitor your APIs, websites and server globally. So far, we’ve built a highly performant checker that you can deploy as your own probe.
 
-Moving forward, we want to embrace standards **OpenTelemetry.** 
+Moving forward, we want to embrace standards **OpenTelemetry.**
 
-We believe the current synthetic monitoring ecosystem  is broken you can not build a observability tool isolated from the rest of the observability stack 
+We believe the current synthetic monitoring ecosystem is broken you can not build a observability tool isolated from the rest of the observability stack
 
 What does this mean? By leveraging OpenTelemetry, we can export data from our probes via metrics to your observability stacks.
 
-This flexibility allows you to choose how you handle the data—leaving alerts, visualizations, and storage to your stack while enabling custom integrations. 
+This flexibility allows you to choose how you handle the data—leaving alerts, visualizations, and storage to your stack while enabling custom integrations.
 
-Besides we also think at a new kind of monitor which is neither TCP or HTTP based but based on metrics from your system.  You define a PromQL query and configure custom assertions,  if an assertion fails, you can inform your users via a *headless* status page and receive alerts instantly.
+Besides we also think at a new kind of monitor which is neither TCP or HTTP based but based on metrics from your system. You define a PromQL query and configure custom assertions, if an assertion fails, you can inform your users via a *headless* status page and receive alerts instantly.
 
 But there’s more. As developers, we live in our IDEs and terminals. That’s why we really want improve our **openstatus CLI** and `config.openstatus.yaml` to make developer experience neat (DX). Allowing you to run your synthetic check in you CI workflow, or from your terminal.
 
 Thinking of DX, if interest exists, we’d start building SDKs for your favorite language.
 
-Some of you also love beautiful craft UI this is why  we want to make the dashboard feel *alive*  Dashboard—showing real-time pings as they await responses.
+Some of you also love beautiful craft UI this is why we want to make the dashboard feel *alive* Dashboard—showing real-time pings as they await responses.
 
 Looking ahead, we want to expand our probes to more cloud providers like AWS, GCP, Koyeb, Render or more if requested.
 
@@ -51,7 +51,7 @@ Looking ahead, we want to expand our probes to more cloud providers like AWS, GC
 
 ### 2. Status Pages
 
-Status pages go hand in hand with synthetic monitoring. 
+Status pages go hand in hand with synthetic monitoring.
 
 We aim to make it effortless to communicate incidents to your users while ensuring the page feels uniquely *yours*. **Customization is key**: supporting brand colors, layouts, and enabling custom `script` injections (e.g., for tools like Plausible to learn who your users are and where they’re coming from).
 

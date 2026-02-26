@@ -119,6 +119,7 @@ And adding the build step to the package:
 ```
 
 The downsides:
+
 - Every change requires a rebuild (yes, even with `--watch` mode, there's still a delay)
 - Adds complexity to the development workflow
 - Build output needs to be managed and debugged
@@ -156,6 +157,7 @@ But now you have a **new problem**: what if your app also wants to use `@/` for 
 3. Some complex webpack resolver that checks the importing file's location to decide what `@/` means (maintainability nightmare)
 
 The problems:
+
 - Fragile configuration that breaks with Next.js updates
 - Needs to be duplicated in every app
 - Turbopack doesn't support custom webpack configs
@@ -242,7 +244,7 @@ When building the registry for public distribution, we transform the imports wit
 // Transform: @openstatus/ui/components/ui/button → @/components/ui/button
 content = content.replace(
   /@openstatus\/ui\/(components|lib|hooks|types)/g,
-  "@/$1"
+  "@/$1",
 );
 ```
 

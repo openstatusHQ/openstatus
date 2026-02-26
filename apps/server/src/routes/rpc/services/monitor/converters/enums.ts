@@ -1,12 +1,12 @@
+import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import type { z } from "zod";
+
 import {
   HTTPMethod,
   MonitorStatus,
   Periodicity,
   TimeRange,
 } from "@openstatus/proto/monitor/v1";
-
-import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import type { z } from "zod";
 
 // ============================================================
 // Periodicity Conversions

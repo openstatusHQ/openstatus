@@ -1,14 +1,14 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import type { monitorsApi } from "./index";
 
+import { createRoute, z } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
-
 // import { serialize } from "@openstatus/assertions";
+import { monitor } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
-import type { monitorsApi } from "./index";
+
 import { DNSMonitorSchema, MonitorSchema } from "./schema";
 // import { getAssertionNew } from "./utils";
 
@@ -125,7 +125,6 @@ export function registerPostMonitorDNS(api: typeof monitorsApi) {
             }),
           )
           .parse(JSON.parse(_newMonitor.otelHeaders))
-          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
           .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
       : undefined;
 

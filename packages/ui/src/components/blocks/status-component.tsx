@@ -1,5 +1,12 @@
 "use client";
 
+import type {
+  StatusBarData,
+  StatusType,
+} from "@openstatus/ui/components/blocks/status.types";
+
+import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
+import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import {
   Tooltip,
@@ -12,12 +19,6 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceToNowStrict } from "date-fns";
 import { InfoIcon } from "lucide-react";
 import { useState } from "react";
-import { StatusIcon as UnifiedStatusIcon } from "@openstatus/ui/components/blocks/status-icon";
-import type {
-  StatusBarData,
-  StatusType,
-} from "@openstatus/ui/components/blocks/status.types";
-import { systemStatusLabels } from "@openstatus/ui/components/blocks/status.utils";
 
 // ============================================================================
 // Layout Components
@@ -268,7 +269,7 @@ export function StatusComponentTitle({
     <div
       data-slot="status-component-title"
       className={cn(
-        "truncate font-medium font-mono text-base text-foreground leading-5",
+        "text-foreground truncate font-mono text-base leading-5 font-medium",
         className,
       )}
       {...props}
@@ -327,7 +328,7 @@ export function StatusComponentDescription({
           className="rounded-full"
           {...props}
         >
-          <InfoIcon className="size-4 text-muted-foreground" />
+          <InfoIcon className="text-muted-foreground size-4" />
         </TooltipTrigger>
         <TooltipContent>
           <p>{children}</p>
@@ -413,7 +414,7 @@ export function StatusComponentFooter({
   return (
     <div
       data-slot="status-component-footer"
-      className="flex flex-row items-center justify-between font-mono text-muted-foreground text-xs leading-none"
+      className="text-muted-foreground flex flex-row items-center justify-between font-mono text-xs leading-none"
     >
       <div>
         {isLoading ? (
@@ -462,7 +463,7 @@ export function StatusComponentUptime({
     <div
       data-slot="status-component-uptime"
       className={cn(
-        "font-mono text-foreground/80 text-sm leading-none",
+        "text-foreground/80 font-mono text-sm leading-none",
         className,
       )}
       {...props}

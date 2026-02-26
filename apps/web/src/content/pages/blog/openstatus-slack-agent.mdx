@@ -7,7 +7,6 @@ category: "engineering"
 image: "/assets/posts/openstatus-slack-agent/slack-agent.png"
 ---
 
-
 # How We Built Our Slack Agent
 
 It's 2 AM. Your API is returning 500s. You're in a Slack thread with your team, looking at logs, sharing stack traces, trying to figure out what's going on. The last thing you want to do is switch to a dashboard, find the right status page, fill out a form, and publish a status report.
@@ -60,6 +59,7 @@ The agent reads the message, looks up your status pages and components, and draf
 The card shows the drafted title, status, target page, and message — so you can review before anything goes public.
 
 You get three options:
+
 - **Approve** — publishes the status report.
 - **Approve & Notify** — publishes and sends a notification to all your subscribers (email, SMS, etc.).
 - **Cancel** — discards the draft.
@@ -107,10 +107,12 @@ Every incoming POST is verified with Slack's HMAC-SHA256 signature. We wrote a H
 We use the [Vercel AI SDK](https://sdk.vercel.ai/) with Claude Sonnet. The agent has 6 tools:
 
 **Read tools** (execute immediately):
+
 - `listStatusPages` — returns all status pages and their components for the workspace.
 - `listStatusReports` — returns active (or all) reports with their latest update.
 
 **Mutation tools** (require human confirmation):
+
 - `createStatusReport`
 - `addStatusReportUpdate`
 - `updateStatusReport`

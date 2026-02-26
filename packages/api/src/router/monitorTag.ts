@@ -1,7 +1,6 @@
-import { z } from "zod";
-
 import { and, eq, inArray } from "@openstatus/db";
 import { monitorTag } from "@openstatus/db/src/schema";
+import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

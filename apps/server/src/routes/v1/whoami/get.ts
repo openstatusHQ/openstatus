@@ -1,9 +1,12 @@
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import type { whoamiApi } from ".";
+
 import { createRoute } from "@hono/zod-openapi";
 import { eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { workspace } from "@openstatus/db/src/schema/workspaces";
-import type { whoamiApi } from ".";
+
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+
 import { WorkspaceSchema } from "./schema";
 
 const getRoute = createRoute({

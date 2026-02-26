@@ -1,5 +1,7 @@
 import type { NotificationContext } from "@openstatus/notification-base";
+
 import { transformHeaders } from "@openstatus/utils";
+
 import { PayloadSchema, WebhookSchema } from "./schema";
 
 export const sendAlert = async ({
@@ -135,6 +137,6 @@ export const sendTest = async ({
     return true;
   } catch (err) {
     console.log(err);
-    throw new Error("Failed to send test");
+    throw new Error("Failed to send test", { cause: err });
   }
 };

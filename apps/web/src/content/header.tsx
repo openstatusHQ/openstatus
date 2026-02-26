@@ -1,4 +1,3 @@
-import { headerLinks } from "@/data/content";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,19 +5,22 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import Link from "next/link";
+
+import { headerLinks } from "@/data/content";
+
 import { CmdK } from "./cmdk";
 import { LogoWithContextMenu } from "./logo-with-context-menu";
 
 export function Header() {
   return (
-    <header className="grid grid-cols-3 gap-px border border-border bg-border lg:grid-cols-6 [&>*]:bg-background [&>*]:px-4 [&>*]:py-4 [&>*]:hover:bg-muted">
+    <header className="border-border bg-border [&>*]:bg-background [&>*]:hover:bg-muted grid grid-cols-3 gap-px border lg:grid-cols-6 [&>*]:px-4 [&>*]:py-4">
       <LogoWithContextMenu />
       {headerLinks.map((section, _) => (
         <DropdownMenu key={section.label}>
-          <DropdownMenuTrigger className="group flex items-center gap-1 data-[state=open]:bg-muted">
+          <DropdownMenuTrigger className="group data-[state=open]:bg-muted flex items-center gap-1">
             <span className="w-full truncate text-left">{section.label}</span>
             <span
-              className="relative top-[1px] shrink-0 origin-center text-[10px] text-muted-foreground transition duration-300 group-hover:text-foreground group-data-[state=open]:rotate-180 group-data-[state=open]:text-foreground"
+              className="text-muted-foreground group-hover:text-foreground group-data-[state=open]:text-foreground relative top-[1px] shrink-0 origin-center text-[10px] transition duration-300 group-data-[state=open]:rotate-180"
               aria-hidden="true"
             >
               ▲

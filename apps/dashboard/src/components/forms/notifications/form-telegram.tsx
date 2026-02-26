@@ -1,5 +1,7 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import {
   FormControl,
@@ -9,16 +11,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
-
-import { Link } from "@/components/common/link";
-import {
-  FormCardContent,
-  FormCardSeparator,
-} from "@/components/forms/form-card";
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { useTRPC } from "@/lib/trpc/client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@openstatus/ui/components/ui/button";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
@@ -29,6 +21,14 @@ import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   name: z.string(),

@@ -1,11 +1,12 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import type { statusReportsApi } from "./index";
 
+import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
 import { openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
-import type { statusReportsApi } from "./index";
+
 import { StatusReportSchema } from "./schema";
 
 const getAllRoute = createRoute({
@@ -40,13 +41,7 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
     });
 
     const data = z.array(StatusReportSchema).parse(
-      _statusReports.map((r) => ({
-        ...r,
-        statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
-        monitorIds: r.statusReportsToPageComponents
-          .map((sr) => sr.pageComponent.monitorId)
-          .filter(notEmpty),
-      })),
+      _statusReports.map((r) => (Object.assign(r, {statusReportUpdateIds:r.statusReportUpdates.map(u=>u.id),monitorIds:r.statusReportsToPageComponents.map(sr=>sr.pageComponent.monitorId).filter(notEmpty)}))),
     );
 
     return c.json(data, 200);

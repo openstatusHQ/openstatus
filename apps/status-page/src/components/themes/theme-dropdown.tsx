@@ -1,6 +1,5 @@
 "use client";
 
-import { useTheme } from "next-themes";
 import type * as React from "react";
 
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -13,6 +12,7 @@ import {
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Laptop, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 import { useEffect } from "react";
 

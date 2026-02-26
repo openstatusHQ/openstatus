@@ -1,13 +1,15 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { Row } from "@tanstack/react-table";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
+
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetPrivateLocation } from "@/components/forms/private-location/sheet";
 import { getActions } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { useRef } from "react";
 
 type PrivateLocation = RouterOutputs["privateLocation"]["list"][number];
 
@@ -35,7 +37,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   const deletePrivateLocationMutation = useMutation(
     trpc.privateLocation.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.privateLocation.list.queryKey(),
         });
       },

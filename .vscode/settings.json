@@ -1,8 +1,5 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.organizeImports.biome": "explicit"
-  },
-  "editor.defaultFormatter": "biomejs.biome",
+  "editor.defaultFormatter": "nicolo-ribaudo.vscode-oxfmt",
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",
 

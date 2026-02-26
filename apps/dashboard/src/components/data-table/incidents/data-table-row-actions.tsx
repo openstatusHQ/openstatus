@@ -1,11 +1,8 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
 import type { Row } from "@tanstack/react-table";
 
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/incidents.client";
-import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +18,10 @@ import { isTRPCClientError } from "@trpc/client";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/incidents.client";
+import { useTRPC } from "@/lib/trpc/client";
+
 type Incident = RouterOutputs["incident"]["list"][number];
 
 interface DataTableRowActionsProps {
@@ -34,7 +35,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const acknowledgeIncidentMutation = useMutation(
     trpc.incident.acknowledge.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.incident.list.queryKey({
             monitorId: row.original.monitorId,
           }),
@@ -45,7 +46,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const resolveIncidentMutation = useMutation(
     trpc.incident.resolve.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.incident.list.queryKey({
             monitorId: row.original.monitorId,
           }),
@@ -56,7 +57,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteIncidentMutation = useMutation(
     trpc.incident.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.incident.list.queryKey({
             monitorId: row.original.monitorId,
           }),
@@ -137,7 +138,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
-                handleConfirm();
+                void handleConfirm();
               }}
               disabled={isPending}
             >

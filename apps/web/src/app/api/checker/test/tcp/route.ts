@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import {
   type Region,
   monitorRegionSchema,
 } from "@openstatus/db/src/schema/constants";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { TCPResponse, tcpPayload } from "./schema";
 

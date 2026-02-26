@@ -6,32 +6,32 @@
   "types": "./gen/ts/index.ts",
   "exports": {
     ".": {
-      "import": "./gen/ts/index.ts",
-      "types": "./gen/ts/index.ts"
+      "types": "./gen/ts/index.ts",
+      "import": "./gen/ts/index.ts"
     },
     "./monitor/v1": {
-      "import": "./gen/ts/openstatus/monitor/v1/index.ts",
-      "types": "./gen/ts/openstatus/monitor/v1/index.ts"
+      "types": "./gen/ts/openstatus/monitor/v1/index.ts",
+      "import": "./gen/ts/openstatus/monitor/v1/index.ts"
     },
     "./health/v1": {
-      "import": "./gen/ts/openstatus/health/v1/index.ts",
-      "types": "./gen/ts/openstatus/health/v1/index.ts"
+      "types": "./gen/ts/openstatus/health/v1/index.ts",
+      "import": "./gen/ts/openstatus/health/v1/index.ts"
     },
     "./status_report/v1": {
-      "import": "./gen/ts/openstatus/status_report/v1/index.ts",
-      "types": "./gen/ts/openstatus/status_report/v1/index.ts"
+      "types": "./gen/ts/openstatus/status_report/v1/index.ts",
+      "import": "./gen/ts/openstatus/status_report/v1/index.ts"
     },
     "./status_page/v1": {
-      "import": "./gen/ts/openstatus/status_page/v1/index.ts",
-      "types": "./gen/ts/openstatus/status_page/v1/index.ts"
+      "types": "./gen/ts/openstatus/status_page/v1/index.ts",
+      "import": "./gen/ts/openstatus/status_page/v1/index.ts"
     },
     "./maintenance/v1": {
-      "import": "./gen/ts/openstatus/maintenance/v1/index.ts",
-      "types": "./gen/ts/openstatus/maintenance/v1/index.ts"
+      "types": "./gen/ts/openstatus/maintenance/v1/index.ts",
+      "import": "./gen/ts/openstatus/maintenance/v1/index.ts"
     },
     "./notification/v1": {
-      "import": "./gen/ts/openstatus/notification/v1/index.ts",
-      "types": "./gen/ts/openstatus/notification/v1/index.ts"
+      "types": "./gen/ts/openstatus/notification/v1/index.ts",
+      "import": "./gen/ts/openstatus/notification/v1/index.ts"
     }
   },
   "scripts": {

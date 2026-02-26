@@ -1,4 +1,3 @@
-import { INTERVALS } from "@/data/metrics.client";
 import {
   createSearchParamsCache,
   parseAsArrayOf,
@@ -6,6 +5,8 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
+
+import { INTERVALS } from "@/data/metrics.client";
 
 const PERIOD = ["1d", "7d", "14d"] as const;
 const PERCENTILE = ["p50", "p75", "p90", "p95", "p99"] as const;
