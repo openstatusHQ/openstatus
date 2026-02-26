@@ -76,7 +76,7 @@ export function FormTelegram({
   }, [defaultValues]);
 
   const [mode, setMode] = React.useState<"qr" | "manual" | null>(
-    isEditMode ? null : "qr"
+    isEditMode ? null : "qr",
   );
 
   function submitAction(values: FormValues) {
