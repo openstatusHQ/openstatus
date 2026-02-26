@@ -1,20 +1,6 @@
 name: Publish Docker Images (Development)
 
 on:
-  pull_request:
-    paths:
-      - "apps/server/**"
-      - "apps/dashboard/**"
-      - "apps/workflows/**"
-      - "apps/private-location/**"
-      - "apps/status-page/**"
-      - "apps/checker/**"
-      - "packages/**"
-      - "docker-compose.yaml"
-  push:
-    branches:
-      - develop
-      - feature/*
   workflow_dispatch:
 
 env:
