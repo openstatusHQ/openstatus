@@ -1,6 +1,7 @@
 "use client";
 
 import type { MDXData } from "@/content/utils";
+
 import {
   Command,
   CommandEmpty,
@@ -267,15 +268,15 @@ export function CmdK() {
       <button
         type="button"
         className={cn(
-          "flex w-full items-center text-left hover:bg-muted",
+          "hover:bg-muted flex w-full items-center text-left",
           open && "bg-muted!",
         )}
         onClick={() => setOpen(true)}
       >
-        <span className="truncate text-muted-foreground">
+        <span className="text-muted-foreground truncate">
           Search<span className="text-xs">...</span>
         </span>
-        <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground opacity-100">
+        <kbd className="bg-muted text-muted-foreground pointer-events-none ml-auto inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
@@ -303,7 +304,7 @@ export function CmdK() {
                 <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
               )}
               <CommandPrimitive.Input
-                className="flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden placeholder:text-foreground-muted disabled:cursor-not-allowed disabled:opacity-50"
+                className="placeholder:text-foreground-muted flex h-11 w-full rounded-none bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Type to search…"
                 value={search}
                 onValueChange={setSearch}
@@ -448,13 +449,11 @@ function SearchResults({
             <div className="grid min-w-0">
               <span
                 className="block truncate"
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
                 dangerouslySetInnerHTML={{ __html: title }}
               />
               {item.content && search ? (
                 <span
-                  className="block truncate text-muted-foreground text-xs"
-                  // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+                  className="text-muted-foreground block truncate text-xs"
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
               ) : null}

@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+
 import { NotificationSchema } from "./schema";
 
 test("return all notifications", async () => {

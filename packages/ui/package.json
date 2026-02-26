@@ -32,20 +32,8 @@
   "scripts": {
     "build": "echo '@openstatus/ui has no build step (registry builds separately)'",
     "registry:build": "node scripts/transform-imports.mjs && cd dist && shadcn build && cd .. && node scripts/copy-to-web.mjs",
-    "lint": "biome lint \"**/*.ts*\"",
+    "lint": "oxlint .",
     "tsc": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@openstatus/tsconfig": "workspace:*",
-    "@types/luxon": "3.4.2",
-    "@types/node": "22.10.2",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
-    "glob": "11.0.0",
-    "shadcn": "3.8.4",
-    "tailwindcss": "4.1.8",
-    "typescript": "5.9.3"
   },
   "dependencies": {
     "@date-fns/utc": "2.1.0",
@@ -91,6 +79,17 @@
     "tailwind-merge": "2.5.5",
     "tailwindcss-animate": "1.0.7",
     "zod": "4.1.13"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/luxon": "3.4.2",
+    "@types/node": "22.10.2",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "glob": "11.0.0",
+    "shadcn": "3.8.4",
+    "tailwindcss": "4.1.8",
+    "typescript": "5.9.3"
   },
   "peerDependencies": {
     "next-themes": "0.4.6",

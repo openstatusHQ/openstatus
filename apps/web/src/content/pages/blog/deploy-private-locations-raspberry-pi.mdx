@@ -26,12 +26,12 @@ Obviously connecting to the Raspberry Pi via `ssh` - and if you're like me, the 
 
 ```shell
 $ ssh pi@raspberrypi.local
-> password: raspberry 
+> password: raspberry
 ```
 
 ### Hardware Specs
 
-I didn’t know exactly which Debian version it was running, but it was _very_ old - so I took the opportunity to clean everything up and upgrade to the latest available version.
+I didn’t know exactly which Debian version it was running, but it was *very* old - so I took the opportunity to clean everything up and upgrade to the latest available version.
 
 Model:
 
@@ -70,14 +70,13 @@ I'm running the OS on a **16GB micro SD** card. The Pi has **1GB of RAM**, which
   alt="Statistics from htop command"
 />
 
-
 ### Install Docker Image
 
-Let's freshly install **Docker** using the official Debian repository instructions: 
+Let's freshly install **Docker** using the official Debian repository instructions:
 
 https://docs.docker.com/engine/install/debian/#install-using-the-repository
 
-Once installed, Docker should already be running.  
+Once installed, Docker should already be running.
 
 You can verify it with:
 
@@ -99,7 +98,6 @@ If you have access to Private Locations in the **Dashboard**, create one - it'll
   src="/assets/posts/deploy-private-locations-raspberry-pi/dashboard-create-private-location.png"
   alt="Create a private location"
 />
-
 
 Add the `token` to your shell profile:
 
@@ -135,6 +133,7 @@ $ sudo docker run -d \
 ```
 
 What these flags do:
+
 - `-d`: run in background (detached mode)
 - `--restart`: auto-start on reboot
 - `--name`: give it a nice readable name
@@ -148,8 +147,6 @@ To see live logs:
 $ sudo docker logs -f openstatus-private-location
 ```
 
-
-
 ---
 
 ### What Happens Next
@@ -160,12 +157,10 @@ Every few minutes (`last_seen_at`), the agent refreshes its internal database to
 
 The responses of the pings are sent to our ingest endpoint for storage and aggregation.
 
-
 <Image
   src="/assets/posts/deploy-private-locations-raspberry-pi/dashboard-response-logs.png"
   alt="Access your logs within the openstatus Dashboard."
 />
-
 
 ### Light on Resources
 
@@ -178,6 +173,7 @@ It's wild that a tiny 1 GB-RAM device from 2016 can now handle this so easily.
 Running a private probe means your checks happen **from within your own network** - not just from public cloud servers.
 
 It’s useful for:
+
 - Monitoring internal applications or databases
 - Testing network latency from real-world locations (like your office or home)
 - Running low-cost monitoring nodes on tiny devices (e.g. in agriculture or industrial setups)
@@ -203,7 +199,7 @@ Private locations are currently in **beta** and we're gathering feedback from ea
 ```shell
 # stop running
 $ docker stop openstatus-private-location
-# remove the container, not the image or data:  
+# remove the container, not the image or data:
 $ docker rm openstatus-private-location
 # remove unused images (docker keeps old images even after pulling updates)
 $ docker image prune -f

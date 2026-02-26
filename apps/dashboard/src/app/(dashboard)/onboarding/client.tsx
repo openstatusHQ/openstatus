@@ -1,5 +1,13 @@
 "use client";
 
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { useEffect } from "react";
+
 import {
   ActionCard,
   ActionCardDescription,
@@ -27,13 +35,7 @@ import { CreatePageForm } from "@/components/forms/onboarding/create-page";
 import { LearnFromForm } from "@/components/forms/onboarding/learn-from";
 import { extractDomain } from "@/lib/domains";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import { useEffect } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 const moreActions = [
@@ -106,8 +108,8 @@ export function Client() {
         if (data.active) {
           triggerCheckMutation.mutate({ id: data.id });
         }
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
       },
@@ -117,8 +119,8 @@ export function Client() {
     trpc.page.create.mutationOptions({
       onSuccess: async () => {
         await setSearchParams({ step: "next" });
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
@@ -156,8 +158,8 @@ export function Client() {
         <Section>
           <SectionHeader className="h-8 flex-row items-center justify-between">
             <SectionDescription className="tabular-nums">
-              Step <span className="font-medium text-foreground">1</span> of{" "}
-              <span className="font-medium text-foreground">2</span>
+              Step <span className="text-foreground font-medium">1</span> of{" "}
+              <span className="text-foreground font-medium">2</span>
             </SectionDescription>
             <Button
               variant="ghost"
@@ -201,8 +203,8 @@ export function Client() {
         <Section>
           <SectionHeader className="h-8 flex-row items-center justify-between">
             <SectionDescription className="tabular-nums">
-              Step <span className="font-medium text-foreground">2</span> of{" "}
-              <span className="font-medium text-foreground">2</span>
+              Step <span className="text-foreground font-medium">2</span> of{" "}
+              <span className="text-foreground font-medium">2</span>
             </SectionDescription>
             <Button
               variant="ghost"
@@ -293,7 +295,7 @@ export function Client() {
                         <ActionCardTitle className="flex items-center justify-between gap-2">
                           {action.title}
                           {isExternal && (
-                            <ArrowUpRight className="size-4 shrink-0 text-muted-foreground group-hover/action-card:text-foreground" />
+                            <ArrowUpRight className="text-muted-foreground group-hover/action-card:text-foreground size-4 shrink-0" />
                           )}
                         </ActionCardTitle>
                         <ActionCardDescription>

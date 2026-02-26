@@ -1,17 +1,5 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardContentUpgrade,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -35,6 +23,19 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardContentUpgrade,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 
 const accessTypeSchema = z.enum(["public", "password", "email-domain"]);
 
@@ -140,7 +141,7 @@ export function FormPageAccess({
                           <FormItem
                             key={type.value}
                             className={cn(
-                              "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+                              "border-input has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]",
                             )}
                           >
                             <FormControl>
@@ -150,11 +151,11 @@ export function FormPageAccess({
                               />
                             </FormControl>
                             <type.icon
-                              className="shrink-0 text-muted-foreground"
+                              className="text-muted-foreground shrink-0"
                               size={16}
                               aria-hidden="true"
                             />
-                            <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
+                            <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
                               {type.label}
                             </FormLabel>
                           </FormItem>

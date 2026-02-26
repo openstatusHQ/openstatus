@@ -1,10 +1,10 @@
-import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
-import type { NextRequest } from "next/server";
-import { z } from "zod";
-
-import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/db/src/schema/constants";
+import type { NextRequest } from "next/server";
+
+import { CloudTasksClient } from "@google-cloud/tasks";
+import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import {
   maintenance,
   monitor,
@@ -16,15 +16,15 @@ import {
   maintenancesToPageComponents,
   pageComponent,
 } from "@openstatus/db/src/schema/page_components";
-
-import { env } from "@/env";
-import type { Region } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
   transformHeaders,
 } from "@openstatus/utils";
+import { z } from "zod";
+
+import { env } from "@/env";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -41,7 +41,6 @@ export const isAuthorizedDomain = (url: string) => {
 
 export const cron = async ({
   periodicity,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   req,
 }: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
   const client = new CloudTasksClient({
@@ -123,7 +122,7 @@ export const cron = async ({
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
 
-      const r = regionDict[region as keyof typeof regionDict];
+      const r = regionDict[region];
 
       if (!r) {
         console.error(`Invalid region ${region}`);

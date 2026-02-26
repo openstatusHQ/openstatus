@@ -1,5 +1,7 @@
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 import type { SearchParams } from "nuqs";
+
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
 

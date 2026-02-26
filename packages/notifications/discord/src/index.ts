@@ -4,6 +4,7 @@ import {
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
+
 import {
   type DiscordEmbed,
   buildAlertEmbed,

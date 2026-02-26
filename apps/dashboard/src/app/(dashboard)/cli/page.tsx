@@ -1,3 +1,12 @@
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/components/ui/tabs";
+import { FileDown, FileJson, Key, Terminal } from "lucide-react";
+import React from "react";
+
 import { Code } from "@/components/common/code";
 import { Link } from "@/components/common/link";
 import {
@@ -7,14 +16,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { Section } from "@/components/content/section";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/components/ui/tabs";
-import { FileDown, FileJson, Key, Terminal } from "lucide-react";
-import React from "react";
 
 const OS = ["macOs", "Windows", "Linux"] as const;
 
@@ -165,7 +166,7 @@ export default function Page() {
                 return (
                   <div key={i} className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
-                      <p className="flex items-center gap-2 font-medium text-sm">
+                      <p className="flex items-center gap-2 text-sm font-medium">
                         <step.icon className="size-4" />
                         {step.title}
                       </p>

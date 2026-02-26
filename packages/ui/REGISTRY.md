@@ -11,6 +11,7 @@ pnpm registry:build
 ```
 
 This will:
+
 1. Transform all `@openstatus/ui/*` imports to `@/*`
 2. Build the shadcn registry
 3. Copy the registry files to `apps/web/public/r/`
@@ -76,6 +77,7 @@ The build process is integrated with Turborepo:
 ## Development
 
 The registry source files are in `packages/ui/src/`:
+
 - `src/components/ui/*` - UI components
 - `src/components/blocks/*` - Component blocks
 - `src/lib/*` - Utility functions

@@ -14,6 +14,7 @@ import {
   Text,
 } from "@react-email/components";
 import { z } from "zod";
+
 import { Layout } from "./_components/layout";
 import { colors, styles } from "./_components/styles";
 

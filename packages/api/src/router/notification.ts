@@ -1,6 +1,4 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { type SQL, and, count, eq, inArray } from "@openstatus/db";
 import {
   NotificationDataSchema,
@@ -15,13 +13,13 @@ import {
   telegramDataSchema,
   whatsappDataSchema,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
 import { sendTest as sendGoogleChatTest } from "@openstatus/notification-google-chat";
 import { sendTest as sendGrafanaTest } from "@openstatus/notification-grafana-oncall";
 import { sendTest as sendTelegramTest } from "@openstatus/notification-telegram";
 import { sendTest as sendWhatsAppTest } from "@openstatus/notification-twillio-whatsapp";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -44,10 +42,11 @@ export const notificationRouter = createTRPCRouter({
       })
       .array()
       .parse(
-        notifications.map((notification) => ({
-          ...notification,
-          monitors: notification.monitor.map(({ monitor }) => monitor),
-        })),
+        notifications.map((notification) =>
+          Object.assign(notification, {
+            monitors: notification.monitor.map(({ monitor }) => monitor),
+          }),
+        ),
       );
   }),
 
@@ -172,7 +171,6 @@ export const notificationRouter = createTRPCRouter({
         "grafana-oncall",
         "whatsapp",
       ] as const;
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       if (limitedProviders.includes(opts.input.provider as any)) {
         const isAllowed =
           opts.ctx.workspace.limits[

@@ -1,13 +1,7 @@
 "use client";
 
-import { Link } from "@/components/common/link";
-import {
-  type StatusUpdateType,
-  StatusUpdates,
-} from "@/components/status-page/status-updates";
-import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
-import { useTRPC } from "@/lib/trpc/client";
 import type { RouterOutputs } from "@openstatus/api";
+
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Sheet,
@@ -30,6 +24,14 @@ import NextLink from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { Link } from "@/components/common/link";
+import {
+  type StatusUpdateType,
+  StatusUpdates,
+} from "@/components/status-page/status-updates";
+import { usePathnamePrefix } from "@/hooks/use-pathname-prefix";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Page = RouterOutputs["statusPage"]["get"];
 

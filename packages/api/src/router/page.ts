@@ -1,6 +1,4 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import { type SQL, and, desc, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   insertPageSchema,
@@ -14,8 +12,9 @@ import {
   selectPageSchema,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
-import { Events } from "@openstatus/analytics";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -80,7 +79,7 @@ export const pageRouter = createTRPCRouter({
 
       // the user is not eligible for password protection
       if (
-        limit["password-protection"] === false &&
+        !limit["password-protection"] &&
         opts.input.passwordProtected === true
       ) {
         throw new TRPCError({

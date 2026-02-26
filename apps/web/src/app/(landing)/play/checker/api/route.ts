@@ -1,3 +1,8 @@
+import { Events, setupAnalytics } from "@openstatus/analytics";
+import { AVAILABLE_REGIONS } from "@openstatus/regions";
+import { after } from "next/server";
+import { z } from "zod";
+
 import { mockCheckRegion } from "@/lib/checker/mock";
 import {
   type Method,
@@ -9,10 +14,6 @@ import {
 import { getClientIP, ratelimit } from "@/lib/ratelimit";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { wait } from "@/lib/utils";
-import { Events, setupAnalytics } from "@openstatus/analytics";
-import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { after } from "next/server";
-import { z } from "zod";
 
 export const runtime = "edge";
 
@@ -166,7 +167,7 @@ export async function POST(request: Request) {
     }
 
     requestData = parsed.data;
-  } catch (_error) {
+  } catch {
     return createErrorResponse(
       "INVALID_REQUEST",
       "Invalid JSON in request body",

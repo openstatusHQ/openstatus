@@ -1,9 +1,12 @@
 "use client";
 
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { RouterOutputs } from "@openstatus/api";
 import type { ColumnDef } from "@tanstack/react-table";
+
 import Link from "next/link";
+
+import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
 import { DataTableRowActions } from "./data-table-row-actions";

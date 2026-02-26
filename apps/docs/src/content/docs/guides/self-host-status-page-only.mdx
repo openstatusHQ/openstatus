@@ -15,15 +15,15 @@ OpenStatus provides a lightweight Docker Compose setup that runs only 4 services
 
 The lightweight stack strips away all monitoring infrastructure. Here's what each version includes:
 
-| Feature | Full | Lightweight |
-|---------|------|-------------|
-| Status page | Yes | Yes |
-| Dashboard | Yes | Yes |
-| Database (libSQL) | Yes | Yes |
-| Automated monitoring | Yes | **No** |
-| Analytics & charts (Tinybird) | Yes | **No** |
-| API server | Yes | **No** |
-| Private location probes | Yes | **No** |
+| Feature                       | Full | Lightweight |
+| ----------------------------- | ---- | ----------- |
+| Status page                   | Yes  | Yes         |
+| Dashboard                     | Yes  | Yes         |
+| Database (libSQL)             | Yes  | Yes         |
+| Automated monitoring          | Yes  | **No**      |
+| Analytics & charts (Tinybird) | Yes  | **No**      |
+| API server                    | Yes  | **No**      |
+| Private location probes       | Yes  | **No**      |
 
 If you need automated monitoring, follow the [full self-hosting guide](/guides/self-hosting-openstatus) instead.
 
@@ -40,6 +40,7 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
 1.  **Clone the Repository**
 
     Get the latest version of openstatus:
+
     ```bash
     git clone https://github.com/openstatushq/openstatus
     cd openstatus
@@ -48,11 +49,12 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
 2.  **Configure Your Environment**
 
     Copy the example environment file. This is a simplified version of the full configuration, with only the variables relevant to the status page and dashboard.
+
     ```bash
     cp .env.docker-lightweight.example .env.docker
     ```
-    Open `.env.docker` in a text editor. You **must** set values for the following variables:
 
+    Open `.env.docker` in a text editor. You **must** set values for the following variables:
     - `AUTH_SECRET` — required for authentication. Generate a value with:
       ```bash
       openssl rand -base64 32
@@ -64,6 +66,7 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
 3.  **Build and Start Services**
 
     Use Docker Compose to build and run all services in the background:
+
     ```bash
     docker compose -f docker-compose-lightweight.yaml up -d
     ```
@@ -71,6 +74,7 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
     The first build takes several minutes as it compiles the Next.js applications. Subsequent starts are much faster.
 
     Check the status of the services:
+
     ```bash
     docker compose -f docker-compose-lightweight.yaml ps
     ```
@@ -80,9 +84,8 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
 ### Part 2: Application Configuration
 
 4.  **Access the Applications**
-
-    -   **Dashboard:** `http://localhost:3000`
-    -   **Status Page:** `http://localhost:3001`
+    - **Dashboard:** `http://localhost:3000`
+    - **Status Page:** `http://localhost:3001`
 
     Log in to the dashboard using email authentication (magic link). This will create your account and workspace.
 
@@ -96,6 +99,7 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
     ```
 
     You can find your workspace ID by querying the database:
+
     ```bash
     curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
       -d '{"statements":["SELECT id, name FROM workspace"]}'
@@ -107,12 +111,12 @@ If you need automated monitoring, follow the [full self-hosting guide](/guides/s
 
 ## Service architecture
 
-| Service | Container | Host Port | Purpose |
-|---------|-----------|-----------|---------|
-| libsql | openstatus-libsql | 8080 | Database (HTTP API) |
-| db-migrate | openstatus-db-migrate | — | One-shot database migration (exits after completion) |
-| dashboard | openstatus-dashboard | 3000 | Admin interface |
-| status-page | openstatus-status-page | 3001 | Public status page |
+| Service     | Container              | Host Port | Purpose                                              |
+| ----------- | ---------------------- | --------- | ---------------------------------------------------- |
+| libsql      | openstatus-libsql      | 8080      | Database (HTTP API)                                  |
+| db-migrate  | openstatus-db-migrate  | —         | One-shot database migration (exits after completion) |
+| dashboard   | openstatus-dashboard   | 3000      | Admin interface                                      |
+| status-page | openstatus-status-page | 3001      | Public status page                                   |
 
 ## Data persistence
 
@@ -126,6 +130,7 @@ For production use, back up this volume regularly.
 ## Troubleshooting
 
 **Containers won't start:** Check the logs for the failing service:
+
 ```bash
 docker compose -f docker-compose-lightweight.yaml logs <service-name>
 ```
@@ -133,6 +138,7 @@ docker compose -f docker-compose-lightweight.yaml logs <service-name>
 **Magic link emails not arriving:** Verify that `RESEND_API_KEY` is set correctly in `.env.docker`.
 
 **Dashboard shows errors on first load:** The `db-migrate` service may still be running. Check its status:
+
 ```bash
 docker compose -f docker-compose-lightweight.yaml ps
 ```

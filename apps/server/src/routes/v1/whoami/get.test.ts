@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { app } from "@/index";
+
 import { WorkspaceSchema } from "./schema";
 
 test("return the whoami", async () => {

@@ -1,8 +1,10 @@
-import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
-import { getLogger } from "@logtape/logtape";
 import type { ErrorCode } from "@openstatus/error";
 
+import { Code, ConnectError, type Interceptor } from "@connectrpc/connect";
+import { getLogger } from "@logtape/logtape";
+
 import { OpenStatusApiError } from "@/libs/errors";
+
 import { RPC_CONTEXT_KEY } from "./auth";
 
 const logger = getLogger("api-server");

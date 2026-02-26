@@ -1,13 +1,15 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { ChartConfig } from "@openstatus/ui/components/ui/chart";
+
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { Line, LineChart, XAxis } from "recharts";
+
+import { cn } from "@/lib/utils";
 
 const chartConfig = {
   latency: {
@@ -60,9 +62,9 @@ export function SimpleChart({ data, className }: SimpleChartProps) {
                     }
                   />
                   {chartConfig[name as keyof typeof chartConfig]?.label || name}
-                  <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
+                  <div className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
                     {value}
-                    <span className="font-normal text-muted-foreground">
+                    <span className="text-muted-foreground font-normal">
                       ms
                     </span>
                   </div>

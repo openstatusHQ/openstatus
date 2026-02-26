@@ -1,6 +1,4 @@
-import { TRPCError } from "@trpc/server";
-import { z } from "zod";
-
+import { Events } from "@openstatus/analytics";
 import {
   type Assertion,
   DnsRecordAssertion,
@@ -34,14 +32,15 @@ import {
   selectNotificationSchema,
   selectPrivateLocationSchema,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import {
   freeFlyRegions,
   monitorPeriodicity,
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { testDns, testHttp, testTcp } from "./checker";
 
@@ -191,10 +190,11 @@ export const monitorRouter = createTRPCRouter({
           }),
         )
         .parse(
-          result.map((data) => ({
-            ...data,
-            tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
-          })),
+          result.map((data) =>
+            Object.assign(data, {
+              tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
+            }),
+          ),
         );
     }),
 
@@ -772,7 +772,7 @@ export const monitorRouter = createTRPCRouter({
           if (!deprecated) return true;
           return false;
         })
-        .sort(() => 0.5 - Math.random())
+        .toSorted(() => 0.5 - Math.random())
         .slice(0, randomRegions);
 
       const newMonitor = await ctx.db

@@ -1,11 +1,12 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import type { monitorsApi } from "../index";
 
+import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { redis, tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import type { monitorsApi } from "../index";
+
 import { ParamsSchema, SummarySchema } from "./schema";
 
 // TODO: is there another better way to mock Redis/Tinybird?

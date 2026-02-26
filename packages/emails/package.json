@@ -2,13 +2,13 @@
   "name": "@openstatus/emails",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
   "main": "./src/index.ts",
   "scripts": {
     "dev:email": "email dev"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@react-email/components": "1.0.3",
     "@react-email/render": "2.0.1",

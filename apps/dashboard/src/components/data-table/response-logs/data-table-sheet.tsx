@@ -1,5 +1,13 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { PrivateLocation } from "@openstatus/db/src/schema";
+
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Separator } from "@openstatus/ui/components/ui/separator";
+import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
+import { Check, Copy } from "lucide-react";
+
 import {
   DataTableSheet,
   DataTableSheetContent,
@@ -7,12 +15,7 @@ import {
   DataTableSheetHeader,
   DataTableSheetTitle,
 } from "@/components/data-table/data-table-sheet";
-import type { RouterOutputs } from "@openstatus/api";
-import type { PrivateLocation } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { Separator } from "@openstatus/ui/components/ui/separator";
-import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
+
 import { DataTableBasics } from "./data-table-basics";
 
 type ResponseLog = RouterOutputs["tinybird"]["get"]["data"][number];
@@ -42,7 +45,7 @@ export function Sheet({
             variant="outline"
             onClick={() => {
               if (typeof window !== "undefined") {
-                copy(window.location.href, {
+                void copy(window.location.href, {
                   withToast: false,
                 });
               }

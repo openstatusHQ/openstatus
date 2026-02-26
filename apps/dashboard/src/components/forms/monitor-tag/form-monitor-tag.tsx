@@ -1,7 +1,5 @@
 "use client";
 
-import { useFormSheetDirty } from "@/components/forms/form-sheet";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -20,6 +18,9 @@ import React, { useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { useFormSheetDirty } from "@/components/forms/form-sheet";
+import { useTRPC } from "@/lib/trpc/client";
 
 const tagSchema = z.object({
   id: z.number().optional(),
@@ -95,7 +96,7 @@ export function FormMonitorTag({
           // and stop the propagation to avoid double submission
           e.preventDefault();
           e.stopPropagation();
-          form.handleSubmit(submitAction)(e);
+          void form.handleSubmit(submitAction)(e);
         }}
         {...props}
       >

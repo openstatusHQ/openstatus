@@ -1,4 +1,5 @@
 import type { RouterOutputs } from "@openstatus/api";
+
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay } from "date-fns";
 

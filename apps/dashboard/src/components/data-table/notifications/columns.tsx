@@ -1,11 +1,14 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { ColumnDef } from "@tanstack/react-table";
+
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import Link from "next/link";
+
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { type NotifierProvider, config } from "@/data/notifications.client";
-import type { RouterOutputs } from "@openstatus/api";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
+
 import { TableCellBadge } from "../table-cell-badge";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -25,7 +28,7 @@ export const columns: ColumnDef<Notifier>[] = [
     enableSorting: false,
     enableHiding: false,
     cell: ({ row }) => {
-      const provider = row.getValue("provider") as NotifierProvider;
+      const provider = row.getValue("provider");
       const Icon = config[provider].icon;
       return (
         <Badge variant="secondary" className="px-1.5 font-mono text-[10px]">

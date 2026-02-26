@@ -1,3 +1,4 @@
+import type { StatusDetails, StatusVariant } from "./types";
 import type {
   Incident,
   Maintenance,
@@ -7,7 +8,6 @@ import type {
 
 import { isInBlacklist } from "./blacklist";
 import { classNames, statusDetails } from "./config";
-import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 import { endOfDay, isSameDay, startOfDay } from "./utils";
 
@@ -81,10 +81,11 @@ export class Tracker {
   }
 
   private isOngoingReport() {
-    const resolved: StatusReport["status"][] = ["monitoring", "resolved"];
-    return this.statusReports.some(
-      (report) => !resolved.includes(report.status),
-    );
+    const resolved = new Set<StatusReport["status"]>([
+      "monitoring",
+      "resolved",
+    ]);
+    return this.statusReports.some((report) => !resolved.has(report.status));
   }
 
   private isOngoingMaintenance() {

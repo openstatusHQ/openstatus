@@ -34,6 +34,7 @@ Here's what they actually mean, how they relate, and how to use them without scr
 An SLI is a specific metric you can measure. Not a feeling. Not a goal. A measurement.
 
 **Examples:**
+
 - API response time: 95th percentile under 200ms
 - Uptime percentage: 99.9% availability
 - Error rate: less than 0.1% of requests fail
@@ -45,6 +46,7 @@ An SLI is a specific metric you can measure. Not a feeling. Not a goal. A measur
 An SLO is your internal target for an SLI. It's what you promise yourself, not what you promise customers.
 
 **Examples:**
+
 - "API requests should return in under 200ms (P95) 99.5% of the time"
 - "Homepage should be available 99.95% of the time per month"
 
@@ -55,6 +57,7 @@ This is your goal. The bar you hold yourself to. It should be stricter than your
 An SLA is your public promise to customers, with real consequences if you fail.
 
 **Examples:**
+
 - "We guarantee 99.9% uptime. If we fall below, you get 10% credit"
 - "API latency will be under 500ms (P95) or we refund 25% of your monthly bill"
 
@@ -73,6 +76,7 @@ SLA → External promise to customers (has buffer from SLO)
 ```
 
 **Concrete example:**
+
 - **SLI:** API uptime percentage
 - **SLO:** 99.95% uptime (internal target)
 - **SLA:** 99.9% uptime (customer promise)
@@ -188,6 +192,7 @@ Until then? Keep it simple. Measure. Communicate. Don't over-promise.
 You can't have reliable SLAs without disciplined SLOs. You can't have meaningful SLOs without accurate SLIs.
 
 Start from the bottom and work up:
+
 1. **Measure** (define SLIs that matter to users)
 2. **Set internal targets** (create SLOs with room for error)
 3. **Promise externally** (offer SLAs only after proving you can consistently hit SLOs)

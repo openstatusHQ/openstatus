@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
@@ -19,6 +18,8 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
+
+import { useTRPC } from "@/lib/trpc/client";
 
 export function CommandTags() {
   const trpc = useTRPC();
@@ -53,7 +54,7 @@ export function CommandTags() {
                   value={tag.name}
                   keywords={[tag.name]}
                   onSelect={() => {
-                    setSelectedTags((prev) =>
+                    void setSelectedTags((prev) =>
                       prev.includes(tag.name)
                         ? prev.filter((r) => r !== tag.name)
                         : [...prev, tag.name],

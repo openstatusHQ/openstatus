@@ -1,7 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { getImageDimensions } from "@/lib/image-dimensions";
-import { cn } from "@/lib/utils";
+
 import { Button } from "@openstatus/ui/components/ui/button";
 import { MDXRemote, type MDXRemoteProps } from "next-mdx-remote/rsc";
 import Image from "next/image";
@@ -10,6 +9,10 @@ import React from "react";
 import { Tweet, type TweetProps } from "react-tweet";
 import remarkGfm from "remark-gfm";
 import { highlight } from "sugar-high";
+
+import { getImageDimensions } from "@/lib/image-dimensions";
+import { cn } from "@/lib/utils";
+
 import { ComponentHighlighter } from "./component-highlighter";
 import { CopyButton } from "./copy-button";
 import { HighlightText } from "./highlight-text";
@@ -64,7 +67,7 @@ function Grid({
     <div
       className={cn(
         "my-4 grid grid-cols-1",
-        "[&>*]:border [&>*]:border-border [&>*]:p-4",
+        "[&>*]:border-border [&>*]:border [&>*]:p-4",
         // NOTE: remove extra margin from prose grid cells of first and last element
         "[&>*>*:first-child]:!mt-0 [&>*>*:last-child]:!mb-0",
         colsClass[cols],
@@ -103,7 +106,7 @@ function ButtonLink(
     <Button
       variant="outline"
       size="lg"
-      className="no-underline! h-auto rounded-none px-4 py-4 text-base"
+      className="h-auto rounded-none px-4 py-4 text-base no-underline!"
       asChild
       {...props}
     >
@@ -120,7 +123,6 @@ function Code({ children, className, ...props }: React.ComponentProps<"code">) {
     const codeHTML = highlight(children?.toString() ?? "");
     return (
       <code
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
         dangerouslySetInnerHTML={{ __html: codeHTML }}
         className={className}
         {...props}
@@ -214,8 +216,7 @@ function Details({
     <details open={open}>
       <summary>{summary}</summary>
       {React.isValidElement(children)
-        ? // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-          React.cloneElement(children, { hidden: "until-found" } as any)
+        ? React.cloneElement(children, { hidden: "until-found" } as any)
         : children}
     </details>
   );

@@ -1,4 +1,6 @@
 import type { ServiceImpl } from "@connectrpc/connect";
+import type { StatusPageService } from "@openstatus/proto/status_page/v1";
+
 import {
   and,
   count,
@@ -22,7 +24,6 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import type { StatusPageService } from "@openstatus/proto/status_page/v1";
 import { OverallStatus } from "@openstatus/proto/status_page/v1";
 import { nanoid } from "nanoid";
 

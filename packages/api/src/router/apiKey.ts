@@ -1,11 +1,10 @@
-import { z } from "zod";
-
 import { Events } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { createApiKeySchema } from "@openstatus/db/src/schema/api-keys/validation";
-
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
 import {
   createApiKey as createCustomApiKey,
   getApiKeys,
@@ -87,10 +86,7 @@ export const apiKeyRouter = createTRPCRouter({
           .where(eq(user.id, key.createdById))
           .get();
 
-        return {
-          ...key,
-          createdBy: creator,
-        };
+        return Object.assign(key, { createdBy: creator });
       }),
     );
 

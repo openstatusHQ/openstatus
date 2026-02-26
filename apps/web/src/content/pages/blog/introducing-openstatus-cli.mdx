@@ -27,7 +27,6 @@ We already have a [Terraform](https://registry.terraform.io/providers/openstatus
 
 The openstatus CLI directly addresses these needs. Imagine being able to:
 
-
 ### Export and manage monitors as code
 
 We've made it possible to import your existing monitors from your openstatus dashboard.
@@ -36,8 +35,6 @@ Just run `openstatus monitors import`
 This means you can now manage your monitoring configurations as version-controlled files. Define your monitors in a YAML. To apply your change run `openstatus monitors apply`
 
 This isn't just about convenience; it's about empowerment. The openstatus CLI allows you to treat your monitoring setup like any other part of your codebase, bringing the benefits of version control, automation, and a developer-centric workflow to your uptime and performance checks.
-
-
 
 ### Trigger checks directly from your GitHub Actions
 
@@ -52,15 +49,15 @@ name: Run OpenStatus Synthetics CI
 
 on:
   workflow_run:
-      workflows: ['Fly Deploy']
-      types: [completed]
-      branches:
-        - main
+    workflows: ["Fly Deploy"]
+    types: [completed]
+    branches:
+      - main
   repository_dispatch:
-      types:
-        - 'vercel.deployment.success'
-      branches:
-        - main
+    types:
+      - "vercel.deployment.success"
+    branches:
+      - main
 
 jobs:
   synthetic_ci:
@@ -75,10 +72,9 @@ jobs:
           api_key: ${{ secrets.OPENSTATUS_API_KEY }}
 ```
 
-If you want to see the action in action  we are using it in our main repository and running test after every deployment:
+If you want to see the action in action we are using it in our main repository and running test after every deployment:
 
 https://github.com/openstatusHQ/openstatus/actions/workflows/synthetic.yml
-
 
 ## Get Started Today!
 

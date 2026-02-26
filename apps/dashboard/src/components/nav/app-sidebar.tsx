@@ -1,6 +1,12 @@
 "use client";
 
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
+import {
   Activity,
   Bell,
   Bot,
@@ -27,12 +33,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
+
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
 
@@ -140,10 +141,10 @@ export function AppSidebarTrigger() {
         <TooltipContent side="right">
           <p className="mr-px inline-flex items-center">
             Toggle Sidebar{" "}
-            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
               ⌘
             </Kbd>
-            <Kbd className="border-muted-foreground bg-primary font-mono text-background">
+            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
               {SIDEBAR_KEYBOARD_SHORTCUT}
             </Kbd>
           </p>

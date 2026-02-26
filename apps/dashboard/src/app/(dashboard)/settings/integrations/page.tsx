@@ -1,5 +1,7 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+
 import {
   Section,
   SectionDescription,
@@ -9,7 +11,7 @@ import {
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+
 import { SlackIntegrationCard } from "./slack-card";
 
 export default function Page() {

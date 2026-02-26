@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, test } from "bun:test";
-import type { z } from "zod";
 import type { monitorRegionSchema } from "../src/schema/constants";
+import type { z } from "zod";
+
+import { beforeEach, describe, expect, test } from "bun:test";
+
 import { updateRegion } from "./region-migration";
 
 // Import the types we need

@@ -49,17 +49,16 @@ docker builder prune
 
 ## Services
 
-| Service | Port | Purpose |
-|---------|------|---------|
-| workflows | 3000 | Background jobs |
-| server | 3001 | API backend (tRPC) |
-| dashboard | 3002 | Admin interface |
-| status-page | 3003 | Public status pages |
-| private-location | 8081 | Monitoring agent |
-| libsql | 8080 | Database (HTTP) |
-| libsql | 5001 | Database (gRPC) |
-| tinybird-local | 7181 | Analytics |
-
+| Service          | Port | Purpose             |
+| ---------------- | ---- | ------------------- |
+| workflows        | 3000 | Background jobs     |
+| server           | 3001 | API backend (tRPC)  |
+| dashboard        | 3002 | Admin interface     |
+| status-page      | 3003 | Public status pages |
+| private-location | 8081 | Monitoring agent    |
+| libsql           | 8080 | Database (HTTP)     |
+| libsql           | 5001 | Database (gRPC)     |
+| tinybird-local   | 7181 | Analytics           |
 
 ## Architecture
 
@@ -90,6 +89,7 @@ docker builder prune
 Migrations run **automatically** when you start the stack with `docker compose up -d`.
 
 **Verifying migrations:**
+
 ```bash
 # Check workflows logs for migration output
 docker compose logs workflows | grep -A 5 "Running database migrations"
@@ -126,12 +126,14 @@ docker run --rm --network openstatus \
 ```
 
 This creates:
+
 - 3 workspaces (`love-openstatus`, `test2`, `test3`)
 - 5 sample monitors and 1 status page with slug `status`
 - Test user account: `ping@openstatus.dev`
 - Sample incidents, status reports, and maintenance windows
 
 **Verifying seeded data:**
+
 ```bash
 # Check table counts via libsql HTTP API
 curl -s http://localhost:8080/ -H "Content-Type: application/json" \
@@ -145,34 +147,36 @@ curl -s http://localhost:8080/ -H "Content-Type: application/json" \
 After seeding, you can access the test data:
 
 **Dashboard:**
+
 1. Navigate to http://localhost:3002/login
 2. Use magic link authentication with email: `ping@openstatus.dev`
 3. Check your console/logs for the magic link (with `SELF_HOST=true` in `.env.docker`)
 4. After logging in, you'll see the `love-openstatus` workspace with all seeded monitors and status page
 
 **Status Page:**
+
 - The seeded status page has slug `status`
 - Access it via subdomain routing: http://status.localhost:3003
 - Or view theme explorer at: http://localhost:3003
 
 **If you use a different email address**, the system will create a new empty workspace for you instead of showing the seeded data. To access seeded data with a different account, you must add your user to the seeded workspace using SQL:
 
-  ```bash
-  # First, find your user_id
-  curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
-    -d '{"statements":["SELECT id, email FROM user"]}'
+```bash
+# First, find your user_id
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+  -d '{"statements":["SELECT id, email FROM user"]}'
 
-  # Then add association (replace USER_ID with your id)
-  curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
-    -d '{"statements":["INSERT INTO users_to_workspaces (user_id, workspace_id, role) VALUES (USER_ID, 1, '\''owner'\'')"]}'
-  ```
-
+# Then add association (replace USER_ID with your id)
+curl -X POST http://localhost:8080/ -H "Content-Type: application/json" \
+  -d '{"statements":["INSERT INTO users_to_workspaces (user_id, workspace_id, role) VALUES (USER_ID, 1, '\''owner'\'')"]}'
+```
 
 ## Tinybird Setup (Optional)
 
 Tinybird is used for analytics and monitoring metrics. The application will work without it, but analytics features will be unavailable.
 
 If you want to enable analytics, you can:
+
 1. Use Tinybird Cloud and configure `TINY_BIRD_API_KEY` in `.env.docker`
 2. Manually configure Tinybird Local (requires additional setup beyond this guide)
 
@@ -247,18 +251,21 @@ Set `SELF_HOST=true` in `.env.docker` to enable email-based magic link authentic
 **OAuth Providers**:
 
 Configure GitHub/Google OAuth credentials in `.env.docker` and set up callback URLs:
-  - GitHub: `http://localhost:3002/api/auth/callback/github`
-  - Google: `http://localhost:3002/api/auth/callback/google`
+
+- GitHub: `http://localhost:3002/api/auth/callback/github`
+- Google: `http://localhost:3002/api/auth/callback/google`
 
 ### Creating Status Pages
 
 **Via Dashboard (Recommended)**:
+
 1. Login to http://localhost:3002
 2. Create a workspace
 3. Create a status page with a slug
 4. Access at http://localhost:3003/[slug]
 
 **Via Database (Testing)**:
+
 ```bash
 # Insert test data
 curl -s http://localhost:8080/v2/pipeline \
@@ -283,10 +290,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 1G
         reservations:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
 ```
 

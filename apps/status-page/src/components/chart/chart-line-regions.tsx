@@ -1,5 +1,17 @@
 "use client";
 
+import type { MonitorRegion } from "@openstatus/db/src/schema";
+
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@openstatus/ui/components/ui/chart";
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { cn } from "@openstatus/ui/lib/utils";
+import { useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -11,17 +23,7 @@ import {
 
 import { regions } from "@/data/regions";
 import { formatMilliseconds } from "@/lib/formatter";
-import type { MonitorRegion } from "@openstatus/db/src/schema";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@openstatus/ui/components/ui/chart";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useState } from "react";
+
 import { ChartLegendBadge } from "./chart-legend-badge";
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
@@ -47,7 +49,7 @@ function getChartConfig(
       : [];
 
   return regions
-    .sort((a, b) => {
+    .toSorted((a, b) => {
       return (
         avg(data.map((item) => item[b])) - avg(data.map((item) => item[a]))
       );

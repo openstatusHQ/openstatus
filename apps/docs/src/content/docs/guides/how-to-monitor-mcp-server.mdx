@@ -17,10 +17,10 @@ openstatus offers a robust solution for monitoring your MCP servers. By sending 
 
 Before you begin, ensure you have:
 
--   An [openstatus account](https://www.openstatus.dev/app/login).
--   The [openstatus CLI installed](/tutorial/get-started-with-openstatus-cli). (If you haven't installed it yet, follow this guide first).
--   An MCP server with a publicly accessible endpoint.
--   A basic understanding of the [JSON-RPC 2.0 protocol](https://www.jsonrpc.org/specification).
+- An [openstatus account](https://www.openstatus.dev/app/login).
+- The [openstatus CLI installed](/tutorial/get-started-with-openstatus-cli). (If you haven't installed it yet, follow this guide first).
+- An MCP server with a publicly accessible endpoint.
+- A basic understanding of the [JSON-RPC 2.0 protocol](https://www.jsonrpc.org/specification).
 
 ## Background: Understanding MCP for Monitoring
 
@@ -73,19 +73,19 @@ mcp-server:
 
 Let's break down the key fields in this YAML configuration:
 
--   `name` & `description`: A human-readable name and explanation for your monitor.
--   `frequency`: How often openstatus will run the check (e.g., `1m`, `5m`, `10m`).
--   `regions`: An array of geographic regions from which to perform checks (e.g., `["iad", "ams", "lax"]`). Monitoring from multiple regions helps detect localized issues.
--   `retry`: The number of times to retry a failed check before marking it as down.
--   `kind`: Must be `http` for MCP servers.
--   `request`:
-    -   `url`: The full URL of your MCP server's JSON-RPC endpoint.
-    -   `method`: Must be `POST` for JSON-RPC requests.
-    -   `body`: The JSON-RPC `ping` request payload.
-    -   `headers`: Standard HTTP headers for JSON-RPC communication.
--   `assertions`: Rules to validate the server's response.
-    -   `statusCode`: Ensures the HTTP response is `200 OK`.
-    -   `textBody`: Verifies that the response payload exactly matches the expected JSON-RPC `ping` result.
+- `name` & `description`: A human-readable name and explanation for your monitor.
+- `frequency`: How often openstatus will run the check (e.g., `1m`, `5m`, `10m`).
+- `regions`: An array of geographic regions from which to perform checks (e.g., `["iad", "ams", "lax"]`). Monitoring from multiple regions helps detect localized issues.
+- `retry`: The number of times to retry a failed check before marking it as down.
+- `kind`: Must be `http` for MCP servers.
+- `request`:
+  - `url`: The full URL of your MCP server's JSON-RPC endpoint.
+  - `method`: Must be `POST` for JSON-RPC requests.
+  - `body`: The JSON-RPC `ping` request payload.
+  - `headers`: Standard HTTP headers for JSON-RPC communication.
+- `assertions`: Rules to validate the server's response.
+  - `statusCode`: Ensures the HTTP response is `200 OK`.
+  - `textBody`: Verifies that the response payload exactly matches the expected JSON-RPC `ping` result.
 
 ### 3. Test your MCP server (Optional)
 
@@ -116,22 +116,22 @@ This guide has equipped you with the knowledge to effectively monitor your MCP s
 
 ## What You've Accomplished
 
--   ✅ Successfully configured a JSON-RPC based monitor for your MCP server.
--   ✅ Implemented precise assertions to validate `ping` responses.
--   ✅ Set up global monitoring to detect localized or widespread issues.
--   ✅ Automated monitor deployment using a version-controlled YAML configuration.
+- ✅ Successfully configured a JSON-RPC based monitor for your MCP server.
+- ✅ Implemented precise assertions to validate `ping` responses.
+- ✅ Set up global monitoring to detect localized or widespread issues.
+- ✅ Automated monitor deployment using a version-controlled YAML configuration.
 
 ## Next Steps
 
 Now that your MCP server is under robust monitoring, consider further enhancing your setup:
 
--   **[Set up Alerting](/monitoring/customization/notification)**: Configure notifications to be immediately informed of any MCP server downtime or performance degradation.
--   **[Export Metrics to OTLP](/guides/how-to-export-metrics-to-otlp-endpoint)**: Integrate your MCP monitoring data with your existing observability platform for centralized analytics.
--   **[Run Synthetic Tests in GitHub Actions](/guides/how-to-run-synthetic-test-github-action/)**: Incorporate these synthetic checks into your CI/CD pipeline for pre-deployment validation.
+- **[Set up Alerting](/monitoring/customization/notification)**: Configure notifications to be immediately informed of any MCP server downtime or performance degradation.
+- **[Export Metrics to OTLP](/guides/how-to-export-metrics-to-otlp-endpoint)**: Integrate your MCP monitoring data with your existing observability platform for centralized analytics.
+- **[Run Synthetic Tests in GitHub Actions](/guides/how-to-run-synthetic-test-github-action/)**: Incorporate these synthetic checks into your CI/CD pipeline for pre-deployment validation.
 
 ## Related Resources
 
--   **[JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)**: Deep dive into the JSON-RPC protocol.
--   **[MCP Official Documentation](https://modelcontextprotocol.io/docs/concepts/architecture#debugging-and-monitoring)**: Official insights into MCP health checks.
--   **[HTTP Monitor Reference](/reference/http-monitor)**: Comprehensive API reference for HTTP monitors.
--   **[CLI Reference](/reference/cli-reference)**: Full documentation for the openstatus CLI.
+- **[JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)**: Deep dive into the JSON-RPC protocol.
+- **[MCP Official Documentation](https://modelcontextprotocol.io/docs/concepts/architecture#debugging-and-monitoring)**: Official insights into MCP health checks.
+- **[HTTP Monitor Reference](/reference/http-monitor)**: Comprehensive API reference for HTTP monitors.
+- **[CLI Reference](/reference/cli-reference)**: Full documentation for the openstatus CLI.

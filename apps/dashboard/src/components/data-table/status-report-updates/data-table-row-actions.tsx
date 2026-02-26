@@ -1,13 +1,15 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useRef } from "react";
+
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { getActions } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import { useRef } from "react";
 
 type StatusReportUpdate =
   RouterOutputs["statusReport"]["list"][number]["updates"][number];
@@ -24,15 +26,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateStatusReportUpdateMutation = useMutation(
     trpc.statusReport.updateStatusReportUpdate.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: Number.parseInt(id),
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),
@@ -43,12 +45,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteStatusReportUpdateMutation = useMutation(
     trpc.statusReport.deleteUpdate.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             pageId: Number.parseInt(id),
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({
             period: "7d",
           }),

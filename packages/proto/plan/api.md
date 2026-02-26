@@ -19,26 +19,31 @@ packages/proto/api/openstatus/status_page/v1/
 ### 1. `status_page.proto` - Core Types
 
 **Enums:**
+
 - `PageAccessType`: PUBLIC, PASSWORD_PROTECTED, AUTHENTICATED
 - `PageTheme`: SYSTEM, LIGHT, DARK
 - `OverallStatus`: OPERATIONAL, DEGRADED, PARTIAL_OUTAGE, MAJOR_OUTAGE, MAINTENANCE, UNKNOWN
 
 **Messages:**
+
 - `StatusPage` - Full page details (id, title, description, slug, custom_domain, published, access_type, theme, homepage_url, contact_url, icon, timestamps)
 - `StatusPageSummary` - List response (id, title, slug, published, timestamps)
 
 ### 2. `page_component.proto` - Component Types
 
 **Enums:**
+
 - `PageComponentType`: MONITOR, STATIC
 
 **Messages:**
+
 - `PageComponent` - Component details (id, page_id, name, description, type, monitor_id, order, group_id, group_order, timestamps)
 - `PageComponentGroup` - Group details (id, page_id, name, timestamps)
 
 ### 3. `page_subscriber.proto` - Subscriber Types
 
 **Messages:**
+
 - `PageSubscriber` - Subscriber details (id, page_id, email, accepted_at, unsubscribed_at, timestamps)
 
 ### 4. `service.proto` - RPC Service
@@ -77,41 +82,46 @@ service StatusPageService {
 ## RPC Methods Breakdown
 
 ### Page CRUD (5 methods)
-| Method | Request Fields | Response |
-|--------|---------------|----------|
-| `CreateStatusPage` | title, description, slug,  homepage_url?, contact_url?| StatusPage |
-| `GetStatusPage` | id | StatusPage |
-| `ListStatusPages` | limit?, offset? | StatusPageSummary[], total_size |
-| `UpdateStatusPage` | id, title?, description?, slug?, homepage_url?, contact_url? | StatusPage |
-| `DeleteStatusPage` | id | success |
+
+| Method             | Request Fields                                               | Response                        |
+| ------------------ | ------------------------------------------------------------ | ------------------------------- |
+| `CreateStatusPage` | title, description, slug, homepage_url?, contact_url?        | StatusPage                      |
+| `GetStatusPage`    | id                                                           | StatusPage                      |
+| `ListStatusPages`  | limit?, offset?                                              | StatusPageSummary[], total_size |
+| `UpdateStatusPage` | id, title?, description?, slug?, homepage_url?, contact_url? | StatusPage                      |
+| `DeleteStatusPage` | id                                                           | success                         |
 
 ### Component Management (4 methods)
-| Method | Request Fields | Response |
-|--------|---------------|----------|
-| `AddMonitorComponent` | page_id, monitor_id, name?, description?, order?, group_id? | PageComponent |
-| `AddExternalComponent` | page_id, name, description?, order?, group_id? | PageComponent |
-| `RemoveComponent` | id | success |
-| `UpdateComponent` | id, name?, description?, order?, group_id?, group_order? | PageComponent |
+
+| Method                 | Request Fields                                              | Response      |
+| ---------------------- | ----------------------------------------------------------- | ------------- |
+| `AddMonitorComponent`  | page_id, monitor_id, name?, description?, order?, group_id? | PageComponent |
+| `AddExternalComponent` | page_id, name, description?, order?, group_id?              | PageComponent |
+| `RemoveComponent`      | id                                                          | success       |
+| `UpdateComponent`      | id, name?, description?, order?, group_id?, group_order?    | PageComponent |
 
 ### Component Groups (3 methods)
-| Method | Request Fields | Response |
-|--------|---------------|----------|
-| `CreateComponentGroup` | page_id, name | PageComponentGroup |
-| `DeleteComponentGroup` | id | success |
-| `UpdateComponentGroup` | id, name? | PageComponentGroup |
+
+| Method                 | Request Fields | Response           |
+| ---------------------- | -------------- | ------------------ |
+| `CreateComponentGroup` | page_id, name  | PageComponentGroup |
+| `DeleteComponentGroup` | id             | success            |
+| `UpdateComponentGroup` | id, name?      | PageComponentGroup |
 
 ### Subscriber Management (3 methods)
-| Method | Request Fields | Response |
-|--------|---------------|----------|
-| `SubscribeToPage` | page_id, email | PageSubscriber |
-| `UnsubscribeFromPage` | page_id, email or token | success |
-| `ListSubscribers` | page_id, limit?, offset?, include_unsubscribed? | PageSubscriber[], total_size |
+
+| Method                | Request Fields                                  | Response                     |
+| --------------------- | ----------------------------------------------- | ---------------------------- |
+| `SubscribeToPage`     | page_id, email                                  | PageSubscriber               |
+| `UnsubscribeFromPage` | page_id, email or token                         | success                      |
+| `ListSubscribers`     | page_id, limit?, offset?, include_unsubscribed? | PageSubscriber[], total_size |
 
 ### Full Content & Status (2 methods)
-| Method | Request Fields | Response |
-|--------|---------------|----------|
-| `GetStatusPageContent` | id or slug | StatusPage, components[], groups[], status_reports[], maintenances[] |
-| `GetOverallStatus` | id or slug | overall_status, component_statuses[] |
+
+| Method                 | Request Fields | Response                                                             |
+| ---------------------- | -------------- | -------------------------------------------------------------------- |
+| `GetStatusPageContent` | id or slug     | StatusPage, components[], groups[], status_reports[], maintenances[] |
+| `GetOverallStatus`     | id or slug     | overall_status, component_statuses[]                                 |
 
 ## Validation Rules (using buf.validate)
 
@@ -133,12 +143,12 @@ service StatusPageService {
 
 ## Files to Create
 
-| File | Description |
-|------|-------------|
-| `packages/proto/api/openstatus/status_page/v1/status_page.proto` | Core enums and StatusPage messages |
-| `packages/proto/api/openstatus/status_page/v1/page_component.proto` | PageComponent and PageComponentGroup messages |
-| `packages/proto/api/openstatus/status_page/v1/page_subscriber.proto` | PageSubscriber message |
-| `packages/proto/api/openstatus/status_page/v1/service.proto` | StatusPageService RPC definitions |
+| File                                                                 | Description                                   |
+| -------------------------------------------------------------------- | --------------------------------------------- |
+| `packages/proto/api/openstatus/status_page/v1/status_page.proto`     | Core enums and StatusPage messages            |
+| `packages/proto/api/openstatus/status_page/v1/page_component.proto`  | PageComponent and PageComponentGroup messages |
+| `packages/proto/api/openstatus/status_page/v1/page_subscriber.proto` | PageSubscriber message                        |
+| `packages/proto/api/openstatus/status_page/v1/service.proto`         | StatusPageService RPC definitions             |
 
 ## Verification
 

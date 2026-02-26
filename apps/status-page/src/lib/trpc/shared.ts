@@ -1,7 +1,7 @@
-import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
-import { httpBatchLink } from "@trpc/client";
-
 import type { AppRouter } from "@openstatus/api";
+import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
+
+import { httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 
 const getBaseUrl = () => {
@@ -11,7 +11,7 @@ const getBaseUrl = () => {
   return "http://localhost:3000"; // Local dev and Docker (internal calls)
 };
 
-const lambdas = ["stripeRouter", "emailRouter"];
+const lambdas = new Set(["stripeRouter", "emailRouter"]);
 
 export const endingLink = (opts?: {
   fetch?: typeof fetch;
@@ -22,7 +22,6 @@ export const endingLink = (opts?: {
       headers: opts?.headers,
       fetch: opts?.fetch,
       transformer: superjson,
-      // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
     } satisfies Partial<HTTPBatchLinkOptions<any>>;
 
     const edgeLink = httpBatchLink({
@@ -36,7 +35,7 @@ export const endingLink = (opts?: {
 
     return (ctx) => {
       const path = ctx.op.path.split(".") as [string, ...string[]];
-      const endpoint = lambdas.includes(path[0]) ? "lambda" : "edge";
+      const endpoint = lambdas.has(path[0]) ? "lambda" : "edge";
 
       const newCtx = {
         ...ctx,

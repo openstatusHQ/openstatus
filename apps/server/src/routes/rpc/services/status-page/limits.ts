@@ -1,7 +1,8 @@
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+
 import { Code, ConnectError } from "@connectrpc/connect";
 import { count, db, eq } from "@openstatus/db";
 import { page, pageComponent } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 /**
  * Check workspace limits for creating a new status page.

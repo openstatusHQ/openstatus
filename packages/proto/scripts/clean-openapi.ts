@@ -1,8 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-// biome-ignore lint: only  a script
-const OPENAPI_PATH = join(dirname(import.meta.dirname!), "gen", "openapi.yaml");
+const OPENAPI_PATH = join(dirname(import.meta.dirname), "gen", "openapi.yaml");
 
 const CONNECT_PARAMS = new Set([
   "Connect-Protocol-Version",

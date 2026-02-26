@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 
-import { Kbd } from "@/components/common/kbd";
-import { formatDateForInput } from "@/lib/formatter";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Calendar } from "@openstatus/ui/components/ui/calendar";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { endOfDay } from "date-fns";
+import { useState } from "react";
+
+import { Kbd } from "@/components/common/kbd";
+import { formatDateForInput } from "@/lib/formatter";
 
 type DatePickerProps = {
   range: DateRange;
@@ -28,7 +29,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
         <div className="relative py-4">
           <div className="h-full">
             <div className="flex flex-col px-1">
-              <div className="px-3 py-1 font-medium text-muted-foreground text-xs">
+              <div className="text-muted-foreground px-3 py-1 text-xs font-medium">
                 Presets
               </div>
               {presets.map((preset) => {
@@ -77,7 +78,7 @@ export function DatePicker({ range, onSelect, presets }: DatePickerProps) {
       </div>
       <Separator />
       <div className="flex flex-col gap-2 px-3 py-4">
-        <p className="px-1 font-medium text-muted-foreground text-xs">
+        <p className="text-muted-foreground px-1 text-xs font-medium">
           Custom Range
         </p>
         <div className="grid gap-2 sm:grid-cols-2">

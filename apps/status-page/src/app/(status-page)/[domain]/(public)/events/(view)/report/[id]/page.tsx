@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import { StatusBlankEvents } from "@/components/status-page/status-blank";
@@ -15,8 +18,6 @@ import {
   StatusEventTitleCheck,
 } from "@/components/status-page/status-events";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 
 export default function ReportPage() {
   const trpc = useTRPC();
@@ -34,7 +35,7 @@ export default function ReportPage() {
     );
   }
 
-  const updates = report.statusReportUpdates.sort(
+  const updates = report.statusReportUpdates.toSorted(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
   const firstUpdate = updates[updates.length - 1];

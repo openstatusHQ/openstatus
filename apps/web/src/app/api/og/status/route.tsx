@@ -1,10 +1,12 @@
+import type { RouterOutputs } from "@openstatus/api";
+
+import { format } from "date-fns";
 import { ImageResponse } from "next/og";
 
 import { DESCRIPTION, TITLE } from "@/lib/metadata/shared-metadata";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
-import type { RouterOutputs } from "@openstatus/api";
-import { format } from "date-fns";
+
 import { SIZE } from "../utils";
 
 export const runtime = "edge";
@@ -80,7 +82,7 @@ export async function GET(req: Request) {
       >
         <div tw="flex flex-col justify-end flex-1 mb-8">
           <div tw={cn("flex flex-row items-center text-2xl", content?.text)}>
-            [<div tw={cn("rounded-full h-5 w-5 mr-2", content?.bg)} />
+            [<div tw={cn("mr-2 h-5 w-5 rounded-full", content?.bg)} />
             <p>{category}</p>] | {format(new Date(), "MMM d, yyyy HH:mm zzz")}
           </div>
           <h1

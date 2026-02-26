@@ -1,15 +1,3 @@
-import { ChevronRight } from "lucide-react";
-import * as React from "react";
-
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-} from "@/components/content/empty-state";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-} from "@/components/ui/sidebar";
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,6 +19,18 @@ import {
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { ChevronRight } from "lucide-react";
+import * as React from "react";
+
+import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+} from "@/components/content/empty-state";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+} from "@/components/ui/sidebar";
 
 export type SidebarMetadataProps = {
   label: string;
@@ -47,7 +47,7 @@ export function SidebarMetadata({ label, items }: SidebarMetadataProps) {
       <Collapsible defaultOpen className="group/collapsible border-b">
         <SidebarGroupLabel
           asChild
-          className="group/label h-9 w-full rounded-none text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 w-full rounded-none text-sm"
         >
           <CollapsibleTrigger>
             {label}{" "}
@@ -91,8 +91,8 @@ function SidebarMetadataTable({
       <TableBody>
         {items.map((item, index) => (
           <TableRow key={`${item.label}-${index}`}>
-            <TableCell className="w-26 border-r text-muted-foreground">
-              <div className="min-w-[90px] max-w-[90px] truncate">
+            <TableCell className="text-muted-foreground w-26 border-r">
+              <div className="max-w-[90px] min-w-[90px] truncate">
                 {item.isNested ? "└ " : ""}
                 {item.label}
               </div>
@@ -116,7 +116,6 @@ function SidebarMetadataTableCell({
   const { copy, isCopied } = useCopyToClipboard();
   const [open, setOpen] = React.useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   React.useEffect(() => {
     if (ref.current) {
       setIsTruncated(ref.current.scrollWidth > ref.current.clientWidth);
@@ -125,7 +124,7 @@ function SidebarMetadataTableCell({
 
   const handleClick = () => {
     if (typeof props.children === "string") {
-      copy(props.children, { withToast: false, timeout: 1000 });
+      void copy(props.children, { withToast: false, timeout: 1000 });
     }
   };
 

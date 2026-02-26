@@ -1,8 +1,5 @@
 "use client";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
@@ -20,6 +17,10 @@ import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+// FIXME: use input-group instead
+import { InputWithAddons } from "@/components/common/input-with-addons";
+import { useTRPC } from "@/lib/trpc/client";
 
 const SLUG_UNIQUE_ERROR_MESSAGE =
   "This slug is already taken. Please choose another one.";

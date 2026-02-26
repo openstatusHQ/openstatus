@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-
 import {
   numberCompare,
   recordCompare,
@@ -123,9 +122,7 @@ export const MonitorSchema = z
       )
       .superRefine((regions, ctx) => {
         const deprecatedRegions = regions.filter((r) => {
-          return !AVAILABLE_REGIONS.includes(
-            r as (typeof AVAILABLE_REGIONS)[number],
-          );
+          return !AVAILABLE_REGIONS.includes(r);
         });
         if (deprecatedRegions.length > 0) {
           ctx.addIssue({

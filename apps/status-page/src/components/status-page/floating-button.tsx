@@ -1,6 +1,7 @@
 "use client";
 
-import { ThemeSelect } from "@/components/themes/theme-select";
+import type React from "react";
+
 import {
   THEMES,
   THEME_KEYS,
@@ -33,8 +34,9 @@ import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { Check, ChevronsUpDown, Settings } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
-import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
+
+import { ThemeSelect } from "@/components/themes/theme-select";
 
 export const IS_DEV = process.env.NODE_ENV === "development";
 
@@ -145,7 +147,6 @@ export function FloatingButton({
     parseAsString,
   );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const enabled =
       localStorage.getItem("configuration-token") === token ||
@@ -164,7 +165,7 @@ export function FloatingButton({
       setDisplay(true);
     }
 
-    if (configToken) setConfigToken(null);
+    if (configToken) void setConfigToken(null);
   }, [token]);
 
   if (!display) return null;
@@ -185,7 +186,7 @@ export function FloatingButton({
         <PopoverContent className="w-80 p-0" align="end">
           <div className="space-y-4 p-4">
             <div className="space-y-2">
-              <h4 className="font-medium leading-none">Status Page Settings</h4>
+              <h4 className="leading-none font-medium">Status Page Settings</h4>
               <p className="text-muted-foreground text-sm">
                 Configure the status page appearance
               </p>
@@ -298,7 +299,7 @@ export function FloatingButton({
                               <span className="truncate">
                                 {THEMES[theme].name}
                               </span>
-                              <span className="truncate font-commit-mono text-muted-foreground text-xs">
+                              <span className="font-commit-mono text-muted-foreground truncate text-xs">
                                 by {THEMES[theme].author.name}
                               </span>
                               <Check

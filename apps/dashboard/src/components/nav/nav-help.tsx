@@ -1,14 +1,5 @@
 "use client";
 
-import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { useSidebar } from "@/components/ui/sidebar";
 import { DiscordIcon } from "@openstatus/icons";
 import { GitHubIcon } from "@openstatus/icons";
 import {
@@ -26,6 +17,16 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import Link from "next/link";
+
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
 
 export function NavHelp() {
   const { isMobile } = useSidebar();

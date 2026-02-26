@@ -1,8 +1,9 @@
+import readline from "node:readline";
+
 import { db, eq } from "@openstatus/db";
 import { type WorkspacePlan, workspace } from "@openstatus/db/src/schema";
-import { env } from "../env";
 
-import readline from "node:readline";
+import { env } from "../env";
 
 // Function to prompt user for confirmation
 const askConfirmation = async (question: string): Promise<boolean> => {
@@ -104,9 +105,9 @@ async function main() {
   // all other workspaces, we need to 'reverse' the deletion here to NOT include those workspaces
   const rest = [...starters, ...teams];
 
-  deleteLogs(lastTwoWeeks, rest, true);
-  deleteLogs(lastThreeMonths, starters);
-  deleteLogs(lastYear, teams);
+  void deleteLogs(lastTwoWeeks, rest, true);
+  void deleteLogs(lastThreeMonths, starters);
+  void deleteLogs(lastYear, teams);
   // deleteLogs(lastYear, pros);
 }
 

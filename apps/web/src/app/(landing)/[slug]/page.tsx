@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+import { notFound } from "next/navigation";
+
 import { CustomMDX } from "@/content/mdx";
 import { getMainPages } from "@/content/utils";
 import { getPageMetadata } from "@/lib/metadata/shared-metadata";
@@ -10,8 +14,6 @@ import {
   getJsonLDSoftwareApplication,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
 export const dynamicParams = false;
 
@@ -65,7 +67,6 @@ export default async function Page({
       <script
         type="application/ld+json"
         suppressHydrationWarning
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: jsonLd
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLDGraph).replace(/</g, "\\u003c"),
         }}

@@ -1,9 +1,11 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
+
+import { cn } from "@/lib/utils";
+
 import { CopyDropdownButton } from "./copy-button";
 
 export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
@@ -15,7 +17,7 @@ export function SubNav({ className, ...props }: React.ComponentProps<"div">) {
       className={cn("flex items-center justify-between gap-2", className)}
       {...props}
     >
-      <div className="prose px-4 text-muted-foreground">
+      <div className="prose text-muted-foreground px-4">
         {segments.map((segment, index) => (
           <Fragment key={segment}>
             <Link href={`/${segments.slice(0, index + 1).join("/")}`}>

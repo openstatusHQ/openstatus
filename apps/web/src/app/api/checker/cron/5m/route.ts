@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+
 import { NextResponse } from "next/server";
 
 import { cron, isAuthorizedDomain } from "../_cron";
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     try {
       await cron({ periodicity: "5m", req });
       await cronCompleted();
-    } catch (_error) {
+    } catch {
       await cronFailed();
     }
   }

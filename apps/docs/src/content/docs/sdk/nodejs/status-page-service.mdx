@@ -10,8 +10,8 @@ Manage status pages, components, component groups, and subscribers. The Status P
 ### Create Status Page
 
 ```typescript
-const { statusPage } = await client.statusPage.v1.StatusPageService
-  .createStatusPage({
+const { statusPage } =
+  await client.statusPage.v1.StatusPageService.createStatusPage({
     title: "My Service Status",
     slug: "my-service",
     description: "Status page for My Service",
@@ -25,15 +25,20 @@ console.log(`Status page created: ${statusPage?.id}`);
 ### Get Status Page
 
 ```typescript
-const { statusPage } = await client.statusPage.v1.StatusPageService
-  .getStatusPage({ id: "page_123" });
+const { statusPage } =
+  await client.statusPage.v1.StatusPageService.getStatusPage({
+    id: "page_123",
+  });
 ```
 
 ### List Status Pages
 
 ```typescript
-const { statusPages, totalSize } = await client.statusPage.v1.StatusPageService
-  .listStatusPages({ limit: 10, offset: 0 });
+const { statusPages, totalSize } =
+  await client.statusPage.v1.StatusPageService.listStatusPages({
+    limit: 10,
+    offset: 0,
+  });
 
 console.log(`Found ${totalSize} status pages`);
 ```
@@ -41,8 +46,8 @@ console.log(`Found ${totalSize} status pages`);
 ### Update Status Page
 
 ```typescript
-const { statusPage } = await client.statusPage.v1.StatusPageService
-  .updateStatusPage({
+const { statusPage } =
+  await client.statusPage.v1.StatusPageService.updateStatusPage({
     id: "page_123",
     title: "Updated Title",
     description: "Updated description",
@@ -52,8 +57,10 @@ const { statusPage } = await client.statusPage.v1.StatusPageService
 ### Delete Status Page
 
 ```typescript
-const { success } = await client.statusPage.v1.StatusPageService
-  .deleteStatusPage({ id: "page_123" });
+const { success } =
+  await client.statusPage.v1.StatusPageService.deleteStatusPage({
+    id: "page_123",
+  });
 ```
 
 ## Components
@@ -63,8 +70,8 @@ Components represent individual services on a status page. They can be linked to
 ### Add Monitor Component
 
 ```typescript
-const { component } = await client.statusPage.v1.StatusPageService
-  .addMonitorComponent({
+const { component } =
+  await client.statusPage.v1.StatusPageService.addMonitorComponent({
     pageId: "page_123",
     monitorId: "mon_456",
     name: "API Server",
@@ -77,8 +84,8 @@ const { component } = await client.statusPage.v1.StatusPageService
 ### Add Static Component
 
 ```typescript
-const { component } = await client.statusPage.v1.StatusPageService
-  .addStaticComponent({
+const { component } =
+  await client.statusPage.v1.StatusPageService.addStaticComponent({
     pageId: "page_123",
     name: "Third-party Service",
     description: "External dependency",
@@ -89,8 +96,8 @@ const { component } = await client.statusPage.v1.StatusPageService
 ### Update Component
 
 ```typescript
-const { component } = await client.statusPage.v1.StatusPageService
-  .updateComponent({
+const { component } =
+  await client.statusPage.v1.StatusPageService.updateComponent({
     id: "comp_123",
     name: "Updated Component Name",
     description: "Updated description",
@@ -103,8 +110,10 @@ const { component } = await client.statusPage.v1.StatusPageService
 ### Remove Component
 
 ```typescript
-const { success } = await client.statusPage.v1.StatusPageService
-  .removeComponent({ id: "comp_123" });
+const { success } =
+  await client.statusPage.v1.StatusPageService.removeComponent({
+    id: "comp_123",
+  });
 ```
 
 ## Component Groups
@@ -114,8 +123,8 @@ Group related components together on a status page.
 ### Create Component Group
 
 ```typescript
-const { group } = await client.statusPage.v1.StatusPageService
-  .createComponentGroup({
+const { group } =
+  await client.statusPage.v1.StatusPageService.createComponentGroup({
     pageId: "page_123",
     name: "Core Services",
   });
@@ -124,8 +133,8 @@ const { group } = await client.statusPage.v1.StatusPageService
 ### Update Component Group
 
 ```typescript
-const { group } = await client.statusPage.v1.StatusPageService
-  .updateComponentGroup({
+const { group } =
+  await client.statusPage.v1.StatusPageService.updateComponentGroup({
     id: "group_123",
     name: "Updated Group Name",
   });
@@ -134,8 +143,10 @@ const { group } = await client.statusPage.v1.StatusPageService
 ### Delete Component Group
 
 ```typescript
-const { success } = await client.statusPage.v1.StatusPageService
-  .deleteComponentGroup({ id: "group_123" });
+const { success } =
+  await client.statusPage.v1.StatusPageService.deleteComponentGroup({
+    id: "group_123",
+  });
 ```
 
 ## Subscribers
@@ -145,8 +156,8 @@ Manage email subscriptions to status page updates.
 ### Subscribe to Page
 
 ```typescript
-const { subscriber } = await client.statusPage.v1.StatusPageService
-  .subscribeToPage({
+const { subscriber } =
+  await client.statusPage.v1.StatusPageService.subscribeToPage({
     pageId: "page_123",
     email: "user@example.com",
   });
@@ -158,15 +169,15 @@ Unsubscribe by email or subscriber ID using the `identifier` oneof:
 
 ```typescript
 // By email
-const { success } = await client.statusPage.v1.StatusPageService
-  .unsubscribeFromPage({
+const { success } =
+  await client.statusPage.v1.StatusPageService.unsubscribeFromPage({
     pageId: "page_123",
     identifier: { case: "email", value: "user@example.com" },
   });
 
 // By subscriber ID
-const { success: success2 } = await client.statusPage.v1.StatusPageService
-  .unsubscribeFromPage({
+const { success: success2 } =
+  await client.statusPage.v1.StatusPageService.unsubscribeFromPage({
     pageId: "page_123",
     identifier: { case: "id", value: "sub_456" },
   });
@@ -175,8 +186,8 @@ const { success: success2 } = await client.statusPage.v1.StatusPageService
 ### List Subscribers
 
 ```typescript
-const { subscribers, totalSize } = await client.statusPage.v1.StatusPageService
-  .listSubscribers({
+const { subscribers, totalSize } =
+  await client.statusPage.v1.StatusPageService.listSubscribers({
     pageId: "page_123",
     limit: 50,
     offset: 0,
@@ -189,8 +200,8 @@ const { subscribers, totalSize } = await client.statusPage.v1.StatusPageService
 Get the full content of a status page including components, groups, active status reports, and maintenance windows. Identify the page by ID or slug.
 
 ```typescript
-const content = await client.statusPage.v1.StatusPageService
-  .getStatusPageContent({
+const content =
+  await client.statusPage.v1.StatusPageService.getStatusPageContent({
     identifier: { case: "slug", value: "my-service" },
   });
 
@@ -212,8 +223,8 @@ const client = createOpenStatusClient({
   apiKey: process.env.OPENSTATUS_API_KEY,
 });
 
-const { overallStatus, componentStatuses } = await client.statusPage.v1
-  .StatusPageService.getOverallStatus({
+const { overallStatus, componentStatuses } =
+  await client.statusPage.v1.StatusPageService.getOverallStatus({
     identifier: { case: "id", value: "page_123" },
   });
 

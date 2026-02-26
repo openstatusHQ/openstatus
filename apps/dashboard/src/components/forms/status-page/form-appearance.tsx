@@ -1,20 +1,8 @@
-import { useTransition } from "react";
-import { z } from "zod";
+import type { ThemeKey } from "@openstatus/theme-store";
 
-import { Link } from "@/components/common/link";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { THEME_KEYS } from "@openstatus/theme-store";
 import { THEMES } from "@openstatus/theme-store";
-import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Command,
@@ -49,8 +37,21 @@ import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
 import { ArrowUpRight, Laptop, Moon, Sun } from "lucide-react";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 
 const schema = z.object({
   forceTheme: z.enum(["light", "dark", "system"]),
@@ -198,7 +199,7 @@ export function FormAppearance({
                                   onSelect={(v) => field.onChange(v)}
                                 >
                                   <span className="truncate">{name}</span>
-                                  <span className="truncate font-commit-mono text-muted-foreground text-xs">
+                                  <span className="font-commit-mono text-muted-foreground truncate text-xs">
                                     by {author.name}
                                   </span>
                                   <Check

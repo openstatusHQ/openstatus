@@ -1,4 +1,7 @@
 import type { ServiceImpl } from "@connectrpc/connect";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
+
 import {
   and,
   db,
@@ -16,11 +19,10 @@ import {
   pageComponent,
   pageSubscriber,
 } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { EmailClient } from "@openstatus/emails";
-import type { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 
 import { env } from "@/env";
+
 import { getRpcContext } from "../../interceptors";
 import {
   dbMaintenanceToProto,

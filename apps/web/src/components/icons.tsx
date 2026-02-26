@@ -1,3 +1,5 @@
+import type { LucideIcon, LucideProps } from "lucide-react";
+
 import {
   Activity,
   AlertTriangle,
@@ -72,7 +74,6 @@ import {
   Youtube,
   Zap,
 } from "lucide-react";
-import type { LucideIcon, LucideProps } from "lucide-react";
 
 export type Icon = LucideIcon;
 export type IconProps = LucideProps;

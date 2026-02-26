@@ -1,5 +1,8 @@
 "use client";
 
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
+
 import { Link } from "@/components/common/link";
 import {
   ActionCard,
@@ -24,8 +27,7 @@ import { FormSheetNotifier } from "@/components/forms/notifications/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { config } from "@/data/notifications.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
+
 import { searchParamsParsers } from "./search-params";
 
 // FIXME: WARNING we are using the `web` api url here
@@ -93,9 +95,7 @@ export function Client() {
 
             if (key in workspace.limits) {
               enabled =
-                workspace.limits[
-                  key as "opsgenie" | "sms" | "opsgenie" | "whatsapp"
-                ];
+                workspace.limits[key as "opsgenie" | "sms" | "whatsapp"];
             }
 
             if (limitReached) {
@@ -114,7 +114,7 @@ export function Client() {
                   <ActionCard className="h-full w-full">
                     <ActionCardHeader>
                       <div className="flex items-center gap-2">
-                        <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted">
+                        <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
                           <Icon className="size-3" />
                         </div>
                         <ActionCardTitle>{config[key].label}</ActionCardTitle>
@@ -147,7 +147,7 @@ export function Client() {
                 <ActionCard className="h-full w-full">
                   <ActionCardHeader>
                     <div className="flex items-center gap-2">
-                      <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted">
+                      <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border">
                         <Icon className="size-3" />
                       </div>
                       <ActionCardTitle>{config[key].label}</ActionCardTitle>
@@ -163,7 +163,7 @@ export function Client() {
           <ActionCard className="border-dashed">
             <ActionCardHeader>
               <div className="flex items-center gap-2">
-                <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted" />
+                <div className="border-border bg-muted flex size-6 items-center justify-center rounded-md border" />
                 <ActionCardTitle className="text-muted-foreground">
                   Your Notifier
                 </ActionCardTitle>

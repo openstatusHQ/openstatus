@@ -1,5 +1,9 @@
 "use client";
 
+import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+
 import { BlockWrapper } from "@/components/content/block-wrapper";
 import {
   EmptyStateContainer,
@@ -9,10 +13,7 @@ import {
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
 
-import { useMemo } from "react";
 import { getColumns } from "./columns";
 
 export function AuditLogsWrapper({

@@ -1,9 +1,8 @@
 import { getLogger } from "@logtape/logtape";
-import { Hono } from "hono";
-import { endTime, setMetric, startTime } from "hono/timing";
-
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
+import { Hono } from "hono";
+import { endTime, setMetric, startTime } from "hono/timing";
 
 const logger = getLogger("api-server");
 import { Status, Tracker } from "@openstatus/tracker";

@@ -1,5 +1,7 @@
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
+
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+
 import { pageComponent } from "./page_components";
 
 export const selectPageComponentSchema = createSelectSchema(pageComponent);

@@ -1,5 +1,4 @@
 import { z } from "@hono/zod-openapi";
-
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 
 export const WorkspaceSchema = z

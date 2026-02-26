@@ -1,15 +1,3 @@
-import { FormDiscord } from "@/components/forms/notifications/form-discord";
-import { FormEmail } from "@/components/forms/notifications/form-email";
-import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
-import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
-import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
-import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
-import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
-import { FormSlack } from "@/components/forms/notifications/form-slack";
-import { FormSms } from "@/components/forms/notifications/form-sms";
-import { FormTelegram } from "@/components/forms/notifications/form-telegram";
-import { FormWebhook } from "@/components/forms/notifications/form-webhook";
-import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
 import {
   DiscordIcon,
   GoogleIcon,
@@ -38,6 +26,19 @@ import {
   Webhook,
 } from "lucide-react";
 
+import { FormDiscord } from "@/components/forms/notifications/form-discord";
+import { FormEmail } from "@/components/forms/notifications/form-email";
+import { FormGoogleChat } from "@/components/forms/notifications/form-google-chat";
+import { FormGrafanaOncall } from "@/components/forms/notifications/form-grafana-oncall";
+import { FormNtfy } from "@/components/forms/notifications/form-ntfy";
+import { FormOpsGenie } from "@/components/forms/notifications/form-opsgenie";
+import { FormPagerDuty } from "@/components/forms/notifications/form-pagerduty";
+import { FormSlack } from "@/components/forms/notifications/form-slack";
+import { FormSms } from "@/components/forms/notifications/form-sms";
+import { FormTelegram } from "@/components/forms/notifications/form-telegram";
+import { FormWebhook } from "@/components/forms/notifications/form-webhook";
+import { FormWhatsApp } from "@/components/forms/notifications/form-whatsapp";
+
 export const actions = [
   {
     id: "edit",
@@ -58,10 +59,9 @@ export type NotifierAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>,
 ): (NotifierAction & { onClick?: () => Promise<void> | void })[] => {
-  return actions.map((action) => ({
-    ...action,
-    onClick: props[action.id as keyof typeof props],
-  }));
+  return actions.map((action) =>
+    Object.assign(action, { onClick: props[action.id] }),
+  );
 };
 
 // List of the notifiers

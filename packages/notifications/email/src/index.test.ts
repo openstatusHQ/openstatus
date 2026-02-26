@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
+
 import { sendAlert, sendDegraded, sendRecovery } from "./index";
 
 const sendMonitorAlertMock = mock(async (_callArgs) => {});
 
-mock.module("@openstatus/emails/src/client", () => ({
+void mock.module("@openstatus/emails/src/client", () => ({
   EmailClient: mock((_args: { apiKey: string }) => {
     return {
       sendMonitorAlert: sendMonitorAlertMock,

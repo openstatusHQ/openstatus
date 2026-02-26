@@ -1,8 +1,8 @@
 {
   "name": "@openstatus/tinybird",
   "version": "0.0.0",
-  "main": "src/index.ts",
   "license": "MIT",
+  "main": "src/index.ts",
   "dependencies": {
     "@chronark/zod-bird": "1.0.0",
     "zod": "4.1.13"

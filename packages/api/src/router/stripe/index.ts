@@ -1,5 +1,6 @@
-import { z } from "zod";
+import type { Stripe } from "stripe";
 
+import { Events } from "@openstatus/analytics";
 import { count, eq, schema } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
@@ -8,13 +9,12 @@ import {
   workspace,
   workspacePlans,
 } from "@openstatus/db/src/schema";
-
-import { Events } from "@openstatus/analytics";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { addons } from "@openstatus/db/src/schema/plan/schema";
 import { updateAddonInLimits } from "@openstatus/db/src/schema/plan/utils";
 import { TRPCError } from "@trpc/server";
-import type { Stripe } from "stripe";
+import { z } from "zod";
+
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPriceIdForFeature, getPriceIdForPlan } from "./utils";

@@ -1,4 +1,5 @@
 import type { Interceptor } from "@connectrpc/connect";
+
 import { createValidateInterceptor } from "@connectrpc/validate";
 
 // Methods that skip standard protovalidate (they do manual validation in handlers)

@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@/lib/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -24,6 +23,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
   message: z.string().min(1),
@@ -53,9 +54,7 @@ export function NavFeedback() {
     }
 
     const SpeechRecognitionCtor =
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       (window as any).webkitSpeechRecognition ||
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       (window as any).SpeechRecognition;
 
     // Browser not supported
@@ -164,20 +163,20 @@ export function NavFeedback() {
         <Button
           variant="ghost"
           size="sm"
-          className="group gap-0 px-2 text-muted-foreground text-sm hover:bg-transparent hover:text-foreground data-[state=open]:text-foreground"
+          className="group text-muted-foreground hover:text-foreground data-[state=open]:text-foreground gap-0 px-2 text-sm hover:bg-transparent"
         >
           Feedback{" "}
-          <Kbd className="ml-1 font-mono group-hover:text-foreground group-data-[state=open]:text-foreground">
+          <Kbd className="group-hover:text-foreground group-data-[state=open]:text-foreground ml-1 font-mono">
             F
           </Kbd>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="relative border-none p-0">
         {feedbackMutation.isSuccess ? (
-          <div className="flex h-[110px] flex-col items-center justify-center gap-1 rounded-md border border-input p-3 text-base shadow-xs">
+          <div className="border-input flex h-[110px] flex-col items-center justify-center gap-1 rounded-md border p-3 text-base shadow-xs">
             <Inbox className="size-4 shrink-0" />
             <p className="text-center font-medium">Thanks for sharing!</p>
-            <p className="text-center text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-center text-sm">
               We&apos;ll get in touch if there&apos;s a follow-up.
             </p>
           </div>
@@ -228,10 +227,10 @@ export function NavFeedback() {
                 ) : (
                   <>
                     Send
-                    <Kbd className="ml-1 font-mono group-hover:text-foreground">
+                    <Kbd className="group-hover:text-foreground ml-1 font-mono">
                       ⌘
                     </Kbd>
-                    <Kbd className="ml-1 font-mono group-hover:text-foreground">
+                    <Kbd className="group-hover:text-foreground ml-1 font-mono">
                       ↵
                     </Kbd>
                   </>

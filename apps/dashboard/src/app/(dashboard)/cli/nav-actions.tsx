@@ -1,4 +1,3 @@
-import { NavFeedback } from "@/components/nav/nav-feedback";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Tooltip,
@@ -7,6 +6,8 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { Book } from "lucide-react";
+
+import { NavFeedback } from "@/components/nav/nav-feedback";
 
 export function NavActions() {
   return (
@@ -21,7 +22,7 @@ export function NavActions() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <Book className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+                <Book className="text-muted-foreground group-hover:text-foreground h-4 w-4" />
               </a>
             </Button>
           </TooltipTrigger>

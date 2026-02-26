@@ -1,6 +1,7 @@
 import { getSentry } from "@hono/sentry";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import { Hono } from "hono";
+
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";

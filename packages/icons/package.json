@@ -1,20 +1,19 @@
 {
   "name": "@openstatus/icons",
   "version": "0.0.0",
+  "license": "MIT",
   "main": "./src/index.tsx",
   "types": "./src/index.tsx",
-  "license": "MIT",
   "scripts": {
-    "lint": "biome lint \"**/*.ts*\""
+    "lint": "oxlint ."
+  },
+  "dependencies": {
+    "react": "19.2.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
     "@openstatus/tsconfig": "workspace:*",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "typescript": "5.9.3"
-  },
-  "dependencies": {
-    "react": "19.2.3"
   }
 }

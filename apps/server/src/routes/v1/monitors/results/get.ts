@@ -1,11 +1,12 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import type { monitorsApi } from "../index";
 
+import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
 
 import { tb } from "@/libs/clients";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import type { monitorsApi } from "../index";
+
 import { ParamsSchema, ResultRun } from "../schema";
 
 const getRoute = createRoute({

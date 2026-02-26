@@ -1,4 +1,6 @@
-import { getPayloadConfigFromPayload } from "@/lib/chart";
+import type * as RechartsPrimitive from "recharts";
+import type { Payload } from "recharts/types/component/DefaultLegendContent";
+
 import { badgeVariants } from "@openstatus/ui/components/ui/badge";
 import { useChart } from "@openstatus/ui/components/ui/chart";
 import {
@@ -9,8 +11,8 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
 import * as React from "react";
-import type * as RechartsPrimitive from "recharts";
-import type { Payload } from "recharts/types/component/DefaultLegendContent";
+
+import { getPayloadConfigFromPayload } from "@/lib/chart";
 
 export function ChartLegendBadge({
   className,
@@ -92,7 +94,7 @@ export function ChartLegendBadge({
             className={cn(
               badgeVariants({ variant: "outline" }),
               "outline-none",
-              "flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground",
+              "[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3",
               !isActive && "opacity-60",
               !isActive && hasMaxActive && "cursor-not-allowed opacity-40",
             )}
@@ -118,7 +120,7 @@ export function ChartLegendBadge({
             )}
             {itemConfig?.label}
             {suffix !== undefined ? (
-              <span className="font-mono text-[10px] text-muted-foreground">
+              <span className="text-muted-foreground font-mono text-[10px]">
                 {suffix}
               </span>
             ) : null}

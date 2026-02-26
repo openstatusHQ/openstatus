@@ -8,10 +8,11 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { cn } from "@openstatus/ui/lib/utils";
+import { CircleCheck } from "lucide-react";
 
 import { Note } from "@/components/common/note";
 import { getSubdomain } from "@/lib/domains";
-import { CircleCheck } from "lucide-react";
+
 import DomainStatusIcon from "./domain-status-icon";
 import { useDomainStatus } from "./use-domain-status";
 
@@ -25,7 +26,7 @@ export const InlineSnippet = ({
   return (
     <span
       className={cn(
-        "inline-block rounded-md bg-muted px-1 py-0.5 font-mono",
+        "bg-muted inline-block rounded-md px-1 py-0.5 font-mono",
         className,
       )}
     >
@@ -72,13 +73,13 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
             <InlineSnippet>{domainJson.apexName}</InlineSnippet> to prove
             ownership of <InlineSnippet>{domainJson.name}</InlineSnippet>:
           </p>
-          <div className="my-5 flex items-start justify-start space-x-10 rounded-md bg-muted p-2">
+          <div className="bg-muted my-5 flex items-start justify-start space-x-10 rounded-md p-2">
             <div>
-              <p className="font-bold text-sm">Type</p>
+              <p className="text-sm font-bold">Type</p>
               <p className="mt-2 font-mono text-sm">{txtVerification.type}</p>
             </div>
             <div>
-              <p className="font-bold text-sm">Name</p>
+              <p className="text-sm font-bold">Name</p>
               <p className="mt-2 font-mono text-sm">
                 {txtVerification.domain.slice(
                   0,
@@ -89,7 +90,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
               </p>
             </div>
             <div>
-              <p className="font-bold text-sm">Value</p>
+              <p className="text-sm font-bold">Value</p>
               <p className="mt-2 font-mono text-sm">
                 <span className="text-ellipsis">{txtVerification.value}</span>
               </p>
@@ -120,41 +121,41 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                 <InlineSnippet>{domainJson.apexName}</InlineSnippet>
                 ), set the following A record on your DNS provider to continue:
               </p>
-              <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+              <div className="bg-muted flex items-center justify-start space-x-10 rounded-md p-2">
                 <div>
-                  <p className="font-bold text-sm">Type</p>
+                  <p className="text-sm font-bold">Type</p>
                   <p className="mt-2 font-mono text-sm">A</p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Name</p>
+                  <p className="text-sm font-bold">Name</p>
                   <p className="mt-2 font-mono text-sm">@</p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Value</p>
+                  <p className="text-sm font-bold">Value</p>
                   <p className="mt-2 font-mono text-sm">76.76.21.21</p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">TTL</p>
+                  <p className="text-sm font-bold">TTL</p>
                   <p className="mt-2 font-mono text-sm">86400</p>
                 </div>
               </div>
             </TabsContent>
             <TabsContent value="CNAME">
-              <div className="flex items-center justify-start space-x-10 rounded-md bg-muted p-2">
+              <div className="bg-muted flex items-center justify-start space-x-10 rounded-md p-2">
                 <div>
-                  <p className="font-bold text-sm">Type</p>
+                  <p className="text-sm font-bold">Type</p>
                   <p className="mt-2 font-mono text-sm">CNAME</p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Name</p>
+                  <p className="text-sm font-bold">Name</p>
                   <p className="mt-2 font-mono text-sm">{subdomain ?? "www"}</p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">Value</p>
+                  <p className="text-sm font-bold">Value</p>
                   <p className="mt-2 font-mono text-sm">cname.vercel-dns.com</p>
                 </div>
                 <div>
-                  <p className="font-bold text-sm">TTL</p>
+                  <p className="text-sm font-bold">TTL</p>
                   <p className="mt-2 font-mono text-sm">86400</p>
                 </div>
               </div>

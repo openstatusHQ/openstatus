@@ -1,20 +1,22 @@
+import type { Workspace } from "@openstatus/db/src/schema";
+import type { RequestIdVariables } from "hono/request-id";
+
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
-import type { RequestIdVariables } from "hono/request-id";
 
 import { handleZodError } from "@/libs/errors";
 import { authMiddleware } from "@/libs/middlewares";
-import type { Workspace } from "@openstatus/db/src/schema";
+
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { maintenancesApi } from "./maintenances";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
-import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
-import { statusReportUpdatesApi } from "./statusReportUpdates";
+import { pageSubscribersApi } from "./pageSubscribers";
 import { statusReportsApi } from "./statusReports";
+import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { whoamiApi } from "./whoami";
 
 export type Variables = RequestIdVariables & {

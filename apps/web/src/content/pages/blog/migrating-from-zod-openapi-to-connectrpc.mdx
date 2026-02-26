@@ -7,7 +7,7 @@ image: "/assets/posts/migrating-from-zod-openapi-to-connectrpc/API.png"
 category: "engineering"
 ---
 
-**TL;DR:** Two APIs. Double the bugs. Double the work. We maintain tRPC for ourselves and REST for everyone else. We're unifying them with ConnectRPC—a schema-first API that's type-safe *and* curl-able. Here's how we're doing it, and how AI is accelerating the migration.
+**TL;DR:** Two APIs. Double the bugs. Double the work. We maintain tRPC for ourselves and REST for everyone else. We're unifying them with ConnectRPC—a schema-first API that's type-safe _and_ curl-able. Here's how we're doing it, and how AI is accelerating the migration.
 
 ---
 
@@ -18,9 +18,10 @@ Here's a confession: we weren't dogfooding our own public API.
 Internally, we use **tRPC** for its end-to-end type safety. For our public API, we built a separate REST layer with **zod-openapi**.
 
 The result? The "Split Stack" problem:
-* **Two codebases.** Every endpoint defined twice.
-* **Two sets of types.** Internal types drifted from public DTOs.
-* **Half the velocity.** Every feature shipped twice. Every bug fix risked inconsistency.
+
+- **Two codebases.** Every endpoint defined twice.
+- **Two sets of types.** Internal types drifted from public DTOs.
+- **Half the velocity.** Every feature shipped twice. Every bug fix risked inconsistency.
 
 This debt compounds. We needed to merge them—but we didn't want to sacrifice tRPC's DX or REST's accessibility.
 
@@ -119,8 +120,9 @@ breaking:
 ```
 
 What this gives us:
-* **`buf lint`**: Catches style issues and naming conventions before PRs merge.
-* **`buf breaking`**: Detects backward-incompatible changes in CI. No more accidentally shipping a breaking SDK change.
+
+- **`buf lint`**: Catches style issues and naming conventions before PRs merge.
+- **`buf breaking`**: Detects backward-incompatible changes in CI. No more accidentally shipping a breaking SDK change.
 
 ### 3. Still Curl-able (No gRPC Client Required)
 
@@ -154,11 +156,9 @@ Debuggable in Chrome DevTools. No special tooling required.
 
 Documentation gets stale. Types don't compile if they're wrong.
 
-With OpenAPI, your docs and implementation can drift apart silently. With Protobuf, the schema *is* the implementation contract. If the types don't match, the build fails.
+With OpenAPI, your docs and implementation can drift apart silently. With Protobuf, the schema _is_ the implementation contract. If the types don't match, the build fails.
 
 This matters even more now that AI agents are consuming APIs. They work better with structured schemas than with prose documentation. For more on this idea, see Boris Tane's [Ship types, not docs](https://shiptypes.com?ref=openstatus.dev).
-
-
 
 ---
 
@@ -258,10 +258,9 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
     const monitors = await db
       .select()
       .from(monitor)
-      .where(and(
-        eq(monitor.workspaceId, workspaceId),
-        isNull(monitor.deletedAt)
-      ))
+      .where(
+        and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
+      )
       .limit(limit)
       .offset(offset)
       .all();
@@ -273,13 +272,24 @@ export const monitorServiceImpl: ServiceImpl<typeof MonitorService> = {
 
     for (const m of monitors) {
       switch (m.jobType) {
-        case "http": httpMonitors.push(dbMonitorToHttpProto(m)); break;
-        case "tcp":  tcpMonitors.push(dbMonitorToTcpProto(m));   break;
-        case "dns":  dnsMonitors.push(dbMonitorToDnsProto(m));   break;
+        case "http":
+          httpMonitors.push(dbMonitorToHttpProto(m));
+          break;
+        case "tcp":
+          tcpMonitors.push(dbMonitorToTcpProto(m));
+          break;
+        case "dns":
+          dnsMonitors.push(dbMonitorToDnsProto(m));
+          break;
       }
     }
 
-    return { httpMonitors, tcpMonitors, dnsMonitors, totalSize: monitors.length };
+    return {
+      httpMonitors,
+      tcpMonitors,
+      dnsMonitors,
+      totalSize: monitors.length,
+    };
   },
 };
 ```
@@ -290,16 +300,26 @@ Similar to Hono middleware, but with typed context via `createContextKey`:
 
 ```typescript
 // apps/server/src/routes/rpc/interceptors/auth.ts
-import { Code, ConnectError, type Interceptor, createContextKey } from "@connectrpc/connect";
+import {
+  Code,
+  ConnectError,
+  type Interceptor,
+  createContextKey,
+} from "@connectrpc/connect";
 
-export const RPC_CONTEXT_KEY = createContextKey<RpcContext | undefined>(undefined);
+export const RPC_CONTEXT_KEY = createContextKey<RpcContext | undefined>(
+  undefined,
+);
 
 export function authInterceptor(): Interceptor {
   return (next) => async (req) => {
     const apiKey = req.header.get("x-openstatus-key");
 
     if (!apiKey) {
-      throw new ConnectError("Missing 'x-openstatus-key' header", Code.Unauthenticated);
+      throw new ConnectError(
+        "Missing 'x-openstatus-key' header",
+        Code.Unauthenticated,
+      );
     }
 
     const { error, result } = await validateKey(apiKey);
@@ -502,9 +522,9 @@ describe("MonitorService", () => {
 
   test("CreateHTTPMonitor validates input", async () => {
     const res = await connectRequest("CreateHTTPMonitor", {
-      monitor: { name: "", url: "not-a-url" }  // Invalid
+      monitor: { name: "", url: "not-a-url" }, // Invalid
     });
-    expect(res.status).toBe(400);  // InvalidArgument
+    expect(res.status).toBe(400); // InvalidArgument
   });
 });
 ```

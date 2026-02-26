@@ -1,5 +1,6 @@
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
+
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { monitorTag } from "./monitor_tag";
 

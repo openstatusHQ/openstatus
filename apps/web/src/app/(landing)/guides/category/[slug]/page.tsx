@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { ContentCategory } from "@/app/(landing)/content-category";
 import { ContentList } from "@/app/(landing)/content-list";
 import { getGuides } from "@/content/utils";
@@ -6,7 +8,6 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/lib/metadata/shared-metadata";
-import type { Metadata } from "next";
 
 const TITLE = "Guide Category";
 const DESCRIPTION = "All the latest guides from openstatus.";

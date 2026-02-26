@@ -1,5 +1,12 @@
 "use client";
 
+import { Badge } from "@openstatus/ui/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { TrendingUp } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useQueryStates } from "nuqs";
+import { useMemo } from "react";
+
 import { ButtonBack } from "@/components/button/button-back";
 import { ButtonCopyLink } from "@/components/button/button-copy-link";
 import {
@@ -44,12 +51,7 @@ import {
   formatPercentage,
 } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
-import { Badge } from "@openstatus/ui/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
-import { TrendingUp } from "lucide-react";
-import { useParams } from "next/navigation";
-import { useQueryStates } from "nuqs";
-import { useMemo } from "react";
+
 import { searchParamsParsers } from "./search-params";
 
 export default function Page() {
@@ -74,24 +76,25 @@ export default function Page() {
     if (!monitor?.data.latency?.data) return [];
 
     return monitor.data.latency.data
-      .sort((a, b) => a.timestamp - b.timestamp)
-      .map((item) => ({
-        ...item,
-        timestamp: new Date(item.timestamp).toLocaleString("default", {
-          day: "numeric",
-          month: "short",
-          hour: "numeric",
-          minute: "numeric",
-          timeZoneName: "short",
+      .toSorted((a, b) => a.timestamp - b.timestamp)
+      .map((item) =>
+        Object.assign(item, {
+          timestamp: new Date(item.timestamp).toLocaleString(`default`, {
+            day: `numeric`,
+            month: `short`,
+            hour: `numeric`,
+            minute: `numeric`,
+            timeZoneName: `short`,
+          }),
         }),
-      }));
+      );
   }, [monitor?.data.latency?.data]);
 
   const regionLatencyData = useMemo(() => {
     if (!monitor?.data.regions?.data) return [];
 
     const grouped = monitor.data.regions.data
-      .sort((a, b) => a.timestamp - b.timestamp)
+      .toSorted((a, b) => a.timestamp - b.timestamp)
       .reduce(
         (acc, item) => {
           const timestamp = new Date(item.timestamp).toLocaleString("default", {
@@ -120,17 +123,21 @@ export default function Page() {
   const uptimeData = useMemo(() => {
     if (!monitor?.data.uptime?.data) return [];
     return monitor.data.uptime.data
-      .sort((a, b) => a.interval.getTime() - b.interval.getTime())
-      .map((item) => ({
-        timestamp: item.interval.toLocaleString("default", {
-          day: "numeric",
-          month: "short",
-          hour: "numeric",
-          minute: "numeric",
-          timeZoneName: "short",
-        }),
-        ...item,
-      }));
+      .toSorted((a, b) => a.interval.getTime() - b.interval.getTime())
+      .map((item) =>
+        Object.assign(
+          {
+            timestamp: item.interval.toLocaleString(`default`, {
+              day: `numeric`,
+              month: `short`,
+              hour: `numeric`,
+              minute: `numeric`,
+              timeZoneName: `short`,
+            }),
+          },
+          item,
+        ),
+      );
   }, [monitor?.data.uptime?.data]);
 
   const { totalChecks, uptimePercentage, slowestRegion, p75Range } =
@@ -170,7 +177,7 @@ export default function Page() {
               if (!acc[key]) {
                 acc[key] = { sum: 0, count: 0 };
               }
-              acc[key].sum += item[key] as number;
+              acc[key].sum += item[key];
               acc[key].count += 1;
             }
           });
@@ -184,7 +191,7 @@ export default function Page() {
           region,
           avgLatency: stats.count > 0 ? stats.sum / stats.count : 0,
         }))
-        .sort((a, b) => b.avgLatency - a.avgLatency)[0];
+        .toSorted((a, b) => b.avgLatency - a.avgLatency)[0];
 
       return {
         totalChecks: formatNumber(uptimeStats.total, {
@@ -308,10 +315,10 @@ export default function Page() {
                 <StatusChartDescription>
                   {/* TODO: we could add an information to p95 that it takes the highest selected global latency percentile */}
                   Region latency per{" "}
-                  <code className="font-medium text-foreground">p75</code>{" "}
+                  <code className="text-foreground font-medium">p75</code>{" "}
                   <PopoverQuantile>quantile</PopoverQuantile>, sorted by slowest
                   region. Compare up to{" "}
-                  <code className="font-medium text-foreground">6</code>{" "}
+                  <code className="text-foreground font-medium">6</code>{" "}
                   regions.
                 </StatusChartDescription>
               </StatusChartHeader>

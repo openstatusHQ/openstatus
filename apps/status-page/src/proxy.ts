@@ -1,9 +1,9 @@
+import { db, sql } from "@openstatus/db";
+import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 
-import { db, sql } from "@openstatus/db";
-import { page, selectPageSchema } from "@openstatus/db/src/schema";
 import { getValidSubdomain } from "./lib/domain";
 import { createProtectedCookieKey } from "./lib/protected";
 
@@ -110,7 +110,7 @@ export default auth(async (req) => {
       return NextResponse.redirect(
         new URL(
           `${req.nextUrl.origin}${
-            redirect ?? type === "pathname" ? `/${prefix}` : "/"
+            (redirect ?? type === "pathname") ? `/${prefix}` : "/"
           }`,
         ),
       );

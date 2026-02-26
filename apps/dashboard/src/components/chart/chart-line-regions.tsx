@@ -1,10 +1,7 @@
 "use client";
 
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
-
-import { getRegionColor } from "@/data/regions";
-import { cn } from "@/lib/utils";
 import type { PrivateLocation } from "@openstatus/db/src/schema";
+
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { getRegionInfo } from "@openstatus/regions";
 import {
@@ -16,6 +13,11 @@ import {
   ChartTooltipContent,
 } from "@openstatus/ui/components/ui/chart";
 import { useIsMobile } from "@openstatus/ui/hooks/use-mobile";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+
+import { getRegionColor } from "@/data/regions";
+import { cn } from "@/lib/utils";
+
 import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 function getChartConfig(privateLocations?: PrivateLocation[]) {
@@ -61,15 +63,16 @@ export function ChartLineRegions({
   const isMobile = useIsMobile();
   const trendData = data ?? [];
   const chartConfig = getChartConfig(privateLocations);
-  const chartData = trendData.map((d) => ({
-    ...d,
-    timestamp: new Date(d.timestamp).toLocaleString("default", {
-      hour: "numeric",
-      minute: "numeric",
-      day: "numeric",
-      month: "short",
+  const chartData = trendData.map((d) =>
+    Object.assign(d, {
+      timestamp: new Date(d.timestamp).toLocaleString(`default`, {
+        hour: `numeric`,
+        minute: `numeric`,
+        day: `numeric`,
+        month: `short`,
+      }),
     }),
-  }));
+  );
 
   return (
     <ChartContainer

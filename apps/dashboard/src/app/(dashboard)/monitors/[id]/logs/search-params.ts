@@ -1,4 +1,3 @@
-import { PERIODS, STATUS, TRIGGER } from "@/data/metrics.client";
 import { endOfDay } from "date-fns";
 import { startOfDay } from "date-fns";
 import {
@@ -9,6 +8,8 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
+
+import { PERIODS, STATUS, TRIGGER } from "@/data/metrics.client";
 
 export const searchParamsParsers = {
   period: parseAsStringLiteral(PERIODS).withDefault("1d"),

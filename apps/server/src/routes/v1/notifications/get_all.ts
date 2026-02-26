@@ -1,12 +1,14 @@
-import { createRoute } from "@hono/zod-openapi";
+import type { notificationsApi } from "./index";
 
-import { openApiErrorResponses } from "@/libs/errors";
+import { createRoute } from "@hono/zod-openapi";
 import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
-import type { notificationsApi } from "./index";
+
+import { openApiErrorResponses } from "@/libs/errors";
+
 import { NotificationSchema } from "./schema";
 
 const getAllRoute = createRoute({
@@ -50,13 +52,14 @@ export function registerGetAllNotifications(app: typeof notificationsApi) {
       .all();
 
     const data = NotificationSchema.array().parse(
-      _notifications.map((n) => ({
-        ...n,
-        payload: JSON.parse(n.data || "{}"),
-        monitors: _monitors
-          .filter((m) => m.notificationId === n.id)
-          .map((m) => m.monitorId),
-      })),
+      _notifications.map((n) =>
+        Object.assign(n, {
+          payload: JSON.parse(n.data || `{}`),
+          monitors: _monitors
+            .filter((m) => m.notificationId === n.id)
+            .map((m) => m.monitorId),
+        }),
+      ),
     );
 
     return c.json(data, 200);

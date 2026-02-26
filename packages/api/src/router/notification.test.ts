@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
+
 import { db, eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
 

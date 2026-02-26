@@ -3,16 +3,16 @@ title: Configure Your Status Page
 description: "A step-by-step tutorial to customize and configure your status page"
 ---
 
-import { Image } from 'astro:assets';
-import { Aside } from '@astrojs/starlight/components';
-import { ShowcaseYouTube } from 'starlight-showcases'
+import { Image } from "astro:assets";
+import { Aside } from "@astrojs/starlight/components";
+import { ShowcaseYouTube } from "starlight-showcases";
 
-import ConfigureStatusPage1 from '../../../assets/tutorial/configure-status-page/configure-status-page-1.png';
-import StatusPageFloating from '../../../assets/tutorial/configure-status-page/status-page-floating.png';
-import StatusPageBeta1 from '../../../assets/tutorial/configure-status-page/status-page-beta-1.png';
-import StatusPageBeta2 from '../../../assets/tutorial/configure-status-page/status-page-beta-2.png';
-import StatusPageBeta3 from '../../../assets/tutorial/configure-status-page/status-page-beta-3.png';
-import StatusPageBeta4 from '../../../assets/tutorial/configure-status-page/status-page-beta-4.png';
+import ConfigureStatusPage1 from "../../../assets/tutorial/configure-status-page/configure-status-page-1.png";
+import StatusPageFloating from "../../../assets/tutorial/configure-status-page/status-page-floating.png";
+import StatusPageBeta1 from "../../../assets/tutorial/configure-status-page/status-page-beta-1.png";
+import StatusPageBeta2 from "../../../assets/tutorial/configure-status-page/status-page-beta-2.png";
+import StatusPageBeta3 from "../../../assets/tutorial/configure-status-page/status-page-beta-3.png";
+import StatusPageBeta4 from "../../../assets/tutorial/configure-status-page/status-page-beta-4.png";
 
 ## What you'll learn
 
@@ -27,6 +27,7 @@ In this tutorial, you'll learn how to customize your status page's appearance an
 ### What you'll build
 
 By the end of this tutorial, you'll have:
+
 - A customized status page with your preferred theme
 - Configured status trackers displaying data your way
 - Links to important resources
@@ -44,26 +45,27 @@ Go to the **Status Page Redesign (beta)** section in your status page settings. 
 
 1. **Tracker Configuration**
 2. **Theme Explorer**
-2. **Links**
+3. **Links**
 
-<Image
-    src={ConfigureStatusPage1}
-    alt="Create your status page"
-/>
+<Image src={ConfigureStatusPage1} alt="Create your status page" />
 
 ### View and configure status page
 
 Before choosing to enable the new page, we provide you with a way to check the configuration first. Click on the **View and configure status page** and you'll get forwarded to your status page and a bottom right floating button will appear. Once you're done, click on the **Dashboard** and you'll be forwarded to your page where you get asked to save the config before continuing.
 
 <Image
-    src={StatusPageFloating}
-    alt="Status page floating configuration popover"
+  src={StatusPageFloating}
+  alt="Status page floating configuration popover"
 />
-
 
 ---
 
-<Aside>Once enabled, the subdomain will have a rewrite to the new project. We are adding a `maxAge: 600` request cookie to improve the page load. **If you decide to deactivate the new version, it might take up to 10 minutes for the user to see the old page.**</Aside>
+<Aside>
+  Once enabled, the subdomain will have a rewrite to the new project. We are
+  adding a `maxAge: 600` request cookie to improve the page load. **If you
+  decide to deactivate the new version, it might take up to 10 minutes for the
+  user to see the old page.**
+</Aside>
 
 ### 1. Tracker Configuration
 
@@ -80,23 +82,20 @@ A few examples to understand it:
 Example of **absolute bar** with **duration card** and **showing uptime**
 
 <Image
-    src={StatusPageBeta3}
-    alt="absolute bar type with duration card and showing uptime"
+  src={StatusPageBeta3}
+  alt="absolute bar type with duration card and showing uptime"
 />
 
 Example of **absolute bar** with **request card** and **hiding uptime**
 
 <Image
-    src={StatusPageBeta4}
-    alt="absolute bar type with request card and hiding uptime"
+  src={StatusPageBeta4}
+  alt="absolute bar type with request card and hiding uptime"
 />
 
 Example of **manual bar** with **simple card** and **hiding uptime**
 
-<Image
-    src={StatusPageBeta2}
-    alt="manual bar type and hiding uptime"
-/>
+<Image src={StatusPageBeta2} alt="manual bar type and hiding uptime" />
 
 ### 2. Theme Explorer
 
@@ -112,10 +111,7 @@ Visit [themes.openstatus.dev](https://themes.openstatus.dev) to see the list of 
 
 Let's have a closer look to your status page header navigation:
 
-<Image
-    src={StatusPageBeta1}
-    alt="Header navigation of your status page"
-/>
+<Image src={StatusPageBeta1} alt="Header navigation of your status page" />
 
 **Homepage URL**: Your logo will support linking to your own website.
 
@@ -128,6 +124,7 @@ We are adding some additional features. Feel free to let us know what's missing!
 ## What you've accomplished
 
 Excellent work! You've successfully:
+
 - ✅ Enabled and configured the new status page design (beta)
 - ✅ Customized status tracker display options
 - ✅ Explored and applied theme settings
@@ -147,7 +144,6 @@ Now that your status page is configured, you can:
 - **[Status Page Reference](/reference/status-page)** - Complete configuration options
 - **[Uptime Calculation Values](/concept/uptime-calculation-and-values)** - How uptime percentages work
 
-
 ## Video Tutorial
 
 <ShowcaseYouTube
@@ -157,5 +153,5 @@ Now that your status page is configured, you can:
       title: 'View, configure and enable the new status page',
     },
 
-  ]}
+]}
 />

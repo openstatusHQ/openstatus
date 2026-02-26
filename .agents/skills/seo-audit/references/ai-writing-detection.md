@@ -13,20 +13,23 @@ Sources: Grammarly (2025), Microsoft 365 Life Hacks (2025), GPTHuman (2025), Wal
 Em dashes are longer than hyphens (-) and are used for emphasis, interruptions, or parenthetical information. While they have legitimate uses in writing, AI models drastically overuse them.
 
 ### Why Em Dashes Signal AI Writing
+
 - AI models were trained on edited books, academic papers, and style guides where em dashes appear frequently
 - AI uses em dashes as a shortcut for sentence variety instead of commas, colons, or parentheses
 - Most human writers rarely use em dashes because they don't exist as a standard keyboard key
 - The overuse is so consistent that it has become the unofficial signature of ChatGPT writing
 
 ### What To Do Instead
-| Instead of | Use |
-|------------|-----|
-| The results—which were surprising—showed... | The results, which were surprising, showed... |
-| This approach—unlike traditional methods—allows... | This approach, unlike traditional methods, allows... |
-| The study found—as expected—that... | The study found, as expected, that... |
+
+| Instead of                                                 | Use                                                          |
+| ---------------------------------------------------------- | ------------------------------------------------------------ |
+| The results—which were surprising—showed...                | The results, which were surprising, showed...                |
+| This approach—unlike traditional methods—allows...         | This approach, unlike traditional methods, allows...         |
+| The study found—as expected—that...                        | The study found, as expected, that...                        |
 | Communication skills—both written and verbal—are essential | Communication skills (both written and verbal) are essential |
 
 ### Guidelines
+
 - Use commas for most parenthetical information
 - Use colons to introduce explanations or lists
 - Use parentheses for supplementary information
@@ -37,67 +40,68 @@ Em dashes are longer than hyphens (-) and are used for emphasis, interruptions, 
 
 ## Overused Verbs
 
-| Avoid | Use Instead |
-|-------|-------------|
+| Avoid        | Use Instead                            |
+| ------------ | -------------------------------------- |
 | delve (into) | explore, examine, investigate, look at |
-| leverage | use, apply, draw on |
-| optimise | improve, refine, enhance |
-| utilise | use |
-| facilitate | help, enable, support |
-| foster | encourage, support, develop, nurture |
-| bolster | strengthen, support, reinforce |
-| underscore | emphasise, highlight, stress |
-| unveil | reveal, show, introduce, present |
-| navigate | manage, handle, work through |
-| streamline | simplify, make more efficient |
-| enhance | improve, strengthen |
-| endeavour | try, attempt, effort |
-| ascertain | find out, determine, establish |
-| elucidate | explain, clarify, make clear |
+| leverage     | use, apply, draw on                    |
+| optimise     | improve, refine, enhance               |
+| utilise      | use                                    |
+| facilitate   | help, enable, support                  |
+| foster       | encourage, support, develop, nurture   |
+| bolster      | strengthen, support, reinforce         |
+| underscore   | emphasise, highlight, stress           |
+| unveil       | reveal, show, introduce, present       |
+| navigate     | manage, handle, work through           |
+| streamline   | simplify, make more efficient          |
+| enhance      | improve, strengthen                    |
+| endeavour    | try, attempt, effort                   |
+| ascertain    | find out, determine, establish         |
+| elucidate    | explain, clarify, make clear           |
 
 ---
 
 ## Overused Adjectives
 
-| Avoid | Use Instead |
-|-------|-------------|
-| robust | strong, reliable, thorough, solid |
-| comprehensive | complete, thorough, full, detailed |
-| pivotal | key, critical, central, important |
-| crucial | important, key, essential, critical |
-| vital | important, essential, necessary |
-| transformative | significant, important, major |
-| cutting-edge | new, advanced, recent, modern |
-| groundbreaking | new, original, significant |
-| innovative | new, original, creative |
-| seamless | smooth, easy, effortless |
-| intricate | complex, detailed, complicated |
-| nuanced | subtle, complex, detailed |
-| multifaceted | complex, varied, diverse |
-| holistic | complete, whole, comprehensive |
+| Avoid          | Use Instead                         |
+| -------------- | ----------------------------------- |
+| robust         | strong, reliable, thorough, solid   |
+| comprehensive  | complete, thorough, full, detailed  |
+| pivotal        | key, critical, central, important   |
+| crucial        | important, key, essential, critical |
+| vital          | important, essential, necessary     |
+| transformative | significant, important, major       |
+| cutting-edge   | new, advanced, recent, modern       |
+| groundbreaking | new, original, significant          |
+| innovative     | new, original, creative             |
+| seamless       | smooth, easy, effortless            |
+| intricate      | complex, detailed, complicated      |
+| nuanced        | subtle, complex, detailed           |
+| multifaceted   | complex, varied, diverse            |
+| holistic       | complete, whole, comprehensive      |
 
 ---
 
 ## Overused Transitions and Connectors
 
-| Avoid | Use Instead |
-|-------|-------------|
-| furthermore | also, in addition, and |
-| moreover | also, and, besides |
-| notwithstanding | despite, even so, still |
-| that being said | however, but, still |
-| at its core | essentially, fundamentally, basically |
-| to put it simply | in short, simply put |
-| it is worth noting that | note that, importantly |
-| in the realm of | in, within, regarding |
-| in the landscape of | in, within |
-| in today's [anything] | currently, now, today |
+| Avoid                   | Use Instead                           |
+| ----------------------- | ------------------------------------- |
+| furthermore             | also, in addition, and                |
+| moreover                | also, and, besides                    |
+| notwithstanding         | despite, even so, still               |
+| that being said         | however, but, still                   |
+| at its core             | essentially, fundamentally, basically |
+| to put it simply        | in short, simply put                  |
+| it is worth noting that | note that, importantly                |
+| in the realm of         | in, within, regarding                 |
+| in the landscape of     | in, within                            |
+| in today's [anything]   | currently, now, today                 |
 
 ---
 
 ## Phrases That Signal AI Writing
 
 ### Opening Phrases to Avoid
+
 - "In today's fast-paced world..."
 - "In today's digital age..."
 - "In an era of..."
@@ -108,6 +112,7 @@ Em dashes are longer than hyphens (-) and are used for emphasis, interruptions, 
 - "Imagine a world where..."
 
 ### Transitional Phrases to Avoid
+
 - "That being said..."
 - "With that in mind..."
 - "It's worth mentioning that..."
@@ -117,6 +122,7 @@ Em dashes are longer than hyphens (-) and are used for emphasis, interruptions, 
 - "This begs the question..."
 
 ### Concluding Phrases to Avoid
+
 - "In conclusion..."
 - "To sum up..."
 - "By [doing X], you can [achieve Y]..."
@@ -125,6 +131,7 @@ Em dashes are longer than hyphens (-) and are used for emphasis, interruptions, 
 - "At the end of the day..."
 
 ### Structural Patterns to Avoid
+
 - "Whether you're a [X], [Y], or [Z]..." (listing three examples after "whether")
 - "It's not just [X], it's also [Y]..."
 - "Think of [X] as [elaborate metaphor]..."
@@ -163,20 +170,20 @@ These words often add nothing to meaning. Remove them or find specific alternati
 
 ## Academic-Specific AI Tells
 
-| Avoid | Use Instead |
-|-------|-------------|
-| shed light on | clarify, explain, reveal |
-| pave the way for | enable, allow, make possible |
-| a myriad of | many, numerous, various |
-| a plethora of | many, numerous, several |
-| paramount | very important, essential, critical |
-| pertaining to | about, regarding, concerning |
-| prior to | before |
-| subsequent to | after |
-| in light of | because of, given, considering |
-| with respect to | about, regarding, for |
-| in terms of | regarding, for, about |
-| the fact that | that (or rewrite sentence) |
+| Avoid            | Use Instead                         |
+| ---------------- | ----------------------------------- |
+| shed light on    | clarify, explain, reveal            |
+| pave the way for | enable, allow, make possible        |
+| a myriad of      | many, numerous, various             |
+| a plethora of    | many, numerous, several             |
+| paramount        | very important, essential, critical |
+| pertaining to    | about, regarding, concerning        |
+| prior to         | before                              |
+| subsequent to    | after                               |
+| in light of      | because of, given, considering      |
+| with respect to  | about, regarding, for               |
+| in terms of      | regarding, for, about               |
+| the fact that    | that (or rewrite sentence)          |
 
 ---
 

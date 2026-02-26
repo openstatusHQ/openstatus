@@ -1,14 +1,16 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
+import type { Row } from "@tanstack/react-table";
+
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
+
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
-import type { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useQuery } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { useRef } from "react";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
@@ -29,12 +31,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateMaintenanceMutation = useMutation(
     trpc.maintenance.update.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.maintenance.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.maintenance.list.queryKey({
             period: "7d",
           }),
@@ -46,12 +48,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const deleteMaintenanceMutation = useMutation(
     trpc.maintenance.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.refetchQueries({
+        void queryClient.refetchQueries({
           queryKey: trpc.maintenance.list.queryKey({
             pageId: row.original.pageId ?? undefined,
           }),
         });
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
           queryKey: trpc.maintenance.list.queryKey({
             period: "7d",
           }),

@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+
 import {
   MetricCard,
   MetricCardBadge,
@@ -9,16 +12,13 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-
 import { mapMetrics, metricsCards } from "@/data/metrics.client";
 import {
   formatMilliseconds,
   formatNumber,
   formatPercentage,
 } from "@/lib/formatter";
-import { formatDistanceToNow } from "date-fns";
+import { useTRPC } from "@/lib/trpc/client";
 
 type Metric = {
   label: string;
@@ -59,7 +59,7 @@ export function GlobalUptimeSection({
 
     if (_metrics.length !== 2) return null;
 
-    return _metrics.reverse().reduce(
+    return _metrics.toReversed().reduce(
       (acc, metric) => {
         Object.entries(metric).forEach(([key, value]) => {
           const k = key as keyof typeof acc;
@@ -96,7 +96,7 @@ export function GlobalUptimeSection({
               value: v ?? "0",
               trend: hasTrend ? trend : null,
               raw: value ?? 0,
-            } as (typeof acc)[typeof k & keyof typeof acc];
+            } as (typeof acc)[typeof k];
           } else {
             acc[k] = {
               label: metricsCards[k].label,
@@ -104,7 +104,7 @@ export function GlobalUptimeSection({
               value: v ?? "0",
               trend: 1,
               raw: value ?? 0,
-            } as (typeof acc)[typeof k & keyof typeof acc];
+            } as (typeof acc)[typeof k];
           }
         });
         return acc;

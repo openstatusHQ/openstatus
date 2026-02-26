@@ -1,10 +1,12 @@
+import type { pagesApi } from "./index";
+
 import { createRoute } from "@hono/zod-openapi";
+import { db, eq } from "@openstatus/db";
+import { page } from "@openstatus/db/src/schema";
 
 import { openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
-import { db, eq } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
-import type { pagesApi } from "./index";
+
 import { PageSchema, transformPageData } from "./schema";
 
 const getAllRoute = createRoute({
@@ -42,10 +44,9 @@ export function registerGetAllPages(api: typeof pagesApi) {
           const monitorIds = p.pageComponents
             .map((pc) => pc.monitorId)
             .filter(notEmpty);
-          return {
-            ...p,
+          return Object.assign(p, {
             monitors: monitorIds.length > 0 ? monitorIds : undefined,
-          };
+          });
         }),
       )
       .map((page) => transformPageData(page));

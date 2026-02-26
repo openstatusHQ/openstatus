@@ -1,3 +1,5 @@
+import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
+
 import { cn } from "@openstatus/ui/lib/utils";
 import {
   AlertCircleIcon,
@@ -5,7 +7,6 @@ import {
   TriangleAlertIcon,
   WrenchIcon,
 } from "lucide-react";
-import type { StatusType } from "@openstatus/ui/components/blocks/status.types";
 
 interface StatusIconProps extends React.ComponentProps<"div"> {
   /**
@@ -115,7 +116,7 @@ export function StatusIcon({
     <div
       data-slot="status-icon"
       className={cn(
-        "flex items-center justify-center rounded-full bg-muted text-background",
+        "bg-muted text-background flex items-center justify-center rounded-full",
         sizeClasses,
         ...statusClasses,
         className,

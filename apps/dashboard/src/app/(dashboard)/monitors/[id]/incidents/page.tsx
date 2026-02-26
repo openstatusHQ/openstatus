@@ -1,5 +1,8 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -16,8 +19,6 @@ import { columns } from "@/components/data-table/incidents/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();

@@ -1,7 +1,8 @@
+import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
+
 import { Code, ConnectError } from "@connectrpc/connect";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import { monitorMethods } from "@openstatus/db/src/schema/monitors/constants";
-import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
 
 import {
   MONITOR_DEFAULTS,
@@ -45,9 +46,7 @@ export function toValidMethod(value: string | undefined): MonitorMethod {
  * Note: name, url/uri, and periodicity are validated by protovalidate interceptor.
  * Throws ConnectError if validation fails.
  */
-export function validateCommonMonitorFields(mon: {
-  regions?: Region[];
-}): void {
+export function validateCommonMonitorFields(mon: { regions?: Region[] }): void {
   if (mon.regions && mon.regions.length > 0) {
     const regionStrings = regionsToStrings(mon.regions);
     const invalidRegions = validateRegions(regionStrings);

@@ -1,5 +1,12 @@
 "use client";
 
+import type { FormValues } from "@/components/forms/status-report-update/form";
+
+import { Button } from "@openstatus/ui/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
+
 import {
   EmptyStateContainer,
   EmptyStateDescription,
@@ -14,15 +21,10 @@ import {
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
 import { FormSheetWithDirtyProtection } from "@/components/forms/form-sheet";
-import type { FormValues } from "@/components/forms/status-report-update/form";
 import { FormStatusReportUpdateCard } from "@/components/forms/status-report-update/form-status-report";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { getNextStatus } from "@/data/status-report-updates.client";
 import { useTRPC } from "@/lib/trpc/client";
-import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useParams } from "next/navigation";
 
 export default function Page() {
   const { reportId } = useParams<{ id: string; reportId: string }>();
@@ -41,10 +43,10 @@ export default function Page() {
     trpc.statusReport.createStatusReportUpdate.mutationOptions({
       onSuccess: (update) => {
         if (update?.notifySubscribers) {
-          sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
+          void sendStatusReportUpdateMutation.mutateAsync({ id: update.id });
         }
-        refetch();
-        queryClient.invalidateQueries({
+        void refetch();
+        void queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
@@ -54,14 +56,14 @@ export default function Page() {
   const updateStatusReportUpdateMutation = useMutation(
     trpc.statusReport.updateStatusReportUpdate.mutationOptions({
       onSuccess: () => {
-        refetch();
+        void refetch();
       },
     }),
   );
 
   if (!statusReport) return null;
 
-  const updates = [...statusReport.updates].sort(
+  const updates = [...statusReport.updates].toSorted(
     (a, b) => b.date.getTime() - a.date.getTime(),
   );
 

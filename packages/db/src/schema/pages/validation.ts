@@ -1,4 +1,5 @@
 import type { ThemeKey } from "@openstatus/theme-store";
+
 import { THEME_KEYS } from "@openstatus/theme-store";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";

@@ -1,6 +1,7 @@
+import type { ResponseStatusTracker } from "@/lib/tb";
+
 import { Tracker as OSTracker, classNames } from "@openstatus/tracker";
 
-import type { ResponseStatusTracker } from "@/lib/tb";
 import { cn, formatDate } from "@/lib/utils";
 
 interface TrackerProps {
@@ -36,7 +37,7 @@ export function Tracker({ data }: TrackerProps) {
                 <div
                   key={i}
                   tw={cn(
-                    "h-16 w-3 rounded-full mr-1",
+                    "mr-1 h-16 w-3 rounded-full",
                     classNames[item.variant],
                   )}
                 />

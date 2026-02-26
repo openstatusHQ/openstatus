@@ -9,7 +9,7 @@ category: "engineering"
 
 This article is part of the [logs.run](https://logs.run) series.
 
-You can enable the live mode right away via [logs.run/i?live=true](https://logs.run/i?live=true). 
+You can enable the live mode right away via [logs.run/i?live=true](https://logs.run/i?live=true).
 
 Note that it's a demo. The data is mocked and not persisted. Live mode might take a while to load new data.
 
@@ -17,7 +17,7 @@ While TanStack provides excellent documentation on [Infinite Queries](https://ta
 
 ## Basic Concept
 
-Infinite queries work with "pages" of data. Each time you load new data, a new "page" is either appended (_load more_ older data) or prepended (_live mode_ newer data) to the `data.pages` array defined by the `useInfiniteQuery` hook. In the documentation, you'll read `lastPage` and `firstPage` to refer to the last and first page respectively. 
+Infinite queries work with "pages" of data. Each time you load new data, a new "page" is either appended (_load more_ older data) or prepended (_live mode_ newer data) to the `data.pages` array defined by the `useInfiniteQuery` hook. In the documentation, you'll read `lastPage` and `firstPage` to refer to the last and first page respectively.
 
 Each query to our API endpoint requires two key parameters:
 
@@ -143,12 +143,12 @@ const dataOptions = {
   },
   // Initialize with current timestamp and get the most recent data in the past
   initialPageParam: { cursor: new Date().getTime(), direction: "next" },
-	// Function to fetch newer data
+  // Function to fetch newer data
   getPreviousPageParam: (firstPage, allPages) => {
     if (!firstPage.prevCursor) return null;
     return { cursor: firstPage.prevCursor, direction: "prev" };
   },
-	// Function to fetch older data
+  // Function to fetch older data
   getNextPageParam: (lastPage, allPages) => {
     if (!lastPage.nextCursor) return null;
     return { cursor: lastPage.nextCursor, direction: "next" };
@@ -156,14 +156,21 @@ const dataOptions = {
 };
 
 export function Component() {
-  const { data, fetchNextPage, fetchPreviousPage } = useInfiniteQuery(dataOptions);
+  const { data, fetchNextPage, fetchPreviousPage } =
+    useInfiniteQuery(dataOptions);
 
   const flatData = React.useMemo(
     () => data?.pages?.flatMap((page) => page.data ?? []) ?? [],
     [data?.pages],
   );
 
-  return <div>{flatData.map((item) => {/* render item */})}</div>;
+  return (
+    <div>
+      {flatData.map((item) => {
+        /* render item */
+      })}
+    </div>
+  );
 }
 ```
 
@@ -188,36 +195,38 @@ import type { FetchPreviousPageOptions } from "@tanstack/react-query";
 const REFRESH_INTERVAL = 5_000; // 5 seconds
 
 interface LiveModeButtonProps {
-	fetchPreviousPage?: (
-		options?: FetchPreviousPageOptions | undefined,
-	) => Promise<unknown>;
+  fetchPreviousPage?: (
+    options?: FetchPreviousPageOptions | undefined,
+  ) => Promise<unknown>;
 }
 
 export function LiveModeButton({ fetchPreviousPage }: LiveModeButtonProps) {
-	// or nuqs [isLive, setIsLive] = useQueryState("live", parseAsBoolean)
-	const [isLive, setIsLive] = React.useState(false);
+  // or nuqs [isLive, setIsLive] = useQueryState("live", parseAsBoolean)
+  const [isLive, setIsLive] = React.useState(false);
 
-	React.useEffect(() => {
-		let timeoutId: NodeJS.Timeout;
+  React.useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
 
-		async function fetchData() {
-			if (isLive) {
-				await fetchPreviousPage();
-				// schedule the next fetch after REFRESH_INTERVAL 
-				// once the current fetch completes
-				timeoutId = setTimeout(fetchData, REFRESH_INTERVAL);
-			} else {
-				clearTimeout(timeoutId);
-			}
-		}
-		fetchData();
+    async function fetchData() {
+      if (isLive) {
+        await fetchPreviousPage();
+        // schedule the next fetch after REFRESH_INTERVAL
+        // once the current fetch completes
+        timeoutId = setTimeout(fetchData, REFRESH_INTERVAL);
+      } else {
+        clearTimeout(timeoutId);
+      }
+    }
+    fetchData();
 
-		return () => clearTimeout(timeoutId);
-	}, [isLive, fetchPreviousPage]);
+    return () => clearTimeout(timeoutId);
+  }, [isLive, fetchPreviousPage]);
 
-	return <button onClick={() => setIsLive(!isLive)}>
-		{isLive ? "Stop live mode" : "Start live mode"}
-	</button>
+  return (
+    <button onClick={() => setIsLive(!isLive)}>
+      {isLive ? "Stop live mode" : "Start live mode"}
+    </button>
+  );
 }
 ```
 
