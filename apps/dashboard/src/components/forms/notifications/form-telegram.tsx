@@ -35,7 +35,6 @@ const schema = z.object({
   data: z.object({
     chatId: z.string(),
   }),
-  chatType: z.enum(["group", "private"]),
   monitors: z.array(z.number()),
 });
 
@@ -60,7 +59,6 @@ export function FormTelegram({
       data: {
         chatId: "",
       },
-      chatType: "private",
       monitors: [],
     },
   });
@@ -77,7 +75,9 @@ export function FormTelegram({
     return Boolean(defaultValues?.data?.chatId);
   }, [defaultValues]);
 
-  const [mode, setMode] = React.useState<"qr" | "manual" | null>(null);
+  const [mode, setMode] = React.useState<"qr" | "manual" | null>(
+    isEditMode ? null : "qr"
+  );
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -109,6 +109,7 @@ export function FormTelegram({
   return (
     <Form {...form}>
       <form
+        id="notifier-form-telegram"
         className={cn("grid gap-4", className)}
         onSubmit={form.handleSubmit(submitAction)}
         {...props}
