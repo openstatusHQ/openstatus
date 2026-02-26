@@ -160,7 +160,7 @@ services:
 
   # Core OpenStatus Services
   workflows:
-    image: ghcr.io/openstatusHQ/openstatus-workflows:dev-latest-workflows
+    image: ghcr.io/openstatushq/openstatus-workflows:dev-latest-workflows
     container_name: openstatus-workflows
     networks:
       - openstatus
