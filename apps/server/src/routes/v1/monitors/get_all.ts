@@ -52,7 +52,14 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
               .parse(JSON.parse(monitor.otelHeaders))
               .reduce((a, v) => ({ ...a, [v.key]: v.value }), {})
           : undefined;
-        return Object.assign(monitor, {openTelemetry:monitor.otelEndpoint?{endpoint:monitor.otelEndpoint??undefined,headers:otelHeader}:undefined});
+        return Object.assign(monitor, {
+          openTelemetry: monitor.otelEndpoint
+            ? {
+                endpoint: monitor.otelEndpoint ?? undefined,
+                headers: otelHeader,
+              }
+            : undefined,
+        });
       }),
     );
 

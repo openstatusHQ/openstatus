@@ -172,7 +172,14 @@ export const statusReportRouter = createTRPCRouter({
         })
         .array()
         .parse(
-          result.map((report) => (Object.assign(report, {updates:report.statusReportUpdates,pageComponents:report.statusReportsToPageComponents.map(({pageComponent})=>pageComponent)}))),
+          result.map((report) =>
+            Object.assign(report, {
+              updates: report.statusReportUpdates,
+              pageComponents: report.statusReportsToPageComponents.map(
+                ({ pageComponent }) => pageComponent,
+              ),
+            }),
+          ),
         );
     }),
 

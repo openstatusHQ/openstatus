@@ -1,9 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNowStrict } from "date-fns";
 import { formatDistanceToNowStrict } from "date-fns";
 import { List, Search } from "lucide-react";
 import { Terminal } from "lucide-react";
+import { Bot, List, Search } from "lucide-react";
+import Link from "next/link";
 import Link from "next/link";
 
 import { Note, NoteButton } from "@/components/common/note";
@@ -30,10 +34,7 @@ import {
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict } from "date-fns";
-import { Bot, List, Search } from "lucide-react";
-import Link from "next/link";
+
 import { DataTableStatusReports } from "./data-table-status-reports";
 
 // FIXME: the page is server side

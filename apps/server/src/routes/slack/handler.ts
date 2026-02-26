@@ -107,11 +107,14 @@ async function processEvent(body: SlackEvent) {
     if (!event.text?.includes(`<@${botUserId}>`)) return;
   }
 
-  const thinkingMsg = await slack.chat.postMessage({
-    channel: event.channel,
-    thread_ts: threadTs,
-    text: ":hourglass_flowing_sand: Thinking...",
-  }, self.location.origin);
+  const thinkingMsg = await slack.chat.postMessage(
+    {
+      channel: event.channel,
+      thread_ts: threadTs,
+      text: ":hourglass_flowing_sand: Thinking...",
+    },
+    self.location.origin,
+  );
   const thinkingTs = thinkingMsg.ts;
 
   if (!thinkingTs) {

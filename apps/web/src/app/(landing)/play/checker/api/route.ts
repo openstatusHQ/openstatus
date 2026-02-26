@@ -167,7 +167,7 @@ export async function POST(request: Request) {
     }
 
     requestData = parsed.data;
-  } catch  {
+  } catch {
     return createErrorResponse(
       "INVALID_REQUEST",
       "Invalid JSON in request body",

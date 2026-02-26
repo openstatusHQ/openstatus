@@ -103,7 +103,7 @@ export function registerHTTPPostCheck(api: typeof checkApi) {
     const fulfilledRequest: z.infer<typeof ResponseSchema>[] = [];
 
     const filteredResult = result.filter((r) => r.status === "fulfilled");
-    for  (const r of filteredResult) {
+    for (const r of filteredResult) {
       if (r.status !== "fulfilled") throw new Error("No value");
 
       const json = await r.value.json();

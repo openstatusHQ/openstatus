@@ -63,7 +63,16 @@ export function ChartLineRegions({
   const isMobile = useIsMobile();
   const trendData = data ?? [];
   const chartConfig = getChartConfig(privateLocations);
-  const chartData = trendData.map((d) => (Object.assign(d, {timestamp:new Date(d.timestamp).toLocaleString(`default`,{hour:`numeric`,minute:`numeric`,day:`numeric`,month:`short`})})));
+  const chartData = trendData.map((d) =>
+    Object.assign(d, {
+      timestamp: new Date(d.timestamp).toLocaleString(`default`, {
+        hour: `numeric`,
+        minute: `numeric`,
+        day: `numeric`,
+        month: `short`,
+      }),
+    }),
+  );
 
   return (
     <ChartContainer

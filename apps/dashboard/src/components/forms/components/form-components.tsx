@@ -365,7 +365,7 @@ export function FormComponents({
         .map(({ item, index }) => {
           const existingGroup = existingGroups.find((g) => g.id === item.id);
           return existingGroup
-            ? Object.assign(existingGroup, {order:index})
+            ? Object.assign(existingGroup, { order: index })
             : {
                 id: item.id,
                 order: index,

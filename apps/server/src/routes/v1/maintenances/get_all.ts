@@ -41,7 +41,13 @@ export function registerGetAllMaintenances(api: typeof maintenancesApi) {
     });
 
     const data = MaintenanceSchema.array().parse(
-      _maintenances.map((m) => (Object.assign(m, {monitorIds:m.maintenancesToPageComponents.map(mtm=>mtm.pageComponent.monitorId).filter(notEmpty)}))),
+      _maintenances.map((m) =>
+        Object.assign(m, {
+          monitorIds: m.maintenancesToPageComponents
+            .map((mtm) => mtm.pageComponent.monitorId)
+            .filter(notEmpty),
+        }),
+      ),
     );
 
     return c.json(data, 200);

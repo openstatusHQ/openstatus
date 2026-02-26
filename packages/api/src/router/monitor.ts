@@ -190,7 +190,11 @@ export const monitorRouter = createTRPCRouter({
           }),
         )
         .parse(
-          result.map((data) => (Object.assign(data, {tags:data.monitorTagsToMonitors.map(t=>t.monitorTag)}))),
+          result.map((data) =>
+            Object.assign(data, {
+              tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
+            }),
+          ),
         );
     }),
 

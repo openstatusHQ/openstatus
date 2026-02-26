@@ -19,7 +19,13 @@ export const privateLocationRouter = createTRPCRouter({
         },
       });
     });
-    const result = privateLocations.map((privateLocation) => (Object.assign(privateLocation, {monitors:privateLocation.privateLocationToMonitors.map(m=>m.monitor).filter(m=>m!==null)})));
+    const result = privateLocations.map((privateLocation) =>
+      Object.assign(privateLocation, {
+        monitors: privateLocation.privateLocationToMonitors
+          .map((m) => m.monitor)
+          .filter((m) => m !== null),
+      }),
+    );
     return result;
   }),
   new: protectedProcedure

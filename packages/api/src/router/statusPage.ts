@@ -905,7 +905,9 @@ export const statusPageRouter = createTRPCRouter({
         const monitorId = c.monitor.id.toString();
         const data = metricsDataByMonitorId.get(monitorId) || [];
 
-        return Object.assign(selectPublicMonitorSchema.parse(c.monitor), {data});
+        return Object.assign(selectPublicMonitorSchema.parse(c.monitor), {
+          data,
+        });
       });
     }),
 

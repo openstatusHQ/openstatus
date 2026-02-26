@@ -14,5 +14,7 @@ export type PageComponentAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<Record<PageComponentAction["id"], () => Promise<void> | void>>,
 ): (PageComponentAction & { onClick?: () => Promise<void> | void })[] => {
-  return actions.map((action) => (Object.assign(action, {onClick:props[action.id as keyof typeof props]})));
+  return actions.map((action) =>
+    Object.assign(action, { onClick: props[action.id as keyof typeof props] }),
+  );
 };

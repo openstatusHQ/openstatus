@@ -67,7 +67,7 @@ export function CopyDropdownButton({
 
       await navigator.clipboard.write([item]);
       toast.success("Markdown copied to clipboard");
-    } catch  {
+    } catch {
       toast.error("Failed to copy markdown");
     }
   };

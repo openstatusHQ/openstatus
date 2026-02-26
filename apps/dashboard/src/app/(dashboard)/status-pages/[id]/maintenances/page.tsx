@@ -38,7 +38,9 @@ export default function Page() {
       onSuccess: (maintenance) => {
         // TODO: move to server
         if (maintenance.notifySubscribers) {
-          void sendMaintenanceUpdateMutation.mutateAsync({ id: maintenance.id });
+          void sendMaintenanceUpdateMutation.mutateAsync({
+            id: maintenance.id,
+          });
         }
         //
         void refetch();

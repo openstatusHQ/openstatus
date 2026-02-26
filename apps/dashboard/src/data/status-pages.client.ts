@@ -32,5 +32,7 @@ export type StatusPageAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<Record<StatusPageAction["id"], () => Promise<void> | void>>,
 ): (StatusPageAction & { onClick?: () => Promise<void> | void })[] => {
-  return actions.map((action) => (Object.assign(action, {onClick:props[action.id]})));
+  return actions.map((action) =>
+    Object.assign(action, { onClick: props[action.id] }),
+  );
 };

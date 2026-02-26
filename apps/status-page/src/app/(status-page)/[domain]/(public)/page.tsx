@@ -310,7 +310,14 @@ export default function Page() {
                   (event) => event.id === report.id && event.type === "report",
                 ),
               )
-              .map((report) => (Object.assign(report, {affected:report.statusReportsToPageComponents.map(component=>component.pageComponent.name),updates:report.statusReportUpdates})))}
+              .map((report) =>
+                Object.assign(report, {
+                  affected: report.statusReportsToPageComponents.map(
+                    (component) => component.pageComponent.name,
+                  ),
+                  updates: report.statusReportUpdates,
+                }),
+              )}
             maintenances={page.maintenances
               .filter((maintenance) =>
                 page.lastEvents.some(
@@ -318,7 +325,13 @@ export default function Page() {
                     event.id === maintenance.id && event.type === "maintenance",
                 ),
               )
-              .map((maintenance) => (Object.assign(maintenance, {affected:maintenance.maintenancesToPageComponents.map(component=>component.pageComponent.name)})))}
+              .map((maintenance) =>
+                Object.assign(maintenance, {
+                  affected: maintenance.maintenancesToPageComponents.map(
+                    (component) => component.pageComponent.name,
+                  ),
+                }),
+              )}
           />
         </StatusContent>
       </Status>

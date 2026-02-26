@@ -64,5 +64,7 @@ export type MonitorAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<Record<MonitorAction["id"], () => Promise<void> | void>>,
 ): (MonitorAction & { onClick?: () => Promise<void> | void })[] => {
-  return actions.map((action) => (Object.assign(action, {onClick:props[action.id]})));
+  return actions.map((action) =>
+    Object.assign(action, { onClick: props[action.id] }),
+  );
 };

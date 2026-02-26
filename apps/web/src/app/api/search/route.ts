@@ -128,7 +128,7 @@ function search(params: SearchParams) {
           ? getContentSnippet(result.content, q)
           : "";
 
-      return Object.assign(result, {content,href});
+      return Object.assign(result, { content, href });
     });
 
   return results;

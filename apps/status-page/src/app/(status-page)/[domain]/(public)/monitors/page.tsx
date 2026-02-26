@@ -46,7 +46,20 @@ export default function Page() {
             const data =
               monitors
                 ?.find((item) => item.id === monitor.id)
-                ?.data?.map((item) => (Object.assign(item, {timestamp:new Date(item.timestamp).toLocaleString(`default`,{day:`numeric`,month:`short`,hour:`numeric`,minute:`numeric`,timeZoneName:`short`})}))) ?? [];
+                ?.data?.map((item) =>
+                  Object.assign(item, {
+                    timestamp: new Date(item.timestamp).toLocaleString(
+                      `default`,
+                      {
+                        day: `numeric`,
+                        month: `short`,
+                        hour: `numeric`,
+                        minute: `numeric`,
+                        timeZoneName: `short`,
+                      },
+                    ),
+                  }),
+                ) ?? [];
 
             return (
               <Link

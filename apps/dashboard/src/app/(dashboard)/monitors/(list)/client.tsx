@@ -166,7 +166,20 @@ export function Client() {
       <Section>
         <DataTable
           columns={columns}
-          data={monitors.map((monitor) => (Object.assign(monitor, {globalMetrics:isLoadingHttp||isLoadingTcp?undefined:monitor.jobType===`http`?globalHttpMetrics?.data?.find(m=>m.monitorId===monitor.id.toString())??false:globalTcpMetrics?.data?.find(m=>m.monitorId===monitor.id.toString())??false})))}
+          data={monitors.map((monitor) =>
+            Object.assign(monitor, {
+              globalMetrics:
+                isLoadingHttp || isLoadingTcp
+                  ? undefined
+                  : monitor.jobType === `http`
+                    ? (globalHttpMetrics?.data?.find(
+                        (m) => m.monitorId === monitor.id.toString(),
+                      ) ?? false)
+                    : (globalTcpMetrics?.data?.find(
+                        (m) => m.monitorId === monitor.id.toString(),
+                      ) ?? false),
+            }),
+          )}
           actionBar={MonitorDataTableActionBar}
           toolbarComponent={(props) => (
             <MonitorDataTableToolbar {...props} tags={tags ?? []} />

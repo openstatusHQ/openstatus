@@ -77,7 +77,7 @@ describe("Webhook sendTest", () => {
     const url = "https://example.com/webhook";
     fetchMock.mockResolvedValue(new Response(null, { status: 400 }));
 
-     expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+    expect(sendTest({ url })).rejects.toThrow("Failed to send test");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -86,7 +86,7 @@ describe("Webhook sendTest", () => {
     const networkError = new Error("Network error");
     fetchMock.mockRejectedValue(networkError);
 
-     expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+    expect(sendTest({ url })).rejects.toThrow("Failed to send test");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -108,7 +108,7 @@ describe("Webhook sendTest", () => {
     const url = "https://example.com/webhook";
     fetchMock.mockResolvedValue(new Response(null, { status: 500 }));
 
-     expect(sendTest({ url })).rejects.toThrow("Failed to send test");
+    expect(sendTest({ url })).rejects.toThrow("Failed to send test");
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
