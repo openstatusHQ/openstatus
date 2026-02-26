@@ -6,6 +6,7 @@ import { BASE_URL, getPageMetadata } from "@/lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
   getJsonLDBreadcrumbList,
+  getJsonLDFAQPage,
   getJsonLDWebPage,
 } from "@/lib/metadata/structured-data";
 import type { Metadata } from "next";
@@ -45,6 +46,7 @@ export default async function Page(props: {
       { name: "Playground", url: `${BASE_URL}/play` },
       { name: page.metadata.title, url: `${BASE_URL}/play/checker` },
     ]),
+    getJsonLDFAQPage(page),
   ]);
 
   return (

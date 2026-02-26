@@ -119,7 +119,9 @@ const toolsSection = {
   label: "Tools",
   items: [
     ...getToolsPages()
-      .filter((page) => page.slug !== "checker-slug")
+      .filter(
+        (page) => !["checker-slug", "severity-matrix"].includes(page.slug),
+      )
       .map((page) => ({
         label: page.metadata.title,
         href: `/play/${page.slug}`,

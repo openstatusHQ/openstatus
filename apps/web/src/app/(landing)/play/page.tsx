@@ -71,6 +71,11 @@ const PLAY = [
     href: "https://themes.openstatus.dev",
   },
   {
+    label: "Incident Severity Matrix Builder",
+    description: "Classify incidents with deterministic, auditable rules",
+    href: "/play/severity-matrix",
+  },
+  {
     label: "All Status Codes",
     description: "Explore all HTTP status codes",
     href: "https://openstat.us",

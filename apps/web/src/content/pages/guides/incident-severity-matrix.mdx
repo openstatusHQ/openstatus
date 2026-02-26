@@ -1,0 +1,312 @@
+---
+title: "Incident Severity Matrix Template"
+description: "Ready-to-use templates for classifying and communicating incidents by severity level. Covers status page message templates, postmortem requirements, and real-world examples for SEV0 through SEV3."
+author: "openstatus"
+publishedAt: "2026-02-26"
+category: "template"
+howto:
+  totalTime: "PT30M"
+  steps:
+    - name: "Define your severity thresholds"
+      text: "Set measurable thresholds for each severity level based on percentage of users affected. Use the interactive builder to customize thresholds to your team's operational reality."
+    - name: "Classify the incident"
+      text: "Apply the classification rules in order: security impact always triggers SEV0, then check user percentage against thresholds, then apply the SLA modifier if active."
+      url: "#severity-matrix"
+    - name: "Post to your status page"
+      text: "Use the per-severity message templates to post a consistent public update. Commit to the update cadence for your severity level and never go more than one hour without an update on any active SEV0 or SEV1."
+      url: "#status-page-message-templates"
+    - name: "Escalate and run the postmortem"
+      text: "Follow the escalation path for the classified severity level. SEV0 and SEV1 always require a postmortem. Close the loop by publishing findings and action items."
+      url: "#postmortem-requirements"
+faq:
+  - question: "What does SEV0 mean?"
+    answer: "SEV0 indicates a critical incident — typically a complete service outage or confirmed security breach that requires immediate response from senior engineering leadership. It's the highest severity level and triggers the most aggressive communication and escalation protocols."
+  - question: "How many severity levels should we use?"
+    answer: "Most teams use 3 or 4 levels. Four levels (SEV0 through SEV3) provide enough granularity to distinguish between a full outage and a minor cosmetic bug without overcomplicating triage during a live incident."
+  - question: "What is the difference between severity and priority?"
+    answer: "Severity measures the impact of an incident — how many users are affected and how badly. Priority reflects business urgency and resource allocation. A typo on your pricing page might be low severity but high priority if it's costing you conversions. Your severity matrix should classify based on impact alone; priority is a triage decision."
+  - question: "Should security incidents always be SEV0?"
+    answer: "In most cases, yes. Security incidents carry outsized risk even when few users are immediately affected — the blast radius can expand quickly and the reputational impact is disproportionate. Treating all confirmed security incidents as SEV0 ensures you mobilize the right resources immediately."
+  - question: "How often should we review our severity matrix?"
+    answer: "Review it quarterly, or after any major incident where the classification felt wrong. If your team consistently debates whether something is a SEV1 or SEV2, your thresholds probably need adjustment."
+  - question: "When is a postmortem required?"
+    answer: "SEV0 and SEV1 incidents always require a postmortem. SEV2 requires a team-level postmortem. SEV3 postmortems are optional. The postmortem closes the loop by documenting root cause, timeline, and action items to prevent recurrence."
+---
+
+Use these templates when classifying and communicating production incidents. Based on real-world patterns from GitHub, Stripe, and Vercel status pages. Use the [interactive builder](/play/severity-matrix) to classify incidents and customize thresholds for your team.
+
+## When to Use This Guide
+
+- An incident has just been detected and you need to classify it fast
+- You're writing a status page update and want consistent, professional language
+- You're setting up your team's incident response process for the first time
+- A postmortem revealed your classification or communication was inconsistent
+
+## Severity Matrix
+
+Copy these tables into your runbook, wiki, or Notion page.
+
+Each row maps a severity level to its user impact threshold, required response time, and communication protocol. Classification should be deterministic — given the same inputs, every engineer on your team should reach the same row.
+
+```markdown
+| Severity | Users Affected | Security | Response Time | Status Page Label | Communication | Postmortem |
+|----------|---------------|----------|---------------|-------------------|---------------|------------|
+| 🔴 SEV0 – Critical | ≥80% OR security incident | Yes | 15 minutes | Major Outage | Immediate public update + all-hands | Required |
+| 🟠 SEV1 – High | ≥50% | No | 30 minutes | Partial Outage | Public update within 15 min | Required |
+| 🟡 SEV2 – Medium | ≥10% | No | 2 hours | Degraded Performance | Status page update + ticket | Required (team) |
+| 🟢 SEV3 – Low | <10% | No | 1 business day | Minor Issue | Internal ticket only | Optional |
+```
+
+Once the severity is set, this table tells every engineer exactly who owns it and when to escalate. If an incident isn't resolved within the auto-escalate window, re-classify upward immediately — don't wait.
+
+```markdown
+| Severity | First Response | Update Cadence | Escalation Path | Auto-Escalate If |
+|----------|---------------|----------------|-----------------|-----------------|
+| SEV0 | 15 min | Every 15 min | VP Engineering + on-call | — |
+| SEV1 | 30 min | Every 30 min | Engineering lead | Not resolved in 2h → SEV0 review |
+| SEV2 | 2 hours | Every 2 hours | Team lead | Not resolved in 4h → SEV1 |
+| SEV3 | 1 business day | Daily | Assigned engineer | Spreads to more systems → re-classify |
+```
+
+## Status Page Message Templates
+
+Never go more than one hour without a public update on any active SEV0 or SEV1. Even if there's no new information, a "we're still investigating" update is better than silence.
+
+### SEV0 – Critical
+
+**Investigating**
+
+```
+We are investigating a critical incident affecting [description of impact]. Our on-call team has been paged and we are actively working to identify the root cause. Next update in 15 minutes.
+```
+
+**Identified**
+
+```
+We have identified the root cause as [brief description]. A fix is being deployed. We will continue to provide updates every 15 minutes until service is fully restored.
+```
+
+**Monitoring**
+
+```
+A fix has been deployed. We are monitoring for full recovery and are seeing signs of improvement. Next update in 15 minutes.
+```
+
+**Resolved**
+
+```
+This incident has been resolved. All systems are operating normally. We apologize for the disruption. A postmortem will be published within 48 hours.
+```
+
+---
+
+### SEV1 – High
+
+**Investigating**
+
+```
+We are investigating degraded performance affecting [description of impact]. Our team is actively working on this. Next update in 30 minutes.
+```
+
+**Identified**
+
+```
+We have identified the cause of the degradation. A fix is in progress. Next update in 30 minutes.
+```
+
+**Monitoring**
+
+```
+A fix has been deployed and we are monitoring for full recovery. Next update in 30 minutes.
+```
+
+**Resolved**
+
+```
+Service has been fully restored. We apologize for the disruption. Our engineering team will publish a postmortem with root cause and action items.
+```
+
+---
+
+### SEV2 – Medium
+
+**Investigating**
+
+```
+We are investigating reports of degraded performance affecting a subset of users. Core functionality remains available. We will provide an update within 2 hours.
+```
+
+**Identified**
+
+```
+We have identified the root cause. A fix is being prepared and we expect resolution within [timeframe].
+```
+
+**Monitoring**
+
+```
+A fix has been deployed. We are monitoring for full resolution.
+```
+
+**Resolved**
+
+```
+This issue has been resolved. All systems are operating normally.
+```
+
+---
+
+### SEV3 – Low
+
+SEV3 incidents typically do not require a public status page update. If you choose to communicate externally, use these templates.
+
+**Investigating**
+
+```
+We are aware of a minor issue affecting a small number of users. Core functionality is not impacted. No immediate action is required on your end.
+```
+
+**Identified**
+
+```
+We have identified the cause. A fix will be deployed in the normal course of work.
+```
+
+**Monitoring**
+
+```
+A fix has been deployed and we are monitoring for full resolution.
+```
+
+**Resolved**
+
+```
+This minor issue has been resolved.
+```
+
+## Postmortem Requirements
+
+Closing the incident loop with a postmortem prevents recurrence and builds team knowledge.
+
+| Severity | Postmortem | Who attends | Timeline |
+|----------|-----------|-------------|---------|
+| SEV0 | Required | Full engineering leadership | Within 48 hours |
+| SEV1 | Required | Engineering leads + on-call | Within 72 hours |
+| SEV2 | Required (team) | Relevant engineering team | Within 1 week |
+| SEV3 | Optional | Assigned engineer | As needed |
+
+When you post the "Resolved" update for a SEV0 or SEV1, commit to the postmortem publicly: "A postmortem will be published at [link] within 48 hours." This sets expectations and holds the team accountable.
+
+## Severity vs Priority
+
+Severity and priority are often conflated, and that conflict tends to surface during live incidents at exactly the wrong time.
+
+**Severity** is objective — it measures blast radius: how many users are affected and how badly. It does not change based on who's asking.
+
+**Priority** is contextual — it reflects how urgently the team should act given business context. The same severity level can warrant different priorities.
+
+Priority levels run P0 (drop everything) through P3 (low urgency), independent of severity:
+
+| Scenario | Severity | Priority | Why |
+|----------|----------|----------|-----|
+| API down for 90% of users | SEV0 | P0 | Total outage + business impact |
+| Button misaligned on pricing page | SEV3 | P1 | Low impact but costs conversions |
+| Slow dashboard for 5% of users | SEV2 | P2 | Limited impact, no SLA risk |
+| Auth bug during enterprise demo | SEV2 | P0 | Low blast radius, high business risk |
+
+Classify severity based on impact. Decide priority separately during triage. A higher severity level also grants broader authority to take riskier recovery actions — a SEV0 may justify taking a service down entirely to restore stability.
+
+## Roles During a Severity Incident
+
+Assign an **Incident Commander** at the start of every SEV0 or SEV1. One person owns:
+
+- The current severity classification
+- All public status page updates
+- The escalation decision
+
+This prevents contradictory messages on your status page. If two engineers post updates independently, users see conflicting information at the worst possible time. The IC is the single source of truth for external communication until the incident is resolved.
+
+For SEV2 and below, the assigned engineer handles communication directly without a dedicated IC.
+
+## Real-World Examples
+
+### Database cluster failover
+
+**Scenario**: Primary database fails over to replica. 60% of users experience 2 minutes of downtime. No data loss.
+**Classification**: 🟠 SEV1 – High (60% users affected)
+
+Full communication arc:
+
+**Investigating**
+```
+We are investigating degraded performance affecting the majority of users. Our team is actively working to restore service. Next update in 30 minutes.
+```
+
+**Identified**
+```
+We have identified the cause as a database failover. Service is being restored and we are monitoring recovery. Next update in 30 minutes.
+```
+
+**Monitoring**
+```
+The failover has completed and service is recovering. We are monitoring to confirm full stability. Next update in 30 minutes.
+```
+
+**Resolved**
+```
+Service has been fully restored. We apologize for the disruption. Our engineering team will publish a postmortem with root cause and action items.
+```
+
+---
+
+### API authentication breach
+
+**Scenario**: Unauthorized access detected on API keys. Only 5% of users affected, but security is compromised.
+**Classification**: 🔴 SEV0 – Critical (security override)
+
+```
+We are investigating a security incident affecting API authentication. Impacted API keys have been revoked as a precaution. Our security team is actively investigating. Next update in 15 minutes.
+```
+
+---
+
+### CDN edge node degradation
+
+**Scenario**: One CDN region serving stale assets. 15% of users see outdated content. Workaround: hard refresh.
+**Classification**: 🟡 SEV2 – Medium (15% users affected)
+
+```
+We are investigating reports of stale content being served to users in [region]. A workaround is available: clear your browser cache or perform a hard refresh. We will provide an update within 2 hours.
+```
+
+---
+
+### Payment processor timeout
+
+**Scenario**: Stripe webhook failures causing 90% checkout failures. SLA breach triggered.
+**Classification**: 🔴 SEV0 – Critical (90% users affected)
+
+```
+We are investigating a critical issue affecting checkout. The majority of payment attempts are currently failing. Our team is working urgently with our payment provider to restore service. Next update in 15 minutes.
+```
+
+---
+
+### CSS regression on settings page
+
+**Scenario**: Button misaligned on settings page. 3% of users affected. Functional workaround exists.
+**Classification**: 🟢 SEV3 – Low (3% users affected)
+**Status page message**: No public update needed. Internal ticket created and assigned.
+
+## Tips for Using the Severity Matrix
+
+1. **During a live incident, err high.** Over-escalating one incident costs less than under-escalating and letting user impact compound. Calibrate downward in the postmortem if you overshot.
+2. **Watch for severity inflation.** If your team regularly classifies 30%+ of incidents as SEV1, you've lost the signal. Measurable thresholds prevent this from drifting over time.
+3. **Auto-escalate on duration.** If a SEV2 is not resolved within 4 hours, trigger a SEV1 review. Unresolved incidents spreading to new systems always warrant re-classification.
+4. **Use UTC in all public updates.** For distributed teams and global users, UTC timestamps remove timezone ambiguity and prevent confusion during long-running incidents.
+5. **Pin the matrix where it will be found.** In your incident Slack channel, your runbook, and your on-call documentation. A severity matrix only works if engineers can find it in the first 30 seconds of an incident.
+6. **Review thresholds quarterly.** Or after any incident where the classification was debated. If your team is consistently arguing about SEV1 vs SEV2, adjust the threshold.
+
+---
+
+Use the [Incident Severity Matrix Builder](/play/severity-matrix) to classify incidents interactively, test your thresholds against real scenarios, and customize the matrix for your team.

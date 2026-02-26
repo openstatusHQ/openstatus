@@ -1,0 +1,80 @@
+---
+title: "Incident Severity Matrix Builder"
+publishedAt: "2026-02-26"
+author: "Maximilian Kaske"
+description: "Classify incidents with deterministic, auditable rules. Customize thresholds, test scenarios, and export a ready-to-use template for your runbook."
+category: "Product"
+faq:
+  - question: "What does SEV0 mean?"
+    answer: "SEV0 indicates a critical incident — typically a complete service outage or confirmed security breach that requires immediate response from senior engineering leadership. It's the highest severity level and triggers the most aggressive communication and escalation protocols."
+  - question: "How many severity levels should we use?"
+    answer: "Most teams use 3 or 4 levels. Four levels (SEV0 through SEV3) provide enough granularity to distinguish between a full outage and a minor cosmetic bug without overcomplicating triage during a live incident. If you're a small team, 3 levels can work fine — you can always add granularity later."
+  - question: "What is the difference between severity and priority?"
+    answer: "Severity measures the impact of an incident — how many users are affected and how badly. Priority reflects business urgency and resource allocation. A typo on your pricing page might be low severity but high priority if it's costing you conversions. Your severity matrix should classify based on impact alone; priority is a triage decision."
+  - question: "Should security incidents always be SEV0?"
+    answer: "In most cases, yes. Security incidents carry outsized risk even when few users are immediately affected — the blast radius can expand quickly and the reputational impact is disproportionate. Treating all confirmed security incidents as SEV0 ensures you mobilize the right resources immediately."
+  - question: "How often should we review our severity matrix?"
+    answer: "Review it quarterly, or after any major incident where the classification felt wrong. If your team consistently debates whether something is a SEV1 or SEV2, your thresholds probably need adjustment. The builder lets you customize thresholds so your matrix reflects your team's actual operational patterns."
+  - question: "Is a severity matrix required for SOC 2?"
+    answer: "Not by name, but functionally yes. SOC 2 criterion CC7.4 explicitly requires understanding the 'nature and severity' of an incident to determine the appropriate response time frame. Auditors doing a Type II audit will sample real incidents and check whether your severity classification was applied consistently. Without a documented matrix, that evidence trail doesn't exist. ISO 27001 Annex A 5.25 is even more explicit — it directly mandates categorisation and prioritisation of security events."
+  - question: "How does this relate to SLA compliance?"
+    answer: "Your severity levels determine how quickly you respond to incidents, which directly affects your cumulative downtime. If your SLA promises 99.9% uptime, you have roughly 8 hours and 46 minutes of allowed downtime per year. A single misclassified SEV0 treated as SEV2 could burn through that budget."
+---
+
+## Severity Matrix Template
+
+Copy these tables into your runbook, wiki, or Notion page.
+
+```markdown
+| Severity | Users Affected | Security | Response Time | Status Page Label | Communication | Postmortem |
+|----------|---------------|----------|---------------|-------------------|---------------|------------|
+| 🔴 SEV0 – Critical | ≥80% OR security incident | Yes | 15 minutes | Major Outage | Immediate public update + all-hands | Required |
+| 🟠 SEV1 – High | ≥50% | No | 30 minutes | Partial Outage | Public update within 15 min | Required |
+| 🟡 SEV2 – Medium | ≥10% | No | 2 hours | Degraded Performance | Status page update + ticket | Required (team) |
+| 🟢 SEV3 – Low | <10% | No | 1 business day | Minor Issue | Internal ticket only | Optional |
+```
+
+Once you have your severity levels defined, pair them with explicit response expectations. This table tells every engineer exactly how fast to act and when to escalate — no guessing during an active incident.
+
+### Response Expectations Template
+
+```markdown
+| Severity | First Response | Update Cadence | Escalation Path | Auto-Escalate If |
+|----------|---------------|----------------|-----------------|-----------------|
+| SEV0 | 15 min | Every 15 min | VP Engineering + on-call | — |
+| SEV1 | 30 min | Every 30 min | Engineering lead | Not resolved in 2h → SEV0 review |
+| SEV2 | 2 hours | Every 2 hours | Team lead | Not resolved in 4h → SEV1 |
+| SEV3 | 1 business day | Daily | Assigned engineer | Spreads to more systems → re-classify |
+```
+
+## What Is an Incident Severity Matrix?
+
+An incident severity matrix is a structured framework that classifies production incidents based on measurable impact: how many users are affected, whether security is compromised, and whether SLA commitments are at risk.
+
+Without one, incident classification becomes subjective. Different engineers escalate differently. Status page updates are inconsistent. Response times vary depending on who's on call.
+
+A well-defined severity matrix solves this by making classification deterministic. Given the same inputs, every engineer arrives at the same severity level, the same response time expectation, and the same communication protocol.
+
+### Is it required for compliance?
+
+Largely, yes. SOC 2's CC7.4 criterion explicitly states that an organization must obtain "an understanding of the nature and **severity** of the security incident" to determine "the appropriate containment strategy, including a determination of the appropriate response time frame." Without a documented severity framework, you cannot demonstrate consistent, auditable compliance during a Type II audit — where auditors sample real incidents and verify the classification was applied.
+
+ISO 27001 goes further. Annex A control 5.25 directly mandates "effective categorisation and prioritisation of information security events" using impact, urgency, and priority as criteria. It is one of the most explicit requirements across any compliance framework for building exactly this kind of matrix.
+
+NIST SP 800-61, PCI DSS 12.10, and HIPAA's breach determination process all lean on the same concept: you cannot respond proportionally to something you haven't classified.
+
+## SEV0 vs SEV1 vs SEV2 vs SEV3
+
+**SEV0 – Critical**
+Complete outage or security breach. No workaround available. Requires immediate response from senior engineering leadership. Public status page should show "Major Outage" and updates should go out every 15 minutes. A postmortem is always required.
+
+**SEV1 – High**
+Major degradation affecting most users. Significant business or revenue impact. Requires urgent response from engineering leads. Status page shows "Partial Outage" with 30-minute update cadence. A postmortem is required.
+
+**SEV2 – Medium**
+Partial degradation with limited user impact. Standard incident process applies. Status page shows "Degraded Performance" and updates go out every 2 hours. A team-level postmortem is required.
+
+**SEV3 – Low**
+Minor bug or cosmetic issue affecting a small percentage of users. Non-urgent resolution on a 1 business day timeline. Typically no public status page update is needed. Postmortem is optional.
+
+See the [Incident Severity Matrix Template](/guides/incident-severity-matrix) for per-severity status page message templates, postmortem requirements, real-world examples, and tips.
