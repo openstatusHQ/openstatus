@@ -430,6 +430,22 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
       }
@@ -452,6 +468,22 @@ export const tinybirdRouter = createTRPCRouter({
       }),
     )
     .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       if (opts.ctx.workspace.plan === "free") {
         opts.input.regions = undefined;
       }
