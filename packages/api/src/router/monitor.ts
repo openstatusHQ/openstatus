@@ -444,13 +444,12 @@ export const monitorRouter = createTRPCRouter({
       }
 
       if (input.privateLocations && input.privateLocations.length > 0) {
-        const validLocations =
-          await ctx.db.query.privateLocation.findMany({
-            where: and(
-              eq(privateLocation.workspaceId, ctx.workspace.id),
-              inArray(privateLocation.id, input.privateLocations),
-            ),
-          });
+        const validLocations = await ctx.db.query.privateLocation.findMany({
+          where: and(
+            eq(privateLocation.workspaceId, ctx.workspace.id),
+            inArray(privateLocation.id, input.privateLocations),
+          ),
+        });
         if (validLocations.length !== input.privateLocations.length) {
           throw new TRPCError({
             code: "FORBIDDEN",

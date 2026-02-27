@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
-import { monitor, pageComponent } from "@openstatus/db/src/schema";
+import { monitor } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { TRPCError } from "@trpc/server";
 

@@ -164,9 +164,7 @@ test("privateLocation.new succeeds with own workspace monitors", async () => {
   await db
     .delete(privateLocationToMonitors)
     .where(eq(privateLocationToMonitors.privateLocationId, result.id));
-  await db
-    .delete(privateLocation)
-    .where(eq(privateLocation.id, result.id));
+  await db.delete(privateLocation).where(eq(privateLocation.id, result.id));
 });
 
 test("privateLocation.update rejects monitors from another workspace", async () => {
