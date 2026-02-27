@@ -4,6 +4,7 @@ import { type SQL, and, asc, desc, eq, gte } from "@openstatus/db";
 import {
   insertStatusReportUpdateSchema,
   page,
+  pageComponent,
   selectPageComponentSchema,
   selectPageSchema,
   selectStatusReportSchema,
@@ -211,6 +212,25 @@ export const statusReportRouter = createTRPCRouter({
         });
       }
 
+      if (opts.input.pageComponents.length > 0) {
+        const components = await opts.ctx.db.query.pageComponent.findMany({
+          where: and(
+            eq(pageComponent.pageId, opts.input.pageId),
+            eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+        const validIds = new Set(components.map((c) => c.id));
+        const invalid = opts.input.pageComponents.filter(
+          (id) => !validIds.has(id),
+        );
+        if (invalid.length > 0) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Invalid page component IDs.",
+          });
+        }
+      }
+
       return opts.ctx.db.transaction(async (tx) => {
         const newStatusReport = await tx
           .insert(statusReport)
@@ -276,6 +296,25 @@ export const statusReportRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Status report not found",
         });
+      }
+
+      if (opts.input.pageComponents.length > 0) {
+        const components = await opts.ctx.db.query.pageComponent.findMany({
+          where: and(
+            eq(pageComponent.pageId, existing.pageId),
+            eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+        const validIds = new Set(components.map((c) => c.id));
+        const invalid = opts.input.pageComponents.filter(
+          (id) => !validIds.has(id),
+        );
+        if (invalid.length > 0) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Invalid page component IDs.",
+          });
+        }
       }
 
       await opts.ctx.db.transaction(async (tx) => {

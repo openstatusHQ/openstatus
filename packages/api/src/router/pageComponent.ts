@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
 import {
+  monitor,
   pageComponent,
   pageComponentGroup,
   selectMaintenanceSchema,
@@ -179,6 +180,21 @@ export const pageComponentRouter = createTRPCRouter({
               .map((c) => c.monitorId),
           ),
         ] as number[];
+
+        if (inputMonitorIds.length > 0) {
+          const validMonitors = await tx.query.monitor.findMany({
+            where: and(
+              eq(monitor.workspaceId, opts.ctx.workspace.id),
+              inArray(monitor.id, inputMonitorIds),
+            ),
+          });
+          if (validMonitors.length !== inputMonitorIds.length) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Invalid monitor IDs.",
+            });
+          }
+        }
 
         // Collect IDs for static components that have IDs in input
         const inputStaticComponentIds = [

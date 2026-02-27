@@ -1,5 +1,6 @@
-import { and, eq } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
+  monitor,
   privateLocation,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
@@ -37,6 +38,21 @@ export const privateLocationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      if (opts.input.monitors.length) {
+        const validMonitors = await opts.ctx.db.query.monitor.findMany({
+          where: and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            inArray(monitor.id, opts.input.monitors),
+          ),
+        });
+        if (validMonitors.length !== opts.input.monitors.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Invalid monitor IDs.",
+          });
+        }
+      }
+
       return await opts.ctx.db.transaction(async (tx) => {
         const _privateLocation = await tx
           .insert(privateLocation)
@@ -80,6 +96,21 @@ export const privateLocationRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Private location not found",
         });
+      }
+
+      if (opts.input.monitors.length) {
+        const validMonitors = await opts.ctx.db.query.monitor.findMany({
+          where: and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            inArray(monitor.id, opts.input.monitors),
+          ),
+        });
+        if (validMonitors.length !== opts.input.monitors.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Invalid monitor IDs.",
+          });
+        }
       }
 
       return await opts.ctx.db.transaction(async (tx) => {
