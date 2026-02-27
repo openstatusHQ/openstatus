@@ -1,0 +1,85 @@
+---
+title: Set Up the OpenStatus Slack Agent
+description: "A step-by-step tutorial to install the OpenStatus Slack agent and manage incidents directly from Slack"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## What you'll learn
+
+In this tutorial, you'll learn how to install the OpenStatus Slack agent so you can manage incidents directly from your Slack workspace — no need to switch to the dashboard.
+
+### Prerequisites
+
+- An OpenStatus account ([openstatus.dev](https://www.openstatus.dev))
+- A Slack workspace where you have permission to install apps
+
+### What you'll get
+
+By the end of this tutorial, you'll have:
+- The OpenStatus Slack agent installed in your workspace
+- The ability to create, update, and resolve incidents from Slack
+
+## Install the Slack Agent
+
+### 1. Go to Settings
+
+Navigate to **Settings** > **Integrations** in your OpenStatus dashboard.
+
+### 2. Install the Slack Integration
+
+Click the **Install Slack** button. You'll be redirected to Slack's authorization page where you can select the workspace and channel you want to connect.
+
+Grant the requested permissions and click **Allow** to complete the installation.
+
+<Aside>Make sure you select the correct Slack workspace if you belong to multiple workspaces.</Aside>
+
+### 3. Start Managing Incidents from Slack
+
+Once installed, mention **@openstatus** in any channel to interact with the agent. This keeps threads clean — the bot only responds when mentioned.
+
+Here are some examples:
+
+#### Create an incident
+
+Notify your subscribers about a new issue.
+
+```
+@openstatus create an incident for the payment API – high latency detected.
+```
+
+#### Update an incident
+
+Keep your status page updated while you investigate.
+
+```
+@openstatus keep the status page updated that we are still monitoring the issue.
+```
+
+#### Resolve an incident
+
+Close an active incident and let your subscribers know.
+
+```
+@openstatus resolve the ongoing incident on my API status page.
+```
+
+#### Schedule maintenance
+
+Plan downtime so subscribers are informed in advance.
+
+```
+@openstatus schedule a maintenance window for my database next Friday from 2–3 PM.
+```
+
+## What you've accomplished
+
+Congratulations! You've successfully:
+- Installed the OpenStatus Slack agent in your workspace
+- Connected your OpenStatus account to Slack
+- Learned how to manage incidents directly from Slack
+
+## What's next?
+
+- **[Create a Status Page](/tutorial/how-to-create-status-page)** — share your service status publicly with users
+- **[Create a Monitor](/tutorial/how-to-create-monitor)** — set up uptime monitoring for your endpoints
