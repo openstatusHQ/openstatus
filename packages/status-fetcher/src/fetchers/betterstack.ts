@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FetchError, fetchWithRetry } from "../fetch-utils";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
+import { urlHostnameEndsWith } from "../utils";
 
 // DOCS: https://betterstack.com/docs/uptime/status-pages/subscribing-to-status-updates/subscribing-to-api/#access-the-json-endpoint
 
@@ -30,8 +31,8 @@ export class BetterStackFetcher implements StatusFetcher {
     return (
       entry.api_config?.type === "betterstack" ||
       entry.provider === "better-uptime" ||
-      entry.status_page_url.includes("betteruptime.com") ||
-      entry.status_page_url.includes("betterstack.com")
+      urlHostnameEndsWith(entry.status_page_url, "betteruptime.com") ||
+      urlHostnameEndsWith(entry.status_page_url, "betterstack.com")
     );
   }
 

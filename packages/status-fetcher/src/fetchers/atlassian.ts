@@ -2,7 +2,7 @@ import { z } from "zod";
 import { FetchError, fetchWithRetry } from "../fetch-utils";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
 import { SEVERITY_LEVELS } from "../types";
-import { inferStatus } from "../utils";
+import { inferStatus, urlHostnameEndsWith } from "../utils";
 
 // DOCS: https://status.atlassian.com/api
 
@@ -27,7 +27,7 @@ export class AtlassianFetcher implements StatusFetcher {
     return (
       entry.api_config?.type === "atlassian" ||
       entry.provider === "atlassian-statuspage" ||
-      entry.status_page_url.includes("statuspage.io")
+      urlHostnameEndsWith(entry.status_page_url, "statuspage.io")
     );
   }
 

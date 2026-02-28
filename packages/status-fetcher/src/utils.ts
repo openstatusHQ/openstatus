@@ -1,6 +1,20 @@
 import type { SeverityLevel, StatusType } from "./types";
 
 /**
+ * Check if a URL's hostname equals or is a subdomain of the given domain.
+ * Uses proper hostname parsing to prevent substring spoofing attacks
+ * (e.g. "evil.com/statuspage.io" or "statuspage.io.evil.com").
+ */
+export function urlHostnameEndsWith(url: string, domain: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return hostname === domain || hostname.endsWith(`.${domain}`);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Infer normalized status type from free-text description and severity level
  *
  * This function maps diverse status messages from different providers into a

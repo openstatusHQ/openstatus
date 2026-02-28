@@ -1,5 +1,44 @@
 import { describe, expect, it } from "bun:test";
-import { inferStatus } from "../src/utils";
+import { inferStatus, urlHostnameEndsWith } from "../src/utils";
+
+describe("urlHostnameEndsWith", () => {
+  it("should match exact domain", () => {
+    expect(urlHostnameEndsWith("https://statuspage.io", "statuspage.io")).toBe(
+      true,
+    );
+  });
+
+  it("should match subdomains", () => {
+    expect(
+      urlHostnameEndsWith(
+        "https://acme.statuspage.io/api/v2/summary.json",
+        "statuspage.io",
+      ),
+    ).toBe(true);
+  });
+
+  it("should reject domain in path (spoof attempt)", () => {
+    expect(
+      urlHostnameEndsWith("https://evil.com/statuspage.io", "statuspage.io"),
+    ).toBe(false);
+  });
+
+  it("should reject domain as subdomain prefix of another domain (spoof attempt)", () => {
+    expect(
+      urlHostnameEndsWith("https://statuspage.io.evil.com", "statuspage.io"),
+    ).toBe(false);
+  });
+
+  it("should reject partial domain match", () => {
+    expect(
+      urlHostnameEndsWith("https://notstatuspage.io", "statuspage.io"),
+    ).toBe(false);
+  });
+
+  it("should return false for invalid URLs", () => {
+    expect(urlHostnameEndsWith("not-a-url", "statuspage.io")).toBe(false);
+  });
+});
 
 describe("inferStatus", () => {
   describe("Incident workflow states", () => {

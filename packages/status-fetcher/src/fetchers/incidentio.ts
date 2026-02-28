@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FetchError, fetchWithRetry } from "../fetch-utils";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
+import { urlHostnameEndsWith } from "../utils";
 
 // DOCS: https://help.incident.io/articles/7434055319-embed-your-status-page%27s-data-into-your-own-product
 // NOTE: this only works if Widget API is enabled
@@ -31,8 +32,8 @@ export class IncidentioFetcher implements StatusFetcher {
     return (
       entry.api_config?.type === "incidentio" ||
       entry.provider === "incidentio" ||
-      entry.status_page_url.includes("incident.io") ||
-      entry.status_page_url.includes("incidentio.com")
+      urlHostnameEndsWith(entry.status_page_url, "incident.io") ||
+      urlHostnameEndsWith(entry.status_page_url, "incidentio.com")
     );
   }
 

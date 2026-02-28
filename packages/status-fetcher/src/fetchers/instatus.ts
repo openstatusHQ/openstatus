@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { FetchError, fetchWithRetry } from "../fetch-utils";
 import type { StatusFetcher, StatusPageEntry, StatusResult } from "../types";
+import { urlHostnameEndsWith } from "../utils";
 
 // DOCS: https://instatus.com/help/status-page/widgets
 
@@ -25,7 +26,7 @@ export class InstatusFetcher implements StatusFetcher {
     return (
       entry.api_config?.type === "instatus" ||
       entry.provider === "instatus" ||
-      entry.status_page_url.includes("instatus.com")
+      urlHostnameEndsWith(entry.status_page_url, "instatus.com")
     );
   }
 
