@@ -5,6 +5,7 @@ import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/lib/auth";
 import { TRPCReactProvider } from "@/lib/trpc/client";
+import { OpenPanelComponent } from "@openpanel/nextjs";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import { cn } from "@openstatus/ui/lib/utils";
 import { SessionProvider } from "next-auth/react";
@@ -12,7 +13,6 @@ import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
-import { OpenPanelComponent } from "@openpanel/nextjs";
 
 const cal = LocalFont({
   src: "../../public/fonts/CalSans-SemiBold.ttf",
