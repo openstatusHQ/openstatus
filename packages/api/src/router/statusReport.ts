@@ -1,9 +1,10 @@
 import { z } from "zod";
 
-import { type SQL, and, asc, desc, eq, gte } from "@openstatus/db";
+import { type SQL, and, asc, desc, eq, gte, inArray } from "@openstatus/db";
 import {
   insertStatusReportUpdateSchema,
   page,
+  pageComponent,
   selectPageComponentSchema,
   selectPageSchema,
   selectStatusReportSchema,
@@ -211,6 +212,27 @@ export const statusReportRouter = createTRPCRouter({
         });
       }
 
+      // Verify all page components belong to the current workspace
+      if (opts.input.pageComponents.length > 0) {
+        const ownedComponents = await opts.ctx.db
+          .select({ id: pageComponent.id })
+          .from(pageComponent)
+          .where(
+            and(
+              inArray(pageComponent.id, opts.input.pageComponents),
+              eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
+          .all();
+
+        if (ownedComponents.length !== opts.input.pageComponents.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to one or more page components.",
+          });
+        }
+      }
+
       return opts.ctx.db.transaction(async (tx) => {
         const newStatusReport = await tx
           .insert(statusReport)
@@ -276,6 +298,27 @@ export const statusReportRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Status report not found",
         });
+      }
+
+      // Verify all page components belong to the current workspace
+      if (opts.input.pageComponents.length > 0) {
+        const ownedComponents = await opts.ctx.db
+          .select({ id: pageComponent.id })
+          .from(pageComponent)
+          .where(
+            and(
+              inArray(pageComponent.id, opts.input.pageComponents),
+              eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
+          .all();
+
+        if (ownedComponents.length !== opts.input.pageComponents.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to one or more page components.",
+          });
+        }
       }
 
       await opts.ctx.db.transaction(async (tx) => {

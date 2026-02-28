@@ -1,5 +1,6 @@
-import { and, eq } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
+  monitor,
   privateLocation,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
@@ -37,6 +38,27 @@ export const privateLocationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      // Verify all monitors belong to the current workspace
+      if (opts.input.monitors.length > 0) {
+        const ownedMonitors = await opts.ctx.db
+          .select({ id: monitor.id })
+          .from(monitor)
+          .where(
+            and(
+              inArray(monitor.id, opts.input.monitors),
+              eq(monitor.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
+          .all();
+
+        if (ownedMonitors.length !== opts.input.monitors.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to one or more monitors.",
+          });
+        }
+      }
+
       return await opts.ctx.db.transaction(async (tx) => {
         const _privateLocation = await tx
           .insert(privateLocation)
@@ -80,6 +102,27 @@ export const privateLocationRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Private location not found",
         });
+      }
+
+      // Verify all monitors belong to the current workspace
+      if (opts.input.monitors.length > 0) {
+        const ownedMonitors = await opts.ctx.db
+          .select({ id: monitor.id })
+          .from(monitor)
+          .where(
+            and(
+              inArray(monitor.id, opts.input.monitors),
+              eq(monitor.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
+          .all();
+
+        if (ownedMonitors.length !== opts.input.monitors.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to one or more monitors.",
+          });
+        }
       }
 
       return await opts.ctx.db.transaction(async (tx) => {

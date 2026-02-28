@@ -4,6 +4,7 @@ import { type SQL, and, asc, desc, eq, gte, inArray } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToPageComponents,
+  page,
   pageComponent,
   selectMaintenanceSchema,
   selectPageComponentSchema,
@@ -97,7 +98,22 @@ export const maintenanceRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      // Check if the user has access to the monitors
+      // Verify the page belongs to the current workspace
+      const existingPage = await opts.ctx.db.query.page.findFirst({
+        where: and(
+          eq(page.id, opts.input.pageId),
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
+      });
+
+      if (!existingPage) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this page.",
+        });
+      }
+
+      // Check if the user has access to the page components
       if (opts.input.pageComponents?.length) {
         const whereConditions: SQL[] = [
           eq(pageComponent.workspaceId, opts.ctx.workspace.id),

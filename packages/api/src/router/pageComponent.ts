@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
 import {
+  monitor,
+  page,
   pageComponent,
   pageComponentGroup,
   selectMaintenanceSchema,
@@ -134,6 +136,25 @@ export const pageComponentRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       await opts.ctx.db.transaction(async (tx) => {
+        // Verify the page belongs to the current workspace
+        const ownedPage = await tx
+          .select({ id: page.id })
+          .from(page)
+          .where(
+            and(
+              eq(page.id, opts.input.pageId),
+              eq(page.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
+          .get();
+
+        if (!ownedPage) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to this page.",
+          });
+        }
+
         const pageComponentLimit = opts.ctx.workspace.limits["page-components"];
 
         // Get existing state
@@ -179,6 +200,27 @@ export const pageComponentRouter = createTRPCRouter({
               .map((c) => c.monitorId),
           ),
         ] as number[];
+
+        // Verify all provided monitors belong to the current workspace
+        if (inputMonitorIds.length > 0) {
+          const ownedMonitors = await tx
+            .select({ id: monitor.id })
+            .from(monitor)
+            .where(
+              and(
+                inArray(monitor.id, inputMonitorIds),
+                eq(monitor.workspaceId, opts.ctx.workspace.id),
+              ),
+            )
+            .all();
+
+          if (ownedMonitors.length !== inputMonitorIds.length) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You don't have access to one or more monitors.",
+            });
+          }
+        }
 
         // Collect IDs for static components that have IDs in input
         const inputStaticComponentIds = [
