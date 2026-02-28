@@ -212,23 +212,21 @@ export const statusReportRouter = createTRPCRouter({
         });
       }
 
-      // Verify all page components belong to the current workspace
       if (opts.input.pageComponents.length > 0) {
-        const ownedComponents = await opts.ctx.db
-          .select({ id: pageComponent.id })
-          .from(pageComponent)
-          .where(
-            and(
-              inArray(pageComponent.id, opts.input.pageComponents),
-              eq(pageComponent.workspaceId, opts.ctx.workspace.id),
-            ),
-          )
-          .all();
-
-        if (ownedComponents.length !== opts.input.pageComponents.length) {
+        const components = await opts.ctx.db.query.pageComponent.findMany({
+          where: and(
+            eq(pageComponent.pageId, opts.input.pageId),
+            eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+        const validIds = new Set(components.map((c) => c.id));
+        const invalid = opts.input.pageComponents.filter(
+          (id) => !validIds.has(id),
+        );
+        if (invalid.length > 0) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You don't have access to one or more page components.",
+            message: "Invalid page component IDs.",
           });
         }
       }
@@ -293,30 +291,28 @@ export const statusReportRouter = createTRPCRouter({
         ),
       });
 
-      if (!existing) {
+      if (!existing || !existing.pageId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Status report not found",
         });
       }
 
-      // Verify all page components belong to the current workspace
       if (opts.input.pageComponents.length > 0) {
-        const ownedComponents = await opts.ctx.db
-          .select({ id: pageComponent.id })
-          .from(pageComponent)
-          .where(
-            and(
-              inArray(pageComponent.id, opts.input.pageComponents),
-              eq(pageComponent.workspaceId, opts.ctx.workspace.id),
-            ),
-          )
-          .all();
-
-        if (ownedComponents.length !== opts.input.pageComponents.length) {
+        const components = await opts.ctx.db.query.pageComponent.findMany({
+          where: and(
+            eq(pageComponent.pageId, existing.pageId),
+            eq(pageComponent.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+        const validIds = new Set(components.map((c) => c.id));
+        const invalid = opts.input.pageComponents.filter(
+          (id) => !validIds.has(id),
+        );
+        if (invalid.length > 0) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You don't have access to one or more page components.",
+            message: "Invalid page component IDs.",
           });
         }
       }

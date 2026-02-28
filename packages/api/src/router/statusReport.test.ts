@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
   page,
+  pageComponent,
   statusReport,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
@@ -12,6 +13,7 @@ import { createInnerTRPCContext } from "../trpc";
 
 let otherWorkspacePageId: number;
 let otherWorkspaceReportId: number;
+let otherWorkspaceComponentId: number;
 
 beforeAll(async () => {
   const p = await db
@@ -26,6 +28,18 @@ beforeAll(async () => {
     .returning()
     .get();
   otherWorkspacePageId = p.id;
+
+  const component = await db
+    .insert(pageComponent)
+    .values({
+      workspaceId: 2,
+      pageId: otherWorkspacePageId,
+      name: "Other workspace component",
+      type: "static",
+    })
+    .returning()
+    .get();
+  otherWorkspaceComponentId = component.id;
 
   const report = await db
     .insert(statusReport)
@@ -54,6 +68,9 @@ afterAll(async () => {
   await db
     .delete(statusReport)
     .where(eq(statusReport.id, otherWorkspaceReportId));
+  await db
+    .delete(pageComponent)
+    .where(eq(pageComponent.id, otherWorkspaceComponentId));
   await db.delete(page).where(eq(page.id, otherWorkspacePageId));
 });
 
@@ -159,4 +176,58 @@ test("statusReport.updateStatus succeeds for own workspace report", async () => 
     where: eq(statusReport.id, 1),
   });
   expect(updated?.title).toBe("Updated Title");
+});
+
+test("statusReport.create rejects pageComponents from another workspace", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  try {
+    await caller.statusReport.create({
+      title: "Cross-workspace injection",
+      status: "investigating",
+      pageId: 1, // valid page for workspace 1
+      pageComponents: [otherWorkspaceComponentId], // component from workspace 2
+      date: new Date(),
+      message: "Should be rejected",
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("FORBIDDEN");
+  }
+});
+
+test("statusReport.updateStatus rejects pageComponents from another workspace", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  try {
+    await caller.statusReport.updateStatus({
+      id: 1, // valid report for workspace 1
+      pageComponents: [otherWorkspaceComponentId], // component from workspace 2
+      title: "Cross-workspace injection",
+      status: "investigating",
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("FORBIDDEN");
+  }
+
+  // Verify the report was NOT modified
+  const report = await db.query.statusReport.findFirst({
+    where: eq(statusReport.id, 1),
+  });
+  expect(report?.title).toBe("Updated Title"); // still the value from the previous test
 });

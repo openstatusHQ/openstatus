@@ -108,6 +108,10 @@ export default defineConfig({
               label: "Get Started with OpenStatus CLI",
               slug: "tutorial/get-started-with-openstatus-cli",
             },
+            {
+              label: "How to set up the Slack Agent",
+              slug: "tutorial/how-to-setup-slack-agent",
+            },
           ],
         },
 

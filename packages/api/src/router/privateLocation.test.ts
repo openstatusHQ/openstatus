@@ -112,3 +112,79 @@ test("privateLocation.update succeeds for own workspace location", async () => {
   expect(result).toBeDefined();
   expect(result.name).toBe("Updated Location Name");
 });
+
+test("privateLocation.new rejects monitors from another workspace", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  try {
+    await caller.privateLocation.new({
+      name: "Injected Location",
+      token: "test-token-inject",
+      monitors: [5], // monitor 5 belongs to workspace 3
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("FORBIDDEN");
+  }
+});
+
+test("privateLocation.new succeeds with own workspace monitors", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  const result = await caller.privateLocation.new({
+    name: "Valid Location",
+    token: "test-token-valid-new",
+    monitors: [1], // monitor 1 belongs to workspace 1
+  });
+
+  expect(result).toBeDefined();
+  expect(result.name).toBe("Valid Location");
+
+  // Verify the monitor association was created
+  const associations = await db.query.privateLocationToMonitors.findMany({
+    where: eq(privateLocationToMonitors.privateLocationId, result.id),
+  });
+  expect(associations.length).toBe(1);
+  expect(associations[0].monitorId).toBe(1);
+
+  // Cleanup
+  await db
+    .delete(privateLocationToMonitors)
+    .where(eq(privateLocationToMonitors.privateLocationId, result.id));
+  await db.delete(privateLocation).where(eq(privateLocation.id, result.id));
+});
+
+test("privateLocation.update rejects monitors from another workspace", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1 },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  try {
+    await caller.privateLocation.update({
+      id: ownWorkspaceLocationId,
+      name: "Updated Location Name",
+      monitors: [5], // monitor 5 belongs to workspace 3
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("FORBIDDEN");
+  }
+});

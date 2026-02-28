@@ -3,6 +3,7 @@ import { db, eq } from "@openstatus/db";
 import {
   monitorTag,
   monitorTagsToMonitors,
+  privateLocation,
   privateLocationToMonitors,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
@@ -12,6 +13,8 @@ import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
 
 let tagId: number;
+let otherWorkspacePrivateLocationId: number;
+let ownWorkspacePrivateLocationId: number;
 
 beforeAll(async () => {
   const tag = await db
@@ -24,6 +27,28 @@ beforeAll(async () => {
     .returning()
     .get();
   tagId = tag.id;
+
+  const otherLoc = await db
+    .insert(privateLocation)
+    .values({
+      workspaceId: 2,
+      name: "Other workspace private location",
+      token: "monitor-test-other-token",
+    })
+    .returning()
+    .get();
+  otherWorkspacePrivateLocationId = otherLoc.id;
+
+  const ownLoc = await db
+    .insert(privateLocation)
+    .values({
+      workspaceId: 1,
+      name: "Own workspace private location",
+      token: "monitor-test-own-token",
+    })
+    .returning()
+    .get();
+  ownWorkspacePrivateLocationId = ownLoc.id;
 });
 
 afterAll(async () => {
@@ -31,6 +56,20 @@ afterAll(async () => {
     .delete(monitorTagsToMonitors)
     .where(eq(monitorTagsToMonitors.monitorTagId, tagId));
   await db.delete(monitorTag).where(eq(monitorTag.id, tagId));
+  await db
+    .delete(privateLocationToMonitors)
+    .where(
+      eq(
+        privateLocationToMonitors.privateLocationId,
+        ownWorkspacePrivateLocationId,
+      ),
+    );
+  await db
+    .delete(privateLocation)
+    .where(eq(privateLocation.id, otherWorkspacePrivateLocationId));
+  await db
+    .delete(privateLocation)
+    .where(eq(privateLocation.id, ownWorkspacePrivateLocationId));
 });
 
 test("monitor.updateTags rejects monitor from another workspace", async () => {
@@ -151,4 +190,52 @@ test("monitor.updateSchedulingRegions succeeds for own workspace monitor", async
     periodicity: "1m",
     privateLocations: [],
   });
+});
+
+test("monitor.updateSchedulingRegions rejects privateLocations from another workspace", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1, limits: allPlans.team.limits },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  try {
+    await caller.monitor.updateSchedulingRegions({
+      id: 1, // own monitor
+      regions: ["ams"],
+      periodicity: "1m",
+      privateLocations: [otherWorkspacePrivateLocationId], // workspace 2
+    });
+    throw new Error("Should have thrown");
+  } catch (e) {
+    expect(e).toBeInstanceOf(TRPCError);
+    expect((e as TRPCError).code).toBe("FORBIDDEN");
+  }
+});
+
+test("monitor.updateSchedulingRegions succeeds with own workspace privateLocations", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
+    session: { user: { id: "1" } },
+    // @ts-expect-error - minimal workspace for test
+    workspace: { id: 1, limits: allPlans.team.limits },
+  });
+  const caller = edgeRouter.createCaller(ctx);
+
+  await caller.monitor.updateSchedulingRegions({
+    id: 1,
+    regions: ["ams"],
+    periodicity: "1m",
+    privateLocations: [ownWorkspacePrivateLocationId],
+  });
+
+  const associations = await db.query.privateLocationToMonitors.findMany({
+    where: eq(privateLocationToMonitors.monitorId, 1),
+  });
+  const linked = associations.find(
+    (a) => a.privateLocationId === ownWorkspacePrivateLocationId,
+  );
+  expect(linked).toBeDefined();
 });

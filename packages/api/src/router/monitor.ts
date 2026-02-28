@@ -27,6 +27,7 @@ import {
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
+  privateLocation,
   privateLocationToMonitors,
   selectIncidentSchema,
   selectMonitorSchema,
@@ -440,6 +441,21 @@ export const monitorRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Monitor not found.",
         });
+      }
+
+      if (input.privateLocations && input.privateLocations.length > 0) {
+        const validLocations = await ctx.db.query.privateLocation.findMany({
+          where: and(
+            eq(privateLocation.workspaceId, ctx.workspace.id),
+            inArray(privateLocation.id, input.privateLocations),
+          ),
+        });
+        if (validLocations.length !== input.privateLocations.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Invalid private location IDs.",
+          });
+        }
       }
 
       await ctx.db.transaction(async (tx) => {

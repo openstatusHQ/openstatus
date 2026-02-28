@@ -98,7 +98,6 @@ export const maintenanceRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      // Verify the page belongs to the current workspace
       const existingPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.pageId),
@@ -108,8 +107,8 @@ export const maintenanceRouter = createTRPCRouter({
 
       if (!existingPage) {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "You don't have access to this page.",
+          code: "NOT_FOUND",
+          message: "Page not found.",
         });
       }
 

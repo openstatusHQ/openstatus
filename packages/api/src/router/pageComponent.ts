@@ -201,23 +201,17 @@ export const pageComponentRouter = createTRPCRouter({
           ),
         ] as number[];
 
-        // Verify all provided monitors belong to the current workspace
         if (inputMonitorIds.length > 0) {
-          const ownedMonitors = await tx
-            .select({ id: monitor.id })
-            .from(monitor)
-            .where(
-              and(
-                inArray(monitor.id, inputMonitorIds),
-                eq(monitor.workspaceId, opts.ctx.workspace.id),
-              ),
-            )
-            .all();
-
-          if (ownedMonitors.length !== inputMonitorIds.length) {
+          const validMonitors = await tx.query.monitor.findMany({
+            where: and(
+              eq(monitor.workspaceId, opts.ctx.workspace.id),
+              inArray(monitor.id, inputMonitorIds),
+            ),
+          });
+          if (validMonitors.length !== inputMonitorIds.length) {
             throw new TRPCError({
               code: "FORBIDDEN",
-              message: "You don't have access to one or more monitors.",
+              message: "Invalid monitor IDs.",
             });
           }
         }

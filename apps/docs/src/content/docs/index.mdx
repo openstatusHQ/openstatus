@@ -1,41 +1,68 @@
 ---
-title: Welcome to openstatus
-description: Openstatus is an open-source global uptime monitoring platform that offers a status page and monitoring as code.
+title: "OpenStatus Docs — Open Source Status Page & Uptime Monitoring"
+description: "OpenStatus documentation — learn how to create your open-source status page, monitor your websites and APIs from 35+ global locations, and configure alerts."
 template: doc
 topic: docs
 next: false
 hero:
-  title: Welcome to openstatus
-  tagline: Explore our documentation to get started with openstatus and start monitoring your services.
+  title: OpenStatus Documentation
+  tagline: Learn how to create your status page, monitor your services, and keep your users informed — all open source.
 ---
 
-import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
-import "../../custom.css"
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
+import "../../custom.css";
 
 ### What is openstatus?
 
 [openstatus](https://www.openstatus.dev) is an open-source status page platform with uptime monitoring. Monitor your websites, APIs, and services from multiple global locations and share real-time status updates with your users.
 
+### Why OpenStatus?
+
+- **Open source** — fully open-source, self-hostable, and transparent
+- **Beautiful status pages** — keep your users informed with public or audience specific status pages
+- **30+ global locations** — monitor from your users' perspective, not just your own
+- **HTTP, TCP & DNS monitors** — check APIs, servers, and DNS resolution
+- **12 notification channels** — Slack, Discord, PagerDuty, OpsGenie, email, SMS, and more
+- **Monitoring as code** — define monitors in YAML, manage with CLI or Terraform
+- **OpenTelemetry export** — send metrics to Grafana, Datadog, Honeycomb, or any OTLP endpoint
+- **Private locations** — deploy lightweight probes inside your own infrastructure
+
 ### How to use this documentation
 
 Our documentation follows the [Diátaxis framework](https://diataxis.fr/), organizing content into four distinct categories to help you find what you need:
 
-<CardGrid >
-    <LinkCard title="📚 Tutorials"  href="/tutorial/getting-started/" description="Step-by-step lessons to learn openstatus from scratch. Start here if you're new!" />
-    <LinkCard title="🛠️ How-to Guides"  href="/guides/getting-started/" description="Practical guides to solve specific problems and accomplish particular tasks." />
-    <LinkCard title="💡 Concepts"   href="/concept/getting-started/" description="In-depth explanations of key concepts, design decisions, and best practices." />
-    <LinkCard title="📖 Reference"  href="/reference" description="Technical specifications, API documentation, and configuration references." />
+<CardGrid>
+  <LinkCard
+    title="📚 Tutorials"
+    href="/tutorial/getting-started/"
+    description="Step-by-step lessons to learn openstatus from scratch. Start here if you're new!"
+  />
+  <LinkCard
+    title="🛠️ How-to Guides"
+    href="/guides/getting-started/"
+    description="Practical guides to solve specific problems and accomplish particular tasks."
+  />
+  <LinkCard
+    title="💡 Concepts"
+    href="/concept/getting-started/"
+    description="In-depth explanations of key concepts, design decisions, and best practices."
+  />
+  <LinkCard
+    title="📖 Reference"
+    href="/reference"
+    description="Technical specifications, API documentation, and configuration references."
+  />
 </CardGrid>
 
 **Not sure where to start?**
+
 - **New users**: Begin with our [tutorials](/tutorial/getting-started/) to create your first monitor
 - **Experienced users**: Check out [how-to guides](/guides/getting-started/) for specific tasks
 - **Need help?** Visit our [help section](/help/support/) or join our community
 
-
 ### Join the community
 
-Join the commmunity to get help, share your ideas or just to say hi.
+Join the community to get help, share your ideas or just to say hi.
 
 <CardGrid>
 <LinkCard href="https://bsky.app/profile/openstatus.dev" title="Bluesky" />

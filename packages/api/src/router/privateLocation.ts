@@ -38,23 +38,17 @@ export const privateLocationRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      // Verify all monitors belong to the current workspace
-      if (opts.input.monitors.length > 0) {
-        const ownedMonitors = await opts.ctx.db
-          .select({ id: monitor.id })
-          .from(monitor)
-          .where(
-            and(
-              inArray(monitor.id, opts.input.monitors),
-              eq(monitor.workspaceId, opts.ctx.workspace.id),
-            ),
-          )
-          .all();
-
-        if (ownedMonitors.length !== opts.input.monitors.length) {
+      if (opts.input.monitors.length) {
+        const validMonitors = await opts.ctx.db.query.monitor.findMany({
+          where: and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            inArray(monitor.id, opts.input.monitors),
+          ),
+        });
+        if (validMonitors.length !== opts.input.monitors.length) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You don't have access to one or more monitors.",
+            message: "Invalid monitor IDs.",
           });
         }
       }
@@ -104,23 +98,17 @@ export const privateLocationRouter = createTRPCRouter({
         });
       }
 
-      // Verify all monitors belong to the current workspace
-      if (opts.input.monitors.length > 0) {
-        const ownedMonitors = await opts.ctx.db
-          .select({ id: monitor.id })
-          .from(monitor)
-          .where(
-            and(
-              inArray(monitor.id, opts.input.monitors),
-              eq(monitor.workspaceId, opts.ctx.workspace.id),
-            ),
-          )
-          .all();
-
-        if (ownedMonitors.length !== opts.input.monitors.length) {
+      if (opts.input.monitors.length) {
+        const validMonitors = await opts.ctx.db.query.monitor.findMany({
+          where: and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            inArray(monitor.id, opts.input.monitors),
+          ),
+        });
+        if (validMonitors.length !== opts.input.monitors.length) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You don't have access to one or more monitors.",
+            message: "Invalid monitor IDs.",
           });
         }
       }
