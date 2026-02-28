@@ -12,6 +12,7 @@ import LocalFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ogMetadata, twitterMetadata } from "./metadata";
 import { defaultMetadata } from "./metadata";
+import { OpenPanelComponent } from "@openpanel/nextjs";
 
 const cal = LocalFont({
   src: "../../public/fonts/CalSans-SemiBold.ttf",
@@ -102,6 +103,15 @@ export default async function RootLayout({
                 {children}
                 <TailwindIndicator />
                 <Toaster richColors expand />
+                {process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
+                  <OpenPanelComponent
+                    clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+                    trackScreenViews
+                    trackOutgoingLinks
+                    trackAttributes
+                    sessionReplay={{ enabled: true }}
+                  />
+                )}
               </ThemeProvider>
             </NuqsAdapter>
           </TRPCReactProvider>
