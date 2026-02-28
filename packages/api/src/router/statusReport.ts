@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { type SQL, and, asc, desc, eq, gte, inArray } from "@openstatus/db";
+import { type SQL, and, asc, desc, eq, gte } from "@openstatus/db";
 import {
   insertStatusReportUpdateSchema,
   page,
