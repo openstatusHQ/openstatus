@@ -19,6 +19,8 @@ faq:
 
 ## Looking for an Uptime Kuma alternative?
 
+**TL;DR:** Both are open-source. Openstatus offers managed SaaS hosting and monitors from 28 global regions simultaneously. Uptime Kuma is self-hosted only and checks from one server location. Choose openstatus for global coverage without infrastructure, Uptime Kuma for fully free self-managed monitoring.
+
 If you love the open-source ethos of Uptime Kuma but want managed hosting and global coverage, openstatus gives you both. Monitor from 28 regions across 3 cloud providers without maintaining your own server — or self-host it if you prefer. Either way, you get multi-region checks that Uptime Kuma's single-server architecture can't provide.
 
 Openstatus and Uptime Kuma are both open-source uptime monitoring tools, making this a comparison between two projects with shared values but different architectures. The fundamental difference is the **hosting model**: Uptime Kuma is self-hosted only — you run it on your own server and it monitors from that single location. Openstatus is available both as a **managed SaaS** and for self-hosting, and checks from **28 regions worldwide**.
@@ -27,17 +29,29 @@ If you want zero infrastructure responsibility and global multi-region checks, o
 
 ## Feature Comparison
 
-| Feature | openstatus | Uptime Kuma |
-| --- | --- | --- |
-| Open-source | + | + |
-| Self-hosted or cloud-based | both | self-hosted only |
-| Multi-cloud | 3 cloud providers | single server |
-| Multi-region (global) | 28 regions | 1 (your server location) |
-| OTel Export | + | - |
-| GitHub Action | + | - |
-| Team members | unlimited | unlimited |
-| Managed SaaS option | + | - |
-| Monitoring as code | + | - |
+| Feature             | openstatus          | Uptime Kuma              |
+| ------------------- | ------------------- | ------------------------ |
+| Open-source         | Yes                 | Yes                      |
+| Hosting model       | SaaS or self-hosted | Self-hosted only         |
+| Multi-cloud         | 3 cloud providers   | Single server            |
+| Multi-region        | 28 regions          | 1 (your server location) |
+| OTel Export         | Yes                 | No                       |
+| GitHub Action       | Yes                 | No                       |
+| Team members        | Unlimited           | Unlimited                |
+| Managed SaaS option | Yes                 | No                       |
+| Monitoring as code  | Yes                 | No                       |
+
+## Pricing Comparison
+
+|                     | openstatus                                    | Uptime Kuma                           |
+| ------------------- | --------------------------------------------- | ------------------------------------- |
+| Software cost       | Free (Hobby), $30/mo (Starter), $100/mo (Pro) | Free                                  |
+| Infrastructure cost | $0 (managed SaaS)                             | Your server cost ($5-20+/mo VPS)      |
+| Maintenance         | None (managed)                                | You manage updates, backups, uptime   |
+| Multi-region        | Included (28 regions)                         | Requires additional server per region |
+| Status page         | Included                                      | Included                              |
+
+Uptime Kuma is free software, but running it requires a server. A basic VPS costs $5-20/month, and you're responsible for updates, backups, and keeping the monitoring server itself online. Openstatus's managed SaaS eliminates that overhead. To get multi-region monitoring with Uptime Kuma, you'd need to run separate instances in each region.
 
 ## When to Choose openstatus
 
@@ -53,3 +67,21 @@ If you want zero infrastructure responsibility and global multi-region checks, o
 - You are comfortable **running your own server**
 - You need monitoring **behind a firewall** with no external SaaS dependency
 - You prefer a **single-location** check from your own infrastructure
+
+## Switching from Uptime Kuma to openstatus
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Recreate your monitors** — use the dashboard or monitoring-as-code (YAML + CLI) to define your HTTP, TCP, and DNS checks
+3. **Set up your status page** — openstatus includes a branded status page with custom domain support
+4. **Configure alerts** — openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, and more
+5. **Decommission your server** — once your monitors are running on openstatus, you can shut down your Uptime Kuma instance and stop paying for the VPS
+
+If you prefer to self-host openstatus instead, check the [GitHub repository](https://github.com/openstatusHQ/openstatus) for Docker setup instructions.
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=compare-uptimekuma">Get Started Free</ButtonLink>
+
+---
