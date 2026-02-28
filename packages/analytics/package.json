@@ -8,7 +8,7 @@
   "main": "src/index.ts",
   "scripts": {},
   "dependencies": {
-    "@openpanel/sdk": "1.1.0",
+    "@openpanel/sdk": "1.0.3",
     "@t3-oss/env-core": "0.13.10",
     "zod": "4.1.13"
   },
