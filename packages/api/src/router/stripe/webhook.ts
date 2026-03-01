@@ -99,11 +99,7 @@ export const webhookRouter = createTRPCRouter({
             ? currentValue + 1
             : currentValue;
 
-      finalLimits = updateAddonInLimits(
-        finalLimits,
-        feature.feature,
-        newValue,
-      );
+      finalLimits = updateAddonInLimits(finalLimits, feature.feature, newValue);
     }
 
     await opts.ctx.db
