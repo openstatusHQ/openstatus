@@ -1094,7 +1094,7 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      return subscription.id;
+      return subscription.token;
     }),
 
   getSubscriptionByToken: publicProcedure

@@ -84,10 +84,10 @@ export function Header(props: React.ComponentProps<"header">) {
 
   const subscribeMutation = useMutation(
     trpc.statusPage.subscribe.mutationOptions({
-      onSuccess: (id) => {
-        if (!id) return;
+      onSuccess: (token) => {
+        if (!token) return;
         sendPageSubscriptionMutation.mutate(
-          { id },
+          { token },
           {
             onError: (error) => {
               if (isTRPCClientError(error)) {

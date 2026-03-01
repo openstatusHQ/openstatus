@@ -47,8 +47,15 @@ export const emailRouter = createTRPCRouter({
         },
       });
 
+      if (!subscriber) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Subscriber not found",
+        });
+      }
+
       const workspace = selectWorkspaceSchema.safeParse(
-        subscriber?.page?.workspace,
+        subscriber.page?.workspace,
       );
 
       if (!workspace.success) {
@@ -62,13 +69,6 @@ export const emailRouter = createTRPCRouter({
         return;
       }
 
-      if (!subscriber) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Subscriber not found",
-        });
-      }
-
       if (!subscriber.email) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -80,6 +80,13 @@ export const emailRouter = createTRPCRouter({
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Subscription already verified",
+        });
+      }
+
+      if (!subscriber.token) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Subscription has no verification token",
         });
       }
 
@@ -105,7 +112,7 @@ export const emailRouter = createTRPCRouter({
           componentIds: [],
           channelType: "email",
           email: subscriber.email,
-          token: subscriber.token ?? "",
+          token: subscriber.token,
           acceptedAt: subscriber.acceptedAt ?? undefined,
         },
         verifyUrl,
@@ -119,10 +126,10 @@ export const emailRouter = createTRPCRouter({
    * Kept for backward compatibility with existing status-page UI
    */
   sendPageSubscription: publicProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ token: z.string().uuid() }))
     .mutation(async (opts) => {
       const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: eq(pageSubscriber.id, opts.input.id),
+        where: eq(pageSubscriber.token, opts.input.token),
         with: {
           page: {
             with: {
@@ -136,6 +143,13 @@ export const emailRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Page subscriber not found",
+        });
+      }
+
+      if (_pageSubscriber.acceptedAt) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Subscription already verified",
         });
       }
 
