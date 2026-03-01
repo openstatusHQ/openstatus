@@ -19,6 +19,8 @@ faq:
 
 ## Looking for a BetterStack alternative?
 
+**TL;DR:** Openstatus checks from 28 regions in parallel for a true global snapshot. BetterStack checks from 4 regions in round-robin (one at a time). Openstatus is open-source with transparent pricing — no add-on fees for status pages or subscribers.
+
 If you want more monitoring regions, transparent pricing, and no add-on fees, openstatus is the BetterStack alternative to consider. It checks from 28 regions in parallel (vs. BetterStack's 4 in round-robin), is fully open-source, and includes status pages and unlimited subscribers in the base price — no surprise charges.
 
 Openstatus and BetterStack are both uptime monitoring platforms with status pages. Openstatus is open-source, bootstrapped, and built for teams that want global coverage and transparent pricing. BetterStack is a VC-backed, closed-source SaaS with a broader product suite including log management.
@@ -27,18 +29,31 @@ The most significant technical difference is scheduling strategy: openstatus che
 
 ## Feature Comparison
 
-| Feature | openstatus | BetterStack |
-| --- | --- | --- |
-| Open-source | + | - |
-| Bootstrap | + | - |
-| Multi-region | 28 | 4 |
-| Scheduling strategy | parallel | round-robin |
-| Incident escalation | - | + |
-| OpenTelemetry exporter | + | - |
-| GitHub Action | + | - |
-| CLI to trigger checks | + | - |
-| Team members | unlimited | restricted |
-| Password-protected status page | included in team plan | additional $42/mo. |
+| Feature                        | openstatus             | BetterStack                 |
+| ------------------------------ | ---------------------- | --------------------------- |
+| Open-source                    | Yes                    | No                          |
+| Multi-region                   | 28 regions             | ~4 regions                  |
+| Scheduling strategy            | Parallel (all at once) | Round-robin (one at a time) |
+| Incident escalation            | No                     | Yes                         |
+| OpenTelemetry exporter         | Yes                    | No                          |
+| GitHub Action                  | Yes                    | No                          |
+| CLI to trigger checks          | Yes                    | No                          |
+| Team members                   | Unlimited              | Restricted                  |
+| Password-protected status page | Included in team plan  | $42/mo add-on               |
+| Self-hostable                  | Yes                    | No                          |
+
+## Pricing Comparison
+
+|                     | openstatus              | BetterStack                 |
+| ------------------- | ----------------------- | --------------------------- |
+| Free plan           | 1 monitor, 6 regions    | 5 monitors, limited regions |
+| Starter/paid        | $30/mo (20 monitors)    | $25/mo                      |
+| Pro                 | $100/mo (50 monitors)   | Custom pricing              |
+| Private status page | Included                | $42/mo add-on               |
+| Team members        | Unlimited on paid plans | Restricted                  |
+| Log management      | Not included            | Available (separate cost)   |
+
+BetterStack's base price looks competitive, but add-ons for private status pages and subscriber tiers increase the effective cost significantly. Openstatus pricing is flat — no surprise charges.
 
 ## When to Choose openstatus
 
@@ -52,3 +67,19 @@ The most significant technical difference is scheduling strategy: openstatus che
 - You need **incident escalation** workflows
 - You want a single platform for uptime monitoring **and** log management
 - You prefer a mature, closed-source SaaS with dedicated support tiers
+
+## Switching from BetterStack to openstatus
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Recreate your monitors** — use the dashboard or monitoring-as-code (YAML + CLI) to define them programmatically
+3. **Set up your status page** — openstatus includes branded status pages with custom domain support, password protection, and unlimited subscribers on paid plans
+4. **Configure alerts** — openstatus supports Slack, Discord, PagerDuty, OpsGenie, and more
+5. **Export telemetry** — if you use BetterStack for log management, openstatus supports OpenTelemetry export to push check results into your existing observability stack
+
+---
+
+Start monitoring from 28 regions today
+
+## <ButtonLink href="https://app.openstatus.dev?ref=compare-betterstack">Get Started Free</ButtonLink>
+
+---

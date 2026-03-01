@@ -19,6 +19,8 @@ faq:
 
 ## Looking for an Atlassian Statuspage alternative?
 
+**TL;DR:** Atlassian Statuspage has no built-in monitoring, charges per subscriber tier, and gates custom styling behind a $399/month plan. Openstatus includes monitoring from 28 regions, flat pricing with unlimited subscribers, and is fully open-source. With OpsGenie shutting down in 2027, now is a good time to simplify your stack.
+
 If you're paying for Statuspage and a separate monitoring tool on top of it, openstatus replaces both. It includes uptime monitoring from 28 global regions and a native status page in one product — with flat pricing that doesn't scale with your subscriber count. Plus, with OpsGenie shutting down in 2027, now is a good time to simplify your stack.
 
 Atlassian Statuspage is the longest-established name in status pages, but it comes with significant trade-offs: **no built-in monitoring**, pricing that scales with your subscriber count, and customization gated behind its most expensive tier. Openstatus covers monitoring and status pages in one product at a fraction of the cost, with flat pricing and an open-source codebase.
@@ -29,17 +31,31 @@ Additionally, OpsGenie — Atlassian's incident management product often used al
 
 ## Feature Comparison
 
-| Feature | openstatus | Atlassian Statuspage |
-| --- | --- | --- |
-| Open-source | + | - |
-| Self-hosted | + | - |
-| Built-in uptime monitoring | + | - |
-| Multi-region | 28 | - |
-| Monitoring as code | + | - |
-| OpenTelemetry export | + | - |
-| Subscriber-count billing | flat | + (costs scale) |
-| Custom HTML/CSS | themes | $399/mo plan only |
-| Team members | unlimited | restricted by plan |
+| Feature                    | openstatus       | Atlassian Statuspage    |
+| -------------------------- | ---------------- | ----------------------- |
+| Open-source                | Yes              | No                      |
+| Self-hosted                | Yes              | No                      |
+| Built-in uptime monitoring | Yes              | No                      |
+| Multi-region               | 28 regions       | Not applicable          |
+| Monitoring as code         | Yes              | No                      |
+| OpenTelemetry export       | Yes              | No                      |
+| Subscriber-count billing   | Flat (unlimited) | Scales with subscribers |
+| Custom HTML/CSS            | Themes included  | $399/mo plan only       |
+| Team members               | Unlimited        | Restricted by plan      |
+
+## Pricing Comparison
+
+|                     | openstatus       | Atlassian Statuspage        |
+| ------------------- | ---------------- | --------------------------- |
+| Starting price      | $30/mo           | $29/mo                      |
+| Monitoring included | Yes (28 regions) | No (requires separate tool) |
+| Status pages        | 1 (+$20/mo each) | 1                           |
+| Subscribers         | Unlimited        | 100 (scales with cost)      |
+| Custom Themes       | Included         | $399/mo plan                |
+| Team members        | Unlimited        | Restricted                  |
+| 3 status pages      | $70/mo           | $99/mo                      |
+
+The starting prices look similar, but Atlassian Statuspage's $29/month plan only includes 100 subscribers and no monitoring. To get custom styling, you need the $399/month plan. And you still need to pay for a separate monitoring tool on top of that. Openstatus includes monitoring, unlimited subscribers, and theming from $30/month.
 
 ## When to Choose openstatus
 
@@ -54,3 +70,28 @@ Additionally, OpsGenie — Atlassian's incident management product often used al
 - Your organization is deeply embedded in the **Atlassian ecosystem** and requires native Jira integration
 - You need enterprise **subscriber management at very large scale** with Atlassian's compliance certifications
 - Your contracts or procurement processes are already tied to **Atlassian Enterprise agreements**
+
+## Switching from Atlassian Statuspage to openstatus
+
+Atlassian Statuspage is one of the most common platforms teams switch from. Here's the migration path:
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Recreate your components** — set up the same service components you had on Statuspage
+3. **Create monitors** — add HTTP, TCP, or DNS monitors for each component. Unlike Statuspage, openstatus detects incidents automatically from 28 regions — no need for a separate Datadog or Pingdom integration
+4. **Set up your status page** — configure custom domain, branding, maintenance windows, and subscriber notifications
+5. **Configure alerts** — openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, Grafana OnCall, and more
+6. **Update your DNS** — point your custom status page domain to openstatus
+7. **Notify subscribers** — let your status page subscribers know about any URL changes
+8. **Cancel Statuspage + monitoring tool** — since openstatus includes monitoring, you can cancel both your Statuspage subscription and the separate monitoring service
+
+With OpsGenie shutting down in April 2027, this is also a good time to consolidate your incident detection and communication into a single tool.
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=compare-atlassianstatuspage">
+  Get Started Free
+</ButtonLink>
+
+---

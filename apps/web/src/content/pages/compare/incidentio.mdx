@@ -17,6 +17,8 @@ faq:
 
 ## Looking for an incident.io alternative?
 
+**TL;DR:** Openstatus detects outages and communicates them to users via status pages. Incident.io coordinates the human response through Slack workflows and on-call scheduling. They solve adjacent problems — openstatus is for monitoring and status pages, incident.io is for incident coordination.
+
 If you need to detect outages and communicate them to users — not just coordinate the human response — openstatus is the simpler, more affordable choice. It combines uptime monitoring from 28 global regions with native status pages in a single open-source product, no separate monitoring tool required.
 
 Openstatus and incident.io solve adjacent problems. Incident.io is an **incident management** platform — it coordinates the human response to an outage through Slack workflows, on-call scheduling, and post-mortems. Openstatus is a **monitoring and status page** platform — it detects outages automatically and communicates them to end users.
@@ -25,18 +27,30 @@ The key distinction: incident.io has no uptime monitoring. It relies on external
 
 ## Feature Comparison
 
-| Feature | openstatus | incident.io |
-| --- | --- | --- |
-| Open-source | + | - |
-| Built-in uptime monitoring | + | - |
-| Multi-region | 28 | - |
-| Monitoring as code | + | - |
-| OpenTelemetry export | + | - |
-| Status page included | + | + |
-| Incident management | - | + |
-| On-call scheduling | - | + |
-| Post-mortems | - | + |
-| Team members | unlimited | per-seat |
+| Feature                    | openstatus | incident.io      |
+| -------------------------- | ---------- | ---------------- |
+| Open-source                | Yes        | No               |
+| Built-in uptime monitoring | Yes        | No               |
+| Multi-region               | 28 regions | Not applicable   |
+| Monitoring as code         | Yes        | No               |
+| OpenTelemetry export       | Yes        | No               |
+| Status page included       | Yes        | Yes              |
+| Incident management        | No         | Yes              |
+| On-call scheduling         | No         | Yes              |
+| Post-mortems               | No         | Yes (AI-powered) |
+| Team members               | Unlimited  | Per-seat pricing |
+
+## Pricing Comparison
+
+|                 | openstatus                        | incident.io                                 |
+| --------------- | --------------------------------- | ------------------------------------------- |
+| Free plan       | 1 monitor, 1 status page          | Limited free tier                           |
+| Starter/paid    | $30/mo                            | Per-seat pricing (contact sales)            |
+| What's included | Monitoring + status page + alerts | Incident workflows + on-call + post-mortems |
+| Team members    | Unlimited on paid plans           | Per-seat                                    |
+| Monitoring      | Built-in (28 regions)             | Requires external tool                      |
+
+For small-to-mid teams that need monitoring and a status page, openstatus is significantly cheaper. Incident.io's per-seat pricing targets larger engineering organizations with complex on-call rotations.
 
 ## When to Choose openstatus
 
@@ -51,3 +65,21 @@ The key distinction: incident.io has no uptime monitoring. It relies on external
 - You need **on-call scheduling, escalation policies**, and rotation management
 - You want **AI-powered post-mortems** and structured incident timelines
 - You manage a large on-call rotation across multiple teams or services
+
+## Using openstatus alongside incident.io
+
+These products are complementary rather than direct replacements. A common setup:
+
+- **Openstatus** detects outages from 28 regions and updates your public status page automatically
+- **Incident.io** receives alerts (from openstatus or other tools) and coordinates the internal response via Slack
+- Your **users** see the status page. Your **engineers** see the incident channel.
+
+If you only need the detection and communication layer, openstatus covers it alone. If you need the full incident coordination layer too, both tools work well together.
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=compare-incidentio">Get Started Free</ButtonLink>
+
+---

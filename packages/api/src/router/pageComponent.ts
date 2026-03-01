@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type SQL, and, asc, desc, eq, inArray, sql } from "@openstatus/db";
 import {
   monitor,
+  page,
   pageComponent,
   pageComponentGroup,
   selectMaintenanceSchema,
@@ -135,6 +136,25 @@ export const pageComponentRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       await opts.ctx.db.transaction(async (tx) => {
+        // Verify the page belongs to the current workspace
+        const ownedPage = await tx
+          .select({ id: page.id })
+          .from(page)
+          .where(
+            and(
+              eq(page.id, opts.input.pageId),
+              eq(page.workspaceId, opts.ctx.workspace.id),
+            ),
+          )
+          .get();
+
+        if (!ownedPage) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to this page.",
+          });
+        }
+
         const pageComponentLimit = opts.ctx.workspace.limits["page-components"];
 
         // Get existing state

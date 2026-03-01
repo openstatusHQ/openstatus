@@ -17,6 +17,8 @@ faq:
 
 ## Looking for a Checkly alternative?
 
+**TL;DR:** Openstatus is built for uptime monitoring with built-in status pages. Checkly is built for browser-based synthetic monitoring with Playwright. If you need to know when your API is down, choose openstatus. If you need to test complex user flows, choose Checkly.
+
 If your main need is uptime monitoring with a public status page rather than browser-based synthetic tests, openstatus is the better fit. It monitors from 28 regions with parallel scheduling, is fully open-source, and includes status pages with every plan — no Playwright scripts needed to know if your API is down.
 
 Openstatus and Checkly take different approaches to monitoring. Openstatus focuses on **uptime monitoring** — checking whether your endpoints are reachable and performant from 28 global regions — and pairs this with **status pages** for incident communication. Checkly focuses on **synthetic monitoring** using Playwright and Puppeteer to run full browser-based end-to-end checks.
@@ -25,17 +27,29 @@ If your primary need is knowing when your API or website goes down and communica
 
 ## Feature Comparison
 
-| Feature | openstatus | Checkly |
-| --- | --- | --- |
-| Multi-region | 28 | 19 |
-| Status Page | + | ? |
-| Open-source | + | - |
-| Bootstrap | + | - |
-| Monitoring as code | + (YAML + CLI) | + (JavaScript) |
-| Browser checks (Playwright) | - | + |
-| OpenTelemetry exporter | + | + |
-| GitHub Action | + | + |
-| Team members | unlimited | restricted |
+| Feature                     | openstatus       | Checkly          |
+| --------------------------- | ---------------- | ---------------- |
+| Multi-region                | 28 regions       | ~19 regions      |
+| Status Page                 | Yes (built-in)   | No               |
+| Open-source                 | Yes              | No               |
+| Monitoring as code          | Yes (YAML + CLI) | Yes (JavaScript) |
+| Browser checks (Playwright) | No               | Yes              |
+| OpenTelemetry exporter      | Yes              | Yes              |
+| GitHub Action               | Yes              | Yes              |
+| Team members                | Unlimited        | Restricted       |
+| Self-hostable               | Yes              | No               |
+
+## Pricing Comparison
+
+|                | openstatus              | Checkly                    |
+| -------------- | ----------------------- | -------------------------- |
+| Free plan      | 1 monitor, 6 regions    | 5 browser checks           |
+| Starter/paid   | $30/mo                  | Usage-based (from ~$30/mo) |
+| Status page    | Included                | Not available              |
+| Team members   | Unlimited on paid plans | Per-seat pricing           |
+| Browser checks | Not available           | Core feature               |
+
+Checkly's pricing is usage-based and scales with the number and frequency of browser checks. Openstatus offers flat, predictable pricing — what you see is what you pay.
 
 ## When to Choose openstatus
 
@@ -50,3 +64,22 @@ If your primary need is knowing when your API or website goes down and communica
 - You need **browser-based synthetic monitoring** with Playwright
 - You want to monitor **complex user flows** (checkout, authentication, search)
 - You already use JavaScript-based monitoring-as-code workflows
+
+## Switching from Checkly to openstatus
+
+If your Checkly usage is primarily HTTP API checks (not browser-based Playwright tests), the switch is simple:
+
+1. **Sign up** for a free openstatus account
+2. **Migrate your API checks** — recreate HTTP monitors in the dashboard or define them via YAML and the openstatus CLI
+3. **Set up your status page** — something Checkly doesn't offer natively
+4. **Configure alerts** — openstatus supports Slack, Discord, PagerDuty, OpsGenie, and more
+
+If you rely heavily on Playwright browser checks, openstatus is not a direct replacement for that capability. Consider using openstatus for uptime monitoring and status pages alongside a browser testing tool.
+
+---
+
+Start monitoring from 28 regions today
+
+## <ButtonLink href="https://app.openstatus.dev?ref=compare-checkly">Get Started Free</ButtonLink>
+
+---

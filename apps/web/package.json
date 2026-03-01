@@ -17,7 +17,7 @@
     "@google-cloud/tasks": "4.0.1",
     "@hookform/resolvers": "5.1.0",
     "@libsql/client": "0.15.15",
-    "@openpanel/nextjs": "1.0.8",
+    "@openpanel/nextjs": "1.2.0",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
     "@openstatus/assertions": "workspace:*",

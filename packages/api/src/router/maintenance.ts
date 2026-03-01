@@ -112,7 +112,7 @@ export const maintenanceRouter = createTRPCRouter({
         });
       }
 
-      // Check if the user has access to the monitors
+      // Check if the user has access to the page components
       if (opts.input.pageComponents?.length) {
         const whereConditions: SQL[] = [
           eq(pageComponent.workspaceId, opts.ctx.workspace.id),

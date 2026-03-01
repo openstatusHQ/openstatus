@@ -17,6 +17,8 @@ faq:
 
 ## Looking for an Instatus alternative?
 
+**TL;DR:** Instatus is a status-page-first product with basic monitoring bolted on. Openstatus was built around monitoring — 28 regions, parallel checks — with status pages as a native part of the product. If you want your status page backed by real monitoring data, choose openstatus.
+
 If you want your status page backed by real monitoring — not just a pretty page with bolted-on HTTP pings — openstatus is the stronger choice. It monitors from 28 regions simultaneously and surfaces results directly on your status page, so incidents are detected and communicated automatically.
 
 Openstatus and Instatus are both alternatives to Atlassian Statuspage, but they cover different ground. Instatus is focused purely on status pages — fast, CDN-delivered, with basic monitoring bolted on as a secondary feature. Openstatus treats **monitoring and status pages as equal parts of the same product**: checks run from 28 regions simultaneously, and your status page reflects those results in real time.
@@ -25,18 +27,29 @@ The practical difference: with Instatus, your status page and your monitoring li
 
 ## Feature Comparison
 
-| Feature | openstatus | Instatus |
-| --- | --- | --- |
-| Open-source | + | - |
-| Self-hosted | + | - |
-| Scheduling strategy | parallel | round-robin |
-| Multi-region | 28 | 4 |
-| Monitoring as code | + | - |
-| OpenTelemetry export | + | - |
-| GitHub Action | + | - |
-| Status page | + | + |
-| Unlimited subscribers | + | + |
-| Team members | unlimited | unlimited |
+| Feature               | openstatus                     | Instatus   |
+| --------------------- | ------------------------------ | ---------- |
+| Open-source           | Yes                            | No         |
+| Self-hosted           | Yes                            | No         |
+| Scheduling strategy   | Parallel (all regions at once) | Sequential |
+| Multi-region          | 28 regions                     | ~4 regions |
+| Monitoring as code    | Yes                            | No         |
+| OpenTelemetry export  | Yes                            | No         |
+| GitHub Action         | Yes                            | No         |
+| Status page           | Yes                            | Yes        |
+| Unlimited subscribers | Yes                            | Yes        |
+| Team members          | Unlimited                      | Unlimited  |
+
+## Pricing Comparison
+
+|                         | openstatus                                                      | Instatus                                       |
+| ----------------------- | --------------------------------------------------------------- | ---------------------------------------------- |
+| Free plan               | 1 monitor, 1 status page                                        | 1 status page (no custom domain)               |
+| Starter/paid            | $30/mo                                                          | $20/mo                                         |
+| What's included         | 20 monitors + 28 regions + status page + unlimited team members | 1 custom-domain status page + basic monitoring |
+| Additional status pages | $20/mo each                                                     | Included in higher plans                       |
+
+Instatus is $10/month cheaper on the base plan, but it does not include the depth of monitoring openstatus offers. If you're already paying for a separate monitoring tool alongside Instatus, openstatus replaces both at a lower combined cost.
 
 ## When to Choose openstatus
 
@@ -51,3 +64,21 @@ The practical difference: with Instatus, your status page and your monitoring li
 - You want a **pure status page** with no monitoring requirements
 - You need a **static, CDN-delivered** status page with fast global load times
 - You are migrating from Atlassian Statuspage and monitoring is handled by a separate tool
+- You want the **lowest possible price** for a standalone status page
+
+## Switching from Instatus to openstatus
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Set up your status page** — configure your custom domain, branding, and components to match your Instatus setup
+3. **Create monitors** — add HTTP, TCP, or DNS monitors for each component on your status page, with 28-region coverage
+4. **Configure alerts** — openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, and more
+5. **Update your DNS** — point your custom status page domain to openstatus
+6. **Notify subscribers** — let your status page subscribers know about the new URL if it changes
+
+---
+
+Start monitoring from 28 regions today
+
+## <ButtonLink href="https://app.openstatus.dev?ref=compare-instatus">Get Started Free</ButtonLink>
+
+---

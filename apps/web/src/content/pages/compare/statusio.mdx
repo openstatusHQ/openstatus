@@ -17,6 +17,8 @@ faq:
 
 ## Looking for a Status.io alternative?
 
+**TL;DR:** Status.io costs $79+/month for a status page with no monitoring included. Openstatus starts at $30/month and includes uptime monitoring from 28 regions, unlimited team members, and developer tooling — all in one open-source product.
+
 If you're paying $79+/month for a status page that doesn't even include monitoring, openstatus is the alternative that covers both. Get uptime monitoring from 28 global regions and a native status page in one open-source product starting at $30/month with unlimited team members.
 
 Openstatus and Status.io are both hosted status page platforms, but they differ significantly in scope and price. Status.io is an older, enterprise-oriented status page tool with no built-in monitoring — you need a separate service to detect incidents. Openstatus monitors your endpoints from **28 regions simultaneously**, surfaces results on a native status page, and provides developer tooling (CLI, Terraform, GitHub Actions) that Status.io does not.
@@ -25,18 +27,31 @@ For teams that want monitoring and status pages without stitching together two p
 
 ## Feature Comparison
 
-| Feature | openstatus | Status.io |
-| --- | --- | --- |
-| Open-source | + | - |
-| Self-hosted | + | - |
-| Built-in uptime monitoring | + | - |
-| Multi-region | 28 | - |
-| Monitoring as code | + | - |
-| OpenTelemetry export | + | - |
-| GitHub Action | + | - |
-| Status page included | + | + |
-| Private status pages | + | + |
-| Team members | unlimited | restricted |
+| Feature                    | openstatus | Status.io      |
+| -------------------------- | ---------- | -------------- |
+| Open-source                | Yes        | No             |
+| Self-hosted                | Yes        | No             |
+| Built-in uptime monitoring | Yes        | No             |
+| Multi-region               | 28 regions | Not applicable |
+| Monitoring as code         | Yes        | No             |
+| OpenTelemetry export       | Yes        | No             |
+| GitHub Action              | Yes        | No             |
+| Status page included       | Yes        | Yes            |
+| Private status pages       | Yes        | Yes            |
+| Team members               | Unlimited  | Restricted     |
+
+## Pricing Comparison
+
+|                     | openstatus                        | Status.io              |
+| ------------------- | --------------------------------- | ---------------------- |
+| Starting price      | $30/mo                            | ~$79/mo                |
+| What's included     | Monitoring + status page + alerts | Status page only       |
+| Monitoring          | Built-in (28 regions)             | Requires separate tool |
+| Team members        | Unlimited on paid plans           | Limited by plan        |
+| Developer tooling   | CLI, Terraform, GitHub Actions    | No                     |
+| Self-hosting option | Yes (free)                        | No                     |
+
+Status.io costs nearly 3x more than openstatus's Starter plan — and doesn't include any monitoring. When you factor in the cost of a separate monitoring tool, the total cost difference grows even larger.
 
 ## When to Choose openstatus
 
@@ -48,5 +63,24 @@ For teams that want monitoring and status pages without stitching together two p
 
 ## When to Choose Status.io
 
-- Your organization specifically requires **Status.io's enterprise compliance certifications** or existing vendor agreements
-- You need **private internal status pages** and Status.io's specific access control model
+- Your organization has **existing vendor agreements** with Status.io
+- You need Status.io's specific **enterprise compliance certifications**
+- You require Status.io's **private internal status page** access control model
+- You have a large-scale deployment with **dedicated account management** needs
+
+## Switching from Status.io to openstatus
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Set up your status page** — configure components, custom domain, branding, and subscriber notifications to match your Status.io setup
+3. **Create monitors** — add HTTP, TCP, or DNS monitors for each service component. Unlike Status.io, openstatus detects incidents automatically from 28 regions
+4. **Configure alerts** — openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, and more
+5. **Update your DNS** — point your custom status page domain to openstatus
+6. **Cancel your monitoring tool** — since openstatus includes monitoring, you may be able to cancel the separate monitoring service you were using with Status.io
+
+---
+
+Start monitoring from 28 regions today
+
+<ButtonLink href="https://app.openstatus.dev?ref=compare-statusio">Get Started Free</ButtonLink>
+
+---

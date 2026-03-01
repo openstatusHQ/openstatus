@@ -15,7 +15,9 @@ faq:
     answer: "Yes. Openstatus is open-source (AGPL-3.0 license) and self-hostable. UptimeRobot is a closed-source SaaS with no self-hosting option."
 ---
 
-## Looking for a UptimeRobot alternative?
+## Looking for an UptimeRobot alternative?
+
+**TL;DR:** Openstatus monitors from 28 regions simultaneously with open-source code and unlimited team members. UptimeRobot checks from one location at a time and charges $19/seat for team access.
 
 If you're tired of single-location checks and per-seat pricing, openstatus is the UptimeRobot alternative worth considering. It's open-source, monitors from 28 regions simultaneously, includes unlimited team members on paid plans, and gives you a built-in status page — all things UptimeRobot doesn't offer.
 
@@ -25,17 +27,29 @@ For teams that need global monitoring coverage, CI/CD integration, or a public s
 
 ## Feature Comparison
 
-| Feature | openstatus | UptimeRobot |
-| --- | --- | --- |
-| Open-source | + | - |
-| Bootstrap | + | - |
-| Multi-cloud | 3 providers | - |
-| Multi-region | 28 | - |
-| OTel Export | + | - |
-| GitHub Action | + | - |
-| Team members | unlimited | additional $19/seat |
-| Status Page | + | + (basic) |
-| Monitoring as code | + | - |
+| Feature            | openstatus       | UptimeRobot     |
+| ------------------ | ---------------- | --------------- |
+| Open-source        | Yes              | No              |
+| Multi-cloud        | 3 providers      | No              |
+| Multi-region       | 28 regions       | Single location |
+| OTel Export        | Yes              | No              |
+| GitHub Action      | Yes              | No              |
+| Team members       | Unlimited (paid) | $19/seat add-on |
+| Status Page        | Yes              | Basic           |
+| Monitoring as code | Yes              | No              |
+| Self-hostable      | Yes              | No              |
+
+## Pricing Comparison
+
+|              | openstatus              | UptimeRobot           |
+| ------------ | ----------------------- | --------------------- |
+| Free plan    | 1 monitor, 6 regions    | 50 monitors, 1 region |
+| Starter/paid | $30/mo (20 monitors)    | $8/mo per 10 monitors |
+| Team members | Unlimited on paid plans | $19/seat add-on       |
+| Status page  | Included                | Included (basic)      |
+| Multi-region | Included (28 regions)   | Not available         |
+
+UptimeRobot's free plan includes more monitors, but openstatus's free plan already includes multi-region monitoring. On paid plans, UptimeRobot's per-seat pricing adds up quickly for teams — a 5-person team adds $95/month on top of the monitoring cost.
 
 ## When to Choose openstatus
 
@@ -50,3 +64,22 @@ For teams that need global monitoring coverage, CI/CD integration, or a public s
 - You want a **familiar, well-established** tool with a long track record
 - Single-location monitoring is **sufficient for your use case**
 - You need **many monitors on the free tier** — UptimeRobot's free plan includes up to 50 monitors
+
+## Switching from UptimeRobot to openstatus
+
+Moving from UptimeRobot to openstatus is straightforward:
+
+1. **Sign up** for a free openstatus account — no credit card required
+2. **Recreate your monitors** in the openstatus dashboard or use monitoring-as-code (YAML + CLI) to define them programmatically
+3. **Set up your status page** — openstatus includes a branded status page with custom domain support on paid plans
+4. **Configure alerts** — openstatus supports Slack, Discord, Email, PagerDuty, OpsGenie, and more
+
+Most teams complete the switch in under an hour. If you need help, reach out at [ping@openstatus.dev](mailto:ping@openstatus.dev).
+
+---
+
+Start monitoring from 28 regions today
+
+## <ButtonLink href="https://app.openstatus.dev?ref=compare-uptimerobot">Get Started Free</ButtonLink>
+
+---

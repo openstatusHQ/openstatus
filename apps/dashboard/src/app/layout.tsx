@@ -5,6 +5,7 @@ import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { auth } from "@/lib/auth";
 import { TRPCReactProvider } from "@/lib/trpc/client";
+import { OpenPanelComponent } from "@openpanel/nextjs";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import { cn } from "@openstatus/ui/lib/utils";
 import { SessionProvider } from "next-auth/react";
@@ -102,6 +103,15 @@ export default async function RootLayout({
                 {children}
                 <TailwindIndicator />
                 <Toaster richColors expand />
+                {process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
+                  <OpenPanelComponent
+                    clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+                    trackScreenViews
+                    trackOutgoingLinks
+                    trackAttributes
+                    sessionReplay={{ enabled: true }}
+                  />
+                )}
               </ThemeProvider>
             </NuqsAdapter>
           </TRPCReactProvider>
