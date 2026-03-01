@@ -144,12 +144,12 @@ const CONFIG: ConfigSection[] = [
       {
         type: "item",
         label: "X",
-        href: "/x",
+        href: "/twitter",
       },
       {
         type: "item",
         label: "BlueSky",
-        href: "/bluesky",
+        href: "/bsky",
       },
       {
         type: "item",
