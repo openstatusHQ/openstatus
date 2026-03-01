@@ -119,7 +119,7 @@ export function FormSubscribeEmail({
             {form.watch("subscribeComponents") && (
               <>
                 <Separator />
-                <div className="-my-2 flex flex-col gap-2 bg-muted p-2 px-2">
+                <div className="-my-2 flex max-h-56 flex-col gap-2 overflow-y-auto bg-muted p-2 px-2">
                   {page?.trackers && page.trackers.length > 0 ? (
                     page.trackers.map((tracker) => {
                       if (tracker.type === "group") {
