@@ -85,6 +85,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     name: "openstatus",
     description:
       "Open-source uptime and synthetic monitoring with status pages.",
+    image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
       "@type": "Brand",
