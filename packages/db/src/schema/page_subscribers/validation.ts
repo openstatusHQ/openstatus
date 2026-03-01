@@ -6,7 +6,7 @@ import { pageSubscriber } from "./page_subscribers";
 // Base schemas (auto-generated from Drizzle schema)
 export const selectPageSubscriberSchema = createSelectSchema(pageSubscriber);
 export const insertPageSubscriberSchema = createInsertSchema(pageSubscriber, {
-  email: z.email(),
+  email: z.email().nullable(),
 });
 
 // Channel config schema for webhook

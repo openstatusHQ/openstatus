@@ -41,9 +41,9 @@ interface UpdateSubscriptionScopeInput {
 /**
  * Create or update email subscription (ADD behavior)
  *
- * - If no active subscription exists: creates new subscription
- * - If active subscription exists: merges components (adds new ones)
- * - If unsubscribed subscription exists: reactivates with new token
+ * - If no subscription exists (or only unsubscribed ones): creates new subscription
+ * - If pending subscription exists: merges components and refreshes expiry
+ * - If verified subscription exists: returns as-is (caller handles "already subscribed")
  */
 export async function upsertEmailSubscription(
   input: UpsertEmailSubscriptionInput,

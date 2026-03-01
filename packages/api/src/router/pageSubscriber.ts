@@ -74,7 +74,7 @@ export const pageSubscriberRouter = createTRPCRouter({
   verify: publicProcedure
     .input(
       z.object({
-        token: z.string(),
+        token: z.uuid(),
         domain: z.string().toLowerCase().optional(),
       }),
     )

@@ -1248,7 +1248,11 @@ export const statusPageRouter = createTRPCRouter({
         opts.input.domain,
       );
 
-      if (!subscription || subscription.unsubscribedAt) {
+      if (
+        !subscription ||
+        subscription.unsubscribedAt ||
+        subscription.channelType !== "email"
+      ) {
         return null;
       }
 
