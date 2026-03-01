@@ -24,35 +24,40 @@ import { columns } from "@/components/data-table/subscribers/columns";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { useTRPC } from "@/lib/trpc/client";
+import type { RouterOutputs } from "@openstatus/api";
 import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+
+type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 
 const EXAMPLES = [
   {
     id: 1,
     email: "max@openstatus.dev",
     createdAt: new Date(),
-    updatedAt: null,
     pageId: 1,
-    token: null,
+    channelType: "email",
     acceptedAt: new Date(),
-    expiresAt: new Date(),
     unsubscribedAt: null,
+    components: [],
+    isEntirePage: true,
+    webhookUrl: null,
   },
   {
     id: 2,
     email: "thibault@openstatus.dev",
     createdAt: new Date(),
-    updatedAt: null,
     pageId: 1,
-    token: null,
+    channelType: "email",
     acceptedAt: new Date(),
-    expiresAt: new Date(),
     unsubscribedAt: null,
+    components: [],
+    isEntirePage: true,
+    webhookUrl: null,
   },
-];
+] satisfies Subscriber[];
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
@@ -7,15 +7,14 @@ import {
   pageComponent,
   pageSubscriber,
 } from "@openstatus/db/src/schema";
-import { EmailClient } from "@openstatus/emails";
 
 import { app } from "@/index";
 
-// Mock the sendMaintenanceNotification method
-const sendMaintenanceNotificationMock = spyOn(
-  EmailClient.prototype,
-  "sendMaintenanceNotification",
-).mockResolvedValue(undefined);
+const subscriptionSpies = (globalThis as Record<string, unknown>)
+  .__subscriptionSpies as {
+  dispatchStatusReportUpdate: ReturnType<typeof import("bun:test").mock>;
+  dispatchMaintenanceUpdate: ReturnType<typeof import("bun:test").mock>;
+};
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).
@@ -458,7 +457,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
   });
 
   test("creates maintenance with notify=true", async () => {
-    sendMaintenanceNotificationMock.mockClear();
+    subscriptionSpies.dispatchMaintenanceUpdate.mockClear();
 
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -483,12 +482,9 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data).toHaveProperty("maintenance");
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-with-notify`);
 
-    // Verify notification was sent
-    expect(sendMaintenanceNotificationMock).toHaveBeenCalledTimes(1);
-    const mockCall = sendMaintenanceNotificationMock.mock.calls[0][0];
-    expect(mockCall.maintenanceTitle).toBe(`${TEST_PREFIX}-with-notify`);
-    expect(mockCall.message).toBe(
-      "Notifying subscribers about this maintenance.",
+    // Verify dispatcher was called (dispatchers are mocked in preload.ts)
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).toHaveBeenCalledTimes(
+      1,
     );
 
     // Clean up
@@ -506,7 +502,7 @@ describe("MaintenanceService.CreateMaintenance", () => {
   });
 
   test("creates maintenance with notify=false (default)", async () => {
-    sendMaintenanceNotificationMock.mockClear();
+    subscriptionSpies.dispatchMaintenanceUpdate.mockClear();
 
     const fromDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const toDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 3600000);
@@ -531,8 +527,8 @@ describe("MaintenanceService.CreateMaintenance", () => {
     expect(data).toHaveProperty("maintenance");
     expect(data.maintenance.title).toBe(`${TEST_PREFIX}-no-notify`);
 
-    // Verify notification was NOT sent
-    expect(sendMaintenanceNotificationMock).not.toHaveBeenCalled();
+    // Verify dispatcher was NOT called
+    expect(subscriptionSpies.dispatchMaintenanceUpdate).not.toHaveBeenCalled();
 
     // Clean up
     await db

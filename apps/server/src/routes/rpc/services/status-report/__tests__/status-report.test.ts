@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, spyOn, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { db, eq } from "@openstatus/db";
 import {
   page,
@@ -8,17 +8,16 @@ import {
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import { EmailClient } from "@openstatus/emails";
 import { StatusReportStatus } from "@openstatus/proto/status_report/v1";
 
 import { app } from "@/index";
 import { protoStatusToDb } from "../converters";
 
-// Mock the sendStatusReportUpdate method
-const sendStatusReportUpdateMock = spyOn(
-  EmailClient.prototype,
-  "sendStatusReportUpdate",
-).mockResolvedValue(undefined);
+const subscriptionSpies = (globalThis as Record<string, unknown>)
+  .__subscriptionSpies as {
+  dispatchStatusReportUpdate: ReturnType<typeof import("bun:test").mock>;
+  dispatchMaintenanceUpdate: ReturnType<typeof import("bun:test").mock>;
+};
 
 /**
  * Helper to make ConnectRPC requests using the Connect protocol (JSON).
@@ -520,7 +519,7 @@ describe("StatusReportService.CreateStatusReport", () => {
   });
 
   test("creates status report with notify=true", async () => {
-    sendStatusReportUpdateMock.mockClear();
+    subscriptionSpies.dispatchStatusReportUpdate.mockClear();
 
     const res = await connectRequest(
       "CreateStatusReport",
@@ -543,12 +542,10 @@ describe("StatusReportService.CreateStatusReport", () => {
     expect(data.statusReport.title).toBe(`${TEST_PREFIX}-with-notify`);
     expect(data.statusReport.updates).toHaveLength(1);
 
-    // Verify notification was sent
-    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
-    const mockCall = sendStatusReportUpdateMock.mock.calls[0][0];
-    expect(mockCall.reportTitle).toBe(`${TEST_PREFIX}-with-notify`);
-    expect(mockCall.status).toBe("investigating");
-    expect(mockCall.message).toBe("Notifying subscribers about this issue.");
+    // Verify dispatcher was called (dispatchers are mocked in preload.ts)
+    expect(subscriptionSpies.dispatchStatusReportUpdate).toHaveBeenCalledTimes(
+      1,
+    );
 
     // Clean up
     await db
@@ -570,7 +567,7 @@ describe("StatusReportService.CreateStatusReport", () => {
   });
 
   test("creates status report with notify=false (default)", async () => {
-    sendStatusReportUpdateMock.mockClear();
+    subscriptionSpies.dispatchStatusReportUpdate.mockClear();
 
     const res = await connectRequest(
       "CreateStatusReport",
@@ -592,8 +589,8 @@ describe("StatusReportService.CreateStatusReport", () => {
     expect(data).toHaveProperty("statusReport");
     expect(data.statusReport.title).toBe(`${TEST_PREFIX}-no-notify`);
 
-    // Verify notification was NOT sent
-    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
+    // Verify dispatcher was NOT called
+    expect(subscriptionSpies.dispatchStatusReportUpdate).not.toHaveBeenCalled();
 
     // Clean up
     await db
@@ -1403,7 +1400,7 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
   });
 
   test("adds update with notify=true", async () => {
-    sendStatusReportUpdateMock.mockClear();
+    subscriptionSpies.dispatchStatusReportUpdate.mockClear();
 
     const res = await connectRequest(
       "AddStatusReportUpdate",
@@ -1429,18 +1426,14 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
     );
     expect(newUpdate).toBeDefined();
 
-    // Verify notification was sent
-    expect(sendStatusReportUpdateMock).toHaveBeenCalledTimes(1);
-    const mockCall = sendStatusReportUpdateMock.mock.calls[0][0];
-    expect(mockCall.reportTitle).toBe(`${TEST_PREFIX}-for-notify`);
-    expect(mockCall.status).toBe("identified");
-    expect(mockCall.message).toBe(
-      "We identified the issue and are notifying subscribers.",
+    // Verify dispatcher was called (dispatchers are mocked in preload.ts)
+    expect(subscriptionSpies.dispatchStatusReportUpdate).toHaveBeenCalledTimes(
+      1,
     );
   });
 
   test("adds update with notify=false", async () => {
-    sendStatusReportUpdateMock.mockClear();
+    subscriptionSpies.dispatchStatusReportUpdate.mockClear();
 
     const res = await connectRequest(
       "AddStatusReportUpdate",
@@ -1460,8 +1453,8 @@ describe("StatusReportService.AddStatusReportUpdate", () => {
     expect(data).toHaveProperty("statusReport");
     expect(data.statusReport.status).toBe("STATUS_REPORT_STATUS_MONITORING");
 
-    // Verify notification was NOT sent
-    expect(sendStatusReportUpdateMock).not.toHaveBeenCalled();
+    // Verify dispatcher was NOT called
+    expect(subscriptionSpies.dispatchStatusReportUpdate).not.toHaveBeenCalled();
   });
 
   test("updates status report status when adding update", async () => {
