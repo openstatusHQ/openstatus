@@ -41,12 +41,26 @@ export default function VerifyPage() {
         >
           {title}
         </StatusBlankTitle>
-        <StatusBlankLink
-          href="../"
-          disabled={verifyEmailMutation.isPending || !verifyEmailMutation.data}
-        >
-          Go back
-        </StatusBlankLink>
+        <div className="flex justify-center gap-2">
+          <StatusBlankLink
+            href="/"
+            disabled={
+              verifyEmailMutation.isPending || !verifyEmailMutation.data
+            }
+          >
+            Go back
+          </StatusBlankLink>
+          {verifyEmailMutation.isSuccess && (
+            <StatusBlankLink
+              href={`/manage/${token}`}
+              disabled={
+                verifyEmailMutation.isPending || !verifyEmailMutation.data
+              }
+            >
+              Manage
+            </StatusBlankLink>
+          )}
+        </div>
       </StatusBlankContent>
     </StatusBlankContainer>
   );

@@ -93,7 +93,7 @@ export default function VerifyPage() {
             Manage your subscription to receive updates on the status page.
           </FormCardDescription>
         </FormCardHeader>
-        <FormCardContent>
+        <FormCardContent className="px-0">
           <FormManageSubscription
             id="manage-subscription-form"
             defaultValues={{

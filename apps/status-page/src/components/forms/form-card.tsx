@@ -11,9 +11,8 @@ import { cn } from "@openstatus/ui/lib/utils";
 
 import { type VariantProps, cva } from "class-variance-authority";
 
-// py-0
 const formCardVariants = cva(
-  "group relative w-full overflow-hidden py-0 shadow-none gap-4",
+  "group relative w-full overflow-hidden py-0 shadow-none gap-4 rounded-lg",
   {
     variants: {
       variant: {

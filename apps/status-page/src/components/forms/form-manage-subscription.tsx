@@ -87,7 +87,7 @@ export function FormManageSubscription({
           control={form.control}
           name="subscribeComponents"
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2">
+            <FormItem className="flex items-center gap-2 px-4">
               <FormControl>
                 <Checkbox
                   checked={field.value}
@@ -108,7 +108,10 @@ export function FormManageSubscription({
                 if (tracker.type === "group") {
                   const groupIds = tracker.components.map((c) => c.id);
                   return (
-                    <div key={tracker.groupId} className="flex flex-col gap-2">
+                    <div
+                      key={tracker.groupId}
+                      className="flex flex-col gap-2 px-4"
+                    >
                       <FormField
                         control={form.control}
                         name="pageComponents"
@@ -189,7 +192,7 @@ export function FormManageSubscription({
                     control={form.control}
                     name="pageComponents"
                     render={({ field }) => (
-                      <FormItem className="flex items-center gap-2">
+                      <FormItem className="flex items-center gap-2 px-4">
                         <FormControl>
                           <Checkbox
                             checked={field.value?.includes(
@@ -219,7 +222,7 @@ export function FormManageSubscription({
                 );
               })
             ) : (
-              <StatusBlankContainer>
+              <StatusBlankContainer className="px-4">
                 <StatusBlankTitle>
                   No components to subscribe to
                 </StatusBlankTitle>

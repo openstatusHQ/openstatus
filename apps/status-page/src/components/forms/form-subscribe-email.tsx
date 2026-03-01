@@ -24,9 +24,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// TODO: remove after implementing the feature
-const HIDE_SUBSCRIBE_COMPONENTS = true;
-
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
 const schema = z.object({
@@ -99,166 +96,160 @@ export function FormSubscribeEmail({
             </FormItem>
           )}
         />
-        {HIDE_SUBSCRIBE_COMPONENTS ? null : (
+
+        <FormField
+          control={form.control}
+          name="subscribeComponents"
+          render={({ field }) => (
+            <FormItem className="flex items-center gap-2 px-2">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <FormLabel>Subscribe to specific components</FormLabel>
+            </FormItem>
+          )}
+        />
+        {form.watch("subscribeComponents") && (
           <>
-            <FormField
-              control={form.control}
-              name="subscribeComponents"
-              render={({ field }) => (
-                <FormItem className="flex items-center gap-2 px-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel>Subscribe to specific components</FormLabel>
-                </FormItem>
-              )}
-            />
-            {form.watch("subscribeComponents") && (
-              <>
-                <Separator />
-                <div className="-my-2 flex max-h-56 flex-col gap-2 overflow-y-auto bg-muted p-2 px-2">
-                  {page?.trackers && page.trackers.length > 0 ? (
-                    page.trackers.map((tracker) => {
-                      if (tracker.type === "group") {
-                        const groupIds = tracker.components.map((c) => c.id);
-                        return (
-                          <div
-                            key={tracker.groupId}
-                            className="flex flex-col gap-2"
-                          >
-                            <FormField
-                              control={form.control}
-                              name="pageComponents"
-                              render={({ field }) => {
-                                const allChecked = groupIds.every((id) =>
-                                  field.value?.includes(id),
-                                );
-                                const someChecked = groupIds.some((id) =>
-                                  field.value?.includes(id),
-                                );
-                                return (
-                                  <FormItem className="flex items-center gap-2">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={
-                                          allChecked
-                                            ? true
-                                            : someChecked
-                                              ? "indeterminate"
-                                              : false
-                                        }
-                                        onCheckedChange={(checked) => {
-                                          const value = field.value ?? [];
-                                          if (checked) {
-                                            field.onChange([
-                                              ...new Set([
-                                                ...value,
-                                                ...groupIds,
-                                              ]),
-                                            ]);
-                                          } else {
-                                            field.onChange(
-                                              value.filter(
-                                                (id) => !groupIds.includes(id),
-                                              ),
-                                            );
-                                          }
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel>{tracker.groupName}</FormLabel>
-                                  </FormItem>
-                                );
-                              }}
-                            />
-                            {tracker.components.map((component) => (
-                              <FormField
-                                key={component.id}
-                                control={form.control}
-                                name="pageComponents"
-                                render={({ field }) => (
-                                  <FormItem className="flex items-center gap-2 pl-6">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(
-                                          component.id,
-                                        )}
-                                        onCheckedChange={(checked) => {
-                                          const value = field.value ?? [];
-                                          if (checked) {
-                                            field.onChange([
-                                              ...value,
-                                              component.id,
-                                            ]);
-                                          } else {
-                                            field.onChange(
-                                              value.filter(
-                                                (id) => id !== component.id,
-                                              ),
-                                            );
-                                          }
-                                        }}
-                                      />
-                                    </FormControl>
-                                    <FormLabel>{component.name}</FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-                            ))}
-                          </div>
-                        );
-                      }
-                      return (
+            <Separator />
+            <div className="-my-2 flex max-h-56 flex-col gap-2 overflow-y-auto bg-muted p-2 px-2">
+              {page?.trackers && page.trackers.length > 0 ? (
+                page.trackers.map((tracker) => {
+                  if (tracker.type === "group") {
+                    const groupIds = tracker.components.map((c) => c.id);
+                    return (
+                      <div
+                        key={tracker.groupId}
+                        className="flex flex-col gap-2"
+                      >
                         <FormField
-                          key={tracker.component.id}
                           control={form.control}
                           name="pageComponents"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center gap-2">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(
-                                    tracker.component.id,
-                                  )}
-                                  onCheckedChange={(checked) => {
-                                    const value = field.value ?? [];
-                                    if (checked) {
-                                      field.onChange([
-                                        ...value,
-                                        tracker.component.id,
-                                      ]);
-                                    } else {
-                                      field.onChange(
-                                        value.filter(
-                                          (id) => id !== tracker.component.id,
-                                        ),
-                                      );
+                          render={({ field }) => {
+                            const allChecked = groupIds.every((id) =>
+                              field.value?.includes(id),
+                            );
+                            const someChecked = groupIds.some((id) =>
+                              field.value?.includes(id),
+                            );
+                            return (
+                              <FormItem className="flex items-center gap-2">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={
+                                      allChecked
+                                        ? true
+                                        : someChecked
+                                          ? "indeterminate"
+                                          : false
                                     }
-                                  }}
-                                />
-                              </FormControl>
-                              <FormLabel>{tracker.component.name}</FormLabel>
-                            </FormItem>
-                          )}
+                                    onCheckedChange={(checked) => {
+                                      const value = field.value ?? [];
+                                      if (checked) {
+                                        field.onChange([
+                                          ...new Set([...value, ...groupIds]),
+                                        ]);
+                                      } else {
+                                        field.onChange(
+                                          value.filter(
+                                            (id) => !groupIds.includes(id),
+                                          ),
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel>{tracker.groupName}</FormLabel>
+                              </FormItem>
+                            );
+                          }}
                         />
-                      );
-                    })
-                  ) : (
-                    <StatusBlankContainer>
-                      <StatusBlankTitle>
-                        No components to subscribe to
-                      </StatusBlankTitle>
-                      <StatusBlankDescription>
-                        This page has no components to subscribe to.
-                      </StatusBlankDescription>
-                    </StatusBlankContainer>
-                  )}
-                </div>
-              </>
-            )}
+                        {tracker.components.map((component) => (
+                          <FormField
+                            key={component.id}
+                            control={form.control}
+                            name="pageComponents"
+                            render={({ field }) => (
+                              <FormItem className="flex items-center gap-2 pl-6">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(
+                                      component.id,
+                                    )}
+                                    onCheckedChange={(checked) => {
+                                      const value = field.value ?? [];
+                                      if (checked) {
+                                        field.onChange([
+                                          ...value,
+                                          component.id,
+                                        ]);
+                                      } else {
+                                        field.onChange(
+                                          value.filter(
+                                            (id) => id !== component.id,
+                                          ),
+                                        );
+                                      }
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel>{component.name}</FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <FormField
+                      key={tracker.component.id}
+                      control={form.control}
+                      name="pageComponents"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(
+                                tracker.component.id,
+                              )}
+                              onCheckedChange={(checked) => {
+                                const value = field.value ?? [];
+                                if (checked) {
+                                  field.onChange([
+                                    ...value,
+                                    tracker.component.id,
+                                  ]);
+                                } else {
+                                  field.onChange(
+                                    value.filter(
+                                      (id) => id !== tracker.component.id,
+                                    ),
+                                  );
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel>{tracker.component.name}</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  );
+                })
+              ) : (
+                <StatusBlankContainer>
+                  <StatusBlankTitle>
+                    No components to subscribe to
+                  </StatusBlankTitle>
+                  <StatusBlankDescription>
+                    This page has no components to subscribe to.
+                  </StatusBlankDescription>
+                </StatusBlankContainer>
+              )}
+            </div>
           </>
         )}
       </form>
