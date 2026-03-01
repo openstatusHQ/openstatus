@@ -48,27 +48,13 @@ afterEach(() => {
 // ─── validateWebhookConfig ────────────────────────────────────────────────────
 
 describe("validateWebhookConfig", () => {
-  test("returns valid for a valid URL", async () => {
-    const result = await validateWebhookConfig({
-      url: "https://example.com/hook",
-    });
+  test("returns valid for an empty config", async () => {
+    const result = await validateWebhookConfig({});
     expect(result.valid).toBe(true);
-  });
-
-  test("returns invalid for a non-URL string", async () => {
-    const result = await validateWebhookConfig({ url: "not-a-url" });
-    expect(result.valid).toBe(false);
-    expect(result.error).toBeDefined();
-  });
-
-  test("returns invalid when url field is missing", async () => {
-    const result = await validateWebhookConfig({ headers: [] });
-    expect(result.valid).toBe(false);
   });
 
   test("returns valid with optional headers and secret", async () => {
     const result = await validateWebhookConfig({
-      url: "https://example.com/hook",
       headers: [{ key: "Authorization", value: "Bearer token" }],
       secret: "my-secret",
     });
@@ -77,10 +63,20 @@ describe("validateWebhookConfig", () => {
 
   test("returns invalid when a header is missing a key", async () => {
     const result = await validateWebhookConfig({
-      url: "https://example.com/hook",
       headers: [{ key: "", value: "v" }], // key must be min length 1
     });
     expect(result.valid).toBe(false);
+  });
+
+  test("returns invalid for a non-object value", async () => {
+    const result = await validateWebhookConfig("not-an-object");
+    expect(result.valid).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  test("returns valid with only headers", async () => {
+    const result = await validateWebhookConfig({ headers: [] });
+    expect(result.valid).toBe(true);
   });
 });
 
