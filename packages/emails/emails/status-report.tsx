@@ -31,7 +31,8 @@ export const StatusReportSchema = z.object({
   message: z.string(),
   reportTitle: z.string(),
   pageComponents: z.array(z.string()),
-  unsubscribeUrl: z.string().url().optional(),
+  unsubscribeUrl: z.url().optional(),
+  manageUrl: z.url().optional(),
 });
 
 export type StatusReportProps = z.infer<typeof StatusReportSchema>;
@@ -61,6 +62,7 @@ function StatusReportEmail({
   pageTitle,
   pageComponents,
   unsubscribeUrl,
+  manageUrl,
 }: StatusReportProps) {
   return (
     <Html>
@@ -123,7 +125,13 @@ function StatusReportEmail({
                 >
                   Unsubscribe
                 </Link>{" "}
-                from these notifications.
+                ・{" "}
+                <Link
+                  href={manageUrl}
+                  style={{ color: "#6b7280", textDecoration: "underline" }}
+                >
+                  Manage notifications
+                </Link>
               </Text>
             </Section>
           )}

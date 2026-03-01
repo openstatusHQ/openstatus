@@ -115,12 +115,17 @@ export class EmailClient {
           this.client.batch.send(
             recipients.map((subscriber) => {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
+              const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
                 subject: req.reportTitle,
                 to: subscriber.email,
                 react: (
-                  <StatusReportEmail {...req} unsubscribeUrl={unsubscribeUrl} />
+                  <StatusReportEmail
+                    {...req}
+                    unsubscribeUrl={unsubscribeUrl}
+                    manageUrl={manageUrl}
+                  />
                 ),
               };
             }),
@@ -293,6 +298,7 @@ export class EmailClient {
           this.client.batch.send(
             recipients.map((subscriber) => {
               const unsubscribeUrl = `${statusPageBaseUrl}/unsubscribe/${subscriber.token}`;
+              const manageUrl = `${statusPageBaseUrl}/manage/${subscriber.token}`;
               return {
                 from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
                 subject: `Scheduled Maintenance: ${req.maintenanceTitle}`,
@@ -306,6 +312,7 @@ export class EmailClient {
                     message={req.message}
                     pageComponents={req.pageComponents}
                     unsubscribeUrl={unsubscribeUrl}
+                    manageUrl={manageUrl}
                   />
                 ),
               };

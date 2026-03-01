@@ -7,6 +7,7 @@ import StatusReportEmail from "../emails/status-report";
 describe("Status Report Email - Unsubscribe Link in Body", () => {
   const unsubscribeUrl =
     "https://openstatus.openstatus.dev/unsubscribe/test-token";
+  const manageUrl = "https://openstatus.openstatus.dev/manage/test-token";
 
   test("should include unsubscribe link in email body when URL is provided", async () => {
     const html = await render(
@@ -16,8 +17,9 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         status="investigating"
         date={new Date().toISOString()}
         message="Test message"
-        monitors={["Monitor 1"]}
+        pageComponents={["Monitor 1"]}
         unsubscribeUrl={unsubscribeUrl}
+        manageUrl={manageUrl}
       />,
     );
 
@@ -33,7 +35,8 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         status="investigating"
         date={new Date().toISOString()}
         message="Test message"
-        monitors={["Monitor 1"]}
+        pageComponents={["Monitor 1"]}
+        manageUrl={manageUrl}
       />,
     );
 
@@ -49,8 +52,9 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         status="investigating"
         date={new Date().toISOString()}
         message="Test message"
-        monitors={["Monitor 1"]}
+        pageComponents={["Monitor 1"]}
         unsubscribeUrl={unsubscribeUrl}
+        manageUrl={manageUrl}
       />,
     );
 
@@ -66,8 +70,9 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
         status="investigating"
         date={new Date().toISOString()}
         message="Test message"
-        monitors={["Monitor 1"]}
+        pageComponents={["Monitor 1"]}
         unsubscribeUrl={unsubscribeUrl}
+        manageUrl={manageUrl}
       />,
     );
 
@@ -84,8 +89,9 @@ describe("Status Report Email - Email Content Validation", () => {
       status: "investigating" as const,
       date: "2024-01-15T10:00:00.000Z",
       message: "We are investigating the issue",
-      monitors: ["API", "Web"],
+      pageComponents: ["API", "Web"],
       unsubscribeUrl: "https://openstatus.openstatus.dev/unsubscribe/test",
+      manageUrl: "https://openstatus.openstatus.dev/manage/test",
     };
 
     const html = await render(<StatusReportEmail {...props} />);
@@ -115,8 +121,9 @@ describe("Status Report Email - Email Content Validation", () => {
           status={status}
           date={new Date().toISOString()}
           message="Test"
-          monitors={[]}
+          pageComponents={[]}
           unsubscribeUrl="https://example.com/unsubscribe"
+          manageUrl="https://example.com/manage"
         />,
       );
 
