@@ -3,10 +3,15 @@ import type Stripe from "stripe";
 import { z } from "zod";
 
 import { Events, setupAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
+import { and, asc, eq, isNull, ne } from "@openstatus/db";
 import {
+  invitation,
+  monitor,
+  notification,
+  page,
   selectWorkspaceSchema,
   user,
+  usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
 
@@ -207,24 +212,111 @@ export const webhookRouter = createTRPCRouter({
         ? subscription.customer
         : subscription.customer.id;
 
-    const _workspace = await opts.ctx.db
-      .update(workspace)
-      .set({
-        subscriptionId: null,
-        plan: "free",
-        paidUntil: null,
-      })
-      .where(eq(workspace.stripeId, customerId))
-      .returning();
+    const _workspace = await opts.ctx.db.transaction(async (tx) => {
+      const _workspace = await tx
+        .update(workspace)
+        .set({
+          subscriptionId: null,
+          plan: "free",
+          paidUntil: null,
+          endsAt: null,
+          limits: JSON.stringify(getLimits("free")),
+        })
+        .where(eq(workspace.stripeId, customerId))
+        .returning();
 
+      if (!_workspace.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Workspace not found",
+        });
+      }
+
+      const workspaceId = _workspace[0].id;
+
+      const activeMonitors = await tx
+        .select({ id: monitor.id })
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.workspaceId, workspaceId),
+            eq(monitor.active, true),
+            isNull(monitor.deletedAt),
+          ),
+        )
+        .orderBy(asc(monitor.createdAt));
+
+      for (const m of activeMonitors.slice(1)) {
+        await tx
+          .update(monitor)
+          .set({ active: false })
+          .where(eq(monitor.id, m.id))
+          .run();
+      }
+
+      const statusPages = await tx
+        .select({ id: page.id })
+        .from(page)
+        .where(eq(page.workspaceId, workspaceId))
+        .orderBy(asc(page.createdAt));
+
+      for (const p of statusPages.slice(1)) {
+        await tx.delete(page).where(eq(page.id, p.id)).run();
+      }
+
+      if (statusPages.length > 0) {
+        await tx
+          .update(page)
+          .set({
+            customDomain: "",
+            password: null,
+            accessType: "public",
+            authEmailDomains: null,
+          })
+          .where(eq(page.id, statusPages[0].id))
+          .run();
+      }
+
+      const notifications = await tx
+        .select({ id: notification.id, provider: notification.provider })
+        .from(notification)
+        .where(eq(notification.workspaceId, workspaceId))
+        .orderBy(asc(notification.createdAt));
+
+      const keepNotification =
+        notifications.find((n) => n.provider === "email") ?? notifications[0];
+
+      for (const n of notifications.filter(
+        (n) => n.id !== keepNotification?.id,
+      )) {
+        await tx
+          .delete(notification)
+          .where(eq(notification.id, n.id))
+          .run();
+      }
+
+      // Remove all non-owner members from the workspace
+      await tx
+        .delete(usersToWorkspaces)
+        .where(
+          and(
+            eq(usersToWorkspaces.workspaceId, workspaceId),
+            ne(usersToWorkspaces.role, "owner"),
+          ),
+        )
+        .run();
+
+      // Remove all pending invitations for the workspace
+      await tx
+        .delete(invitation)
+        .where(eq(invitation.workspaceId, workspaceId))
+        .run();
+
+      return _workspace;
+    });
+
+    const workspaceId = _workspace[0].id;
     const customer = await stripe.customers.retrieve(customerId);
-
-    if (!_workspace) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Workspace not found",
-      });
-    }
 
     if (!customer.deleted && customer.email) {
       const userResult = await opts.ctx.db
@@ -237,7 +329,7 @@ export const webhookRouter = createTRPCRouter({
       const analytics = await setupAnalytics({
         userId: `usr_${userResult.id}`,
         email: customer.email || undefined,
-        workspaceId: String(_workspace[0].id),
+        workspaceId: String(workspaceId),
         plan: "free",
       });
       await analytics.track(Events.DowngradeWorkspace);
