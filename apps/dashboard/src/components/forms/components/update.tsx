@@ -90,11 +90,8 @@ export function FormComponentsUpdate() {
         onSubmit={async (values) => {
           await updateComponentsMutation.mutateAsync({
             pageId: Number.parseInt(id),
-            components: values.components.map(({ id, ...rest }) => rest),
-            groups: values.groups.map(({ id, components, ...rest }) => ({
-              ...rest,
-              components: components.map(({ id, ...c }) => c),
-            })),
+            components: values.components,
+            groups: values.groups.map(({ id: _groupId, ...rest }) => rest),
           });
         }}
       />
