@@ -22,6 +22,7 @@ export function createHeading(level: number) {
           href: `#${slug}`,
           key: `link-${slug}`,
           className: "anchor",
+          "aria-label": `Link to section: ${children?.toString()}`,
         }),
       ],
       children,
