@@ -705,7 +705,7 @@ export function FeaturePrivateLocationsDockerImage(
       }
       action={
         <Button variant="outline" className="w-max rounded-full" asChild>
-          <Link href="https://docs.openstatus.dev/blog/deploy-private-locations-raspberry-pi">
+          <Link href="https://www.openstatus.dev/blog/deploy-private-locations-raspberry-pi">
             Blog Post
           </Link>
         </Button>
