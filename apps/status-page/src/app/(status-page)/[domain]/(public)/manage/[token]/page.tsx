@@ -11,6 +11,13 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { FormManageSubscription } from "@/components/forms/form-manage-subscription";
+import {
+  StatusBlankContainer,
+  StatusBlankContent,
+  StatusBlankDescription,
+  StatusBlankLink,
+  StatusBlankTitle,
+} from "@/components/status-page/status-blank";
 import { useTRPC } from "@/lib/trpc/client";
 import {
   AlertDialog,
@@ -60,10 +67,19 @@ export default function VerifyPage() {
     }),
   );
 
-  // FIXME: better handle !subscription case by prefetching it first
-  if (!subscription) return null;
-
-  // TODO: think of adding info about: acceptedAt, unsubscribedAt...
+  if (!subscription)
+    return (
+      <StatusBlankContainer>
+        <StatusBlankContent>
+          <StatusBlankTitle>Invalid subscription token</StatusBlankTitle>
+          <StatusBlankDescription>
+            This subscription token is no longer valid. You may have already
+            unsubscribed or the link has expired.
+          </StatusBlankDescription>
+          <StatusBlankLink href="../">Go back</StatusBlankLink>
+        </StatusBlankContent>
+      </StatusBlankContainer>
+    );
 
   return (
     <div className="flex flex-col gap-4">
