@@ -90,7 +90,7 @@ export class EmailClient {
   }
 
   public async sendStatusReportUpdate(
-    req: StatusReportProps & {
+    req: Omit<StatusReportProps, "unsubscribeUrl" | "manageUrl"> & {
       subscribers: Array<{ email: string; token: string }>;
       pageSlug: string;
       customDomain?: string | null;
