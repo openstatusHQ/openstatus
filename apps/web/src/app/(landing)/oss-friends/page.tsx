@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   title: TITLE,
   description: DESCRIPTION,
+  alternates: {
+    canonical: "/oss-friends",
+  },
   openGraph: {
     ...ogMetadata,
     title: TITLE,

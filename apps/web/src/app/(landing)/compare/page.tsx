@@ -13,13 +13,17 @@ import {
   ContentBoxUrl,
 } from "../content-box";
 
-const TITLE = "Compare Alternatives";
-const DESCRIPTION = "Compare OpenStatus with other tools.";
+const TITLE = "Compare Uptime Monitoring & Status Page Alternatives";
+const DESCRIPTION =
+  "See how openstatus compares to BetterStack, UptimeRobot, Checkly, Instatus, and other monitoring tools. Side-by-side feature and pricing comparisons to help you choose the right solution.";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
   title: TITLE,
   description: DESCRIPTION,
+  alternates: {
+    canonical: "/compare",
+  },
   openGraph: {
     ...ogMetadata,
     title: TITLE,

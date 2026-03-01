@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   title: TITLE,
   description: DESCRIPTION,
+  alternates: {
+    canonical: "/changelog",
+  },
   openGraph: {
     ...ogMetadata,
     title: TITLE,

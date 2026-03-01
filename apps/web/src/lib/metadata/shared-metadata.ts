@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 
 export const TITLE = "openstatus";
 export const HOMEPAGE_TITLE =
-  "OpenStatus - Open-Source Status Page & Uptime Monitoring";
+  "openstatus - Open-Source Status Page & Uptime Monitoring";
 export const DESCRIPTION =
-  "Monitor your services globally and showcase your uptime with a status page. Get started for free with our open-source status page with uptime monitoring solution.";
+  "Monitor your services globally and showcase uptime with a status page. Get started for free with our open-source status page and uptime monitoring solution.";
 
 export const OG_DESCRIPTION =
   "Open-source status page and uptime monitoring system";

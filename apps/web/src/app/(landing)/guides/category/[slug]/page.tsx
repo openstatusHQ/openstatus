@@ -8,25 +8,35 @@ import {
 } from "@/lib/metadata/shared-metadata";
 import type { Metadata } from "next";
 
-const TITLE = "Guide Category";
-const DESCRIPTION = "All the latest guides from openstatus.";
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const TITLE = `Guides - ${slug.charAt(0).toUpperCase()}${slug.slice(1)}`;
+  const DESCRIPTION = "All the latest guides from openstatus.";
 
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  openGraph: {
-    ...ogMetadata,
+  return {
+    ...defaultMetadata,
     title: TITLE,
     description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+    alternates: {
+      canonical: `/guides/category/${slug}`,
+    },
+    openGraph: {
+      ...ogMetadata,
+      title: TITLE,
+      description: DESCRIPTION,
+    },
+    twitter: {
+      ...twitterMetadata,
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
+    },
+  };
+}
 
 export const dynamicParams = false;
 

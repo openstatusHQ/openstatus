@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   title: TITLE,
   description: DESCRIPTION,
+  alternates: {
+    canonical: "/guides",
+  },
   openGraph: {
     ...ogMetadata,
     title: TITLE,
