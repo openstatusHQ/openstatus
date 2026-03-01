@@ -15,7 +15,6 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
-import type { addons } from "@openstatus/db/src/schema/plan/schema";
 import {
   getLimits,
   updateAddonInLimits,
@@ -68,39 +67,18 @@ export const webhookRouter = createTRPCRouter({
     const oldPlan = ws.plan;
 
     let detectedPlan: ReturnType<typeof getPlanFromPriceId> = undefined;
-    const detectedFeatures: Array<{ feature: (typeof addons)[number] }> = [];
 
     for (const item of subscription.items.data) {
       const plan = getPlanFromPriceId(item.price.id);
       if (plan) {
         detectedPlan = plan;
-        continue;
+        break;
       }
-
-      const feature = getFeatureFromPriceId(item.price.id);
-      if (feature) {
-        detectedFeatures.push(feature);
-        continue;
-      }
-
-      console.warn(`Unknown price ID in subscription: ${item.price.id}`);
     }
 
-    let finalLimits = detectedPlan
+    const finalLimits = detectedPlan
       ? getLimits(detectedPlan.plan)
-      : { ...ws.limits };
-
-    for (const feature of detectedFeatures) {
-      const currentValue = finalLimits[feature.feature];
-      const newValue =
-        typeof currentValue === "boolean"
-          ? true
-          : typeof currentValue === "number"
-            ? currentValue + 1
-            : currentValue;
-
-      finalLimits = updateAddonInLimits(finalLimits, feature.feature, newValue);
-    }
+      : ws.limits;
 
     await opts.ctx.db
       .update(workspace)
