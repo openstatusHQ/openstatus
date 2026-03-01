@@ -15,6 +15,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
+import type { addons } from "@openstatus/db/src/schema/plan/schema";
 import {
   getLimits,
   updateAddonInLimits,
@@ -42,6 +43,10 @@ export const webhookRouter = createTRPCRouter({
   customerSubscriptionUpdated: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
 
+    if (subscription.status !== "active") {
+      return;
+    }
+
     const customerId =
       typeof subscription.customer === "string"
         ? subscription.customer
@@ -59,50 +64,102 @@ export const webhookRouter = createTRPCRouter({
       });
     }
 
-    // for (const item of subscription.items.data) {
-    //   const feature = getFeatureFromPriceId(item.price.id);
-    //   if (!feature) {
-    //     continue;
-    //   }
-    //   const _ws = await opts.ctx.db
-    //     .select()
-    //     .from(workspace)
-    //     .where(eq(workspace.stripeId, customerId))
-    //     .get();
+    const ws = selectWorkspaceSchema.parse(result);
+    const oldPlan = ws.plan;
 
-    //   const ws = selectWorkspaceSchema.parse(_ws);
+    let detectedPlan: ReturnType<typeof getPlanFromPriceId> = undefined;
+    const detectedFeatures: Array<{ feature: (typeof addons)[number] }> = [];
 
-    //   const currentValue = ws.limits[feature.feature];
-    //   const newValue =
-    //     typeof currentValue === "boolean"
-    //       ? true
-    //       : typeof currentValue === "number"
-    //         ? currentValue + 1
-    //         : currentValue;
+    for (const item of subscription.items.data) {
+      const plan = getPlanFromPriceId(item.price.id);
+      if (plan) {
+        detectedPlan = plan;
+        continue;
+      }
 
-    //   const newLimits = updateAddonInLimits(
-    //     ws.limits,
-    //     feature.feature,
-    //     newValue,
-    //   );
+      const feature = getFeatureFromPriceId(item.price.id);
+      if (feature) {
+        detectedFeatures.push(feature);
+        continue;
+      }
 
-    //   await opts.ctx.db
-    //     .update(workspace)
-    //     .set({
-    //       limits: JSON.stringify(newLimits),
-    //     })
-    //     .where(eq(workspace.id, result.id))
-    //     .run();
-    // }
+      console.warn(`Unknown price ID in subscription: ${item.price.id}`);
+    }
 
-    const customer = await stripe.customers.retrieve(customerId);
-    if (!customer.deleted && customer.email) {
-      const userResult = await opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.email, customer.email))
-        .get();
-      if (!userResult) return;
+    let finalLimits = detectedPlan
+      ? getLimits(detectedPlan.plan)
+      : { ...ws.limits };
+
+    for (const feature of detectedFeatures) {
+      const currentValue = finalLimits[feature.feature];
+      const newValue =
+        typeof currentValue === "boolean"
+          ? true
+          : typeof currentValue === "number"
+            ? currentValue + 1
+            : currentValue;
+
+      finalLimits = updateAddonInLimits(
+        finalLimits,
+        feature.feature,
+        newValue,
+      );
+    }
+
+    await opts.ctx.db
+      .update(workspace)
+      .set({
+        ...(detectedPlan ? { plan: detectedPlan.plan } : {}),
+        subscriptionId: subscription.id,
+        endsAt: new Date(subscription.current_period_end * 1000),
+        paidUntil: new Date(subscription.current_period_end * 1000),
+        limits: JSON.stringify(finalLimits),
+      })
+      .where(eq(workspace.id, result.id))
+      .run();
+
+    const allActive = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+    });
+
+    for (const sub of allActive.data) {
+      if (sub.id === subscription.id) continue;
+      try {
+        await stripe.subscriptions.cancel(sub.id);
+      } catch (e) {
+        console.error(`Failed to cancel duplicate subscription ${sub.id}:`, e);
+      }
+    }
+
+    const newPlan = detectedPlan?.plan ?? oldPlan;
+    if (detectedPlan && newPlan !== oldPlan) {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (!customer.deleted && customer.email) {
+        const userResult = await opts.ctx.db
+          .select()
+          .from(user)
+          .where(eq(user.email, customer.email))
+          .get();
+        if (!userResult) return;
+
+        const planOrder = ["free", "starter", "team"] as const;
+        const oldIndex = planOrder.indexOf(oldPlan ?? "free");
+        const newIndex = planOrder.indexOf(newPlan ?? "free");
+
+        const event =
+          newIndex > oldIndex
+            ? Events.UpgradeWorkspace
+            : Events.DowngradeWorkspace;
+
+        const analytics = await setupAnalytics({
+          userId: `usr_${userResult.id}`,
+          email: userResult.email || undefined,
+          workspaceId: String(result.id),
+          plan: newPlan,
+        });
+        await analytics.track(event);
+      }
     }
   }),
   sessionCompleted: webhookProcedure.mutation(async (opts) => {
@@ -211,6 +268,15 @@ export const webhookRouter = createTRPCRouter({
       typeof subscription.customer === "string"
         ? subscription.customer
         : subscription.customer.id;
+
+    const activeSubscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      status: "active",
+    });
+
+    if (activeSubscriptions.data.length > 0) {
+      return;
+    }
 
     const _workspace = await opts.ctx.db.transaction(async (tx) => {
       const _workspace = await tx
