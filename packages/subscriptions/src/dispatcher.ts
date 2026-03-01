@@ -87,7 +87,7 @@ export async function dispatchMaintenanceUpdate(maintenanceId: number) {
     message: maintenanceWithComponents.message,
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
-    date: maintenanceWithComponents.from.toISOString(),
+    date: `${maintenanceWithComponents.from.toISOString()} - ${maintenanceWithComponents.to.toISOString()}`,
   });
 }
 

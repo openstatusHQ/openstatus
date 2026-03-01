@@ -3,7 +3,6 @@ import type { PageUpdate, Subscription } from "../types";
 
 export async function validateWebhookConfig(config: unknown) {
   const schema = z.object({
-    url: z.string().url(),
     headers: z
       .array(
         z.object({
@@ -59,9 +58,16 @@ export async function sendWebhookNotifications(
 
   await Promise.allSettled(
     validSubscriptions.map(async (subscription) => {
-      const config = subscription.channelConfig
-        ? JSON.parse(subscription.channelConfig)
-        : {};
+      let config: Record<string, unknown> = {};
+      try {
+        config = subscription.channelConfig
+          ? JSON.parse(subscription.channelConfig)
+          : {};
+      } catch {
+        console.error(
+          `Invalid channelConfig JSON for subscription ${subscription.id}`,
+        );
+      }
 
       const payload = {
         type: "page_update",
@@ -82,7 +88,10 @@ export async function sendWebhookNotifications(
       };
 
       if (config.headers) {
-        for (const header of config.headers) {
+        for (const header of config.headers as {
+          key: string;
+          value: string;
+        }[]) {
           headers[header.key] = header.value;
         }
       }

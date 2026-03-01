@@ -29,7 +29,7 @@ export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
     id: z.number(),
     pageId: z.number(),
     channelType: z.literal("email"),
-    email: z.string().email(),
+    email: z.email(),
     webhookUrl: z.null(),
     channelConfig: z.null(),
     token: z.string().nullable(),
@@ -44,7 +44,7 @@ export const pageSubscriberSchema = z.discriminatedUnion("channelType", [
     id: z.number(),
     pageId: z.number(),
     channelType: z.literal("webhook"),
-    email: z.string(),
+    email: z.null(),
     webhookUrl: z.string().url(),
     channelConfig: z
       .string()

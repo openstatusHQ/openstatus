@@ -33,11 +33,15 @@ export const emailRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number().int().positive(),
+        token: z.uuid(),
       }),
     )
     .mutation(async (opts) => {
       const subscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: eq(pageSubscriber.id, opts.input.id),
+        where: and(
+          eq(pageSubscriber.id, opts.input.id),
+          eq(pageSubscriber.token, opts.input.token),
+        ),
         with: {
           page: {
             with: {
@@ -119,66 +123,6 @@ export const emailRouter = createTRPCRouter({
       );
 
       return { success: true };
-    }),
-
-  /**
-   * OLD: Send verification email for the legacy subscription flow
-   * Kept for backward compatibility with existing status-page UI
-   */
-  sendPageSubscription: publicProcedure
-    .input(z.object({ token: z.string().uuid() }))
-    .mutation(async (opts) => {
-      const _pageSubscriber = await opts.ctx.db.query.pageSubscriber.findFirst({
-        where: eq(pageSubscriber.token, opts.input.token),
-        with: {
-          page: {
-            with: {
-              workspace: true,
-            },
-          },
-        },
-      });
-
-      if (!_pageSubscriber || !_pageSubscriber.token) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Page subscriber not found",
-        });
-      }
-
-      if (_pageSubscriber.acceptedAt) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Subscription already verified",
-        });
-      }
-
-      const workspace = selectWorkspaceSchema.safeParse(
-        _pageSubscriber.page.workspace,
-      );
-
-      if (!workspace.success) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Workspace not found",
-        });
-      }
-      if (!workspace.data.limits["status-subscribers"]) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Upgrade to use status subscribers",
-        });
-      }
-
-      const link = _pageSubscriber.page.customDomain
-        ? `https://${_pageSubscriber.page.customDomain}/verify/${_pageSubscriber.token}`
-        : `https://${_pageSubscriber.page.slug}.openstatus.dev/verify/${_pageSubscriber.token}`;
-
-      await emailClient.sendPageSubscription({
-        to: _pageSubscriber.email,
-        page: _pageSubscriber.page.title,
-        link,
-      });
     }),
 
   /**

@@ -103,7 +103,7 @@ export default function VerifyPage() {
             }}
             page={page}
             onSubmit={async (values) => {
-              manageSubscriptionMutation.mutate({
+              await manageSubscriptionMutation.mutateAsync({
                 slug: domain,
                 token,
                 ...values,

@@ -2,6 +2,7 @@ import { and, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import {
   getSubscriptionByToken,
+  hasPendingUnexpiredSubscription,
   unsubscribe,
   updateSubscriptionScope,
   upsertEmailSubscription,
@@ -25,6 +26,19 @@ export const pageSubscriberRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
+      // Guard against email spam: reject if a pending (unverified, unexpired) subscription exists
+      const isPending = await hasPendingUnexpiredSubscription(
+        opts.input.email,
+        opts.input.pageId,
+      );
+      if (isPending) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message:
+            "A confirmation link was already sent. Please check your email or wait until it expires to request a new one.",
+        });
+      }
+
       try {
         const subscription = await upsertEmailSubscription({
           email: opts.input.email,

@@ -1026,7 +1026,6 @@ export const statusPageRouter = createTRPCRouter({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
         with: {
           workspace: true,
-          pageComponents: true,
         },
       });
 
@@ -1035,18 +1034,6 @@ export const statusPageRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Page not found",
         });
-      }
-
-      if (opts.input.pageComponents.length > 0) {
-        const validComponents = _page.pageComponents.filter((c) =>
-          opts.input.pageComponents.includes(c.id),
-        );
-        if (validComponents.length !== opts.input.pageComponents.length) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid page component IDs",
-          });
-        }
       }
 
       const workspace = selectWorkspaceSchema.safeParse(_page.workspace);
@@ -1094,7 +1081,7 @@ export const statusPageRouter = createTRPCRouter({
         });
       }
 
-      return subscription.token;
+      return { id: subscription.id, token: subscription.token };
     }),
 
   getSubscriptionByToken: publicProcedure
@@ -1139,7 +1126,10 @@ export const statusPageRouter = createTRPCRouter({
         });
       } catch (error) {
         if (error instanceof Error) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+          const code = error.message.toLowerCase().includes("not found")
+            ? "NOT_FOUND"
+            : "BAD_REQUEST";
+          throw new TRPCError({ code, message: error.message });
         }
         throw error;
       }
